@@ -2,8 +2,17 @@ import { describe, it, expect, vi } from "vitest";
 import hookAxios from "../src/axiosHook";
 import { proxiedRequests } from "../src/proxied";
 
+// getUri of 1.x: baseURL + url + params
+const getUriV1 = (c: any) => {
+  const base = c.baseURL && !/^https?:/.test(c.url) ? c.baseURL.replace(/\/$/, "") + "/" + c.url.replace(/^\//, "") : c.url;
+  const q = c.params ? "?" + new URLSearchParams(c.params) : "";
+  return base + q;
+};
+// getUri before 0.27: url + params, no baseURL
+const getUriV0 = (c: any) => c.url + (c.params ? "?" + new URLSearchParams(c.params) : "");
+
 // just enough of axios: request interceptors, one adapter call, response interceptors
-function fakeAxios(adapter: (config: any) => Promise<any>) {
+function fakeAxios(adapter: (config: any) => Promise<any>, getUri = getUriV1) {
   const req: any[] = [];
   const res: any[] = [];
   const instance = {
@@ -11,7 +20,7 @@ function fakeAxios(adapter: (config: any) => Promise<any>) {
       request: { use: (ok: any, fail?: any) => req.push([ok, fail]) },
       response: { use: (ok: any, fail?: any) => res.push([ok, fail]) },
     },
-    getUri: (c: any) => (c.baseURL || "") + c.url,
+    getUri,
     async request(config: any) {
       for (const [ok] of req) config = ok(config);
       let p = adapter(config);
@@ -95,5 +104,22 @@ describe("axios hook", () => {
     const sendMessage = hook(api);
     await api.request({ url: "https://or.example.com/ingest/v1/web/i", headers: {} });
     expect(sendMessage).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["1.x", getUriV1],
+    ["0.x", getUriV0],
+  ])("resolves baseURL and params with the getUri of axios %s", async (_v, getUri) => {
+    const sendMessage = vi.fn();
+    const api = fakeAxios(async (config) => ({ config, status: 200, headers: {}, data: "" }), getUri);
+    hook(api, sendMessage);
+    await api.request({ baseURL: "https://api.example.com/v2/", url: "/items", params: { a: 1 }, headers: {} });
+    await api.request({ baseURL: "/api", url: "users", headers: {} });
+    await api.request({ baseURL: "https://api.example.com", url: "https://cdn.example.com/x", headers: {} });
+    expect(sendMessage.mock.calls.map(([m]) => m.url)).toEqual([
+      "https://api.example.com/v2/items?a=1",
+      `${location.origin}/api/users`,
+      "https://cdn.example.com/x",
+    ]);
   });
 });

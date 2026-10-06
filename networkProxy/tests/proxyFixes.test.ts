@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import FetchProxy from "../src/fetchProxy";
-import { XHRProxyHandler } from "../src/xhrProxy";
+import XHRProxy from "../src/xhrProxy";
 import { genStringBody } from "../src/utils";
 
 const flush = async () => {
@@ -105,49 +105,187 @@ describe("fetch proxy fixes", () => {
     expect(JSON.parse(sendMessage.mock.calls[0][0].response).body).toBe(body);
   });
 
-  it("records an event stream without waiting for it to end", async () => {
+  /** A body that never ends; `cancelled` flips once every reader of it let go. */
+  function endless(chunk = 64 * 1024) {
+    const state = { pulled: 0, cancelled: false };
+    const stream = new ReadableStream<Uint8Array>({
+      pull(c) {
+        state.pulled += chunk;
+        c.enqueue(new Uint8Array(chunk).fill(97));
+      },
+      cancel() {
+        state.cancelled = true;
+      },
+    });
+    return { stream, state };
+  }
+  const settle = () => new Promise((r) => setTimeout(r, 20));
+
+  it.each(["text/plain", "application/json", "text/event-stream", "application/x-ndjson", "application/octet-stream", "multipart/x-mixed-replace"])(
+    "records a %s response that never ends, and lets the app close it",
+    async (contentType) => {
+      const sendMessage = vi.fn();
+      const { stream, state } = endless();
+      const target = vi.fn().mockResolvedValue(new Response(stream, { headers: { "content-type": contentType } }));
+      const wrapped = FetchProxy.create(false, noToken, identity, sendMessage, () => false, undefined, target as any);
+      const resp = await wrapped("https://api.example.com/tail");
+      await settle();
+      expect(sendMessage).toHaveBeenCalledTimes(1);
+      expect(JSON.parse(sendMessage.mock.calls[0][0].response).body).toBeFalsy();
+      // the tracker holds at most about one limit's worth of it
+      expect(state.pulled).toBeLessThan(1_200_000);
+      await resp.body!.cancel();
+      expect(state.cancelled).toBe(true);
+    },
+  );
+
+  it("sizes a binary response by its content-length without reading it", async () => {
     const sendMessage = vi.fn();
-    const stream = new ReadableStream({ start(c) { c.enqueue(new TextEncoder().encode("data: 1\n\n")) } });
+    const { stream, state } = endless();
     const target = vi.fn().mockResolvedValue(
-      new Response(stream, { headers: { "content-type": "text/event-stream" } }),
+      new Response(stream, { headers: { "content-type": "image/png", "content-length": "2048" } }),
     );
     const wrapped = FetchProxy.create(false, noToken, identity, sendMessage, () => false, undefined, target as any);
-    await wrapped("https://api.example.com/sse");
-    await flush();
+    const resp = await wrapped("https://api.example.com/a.png");
+    await settle();
+    expect(sendMessage.mock.calls[0][0].responseSize).toBe(2048);
+    expect(state.pulled).toBeLessThanOrEqual(64 * 1024);
+    await resp.body!.cancel();
+    expect(state.cancelled).toBe(true);
+  });
+
+  it("records an endless upload stream without holding all of it", async () => {
+    const sendMessage = vi.fn();
+    const { stream, state } = endless();
+    const request = new Request("https://api.example.com/upload", {
+      method: "POST",
+      body: stream,
+      headers: { "content-type": "text/plain" },
+      // @ts-ignore not in the dom lib yet
+      duplex: "half",
+    });
+    const target = vi.fn().mockResolvedValue(new Response("{}", { headers: { "content-type": "application/json" } }));
+    const wrapped = FetchProxy.create(false, noToken, identity, sendMessage, () => false, undefined, target as any);
+    await wrapped(request);
+    await settle();
     expect(sendMessage).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(sendMessage.mock.calls[0][0].request).body).toBeFalsy();
+    expect(state.pulled).toBeLessThan(1_200_000);
   });
 });
 
 describe("xhr proxy fixes", () => {
-  function makeHandler(sendMessage: (m: any) => void) {
-    const req: any = { readyState: 0, status: 0, responseType: "", response: "" };
-    const handler = new XHRProxyHandler(req, false, noToken, identity, sendMessage, () => false);
-    handler.item.url = "https://api.example.com/x";
-    handler.item.method = "GET";
-    return { req, handler };
+  // events in the order the XHR spec fires them, handler attributes first
+  class FakeXHR extends EventTarget {
+    readyState = 0;
+    status = 0;
+    responseType = "";
+    response: any = "";
+    onreadystatechange: any = null;
+    onabort: any = null;
+    ontimeout: any = null;
+    onerror: any = null;
+    private active = false;
+    open() {
+      this.active = false;
+      this.readyState = 1;
+      this.status = 0;
+      this.response = "";
+      this.fire("readystatechange");
+    }
+    setRequestHeader() {}
+    getAllResponseHeaders() {
+      return "content-type: application/json\r\n";
+    }
+    send() {
+      this.active = true;
+    }
+    abort() {
+      if (this.active) this.end("abort");
+      if (this.readyState === 4) this.readyState = 0;
+    }
+    respond(status: number, body: string) {
+      this.status = status;
+      this.readyState = 2;
+      this.fire("readystatechange");
+      this.readyState = 3;
+      this.fire("readystatechange");
+      this.response = body;
+      this.end("load");
+    }
+    end(type: "load" | "error" | "abort" | "timeout") {
+      this.active = false;
+      if (type !== "load") this.status = 0;
+      this.readyState = 4;
+      this.fire("readystatechange");
+      this.fire(type);
+      this.fire("loadend");
+    }
+    private fire(type: string) {
+      const e = new Event(type);
+      (this as any)["on" + type]?.call(this, e);
+      this.dispatchEvent(e);
+    }
   }
 
-  it("reports an aborted request once", async () => {
-    vi.useFakeTimers();
+  function makeXHR() {
     const sendMessage = vi.fn();
-    const { req, handler } = makeHandler(sendMessage);
-    req.readyState = 4;
-    handler.onReadyStateChange();
-    handler.onAbort();
+    const Wrapped = XHRProxy.create(false, noToken, identity, sendMessage, (u) => u.includes("/ingest"), undefined, FakeXHR as any);
+    const xhr = new Wrapped() as unknown as FakeXHR & XMLHttpRequest;
+    const sent = () => sendMessage.mock.calls.map(([m]) => ({ url: m.url, status: m.status, request: JSON.parse(m.request) }));
+    return { xhr, sent };
+  }
+
+  it("records each request of a reused XHR once, with its own data", () => {
+    vi.useFakeTimers();
+    const { xhr, sent } = makeXHR();
+    xhr.open("POST", "https://api.example.com/a");
+    xhr.setRequestHeader("X-First", "1");
+    xhr.send('{"q":"a"}');
+    xhr.abort();
+    xhr.open("GET", "https://api.example.com/b");
+    xhr.send();
+    xhr.respond(200, '{"ok":true}');
     vi.runAllTimers();
     vi.useRealTimers();
-    expect(sendMessage).toHaveBeenCalledTimes(1);
+    const msgs = sent();
+    expect(msgs.map((m) => [m.url, m.status])).toEqual([
+      ["https://api.example.com/a", 0],
+      ["https://api.example.com/b", 200],
+    ]);
+    expect(msgs[1].request.headers).toEqual({});
   });
 
-  it("still reports a failed (status 0) request without abort", () => {
-    vi.useFakeTimers();
-    const sendMessage = vi.fn();
-    const { req, handler } = makeHandler(sendMessage);
-    req.readyState = 4;
-    handler.onReadyStateChange();
-    vi.runAllTimers();
-    vi.useRealTimers();
-    expect(sendMessage).toHaveBeenCalledTimes(1);
+  it.each(["error", "abort", "timeout"] as const)("records a request retried from on%s once", (type) => {
+    const { xhr, sent } = makeXHR();
+    (xhr as any)["on" + type] = () => {
+      xhr.open("GET", "https://api.example.com/retry");
+      xhr.send();
+    };
+    xhr.open("GET", "https://api.example.com/first");
+    xhr.send();
+    xhr.end(type);
+    xhr.respond(200, "{}");
+    expect(sent().map((m) => [m.url, m.status])).toEqual([
+      ["https://api.example.com/first", 0],
+      ["https://api.example.com/retry", 200],
+    ]);
+  });
+
+  it("records a request dropped by open() without events", () => {
+    const { xhr, sent } = makeXHR();
+    xhr.open("GET", "https://api.example.com/slow");
+    xhr.send();
+    xhr.open("GET", "https://api.example.com/next");
+    expect(sent().map((m) => m.url)).toEqual(["https://api.example.com/slow"]);
+  });
+
+  it("skips service urls", () => {
+    const { xhr, sent } = makeXHR();
+    xhr.open("POST", "https://or.example.com/ingest/v1/web/i");
+    xhr.send();
+    xhr.abort();
+    expect(sent()).toEqual([]);
   });
 });
 

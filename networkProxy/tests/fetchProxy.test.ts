@@ -5,16 +5,6 @@ const flushPromises = async () => {
 };
 
 
-vi.mock("./utils", () => {
-  return {
-    formatByteSize: (n: number) => `${n}B`,
-    genStringBody: (b: any) => (typeof b === "string" ? b : "[non-string-body]"),
-    getStringResponseByType: (_t: any, v: any) =>
-      typeof v === "string" ? v : JSON.stringify(v),
-    getURL: (u: string) => new URL(u, "http://example.test"),
-  };
-});
-
 import FetchProxy from "../src/fetchProxy";
 
 describe("FetchProxy", () => {
@@ -68,7 +58,7 @@ describe("FetchProxy", () => {
     expect(globalThis.fetch).toHaveBeenCalledTimes(1);
   });
 
-  it("records a successful JSON response and proxies response methods", async () => {
+  it("records a successful JSON response", async () => {
     const body = { hello: "world" };
     const response = new Response(JSON.stringify(body), {
       status: 200,
@@ -188,34 +178,6 @@ describe("FetchProxy", () => {
     const msg = sendMessage.mock.calls[0][0];
 
     expect(msg.status).toBe(0);
-  });
-
-  it("reads arrayBuffer for non-text content", async () => {
-    const payload = new Uint8Array([1, 2, 3]).buffer;
-    const response = new Response(payload, {
-      status: 200,
-      headers: { "content-type": "application/octet-stream" },
-    });
-    (globalThis.fetch as any).mockResolvedValue(response);
-
-    const wrapped = FetchProxy.create(
-      false,
-      setSessionTokenHeader,
-      sanitize,
-      sendMessage,
-      () => false,
-      tokenUrlMatcher,
-    );
-
-    const res = await wrapped("https://api.example.com/bin", {});
-    await res.arrayBuffer();
-    await flushPromises();
-
-    expect(sendMessage).toHaveBeenCalledTimes(1);
-    const msg = sendMessage.mock.calls[0][0];
-
-    expect(msg.status).toBe(200);
-    expect(msg.responseSize).toBe(3);
   });
 
   it("records chunked responses and still returns the Response", async () => {

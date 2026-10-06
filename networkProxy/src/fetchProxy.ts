@@ -7,18 +7,43 @@
  * */
 import NetworkMessage from "./networkMessage";
 import { INetworkMessage, RequestResponseData } from "./types";
-import {
-  formatByteSize,
-  genStringBody,
-  getStringResponseByType,
-  getURL,
-} from "./utils";
+import { formatByteSize, genStringBody, getURL } from "./utils";
 import { proxiedRequests } from "./proxied";
 
 // Requests may come from another realm, so no instanceof
 const isRequest = (x: unknown): x is Request =>
   !!x && typeof x === "object" && typeof (x as Request).url === "string" && typeof (x as Request).clone === "function";
 const TEXTUAL = /json|text\/|xml|javascript|urlencoded|graphql/i;
+// end only when the app stops reading: a copy being read would keep the connection open
+const STREAMING = /event-stream|ndjson|jsonl|json-seq|stream\+json|x-mixed-replace/i;
+// a larger body would not fit in a batch anyway
+const BODY_LIMIT = 1_000_000;
+
+interface Body {
+  text: string;
+  size: number;
+}
+
+/** Reads a body copy as text; past the limit, lets go of the copy and resolves null. */
+function readCapped(body: ReadableStream<Uint8Array> | null): Promise<Body | null> {
+  if (!body) return Promise.resolve({ text: "", size: 0 });
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
+  let text = "";
+  let size = 0;
+  const pump = (): Promise<Body | null> =>
+    reader.read().then(({ done, value }) => {
+      if (done) return { text: text + decoder.decode(), size };
+      size += value.byteLength;
+      if (size > BODY_LIMIT) {
+        reader.cancel().catch(() => {});
+        return null;
+      }
+      text += decoder.decode(value, { stream: true });
+      return pump();
+    });
+  return pump();
+}
 
 export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T> {
   constructor(
@@ -202,9 +227,9 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
     ) {
       // the body is inside the Request; read a copy before fetch consumes it
       try {
-        return input.clone().text().then(
-          (text) => {
-            item.requestData = genStringBody(text);
+        return readCapped(input.clone().body).then(
+          (body) => {
+            if (body) item.requestData = genStringBody(body.text);
           },
           () => {},
         );
@@ -227,16 +252,10 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
       }
 
       Promise.all([this.handleResponseBody(resp, item), requestBodyRead])
-        .then(([responseValue]) => {
-          item.responseSize =
-            typeof responseValue === "string"
-              ? responseValue.length
-              : responseValue.byteLength;
-          item.responseSizeText = formatByteSize(item.responseSize);
-          item.response = getStringResponseByType(
-            item.responseType,
-            responseValue,
-          );
+        .then(([body]) => {
+          item.responseSize = body.size;
+          item.responseSizeText = formatByteSize(body.size);
+          item.response = body.text;
 
           const msg = item.getMessage();
           if (msg) {
@@ -260,23 +279,20 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
     };
   }
 
-  protected handleResponseBody(resp: Response, item: NetworkMessage): Promise<string | ArrayBuffer> {
+  protected handleResponseBody(resp: Response, item: NetworkMessage): Promise<Body> {
     const contentType = resp.headers.get("content-type") || "";
-    if (contentType.includes("event-stream")) {
-      // never ends: a copy would buffer the whole stream
+    const declaredSize = Number(resp.headers.get("content-length")) || 0;
+    if (STREAMING.test(contentType)) {
       item.responseType = "text";
-      return Promise.resolve("");
+      return Promise.resolve({ text: "", size: 0 });
     }
-    if (contentType.includes("json")) {
-      item.responseType = "json";
-      return resp.clone().text();
+    if (contentType && !TEXTUAL.test(contentType)) {
+      // binary bodies are recorded by size only
+      item.responseType = "arraybuffer";
+      return Promise.resolve({ text: "", size: declaredSize });
     }
-    if (!contentType || TEXTUAL.test(contentType)) {
-      item.responseType = "text";
-      return resp.clone().text();
-    }
-    item.responseType = "arraybuffer";
-    return resp.clone().arrayBuffer();
+    item.responseType = contentType.includes("json") ? "json" : "text";
+    return readCapped(resp.clone().body).then((body) => body ?? { text: "", size: declaredSize });
   }
 }
 

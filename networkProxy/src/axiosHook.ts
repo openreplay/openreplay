@@ -22,6 +22,13 @@ export interface AxiosInstance {
 
 const START = Symbol("openreplay-axios-start");
 
+// axios' own rules (buildFullPath / combineURLs)
+function buildFullPath(baseURL: string | undefined, url: string, allowAbsoluteUrls?: boolean) {
+  const isRelative = !/^([a-z][a-z\d+\-.]*:)?\/\//i.test(url);
+  if (!baseURL || (!isRelative && allowAbsoluteUrls !== false)) return url;
+  return url ? baseURL.replace(/\/?\/$/, "") + "/" + url.replace(/^\/+/, "") : baseURL;
+}
+
 function plainHeaders(headers: any): Record<string, string> {
   const src = headers && typeof headers.toJSON === "function" ? headers.toJSON() : headers;
   const out: Record<string, string> = {};
@@ -53,7 +60,9 @@ export default function hookAxios(
 ): void {
   const fullUrl = (config: any) => {
     try {
-      const uri = instance.getUri ? instance.getUri(config) : (config.baseURL || "") + (config.url || "");
+      // getUri ignores baseURL before axios 0.27: join it here, getUri only adds the params
+      const path = buildFullPath(config.baseURL, config.url || "", config.allowAbsoluteUrls);
+      const uri = instance.getUri ? instance.getUri({ ...config, baseURL: "", url: path }) : path;
       return getURL(uri, window.location.href);
     } catch {
       return null;

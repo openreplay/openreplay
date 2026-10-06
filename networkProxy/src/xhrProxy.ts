@@ -21,6 +21,7 @@ export class XHRProxyHandler<T extends XMLHttpRequest>
 {
   public XMLReq: XMLHttpRequest;
   public item: NetworkMessage;
+  private sent = false;
   private reported = false;
 
   constructor(
@@ -46,12 +47,18 @@ export class XHRProxyHandler<T extends XMLHttpRequest>
     this.XMLReq.ontimeout = () => {
       this.onTimeout();
     };
-    this.item = new NetworkMessage(
-      ignoredHeaders,
-      setSessionTokenHeader,
-      sanitize,
-    );
-    this.item.requestType = "xhr";
+    // once per request, after load / error / abort / timeout
+    this.XMLReq.addEventListener("loadend", () => {
+      // not DONE: re-opened from an earlier handler, open() reported this request
+      if (this.XMLReq.readyState === RequestState.DONE) this.report();
+    });
+    this.item = this.newItem();
+  }
+
+  private newItem() {
+    const item = new NetworkMessage(this.ignoredHeaders, this.setSessionTokenHeader, this.sanitize);
+    item.requestType = "xhr";
+    return item;
   }
 
   public get(target: T, key: string) {
@@ -105,27 +112,12 @@ export class XHRProxyHandler<T extends XMLHttpRequest>
     this.item.endTime = performance.now();
     this.item.duration = this.item.endTime - this.item.startTime;
     this.updateItemByReadyState();
-
-    const rt = this.item.responseType || "";
-    if (rt === "" || rt === "text" || rt === "json") {
-      setTimeout(() => {
-        this.item.response = getStringResponseByType(rt, this.XMLReq.response);
-      }, 0);
-    }
-
-    if (this.XMLReq.readyState === RequestState.DONE) {
-      if (this.XMLReq.status === 0) {
-        // abort/timeout fire right after this readystatechange; let them report once
-        setTimeout(() => this.report(), 0);
-      } else {
-        this.report();
-      }
-    }
   }
 
   private report() {
     if (this.reported) return;
     this.reported = true;
+    if (this.item.url && this.isServiceUrl(this.item.url)) return;
     const msg = this.item.getMessage();
     if (msg) {
       this.sendMessage(msg);
@@ -135,18 +127,23 @@ export class XHRProxyHandler<T extends XMLHttpRequest>
   public onAbort() {
     this.item.cancelState = 1;
     this.item.statusText = "Abort";
-    this.report();
   }
 
   public onTimeout() {
     this.item.cancelState = 3;
     this.item.statusText = "Timeout";
-    this.report();
   }
 
   protected getOpen(target: T) {
     const targetFunction = Reflect.get(target, "open");
     return (...args: any[]) => {
+      // open() drops a request in flight without events
+      if (this.sent && !this.reported) {
+        if (this.XMLReq.readyState !== RequestState.DONE) this.onAbort();
+        this.report();
+      }
+      this.item = this.newItem();
+      this.sent = false;
       this.reported = false;
       const method = args[0];
       const url = args[1];
@@ -164,6 +161,7 @@ export class XHRProxyHandler<T extends XMLHttpRequest>
     return (...args: any[]) => {
       const data: XMLHttpRequestBodyInit = args[0];
       this.item.requestData = genStringBody(data);
+      this.sent = true;
       return targetFunction.apply(target, args);
     };
   }
@@ -275,7 +273,7 @@ export class XHRProxyHandler<T extends XMLHttpRequest>
         const resp = this.XMLReq.response as any;
         const respType = this.XMLReq.responseType || "";
         if (respType === "" || respType === "text" || respType === "json") {
-          this.item.response = resp;
+          this.item.response = getStringResponseByType(respType, resp);
         }
 
         if (resp) {
