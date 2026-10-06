@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
@@ -58,9 +59,17 @@ type usersImpl struct {
 	metrics  database.Database
 	state    userState
 	memory   *memoryState
+	degraded atomic.Bool
 
 	mu           sync.Mutex
 	distinctSeen map[string]bool
+}
+
+func (u *usersImpl) currentState() userState {
+	if u.degraded.Load() {
+		return u.memory
+	}
+	return u.state
 }
 
 func NewUsers(log logger.Logger, conn driver.Conn, sink rowSink, sessions sessions.Sessions, metrics database.Database, client *redis.Client, stateTTL time.Duration) (Users, error) {
@@ -154,7 +163,7 @@ func deref(s *string) string {
 
 func (u *usersImpl) mutate(session *sessions.Session, userID string, fn func(user *model.User, isNew bool)) (*model.User, error) {
 	key := userKey(session.ProjectID, userID)
-	st := u.state
+	st := u.currentState()
 	for attempt := 0; attempt < maxStoreRetries; attempt++ {
 		user, version, found, err := st.load(key)
 		if err != nil {
@@ -204,6 +213,7 @@ func (u *usersImpl) mutate(session *sessions.Session, userID string, fn func(use
 func (u *usersImpl) degrade(key string, err error) userState {
 	u.log.Warn(context.Background(), "user state unavailable for %s, using process memory: %s", key, err)
 	u.metrics.IncreaseUserStateFallbacks()
+	u.degraded.Store(true)
 	return u.memory
 }
 
@@ -289,7 +299,7 @@ func deletedMarker(projectID uint32, userID string) *model.User {
 
 func (u *usersImpl) Delete(projectID uint32, userID string) error {
 	key := userKey(projectID, userID)
-	st := u.state
+	st := u.currentState()
 	for attempt := 0; attempt < maxStoreRetries; attempt++ {
 		_, version, found, err := st.load(key)
 		if err != nil {
@@ -323,7 +333,7 @@ func (u *usersImpl) refresh(rows [][]interface{}) [][]interface{} {
 		}
 		keys = append(keys, userKey(uint32(row[0].(uint16)), row[1].(string)))
 	}
-	latest, err := u.state.loadMany(keys)
+	latest, err := u.currentState().loadMany(keys)
 	if err != nil {
 		u.log.Warn(context.Background(), "can't refresh users batch from state: %s", err)
 		return rows
