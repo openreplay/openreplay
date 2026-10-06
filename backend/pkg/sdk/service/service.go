@@ -46,6 +46,7 @@ type dataSaverImpl struct {
 	sessions          sessions.Sessions
 	consumer          types.Consumer
 	done              chan struct{}
+	stopped           chan struct{}
 	updating          atomic.Bool
 	updateCtx         context.Context
 	updateCancel      context.CancelFunc
@@ -70,6 +71,7 @@ func New(cfg *db.Config, log logger.Logger, ch clickhouse.Connector, sessions se
 		users:       users,
 		sessions:    sessions,
 		done:        make(chan struct{}, 1),
+		stopped:     make(chan struct{}),
 		conn:        conn,
 		lastTs:      time.Now(),
 		leaderToken: uuid.New().String(),
@@ -336,6 +338,8 @@ func (ds *dataSaverImpl) run() {
 			}
 
 		case <-ds.done:
+			ds.updateWg.Wait()
+			close(ds.stopped)
 			return
 
 		default:
@@ -623,6 +627,6 @@ type UserEvent struct {
 
 func (ds *dataSaverImpl) Stop() {
 	ds.updateCancel()
-	ds.updateWg.Wait()
 	ds.done <- struct{}{}
+	<-ds.stopped
 }
