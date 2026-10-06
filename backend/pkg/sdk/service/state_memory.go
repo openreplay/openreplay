@@ -7,7 +7,7 @@ import (
 	"openreplay/backend/pkg/sdk/model"
 )
 
-const memoryStateTTL = 10 * time.Minute
+const memoryStateTTL = 60 * time.Second
 
 type memoryEntry struct {
 	user    *model.User
@@ -15,7 +15,7 @@ type memoryEntry struct {
 	at      time.Time
 }
 
-// memoryState keeps a row only until the connector has sent it
+// memoryState holds a user row for a short TTL
 type memoryState struct {
 	mu    sync.Mutex
 	items map[string]*memoryEntry
@@ -75,16 +75,6 @@ func (s *memoryState) delete(key string) error {
 	delete(s.items, key)
 	s.mu.Unlock()
 	return nil
-}
-
-func (s *memoryState) markSent(flushedAt time.Time) {
-	s.mu.Lock()
-	for k, e := range s.items {
-		if !e.at.After(flushedAt) {
-			delete(s.items, k)
-		}
-	}
-	s.mu.Unlock()
 }
 
 func (s *memoryState) sweep(now time.Time) {

@@ -39,7 +39,6 @@ type rowSink interface {
 	InsertUser(user *model.User) error
 	InsertUserTombstone(projectID uint16, userID string) error
 	InsertUserDistinctID(projectID uint16, distinctID, userID string) error
-	AfterSend(hook func(flushedAt time.Time))
 	SetRowRefresher(table string, refresh func(rows [][]interface{}) [][]interface{})
 }
 
@@ -78,7 +77,6 @@ func NewUsers(log logger.Logger, conn driver.Conn, sink rowSink, sessions sessio
 	if st := newRedisState(client, stateTTL); st != nil {
 		u.state = st
 	}
-	sink.AfterSend(u.memory.markSent)
 	sink.SetRowRefresher("pa_users", u.refresh)
 	go u.memory.sweeper()
 	return u, nil
