@@ -29,6 +29,7 @@ type Config struct {
 	PAUpdaterStartTime    string        `env:"PA_UPDATER_START_TIME,default=00:00"`
 	PAUpdaterEndTime      string        `env:"PA_UPDATER_END_TIME,default=00:00"`
 	PAUpdaterTickDuration time.Duration `env:"PA_UPDATER_TICK_DURATION,default=2m"`
+	PAUserStateTTL        time.Duration `env:"PA_USER_STATE_TTL,default=2h"`
 	CHReadBatchSizeLimit  int           `env:"CH_READ_BATCH_SIZE_LIMIT,default=500"`
 	CHSendBatchSizeLimit  int           `env:"CH_SEND_BATCH_SIZE_LIMIT,default=2000"`
 	CHReadUsersSizeLimit  int           `env:"CH_READ_USERS_SIZE_LIMIT,default=50"`

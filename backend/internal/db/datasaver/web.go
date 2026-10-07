@@ -4,14 +4,13 @@ import (
 	"context"
 	"openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/messages"
-	sdk "openreplay/backend/pkg/sdk/model"
 	"openreplay/backend/pkg/sessions"
 )
 
 func (s *saverImpl) handleWebMessage(session *sessions.Session, msg messages.Message) error {
 	switch m := msg.(type) {
 	case *messages.SessionStart:
-		if err := s.users.Add(session, sdk.NewUser(m.UserID)); err != nil {
+		if err := s.users.Add(session, m.UserID); err != nil {
 			s.log.Warn(context.Background(), "error adding user to session: %s", err)
 		}
 	case *messages.SessionEnd:
@@ -40,7 +39,7 @@ func (s *saverImpl) handleWebMessage(session *sessions.Session, msg messages.Mes
 		}
 		return s.issues.Add(session.SessionID, ie.Type)
 	case *messages.UserID:
-		return s.users.Add(session, sdk.NewUser(m.ID))
+		return s.users.Add(session, m.ID)
 	case *messages.UserAnonymousID:
 		return s.sessions.UpdateAnonymousID(session.SessionID, m.ID)
 	case *messages.CustomEvent:
