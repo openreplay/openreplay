@@ -32,13 +32,13 @@ func (s *segmentsImpl) Get(ctx context.Context, projectID uint32, searchID strin
 	const query = `
 		SELECT search_data
 		FROM public.saved_searches
-		WHERE search_id = $1
-		  AND project_id = $2
+		WHERE search_id = @searchId
+		  AND project_id = @projectId
 		  AND deleted_at IS NULL
 		  AND (expires_at IS NULL OR expires_at > NOW())
 	`
 	var dataJSON []byte
-	err := s.pgconn.QueryRow(query, searchID, projectID).Scan(&dataJSON)
+	err := s.pgconn.QueryRow(query, pgx.NamedArgs{"searchId": searchID, "projectId": projectID}).Scan(&dataJSON)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrSegmentNotFound

@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/jackc/pgx/v5"
+
 	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
@@ -42,11 +44,18 @@ func New(log logger.Logger, conn pool.Pool) (Dashboards, error) {
 func (s *dashboardsImpl) Create(projectId int, userID uint64, req *CreateDashboardRequest) (*GetDashboardResponse, error) {
 	sql := `
 		INSERT INTO dashboards (project_id, user_id, name, description, is_public, is_pinned)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		VALUES (@projectId, @userId, @name, @description, @isPublic, @isPinned)
 		RETURNING dashboard_id, project_id, user_id, name, description, is_public, is_pinned, created_at`
 
 	dashboard := &GetDashboardResponse{}
-	err := s.pgconn.QueryRow(sql, projectId, userID, req.Name, req.Description, req.IsPublic, req.IsPinned).Scan(
+	err := s.pgconn.QueryRow(sql, pgx.NamedArgs{
+		"projectId":   projectId,
+		"userId":      userID,
+		"name":        req.Name,
+		"description": req.Description,
+		"isPublic":    req.IsPublic,
+		"isPinned":    req.IsPinned,
+	}).Scan(
 		&dashboard.DashboardID,
 		&dashboard.ProjectID,
 		&dashboard.UserID,
@@ -102,7 +111,7 @@ func (s *dashboardsImpl) Get(projectId int, dashboardID int, userID uint64) (*Ge
 				SELECT dw.metric_id
 				FROM dashboard_widgets dw
 				JOIN metrics m ON m.metric_id = dw.metric_id AND m.deleted_at IS NULL
-				WHERE dw.dashboard_id = $1
+				WHERE dw.dashboard_id = @dashboardId
 			) AND ms.deleted_at IS NULL
 			GROUP BY ms.metric_id
 		)
@@ -134,14 +143,14 @@ func (s *dashboardsImpl) Get(projectId int, dashboardID int, userID uint64) (*Ge
 		LEFT JOIN dashboard_widgets dw ON d.dashboard_id = dw.dashboard_id
 		LEFT JOIN metrics m ON dw.metric_id = m.metric_id AND m.deleted_at IS NULL
 		LEFT JOIN series_agg s ON m.metric_id = s.metric_id
-		WHERE d.dashboard_id = $1 AND d.project_id = $2 AND d.deleted_at IS NULL
+		WHERE d.dashboard_id = @dashboardId AND d.project_id = @projectId AND d.deleted_at IS NULL
 		GROUP BY d.dashboard_id, d.project_id, d.name, d.description, d.is_public, d.is_pinned, d.user_id, d.created_at`
 
 	dashboard := &GetDashboardResponse{}
 	var ownerID *int
 	var metricsJSON []byte
 
-	err := s.pgconn.QueryRow(sql, dashboardID, projectId).Scan(
+	err := s.pgconn.QueryRow(sql, pgx.NamedArgs{"dashboardId": dashboardID, "projectId": projectId}).Scan(
 		&dashboard.DashboardID,
 		&dashboard.ProjectID,
 		&dashboard.Name,
@@ -176,9 +185,9 @@ func (s *dashboardsImpl) GetAll(projectId int, userID uint64) (*GetDashboardsRes
 		SELECT d.dashboard_id, d.user_id, d.project_id, d.name, d.description, d.is_public, d.is_pinned, u.email AS owner_email, u.name AS owner_name, d.created_at
 		FROM dashboards d
 		LEFT JOIN users u ON d.user_id = u.user_id
-		WHERE (d.is_public = true OR d.user_id = $1) AND d.user_id IS NOT NULL AND d.deleted_at IS NULL AND d.project_id = $2
+		WHERE (d.is_public = true OR d.user_id = @userId) AND d.user_id IS NOT NULL AND d.deleted_at IS NULL AND d.project_id = @projectId
 		ORDER BY d.dashboard_id`
-	rows, err := s.pgconn.Query(sql, userID, projectId)
+	rows, err := s.pgconn.Query(sql, pgx.NamedArgs{"userId": userID, "projectId": projectId})
 	if err != nil {
 		return nil, err
 	}
@@ -212,12 +221,19 @@ func (s *dashboardsImpl) Update(projectId int, dashboardID int, userID uint64, r
 
 	sql := `
 		UPDATE dashboards
-		SET name = $1, description = $2, is_public = $3, is_pinned = $4
-		WHERE dashboard_id = $5 AND project_id = $6 AND deleted_at IS NULL
+		SET name = @name, description = @description, is_public = @isPublic, is_pinned = @isPinned
+		WHERE dashboard_id = @dashboardId AND project_id = @projectId AND deleted_at IS NULL
 		RETURNING dashboard_id, project_id, user_id, name, description, is_public, is_pinned, created_at`
 
 	dashboard := &GetDashboardResponse{}
-	err := s.pgconn.QueryRow(sql, req.Name, req.Description, req.IsPublic, req.IsPinned, dashboardID, projectId).Scan(
+	err := s.pgconn.QueryRow(sql, pgx.NamedArgs{
+		"name":        req.Name,
+		"description": req.Description,
+		"isPublic":    req.IsPublic,
+		"isPinned":    req.IsPinned,
+		"dashboardId": dashboardID,
+		"projectId":   projectId,
+	}).Scan(
 		&dashboard.DashboardID,
 		&dashboard.ProjectID,
 		&dashboard.UserID,
@@ -241,9 +257,9 @@ func (s *dashboardsImpl) Delete(projectId int, dashboardID int, userID uint64) e
 	sql := `
 		UPDATE dashboards
 		SET deleted_at = now()
-		WHERE dashboard_id = $1 AND project_id = $2 AND user_id = $3 AND deleted_at IS NULL`
+		WHERE dashboard_id = @dashboardId AND project_id = @projectId AND user_id = @userId AND deleted_at IS NULL`
 
-	err := s.pgconn.Exec(sql, dashboardID, projectId, userID)
+	err := s.pgconn.Exec(sql, pgx.NamedArgs{"dashboardId": dashboardID, "projectId": projectId, "userId": userID})
 	if err != nil {
 		return fmt.Errorf("error deleting dashboard: %w", err)
 	}
@@ -260,9 +276,9 @@ func (s *dashboardsImpl) GetMetricsWithConfig(projectId int, metricIDs []int) ([
 	sql := `
 		SELECT metric_id, COALESCE(default_config, '{}') as default_config
 		FROM public.metrics
-		WHERE project_id = $1 AND metric_id = ANY($2)
+		WHERE project_id = @projectId AND metric_id = ANY(@metricIds)
 	`
-	rows, err := s.pgconn.Query(sql, projectId, metricIDs)
+	rows, err := s.pgconn.Query(sql, pgx.NamedArgs{"projectId": projectId, "metricIds": metricIDs})
 	if err != nil {
 		return nil, err
 	}
@@ -289,9 +305,9 @@ func (s *dashboardsImpl) GetExistingWidgets(tx *pool.Tx, dashboardId int, metric
 	sql := `
 		SELECT metric_id
 		FROM public.dashboard_widgets
-		WHERE dashboard_id = $1 AND metric_id = ANY($2)
+		WHERE dashboard_id = @dashboardId AND metric_id = ANY(@metricIds)
 	`
-	rows, err := tx.TxQuery(sql, dashboardId, metricIDs)
+	rows, err := tx.TxQuery(sql, pgx.NamedArgs{"dashboardId": dashboardId, "metricIds": metricIDs})
 	if err != nil {
 		return nil, err
 	}
@@ -384,8 +400,7 @@ func (s *dashboardsImpl) AddCards(projectId int, dashboardId int, userId uint64,
 		// Build bulk insert query
 		query := `INSERT INTO public.dashboard_widgets (dashboard_id, metric_id, user_id, config) VALUES `
 		var values []string
-		var args []interface{}
-		argIndex := 1
+		args := pgx.NamedArgs{"dashboardId": dashboardId, "userId": userId}
 		currentPosition := startPosition
 
 		for _, metricID := range newMetricIDs {
@@ -413,14 +428,15 @@ func (s *dashboardsImpl) AddCards(projectId int, dashboardId int, userId uint64,
 				return fmt.Errorf("failed to marshal config: %w", err)
 			}
 
-			values = append(values, fmt.Sprintf("($%d, $%d, $%d, $%d)", argIndex, argIndex+1, argIndex+2, argIndex+3))
-			args = append(args, dashboardId, metricID, userId, configJSON)
-			argIndex += 4
+			i := len(values)
+			values = append(values, fmt.Sprintf("(@dashboardId, @metricId%d, @userId, @config%d)", i, i))
+			args[fmt.Sprintf("metricId%d", i)] = metricID
+			args[fmt.Sprintf("config%d", i)] = configJSON
 			currentPosition++
 		}
 
 		finalQuery := query + strings.Join(values, ", ")
-		err = tx.TxExec(finalQuery, args...)
+		err = tx.TxExec(finalQuery, args)
 		if err != nil {
 			return fmt.Errorf("failed to bulk insert widgets: %w", err)
 		}
@@ -445,9 +461,9 @@ func (s *dashboardsImpl) UpdateWidgetPosition(projectId int, dashboardId int, us
 	var exists bool
 	checkSQL := `SELECT EXISTS (
 		SELECT 1 FROM public.dashboard_widgets
-		WHERE dashboard_id = $1 AND widget_id = $2
+		WHERE dashboard_id = @dashboardId AND widget_id = @widgetId
 	)`
-	err = s.pgconn.QueryRow(checkSQL, dashboardId, widgetId).Scan(&exists)
+	err = s.pgconn.QueryRow(checkSQL, pgx.NamedArgs{"dashboardId": dashboardId, "widgetId": widgetId}).Scan(&exists)
 	if err != nil {
 		return fmt.Errorf("failed to check widget existence: %w", err)
 	}
@@ -463,10 +479,9 @@ func (s *dashboardsImpl) UpdateWidgetPosition(projectId int, dashboardId int, us
 	}
 
 	// Update widget config (position is already included in the config JSON)
-	updateSQL := `UPDATE public.dashboard_widgets SET config = $1 WHERE dashboard_id = $2 AND widget_id = $3`
-	args := []interface{}{configJSON, dashboardId, widgetId}
+	updateSQL := `UPDATE public.dashboard_widgets SET config = @config WHERE dashboard_id = @dashboardId AND widget_id = @widgetId`
 
-	err = s.pgconn.Exec(updateSQL, args...)
+	err = s.pgconn.Exec(updateSQL, pgx.NamedArgs{"config": configJSON, "dashboardId": dashboardId, "widgetId": widgetId})
 	if err != nil {
 		return fmt.Errorf("failed to update widget position: %w", err)
 	}
@@ -484,9 +499,9 @@ func (s *dashboardsImpl) DeleteCard(projectId int, dashboardId int, userId uint6
 	var exists bool
 	checkSQL := `SELECT EXISTS (
 		SELECT 1 FROM public.dashboard_widgets
-		WHERE dashboard_id = $1 AND widget_id = $2
+		WHERE dashboard_id = @dashboardId AND widget_id = @widgetId
 	)`
-	err = s.pgconn.QueryRow(checkSQL, dashboardId, cardId).Scan(&exists)
+	err = s.pgconn.QueryRow(checkSQL, pgx.NamedArgs{"dashboardId": dashboardId, "widgetId": cardId}).Scan(&exists)
 	if err != nil {
 		return fmt.Errorf("failed to check widget existence: %w", err)
 	}
@@ -496,8 +511,8 @@ func (s *dashboardsImpl) DeleteCard(projectId int, dashboardId int, userId uint6
 	}
 
 	// Delete the widget
-	deleteSQL := `DELETE FROM public.dashboard_widgets WHERE dashboard_id = $1 AND widget_id = $2`
-	err = s.pgconn.Exec(deleteSQL, dashboardId, cardId)
+	deleteSQL := `DELETE FROM public.dashboard_widgets WHERE dashboard_id = @dashboardId AND widget_id = @widgetId`
+	err = s.pgconn.Exec(deleteSQL, pgx.NamedArgs{"dashboardId": dashboardId, "widgetId": cardId})
 	if err != nil {
 		return fmt.Errorf("failed to delete card from dashboard: %w", err)
 	}
