@@ -139,10 +139,6 @@ export const ConfigureBackendSchema = z.object({
     appUrl: z.string().describe("Instance URL as opened in the browser, e.g. https://openreplay.your-company.com"),
 });
 
-export const LoginBrowserSchema = z.object({
-    appUrl: z.string().optional().describe("Instance URL; defaults to the configured one"),
-});
-
 export const CompleteLoginSchema = z.object({
     state: z.string().optional().describe("State code from login_browser; defaults to the latest"),
     timeoutMs: z.number().optional().describe("How long to wait for approval. Default 60000."),

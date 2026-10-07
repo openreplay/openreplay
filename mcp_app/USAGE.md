@@ -16,7 +16,8 @@ server into `dist-server/server.mjs`.
 ### 2. Configure Your Client
 
 The app reads the `OPENREPLAY_URL` environment variable — the URL you type into your
-browser, not the API host. If unset it defaults to `https://app.openreplay.com`. The API
+browser, not the API host. If unset it uses the last configured instance (persisted in
+`~/.openreplay-mcp/config.json`), falling back to `https://app.openreplay.com`. The API
 base is derived automatically: `api.openreplay.com` for Cloud, `<host>/api` for
 self-hosted. (`OPENREPLAY_BACKEND_URL` is still read as a legacy alias.)
 
@@ -284,11 +285,7 @@ server is working.
 ```
 
 ### Tool: `login_browser`
-```typescript
-{
-  appUrl?: string  // OpenReplay instance URL (optional, uses configured instance if omitted)
-}
-```
+No arguments — logs in to the configured instance (switch with `configure_backend` first).
 Returns immediately with an authorize URL; call `complete_login` after the user approves.
 
 ### Tool: `login_jwt`

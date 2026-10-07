@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "openreplay",
   "display_name": "OpenReplay",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Query and explore your replays and analytics.",
   "long_description": "Query your OpenReplay data using natural language. Search and replay user sessions, and build interactive cards to track trends, explore web analytics, map user journeys, catch drop-offs with funnels, and monitor web vitals, errors, and slow queries.",
   "author": {
@@ -31,8 +31,7 @@
     "app_url": {
       "type": "string",
       "title": "OpenReplay URL",
-      "description": "Your OpenReplay instance URL — the address you visit in your browser.",
-      "default": "https://app.openreplay.com",
+      "description": "Your OpenReplay instance URL — the address you visit in your browser. Leave empty to keep the last used instance (OpenReplay Cloud on first run).",
       "required": false
     }
   }

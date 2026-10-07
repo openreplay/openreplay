@@ -204,8 +204,10 @@ All UI tools include a TIP in their description guiding the model to use `view_r
 
 ### Base URL
 
-Default: `https://app.openreplay.com`, overridden by the `OPENREPLAY_URL` env var (set by
-the host from `user_config.app_url` in `manifest.json`) or the `configure_backend` tool.
+Default: the persisted URL, else `https://app.openreplay.com`, overridden by the `OPENREPLAY_URL`
+env var (set by the host from `user_config.app_url` in `manifest.json`) or the `configure_backend`
+tool. The manifest has no `default` for `app_url` on purpose: a default makes the env always set,
+so every reinstall (which wipes user_config) would reset the instance and drop the JWT.
 Env wins over the persisted value on every launch; if they disagree the stored JWT is
 dropped, since it was minted against a different instance.
 
@@ -215,7 +217,8 @@ stripped, anything else -> `<host>/api`. It rejects endpoints that aren't a plai
 checks the final host, since the JWT goes wherever the URL points (`fetch_chart_data` takes
 the endpoint from the model).
 
-Switching instance (`configure_backend`, `login_browser` with `appUrl`) goes through
+Switching instance (`configure_backend` only — `login_browser` takes no URL, so the model
+can't silently swap the configured instance while logging in) goes through
 `setAppUrl`, which drops the JWT and the project/filter caches — a token is only valid
 for the instance that minted it.
 

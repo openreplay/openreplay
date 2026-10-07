@@ -7,7 +7,6 @@ import { makeApiRequest, fetchRecentSessions, fetchProjects, fetchSessionReplay,
 import {
   ConfigureBackendSchema,
   LoginJwtSchema,
-  LoginBrowserSchema,
   CompleteLoginSchema,
   FetchChartDataSchema,
   GetSessionDetailsSchema,
@@ -1225,21 +1224,10 @@ export function registerInternalTools(server: McpServer) {
         "PREFERRED login method. RETURNS IMMEDIATELY with an authorize URL — show the URL to the user " +
         "and ask them to open it in their browser and click 'Authorize' in the OpenReplay tab, " +
         "then call complete_login to finish the flow. " +
-        "Use this whenever the user needs to log in. The only alternative is login_jwt for a raw token.",
-      inputSchema: LoginBrowserSchema,
-      _meta: {
-        examples: [
-          { description: "Log me in (use already-configured instance)", input: {} },
-          { description: "Log in to a self-hosted OpenReplay", input: { appUrl: "https://openreplay.mycompany.com" } },
-        ],
-      },
+        "Use this whenever the user needs to log in. The only alternative is login_jwt for a raw token. " +
+        "Logs in to the configured instance; call configure_backend first only if the user explicitly names a different one.",
     },
-    async (parsed) => {
-      // Validate any model-supplied URL up front; reject non-https before it
-      // ever reaches an authorize link or API request.
-      if (parsed.appUrl) {
-        await setAppUrl(assertHttpsUrl(parsed.appUrl));
-      }
+    async () => {
       const appUrl = assertHttpsUrl(state.appUrl);
 
       const authCode = generateAuthCode();

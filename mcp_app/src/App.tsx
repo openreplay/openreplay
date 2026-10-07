@@ -121,7 +121,7 @@ function App() {
       // Step 1 — start the flow. login_browser opens the browser and returns immediately.
       const startResult = await app.callServerTool({
         name: 'login_browser',
-        arguments: { appUrl: browserAppUrl },
+        arguments: {},
       });
 
       const startData = parseToolResult(startResult);

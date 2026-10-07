@@ -105,6 +105,7 @@ function normalizeUrl(raw: string): string {
 // rather than sending it to the new host. Returns whether the URL changed.
 export async function setAppUrl(appUrl: string): Promise<boolean> {
   if (normalizeUrl(appUrl) === normalizeUrl(state.appUrl)) return false;
+  console.error(`[SERVER] setAppUrl ${state.appUrl} -> ${appUrl}`);
   state.appUrl = appUrl;
   state.jwt = null;
   state.userData = null;
@@ -115,6 +116,7 @@ export async function setAppUrl(appUrl: string): Promise<boolean> {
 
 // Load persisted state from disk
 export async function loadPersistedState() {
+  let diskAppUrl: string | undefined;
   try {
     const data = await fs.readFile(CONFIG_FILE, "utf-8");
     const config = JSON.parse(data);
@@ -123,7 +125,7 @@ export async function loadPersistedState() {
     // Accept both the new `appUrl` and legacy `backendUrl`/`frontendUrl` from disk.
     // If env supplied a URL, env always wins; if it differs from disk, the persisted
     // JWT was minted against a different instance — drop it.
-    const diskAppUrl: string | undefined =
+    diskAppUrl =
       config.appUrl || config.frontendUrl || config.backendUrl;
 
     if (!ENV_APP_URL && diskAppUrl) {
@@ -148,7 +150,11 @@ export async function loadPersistedState() {
     console.error("[SERVER] No persisted state found (first run or token expired)");
   }
 
-  console.error(`[SERVER] appUrl=${state.appUrl}`);
+  // One line, so the host's per-chunk timestamp covers all of it.
+  console.error(
+    `[SERVER] startup pid=${process.pid} env=${JSON.stringify(process.env.OPENREPLAY_URL)} ` +
+    `accepted=${!!ENV_APP_URL} disk=${diskAppUrl ?? "-"} appUrl=${state.appUrl}`
+  );
 
   // Generate and persist a client_id if one doesn't exist yet
   if (!state.clientId) {
