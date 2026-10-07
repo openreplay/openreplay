@@ -19,6 +19,8 @@ import (
 	"openreplay/backend/pkg/projects"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+	"github.com/jackc/pgx/v5"
+	"github.com/lib/pq"
 )
 
 type Search interface {
@@ -378,15 +380,20 @@ SELECT
 	s.metadata_10
 FROM public.user_favorite_sessions b
 INNER JOIN public.sessions s ON s.session_id = b.session_id
-WHERE b.user_id = $1
-  AND s.project_id = $2
+WHERE b.user_id = @userId
+  AND s.project_id = @projectId
 ORDER BY s.start_ts %s
-LIMIT $3 OFFSET $4`,
+LIMIT @limit OFFSET @offset`,
 		sortOrder,
 	)
 
 	start := time.Now()
-	rows, err := s.pgConn.Query(query, userId, projectId, req.Limit, offset)
+	rows, err := s.pgConn.Query(query, pgx.NamedArgs{
+		"userId":    userId,
+		"projectId": projectId,
+		"limit":     req.Limit,
+		"offset":    offset,
+	})
 	duration := time.Since(start)
 	if duration > 2*time.Second {
 		s.Logger.Warn(context.Background(), "Slow bookmarked query (%.2fs): %s", duration.Seconds(), query)
