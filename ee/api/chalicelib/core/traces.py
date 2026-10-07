@@ -51,7 +51,7 @@ IGNORE_ROUTES = [
     {"method": ["GET"], "path": "/limits"},
 ]
 SENSITIVE_KEY_PARTS = ["password", "passphrase", "token", "secret", "apikey", "accesskey", "applicationkey",
-                       "querykey", "authheader", "authorization", "credentials"]
+                       "querykey", "authheader", "authorization", "credential"]
 
 
 def __is_sensitive_key(key) -> bool:
