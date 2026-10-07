@@ -100,7 +100,7 @@ func (s *savedSearchesImpl) Save(projectID int, userID uint64, req *model.SavedS
 	const insertQuery = `
 		INSERT INTO public.saved_searches (
 			project_id, user_id, name, is_public, is_share, search_data, expires_at
-		) VALUES ($1, $2, $3, $4, $5, $6, $7)
+		) VALUES (@projectId, @userId, @name, @isPublic, @isShare, @searchData, @expiresAt)
 		RETURNING search_id, created_at
 	`
 
@@ -108,13 +108,15 @@ func (s *savedSearchesImpl) Save(projectID int, userID uint64, req *model.SavedS
 	var createdAt time.Time
 	err = s.pgconn.QueryRow(
 		insertQuery,
-		projectID,
-		userID,
-		req.Name,
-		isPublic,
-		isShare,
-		searchDataJSON,
-		expiresAt,
+		pgx.NamedArgs{
+			"projectId":  projectID,
+			"userId":     userID,
+			"name":       req.Name,
+			"isPublic":   isPublic,
+			"isShare":    isShare,
+			"searchData": searchDataJSON,
+			"expiresAt":  expiresAt,
+		},
 	).Scan(&searchID, &createdAt)
 
 	if err != nil {
@@ -139,14 +141,14 @@ func (s *savedSearchesImpl) Get(projectID int, searchID string, withStats bool) 
 		SELECT 
 			search_id, project_id, user_id, name, is_public, is_share, search_data, created_at, expires_at, deleted_at
 		FROM public.saved_searches
-		WHERE search_id=$1 AND project_id=$2 AND deleted_at IS NULL
+		WHERE search_id=@searchId AND project_id=@projectId AND deleted_at IS NULL
 			AND (expires_at IS NULL OR expires_at > NOW())
 	`
 
 	var savedSearch model.SavedSearch
 	var searchDataJSON []byte
 
-	err := s.pgconn.QueryRow(selectQuery, searchID, projectID).Scan(
+	err := s.pgconn.QueryRow(selectQuery, pgx.NamedArgs{"searchId": searchID, "projectId": projectID}).Scan(
 		&savedSearch.SearchID,
 		&savedSearch.ProjectID,
 		&savedSearch.UserID,
@@ -203,14 +205,19 @@ func (s *savedSearchesImpl) List(ctx context.Context, projectID int, userID uint
 			COUNT(*) OVER() AS total_count
 		FROM public.saved_searches ss
 		LEFT JOIN public.users u ON ss.user_id = u.user_id
-		WHERE ss.project_id=$1 AND ss.deleted_at IS NULL
+		WHERE ss.project_id=@projectId AND ss.deleted_at IS NULL
 			AND ss.is_share=false
-			AND (ss.user_id=$2 OR ss.is_public=true)
+			AND (ss.user_id=@userId OR ss.is_public=true)
 		ORDER BY %s %s NULLS LAST, ss.search_id %s
-		LIMIT $3 OFFSET $4
+		LIMIT @limit OFFSET @offset
 	`, column, direction, direction)
 
-	rows, err := s.pgconn.Query(selectQuery, projectID, userID, limit, offset)
+	rows, err := s.pgconn.Query(selectQuery, pgx.NamedArgs{
+		"projectId": projectID,
+		"userId":    userID,
+		"limit":     limit,
+		"offset":    offset,
+	})
 	if err != nil {
 		s.log.Error(ctx, "list saved searches: %v", err)
 		return nil, 0, fmt.Errorf("list saved searches: %w", err)
@@ -363,8 +370,8 @@ func (s *savedSearchesImpl) Update(projectID int, userID uint64, searchID string
 
 	const updateQuery = `
 		UPDATE public.saved_searches
-		SET name=$1, is_public=$2, search_data=$3
-		WHERE search_id=$4 AND project_id=$5 AND deleted_at IS NULL
+		SET name=@name, is_public=@isPublic, search_data=@searchData
+		WHERE search_id=@searchId AND project_id=@projectId AND deleted_at IS NULL
 		RETURNING is_share, created_at
 	`
 
@@ -372,11 +379,13 @@ func (s *savedSearchesImpl) Update(projectID int, userID uint64, searchID string
 	var createdAt time.Time
 	err = s.pgconn.QueryRow(
 		updateQuery,
-		req.Name,
-		isPublic,
-		searchDataJSON,
-		searchID,
-		projectID,
+		pgx.NamedArgs{
+			"name":       req.Name,
+			"isPublic":   isPublic,
+			"searchData": searchDataJSON,
+			"searchId":   searchID,
+			"projectId":  projectID,
+		},
 	).Scan(&isShare, &createdAt)
 
 	if err != nil {
@@ -407,12 +416,12 @@ func (s *savedSearchesImpl) Delete(projectID int, userID uint64, searchID string
 	const deleteQuery = `
 		UPDATE public.saved_searches
 		SET deleted_at = NOW()
-		WHERE search_id=$1 AND project_id=$2 AND deleted_at IS NULL
+		WHERE search_id=@searchId AND project_id=@projectId AND deleted_at IS NULL
 		RETURNING search_id
 	`
 
 	var deletedID string
-	err := s.pgconn.QueryRow(deleteQuery, searchID, projectID).Scan(&deletedID)
+	err := s.pgconn.QueryRow(deleteQuery, pgx.NamedArgs{"searchId": searchID, "projectId": projectID}).Scan(&deletedID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrSavedSearchNotFound
@@ -428,12 +437,12 @@ func (s *savedSearchesImpl) ListForFilters(projectID, userID int) ([]SegmentsLis
 	const q = `
         SELECT search_id, name, is_public
         FROM public.saved_searches
-        WHERE project_id = $1
+        WHERE project_id = @projectId
           AND deleted_at IS NULL
           AND is_share = FALSE
-          AND (user_id = $2 OR is_public)
+          AND (user_id = @userId OR is_public)
         ORDER BY name`
-	rows, err := s.pgconn.Query(q, projectID, userID)
+	rows, err := s.pgconn.Query(q, pgx.NamedArgs{"projectId": projectID, "userId": userID})
 	if err != nil {
 		return nil, err
 	}
@@ -452,10 +461,10 @@ func (s *savedSearchesImpl) ListForFilters(projectID, userID int) ([]SegmentsLis
 func (s *savedSearchesImpl) checkOwnership(ctx context.Context, projectID int, userID uint64, searchID, op string) error {
 	const q = `
 		SELECT user_id FROM public.saved_searches
-		WHERE search_id=$1 AND project_id=$2 AND deleted_at IS NULL
+		WHERE search_id=@searchId AND project_id=@projectId AND deleted_at IS NULL
 	`
 	var ownerID uint64
-	err := s.pgconn.QueryRow(q, searchID, projectID).Scan(&ownerID)
+	err := s.pgconn.QueryRow(q, pgx.NamedArgs{"searchId": searchID, "projectId": projectID}).Scan(&ownerID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrSavedSearchNotFound
