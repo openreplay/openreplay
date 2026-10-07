@@ -124,6 +124,9 @@ def get_account(context: schemas.CurrentContext = Depends(OR_context)):
         t = dict(t)
         t["createdAt"] = TimeUTC.datetime_to_timestamp(t["createdAt"])
         t["tenantName"] = t.pop("name")
+        if not r["admin"] and not r["superAdmin"]:
+            t.pop("apiKey", None)
+            t.pop("tenantKey", None)
     else:
         return {"errors": ["current tenant not found"]}
 

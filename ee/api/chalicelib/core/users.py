@@ -176,9 +176,11 @@ def reset_member(tenant_id, editor_id, user_id_to_update):
     admin = get_user(tenant_id=tenant_id, user_id=editor_id)
     if not admin["admin"] and not admin["superAdmin"]:
         return {"errors": ["unauthorized"]}
-    user = get_user(tenant_id=tenant_id, user_id=user_id_to_update)
+    user = get_member(tenant_id=tenant_id, user_id=user_id_to_update)
     if not user:
         return {"errors": ["user not found"]}
+    if user["superAdmin"] or user["joined"]:
+        return {"errors": ["unauthorized"]}
     return {"data": {"invitationLink": generate_new_invitation(user_id_to_update)}}
 
 
@@ -560,8 +562,9 @@ def get_member(tenant_id, user_id):
         u = helper.dict_to_camel_case(cur.fetchone())
         if u:
             u["createdAt"] = TimeUTC.datetime_to_timestamp(u["createdAt"])
-            if u["invitationToken"]:
-                u["invitationLink"] = __get_invitation_link(u.pop("invitationToken"))
+            invitation_token = u.pop("invitationToken")
+            if invitation_token and not u["joined"]:
+                u["invitationLink"] = __get_invitation_link(invitation_token)
             else:
                 u["invitationLink"] = None
 
@@ -602,10 +605,9 @@ def get_members(tenant_id):
             r = helper.list_to_camel_case(r)
             for u in r:
                 u["createdAt"] = TimeUTC.datetime_to_timestamp(u["createdAt"])
-                if u["invitationToken"]:
-                    u["invitationLink"] = __get_invitation_link(
-                        u.pop("invitationToken")
-                    )
+                invitation_token = u.pop("invitationToken")
+                if invitation_token and not u["joined"]:
+                    u["invitationLink"] = __get_invitation_link(invitation_token)
                 else:
                     u["invitationLink"] = None
             return r
