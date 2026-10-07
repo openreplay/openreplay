@@ -89,8 +89,8 @@ async def __process_assertion(request: Request, tenant_key=None) -> Response | d
             logger.error("invalid tenantKey, please copy the correct value from Preferences > Account")
             return {"errors": ["invalid tenantKey, please copy the correct value from Preferences > Account"]}
     existing = users.get_by_email_only(email)
-    if existing:
-        internal_id = existing["internalId"]
+    if existing and existing["internalId"] != internal_id:
+        logger.warning(f"Existing internalId:{existing['internalId']} != received: {internal_id}")
     if SAML2_helper.is_scim_available() and not existing:
         return {"errors": [
             f"User {email} is not provisioned by SCIM, please ask your administrator to provision this account"]}
@@ -172,9 +172,11 @@ async def __process_assertion(request: Request, tenant_key=None) -> Response | d
             if len(to_update.keys()) > 0:
                 logger.info(f"== Updating user:{existing['userId']}: {to_update} ==")
                 users.update(tenant_id=t['tenantId'], user_id=existing["userId"], changes=to_update)
+                internal_id = existing["internalId"]
 
     jwt = users.authenticate_sso(email=email, internal_id=internal_id)
     if jwt is None:
+        logger.info(f"> null JWT for \n-received: nameId: {email} user_data: {user_data}\n-existing: {existing}")
         return {"errors": ["null JWT"]}
     response = Response(status_code=status.HTTP_302_FOUND)
     response.set_cookie(key="refreshToken", value=jwt["refreshToken"], path=core_dynamic.COOKIE_PATH,
