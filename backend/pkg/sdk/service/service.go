@@ -3,10 +3,11 @@ package service
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"openreplay/backend/internal/config/db"
@@ -45,6 +46,11 @@ type dataSaverImpl struct {
 	sessions          sessions.Sessions
 	consumer          types.Consumer
 	done              chan struct{}
+	stopped           chan struct{}
+	updating          atomic.Bool
+	updateCtx         context.Context
+	updateCancel      context.CancelFunc
+	updateWg          sync.WaitGroup
 	conn              driver.Conn
 	startTime         int
 	endTime           int
@@ -53,7 +59,7 @@ type dataSaverImpl struct {
 	lastTs            time.Time
 	leaderToken       string
 	isLeader          bool
-	allUsersProcessed bool
+	allUsersProcessed atomic.Bool
 }
 
 func New(cfg *db.Config, log logger.Logger, ch clickhouse.Connector, sessions sessions.Sessions, users Users, conn driver.Conn, redis *redis.Client) (SdkDataSaver, error) {
@@ -65,10 +71,12 @@ func New(cfg *db.Config, log logger.Logger, ch clickhouse.Connector, sessions se
 		users:       users,
 		sessions:    sessions,
 		done:        make(chan struct{}, 1),
+		stopped:     make(chan struct{}),
 		conn:        conn,
 		lastTs:      time.Now(),
 		leaderToken: uuid.New().String(),
 	}
+	ds.updateCtx, ds.updateCancel = context.WithCancel(context.Background())
 	var err error
 	ds.startTime, err = parseHHMM(cfg.PAUpdaterStartTime)
 	if err != nil {
@@ -110,53 +118,20 @@ func New(cfg *db.Config, log logger.Logger, ch clickhouse.Connector, sessions se
 				}
 				switch action.Type {
 				case model.UserActionIdentify:
-					if err = ds.users.Add(sessInfo, model.NewUser(action.UserID)); err != nil {
-						ds.log.Error(context.Background(), "can't add user to session: %d, err: %s", sessID, err)
-						continue
-					}
+					err = ds.users.Add(sessInfo, action.UserID)
 				case model.UserActionDelete:
-					if err = ds.users.Delete(sessInfo.ProjectID, action.UserID); err != nil {
-						ds.log.Error(context.Background(), "can't delete user: %s", err)
-					}
+					err = ds.users.Delete(sessInfo.ProjectID, action.UserID)
+				case model.UserActionSetProperty:
+					err = ds.users.Set(sessInfo, action.UserID, action.Payload)
+				case model.UserActionSetPropertyOnce:
+					err = ds.users.SetOnce(sessInfo, action.UserID, action.Payload)
+				case model.UserActionIncrementProperty:
+					err = ds.users.Increment(sessInfo, action.UserID, action.Payload)
 				default:
-					if action.Payload == nil || len(action.Payload) == 0 {
-						ds.log.Warn(context.Background(), "empty payload")
-						continue
-					}
-					user, err := ds.users.Get(sessInfo.ProjectID, action.UserID)
-					isNew := errors.Is(err, ErrUserNotFound)
-					if err != nil && !isNew {
-						ds.log.Error(context.Background(), "can't get user: %s, userID: %s", err, action.UserID)
-						continue
-					}
-					// User hasn't been identified yet (or has been deleted);
-					// create a new one, so the property update (or event) isn't dropped.
-					if isNew {
-						ds.log.Warn(context.Background(), "user not found, creating new user from session: %d, userID: %s", sessID, action.UserID)
-						user = model.NewUser(action.UserID)
-					}
-
-					switch action.Type {
-					case model.UserActionSetProperty:
-						for key, val := range action.Payload {
-							user.SetProperty(key, val)
-						}
-					case model.UserActionSetPropertyOnce:
-						for key, val := range action.Payload {
-							user.SetPropertyOnce(key, val)
-						}
-					case model.UserActionIncrementProperty:
-						for key, val := range action.Payload {
-							user.IncrementProperty(key, val)
-						}
-					}
-					if isNew {
-						if err = ds.users.Create(sessInfo, user); err != nil {
-							ds.log.Error(context.Background(), "can't create user: %s, userID: %s", err, action.UserID)
-						}
-					} else if err = ds.users.Update(user); err != nil {
-						ds.log.Error(context.Background(), "can't insert user: %s", err)
-					}
+					ds.log.Warn(context.Background(), "unknown user action %s for session: %d", action.Type, sessID)
+				}
+				if err != nil {
+					ds.log.Error(context.Background(), "can't apply user action %s for session: %d, err: %s", action.Type, sessID, err)
 				}
 			}
 
@@ -314,9 +289,9 @@ func (ds *dataSaverImpl) run() {
 			now := time.Now()
 			inWin := inWindow(now, ds.startTime, ds.endTime)
 
-			if inWin && !wasInWindow {
+			if inWin && !wasInWindow && !ds.updating.Load() {
 				ds.log.Info(ctx, "entering maintenance window, resetting state")
-				ds.allUsersProcessed = false
+				ds.allUsersProcessed.Store(false)
 				ds.currUsersBatch = nil
 				ds.currUserIndex = 0
 				ds.lastTs = time.Now()
@@ -324,7 +299,11 @@ func (ds *dataSaverImpl) run() {
 			wasInWindow = inWin
 
 			if inWin {
-				if ds.allUsersProcessed {
+				if ds.updating.Load() {
+					updateTimer.Reset(ds.cfg.PAUpdaterTickDuration)
+					continue
+				}
+				if ds.allUsersProcessed.Load() {
 					ds.log.Debug(ctx, "all users processed, waiting for next maintenance window")
 					updateTimer.Reset(ds.cfg.PAUpdaterTickDuration)
 					continue
@@ -339,10 +318,16 @@ func (ds *dataSaverImpl) run() {
 				}
 
 				ds.log.Info(ctx, "run events updater (leader)")
-				if err := ds.updateEvents(ctx); err != nil {
-					ds.log.Error(ctx, "can't update events: %s", err)
-				}
-			} else if ds.isLeader {
+				ds.updating.Store(true)
+				ds.updateWg.Add(1)
+				go func() {
+					defer ds.updateWg.Done()
+					defer ds.updating.Store(false)
+					if err := ds.updateEvents(ds.updateCtx); err != nil {
+						ds.log.Error(ds.updateCtx, "can't update events: %s", err)
+					}
+				}()
+			} else if ds.isLeader && !ds.updating.Load() {
 				ds.releaseLeaderLock(ctx)
 			}
 			updateTimer.Reset(ds.cfg.PAUpdaterTickDuration)
@@ -353,6 +338,9 @@ func (ds *dataSaverImpl) run() {
 			}
 
 		case <-ds.done:
+			ds.updateWg.Wait()
+			ds.releaseLeaderLock(ctx)
+			close(ds.stopped)
 			return
 
 		default:
@@ -380,7 +368,7 @@ func (ds *dataSaverImpl) updateEvents(ctx context.Context) error {
 
 		if len(ds.currUsersBatch) == 0 {
 			ds.log.Info(ctx, "no more users to process, marking as done for this window")
-			ds.allUsersProcessed = true
+			ds.allUsersProcessed.Store(true)
 			break
 		}
 
@@ -639,5 +627,7 @@ type UserEvent struct {
 }
 
 func (ds *dataSaverImpl) Stop() {
+	ds.updateCancel()
 	ds.done <- struct{}{}
+	<-ds.stopped
 }

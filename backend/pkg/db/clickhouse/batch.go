@@ -34,6 +34,9 @@ type batchImpl struct {
 	flushedAt     time.Time
 	values        [][]interface{}
 	sizeLimit     int
+	key           func(args []interface{}) string
+	index         map[string]int
+	refresh       func(rows [][]interface{}) [][]interface{}
 }
 
 func (b *batchImpl) isWebEvents() bool {
@@ -60,9 +63,28 @@ func NewBatch(log logger.Logger, conn driver.Conn, metrics database.Database, ta
 	}, nil
 }
 
+func NewKeyedBatch(log logger.Logger, conn driver.Conn, metrics database.Database, table, query string, sizeLimit int, key func(args []interface{}) string) (Batch, error) {
+	b, err := NewBatch(log, conn, metrics, table, query, sizeLimit)
+	if err != nil {
+		return nil, err
+	}
+	impl := b.(*batchImpl)
+	impl.key = key
+	impl.index = make(map[string]int)
+	return impl, nil
+}
+
 const webEventsFixedRowBytes = 30
 
 func (b *batchImpl) Append(args ...interface{}) error {
+	if b.key != nil {
+		k := b.key(args)
+		if i, ok := b.index[k]; ok {
+			b.values[i] = args
+			return nil
+		}
+		b.index[k] = len(b.values)
+	}
 	b.values = append(b.values, args)
 	b.counter++
 	if b.isWebEvents() {
@@ -94,6 +116,9 @@ func (b *batchImpl) MarkFlushed() {
 func (b *batchImpl) Send() error {
 	if len(b.values) == 0 {
 		return nil
+	}
+	if b.refresh != nil {
+		b.values = b.refresh(b.values)
 	}
 	start := time.Now()
 	batch, err := b.conn.PrepareBatch(context.Background(), b.query)
@@ -136,6 +161,9 @@ func (b *batchImpl) Send() error {
 	b.values = make([][]interface{}, 0)
 	b.counter = 0
 	b.bytes = 0
+	if b.key != nil {
+		b.index = make(map[string]int)
+	}
 	return nil
 }
 

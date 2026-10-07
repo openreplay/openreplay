@@ -26,6 +26,8 @@ type Database interface {
 	RecordBulkDroppedRows(size float64, db, table string)
 	IncreaseBulkSendRetries(db, table string)
 	RecordCHQueueDepth(size float64)
+	IncreaseUserConflicts()
+	IncreaseUserStateFallbacks()
 	List() []prometheus.Collector
 }
 
@@ -42,6 +44,8 @@ type databaseImpl struct {
 	bulkDroppedRows           *prometheus.CounterVec
 	bulkSendRetries           *prometheus.CounterVec
 	chQueueDepth              prometheus.Gauge
+	userConflicts             prometheus.Counter
+	userStateFallbacks        prometheus.Counter
 }
 
 func New(serviceName string) Database {
@@ -58,6 +62,8 @@ func New(serviceName string) Database {
 		bulkDroppedRows:           newBulkDroppedRows(serviceName),
 		bulkSendRetries:           newBulkSendRetries(serviceName),
 		chQueueDepth:              newCHQueueDepth(serviceName),
+		userConflicts:             newUserConflicts(serviceName),
+		userStateFallbacks:        newUserStateFallbacks(serviceName),
 	}
 }
 
@@ -75,6 +81,8 @@ func (d *databaseImpl) List() []prometheus.Collector {
 		d.bulkDroppedRows,
 		d.bulkSendRetries,
 		d.chQueueDepth,
+		d.userConflicts,
+		d.userStateFallbacks,
 	}
 }
 
@@ -262,4 +270,32 @@ func newCHQueueDepth(serviceName string) prometheus.Gauge {
 
 func (d *databaseImpl) RecordCHQueueDepth(size float64) {
 	d.chQueueDepth.Set(size)
+}
+
+func newUserConflicts(serviceName string) prometheus.Counter {
+	return prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Namespace: serviceName,
+			Name:      "pa_user_conflicts_total",
+			Help:      "A counter displaying product-analytics user writes that lost a compare-and-swap race and were retried on the fresh row.",
+		},
+	)
+}
+
+func (d *databaseImpl) IncreaseUserConflicts() {
+	d.userConflicts.Inc()
+}
+
+func newUserStateFallbacks(serviceName string) prometheus.Counter {
+	return prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Namespace: serviceName,
+			Name:      "pa_user_state_fallbacks_total",
+			Help:      "A counter displaying product-analytics user operations served from process memory because the shared state store failed.",
+		},
+	)
+}
+
+func (d *databaseImpl) IncreaseUserStateFallbacks() {
+	d.userStateFallbacks.Inc()
 }
