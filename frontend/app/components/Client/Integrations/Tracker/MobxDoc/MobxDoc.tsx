@@ -1,10 +1,12 @@
-import React from 'react';
-import ToggleContent from 'Shared/ToggleContent';
-import DocLink from 'Shared/DocLink/DocLink';
-import { CodeBlock } from 'UI';
-import { useStore } from 'App/mstore';
+import { CodeBlock } from '@/ui/data/CodeBlock';
 import { observer } from 'mobx-react-lite';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { useStore } from 'App/mstore';
+
+import DocLink from 'Shared/DocLink/DocLink';
+import ToggleContent from 'Shared/ToggleContent';
 
 function MobxDoc() {
   const { t } = useTranslation();
@@ -41,7 +43,7 @@ function SomeFunctionalComponent() {
 }`;
 
   return (
-    <div className="bg-white h-screen overflow-y-auto w-full">
+    <div className="bg-surface-default h-screen overflow-y-auto w-full">
       <h3 className="p-5 text-2xl">{t('MobX')}</h3>
       <div className="p-5">
         <div>

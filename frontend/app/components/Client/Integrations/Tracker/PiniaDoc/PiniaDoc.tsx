@@ -1,12 +1,12 @@
+import { CodeBlock } from '@/ui/data/CodeBlock';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { useStore } from 'App/mstore';
 import ToggleContent from 'Components/shared/ToggleContent';
-import { CodeBlock } from 'UI';
 
 import DocLink from 'Shared/DocLink/DocLink';
-import { useTranslation } from 'react-i18next';
 
 function PiniaDoc() {
   const { t } = useTranslation();
@@ -65,7 +65,7 @@ piniaStorePlugin(examplePiniaStore)
 // (destructure values or return it as a whole etc)
 }`;
   return (
-    <div className="bg-white h-screen overflow-y-auto w-full">
+    <div className="bg-surface-default h-screen overflow-y-auto w-full">
       <h3 className="p-5 text-2xl">{t('Pinia')}</h3>
       <div className="p-5">
         <div>

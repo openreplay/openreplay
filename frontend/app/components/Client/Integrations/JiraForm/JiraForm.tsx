@@ -1,18 +1,18 @@
 import React from 'react';
-import DocLink from 'Shared/DocLink/DocLink';
+import { useTranslation } from 'react-i18next';
+
 import { useModal } from 'App/components/Modal';
 import IntegrationModalCard from 'Components/Client/Integrations/IntegrationModalCard';
+
+import DocLink from 'Shared/DocLink/DocLink';
+
 import IntegrationForm from '../IntegrationForm';
-import { useTranslation } from 'react-i18next';
 
 function JiraForm(props) {
   const { t } = useTranslation();
   const { hideModal } = useModal();
   return (
-    <div
-      className="bg-white h-screen overflow-y-auto"
-      style={{ width: '350px' }}
-    >
+    <div className="bg-surface-default">
       <IntegrationModalCard
         title={t('Jira')}
         icon="integrations/jira"

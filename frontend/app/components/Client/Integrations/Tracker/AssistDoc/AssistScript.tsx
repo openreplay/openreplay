@@ -1,6 +1,7 @@
+import { CodeBlock } from '@/ui/data/CodeBlock';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { CodeBlock } from 'UI';
+
 import ENV from '../../../../../../env';
 
 function AssistScript(props) {

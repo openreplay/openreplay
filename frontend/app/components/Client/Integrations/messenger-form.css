@@ -1,0 +1,55 @@
+.m-msgr__lede {
+  margin: 0;
+}
+.m-msgr__lede a {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--m-content-accent);
+}
+.m-msgr__lede a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.m-msgr__fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-space-5);
+}
+
+.m-msgr__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.m-msgr__row {
+  display: grid;
+  grid-template-columns: minmax(0, 12rem) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--m-space-5);
+  width: 100%;
+  padding: var(--m-space-4) var(--m-space-6);
+  border-bottom: 1px solid var(--m-border-subtle);
+  text-align: left;
+  transition: background-color var(--m-duration-instant) var(--m-ease-out);
+}
+.m-msgr__row:hover {
+  background: var(--m-surface-hover);
+}
+.m-msgr__row svg {
+  color: var(--m-content-muted);
+  opacity: 0;
+}
+.m-msgr__row:hover svg,
+.m-msgr__row:focus-visible svg {
+  opacity: 1;
+}
+.m-msgr__name {
+  font-size: var(--m-text-sm);
+  color: var(--m-content-primary);
+  overflow-wrap: anywhere;
+}
+.m-msgr__url {
+  color: var(--m-content-muted);
+}

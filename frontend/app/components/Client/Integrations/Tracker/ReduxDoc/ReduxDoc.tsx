@@ -1,10 +1,12 @@
-import { useStore } from 'App/mstore';
-import React from 'react';
-import { CodeBlock } from 'UI';
-import ToggleContent from 'Components/shared/ToggleContent';
-import DocLink from 'Shared/DocLink/DocLink';
+import { CodeBlock } from '@/ui/data/CodeBlock';
 import { observer } from 'mobx-react-lite';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { useStore } from 'App/mstore';
+import ToggleContent from 'Components/shared/ToggleContent';
+
+import DocLink from 'Shared/DocLink/DocLink';
 
 function ReduxDoc() {
   const { t } = useTranslation();
@@ -48,7 +50,7 @@ const store = createStore(
   );
 }`;
   return (
-    <div className="bg-white h-screen overflow-y-auto w-full">
+    <div className="bg-surface-default h-screen overflow-y-auto w-full">
       <h3 className="p-5 text-2xl">{t('Redux')}</h3>
 
       <div className="p-5">

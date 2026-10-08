@@ -117,7 +117,12 @@ export default class RecordingsStore {
     }
   };
 
-  getRecordings = async () => {
+  private recordingsSeq = 0;
+
+  /** `fresh`: another project — drop the old rows while its list loads */
+  getRecordings = async (fresh = false) => {
+    const seq = ++this.recordingsSeq;
+    if (fresh) this.setExportedVideosList([]);
     this.loading = true;
     const params = {
       page: this.page,
@@ -131,12 +136,13 @@ export default class RecordingsStore {
 
     try {
       const resp = await recordingsService.getExports(params);
+      if (seq !== this.recordingsSeq) return;
       this.setExportedVideosList(resp.data.videos ?? []);
       this.setTotal(resp.data.total);
     } catch (e) {
       console.error(e);
     } finally {
-      this.loading = false;
+      if (seq === this.recordingsSeq) this.setLoading(false);
     }
   };
 
@@ -148,21 +154,19 @@ export default class RecordingsStore {
     this.total = total;
   };
 
-  getRecordingLink = async (sessionId: string) => {
-    try {
-      const resp = await recordingsService.getDownloadLink(sessionId);
-      return resp.data;
-    } catch (e) {
-      console.error(e);
-    }
+  setLoading = (loading: boolean) => {
+    this.loading = loading;
   };
 
+  /** Rejects on failure; callers say so. */
+  getRecordingLink = async (sessionId: string): Promise<string> => {
+    const resp = await recordingsService.getDownloadLink(sessionId);
+    return resp.data;
+  };
+
+  /** Rejects on failure; callers say so. */
   deleteSessionRecording = async (sessionId: string) => {
-    try {
-      await recordingsService.deleteVideo(sessionId);
-    } catch (e) {
-      console.error(e);
-    }
+    await recordingsService.deleteVideo(sessionId);
   };
 
   resetValues = () => {

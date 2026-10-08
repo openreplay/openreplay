@@ -1,16 +1,16 @@
-import { Button } from 'antd';
+import { Button } from '@/ui/actions/button';
+import { Loader } from '@/ui/feedback/Loader';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import FormField from 'App/components/Client/Integrations/FormField';
 import { useIntegration } from 'App/components/Client/Integrations/apiMethods';
 import useForm from 'App/hooks/useForm';
 import { useStore } from 'App/mstore';
 import IntegrationModalCard from 'Components/Client/Integrations/IntegrationModalCard';
-import { Loader } from 'UI';
 
 import DocLink from 'Shared/DocLink/DocLink';
-import { useTranslation } from 'react-i18next';
 
 interface DynatraceConfig {
   environment: string;
@@ -64,12 +64,14 @@ function DynatraceFormModal({
     if (checkErrors()) {
       return;
     }
-    try {
-      await saveMutation.mutateAsync({ values, siteId, exists });
-    } catch (e) {
-      console.error(e);
-    }
-    onClose();
+    // a failed save keeps the drawer, and what was typed, open (the reason is toasted)
+    const saved = await saveMutation
+      .mutateAsync({ values, siteId, exists })
+      .catch((e) => {
+        console.error(e);
+        return false;
+      });
+    if (saved) onClose();
   };
 
   const remove = async () => {
@@ -81,10 +83,7 @@ function DynatraceFormModal({
     onClose();
   };
   return (
-    <div
-      className="bg-white h-screen overflow-y-auto"
-      style={{ width: '350px' }}
-    >
+    <div className="bg-surface-default">
       <IntegrationModalCard
         title={t('Dynatrace')}
         icon="integrations/dynatrace"
@@ -150,10 +149,10 @@ function DynatraceFormModal({
 
           <div className="flex items-center gap-2">
             <Button
+              variant="primary"
               onClick={save}
               disabled={hasErrors}
               loading={saveMutation.isPending}
-              type="primary"
             >
               {exists ? t('Update') : t('Add')}
             </Button>
