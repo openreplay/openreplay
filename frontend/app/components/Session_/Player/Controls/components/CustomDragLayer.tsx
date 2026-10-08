@@ -1,6 +1,7 @@
-import React, { memo, useEffect } from 'react';
-import type { CSSProperties, FC } from 'react';
-import { useDragLayer, XYCoord } from 'react-dnd';
+import React, { memo, useEffect, useMemo } from 'react';
+import type { CSSProperties, FC, RefObject } from 'react';
+import { XYCoord, useDragLayer } from 'react-dnd';
+
 import Circle from './Circle';
 
 const layerStyles: CSSProperties = {
@@ -16,22 +17,14 @@ const layerStyles: CSSProperties = {
 function getItemStyles(
   initialOffset: XYCoord | null,
   currentOffset: XYCoord | null,
-  maxX: number,
-  minX: number,
+  box: DOMRect | null,
 ) {
-  if (!initialOffset || !currentOffset) {
+  if (!initialOffset || !currentOffset || !box) {
     return {
       display: 'none',
     };
   }
-  let { x } = currentOffset;
-  if (x > maxX) {
-    x = maxX;
-  }
-
-  if (x < minX) {
-    x = minX;
-  }
+  const x = Math.min(box.right, Math.max(box.left, currentOffset.x));
   const transform = `translate(${x}px, ${initialOffset.y}px)`;
   return {
     transition: 'transform 0.1s ease-out',
@@ -40,15 +33,16 @@ function getItemStyles(
   };
 }
 
+/** `x` is relative to the bar's left edge, clamped to its width. */
 export type OnDragCallback = (offset: XYCoord) => void;
 
 interface Props {
   onDrag: OnDragCallback;
-  maxX: number;
-  minX: number;
+  /** the bar being scrubbed; offsets are reported relative to it */
+  containerRef: RefObject<HTMLElement | null>;
 }
 
-const CustomDragLayer: FC<Props> = memo(({ maxX, minX, onDrag }) => {
+const CustomDragLayer: FC<Props> = memo(({ containerRef, onDrag }) => {
   const {
     isDragging,
     initialOffset,
@@ -58,12 +52,23 @@ const CustomDragLayer: FC<Props> = memo(({ maxX, minX, onDrag }) => {
     currentOffset: monitor.getSourceClientOffset(),
     isDragging: monitor.isDragging(),
   }));
+  // the bar can't move while the pointer holds the handle: measure once per drag
+  const box = useMemo(
+    () =>
+      isDragging
+        ? (containerRef.current?.getBoundingClientRect() ?? null)
+        : null,
+    [isDragging],
+  );
 
   useEffect(() => {
-    if (!isDragging || !currentOffset?.x) {
+    if (!isDragging || !currentOffset || !box) {
       return;
     }
-    onDrag(currentOffset);
+    onDrag({
+      x: Math.min(box.width, Math.max(0, currentOffset.x - box.left)),
+      y: currentOffset.y,
+    });
   }, [isDragging, currentOffset]);
 
   if (!isDragging || !currentOffset) {
@@ -72,11 +77,13 @@ const CustomDragLayer: FC<Props> = memo(({ maxX, minX, onDrag }) => {
 
   return (
     <div id="drag-layer" style={layerStyles}>
-      <div style={getItemStyles(initialOffset, currentOffset, maxX, minX)}>
+      <div style={getItemStyles(initialOffset, currentOffset, box)}>
         <Circle />
       </div>
     </div>
   );
 });
+
+CustomDragLayer.displayName = 'CustomDragLayer';
 
 export default CustomDragLayer;

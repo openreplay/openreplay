@@ -1,21 +1,21 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { LogLevel } from 'Player';
-import { Tabs, NoContent } from 'UI';
-import { Input, Switch } from 'antd';
-import { SearchOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import cn from 'classnames';
-import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
-import { useStore } from 'App/mstore';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { VList, VListHandle } from 'virtua';
+
 import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorDetailsModal';
 import { useModal } from 'App/components/Modal';
-import { VList, VListHandle } from 'virtua';
+import { PlayerContext } from 'App/components/Session/playerContext';
+import { useStore } from 'App/mstore';
+
+import BottomBlock from '../BottomBlock';
+import ConsoleRow from '../ConsoleRow';
+import { Keyword, NoData, PanelMenu, PanelTabs } from '../PanelKit';
 import TabSelector from '../TabSelector';
 import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
 import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter';
-import ConsoleRow from '../ConsoleRow';
-import BottomBlock from '../BottomBlock';
-import { useTranslation } from 'react-i18next';
 
 const ALL = 'ALL';
 const INFO = 'INFO';
@@ -185,8 +185,16 @@ function ConsolePanel({ isLive }: { isLive?: boolean }) {
 
   const onTabClick = (activeTab: any) =>
     devTools.update(INDEX_KEY, { activeTab });
-  const onFilterChange = ({ target: { value } }: any) =>
+  const onFilterChange = (value: string) =>
     devTools.update(INDEX_KEY, { filter: value });
+  const counts = useMemo(() => {
+    const c: Record<string, number> = { [ALL]: list.length };
+    for (const l of list) {
+      const k = LEVEL_TAB[l.level as keyof typeof LEVEL_TAB];
+      if (k) c[k] = (c[k] ?? 0) + 1;
+    }
+    return c;
+  }, [list]);
 
   // AutoScroll
   const [timeoutStartAutoscroll, stopAutoscroll] = useAutoscroll(
@@ -214,7 +222,7 @@ function ConsolePanel({ isLive }: { isLive?: boolean }) {
     setIsDetailsModalActive(true);
     showModal(<ErrorDetailsModal errorId={log.errorId} />, {
       right: true,
-      width: 1200,
+      size: 'wide',
       onClose: () => {
         setIsDetailsModalActive(false);
         timeoutStartAutoscroll();
@@ -247,51 +255,47 @@ function ConsolePanel({ isLive }: { isLive?: boolean }) {
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
-      {/* @ts-ignore */}
       <BottomBlock.Header>
-        <div className="flex items-center">
-          <span className="font-semibold color-gray-medium mr-4">
-            {t('Console')}
-          </span>
-          <Tabs
-            tabs={TABS}
-            active={activeTab}
-            onClick={onTabClick}
-            border={false}
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="whitespace-nowrap">Open Errors By Default</span>
-          <Switch
-            size="small"
-            checked={showErrorsOnly}
-            onChange={changeErrorsOnly}
-          />
+        <PanelTabs
+          label={t('Console level')}
+          active={activeTab}
+          onSelect={onTabClick}
+          items={[
+            { key: ALL, label: t('All'), count: counts[ALL] },
+            { key: ERRORS, label: t('Errors'), count: counts[ERRORS] ?? 0 },
+            {
+              key: WARNINGS,
+              label: t('Warnings'),
+              count: counts[WARNINGS] ?? 0,
+            },
+            { key: INFO, label: t('Info'), count: counts[INFO] ?? 0 },
+          ]}
+        />
+        <div className="m-dt__bar-right">
           <TabSelector />
-          <Input
-            className="rounded-lg"
-            placeholder={t('Filter by keyword')}
-            name="filter"
-            onChange={onFilterChange}
-            value={filter}
-            size="small"
-            prefix={<SearchOutlined className="text-neutral-400" />}
+          <Keyword value={filter} onChange={onFilterChange} />
+          <PanelMenu
+            toggles={[
+              {
+                key: 'errors',
+                label: t('Open errors by default'),
+                checked: showErrorsOnly,
+                onChange: changeErrorsOnly,
+              },
+            ]}
           />
         </div>
-        {/* @ts-ignore */}
       </BottomBlock.Header>
-      {/* @ts-ignore */}
-      <BottomBlock.Content className="overflow-y-auto">
-        <NoContent
-          title={
-            <div className="capitalize flex items-center mt-16 gap-2">
-              <InfoCircleOutlined size={18} />
-              {t('No Data')}
-            </div>
-          }
-          size="small"
-          show={filteredList.length === 0}
-        >
+      <BottomBlock.Content>
+        {filteredList.length === 0 ? (
+          <NoData
+            hint={
+              filter
+                ? t('Nothing in the console matches that.')
+                : t('Nothing was logged at this level.')
+            }
+          />
+        ) : (
           <VList ref={_list} itemSize={25} data={filteredList}>
             {(log, i) => (
               <ConsoleRow
@@ -299,16 +303,13 @@ function ConsolePanel({ isLive }: { isLive?: boolean }) {
                 key={i}
                 jump={jump}
                 sessionId={sessionId}
-                iconProps={getIconProps(log.level)}
-                renderWithNL={renderWithNL}
                 onClick={() => showDetails(log)}
-                showSingleTab={showSingleTab}
+                showSingleTab={showSingleTab || tabsArr.length < 2}
                 getTabNum={getTabNum}
               />
             )}
           </VList>
-        </NoContent>
-        {/* @ts-ignore */}
+        )}
       </BottomBlock.Content>
     </BottomBlock>
   );

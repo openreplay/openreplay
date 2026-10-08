@@ -1,6 +1,6 @@
+import { Log as PLog, getResourceFromNetworkRequest } from 'Player';
 import { makeAutoObservable } from 'mobx';
 
-import { getResourceFromNetworkRequest, Log as PLog } from 'Player';
 import { PlayingState } from 'App/player-ui';
 
 interface Event {
@@ -32,6 +32,8 @@ interface SpotNetworkRequest extends Event {
   duration: number;
   method: string;
 }
+
+const byTime = (a: { time: number }, b: { time: number }) => a.time - b.time;
 
 const mapSpotNetworkToEv = (ev: SpotNetworkRequest): any => {
   const { type, statusCode } = ev;
@@ -208,6 +210,8 @@ class SpotPlayerStore {
         value: log.msg,
       }),
     );
+    // getHighlightedEvent binary-searches these by time: keep them sorted
+    this.logs.sort(byTime);
 
     this.locations = locations.map((location) => ({
       ...location,
@@ -227,6 +231,8 @@ class SpotPlayerStore {
       ...click,
       time: click.time - this.startTs,
     }));
+    this.locations.sort(byTime);
+    this.clicks.sort(byTime);
 
     this.network = network.map((request) => {
       const ev = { ...request, timestamp: request.time };
@@ -239,6 +245,7 @@ class SpotPlayerStore {
         timestamp: request.timestamp,
       };
     });
+    this.network.sort(byTime);
   }
 
   get currentLogIndex() {
@@ -252,22 +259,20 @@ class SpotPlayerStore {
     if (!events.length) {
       return { event: null, index: 0 };
     }
-    let highlightedEvent = events[0];
+    // called every tick: binary search for the last event at or before now
+    // (events are time-sorted); before the first one it stays on index 0
     const currentTs = time * 1000;
     let index = 0;
-    for (let i = 0; i < events.length; i++) {
-      const event = events[i];
-      const nextEvent = events[i + 1];
-
-      if (
-        currentTs >= event.time &&
-        (!nextEvent || currentTs < nextEvent.time)
-      ) {
-        highlightedEvent = event;
-        index = i;
-        break;
-      }
+    let lo = 0;
+    let hi = events.length - 1;
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1;
+      if (events[mid].time <= currentTs) {
+        index = mid;
+        lo = mid + 1;
+      } else hi = mid - 1;
     }
+    const highlightedEvent = events[index];
 
     return { event: highlightedEvent, index };
   }

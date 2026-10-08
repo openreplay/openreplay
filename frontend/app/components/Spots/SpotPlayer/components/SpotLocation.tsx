@@ -1,33 +1,32 @@
+import { Tooltip } from '@/ui/overlays/tooltip';
+import { Lock } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { Tooltip } from 'antd';
-import { Icon } from 'UI';
-import { Link2 } from 'lucide-react';
-import spotPlayerStore from '../spotPlayerStore';
 import { useTranslation } from 'react-i18next';
+
+import spotPlayerStore from '../spotPlayerStore';
 
 function SpotLocation() {
   const { t } = useTranslation();
-  const currUrl = spotPlayerStore.getClosestLocation(
-    spotPlayerStore.time,
-  )?.location;
-  const displayUrl =
-    currUrl.length > 170 ? `${currUrl.slice(0, 170)}...` : currUrl;
+  const currUrl =
+    spotPlayerStore.getClosestLocation(spotPlayerStore.time)?.location ?? '';
   return (
-    <div className="w-full bg-white border-b border-gray-lighter">
-      <div className="flex w-fit items-center cursor-pointer color-gray-medium text-sm p-1">
-        <Link2 className="mx-2" size={16} />
-        <Tooltip title={t('Open in new tab')} placement="bottom">
-          <a
-            href={currUrl}
-            target="_blank"
-            className="truncate link"
-            rel="noreferrer"
-          >
-            {displayUrl}
-          </a>
-        </Tooltip>
-      </div>
+    <div className="m-player__urlbar">
+      <span className="m-player__address">
+        <Lock size={10} aria-hidden="true" />
+        {currUrl ? (
+          <Tooltip title={t('Open in new tab')} side="bottom">
+            <a
+              href={currUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="m-player__url m-mono m-truncate"
+            >
+              {currUrl}
+            </a>
+          </Tooltip>
+        ) : null}
+      </span>
     </div>
   );
 }

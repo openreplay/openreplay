@@ -1,12 +1,13 @@
+import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
+import { IResourceRequest, IResourceTiming } from 'Player';
+import { WsChannel } from 'Player/web/messages';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 
+import { PlayerContext } from 'App/components/Session/playerContext';
 import { useStore } from 'App/mstore';
 import { debounce } from 'App/utils';
 
-import { IResourceRequest, IResourceTiming } from 'Player';
-import { WsChannel } from 'Player/web/messages';
-import { PlayerContext } from 'App/components/Session/playerContext';
 import MDRenderer from 'Shared/MDRenderer/MDRenderer';
 
 let debounceUpdate: any = () => {};
@@ -72,57 +73,16 @@ function SummaryBlock({ sessionId }: { sessionId: string }) {
   }, [zoomTab]);
 
   return (
-    <div style={summaryBlockStyle}>
-      {aiSummaryStore.text ? (
-        <div
-          className={'rounded-sm p-4 bg-white whitespace-pre-wrap flex flex-col'}
-        >
+    <div className="flex max-h-[25vh] w-full flex-col overflow-auto border-b border-border-subtle bg-surface-sunken p-4">
+      <div className="flex flex-col whitespace-pre-wrap rounded-surface border border-border-subtle bg-surface-default p-4 text-sm text-content-primary">
+        {aiSummaryStore.text ? (
           <MDRenderer content={aiSummaryStore.text} />
-        </div>
-      ) : (
-        <TextPlaceholder />
-      )}
-    </div>
-  );
-}
-
-function TextPlaceholder() {
-  return (
-    <div
-      className={
-        'animate-pulse rounded-sm p-4 bg-white whitespace-pre-wrap flex flex-col gap-2'
-      }
-    >
-      <div className={'h-2 bg-gray-medium rounded-sm'} />
-      <div className={'h-2 bg-gray-medium rounded-sm'} />
-      <div className={'grid grid-cols-3 gap-2'}>
-        <div className={'h-2 bg-gray-medium rounded-sm col-span-2'} />
-        <div className={'h-2 bg-gray-medium rounded-sm col-span-1'} />
-      </div>
-
-      <div className={'grid grid-cols-4 gap-2 mt-3'}>
-        <div className={'h-2 bg-gray-medium rounded-sm col-span-1'} />
-        <div className={'h-2 bg-gray-medium rounded-sm col-span-1'} />
-        <div className={'h-2 bg-gray-medium rounded-sm col-span-2'} />
-      </div>
-      <div className={'grid grid-cols-4 gap-2'}>
-        <div className={'h-2 bg-gray-medium rounded-sm col-span-2'} />
-        <div className={'h-2 bg-transparent rounded-sm col-span-2'} />
+        ) : (
+          <SkeletonRows rows={3} />
+        )}
       </div>
     </div>
   );
 }
-
-const summaryBlockStyle: React.CSSProperties = {
-  background:
-    'linear-gradient(180deg, #E8EBFF -24.14%, rgba(236, 254, 255, 0.00) 100%)',
-  width: '100%',
-  maxHeight: '25vh',
-  overflow: 'auto',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '0.5rem',
-  padding: '1rem',
-};
 
 export default observer(SummaryBlock);

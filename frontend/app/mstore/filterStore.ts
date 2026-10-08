@@ -57,6 +57,10 @@ interface CacheEntry {
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 const MAX_CACHE_SIZE = 100;
 
+/** Live sessions get their own suggestions: same property, different values. */
+export const topValuesKey = (id: string, live?: boolean) =>
+  live ? `${id}:live` : id;
+
 export default class FilterStore {
   topValues: TopValues = {};
   filters: ProjectFilters = {};
@@ -121,8 +125,9 @@ export default class FilterStore {
     id: string,
     isLive?: boolean,
   ): Promise<TopValue[]> => {
-    if (this.topValues[id]?.length) {
-      return this.topValues[id];
+    const key = topValuesKey(id, isLive);
+    if (this.topValues[key]?.length) {
+      return this.topValues[key];
     }
 
     const filter = this.findFilterById(id);
@@ -150,7 +155,7 @@ export default class FilterStore {
       const response = await searchService.fetchTopValues(params);
 
       runInAction(() => {
-        this.setTopValues(id, response.events || response || []);
+        this.setTopValues(key, response.events || response || []);
       });
 
       return response.events || [];

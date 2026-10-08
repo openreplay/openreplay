@@ -1,8 +1,14 @@
-import { action, makeAutoObservable, observable, runInAction } from 'mobx';
-import { sessionService, metricService } from 'App/services';
+import { checkEventWithFilters } from '@/components/Session_/Player/Controls/checkEventWithFilters';
+import { loadFile } from 'Player/web/network/loadFiles';
+import { LAST_7_DAYS } from 'Types/app/period';
 import Session from 'Types/session';
 import ErrorStack from 'Types/session/errorStack';
 import { InjectedEvent, Location } from 'Types/session/event';
+import { action, makeAutoObservable, observable, runInAction } from 'mobx';
+
+import { getDateRangeFromValue } from 'App/dateRange';
+import { filterMap } from 'App/mstore/searchStore';
+import { metricService, sessionService } from 'App/services';
 import {
   cleanSessionFilters,
   compareJsonObjects,
@@ -10,12 +16,9 @@ import {
   getSessionFilter,
   setSessionFilter,
 } from 'App/utils';
-import { loadFile } from 'Player/web/network/loadFiles';
-import { LAST_7_DAYS } from 'Types/app/period';
-import { filterMap } from 'App/mstore/searchStore';
-import { getDateRangeFromValue } from 'App/dateRange';
+
 import { searchStore, searchStoreLive } from './index';
-import { checkEventWithFilters } from '@/components/Session_/Player/Controls/checkEventWithFilters';
+
 const range = getDateRangeFromValue(LAST_7_DAYS);
 
 const defaultDateFilters = {
@@ -256,8 +259,8 @@ export default class SessionStore {
     const nextEntryNum =
       keys.length > 0
         ? Math.max(
-          ...keys.map((key) => this.prefetchedMobUrls[key]?.entryNum || 0),
-        ) + 1
+            ...keys.map((key) => this.prefetchedMobUrls[key]?.entryNum || 0),
+          ) + 1
         : 0;
     this.prefetchedMobUrls[sessionId] = {
       data: fileData,
@@ -283,7 +286,11 @@ export default class SessionStore {
         });
     });
 
-  fetchLiveSessions = async (params: any = {}) => {
+  /** `isStale` lets the caller drop a response a newer request has superseded. */
+  fetchLiveSessions = async (
+    params: any = {},
+    isStale: () => boolean = () => false,
+  ) => {
     runInAction(() => {
       this.loadingLiveSessions = true;
     });
@@ -294,6 +301,7 @@ export default class SessionStore {
         params.order = params.order === 'asc' ? 'desc' : 'asc';
       }
       const data: any = await sessionService.getLiveSessions(params);
+      if (isStale()) return;
       this.customSetSessions(data);
     } catch (e) {
       console.error(e);
@@ -319,9 +327,11 @@ export default class SessionStore {
           return;
         }
       }
-      setSessionFilter(cleanSessionFilters(params));
       const data = await sessionService.getSessions(params, abortSignal);
       if (abortSignal?.aborted) return;
+      // recorded as done only once it worked: a failed search must not make an
+      // identical retry look like a no-op
+      setSessionFilter(cleanSessionFilters(params));
       const list = data.sessions.map((s) => new Session(s));
       runInAction(() => {
         this.list = list;
@@ -475,17 +485,6 @@ export default class SessionStore {
     return newSess;
   };
 
-  fetchNotes = async (sessionId: string) => {
-    try {
-      const notes = await sessionService.getSessionNotes(sessionId);
-      if (notes.length > 0) {
-        this.current = this.current.addNotes(notes);
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
   fetchFavoriteList = async () => {
     try {
       const data = await sessionService.getFavoriteSessions();
@@ -519,13 +518,13 @@ export default class SessionStore {
 
     const filteredEvents = query
       ? events.filter(
-        (e) =>
-          searchRe.test(e.url) ||
-          searchRe.test(e.value) ||
-          searchRe.test(e.label) ||
-          searchRe.test(e.type) ||
-          (e.type === 'LOCATION' && searchRe.test('visited')),
-      )
+          (e) =>
+            searchRe.test(e.url) ||
+            searchRe.test(e.value) ||
+            searchRe.test(e.label) ||
+            searchRe.test(e.type) ||
+            (e.type === 'LOCATION' && searchRe.test('visited')),
+        )
       : null;
 
     this.filteredEvents = filteredEvents;

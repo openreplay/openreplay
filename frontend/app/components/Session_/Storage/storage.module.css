@@ -1,13 +1,12 @@
-
 .button {
   padding: 3px 6px;
   cursor: pointer;
-  border-radius: 3px;
-  color: $gray-light;
+  border-radius: var(--m-radius-control);
+  color: var(--m-content-muted);
   &:hover {
-    background-color: $gray-lightest;
+    background-color: var(--m-surface-hover);
     transition: all 0.2s;
-    color: $gray-darkest;
+    color: var(--m-content-primary);
   }
 
   font-size: 12px;

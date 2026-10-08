@@ -1,37 +1,43 @@
+import { Icon } from '@/ui/icons/Icon';
+import { Tooltip } from '@/ui/overlays/tooltip';
 import { IResourceRequest, ResourceType, Timed } from 'Player';
-import { WsChannel } from 'Player/web/messages';
 import MobilePlayer from 'Player/mobile/IOSPlayer';
 import WebPlayer from 'Player/web/WebPlayer';
+import { WsChannel } from 'Player/web/messages';
 import { observer } from 'mobx-react-lite';
 import React, {
-  useMemo,
-  useState,
-  useEffect,
   useCallback,
+  useEffect,
+  useMemo,
   useRef,
+  useState,
 } from 'react';
-import i18n from 'App/i18n';
+import { useTranslation } from 'react-i18next';
 
 import { useModal } from 'App/components/Modal';
 import { formatMs } from 'App/date';
+import i18n from 'App/i18n';
 import { useStore } from 'App/mstore';
-import { formatBytes, debounceCall } from 'App/utils';
-import { Icon, NoContent, Tabs } from 'UI';
-import { Tooltip, Input, Switch, Form } from 'antd';
-import { SearchOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { debounceCall, formatBytes } from 'App/utils';
 
 import FetchDetailsModal from 'Shared/FetchDetailsModal';
 
 import BottomBlock from '../BottomBlock';
 import InfoLine from '../BottomBlock/InfoLine';
+import ExplainButton from '../ExplainButton';
+import {
+  Keyword,
+  NoData,
+  PanelMenu,
+  PanelTabs,
+  useMultiTab,
+} from '../PanelKit';
 import TabSelector from '../TabSelector';
 import TimeTable from '../TimeTable';
 import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
 import WSPanel from './WSPanel';
-import { useTranslation } from 'react-i18next';
-import { mergeListsWithZoom, processInChunks } from './utils';
 import check from './hasExplainAi';
-import ExplainButton from '../ExplainButton';
+import { mergeListsWithZoom, processInChunks } from './utils';
 
 // Constants remain the same
 const INDEX_KEY = 'network';
@@ -63,9 +69,20 @@ export const NETWORK_TABS = TAP_KEYS.map((tab) => ({
   text: tab === 'xhr' ? 'Fetch/XHR' : tab,
   key: tab,
 }));
+const TAB_LABEL: Record<string, string> = {
+  [ALL]: 'All',
+  [XHR]: 'Fetch/XHR',
+  [JS]: 'JS',
+  [CSS]: 'CSS',
+  [IMG]: 'Img',
+  [MEDIA]: 'Media',
+  [OTHER]: 'Other',
+  [WS]: 'WebSocket',
+  [GRAPHQL]: 'GraphQL',
+};
 
-const DOM_LOADED_TIME_COLOR = 'teal';
-const LOAD_TIME_COLOR = 'red';
+const DOM_LOADED_TIME_COLOR = 'bg-content-accent';
+const LOAD_TIME_COLOR = 'bg-content-danger';
 
 const BATCH_SIZE = 2500;
 const INITIAL_LOAD_SIZE = 5000;
@@ -103,7 +120,7 @@ const useInfiniteScroll = (loadMoreCallback: () => void, hasMore: boolean) => {
 
 export function renderType(r: any) {
   return (
-    <Tooltip style={{ width: '100%' }} title={<div>{r.type}</div>}>
+    <Tooltip title={<div>{r.type}</div>}>
       <div>{r.type}</div>
     </Tooltip>
   );
@@ -117,10 +134,7 @@ export function renderName(r: any) {
       : r.url;
 
   return (
-    <Tooltip
-      style={{ width: '100%', maxWidth: 1024 }}
-      title={<div>{tooltipUrl}</div>}
-    >
+    <Tooltip title={<div>{tooltipUrl}</div>}>
       <div
         style={{ maxWidth: 250, overflow: 'hidden', textOverflow: 'ellipsis' }}
       >
@@ -162,13 +176,17 @@ function renderSize(r: any) {
   }
 
   return (
-    <Tooltip style={{ width: '100%' }} title={content}>
+    <Tooltip title={content}>
       <div>{triggerText}</div>
     </Tooltip>
   );
 }
 
 export function renderDuration(r: any) {
+  return <DurationCell r={r} />;
+}
+
+function DurationCell({ r }: { r: any }) {
   const { t } = useTranslation();
   if (!r.success) return 'x';
 
@@ -183,7 +201,7 @@ export function renderDuration(r: any) {
   }
 
   return (
-    <Tooltip style={{ width: '100%' }} title={tooltipText}>
+    <Tooltip title={tooltipText}>
       <div> {text} </div>
     </Tooltip>
   );
@@ -197,15 +215,17 @@ export function TabTag({
   tabNum?: number;
 }) {
   return (
-    <Tooltip title={`${tabName ?? `Tab ${tabNum ?? 0}`}`} placement="left">
-      <div className="bg-gray-light rounded-full min-w-5 min-h-5 w-5 h-5 flex items-center justify-center text-xs cursor-default">
-        {tabNum ?? 0}
-      </div>
+    <Tooltip title={`${tabName ?? `Tab ${tabNum ?? 0}`}`} side="left">
+      <span className="m-dt__tabtag m-mono">{tabNum ?? 0}</span>
     </Tooltip>
   );
 }
 
-function renderStatus({
+function renderStatus(r: { status: string; cached: boolean; error?: string }) {
+  return <StatusCell status={r.status} cached={r.cached} error={r.error} />;
+}
+
+function StatusCell({
   status,
   cached,
   error,
@@ -235,7 +255,7 @@ function renderStatus({
     icon = null;
   }
   return (
-    <Tooltip title={tooltipTitle} placement="top">
+    <Tooltip title={tooltipTitle} side="top">
       <div
         className="flex items-center gap-1 overflow-hidden text-ellipsis"
         style={{ width: 90 }}
@@ -329,6 +349,7 @@ export const NetworkPanelComp = observer(
 
     const {
       sessionStore: { devTools },
+      uiPlayerStore,
     } = useStore();
     const { filter } = devTools[INDEX_KEY];
     const { activeTab } = devTools[INDEX_KEY];
@@ -492,10 +513,32 @@ export const NetworkPanelComp = observer(
       devTools.update(INDEX_KEY, { activeTab });
     };
 
-    const onFilterChange = ({ target: { value } }) => {
+    const onFilterChange = (value: string) => {
       setInputFilterValue(value);
       debouncedFilter(value);
     };
+    const multiTab = useMultiTab();
+    const tabCounts = useMemo(() => {
+      const c: Record<string, number> = {};
+      const add = (r: any) => {
+        const k = TYPE_TO_TAB[r.type as keyof typeof TYPE_TO_TAB] ?? OTHER;
+        c[k] = (c[k] ?? 0) + 1;
+      };
+      usedFetchList.forEach(add);
+      usedResourceList.forEach(add);
+      if (websocketList?.length) c[WS] = websocketList.length;
+      return c;
+    }, [usedFetchList.length, usedResourceList.length, websocketList?.length]);
+    const tabItems = [
+      {
+        key: ALL,
+        label: t('All'),
+        count: Object.values(tabCounts).reduce((n, v) => n + v, 0),
+      },
+      ...TAP_KEYS.filter(
+        (k) => k !== ALL && (tabCounts[k] || k === activeTab),
+      ).map((k) => ({ key: k, label: TAB_LABEL[k], count: tabCounts[k] ?? 0 })),
+    ];
 
     const [timeoutStartAutoscroll, stopAutoscroll] = useAutoscroll(
       displayedItems,
@@ -540,6 +583,21 @@ export const NetworkPanelComp = observer(
       }
 
       setIsDetailsModalActive(true);
+      const onDetailsClose = () => {
+        setIsDetailsModalActive(false);
+        timeoutStartAutoscroll();
+      };
+      if (uiPlayerStore.requestSheetHosts > 0) {
+        uiPlayerStore.openRequestSheet(
+          displayedItems,
+          (displayedItems as any[]).indexOf(item),
+          {
+            onIndex: (index) => devTools.update(INDEX_KEY, { index }),
+            onClose: onDetailsClose,
+          },
+        );
+        return;
+      }
       showModal(
         <FetchDetailsModal
           isSpot={isSpot}
@@ -548,14 +606,7 @@ export const NetworkPanelComp = observer(
           rows={displayedItems}
           fetchPresented={usedFetchList.length > 0}
         />,
-        {
-          right: true,
-          width: 500,
-          onClose: () => {
-            setIsDetailsModalActive(false);
-            timeoutStartAutoscroll();
-          },
-        },
+        { right: true, width: 500, onClose: onDetailsClose },
       );
     };
 
@@ -598,7 +649,7 @@ export const NetworkPanelComp = observer(
           render: renderDuration,
         },
       ];
-      if (!showSingleTab && !isSpot) {
+      if (!showSingleTab && !isSpot && multiTab) {
         cols.unshift({
           label: t('Source'),
           width: 64,
@@ -611,74 +662,46 @@ export const NetworkPanelComp = observer(
         });
       }
       return cols;
-    }, [showSingleTab, activeTab, t, getTabName, getTabNum, isSpot]);
+    }, [showSingleTab, activeTab, t, getTabName, getTabNum, isSpot, multiTab]);
 
     const hasExplainAi = (reqType: string) => {
       // @ts-ignore
       return check && [ResourceType.XHR, ResourceType.FETCH].includes(reqType);
     };
     return (
-      <BottomBlock
-        style={{ height: '100%' }}
-        className="border"
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-      >
+      <BottomBlock onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
         <BottomBlock.Header onClose={onClose}>
-          <div className="flex items-center">
-            <span className="font-semibold color-gray-medium mr-4">
-              {t('Network')}
-            </span>
-            {isMobile ? null : (
-              <Tabs
-                className="uppercase"
-                tabs={NETWORK_TABS}
-                active={activeTab}
-                onClick={onTabClick}
-                border={false}
-              />
-            )}
-          </div>
-          <div className="flex items-center gap-2">
+          {isMobile ? (
+            <span />
+          ) : (
+            <PanelTabs
+              label={t('Request type')}
+              active={activeTab}
+              onSelect={onTabClick}
+              items={tabItems}
+            />
+          )}
+          <div className="m-dt__bar-right">
             {!isMobile && !isSpot ? <TabSelector /> : null}
-            <Input
-              className="rounded-lg"
-              placeholder="Filter by name, type, method or value"
-              name="filter"
-              onChange={onFilterChange}
-              width={280}
+            <Keyword
               value={inputFilterValue}
-              size="small"
-              prefix={<SearchOutlined className="text-neutral-400" />}
+              onChange={onFilterChange}
+              placeholder={t('Filter by name or type')}
+            />
+            <PanelMenu
+              toggles={[
+                {
+                  key: 'bad',
+                  label: t('4xx–5xx only'),
+                  checked: showOnlyErrors,
+                  onChange: setShowOnlyErrors,
+                },
+              ]}
             />
           </div>
         </BottomBlock.Header>
         <BottomBlock.Content>
-          <div className="flex items-center justify-between px-4 border-b bg-teal/5 h-8">
-            <div className="flex items-center">
-              <div className="mb-0">
-                <label
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <Switch
-                    checked={showOnlyErrors}
-                    onChange={() => setShowOnlyErrors(!showOnlyErrors)}
-                    size="small"
-                  />
-                  <span className="text-sm ms-2">4xx-5xx Only</span>
-                </label>
-              </div>
-
-              {isProcessing && (
-                <span className="text-xs text-gray-500 ml-4">
-                  Processing data...
-                </span>
-              )}
-            </div>
+          <div className="m-dt__figrow">
             <InfoLine>
               <InfoLine.Point label={`${totalItems}`} value="requests" />
               <InfoLine.Point
@@ -716,80 +739,70 @@ export const NetworkPanelComp = observer(
                 dotColor={LOAD_TIME_COLOR}
               />
             </InfoLine>
+            {isProcessing && (
+              <span className="m-dt__figrow-note">{t('Processing…')}</span>
+            )}
           </div>
 
           {isLoading ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-2"></div>
-                <p>Processing initial network data...</p>
-              </div>
-            </div>
-          ) : (
-            <NoContent
-              title={
-                <div className="capitalize flex items-center gap-2">
-                  <InfoCircleOutlined size={18} />
-                  {t('No Data')}
-                </div>
+            <NoData title={t('Processing network data…')} />
+          ) : displayedItems.length === 0 ? (
+            <NoData
+              hint={
+                showOnlyErrors
+                  ? t('No request failed in this session.')
+                  : t('No request matches that.')
               }
-              size="small"
-              show={displayedItems.length === 0}
-            >
-              <div>
-                <TimeTable
-                  rows={displayedItems}
-                  tableHeight={panelHeight - 102 - (hasMoreItems ? 30 : 0)}
-                  referenceLines={referenceLines}
-                  renderPopup
-                  onRowClick={showDetailsModal}
-                  sortBy="time"
-                  sortAscending
-                  onJump={(row) => {
-                    devTools.update(INDEX_KEY, {
-                      index: displayedItems.indexOf(row),
-                    });
-                    player.jump(row.time);
-                  }}
-                  activeIndex={activeIndex}
-                  extra={(row) =>
-                    hasExplainAi(row.type) ? (
-                      <ExplainButton
-                        sessionId={sessionId}
-                        request={{
-                          url: row.url,
-                          status: parseInt(row.status),
-                          payload: row.request,
-                          response: row.response,
-                        }}
-                      />
-                    ) : null
-                  }
-                >
-                  {tableCols}
-                </TimeTable>
+            />
+          ) : (
+            <div className="flex flex-col min-h-0">
+              <TimeTable
+                className="flex-1"
+                rows={displayedItems}
+                tableHeight={panelHeight - 102 - (hasMoreItems ? 30 : 0)}
+                referenceLines={referenceLines}
+                renderPopup
+                onRowClick={showDetailsModal}
+                sortBy="time"
+                sortAscending
+                onJump={(row) => {
+                  devTools.update(INDEX_KEY, {
+                    index: displayedItems.indexOf(row),
+                  });
+                  player.jump(row.time);
+                }}
+                activeIndex={activeIndex}
+                extra={(row) =>
+                  hasExplainAi(row.type) ? (
+                    <ExplainButton
+                      sessionId={sessionId}
+                      request={{
+                        url: row.url,
+                        status: parseInt(row.status),
+                        payload: row.request,
+                        response: row.response,
+                      }}
+                    />
+                  ) : null
+                }
+              >
+                {tableCols}
+              </TimeTable>
 
-                {hasMoreItems && (
-                  <div
-                    ref={loadingRef}
-                    className="flex justify-center items-center text-xs text-gray-500"
-                  >
-                    <div className="flex items-center">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
-                      Loading more data ({totalItems - displayedItems.length}{' '}
-                      remaining)
-                    </div>
-                  </div>
-                )}
-              </div>
-
+              {hasMoreItems && (
+                <div ref={loadingRef} className="m-dt__figrow-note px-5 py-2">
+                  {t('Loading more ({{n}} remaining)…', {
+                    n: totalItems - displayedItems.length,
+                  })}
+                </div>
+              )}
               {selectedWsChannel ? (
                 <WSPanel
                   socketMsgList={selectedWsChannel}
                   onClose={() => setSelectedWsChannel(null)}
                 />
               ) : null}
-            </NoContent>
+            </div>
           )}
         </BottomBlock.Content>
       </BottomBlock>

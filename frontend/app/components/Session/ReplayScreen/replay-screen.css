@@ -1,0 +1,206 @@
+.m-rs__back {
+  flex: none;
+  color: var(--m-content-muted);
+  margin-inline-start: calc(var(--m-space-2) * -1);
+}
+.m-rs__sep {
+  flex: none;
+  width: 1px;
+  height: 1.25rem;
+  background: var(--m-border-subtle);
+  margin-inline: var(--m-space-2);
+}
+
+.m-rs__who {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-3);
+  flex: 1;
+  min-width: 0;
+}
+.m-rs__names {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-width: 32rem;
+}
+.m-rs__name {
+  font-size: var(--m-text-sm);
+  font-weight: var(--m-weight-medium);
+  color: var(--m-content-primary);
+}
+.m-rs__meta {
+  font-size: var(--m-text-2xs);
+  color: var(--m-content-muted);
+  display: inline-flex;
+  gap: var(--m-space-2);
+  min-width: 0;
+}
+.m-rs__lead {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-3);
+}
+
+.m-rs__aside-head {
+  display: flex;
+  align-items: stretch;
+}
+
+.m-rs__aside-head .m-rs__aside-tabs {
+  flex: 1;
+  min-width: 0;
+  padding-inline: var(--m-space-5);
+}
+.m-rs__aside-close {
+  display: flex;
+  align-items: center;
+  padding-inline: var(--m-space-2);
+}
+.m-rs__aside-head {
+  border-bottom: 1px solid var(--m-border-subtle);
+}
+
+.m-work__main {
+  position: relative;
+}
+
+.m-work.is-fullscreen .m-ihdr {
+  display: none;
+}
+
+.m-rs__comments {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+.m-rs__comment-author {
+  font-weight: var(--m-weight-medium);
+  color: var(--m-content-secondary);
+}
+.m-rs__comment-text {
+  margin: 0;
+  font-size: var(--m-text-xs);
+  line-height: var(--m-leading-snug);
+  color: var(--m-content-primary);
+  overflow-wrap: anywhere;
+}
+/* a comment is read, not clicked */
+.m-rs__comment:hover {
+  background: none;
+}
+.m-rs__composer {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  flex: none;
+  padding: var(--m-space-3) var(--m-space-4);
+  border-top: 1px solid var(--m-border-subtle);
+}
+.m-rs__send {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--m-radius-full);
+  background: var(--m-action-accent-bg);
+  color: var(--m-action-accent-fg);
+  transition: opacity var(--m-duration-fast) var(--m-ease-out);
+}
+.m-rs__send:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.m-rs__assist.is-on,
+.m-rs__assist.is-on:hover {
+  background: var(--m-surface-active);
+  border-color: var(--m-border-strong);
+  color: var(--m-content-primary);
+}
+
+.m-rs__access {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-space-3);
+  width: 20rem;
+}
+.m-rs__access-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--m-space-4);
+  font-size: var(--m-text-sm);
+  cursor: pointer;
+}
+.m-rs__access-link {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  padding: var(--m-space-1) var(--m-space-2) var(--m-space-1) var(--m-space-3);
+  border: 1px solid var(--m-border-subtle);
+  border-radius: var(--m-radius-control);
+  background: var(--m-surface-sunken);
+  font-size: var(--m-text-2xs);
+  color: var(--m-content-secondary);
+}
+.m-rs__access-link .m-mono {
+  flex: 1;
+  min-width: 0;
+}
+.m-rs__access-hint {
+  margin: 0;
+  font-size: var(--m-text-xs);
+  color: var(--m-content-muted);
+}
+.m-rs__controls {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-1);
+}
+
+.m-jrn__scroll {
+  display: flex;
+  flex-direction: column;
+}
+.m-jrn__scroll > .m-jrn__list,
+.m-jrn__scroll > .m-jrn__answers {
+  flex: none;
+}
+
+.m-rs__name--link {
+  text-align: left;
+  cursor: pointer;
+}
+.m-rs__name--link:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.m-rs__more {
+  color: var(--m-content-muted);
+  font: inherit;
+}
+.m-rs__more:hover {
+  color: var(--m-content-primary);
+}
+
+.m-rs__details {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--m-space-2) var(--m-space-5);
+  margin: 0;
+  padding: var(--m-space-4) var(--m-space-5);
+  font-size: var(--m-text-xs);
+}
+.m-rs__details dt {
+  color: var(--m-content-muted);
+}
+.m-rs__details dd {
+  margin: 0;
+  color: var(--m-content-primary);
+}

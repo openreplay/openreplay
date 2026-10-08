@@ -1,0 +1,199 @@
+.m-act {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+
+.m-act__scroll {
+  flex: 1;
+  min-height: 0;
+}
+/* the virtual list positions its own items, so the row gap is a margin */
+.m-act__list {
+  height: 100%;
+  margin: 0;
+  padding: var(--m-space-3);
+  list-style: none;
+}
+.m-act__list .m-spanel__row {
+  margin-bottom: var(--m-space-1);
+}
+
+.m-feat {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+/* the row whose element is outlined in the recording */
+.m-feat__row.is-marked {
+  background: var(--m-surface-hover);
+}
+
+.m-feat__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-space-5);
+  flex: 1;
+  min-height: 0;
+  padding: var(--m-space-5);
+  overflow-y: auto;
+}
+
+.m-feat__formhead {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  flex: none;
+  /* the panel bar's height, so stepping into the form doesn't move the content */
+  min-height: calc(var(--m-control-height-md) + var(--m-space-2) * 2 + 1px);
+  padding: var(--m-space-2) var(--m-space-3);
+  border-bottom: 1px solid var(--m-border-subtle);
+  font-size: var(--m-text-xs);
+  color: var(--m-content-primary);
+}
+
+.m-feat__form .m-field__label {
+  font-size: var(--m-text-2xs);
+  color: var(--m-content-secondary);
+}
+.m-feat__form [data-slot='field'] {
+  gap: var(--m-space-2);
+}
+
+.m-feat__picked {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-3);
+  min-width: 0;
+  min-height: var(--m-control-height-md);
+  padding: var(--m-space-2) var(--m-space-2) var(--m-space-2) var(--m-space-3);
+  border-radius: var(--m-radius-control);
+  border: var(--m-border-width) solid var(--m-border-default);
+  background: var(--m-surface-sunken);
+}
+.m-feat__picked-glyph {
+  display: inline-flex;
+  flex: none;
+  color: var(--m-content-accent);
+}
+.m-feat__picked-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+  line-height: var(--m-leading-tight);
+}
+.m-feat__picked-name {
+  font-size: var(--m-text-xs);
+  color: var(--m-content-primary);
+}
+.m-feat__picked-sel {
+  font-size: var(--m-text-2xs);
+  color: var(--m-content-muted);
+}
+.m-feat__picked-act {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: var(--m-radius-control);
+  color: var(--m-content-muted);
+  transition:
+    background-color var(--m-duration-instant) var(--m-ease-out),
+    color var(--m-duration-instant) var(--m-ease-out);
+}
+.m-feat__picked-act:hover {
+  background: var(--m-surface-active);
+  color: var(--m-content-primary);
+}
+.m-feat__picked-act:focus-visible {
+  outline: 2px solid var(--m-focus-ring);
+  outline-offset: -2px;
+}
+
+.m-feat__await {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-3);
+  min-height: var(--m-control-height-md);
+  padding-inline: var(--m-space-3);
+  border-radius: var(--m-radius-control);
+  border: var(--m-border-width) dashed var(--m-border-default);
+  color: var(--m-content-accent);
+  font-size: var(--m-text-xs);
+}
+
+.m-feat__byhand > summary {
+  font-size: var(--m-text-2xs);
+  color: var(--m-content-muted);
+  cursor: pointer;
+  list-style: none;
+}
+.m-feat__byhand > summary::-webkit-details-marker {
+  display: none;
+}
+.m-feat__byhand > summary:hover {
+  color: var(--m-content-primary);
+}
+.m-feat__byhand[open] > summary {
+  margin-bottom: var(--m-space-2);
+}
+
+.m-feat__opts {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  /* the rows' hover surface reaches the column's edges, their text the labels' */
+  margin-inline: calc(var(--m-space-4) * -1);
+}
+.m-feat__opts .m-checkrow {
+  font-size: var(--m-text-xs);
+}
+
+.m-feat__scope {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-3);
+  min-width: 0;
+}
+.m-feat__scope-at {
+  min-width: 0;
+  font-size: var(--m-text-2xs);
+  color: var(--m-content-muted);
+}
+
+.m-feat__form [data-slot='segmented'] {
+  width: max-content;
+  max-width: 100%;
+}
+
+/* click map: ranked selectors */
+.m-cmap__rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  border-radius: var(--m-radius-full);
+  background: var(--m-surface-sunken);
+  font-size: var(--m-text-2xs);
+  color: var(--m-content-secondary);
+}
+.m-cmap__row.is-marked .m-cmap__rank {
+  background: var(--m-action-accent-bg);
+  color: var(--m-action-accent-fg);
+}
+.m-cmap__row.is-marked {
+  background: var(--m-surface-active);
+}
+.m-feat__foot {
+  flex: none;
+  padding: var(--m-space-4) var(--m-space-3);
+  border-top: 1px solid var(--m-border-subtle);
+  background: var(--m-surface-default);
+}

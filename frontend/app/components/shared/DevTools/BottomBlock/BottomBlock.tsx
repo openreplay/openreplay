@@ -1,14 +1,14 @@
-import React, { CSSProperties, useEffect } from 'react';
 import cn from 'classnames';
-import stl from './bottomBlock.module.css';
+import React, { CSSProperties } from 'react';
+
+import 'Components/Session/ReplayScreen/dev-tools.css';
 
 function BottomBlock({
   children = null,
   className = '',
-  additionalHeight = 0,
-  onMouseEnter = () => {},
-  onMouseLeave = () => {},
-  ...props
+  onMouseEnter,
+  onMouseLeave,
+  style,
 }: {
   children?: React.ReactNode;
   className?: string;
@@ -17,12 +17,10 @@ function BottomBlock({
   onMouseLeave?: () => void;
   style?: Partial<CSSProperties>;
 }) {
-  useEffect(() => {}, []);
-
   return (
     <div
-      className={cn(stl.wrapper, 'flex flex-col mb-2')}
-      {...props}
+      className={cn('m-dt__panel', className)}
+      style={style}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >

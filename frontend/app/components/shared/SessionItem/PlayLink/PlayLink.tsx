@@ -1,13 +1,15 @@
+import { Icon } from '@/ui/icons/Icon';
 import React, { useEffect, useState } from 'react';
-import { useHistory } from 'App/routing';
 
+import { useStore } from 'App/mstore';
 import {
   liveSession as liveSessionRoute,
   session as sessionRoute,
   withSiteId,
 } from 'App/routes';
-import { Icon, Link } from 'UI';
-import { useStore } from 'App/mstore';
+import { useHistory } from 'App/routing';
+
+import Link from 'Shared/Link/Link';
 
 const PLAY_ICON_NAMES = {
   notPlayed: 'play-v2',

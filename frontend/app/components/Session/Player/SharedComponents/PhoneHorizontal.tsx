@@ -1,7 +1,8 @@
-import React from 'react';
 import { Redo } from 'lucide-react';
-import { mobileScreen } from 'App/utils/isMobile';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { mobileScreen } from 'App/utils/isMobile';
 
 const checkLandscape = () =>
   window.screen.orientation?.type.startsWith('landscape');

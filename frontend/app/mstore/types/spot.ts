@@ -1,10 +1,12 @@
-import { resentOrDate, shortDurationFromMs } from 'App/date';
 import { makeAutoObservable } from 'mobx';
+
+import { resentOrDate, shortDurationFromMs } from 'App/date';
 
 export class Spot {
   thumbnail: string;
   title: string;
   createdAt: string;
+  createdAtMs: number;
   user: string;
   duration: string;
   spotId: string;
@@ -22,7 +24,8 @@ export class Spot {
     this.comments = data.comments ?? [];
     this.thumbnail = data.previewURL;
     this.title = data.name;
-    this.createdAt = resentOrDate(new Date(data.createdAt).getTime(), true);
+    this.createdAtMs = new Date(data.createdAt).getTime();
+    this.createdAt = resentOrDate(this.createdAtMs, true);
     this.user = data.userEmail;
     this.duration = shortDurationFromMs(data.duration);
     this.spotId = data.id;

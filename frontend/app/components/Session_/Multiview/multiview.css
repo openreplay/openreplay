@@ -1,0 +1,113 @@
+.m-mv {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  background: var(--m-surface-canvas);
+}
+.m-mv__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--m-space-4);
+  flex: none;
+  padding: var(--m-space-3) var(--m-space-5);
+  border-bottom: 1px solid var(--m-border-subtle);
+  background: var(--m-surface-default);
+}
+.m-mv__count {
+  font-size: var(--m-text-sm);
+  color: var(--m-content-muted);
+  font-variant-numeric: tabular-nums;
+}
+.m-mv__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: var(--m-space-3);
+  flex: 1;
+  min-height: 0;
+  padding: var(--m-space-3);
+}
+@media (max-width: 780px) {
+  .m-mv__grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    grid-auto-rows: 20rem;
+    overflow-y: auto;
+  }
+}
+.m-mv__tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--m-border-subtle);
+  border-radius: var(--m-radius-surface);
+  background: var(--m-surface-default);
+}
+.m-mv__stage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  text-align: left;
+  cursor: zoom-in;
+}
+.m-mv__stage > * {
+  flex: 1;
+  min-width: 0;
+}
+.m-mv__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--m-text-sm);
+  color: var(--m-content-muted);
+}
+.m-mv__foot {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  flex: none;
+  padding: var(--m-space-2) var(--m-space-2) var(--m-space-2) var(--m-space-4);
+  border-top: 1px solid var(--m-border-subtle);
+}
+.m-mv__who {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--m-text-sm);
+  font-weight: var(--m-weight-medium);
+  color: var(--m-content-primary);
+}
+.m-mv__empty {
+  align-items: center;
+  justify-content: center;
+  gap: var(--m-space-3);
+  flex-direction: row;
+  border-style: dashed;
+  border-color: var(--m-border-default);
+  background: transparent;
+  font-size: var(--m-text-sm);
+  color: var(--m-content-muted);
+  transition:
+    border-color var(--m-duration-instant) var(--m-ease-out),
+    color var(--m-duration-instant) var(--m-ease-out),
+    background-color var(--m-duration-instant) var(--m-ease-out);
+}
+.m-mv__empty:hover {
+  border-color: var(--m-border-accent);
+  background: var(--m-surface-hover);
+  color: var(--m-content-primary);
+}
+/* the CoBrowse list inside the picker drawer */
+.m-mv__picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-space-4);
+  padding: var(--m-space-5) var(--m-space-6);
+}

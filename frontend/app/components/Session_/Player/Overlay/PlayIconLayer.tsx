@@ -1,13 +1,14 @@
-import React, { useState, useCallback, useEffect } from 'react';
 import cn from 'classnames';
-import { Icon } from 'UI';
+import { FastForward, Pause, Play } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
+import React, { useCallback, useEffect, useState } from 'react';
+
 import { useStore } from 'App/mstore';
+import { debounceCall } from 'App/utils';
+
+import { SKIP_INTERVALS } from '../Controls/Controls';
 import cls from './PlayIconLayer.module.css';
 import clsOv from './overlay.module.css';
-import { FastForward } from 'lucide-react';
-import { SKIP_INTERVALS } from '../Controls/Controls';
-import { debounceCall } from 'App/utils';
 
 interface Props {
   togglePlay: () => void;
@@ -92,7 +93,7 @@ function PlayIconLayer({ playing, togglePlay, jumpInterval }: Props) {
       <div
         className={cn(
           'flex items-center pl-10 lg:hidden absolute left-0 top-0',
-          'h-full w-1/4 text-gray-medium',
+          'h-full w-1/4 text-content-muted',
         )}
         onClick={(e) => {
           e.stopPropagation();
@@ -104,7 +105,7 @@ function PlayIconLayer({ playing, togglePlay, jumpInterval }: Props) {
       <div
         className={cn(
           'flex items-center justify-end pr-10 lg:hidden absolute right-0 top-0',
-          'h-full w-1/4 text-gray-medium',
+          'h-full w-1/4 text-content-muted',
         )}
         onClick={(e) => {
           e.stopPropagation();
@@ -118,7 +119,11 @@ function PlayIconLayer({ playing, togglePlay, jumpInterval }: Props) {
           [cls.zoomIcon]: showPlayOverlayIcon,
         })}
       >
-        <Icon name={playing ? 'play' : 'pause'} color="gray-medium" size={30} />
+        {playing ? (
+          <Play size={22} className="text-content-muted" />
+        ) : (
+          <Pause size={22} className="text-content-muted" />
+        )}
       </div>
     </div>
   );

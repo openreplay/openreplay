@@ -1,14 +1,15 @@
 .tooltipWrapper {
-	background: $white;
-	padding: 2px 5px;
-	border-radius: 3px;
-	border: 1px solid $gray-light;
-	color: $gray-dark !important;
-	/* echarts stamps `font: 14px sans-serif` on its tooltip container. */
-	font-family: 'Roboto', sans-serif;
+  background: var(--m-tooltip-bg);
+  padding: 2px 6px;
+  border-radius: var(--m-radius-control);
+  border: 1px solid var(--m-tooltip-border);
+  color: var(--m-tooltip-fg) !important;
+  /* echarts stamps `font: 14px sans-serif` on its tooltip container. */
+  font-family: var(--m-font-sans);
+  font-size: var(--m-text-xs);
 }
 
 .tooltipWrapper p {
-	display: block;
-	margin: 0;
+  display: block;
+  margin: 0;
 }

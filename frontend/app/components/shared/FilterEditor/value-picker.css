@@ -1,0 +1,112 @@
+.m-vp-host {
+  padding: var(--m-space-2);
+}
+
+.m-vp {
+  display: flex;
+  flex-direction: column;
+  width: max-content;
+  min-width: 16rem;
+  max-width: min(22rem, 88vw);
+}
+
+.m-vp__trigger {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 1 auto;
+  min-width: 0;
+
+  max-width: min(30rem, 100%);
+  height: var(--m-control-height-md);
+  padding-inline: var(--m-space-4);
+  border: var(--m-border-width) solid var(--m-border-default);
+  border-radius: var(--m-radius-control);
+  background: var(--m-surface-default);
+  color: var(--m-content-placeholder);
+  font-size: var(--m-text-sm);
+  text-align: left;
+  transition:
+    border-color var(--m-duration-instant) var(--m-ease-out),
+    color var(--m-duration-instant) var(--m-ease-out);
+}
+.m-vp__trigger:hover {
+  border-color: var(--m-border-strong);
+}
+.m-vp__trigger.is-set {
+  color: var(--m-content-primary);
+  font-weight: var(--m-weight-medium);
+}
+
+.m-vp__search {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  padding: var(--m-space-2) var(--m-space-3);
+  border-bottom: var(--m-border-width) solid var(--m-border-subtle);
+}
+
+.m-vp__search:focus-within {
+  outline: 2px solid var(--m-focus-ring);
+  outline-offset: -3px;
+  border-radius: var(--m-radius-control);
+}
+
+.m-vp__commit {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  flex: none;
+  max-width: 9rem;
+  overflow: hidden;
+  padding-inline: var(--m-space-2);
+  border-radius: var(--m-radius-chip);
+  background: var(--m-surface-active);
+  color: var(--m-content-secondary);
+  font-size: var(--m-text-2xs);
+  white-space: nowrap;
+}
+.m-vp__commit:hover {
+  color: var(--m-content-primary);
+}
+
+.m-vp__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  max-height: 19rem;
+  overflow-y: auto;
+  padding: var(--m-space-2);
+}
+
+.m-vp__opt {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.m-vp__line {
+  display: block;
+  height: 2px;
+  border-radius: var(--m-radius-full);
+  background: var(--m-content-accent);
+  transition: width var(--m-duration-slow) var(--m-ease-out);
+}
+
+.m-vp__none {
+  padding: var(--m-space-6) var(--m-space-3);
+  color: var(--m-content-muted);
+  font-size: var(--m-text-sm);
+  text-align: center;
+}
+
+.m-vp__typed {
+  font-size: var(--m-text-2xs);
+  color: var(--m-content-muted);
+  font-style: italic;
+}
+
+.m-vp__all {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-space-1);
+}

@@ -1,12 +1,13 @@
-import { MobilePerformanceEvent } from 'Player/web/messages';
-import React from 'react';
-import { MobilePlayerContext } from 'App/components/Session/playerContext';
-import { observer } from 'mobx-react-lite';
-import { Icon } from 'UI';
+import { Icon } from '@/ui/icons/Icon';
 import { mapIphoneModel } from 'Player/mobile/utils';
+import { MobilePerformanceEvent } from 'Player/web/messages';
 import cn from 'classnames';
-import { NONE } from 'App/mstore/uiPlayerStore';
+import { observer } from 'mobx-react-lite';
+import React from 'react';
+
+import { MobilePlayerContext } from 'App/components/Session/playerContext';
 import { useStore } from 'App/mstore';
+import { NONE } from 'App/mstore/uiPlayerStore';
 
 type warningsType =
   | 'thermalState'
@@ -113,7 +114,7 @@ function PerfWarnings({ userDevice }: { userDevice: string }) {
       {inBackground ? (
         <div
           className={cn(
-            'transition-all flex items-center gap-1 bg-white border rounded-sm px-2 py-1',
+            'transition-all flex items-center gap-1 bg-surface-default border rounded-sm px-2 py-1',
             'opacity-100',
           )}
         >
@@ -124,7 +125,7 @@ function PerfWarnings({ userDevice }: { userDevice: string }) {
       {list.map((w) => (
         <div
           className={cn(
-            'transition-all flex items-center gap-1 bg-white border rounded-sm px-2 py-1',
+            'transition-all flex items-center gap-1 bg-surface-default border rounded-sm px-2 py-1',
             activeWarnings.findIndex((a) => a === w) !== -1
               ? 'opacity-100'
               : 'opacity-0',

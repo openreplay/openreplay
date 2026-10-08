@@ -1,15 +1,15 @@
+import { JSONTree } from '@/ui/data/JSONTree';
 import { selectStorageListNow } from 'Player';
-import { GitCommitVertical } from 'lucide-react';
+import { ChevronRight, GitCommitVertical } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { durationFromMs } from 'App/date';
-import { Icon, JSONTree } from 'UI';
-import JumpButton from '../../shared/DevTools/JumpButton';
 
+import JumpButton from '../../shared/DevTools/JumpButton';
 import BottomBlock from '../BottomBlock/index';
-import { useTranslation } from 'react-i18next';
 
 interface ListItem {
   action: { type: string; payload?: any };
@@ -55,12 +55,7 @@ function ReduxViewer() {
     <BottomBlock>
       <>
         <BottomBlock.Header>
-          <h3
-            style={{ width: '25%', marginRight: 20 }}
-            className="font-semibold color-gray-medium"
-          >
-            {t('Redux')}
-          </h3>
+          <span className="m-dt__title">{t('Redux')}</span>
         </BottomBlock.Header>
         <BottomBlock.Content className="overflow-y-auto">
           {decodedList.map((msg, i) => (
@@ -92,21 +87,20 @@ function StateEvent({
   const { t } = useTranslation();
   const [isOpen, setOpen] = React.useState(false);
   return (
-    <div
-      className="w-full py-1 px-4 border-b border-gray-lightest flex flex-col hover:bg-active-blue group relative"
-      style={{
-        fontFamily: 'Menlo, Monaco, Consolas',
-        letterSpacing: '-0.025rem',
-      }}
-    >
+    <div className="m-mono group relative flex w-full flex-col border-b border-border-subtle px-4 py-1 text-content-secondary hover:bg-surface-hover">
       <div
         className="w-full gap-2 flex items-center cursor-pointer h-full"
         onClick={() => setOpen(!isOpen)}
       >
-        <Icon name={isOpen ? 'chevron-up' : 'chevron-down'} />
+        <ChevronRight
+          size={12}
+          className={isOpen ? 'rotate-90 transition' : 'transition'}
+        />
         <GitCommitVertical strokeWidth={1} />
-        <div className="font-medium">{msg.action.type ?? 'action'}</div>
-        <div className="text-gray-medium">
+        <div className="font-medium text-content-primary">
+          {msg.action.type ?? 'action'}
+        </div>
+        <div className="text-content-muted">
           @ {durationFromMs(msg.actionTime - sessionStart)}&nbsp;({t('in')}
           &nbsp;
           {durationFromMs(msg.duration)})
@@ -119,18 +113,16 @@ function StateEvent({
         >
           {prevMsg ? (
             <div className="flex items-start gap-2">
-              <div className="text-gray-darkest tracking-tight">
-                {t('prev state')}
-              </div>
+              <div className="text-content-secondary">{t('prev state')}</div>
               <JSONTree src={prevMsg.state} collapsed />
             </div>
           ) : null}
           <div className="flex items-start gap-2">
-            <div className="text-yellow2">{t('action')}</div>
+            <div className="text-content-warning">{t('action')}</div>
             <JSONTree src={msg.action} collapsed />
           </div>
           <div className="flex items-start gap-2">
-            <div className="text-tealx">{t('next state')}</div>
+            <div className="text-content-accent">{t('next state')}</div>
             <JSONTree src={msg.state} collapsed />
           </div>
         </div>

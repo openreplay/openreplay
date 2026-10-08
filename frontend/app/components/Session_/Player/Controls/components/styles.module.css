@@ -1,27 +1,20 @@
-
 .timeTooltip {
   position: absolute;
-  padding: 0.25rem;
-  transition-property: all;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
-  background: black;
-  top: -35px;
-  color: white;
+  z-index: 100;
+  padding: var(--m-space-2) var(--m-space-4);
+  border-radius: var(--m-radius-control);
+  background: var(--m-tooltip-bg);
+  color: var(--m-tooltip-fg);
+  border: 1px solid var(--m-tooltip-border);
+  box-shadow: var(--m-shadow-popover);
+  font-family: var(--m-font-mono);
+  font-size: var(--m-text-2xs);
+  line-height: var(--m-leading-snug);
+  pointer-events: none;
+}
 
-  &:after {
-    content:'';
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    margin: 0 auto;
-    width: 0;
-    height: 0;
-    border-top: solid 5px black;
-    border-left: solid 5px transparent;
-    border-right: solid 5px transparent;
-  }
+.timeTooltipSub {
+  opacity: 0.7;
 }
 
 .noteTooltip {
@@ -31,10 +24,12 @@
   transition-property: all;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
-  background: #F5F5F5;
+  background: var(--m-surface-sunken);
   color: black;
   cursor: default;
-  box-shadow: 0 4px 20px 4px rgb(0 20 60 / 10%), 0 4px 80px -8px rgb(0 20 60 / 20%);
+  box-shadow:
+    0 4px 20px 4px rgb(0 20 60 / 10%),
+    0 4px 80px -8px rgb(0 20 60 / 20%);
 }
 
 .arrow {
@@ -45,7 +40,7 @@
   margin: 0 auto;
   width: 0;
   height: 0;
-  border-top: solid 10px #f5f5f5;
+  border-top: solid 10px var(--m-surface-sunken);
   border-left: solid 10px transparent;
   border-right: solid 10px transparent;
 }

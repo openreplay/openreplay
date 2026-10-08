@@ -1,45 +1,43 @@
-
-
-
 .barWrapper {
-	display: flex;
+  display: flex;
   position: absolute;
-  top: 35%;
-  bottom: 35%;
-  border-radius: 3px;
+  top: 50%;
+  height: 6px;
+  translate: 0 -50%;
+  border-radius: var(--m-radius-chip);
   overflow: hidden;
 }
 
-.downloadBar, .ttfbBar {
-  /* box-shadow: inset 0px 0px 0px 1px $teal; */
+.downloadBar,
+.ttfbBar {
   height: 100%;
   box-sizing: border-box;
   position: relative;
 }
 .ttfbBar {
-  background-color: rgba(175, 226, 221, 0.8);
+  background: var(--m-content-decorative);
 }
 .downloadBar {
-  background-color: rgba(133, 200, 192, 0.8);
+  background: var(--m-border-accent);
 }
 
 .popupRow {
-	color: $gray-medium;
-	display: flex;
-	align-items: center;
-	padding: 2px 0;
-	font-size: 12px;
+  color: $gray-medium;
+  display: flex;
+  align-items: center;
+  padding: 2px 0;
+  font-size: 12px;
 }
 .title {
-	width: 105px;
+  width: 105px;
 }
 .time {
-	width: 60px;
-	padding-left: 10px;
+  width: 60px;
+  padding-left: 10px;
 }
 .popupBarWrapper {
-	width: 220px;
-	height: 15px;
-	border-radius: 3px;
+  width: 220px;
+  height: 15px;
+  border-radius: 3px;
   overflow: hidden;
 }

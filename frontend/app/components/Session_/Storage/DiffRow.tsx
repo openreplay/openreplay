@@ -1,5 +1,5 @@
-import React from 'react';
 import cn from 'classnames';
+import React from 'react';
 
 interface Props {
   shades?: Record<string, string>;
@@ -80,7 +80,7 @@ function DiffRow({ diff, path }: Props) {
       <div
         onClick={() => setShortenOldVal(!shortenOldVal)}
         className={cn(
-          'text-disabled-text',
+          'text-content-disabled',
           diffLengths[0] > 50 ? 'cursor-pointer' : '',
         )}
       >
@@ -88,7 +88,7 @@ function DiffRow({ diff, path }: Props) {
         {diffLengths[0] > 50 ? (
           <div
             onClick={() => setShortenOldVal(!shortenOldVal)}
-            className="cursor-pointer px-1 text-white bg-gray-light rounded-sm text-sm w-fit"
+            className="w-fit cursor-pointer rounded-control bg-surface-sunken px-1 text-xs text-content-secondary"
           >
             {!shortenOldVal ? 'collapse' : 'expand'}
           </div>
@@ -96,13 +96,16 @@ function DiffRow({ diff, path }: Props) {
       </div>
       {' -> '}
       <div
-        className={cn('whitespace-pre', newValue ? 'text-red' : 'text-green')}
+        className={cn(
+          'whitespace-pre',
+          newValue ? 'text-content-danger' : 'text-content-success',
+        )}
       >
         {newValueSafe || 'undefined'}
         {diffLengths[1] > 50 ? (
           <div
             onClick={() => setShortenNewVal(!shortenNewVal)}
-            className="cursor-pointer px-1 text-white bg-gray-light rounded-sm text-sm w-fit"
+            className="w-fit cursor-pointer rounded-control bg-surface-sunken px-1 text-xs text-content-secondary"
           >
             {!shortenNewVal ? 'collapse' : 'expand'}
           </div>

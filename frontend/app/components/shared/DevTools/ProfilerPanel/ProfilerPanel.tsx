@@ -1,18 +1,20 @@
-import React from 'react';
+import { Truncated } from '@/ui/data/truncated';
 import { observer } from 'mobx-react-lite';
-import { TextEllipsis, Input } from 'UI';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { useModal } from 'App/components/Modal';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import useInputState from 'App/hooks/useInputState';
 
-import { useModal } from 'App/components/Modal';
-import TimeTable from '../TimeTable';
 import BottomBlock from '../BottomBlock';
+import { Keyword } from '../PanelKit';
 import ProfilerModal from '../ProfilerModal';
+import TimeTable from '../TimeTable';
 import { useRegExListFilterMemo } from '../useListFilter';
-import { useTranslation } from 'react-i18next';
 
 const renderDuration = (p: any) => `${p.duration}ms`;
-const renderName = (p: any) => <TextEllipsis text={p.name} />;
+const renderName = (p: any) => <Truncated text={p.name} />;
 
 function ProfilerPanel({ panelHeight }: { panelHeight: number }) {
   const { t } = useTranslation();
@@ -25,24 +27,19 @@ function ProfilerPanel({ panelHeight }: { panelHeight: number }) {
   const filtered = useRegExListFilterMemo(profiles, (pr) => pr.name, filter);
 
   const onRowClick = (profile: any) => {
-    showModal(<ProfilerModal profile={profile} />, { right: true, width: 500 });
+    showModal(<ProfilerModal profile={profile} />, { right: true });
   };
   return (
     <BottomBlock style={{ height: '100%' }}>
       <BottomBlock.Header>
-        <div className="flex items-center">
-          <span className="font-semibold color-gray-medium mr-4">
-            {t('Profiler')}
-          </span>
+        <span />
+        <div className="m-dt__bar-right">
+          <Keyword
+            value={filter}
+            onChange={(value) => onFilterChange({ target: { value } } as any)}
+            placeholder={t('Filter by name')}
+          />
         </div>
-        <Input
-          // className="input-small"
-          placeholder={t('Filter by name')}
-          icon="search"
-          name="filter"
-          onChange={onFilterChange}
-          height={28}
-        />
       </BottomBlock.Header>
       <BottomBlock.Content>
         <TimeTable

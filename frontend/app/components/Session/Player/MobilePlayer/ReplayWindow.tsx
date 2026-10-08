@@ -18,7 +18,6 @@ interface Props {
   isAndroid: boolean;
   screenWidth: number;
   screenHeight: number;
-  isClips?: boolean;
 }
 
 function ReplayWindow({
@@ -27,7 +26,6 @@ function ReplayWindow({
   screenHeight,
   screenWidth,
   isAndroid,
-  isClips,
 }: Props) {
   const playerContext = React.useContext<IOSPlayerContext>(MobilePlayerContext);
   const videoRef = React.useRef<HTMLVideoElement>(null);
@@ -131,7 +129,8 @@ function ReplayWindow({
       icon.id = '___or_mobile-loader-icon';
       host.id = '___or_mobile-player';
 
-      playerContext.player.injectPlayer(host, isClips);
+      // centred in its box; the old -20px lift made room for overlaid controls
+      playerContext.player.injectPlayer(host, true);
       playerContext.player.customScale(styles.shell.width, styles.shell.height);
       playerContext.player.updateDimensions({
         width: styles.screen.width,

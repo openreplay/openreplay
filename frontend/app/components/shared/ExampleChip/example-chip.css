@@ -1,0 +1,21 @@
+.m-xchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 1.375rem;
+  padding-inline: var(--m-space-2) var(--m-space-3);
+  border: 1px dashed var(--m-border-default);
+  border-radius: var(--m-radius-chip);
+  background: none;
+  color: var(--m-content-secondary);
+  font: inherit;
+  font-size: var(--m-text-xs);
+  font-family: var(--m-font-mono);
+  cursor: pointer;
+}
+.m-xchip:hover {
+  border-style: solid;
+  border-color: var(--m-border-strong);
+  color: var(--m-content-primary);
+  background: var(--m-surface-hover);
+}

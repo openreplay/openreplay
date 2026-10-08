@@ -1,12 +1,14 @@
-import React, { useEffect } from 'react';
-import { observer } from 'mobx-react-lite';
+import Session from 'Types/session';
 import cn from 'classnames';
+import { observer } from 'mobx-react-lite';
+import React, { useEffect } from 'react';
+
 import { countDaysFrom } from 'App/date';
+import { mobileScreen } from 'App/utils/isMobile';
 import RightBlock from 'Components/Session/RightBlock';
 import { PlayerContext } from 'Components/Session/playerContext';
-import Session from 'Types/session';
+
 import PlayerBlock from './PlayerBlock';
-import { mobileScreen } from 'App/utils/isMobile';
 
 interface IProps {
   fullscreen: boolean;
@@ -17,6 +19,8 @@ interface IProps {
   minimalSubHeader?: boolean;
   /** size to the parent instead of the viewport (host header isn't the default 50px) */
   fillHeight?: boolean;
+  /** the host draws the side panel itself (ReplayScreen) */
+  noSidePanel?: boolean;
 }
 
 function PlayerContent({
@@ -26,6 +30,7 @@ function PlayerContent({
   setActiveTab,
   minimalSubHeader,
   fillHeight,
+  noSidePanel,
 }: IProps) {
   const { store } = React.useContext(PlayerContext);
 
@@ -81,7 +86,7 @@ function PlayerContent({
       <div
         className="w-full h-full"
         style={
-          activeTab && !fullscreen
+          activeTab && !fullscreen && !noSidePanel
             ? {
                 maxWidth: `calc(100% - ${activeTab === 'EXPORT' ? '360px' : '270px'})`,
               }
@@ -97,7 +102,7 @@ function PlayerContent({
           />
         </div>
       </div>
-      {!fullscreen && activeTab !== '' ? (
+      {!fullscreen && !noSidePanel && activeTab !== '' ? (
         <RightBlock setActiveTab={setActiveTab} activeTab={activeTab} />
       ) : null}
     </div>

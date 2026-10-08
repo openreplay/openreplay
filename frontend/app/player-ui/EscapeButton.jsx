@@ -1,0 +1,15 @@
+import { Icon } from '@/ui/icons/Icon';
+import React from 'react';
+
+import stl from './escapeButton.module.css';
+
+function EscapeButton({ onClose }) {
+  return (
+    <div className={stl.closeWrapper} onClick={onClose}>
+      <Icon name="close" size="16" />
+      <div>ESC</div>
+    </div>
+  );
+}
+
+export default EscapeButton;

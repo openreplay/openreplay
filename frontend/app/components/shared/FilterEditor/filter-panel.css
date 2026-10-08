@@ -1,0 +1,50 @@
+.m-fpanel {
+  position: absolute;
+
+  inset-block-start: calc(100% + var(--m-space-2));
+  inset-inline-start: 0;
+  z-index: 20;
+  display: flex;
+
+  overflow: hidden;
+
+  padding: var(--m-space-2);
+  background: var(--m-surface-default);
+  border: var(--m-border-width) solid var(--m-border-default);
+  border-radius: var(--m-radius-surface);
+  box-shadow: var(--m-shadow-popover);
+}
+
+.m-fpanel.is-grown {
+  width: var(--m-fpanel-w, 32rem);
+  height: 30rem;
+}
+
+.m-fpanel.is-grown.is-one-kind {
+  width: 27rem;
+  height: auto;
+  max-height: 24rem;
+}
+
+.m-fpanel.is-portal {
+  position: fixed;
+  inset: auto;
+  z-index: var(--m-z-dropdown);
+  pointer-events: auto;
+}
+
+.m-fpanel.is-portal-in {
+  position: absolute;
+}
+
+.m-fpanel.is-still {
+  --m-pop-sx: 0.98;
+  --m-pop-sy: 0.96;
+  transform-origin: top left;
+  animation: m-pop-in var(--m-duration-fast) var(--m-ease-out);
+}
+@media (prefers-reduced-motion: reduce) {
+  .m-fpanel.is-still {
+    animation: none;
+  }
+}

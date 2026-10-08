@@ -1,6 +1,6 @@
+import { Tooltip } from '@/ui/overlays/tooltip';
 import { IResourceRequest, IResourceTiming } from 'Player';
 import { WsChannel } from 'Player/web/messages';
-import { Tooltip } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -32,7 +32,7 @@ export const NETWORK_TABS = TAP_KEYS.map((tab) => ({
 
 export function renderType(r: any) {
   return (
-    <Tooltip style={{ width: '100%' }} title={<div>{r.type}</div>}>
+    <Tooltip title={<div>{r.type}</div>}>
       <div>{r.type}</div>
     </Tooltip>
   );
@@ -46,10 +46,7 @@ export function renderName(r: any) {
       : r.url;
 
   return (
-    <Tooltip
-      style={{ width: '100%', maxWidth: 1024 }}
-      title={<div>{tooltipUrl}</div>}
-    >
+    <Tooltip title={<div>{tooltipUrl}</div>}>
       <div
         style={{ maxWidth: 250, overflow: 'hidden', textOverflow: 'ellipsis' }}
       >
@@ -74,7 +71,7 @@ export function renderDuration(r: any) {
   }
 
   return (
-    <Tooltip style={{ width: '100%' }} title={tooltipText}>
+    <Tooltip title={tooltipText}>
       <div> {text} </div>
     </Tooltip>
   );

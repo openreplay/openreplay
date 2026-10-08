@@ -1,17 +1,21 @@
+import { trackerInstance } from '@/init/openreplay';
+import { Loader } from '@/ui/feedback/Loader';
+import { NoContent } from '@/ui/feedback/NoContent';
 import withPermissions from 'HOCs/withPermissions';
+import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { clearLogs } from 'App/dev/console';
 import usePageTitle from 'App/hooks/usePageTitle';
 import { useStore } from 'App/mstore';
 import { sessions as sessionsRoute } from 'App/routes';
 import MobilePlayer from 'Components/Session/MobilePlayer';
-import { Link, Loader, NoContent } from 'UI';
-import { observer } from 'mobx-react-lite';
-import WebPlayer from './WebPlayer';
-import { useTranslation } from 'react-i18next';
-import { trackerInstance } from '@/init/openreplay';
+
+import Link from 'Shared/Link/Link';
+
 import PhoneHorizontalWarn from './Player/SharedComponents/PhoneHorizontal';
+import WebPlayer from './WebPlayer';
 
 const SESSIONS_ROUTE = sessionsRoute();
 
@@ -63,7 +67,9 @@ function Session({
     >
       <PhoneHorizontalWarn />
       <Loader className="flex-1" loading={!session.sessionId}>
-        <div className="w-screen h-dvh overflow-hidden relative">{player}</div>
+        <div className="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden">
+          {player}
+        </div>
       </Loader>
     </NoContent>
   );

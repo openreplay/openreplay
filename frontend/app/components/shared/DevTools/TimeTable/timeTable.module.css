@@ -1,27 +1,27 @@
-
-
-$offset: 10px;
-
 .timeCell {
-  border-left: solid thin rgba(0, 0, 0, 0.05);
+  border-left: 1px solid var(--m-border-subtle);
 }
 
 .headers {
-  box-shadow: 0 1px 2px 0 $gray-light;
-  background-color: $gray-lightest;
-  color: $gray-darkest;
-  font-size: 12px;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 1.75rem;
+  padding: 0 var(--m-space-5);
   overflow-x: hidden;
   white-space: nowrap;
-  width: 100%;
-  display: flex;
-  padding: 0 $offset;
+  border-bottom: 1px solid var(--m-border-subtle);
+  background: var(--m-surface-sunken);
+  font-size: var(--m-text-2xs);
+  font-weight: var(--m-weight-medium);
+  color: var(--m-content-muted);
 }
 .infoHeaders {
-  text-transform: uppercase;
   display: flex;
+  text-transform: uppercase;
+  letter-spacing: var(--m-tracking-wide);
   & .headerCell {
-    padding: 4px 2px;
+    padding: 0 6px;
   }
 }
 .waterfallHeaders {
@@ -30,36 +30,29 @@ $offset: 10px;
   & .timeCell {
     flex: 1;
     overflow: hidden;
-    padding: 4px 0;
+    padding: 0 var(--m-space-2);
+    font-weight: var(--m-weight-regular);
+    font-variant-numeric: tabular-nums;
+    color: var(--m-content-disabled);
   }
 }
 
 .list {
-  /* TODO hide the scrollbar track */
-  &::-webkit-scrollbar {
-    width: 1px;
-  }
   scrollbar-width: thin;
-  font-size: 14px;
-  font-family: 'Menlo', 'monaco', 'consolas', monospace;
+  font-family: var(--m-font-mono);
+  font-size: var(--m-text-xs);
 }
 
 .row {
   display: flex;
-  padding: 0 $offset;
-
+  align-items: center;
+  padding: 0 var(--m-space-5);
+  border-bottom: 1px solid var(--m-border-subtle);
+  color: var(--m-content-secondary);
+  transition: background-color var(--m-duration-instant) var(--m-ease-out);
   &:hover {
-    background-color: $active-blue;
+    background: var(--m-surface-hover);
   }
-  /*align-items: center;
-  cursor: pointer;
-  */
-  /* &:nth-child(even) {
-    background-color: $gray-lightest;
-  } */
- /* & > div:first-child {
-    padding-left: 5px;
-  }*/
 }
 .cell {
   height: 100%;
@@ -68,7 +61,7 @@ $offset: 10px;
   overflow: hidden;
   padding: 0 6px;
   white-space: nowrap;
-  
+
   & > div > div {
     white-space: nowrap;
     overflow: hidden;
@@ -77,15 +70,9 @@ $offset: 10px;
   }
 }
 .hoverable {
-  transition: all 0.3s;
   cursor: pointer;
-  &:hover {
-    background-color: $active-blue;
-    transition: all 0.2s;
-    color: $gray-dark;
-  }
 }
-.timeBarWrapper{
+.timeBarWrapper {
   overflow: hidden;
 }
 
@@ -93,13 +80,12 @@ $offset: 10px;
   position: absolute;
   top: 0;
   bottom: 0;
-  /*left:0;*/
   right: 0;
   display: flex;
-  margin: 0 $offset;
+  margin: 0 var(--m-space-5);
   & .timeCell {
     height: 100%;
-    flex: 1;  
+    flex: 1;
     z-index: 1;
     pointer-events: none;
   }
@@ -112,7 +98,7 @@ $offset: 10px;
 }
 
 .activeRow {
-  background-color: $teal-light;
+  background: var(--m-surface-selected);
 }
 
 .inactiveRow {

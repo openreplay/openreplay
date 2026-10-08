@@ -1,5 +1,11 @@
-import { CloseOutlined } from '@ant-design/icons';
-import { Button, Form, Select, Tooltip } from 'antd';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/ui/inputs/select';
+import { Tooltip } from '@/ui/overlays/tooltip';
 import { TFunction } from 'i18next';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
@@ -8,9 +14,8 @@ import { useTranslation } from 'react-i18next';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { useStore } from 'App/mstore';
 import { compareJsonObjects } from 'App/utils';
-import { Loader } from 'UI';
-
-import SelectorsList from './components/SelectorsList/SelectorsList';
+import 'Components/Session/ReplayScreen/activity-panel.css';
+import 'Components/Session/ReplayScreen/side-panel.css';
 
 const JUMP_OFFSET = 1000;
 interface Props {
@@ -92,36 +97,82 @@ function PageInsightsPanel({ setActiveTab }: Props) {
   };
 
   return (
-    <div className="p-2 py-4 bg-white">
-      <div className="flex items-center gap-2 mb-3 overflow-hidden">
-        <div className="shrink-0 font-medium">{t('Page')}</div>
-        <Form.Item name="url" className="mb-0! w-44!">
-          <Select
-            showSearch
-            placeholder="change"
-            options={urlOptions}
-            defaultValue={defaultValue}
-            onChange={(value) => onPageSelect(value)}
-            id="change-dropdown"
-            className="w-full rounded-lg max-w-[270px]"
-          />
-        </Form.Item>
-        <Tooltip title={t('Close Panel')} placement="bottomRight">
-          <Button
-            className="ml-2"
-            type="text"
-            onClick={() => {
-              setActiveTab('');
-            }}
-            icon={<CloseOutlined />}
-          />
-        </Tooltip>
+    <div className="m-feat">
+      <div className="m-spanel__bar">
+        <span className="m-spanel__note flex-none">{t('Page')}</span>
+        <Select value={insightsFilters.url} onValueChange={onPageSelect}>
+          <SelectTrigger className="min-w-0 flex-1" aria-label={t('Page')}>
+            <SelectValue placeholder={t('Choose a page')} />
+          </SelectTrigger>
+          <SelectContent>
+            {urlOptions.map((o) => (
+              <SelectItem key={o.value} value={o.value}>
+                <span className="m-mono">{o.label}</span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
-      <Loader loading={loading}>
-        <SelectorsList />
-      </Loader>
+      {loading ? (
+        <p className="m-spanel__none">{t('Loading clicks…')}</p>
+      ) : (
+        <TargetsList />
+      )}
     </div>
   );
 }
+
+const TargetsList = observer(() => {
+  const { t } = useTranslation();
+  const { store, player } = React.useContext(PlayerContext);
+  const { markedTargets: targets, activeTargetIndex } = store.get();
+  if (!targets || targets.length === 0) {
+    return (
+      <p className="m-spanel__none">
+        {t('No clicks were recorded on this page.')}
+      </p>
+    );
+  }
+  return (
+    <ol className="m-spanel__list" aria-label={t('Most clicked elements')}>
+      {targets.map((target, index) => {
+        const on = activeTargetIndex === index;
+        return (
+          <li
+            key={index}
+            className={`m-spanel__row m-cmap__row${on ? ' is-marked' : ''}`}
+          >
+            <button
+              type="button"
+              className="m-spanel__cell"
+              onClick={() => player.setActiveTarget(index)}
+              aria-pressed={on}
+            >
+              <Tooltip title={t('Rank of the most clicked element')}>
+                <span className="m-cmap__rank m-mono">{index + 1}</span>
+              </Tooltip>
+              <span className="m-spanel__body">
+                <span
+                  className="m-spanel__label m-mono m-truncate"
+                  title={target.selector}
+                >
+                  {target.selector}
+                </span>
+                {on ? (
+                  <span className="m-spanel__sub">
+                    {t('{{n}} clicks · {{p}}% of the page', {
+                      n: target.count,
+                      p: target.percent,
+                    })}
+                  </span>
+                ) : null}
+              </span>
+            </button>
+          </li>
+        );
+      })}
+    </ol>
+  );
+});
 
 export default observer(PageInsightsPanel);

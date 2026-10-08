@@ -1,72 +1,36 @@
-import React, { useState } from 'react';
-import { AutoComplete, Input } from 'antd';
-import type { SelectProps } from 'antd/es/select';
+import { SimpleSelect } from '@/ui/inputs/select';
 import { observer } from 'mobx-react-lite';
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { useStore } from 'App/mstore';
 
+/** Narrow the reports to one team member. */
 function UserSearch({ onUserSelect }: { onUserSelect: (id: any) => void }) {
-  const [selectedValue, setSelectedValue] = useState<string | undefined>(
-    undefined,
-  );
+  const { t } = useTranslation();
   const { userStore } = useStore();
-  const allUsers = userStore.list.map((user) => ({
-    value: user.userId,
-    label: user.name,
-  }));
-  const [options, setOptions] = useState<SelectProps<object>['options']>([]);
+  const [value, setValue] = useState<string | undefined>(undefined);
 
   React.useEffect(() => {
-    if (userStore.list.length === 0) {
-      userStore.fetchUsers().then((r) => {
-        setOptions(
-          r.map((user: any) => ({
-            value: user.userId,
-            label: user.name,
-          })),
-        );
-      });
-    }
+    if (userStore.list.length === 0) void userStore.fetchUsers();
   }, []);
 
-  const handleSearch = (value: string) => {
-    setOptions(
-      value
-        ? allUsers.filter((u) =>
-            u.label.toLowerCase().includes(value.toLocaleLowerCase()),
-          )
-        : [],
-    );
-  };
-
-  const onSelect = (value?: string) => {
-    onUserSelect(value);
-    setSelectedValue(allUsers.find((u) => u.value === value)?.label || '');
-  };
-
   return (
-    <AutoComplete
-      popupMatchSelectWidth={200}
-      style={{ width: 200 }}
-      options={options}
-      onSelect={onSelect}
-      onSearch={handleSearch}
-      value={selectedValue}
-      onChange={(e) => {
-        setSelectedValue(e);
-        if (!e) onUserSelect(undefined);
+    <SimpleSelect
+      clearable
+      className="w-52"
+      value={value}
+      placeholder={t('All team members')}
+      ariaLabel={t('Team member')}
+      onChange={(v) => {
+        setValue(v);
+        onUserSelect(v);
       }}
-      onClear={() => onSelect(undefined)}
-      onDeselect={() => onSelect(undefined)}
-      size="small"
-    >
-      <Input.Search
-        allowClear
-        placeholder="Filter by team member name"
-        size="small"
-        classNames={{ input: 'border-0! focus:border-0!' }}
-        style={{ width: 200 }}
-      />
-    </AutoComplete>
+      options={userStore.list.map((u: any) => ({
+        value: String(u.userId),
+        label: u.name,
+      }))}
+    />
   );
 }
 

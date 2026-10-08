@@ -1,18 +1,20 @@
-import { DownOutlined } from '@ant-design/icons';
-import { Button } from 'antd';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/ui/actions/dropdown-menu';
+import { Check, ChevronDown } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   RealReplayTimeConnected,
   RealUserReplayTimeConnected,
   ReduxTime,
 } from 'Components/Session_/Player/Controls/Time';
-import {
-  ITimeMode,
-  TimeMode,
-} from 'Components/Session_/Player/Controls/components/PlayerControls';
-import { Popover } from 'UI';
-import { useTranslation } from 'react-i18next';
+
+import { type ITimeMode, TimeMode } from './timeMode';
 
 interface Props {
   timeMode: ITimeMode;
@@ -23,99 +25,84 @@ interface Props {
 
 function PlayingTime({ timeMode, setTimeMode, startedAt, sessionTz }: Props) {
   const { t } = useTranslation();
-  return (
-    <Popover
-      // @ts-ignore
-      theme="nopadding"
-      animation="none"
-      duration={0}
-      className="cursor-pointer select-none"
-      distance={20}
-      render={({ close }) => (
-        <div
-          style={{ margin: -12 }}
-          className="flex flex-col gap-2 bg-white py-2 rounded-sm color-gray-darkest text-left"
-        >
-          <div className="font-semibold px-4 cursor-default">
-            {t('Playback Time Mode')}
-          </div>
-          <div className="flex flex-col cursor-pointer hover:bg-active-blue w-full px-4">
-            <div className="text-sm text-disabled-text text-left">
-              {t('Current / Session Duration')}
-            </div>
-            <div
-              className="flex items-center text-left"
-              onClick={() => {
-                setTimeMode(TimeMode.Timestamp);
-                close();
-              }}
-            >
-              <ReduxTime isCustom name="time" format="mm:ss" />
-              <span className="px-1">/</span>
-              <ReduxTime isCustom name="endTime" format="mm:ss" />
-            </div>
-          </div>
-          {sessionTz ? (
-            <div
-              className="flex flex-col cursor-pointer hover:bg-active-blue w-full px-4"
-              onClick={() => {
-                setTimeMode(TimeMode.UserReal);
-                close();
-              }}
-            >
-              <div className="text-sm text-disabled-text text-left">
-                {t("User's time")}
-              </div>
-              <div className="text-left">
-                <RealUserReplayTimeConnected
-                  startedAt={startedAt}
-                  sessionTz={sessionTz}
-                />
-              </div>
-            </div>
-          ) : null}
-          <div
-            className="flex flex-col cursor-pointer hover:bg-active-blue w-full px-4"
-            onClick={() => {
-              setTimeMode(TimeMode.Real);
-              close();
-            }}
-          >
-            <div className="text-sm text-disabled-text text-left">
-              {t('Based on your settings')}
-            </div>
-            <div className="text-left">
-              <RealReplayTimeConnected startedAt={startedAt} />
-            </div>
-          </div>
-        </div>
-      )}
-    >
-      <Button type="text" style={{ padding: '4px 0.5rem' }}>
-        <div className="flex items-center gap-2">
-          <div
-            className="flex items-center font-semibold text-center"
-            style={{ minWidth: 85 }}
-          >
-            {timeMode === TimeMode.Real ? (
-              <RealReplayTimeConnected startedAt={startedAt} />
-            ) : timeMode === TimeMode.UserReal ? (
+  const elapsed = (
+    <>
+      <ReduxTime isCustom name="time" format="mm:ss" />
+      <span className="m-tl__time-sep">/</span>
+      <ReduxTime isCustom name="endTime" format="mm:ss" />
+    </>
+  );
+  const modes: { mode: ITimeMode; label: string; value: React.ReactNode }[] = [
+    {
+      mode: TimeMode.Timestamp,
+      label: t('Current / session duration'),
+      value: elapsed,
+    },
+    ...(sessionTz
+      ? [
+          {
+            mode: TimeMode.UserReal,
+            label: t("User's time"),
+            value: (
               <RealUserReplayTimeConnected
                 startedAt={startedAt}
                 sessionTz={sessionTz}
               />
-            ) : (
-              <>
-                <ReduxTime isCustom name="time" format="mm:ss" />
-                <span className="px-1">/</span>
-                <ReduxTime isCustom name="endTime" format="mm:ss" />
-              </>
+            ),
+          },
+        ]
+      : []),
+    {
+      mode: TimeMode.Real,
+      label: t('Your time'),
+      value: <RealReplayTimeConnected startedAt={startedAt} />,
+    },
+  ];
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button type="button" className="m-tl__time">
+          <span className="flex items-center gap-1">
+            <span className="flex items-center">
+              {timeMode === TimeMode.Real ? (
+                <RealReplayTimeConnected startedAt={startedAt} />
+              ) : timeMode === TimeMode.UserReal ? (
+                <RealUserReplayTimeConnected
+                  startedAt={startedAt}
+                  sessionTz={sessionTz}
+                />
+              ) : (
+                elapsed
+              )}
+            </span>
+            <ChevronDown size={11} aria-hidden="true" />
+          </span>
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent side="top" align="start" className="min-w-56">
+        <p className="px-5 pb-2 pt-1 text-2xs font-medium uppercase tracking-wider text-content-muted">
+          {t('Playback time')}
+        </p>
+        {modes.map((m) => (
+          <DropdownMenuItem
+            key={m.mode}
+            className="h-auto py-2"
+            onSelect={() => setTimeMode(m.mode)}
+          >
+            <span className="flex min-w-0 flex-1 flex-col">
+              <span className="text-xs text-content-muted">{m.label}</span>
+              <span className="m-mono flex items-center text-content-primary">
+                {m.value}
+              </span>
+            </span>
+            {(timeMode ?? TimeMode.Timestamp) === m.mode && (
+              <Check size={14} className="text-content-accent" />
             )}
-          </div>
-          <DownOutlined />
-        </div>
-      </Button>
-    </Popover>
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 

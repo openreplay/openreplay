@@ -1,18 +1,15 @@
 import { observer } from 'mobx-react-lite';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { VList, VListHandle } from 'virtua';
 
+import { capitalize } from 'App/utils';
 import BottomBlock from 'Components/shared/DevTools/BottomBlock';
-import {
-  TABS,
-  getIconProps,
-  renderWithNL,
-} from 'Components/shared/DevTools/ConsolePanel/ConsolePanel';
+import { TABS } from 'Components/shared/DevTools/ConsolePanel/ConsolePanel';
 import ConsoleRow from 'Components/shared/DevTools/ConsoleRow';
-import { Icon, NoContent, Tabs } from 'UI';
+import { NoData, PanelTabs } from 'Components/shared/DevTools/PanelKit';
 
 import spotPlayerStore from '../../spotPlayerStore';
-import { useTranslation } from 'react-i18next';
 
 function SpotConsole({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation();
@@ -20,8 +17,8 @@ function SpotConsole({ onClose }: { onClose: () => void }) {
   const _list = React.useRef<VListHandle>(null);
 
   const onTabClick = (tab: string) => {
-    const newTab = TABS.find((t) => t.text === tab);
-    setActiveTab(newTab);
+    const newTab = TABS.find((t) => t.key === tab);
+    if (newTab) setActiveTab(newTab);
   };
   const { logs } = spotPlayerStore;
   const filteredList = React.useMemo(
@@ -41,42 +38,32 @@ function SpotConsole({ onClose }: { onClose: () => void }) {
   return (
     <BottomBlock>
       <BottomBlock.Header onClose={onClose}>
-        <div className="flex items-center">
-          <span className="font-semibold color-gray-medium mr-4">
-            {t('Console')}
-          </span>
-          <Tabs
-            tabs={TABS}
-            active={activeTab}
-            onClick={onTabClick}
-            border={false}
-          />
-        </div>
+        <PanelTabs
+          label={t('Console level')}
+          active={activeTab.key}
+          onSelect={(k) => onTabClick(k)}
+          items={TABS.map((tab) => ({
+            key: tab.key,
+            label: t(capitalize(tab.text.toLowerCase())),
+          }))}
+        />
       </BottomBlock.Header>
-      <BottomBlock.Content className="overflow-y-auto">
-        <NoContent
-          title={
-            <div className="capitalize flex items-center">
-              <Icon name="info-circle" className="mr-2" size="18" />
-              {t('No Data')}
-            </div>
-          }
-          size="small"
-          show={filteredList.length === 0}
-        >
+      <BottomBlock.Content>
+        {filteredList.length === 0 ? (
+          <NoData hint={t('Nothing was logged at this level.')} />
+        ) : (
           <VList ref={_list} itemSize={25} data={filteredList}>
             {(log, index) => (
               <ConsoleRow
                 key={log.time + index}
                 log={log}
                 jump={jump}
-                iconProps={getIconProps(log.level)}
-                renderWithNL={renderWithNL}
                 showSingleTab
+                sessionId=""
               />
             )}
           </VList>
-        </NoContent>
+        )}
       </BottomBlock.Content>
     </BottomBlock>
   );

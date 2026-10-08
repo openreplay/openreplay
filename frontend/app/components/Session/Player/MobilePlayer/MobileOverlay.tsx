@@ -1,3 +1,11 @@
+import { ContextMenu } from '@/ui/actions/context-menu';
+import type { MenuItem } from '@/ui/actions/dropdown-menu';
+import { Icon } from '@/ui/icons/Icon';
+import { observer } from 'mobx-react-lite';
+import React from 'react';
+
+import { PlayerContext } from 'App/components/Session/playerContext';
+import { useStore } from 'App/mstore';
 import {
   CONSOLE,
   NETWORK,
@@ -5,16 +13,9 @@ import {
   STACKEVENTS,
   STORAGE,
 } from 'App/mstore/uiPlayerStore';
-import React from 'react';
 import AutoplayTimer from 'Components/Session_/Player/Overlay/AutoplayTimer';
-import PlayIconLayer from 'Components/Session_/Player/Overlay/PlayIconLayer';
 import Loader from 'Components/Session_/Player/Overlay/Loader';
-import { PlayerContext } from 'App/components/Session/playerContext';
-import { observer } from 'mobx-react-lite';
-import { Dropdown } from 'antd';
-import type { MenuProps } from 'antd';
-import { Icon } from 'UI';
-import { useStore } from 'App/mstore';
+import PlayIconLayer from 'Components/Session_/Player/Overlay/PlayIconLayer';
 
 interface Props {
   nextId?: string;
@@ -31,7 +32,7 @@ enum ItemKey {
   AddNote = '6',
 }
 
-const menuItems: MenuProps['items'] = [
+const menuItems: MenuItem[] = [
   {
     key: ItemKey.Console,
     label: 'Console',
@@ -51,12 +52,6 @@ const menuItems: MenuProps['items'] = [
     key: ItemKey.Events,
     label: 'Events',
     icon: <Icon name="filetype-js" size={14} />,
-  },
-  { type: 'divider' },
-  {
-    key: ItemKey.AddNote,
-    label: 'Add Note',
-    icon: <Icon name="quotes" size={14} />,
   },
 ];
 
@@ -88,9 +83,6 @@ function Overlay({ nextId, isClickmap }: Props) {
       case ItemKey.State:
         toggleBottomBlock(STORAGE);
         break;
-      case ItemKey.AddNote:
-        // TODO setCreateNoteTooltip({ time: store.get().time, isVisible: true });
-        break;
       default:
     }
   };
@@ -98,13 +90,18 @@ function Overlay({ nextId, isClickmap }: Props) {
     <>
       {showAutoplayTimer && <AutoplayTimer />}
       {loading ? <Loader /> : null}
-      <Dropdown menu={{ items: menuItems, onClick }} trigger={['contextMenu']}>
+      <ContextMenu
+        items={menuItems.map((it) => ({
+          ...it,
+          onClick: () => onClick({ key: it.key }),
+        }))}
+      >
         <div>
           {showPlayIconLayer && (
             <PlayIconLayer playing={playing} togglePlay={togglePlay} />
           )}
         </div>
-      </Dropdown>
+      </ContextMenu>
     </>
   );
 }

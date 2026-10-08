@@ -1,10 +1,15 @@
+import { Button } from '@/ui/actions/button';
+import { Loader } from '@/ui/feedback/Loader';
+import { Input } from '@/ui/inputs/input';
+import { SimpleSelect } from '@/ui/inputs/select';
+import { Textarea } from '@/ui/inputs/textarea';
+import { useToast } from '@/ui/overlays/toast';
+import { LoaderCircle } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
-import { useStore } from 'App/mstore';
-import { CircularLoader, Loader } from 'UI';
-import { Form, Input, Button, Select } from 'antd';
-import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
+
+import { useStore } from 'App/mstore';
 
 interface Props {
   closeHandler: () => void;
@@ -31,6 +36,7 @@ const IssueForm: React.FC<Props> = observer(
       },
     } = useStore();
     const { t } = useTranslation();
+    const toast = useToast();
 
     useEffect(() => {
       init({
@@ -53,7 +59,7 @@ const IssueForm: React.FC<Props> = observer(
           closeHandler();
         })
         .catch(() => {
-          toast(t('Failed to create issue'), { type: 'error' });
+          toast.error(t('Failed to create issue'));
         });
 
       // if (!errors || errors.length === 0) {
@@ -94,93 +100,94 @@ const IssueForm: React.FC<Props> = observer(
 
     return (
       <Loader loading={projectsLoading} size={40}>
-        <Form onFinish={onFinish} layout="vertical" className="text-left!">
-          <Form.Item
-            label={
-              <>
-                <span className="mr-2">{t('Project')}</span>
-                <CircularLoader loading={metaLoading} />
-              </>
-            }
-            className="mb-15-imp!"
-          >
-            <Select
-              value={instance?.projectId}
-              onChange={handleSelect('projectId')}
+        <form
+          className="flex flex-col gap-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void onFinish();
+          }}
+        >
+          <div className="m-dfield">
+            <span className="m-dfield__label inline-flex items-center gap-2">
+              {t('Project')}
+              {metaLoading && (
+                <LoaderCircle
+                  role="status"
+                  aria-label={t('Loading')}
+                  size={14}
+                  className="animate-spin text-content-muted"
+                />
+              )}
+            </span>
+            <SimpleSelect
+              value={instance?.projectId || undefined}
+              onChange={(v) => v && handleSelect('projectId')(v)}
               placeholder={t('Project')}
-            >
-              {projectOptions.map((option) => (
-                <Select.Option key={option.value} value={option.value}>
-                  {option.label}
-                </Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
-          <Form.Item label={t('Issue Type')} className="mb-15-imp!">
-            <Select
-              value={instance?.issueType}
-              onChange={handleSelect('issueType')}
+              ariaLabel={t('Project')}
+              options={projectOptions}
+            />
+          </div>
+          <div className="m-dfield">
+            <span className="m-dfield__label">{t('Issue Type')}</span>
+            <SimpleSelect
+              value={instance?.issueType || undefined}
+              onChange={(v) => v && handleSelect('issueType')(v)}
               placeholder={t('Select issue type')}
-              optionLabelProp="label"
-            >
-              {issueTypeOptions.map((option) => (
-                <Select.Option
-                  key={option.value}
-                  value={option.value}
-                  label={
-                    <div className="flex items-center">
-                      {option.iconUrl}
-                      <span>{option.label}</span>
-                    </div>
-                  }
-                >
-                  {option.label}
-                </Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
-          <Form.Item label={t('Assignee')} className="mb-15-imp!">
-            <Select
-              value={instance?.assignee}
-              onChange={handleSelect('assignee')}
+              ariaLabel={t('Issue Type')}
+              options={issueTypeOptions.map((o: any) => ({
+                value: String(o.value),
+                label: (
+                  <span className="inline-flex items-center gap-2">
+                    {o.iconUrl}
+                    {o.label}
+                  </span>
+                ),
+              }))}
+            />
+          </div>
+          <div className="m-dfield">
+            <span className="m-dfield__label">{t('Assignee')}</span>
+            <SimpleSelect
+              value={instance?.assignee || undefined}
+              onChange={(v) => v && handleSelect('assignee')(v)}
               placeholder={t('Select a user')}
-            >
-              {userOptions.map((option) => (
-                <Select.Option key={option.value} value={option.value}>
-                  {option.label}
-                </Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
-          <Form.Item label={t('Summary')} className="mb-15-imp!">
+              ariaLabel={t('Assignee')}
+              options={userOptions}
+            />
+          </div>
+          <label className="m-dfield">
+            <span className="m-dfield__label">{t('Summary')}</span>
             <Input
               name="title"
               value={instance?.title}
               placeholder={t('Issue Title / Summary')}
               onChange={handleChange}
             />
-          </Form.Item>
-          <Form.Item label={t('Description')} className="mb-15-imp!">
-            <Input.TextArea
+          </label>
+          <label className="m-dfield">
+            <span className="m-dfield__label">{t('Description')}</span>
+            <Textarea
               name="description"
-              rows={2}
+              rows={3}
               value={instance?.description}
-              placeholder={'E.g. Found this issue at 3:29secs'}
+              placeholder={t('E.g. Found this issue at 3:29secs')}
               onChange={handleChange}
-              className="text-area"
             />
-          </Form.Item>
-          <Button
-            loading={creating}
-            disabled={!instance?.isValid}
-            className="float-left mr-2"
-            type="primary"
-            htmlType="submit"
-          >
-            {t('Create')}
-          </Button>
-          <Button onClick={closeHandler}>{t('Cancel')}</Button>
-        </Form>
+          </label>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="primary"
+              loading={creating}
+              disabled={!instance?.isValid}
+              type="submit"
+            >
+              {t('Create')}
+            </Button>
+            <Button variant="subtle" onClick={closeHandler}>
+              {t('Cancel')}
+            </Button>
+          </div>
+        </form>
       </Loader>
     );
   },

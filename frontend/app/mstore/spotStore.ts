@@ -20,13 +20,13 @@ export default class SpotStore {
 
   total: number = 0;
 
-  limit: number = 9;
+  limit: number = 12;
 
   accessKey: string | undefined = undefined;
 
   pubKey: { value: string; expiration: number } | null = null;
 
-  readonly order = 'desc';
+  order: 'asc' | 'desc' = 'desc';
 
   accessError = false;
 
@@ -73,6 +73,10 @@ export default class SpotStore {
     this.query = query;
   }
 
+  setOrder(order: 'asc' | 'desc') {
+    this.order = order;
+  }
+
   setPage(page: number) {
     this.page = page;
   }
@@ -85,7 +89,11 @@ export default class SpotStore {
     this.total = total;
   }
 
+  private fetchSeq = 0;
+
+  /** Search, tabs, sort and pager can overlap: only the latest response applies. */
   fetchSpots = async () => {
+    const seq = ++this.fetchSeq;
     const filters = {
       page: this.page,
       filterBy: this.filter,
@@ -97,9 +105,22 @@ export default class SpotStore {
     const { spots, tenantHasSpots, total } = await this.withLoader(() =>
       spotService.fetchSpots(filters),
     );
+    if (seq !== this.fetchSeq) return;
     this.setSpots(spots.map((spot: any) => new Spot(spot)));
     this.setTotal(total);
     this.setTenantHasSpots(tenantHasSpots);
+  };
+
+  /** Every spot the current search returns, across pages. */
+  fetchAllSpotRefs = async (): Promise<{ id: string; title: string }[]> => {
+    const { spots } = await spotService.fetchSpots({
+      page: 1,
+      filterBy: this.filter,
+      query: this.query,
+      order: this.order,
+      limit: Math.max(this.total, this.limit),
+    });
+    return spots.map((spot: any) => ({ id: spot.id, title: spot.name }));
   };
 
   setTenantHasSpots(hasSpots: boolean) {

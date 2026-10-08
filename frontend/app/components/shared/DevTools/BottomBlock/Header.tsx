@@ -1,49 +1,45 @@
-import { Tooltip } from 'antd';
+import { IconButton } from '@/ui/actions/IconButton';
 import cn from 'classnames';
+import { X } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { useStore } from 'App/mstore';
-import { CloseButton } from 'UI';
 
-import stl from './header.module.css';
+/** Set by a host that draws its own collapse control (the replay's devtools strip). */
+export const PanelHostContext = React.createContext({ ownsClose: false });
 
 function Header({
   children,
   className,
   onClose,
-  onFilterChange,
+  customClose,
   showClose = true,
-  ...props
+  customStyle,
 }: {
   children?: React.ReactNode;
   className?: string;
   onFilterChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   showClose?: boolean;
   onClose?: () => void;
+  customClose?: () => void;
+  customStyle?: React.CSSProperties;
 }) {
+  const { t } = useTranslation();
   const { uiPlayerStore } = useStore();
-  const { closeBottomBlock } = uiPlayerStore;
+  const { ownsClose } = React.useContext(PanelHostContext);
+  const close = onClose ?? customClose ?? uiPlayerStore.closeBottomBlock;
   return (
-    <div className={cn('relative border-r border-l py-1', stl.header)}>
-      <div
-        className={cn(
-          'w-full h-full flex justify-between items-center',
-          className,
-        )}
-      >
-        <div className="w-full flex items-center justify-between">
-          {children}
-        </div>
-        {showClose && (
-          <Tooltip title="Close Panel">
-            <CloseButton
-              onClick={onClose || closeBottomBlock}
-              size="18"
-              className="ml-2 hover:bg-black/10 rounded-lg p-1"
-            />
-          </Tooltip>
-        )}
-      </div>
+    <div className="m-dt__bar" style={customStyle}>
+      <div className={cn('m-dt__bar-main', className)}>{children}</div>
+      {showClose && !ownsClose ? (
+        <IconButton
+          icon={<X size={14} />}
+          label={t('Close the panel')}
+          variant="ghost"
+          onClick={close}
+        />
+      ) : null}
     </div>
   );
 }

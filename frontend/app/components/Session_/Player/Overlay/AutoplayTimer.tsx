@@ -1,73 +1,54 @@
-import React, { useEffect, useState } from 'react';
-import cn from 'classnames';
+import { Button } from '@/ui/actions/button';
 import { observer } from 'mobx-react-lite';
-import { useNavigate } from 'App/routing';
-import { Link } from 'UI';
-import { Button } from 'antd';
-import { session as sessionRoute, withSiteId } from 'App/routes';
-import AutoplayToggle from 'Shared/AutoplayToggle';
-import { useStore } from 'App/mstore';
-import stl from './AutoplayTimer.module.css';
-import clsOv from './overlay.module.css';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useStore } from 'App/mstore';
+import { session as sessionRoute, withSiteId } from 'App/routes';
+import { useNavigate } from 'App/routing';
+import 'Components/Session/ReplayScreen/replay-timeline.css';
+
+const COUNT_FROM = 5;
+
+/** The corner countdown to the next session in the queue. */
 function AutoplayTimer() {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  let timer: ReturnType<typeof setTimeout>;
   const [cancelled, setCancelled] = useState(false);
-  const [counter, setCounter] = useState(5);
+  const [left, setLeft] = useState(COUNT_FROM);
   const { projectsStore, sessionStore } = useStore();
   const { nextId } = sessionStore;
 
-  useEffect(() => {
-    if (counter > 0) {
-      timer = setTimeout(() => {
-        setCounter(counter - 1);
-      }, 1000);
-    }
-
-    if (counter === 0) {
-      const { siteId } = projectsStore.getSiteId();
-      navigate(withSiteId(sessionRoute(nextId), siteId));
-    }
-
-    return () => clearTimeout(timer);
-  }, [counter]);
-
-  const cancel = () => {
-    clearTimeout(timer);
-    setCancelled(true);
+  const playNow = () => {
+    const { siteId } = projectsStore.getSiteId();
+    navigate(withSiteId(sessionRoute(nextId), siteId));
   };
+
+  useEffect(() => {
+    if (cancelled) return undefined;
+    if (left === 0) {
+      playNow();
+      return undefined;
+    }
+    const id = setTimeout(() => setLeft((n) => n - 1), 1000);
+    return () => clearTimeout(id);
+  }, [left, cancelled]);
 
   if (cancelled) return null;
 
   return (
-    <div className={cn(clsOv.overlay, stl.overlayBg)}>
-      <div className="border p-5 shadow-lg bg-white rounded-sm">
-        <div className="mb-5">
-          {t('Autoplaying next session in')}{' '}
-          <span className="font-medium">{counter}</span>&nbsp;{t('seconds')}
-        </div>
-
-        <div className="flex items-center justify-between">
-          <div className="mr-10">
-            <AutoplayToggle />
-          </div>
-          <div className="flex items-center">
-            <Button variant="text" onClick={cancel}>
-              {t('Cancel')}
-            </Button>
-            <div className="px-2" />
-            <Link to={sessionRoute(nextId)} disabled={!nextId}>
-              <Button type="default">{t('Play Now')}</Button>
-            </Link>
-          </div>
-        </div>
-        {/* <div className="mt-2 flex items-center color-gray-dark">
-          Turn on/off auto-replay in <Icon name="ellipsis-v" className="mx-1" /> More options
-        </div> */}
-      </div>
+    <div className="m-toast m-autoplay" role="status" aria-live="polite">
+      <span className="m-autoplay__text">
+        {t('Next session in')} <b className="m-mono">{left}s</b>
+      </span>
+      <span className="m-autoplay__actions">
+        <Button variant="secondary" onClick={playNow} disabled={!nextId}>
+          {t('Play now')}
+        </Button>
+        <Button variant="subtle" onClick={() => setCancelled(true)}>
+          {t('Stop')}
+        </Button>
+      </span>
     </div>
   );
 }

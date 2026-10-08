@@ -1,13 +1,12 @@
-import React, { useEffect } from 'react';
-import { withSiteId, session as sessionRoute } from 'App/routes';
-import AutoplayToggle from 'Shared/AutoplayToggle/AutoplayToggle';
-import { withRouter, RouteComponentProps } from 'App/routing';
-import cn from 'classnames';
-import { LeftOutlined, RightOutlined } from '@ant-design/icons';
-import { Button, Popover } from 'antd';
-import { useStore } from 'App/mstore';
+import { IconButton } from '@/ui/actions/IconButton';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { useStore } from 'App/mstore';
+import { session as sessionRoute, withSiteId } from 'App/routes';
+import { RouteComponentProps, withRouter } from 'App/routing';
 
 const PER_PAGE = 10;
 
@@ -61,59 +60,22 @@ function QueueControls(props: Props) {
   };
 
   return (
-    <div className="flex items-center gap-1">
-      <div
+    <span className="m-rs__queue">
+      <IconButton
+        icon={<ChevronLeft size={15} />}
+        label={t('Play previous session')}
+        variant="ghost"
+        disabled={!previousId}
         onClick={prevHandler}
-        className={cn('p-1 group rounded-full', {
-          'pointer-events-none opacity-50': !previousId,
-          'cursor-pointer': !!previousId,
-        })}
-      >
-        <Popover
-          placement="bottom"
-          content={
-            <div className="whitespace-nowrap">
-              {t('Play Previous Session')}
-            </div>
-          }
-          open={previousId ? undefined : false}
-        >
-          <Button
-            size="small"
-            shape="circle"
-            disabled={!previousId}
-            className="flex items-center justify-center"
-          >
-            <LeftOutlined />
-          </Button>
-        </Popover>
-      </div>
-      <AutoplayToggle />
-      <div
+      />
+      <IconButton
+        icon={<ChevronRight size={15} />}
+        label={t('Play next session')}
+        variant="ghost"
+        disabled={!nextId}
         onClick={nextHandler}
-        className={cn('p-1 group ml-1 rounded-full', {
-          'pointer-events-none opacity-50': !nextId,
-          'cursor-pointer': !!nextId,
-        })}
-      >
-        <Popover
-          placement="bottom"
-          content={
-            <div className="whitespace-nowrap">{t('Play Next Session')}</div>
-          }
-          open={nextId ? undefined : false}
-        >
-          <Button
-            size="small"
-            shape="circle"
-            disabled={!nextId}
-            className="flex items-center justify-center"
-          >
-            <RightOutlined />
-          </Button>
-        </Popover>
-      </div>
-    </div>
+      />
+    </span>
   );
 }
 

@@ -1,10 +1,11 @@
+import { toast } from '@/ui/overlays/toast';
 import copy from 'copy-to-clipboard';
 import { useContext, useEffect } from 'react';
-import { toast } from 'react-toastify';
 
+import { blockValues, blocks } from 'App/mstore/uiPlayerStore';
+import { ownsKeys } from 'App/utils/keys';
 import { PlayerContext } from 'Components/Session/playerContext';
 import { SKIP_INTERVALS } from 'Components/Session_/Player/Controls/Controls';
-import { blockValues, blocks } from 'App/mstore/uiPlayerStore';
 
 function useShortcuts({
   skipInterval,
@@ -47,12 +48,7 @@ function useShortcuts({
 
   useEffect(() => {
     const handleShortcuts = (e: KeyboardEvent) => {
-      if (
-        e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLTextAreaElement
-      ) {
-        return false;
-      }
+      if (ownsKeys(e.target)) return false;
       if (e.shiftKey && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
         player.toggleInspectorMode(false);

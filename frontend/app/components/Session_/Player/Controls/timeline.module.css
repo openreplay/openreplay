@@ -1,50 +1,42 @@
 .positionTracker {
-  width: 15px;
-  height: 15px;
-  box-shadow: 0 0 0 1px #2331A8;
-  margin-left: -7px;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
   border-radius: 50%;
-  background-color: $main;
+  background-color: var(--m-content-primary);
+  box-shadow: 0 0 0 2px var(--m-surface-sunken);
   position: absolute;
   left: 0;
   z-index: 98;
-  top: 3px;
-  transition: all 0.2s ease-out;
+  top: calc(50% - 5px);
+  transition: scale var(--m-duration-fast) var(--m-ease-out);
   &:hover,
   &:focus {
-    transition: all 0.1s ease-in;
-    width: 20px;
-    height: 20px;
-    top: 1px;
-    left: -2px;
+    scale: 1.3;
   }
-  
 }
 
 .greenTracker {
-  background-color: #42AE5E!important;
-  box-shadow: 0 0 0 1px #42AE5E;
+  background-color: var(--m-content-success) !important;
 }
 
 .progress {
-  height: 10px;
-  padding: 8px 0;
+  height: 1.25rem;
+  padding: 0;
   cursor: pointer;
   width: 100%;
   max-width: 100%;
   position: relative;
   display: flex;
   align-items: center;
-
 }
-
 
 .skipInterval {
   position: absolute;
-  top: 3px;
-  height: 10px;
+  top: calc(50% - 1.5px);
+  height: 3px;
   bottom: 0;
-  background: repeating-linear-gradient( 125deg, #efefef, #efefef 3px, #ddd 3px, #efefef 5px );
+  background: var(--m-border-subtle);
   pointer-events: none;
   z-index: 2;
 }
@@ -117,14 +109,12 @@
   position: absolute;
   left: 0;
   right: 0;
-  height: 10px;
-  border: 1px solid $gray-lighter;
-  display: flex;
-  align-items: center;
-  background: white;
+  top: 50%;
+  height: 3px;
+  transform: translateY(-50%);
+  border-radius: 999px;
+  background: var(--m-border-default);
 }
-
-
 
 .clickRage {
   position: absolute;
@@ -148,8 +138,8 @@
   margin-left: -9px;
   background-color: $gray-lightest;
   padding: 2px;
-  box-shadow: 0px 0px 0px 1px rgba(0,0,0,0.1);
-  
+  box-shadow: 0px 0px 0px 1px rgba(0, 0, 0, 0.1);
+
   & .tooltipArrow {
     width: 50px;
     height: 25px;
@@ -159,7 +149,7 @@
     transform: translateX(-50%);
     overflow: hidden;
     &::after {
-      content: "";
+      content: '';
       position: absolute;
       width: 6px;
       height: 6px;
@@ -167,7 +157,7 @@
       transform: translateX(-50%) translateY(50%) rotate(45deg);
       bottom: 100%;
       left: 50%;
-      box-shadow: 0px 0px 0px 1px rgba(0,0,0,0.1);
+      box-shadow: 0px 0px 0px 1px rgba(0, 0, 0, 0.1);
     }
   }
 }
@@ -183,7 +173,7 @@
   color: white;
 
   &:after {
-    content:'';
+    content: '';
     position: absolute;
     top: 100%;
     left: 0;
@@ -201,7 +191,16 @@
   background-size: 30px 30px;
   width: 100%;
   height: 100%;
-  background-image: linear-gradient(135deg, rgba(0, 0, 0, 0.15) 25%, transparent 25%, transparent 50%, rgba(0, 0, 0, 0.15) 50%, rgba(0, 0, 0, 0.15) 75%, transparent 75%, transparent);
+  background-image: linear-gradient(
+    135deg,
+    rgba(0, 0, 0, 0.15) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(0, 0, 0, 0.15) 50%,
+    rgba(0, 0, 0, 0.15) 75%,
+    transparent 75%,
+    transparent
+  );
   animation: animate-stripes 1.5s linear infinite;
   animation-direction: reverse;
 }
@@ -209,7 +208,7 @@
 .saved-highlight {
   position: absolute;
   height: 10px;
-  background: rgba(252, 193, 0, 0.4); 
+  background: rgba(252, 193, 0, 0.4);
   z-index: 2;
   pointer-events: none;
 }

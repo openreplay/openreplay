@@ -1,10 +1,11 @@
-import { Dropdown } from 'antd';
-import type { MenuProps } from 'antd';
+import { ContextMenu } from '@/ui/actions/context-menu';
+import type { MenuItem } from '@/ui/actions/dropdown-menu';
+import { Icon } from '@/ui/icons/Icon';
+import { toast } from '@/ui/overlays/toast';
 import copy from 'copy-to-clipboard';
 import { Link2 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { toast } from 'react-toastify';
 
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { useStore } from 'App/mstore';
@@ -15,7 +16,6 @@ import {
   STACKEVENTS,
   STORAGE,
 } from 'App/mstore/uiPlayerStore';
-import { Icon } from 'UI';
 
 import { useModal } from '../../Modal';
 import AutoplayTimer from './Overlay/AutoplayTimer';
@@ -40,7 +40,7 @@ enum ItemKey {
   CopySessionUrlTs = '8',
 }
 
-const menuItems: MenuProps['items'] = [
+const menuItems: MenuItem[] = [
   {
     key: ItemKey.Console,
     label: 'Console',
@@ -66,7 +66,7 @@ const menuItems: MenuProps['items'] = [
     label: 'State',
     icon: <Icon name="redux" size={14} />,
   },
-  { type: 'divider' },
+  { key: 'divider', type: 'divider' },
   // {
   //   key: ItemKey.AddNote,
   //   label: 'Add Note',
@@ -166,7 +166,12 @@ function Overlay({ nextId, isClickmap }: Props) {
           <Loader />
         </div>
       ) : null}
-      <Dropdown menu={{ items: menuItems, onClick }} trigger={['contextMenu']}>
+      <ContextMenu
+        items={menuItems.map((it) => ({
+          ...it,
+          onClick: () => onClick({ key: it.key }),
+        }))}
+      >
         <div>
           {showPlayIconLayer && (
             <PlayIconLayer
@@ -176,7 +181,7 @@ function Overlay({ nextId, isClickmap }: Props) {
             />
           )}
         </div>
-      </Dropdown>
+      </ContextMenu>
       {markedTargets && (
         <ElementsMarker
           targets={markedTargets}

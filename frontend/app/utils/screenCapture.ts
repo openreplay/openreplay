@@ -1,5 +1,5 @@
+import { toast } from '@/ui/overlays/toast';
 import html2canvas from '@codewonders/html2canvas';
-import { toast } from 'react-toastify';
 
 export async function elementToImage(
   element: Element | null,

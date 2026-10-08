@@ -1,60 +1,15 @@
-import React, { useCallback, useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { useStore } from 'App/mstore';
-import { getTimelinePosition } from 'Components/Session_/Player/Controls/getTimelinePosition';
+import React, { useCallback, useState } from 'react';
+
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { shortDurationFromMs } from 'App/date';
+import { useStore } from 'App/mstore';
 import { throttle } from 'App/utils';
+import { getTimelinePosition } from 'Components/Session_/Player/Controls/getTimelinePosition';
 
 interface Props {
   scale: number;
 }
-
-export const HighlightDragLayer = observer(({ scale }: Props) => {
-  const { uiPlayerStore } = useStore();
-  const { player, store } = React.useContext(PlayerContext);
-  const sessEnd = store.get().endTime;
-  const toggleHighlight = uiPlayerStore.toggleHighlightSelection;
-  const timelineHighlightStartTs = uiPlayerStore.highlightSelection.startTs;
-  const timelineHighlightEndTs = uiPlayerStore.highlightSelection.endTs;
-  const lastStartTs = React.useRef(timelineHighlightStartTs);
-  const lastEndTs = React.useRef(timelineHighlightEndTs);
-
-  const [throttledJump] = React.useMemo(
-    () => throttle(player.jump, 25),
-    [player],
-  );
-  React.useEffect(() => {
-    if (timelineHighlightStartTs !== lastStartTs.current) {
-      player.pause();
-      throttledJump(timelineHighlightStartTs, true);
-      lastStartTs.current = timelineHighlightStartTs;
-      return;
-    }
-    if (timelineHighlightEndTs !== lastEndTs.current) {
-      player.pause();
-      throttledJump(timelineHighlightEndTs, true);
-      lastEndTs.current = timelineHighlightEndTs;
-    }
-  }, [timelineHighlightStartTs, timelineHighlightEndTs]);
-
-  const onDrag = (start: number, end: number) => {
-    toggleHighlight({
-      enabled: true,
-      range: [start, end],
-    });
-  };
-
-  return (
-    <DraggableMarkers
-      scale={scale}
-      onDragEnd={onDrag}
-      defaultStartPos={timelineHighlightStartTs}
-      defaultEndPos={timelineHighlightEndTs}
-      sessEnd={sessEnd}
-    />
-  );
-});
 
 export const ZoomDragLayer = observer(({ scale }: Props) => {
   const { uiPlayerStore } = useStore();

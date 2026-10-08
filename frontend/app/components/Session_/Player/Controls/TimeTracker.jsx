@@ -1,6 +1,7 @@
-import React from 'react';
-import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
+import React from 'react';
+
+import { PlayerContext } from 'App/components/Session/playerContext';
 import { ProgressBar } from 'App/player-ui';
 
 function TimeTracker({ scale, live = false, left }) {

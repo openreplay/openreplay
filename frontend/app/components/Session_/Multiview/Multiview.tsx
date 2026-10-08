@@ -1,24 +1,23 @@
-import React from 'react';
-import { useStore } from 'App/mstore';
-import { BackLink } from 'UI';
+import { IconButton } from '@/ui/actions/IconButton';
+import { Button } from '@/ui/actions/button';
+import { ArrowLeft, Plus, Replace, Trash2 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
-import { useHistory, useParams } from 'App/routing';
-import { liveSession, assist, withSiteId, multiview } from 'App/routes';
-import AssistSessionsModal from 'App/components/Session_/Player/Controls/AssistSessionsModal';
-import { useModal } from 'App/components/Modal';
-import LivePlayer from 'App/components/Session/LivePlayer';
-import EmptyTile from './EmptyTile';
-import SessionTileFooter from './SessionTileFooter';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-function Multiview({
-  assistCredentials,
-}: {
-  assistCredentials: any;
-  list: Record<string, any>[];
-}) {
+import LivePlayer from 'App/components/Session/LivePlayer';
+import AssistSessionsModal from 'App/components/Session_/Player/Controls/AssistSessionsModal';
+import { useStore } from 'App/mstore';
+import { assist, liveSession, multiview, withSiteId } from 'App/routes';
+import { useHistory, useParams } from 'App/routing';
+
+import './multiview.css';
+
+const SLOTS = 4;
+
+/** Up to four live sessions side by side; a tile opens its session in full. */
+function Multiview({ assistCredentials }: { assistCredentials: any }) {
   const { t } = useTranslation();
-  const { showModal, hideModal } = useModal();
   const { assistMultiviewStore, projectsStore, searchStoreLive, sessionStore } =
     useStore();
   const siteId = projectsStore.siteId!;
@@ -26,6 +25,10 @@ function Multiview({
   // @ts-ignore
   const { sessionsquery } = useParams();
   const total = sessionStore.totalLiveSessions;
+  const [picker, setPicker] = React.useState<{
+    open: boolean;
+    replace?: string;
+  }>({ open: false });
 
   const onSessionsChange = (
     sessions: Array<Record<string, any> | undefined>,
@@ -38,20 +41,17 @@ function Multiview({
 
   React.useEffect(() => {
     assistMultiviewStore.setOnChange(onSessionsChange);
-
     if (sessionsquery) {
       const sessionIds = decodeURIComponent(sessionsquery).split(',');
-      // preset
-      assistMultiviewStore.presetSessions(sessionIds).then((data) => {
+      void assistMultiviewStore.presetSessions(sessionIds).then((data) => {
         sessionStore.customSetSessions(data);
       });
     } else {
-      searchStoreLive.fetchSessions();
+      void searchStoreLive.fetchSessions();
     }
   }, []);
 
-  const openLiveSession = (e: React.MouseEvent, sessionId: string) => {
-    e.stopPropagation();
+  const openLiveSession = (sessionId: string) => {
     assistMultiviewStore.setActiveSession(sessionId);
     history.push(withSiteId(`${liveSession(sessionId)}?multi=true`, siteId));
   };
@@ -61,49 +61,33 @@ function Multiview({
     history.push(withSiteId(assist(), siteId));
   };
 
-  const openListModal = () => {
-    showModal(<AssistSessionsModal onAdd={hideModal} />, {
-      right: true,
-      width: 700,
-    });
-  };
-
-  const replaceSession = (e: React.MouseEvent, sessionId: string) => {
-    e.stopPropagation();
-    showModal(
-      <AssistSessionsModal onAdd={hideModal} replaceTarget={sessionId} />,
-      { right: true, width: 700 },
-    );
-  };
-
-  const deleteSession = (e: React.MouseEvent, sessionId: string) => {
-    e.stopPropagation();
-    assistMultiviewStore.removeSession(sessionId);
-  };
-
-  const emptySpace = 4 - assistMultiviewStore.sessions.length;
-
-  const placeholder = emptySpace > 0 ? new Array(emptySpace).fill(0) : [];
+  const empty = Math.max(0, SLOTS - assistMultiviewStore.sessions.length);
 
   return (
-    <div style={{ height: '95vh' }} className="full flex flex-col">
-      <div className="w-full p-4 flex justify-between items-center">
-        <div>
-          {/* @ts-ignore */}
-          <BackLink label={t('Exit to sessions list')} onClick={returnToList} />
-        </div>
-        <div>{`${t('Watching')} ${assistMultiviewStore.sessions.length} ${t('of')} ${total} ${t('Live Sessions')}`}</div>
-      </div>
-      <div className="w-full h-full grid grid-cols-2 grid-rows-2">
+    <section className="m-mv">
+      <header className="m-mv__head">
+        <Button variant="subtle" onClick={returnToList}>
+          <ArrowLeft size={14} />
+          {t('CoBrowse')}
+        </Button>
+        <span className="m-mv__count">
+          {t('Watching {{n}} of {{total}} live sessions', {
+            n: assistMultiviewStore.sessions.length,
+            total,
+          })}
+        </span>
+      </header>
+      <div className="m-mv__grid">
         {assistMultiviewStore.sortedSessions.map(
           (session: Record<string, any>) => (
-            <div
-              key={session.key}
-              className="border hover:bg-active-blue hover:border-borderColor-primary relative group cursor-pointer"
-            >
-              <div
-                onClick={(e) => openLiveSession(e, session.sessionId)}
-                className="w-full h-full"
+            <div key={session.key} className="m-mv__tile">
+              <button
+                type="button"
+                className="m-mv__stage"
+                aria-label={t('Open {{name}} in full', {
+                  name: session.userDisplayName,
+                })}
+                onClick={() => openLiveSession(session.sessionId)}
               >
                 {session.agentToken ? (
                   <LivePlayer
@@ -112,25 +96,49 @@ function Multiview({
                     customAssistCredentials={assistCredentials}
                   />
                 ) : (
-                  <div>{t('Loading session')}</div>
+                  <span className="m-mv__loading">{t('Loading session…')}</span>
                 )}
-              </div>
-              <SessionTileFooter
-                userDisplayName={session.userDisplayName}
-                sessionId={session.sessionId}
-                replaceSession={replaceSession}
-                deleteSession={deleteSession}
-              />
+              </button>
+              <footer className="m-mv__foot">
+                <span className="m-mv__who">{session.userDisplayName}</span>
+                <IconButton
+                  icon={<Replace size={14} />}
+                  label={t('Replace session')}
+                  variant="ghost"
+                  onClick={() =>
+                    setPicker({ open: true, replace: session.sessionId })
+                  }
+                />
+                <IconButton
+                  icon={<Trash2 size={14} />}
+                  label={t('Remove from multiview')}
+                  variant="ghost"
+                  onClick={() =>
+                    assistMultiviewStore.removeSession(session.sessionId)
+                  }
+                />
+              </footer>
             </div>
           ),
         )}
-        {placeholder.map((_, i) => (
-          <React.Fragment key={i}>
-            <EmptyTile onClick={openListModal} />
-          </React.Fragment>
+        {Array.from({ length: empty }, (_, i) => (
+          <button
+            key={`empty-${i}`}
+            type="button"
+            className="m-mv__tile m-mv__empty"
+            onClick={() => setPicker({ open: true })}
+          >
+            <Plus size={16} aria-hidden="true" />
+            {t('Add a live session')}
+          </button>
         ))}
       </div>
-    </div>
+      <AssistSessionsModal
+        open={picker.open}
+        replaceTarget={picker.replace}
+        onClose={() => setPicker({ open: false })}
+      />
+    </section>
   );
 }
 

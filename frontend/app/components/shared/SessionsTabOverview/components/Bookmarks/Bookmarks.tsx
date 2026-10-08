@@ -1,92 +1,81 @@
-import React, { useEffect } from 'react';
-import SessionList from 'Shared/SessionsTabOverview/components/SessionList/SessionList';
-import NoteTags from 'Shared/SessionsTabOverview/components/Notes/NoteTags';
-import { Loader, NoContent, Pagination } from 'UI';
-import AnimatedSVG from 'Shared/AnimatedSVG';
-import { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
-import NoteItem from 'Shared/SessionsTabOverview/components/Notes/NoteItem';
-import { useStore } from '@/mstore';
-import { observer } from 'mobx-react-lite';
-import SessionItem from 'Shared/SessionItem/SessionItem';
 import usePageTitle from '@/hooks/usePageTitle';
+import { useStore } from '@/mstore';
+import { EmptyState } from '@/ui/feedback/EmptyState';
+import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
+import { ListFooter } from '@/ui/layout/ListFooter';
+import { PageCard } from '@/ui/layout/PageCard';
 import withPermissions from 'HOCs/withPermissions';
+import { observer } from 'mobx-react-lite';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { useSessionQueue } from 'Shared/SessionsDock/openSessions';
+import { SessionsTable } from 'Shared/SessionsTable/SessionsTable';
+import { useOpenSession } from 'Shared/SessionsTable/useOpenSession';
 
 function Bookmarks() {
   const { t } = useTranslation();
-  const {
-    projectsStore,
-    sessionStore,
-    customFieldStore,
-    userStore,
-    searchStore,
-  } = useStore();
+  const { sessionStore, userStore, settingsStore, projectsStore } = useStore();
+  const queue = useSessionQueue(String(projectsStore.activeSiteId ?? ''));
   const { isEnterprise } = userStore;
-  const { isLoggedIn } = userStore;
-  const { bookmarks } = sessionStore;
+  const { bookmarks, lastPlayedSessionId } = sessionStore;
+  const { open, hover } = useOpenSession();
 
-  usePageTitle('Bookmarks - OpenReplay');
+  usePageTitle(`${isEnterprise ? 'Vault' : 'Bookmarks'} - OpenReplay`);
 
   useEffect(() => {
     void sessionStore.fetchBookmarkedSessions();
   }, []);
 
   return (
-    <div className="widget-wrapper">
-      <div className="flex items-center px-4 py-2 justify-between w-full">
-        <h2 className="text-2xl capitalize mr-4">{t('Bookmarks')}</h2>
-      </div>
-      <div className="border-b" />
-      <Loader loading={bookmarks.loading}>
-        <NoContent
-          show={bookmarks.list.length === 0}
+    <PageCard
+      title={isEnterprise ? t('Vault') : t('Bookmarks')}
+      subtitle={
+        isEnterprise
+          ? t('Sessions kept past the retention period.')
+          : t('Sessions you saved to come back to.')
+      }
+    >
+      {bookmarks.loading && bookmarks.list.length === 0 ? (
+        <SkeletonRows rows={6} />
+      ) : bookmarks.list.length === 0 ? (
+        <EmptyState
+          art="bookmark"
           title={
-            <div className="flex flex-col items-center justify-center">
-              {/* <Icon name="no-dashboard" size={80} color="figmaColors-accent-secondary" /> */}
-              <AnimatedSVG name={ICONS.NO_BOOKMARKS} size={60} />
-              <div className="text-center mt-4 text-lg font-medium">
-                {t('No sessions bookmarked')}
-              </div>
-            </div>
+            isEnterprise
+              ? t('Nothing in the vault yet')
+              : t('Nothing bookmarked yet')
           }
-        >
-          <div className="border-b rounded-sm bg-white">
-            {bookmarks.list.map((session: any) => (
-              <div key={session.sessionId} className="border-b">
-                <SessionItem
-                  session={session}
-                  hasUserFilter={false}
-                  // onUserClick={() => {}}
-                  // metaList={metaList}
-                  // lastPlayedSessionId={lastPlayedSessionId}
-                  bookmarked
-                  // toggleFavorite={toggleFavorite}
-                />
-              </div>
-            ))}
-          </div>
-
-          <div className="w-full flex items-center justify-between py-4 px-6">
-            <div className="text-disabled-text">
-              {t('Showing')}{' '}
-              <span className="font-semibold">
-                {Math.min(bookmarks.list.length, bookmarks.pageSize)}
-              </span>{' '}
-              {t('out of')}
-              <span className="font-semibold">{bookmarks.total}</span>&nbsp;
-              {t('sessions')}.
-            </div>
-            <Pagination
-              page={bookmarks.page}
-              total={bookmarks.total}
-              onPageChange={(page) => sessionStore.updateBookmarksPage(page)}
-              limit={bookmarks.pageSize}
-              debounceRequest={100}
-            />
-          </div>
-        </NoContent>
-      </Loader>
-    </div>
+          hint={
+            isEnterprise
+              ? t(
+                  'Extend the retention period of any session by adding it to your vault directly from the player screen.',
+                )
+              : t(
+                  'Bookmark a session while watching it and it is kept here, for you.',
+                )
+          }
+        />
+      ) : (
+        <>
+          <SessionsTable
+            rows={bookmarks.list}
+            onOpen={open}
+            queue={queue}
+            onHover={hover}
+            lastViewedId={lastPlayedSessionId}
+            timezone={settingsStore.sessionSettings.timezone?.value}
+          />
+          <ListFooter
+            page={bookmarks.page}
+            pageSize={bookmarks.pageSize}
+            total={bookmarks.total}
+            noun={[t('session'), t('sessions')]}
+            onPage={(page) => sessionStore.updateBookmarksPage(page)}
+          />
+        </>
+      )}
+    </PageCard>
   );
 }
 

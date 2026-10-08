@@ -1,42 +1,69 @@
+import { Tooltip } from '@/ui/overlays/tooltip';
+import copy from 'copy-to-clipboard';
+import { Check, Copy } from 'lucide-react';
 import React from 'react';
-import { Tooltip } from 'UI';
-import { CaretRightOutlined } from '@ant-design/icons';
-import { Button } from 'antd';
+import { useTranslation } from 'react-i18next';
+
 import { shortDurationFromMs } from 'App/date';
 
+import './jump-button.css';
+
 interface Props {
-  onClick: any;
+  /** without it the tail keeps only `extra` (a row with no time to jump to) */
+  onClick?: () => void;
   time?: number;
   tooltip?: string;
   extra?: React.ReactNode;
 }
-function JumpButton(props: Props) {
-  const { tooltip } = props;
+
+/** A row's hover tail: extra controls and Jump, over the row's time. Rows carry `group`. */
+function JumpButton({ onClick, time, tooltip, extra }: Props) {
+  const { t } = useTranslation();
+  const jump = onClick ? (
+    <button
+      type="button"
+      className="m-jump__btn"
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+    >
+      {t('Jump')}
+    </button>
+  ) : null;
   return (
-    <div className="absolute right-2 top-0 bottom-0 my-auto flex items-center gap-2">
-      {props.extra ? (
-        <div className={'hidden group-hover:flex gap-2 items-center'}>
-          {props.extra}
-        </div>
+    <div className="m-jump">
+      {extra ? <div className="m-jump__extra">{extra}</div> : null}
+      {tooltip && jump ? <Tooltip title={tooltip}>{jump}</Tooltip> : jump}
+      {time ? (
+        <span className="m-jump__time">{shortDurationFromMs(time)}</span>
       ) : null}
-      <Tooltip title={tooltip}>
-        <div
-          className="hidden bg-white group-hover:flex rounded-md text-xs px-1 py-0 h-6 items-center gap-2 border cursor-pointer hover:border-teal! hover:text-teal!"
-          onClick={(e: any) => {
-            e.stopPropagation();
-            props.onClick();
-          }}
-        >
-          <span className="leading-none">JUMP</span>
-          <CaretRightOutlined />
-        </div>
-        {props.time ? (
-          <div className="block group-hover:hidden mr-2 text-sm">
-            {shortDurationFromMs(props.time)}
-          </div>
-        ) : null}
-      </Tooltip>
     </div>
+  );
+}
+
+export function RowCopy({ text }: { text: string }) {
+  const { t } = useTranslation();
+  const [copied, setCopied] = React.useState(false);
+  const timer = React.useRef<ReturnType<typeof setTimeout>>(undefined);
+  React.useEffect(() => () => clearTimeout(timer.current), []);
+  return (
+    <Tooltip title={copied ? t('Copied') : t('Copy this line')}>
+      <button
+        type="button"
+        className="m-jump__icon"
+        aria-label={t('Copy this line')}
+        onClick={(e) => {
+          e.stopPropagation();
+          copy(text);
+          setCopied(true);
+          clearTimeout(timer.current);
+          timer.current = setTimeout(() => setCopied(false), 1000);
+        }}
+      >
+        {copied ? <Check size={12} /> : <Copy size={12} />}
+      </button>
+    </Tooltip>
   );
 }
 

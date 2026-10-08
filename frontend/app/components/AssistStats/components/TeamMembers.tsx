@@ -1,30 +1,20 @@
-import { DownOutlined, TableOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Space, Typography, Tooltip } from 'antd';
-import { durationFromMsFormatted } from 'App/date';
-import { Member } from 'App/services/AssistStatsService';
-import { getInitials, exportCSVFile } from 'App/utils';
+import { IconButton } from '@/ui/actions/IconButton';
+import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
+import { SimpleSelect } from '@/ui/inputs/select';
 import { TFunction } from 'i18next';
+import { Sheet } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Loader, NoContent } from 'UI';
+
+import { durationFromMsFormatted } from 'App/date';
+import { Member } from 'App/services/AssistStatsService';
+import { exportCSVFile, getInitials } from 'App/utils';
 
 const items = (t: TFunction) => [
-  {
-    label: t('Sessions Assisted'),
-    key: 'sessionsAssisted',
-  },
-  {
-    label: t('Live Duration'),
-    key: 'assistDuration',
-  },
-  {
-    label: t('Call Duration'),
-    key: 'callDuration',
-  },
-  {
-    label: t('Remote Duration'),
-    key: 'controlDuration',
-  },
+  { label: t('Sessions assisted'), value: 'sessionsAssisted' },
+  { label: t('Live duration'), value: 'assistDuration' },
+  { label: t('Call duration'), value: 'callDuration' },
+  { label: t('Remote duration'), value: 'controlDuration' },
 ];
 
 function TeamMembers({
@@ -39,12 +29,6 @@ function TeamMembers({
   membersSort: string;
 }) {
   const { t } = useTranslation();
-  const [dateRange, setDateRange] = React.useState(items(t)[0].label);
-  const updateRange = ({ key }: { key: string }) => {
-    const item = items(t).find((item) => item.key === key);
-    setDateRange(item?.label || items(t)[0].label);
-    onMembersSort(item?.key || items(t)[0].key);
-  };
 
   const onExport = () => {
     const headers = [
@@ -54,7 +38,6 @@ function TeamMembers({
       { label: t('Call Duration'), key: 'callDuration' },
       { label: t('Remote Duration'), key: 'controlDuration' },
     ];
-
     const data = topMembers.list.map((member) => ({
       name: `"${member.name}"`,
       sessionsAssisted: `"${member.assistCount}"`,
@@ -62,7 +45,6 @@ function TeamMembers({
       callDuration: `"${durationFromMsFormatted(member.callDuration)}"`,
       controlDuration: `"${durationFromMsFormatted(member.controlDuration)}"`,
     }));
-
     exportCSVFile(
       headers,
       data,
@@ -71,79 +53,50 @@ function TeamMembers({
   };
 
   return (
-    <div className="rounded-sm bg-white border p-2 h-full w-full flex flex-col">
-      <div className="flex items-center">
-        <Typography.Title style={{ marginBottom: 0 }} level={5}>
-          {t('Team Members')}
-        </Typography.Title>
-        <div className="ml-auto flex items-center gap-2">
-          <Dropdown menu={{ items: items(t), onClick: updateRange }}>
-            <Button size="small">
-              <Space>
-                <Typography.Text>{dateRange}</Typography.Text>
-                <DownOutlined rev={undefined} />
-              </Space>
-            </Button>
-          </Dropdown>
-          <Tooltip
-            title={
-              topMembers.list.length === 0
-                ? t('No data at the moment to export.')
-                : t('Export CSV')
-            }
-          >
-            <Button
-              onClick={onExport}
-              shape="default"
-              size="small"
-              disabled={topMembers.list.length === 0}
-              icon={<TableOutlined rev={undefined} />}
-            />
-          </Tooltip>
-        </div>
-      </div>
-      <Loader
-        loading={isLoading}
-        style={{ minHeight: 150, height: 300 }}
-        size={48}
-      >
-        <NoContent
-          size="small"
-          title={
-            <div className="text-base font-normal">
-              {t('No data available')}
-            </div>
+    <section className="m-astats__card">
+      <header className="m-astats__card-head">
+        <h3 className="m-astats__card-title">{t('Team members')}</h3>
+        <SimpleSelect
+          variant="subtle"
+          value={membersSort}
+          ariaLabel={t('Rank by')}
+          onChange={(v) => v && onMembersSort(v)}
+          options={items(t)}
+        />
+        <IconButton
+          icon={<Sheet size={14} />}
+          label={
+            topMembers.list.length === 0
+              ? t('No data at the moment to export.')
+              : t('Export CSV')
           }
-          show={topMembers.list && topMembers.list.length === 0}
-          style={{ height: '100px' }}
-        >
+          variant="ghost"
+          disabled={topMembers.list.length === 0}
+          onClick={onExport}
+        />
+      </header>
+      {isLoading ? (
+        <SkeletonRows rows={4} columns={[70, 20]} />
+      ) : topMembers.list.length === 0 ? (
+        <p className="m-astats__none">{t('No data available')}</p>
+      ) : (
+        <ul className="m-astats__members">
           {topMembers.list.map((member) => (
-            <div
-              key={member.name}
-              className="w-full flex items-center gap-2 border-b py-2 px-1"
-            >
-              <div className="relative flex items-center justify-center w-10 h-10">
-                <div className="absolute left-0 right-0 top-0 bottom-0 mx-auto w-10 h-10 rounded-full opacity-30 bg-tealx" />
-                <div className="text-lg uppercase color-tealx">
-                  {getInitials(member.name)}
-                </div>
-              </div>
-              <div>{member.name}</div>
-              <div className="ml-auto">
+            <li key={member.name} className="m-astats__member">
+              <span className="m-astats__initials" aria-hidden="true">
+                {getInitials(member.name)}
+              </span>
+              <span className="m-astats__member-name">{member.name}</span>
+              <span className="m-astats__member-n">
                 {membersSort === 'sessionsAssisted'
                   ? member.count
                   : durationFromMsFormatted(member.count)}
-              </div>
-            </div>
+              </span>
+            </li>
           ))}
-        </NoContent>
-      </Loader>
-      <div className="flex items-center justify-center text-disabled-text p-2 mt-auto">
-        {isLoading || topMembers.list.length === 0
-          ? ''
-          : `${t('Showing 1 to')} ${topMembers.total} ${t('of the total')}`}
-      </div>
-    </div>
+        </ul>
+      )}
+    </section>
   );
 }
 

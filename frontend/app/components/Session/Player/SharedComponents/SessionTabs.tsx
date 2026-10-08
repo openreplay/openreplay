@@ -1,10 +1,12 @@
-import React from 'react';
-import { observer } from 'mobx-react-lite';
 import cn from 'classnames';
-import { PlayerContext } from 'Components/Session/playerContext';
-import { useModal } from 'Components/Modal';
-import Tab from './Tab';
+import { observer } from 'mobx-react-lite';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { useModal } from 'Components/Modal';
+import { PlayerContext } from 'Components/Session/playerContext';
+
+import Tab from './Tab';
 
 interface Props {
   tabs: { tab: string; idx: number }[];
@@ -30,8 +32,8 @@ function Modal({ tabs, currentTab, changeTab, hideModal }: Props) {
             hideModal();
           }}
           className={cn(
-            currentTab === tab.tab ? 'font-semibold ' : 'text-disabled-text',
-            'cursor-pointer border-b p-4 hover:bg-active-blue',
+            currentTab === tab.tab ? 'font-semibold ' : 'text-content-disabled',
+            'cursor-pointer border-b p-4 hover:bg-surface-hover',
           )}
         >
           {t('Tab')}&nbsp;{i + 1}
@@ -86,33 +88,29 @@ function SessionTabs({ isLive }: { isLive?: boolean }) {
     );
   };
   return (
-    <>
-      {shownTabs.map((tab, i) => (
-        <React.Fragment key={tab.tab}>
-          <Tab
-            i={tab.idx}
-            tab={tab.tab}
-            currentTab={actualTabs.length === 1 ? tab.tab : currentTab}
-            changeTab={changeTab}
-            isLive={isLive}
-            isClosed={tab.isClosed}
-            name={tabNames[tab.tab]}
-          />
-        </React.Fragment>
+    <div className="m-rtabs" role="tablist" aria-label={t('Browser tabs')}>
+      {shownTabs.map((tab) => (
+        <Tab
+          key={tab.tab}
+          i={tab.idx}
+          tab={tab.tab}
+          currentTab={actualTabs.length === 1 ? tab.tab : currentTab}
+          changeTab={changeTab}
+          isLive={isLive}
+          isClosed={tab.isClosed}
+          name={tabNames[tab.tab]}
+        />
       ))}
       {shouldTruncate ? (
-        <div
+        <button
+          type="button"
+          className="m-rtabs__more m-mono"
           onClick={openModal}
-          className={cn(
-            'self-end py-1 px-4 text-sm',
-            'cursor-pointer bg-active-blue text-blue',
-            'border-t-transparent! border-l-transparent! border-r-transparent!',
-          )}
         >
-          +{tabsArr.length - DISPLAY_LIMIT}&nbsp;{t('More')}
-        </div>
+          +{tabsArr.length - DISPLAY_LIMIT}
+        </button>
       ) : null}
-    </>
+    </div>
   );
 }
 

@@ -22,6 +22,16 @@ interface TagResponse {
   total: number;
 }
 
+/** What the tags API accepts for a name (schemas.TagUpdate). */
+export const TAG_NAME_MAX = 100;
+export const isValidTagName = (name: string) =>
+  name.length > 0 &&
+  name.length <= TAG_NAME_MAX &&
+  /^[a-zA-Z0-9" -]*$/.test(name);
+
+/** A tag as the list returns it. */
+export type TagItem = TagResponse['tags'][number];
+
 export interface Tag extends CreateTag {
   tagId: number;
   volume: number;
@@ -36,7 +46,9 @@ export default class TagWatchService extends BaseService {
   }
 
   async getTags(projectId: number, page = 1, limit = 10): Promise<TagResponse> {
-    const r = await this.client.get(`/${projectId}/tags?page=${page}&limit=${limit}`);
+    const r = await this.client.get(
+      `/${projectId}/tags?page=${page}&limit=${limit}`,
+    );
     const response = await r.json();
     return response.data || {};
   }

@@ -1,3 +1,0 @@
-function Clips() {
-  return null;
-}

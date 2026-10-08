@@ -1,5 +1,4 @@
 import { Filter } from '@/mstore/types/filterConstants';
-import { iTag } from '@/services/NotesService';
 import Period, { CUSTOM_RANGE } from 'Types/app/period';
 import { FilterCategory, FilterKey } from 'Types/filter/filterType';
 import {
@@ -94,7 +93,6 @@ export const TAB_MAP: any = {
   all: { name: 'All', type: 'all' },
   sessions: { name: 'Sessions', type: 'sessions' },
   bookmarks: { name: 'Bookmarks', type: 'bookmarks' },
-  notes: { name: 'Notes', type: 'notes' },
   recommendations: { name: 'Recommendations', type: 'recommendations' },
 };
 
@@ -370,7 +368,7 @@ class SearchStore {
     this.activeTags = ['all'];
   };
 
-  toggleTag(tag?: iTag) {
+  toggleTag(tag?: string) {
     if (!tag) {
       this.activeTags = [];
       void this.fetchSessions(true);

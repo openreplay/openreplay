@@ -1,17 +1,17 @@
-import React from 'react';
 import cn from 'classnames';
-import stl from './content.module.css';
+import React from 'react';
 
 function Content({
   children,
   className,
-  ...props
+  style,
 }: {
   children?: React.ReactNode;
   className?: string;
+  style?: React.CSSProperties;
 }) {
   return (
-    <div className={cn(className, stl.content)} {...props}>
+    <div className={cn('m-dt__content', className)} style={style}>
       {children}
     </div>
   );

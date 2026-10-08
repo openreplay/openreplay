@@ -1,12 +1,12 @@
-import React from 'react';
 import {
-  SignalZero,
+  Signal,
+  SignalHigh,
   SignalLow,
   SignalMedium,
-  SignalHigh,
-  Signal,
-  CircleAlert,
+  SignalZero,
 } from 'lucide-react';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 enum SignalQuality {
   Lowest,
@@ -17,16 +17,11 @@ enum SignalQuality {
 }
 
 const SignalIcons = {
-  [SignalQuality.Lowest]: (
-    <div className="flex items-center gap-1 text-red">
-      <SignalZero size={16} />
-      <CircleAlert size={16} />
-    </div>
-  ),
-  [SignalQuality.Low]: <SignalLow size={16} className="text-red" />,
-  [SignalQuality.Medium]: <SignalMedium size={16} className="text-yellow" />,
-  [SignalQuality.High]: <SignalHigh size={16} className="text-green" />,
-  [SignalQuality.Full]: <Signal size={16} className="text-green" />,
+  [SignalQuality.Lowest]: SignalZero,
+  [SignalQuality.Low]: SignalLow,
+  [SignalQuality.Medium]: SignalMedium,
+  [SignalQuality.High]: SignalHigh,
+  [SignalQuality.Full]: Signal,
 };
 
 const signalTexts = {
@@ -38,18 +33,17 @@ const signalTexts = {
 };
 
 function ConnectionQuality({ connection }: { connection: number }) {
+  const { t } = useTranslation();
+  const q = (
+    connection in signalTexts ? connection : SignalQuality.Full
+  ) as SignalQuality;
+  const Icon = SignalIcons[q];
   return (
-    <div className="mx-2 flex items-center">
-      <div className="font-semibold">Connection quality:</div>
-      <div className="mb-1 ml-2 mr-1">
-        {SignalIcons[connection as SignalQuality] ??
-          SignalIcons[SignalQuality.Full]}
-      </div>
-      <div>
-        {signalTexts[connection as SignalQuality] ||
-          signalTexts[SignalQuality.Full]}
-      </div>
-    </div>
+    <span className={q <= SignalQuality.Low ? 'is-bad' : undefined}>
+      {t('Connection quality')}
+      <Icon size={13} aria-hidden="true" className="m-dt__signal" />
+      <b>{t(signalTexts[q])}</b>
+    </span>
   );
 }
 

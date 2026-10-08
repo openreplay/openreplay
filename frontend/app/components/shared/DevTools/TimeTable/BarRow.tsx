@@ -1,5 +1,7 @@
-import { percentOf } from 'App/utils';
 import React from 'react';
+
+import { percentOf } from 'App/utils';
+
 import styles from './barRow.module.css';
 import tableStyles from './timeTable.module.css';
 

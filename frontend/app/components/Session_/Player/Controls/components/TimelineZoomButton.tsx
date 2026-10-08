@@ -1,9 +1,12 @@
-import React from 'react';
-import { Button, Tooltip } from 'antd';
-import { PlayerContext } from 'Components/Session/playerContext';
+import { Button } from '@/ui/actions/button';
+import { Tooltip } from '@/ui/overlays/tooltip';
+import { Crosshair } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
-import { useStore } from 'App/mstore';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { useStore } from 'App/mstore';
+import { PlayerContext } from 'Components/Session/playerContext';
 
 function TimelineZoomButton() {
   const { t } = useTranslation();
@@ -35,14 +38,14 @@ function TimelineZoomButton() {
       title={t(
         'Select a portion of the timeline to view the x-ray and activity for that specific selection.',
       )}
-      placement="top"
     >
       <Button
+        variant={enabled ? 'secondary' : 'subtle'}
+        aria-pressed={enabled}
         onClick={onClickHandler}
-        size="small"
-        className="flex items-center font-medium"
       >
-        {t('Focus Mode:')}&nbsp;{enabled ? 'On' : 'Off'}
+        <Crosshair size={13} aria-hidden="true" />
+        {enabled ? t('Focus mode on') : t('Focus mode')}
       </Button>
     </Tooltip>
   );

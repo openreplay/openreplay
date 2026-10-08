@@ -1,41 +1,25 @@
 import React from 'react';
+
 import { millisToMinutesAndSeconds } from 'App/utils';
 
-interface Props {
-  endTime: number;
-}
-function TimelineScale(props: Props) {
-  const { endTime } = props;
-  const scaleRef = React.useRef<HTMLDivElement>(null);
-  const gap = 60;
+const TICKS = 8;
 
-  const drawScale = (container: any) => {
-    const width = container.offsetWidth;
-    const part = Math.round(width / gap);
-    container.replaceChildren();
-    for (let i = 0; i < part; i++) {
-      const txt = millisToMinutesAndSeconds(i * (endTime / part));
-      const el = document.createElement('div');
-      el.style.position = 'absolute';
-      el.style.left = `${i * gap}px`;
-      el.style.paddingTop = '1px';
-      el.style.opacity = '0.8';
-      el.innerHTML = `${txt}`;
-      el.style.fontSize = '12px';
-      el.classList.add('text-white');
-
-      container.appendChild(el);
-    }
-  };
-
-  React.useEffect(() => {
-    if (!scaleRef.current) {
-      return;
-    }
-
-    drawScale(scaleRef.current);
-  }, [scaleRef]);
-  return <div className="h-6 bg-gray-darkest w-full" ref={scaleRef} />;
+function TimelineScale({ endTime }: { endTime: number }) {
+  return (
+    <div className="m-dt__lane m-dt__lane--axis" aria-hidden="true">
+      <span className="m-dt__lane-title" />
+      <div className="m-dt__lane-track m-dt__axis">
+        {Array.from({ length: TICKS }, (_, i) => {
+          const at = (endTime / TICKS) * (i + 0.5);
+          return (
+            <i key={i} style={{ left: `${((i + 0.5) / TICKS) * 100}%` }}>
+              {millisToMinutesAndSeconds(at)}
+            </i>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 export default TimelineScale;

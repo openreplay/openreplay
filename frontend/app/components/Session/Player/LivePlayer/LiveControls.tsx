@@ -1,26 +1,24 @@
-import React from 'react';
 import cn from 'classnames';
-import { useStore } from 'App/mstore';
-
-import { CONSOLE, NETWORK } from 'App/mstore/uiPlayerStore';
-import {
-  PlayerContext,
-  ILivePlayerContext,
-} from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+
+import {
+  ILivePlayerContext,
+  PlayerContext,
+} from 'App/components/Session/playerContext';
+import { useStore } from 'App/mstore';
 import { useLocation } from 'App/routing';
-import ControlButton from 'Components/Session_/Player/Controls/ControlButton';
+import 'Components/Session/ReplayScreen/replay-timeline.css';
 import { SKIP_INTERVALS } from 'Components/Session_/Player/Controls/Controls';
-import styles from 'Components/Session_/Player/Controls/controls.module.css';
-import Timeline from './Timeline';
+
 import AssistDuration from './AssistDuration';
 import AssistSessionsTabs from './AssistSessionsTabs';
-import LiveTag from './LiveTag';
+import Timeline from './Timeline';
 
 function Controls(props: any) {
+  const { t } = useTranslation();
   const { uiPlayerStore, searchStoreLive, sessionStore } = useStore();
-  const { toggleBottomBlock } = uiPlayerStore;
-  const { bottomBlock } = uiPlayerStore;
   const { skipInterval } = uiPlayerStore;
   // @ts-ignore ?? TODO
   const { player, store } = React.useContext<ILivePlayerContext>(PlayerContext);
@@ -29,11 +27,8 @@ function Controls(props: any) {
   const { search } = useLocation();
 
   const { jumpToLive } = player;
-  const { livePlay, currentTab, tabStates } = store.get();
+  const { livePlay } = store.get();
 
-  const exceptionsList = tabStates[currentTab]?.exceptionsList || [];
-  const logRedCount = tabStates[currentTab]?.logMarkedCountNow || 0;
-  const showExceptions = exceptionsList.length > 0;
   const session = sessionStore.current;
   const fetchAssistSessions = sessionStore.fetchLiveSessions;
   const totalAssistSessions = sessionStore.totalLiveSessions;
@@ -82,53 +77,28 @@ function Controls(props: any) {
     player.jumpInterval(-SKIP_INTERVALS[skipInterval]);
   };
 
-  const toggleBottomTools = (blockName: number) => {
-    toggleBottomBlock(blockName);
-  };
-
+  if (noControls) return null;
   return (
-    <div className={styles.controls}>
-      {session.liveOnly ? null : <Timeline />}
-      {!noControls ? (
-        <div
-          className={cn(styles.buttons, 'px-5! pt-0!')}
-          data-is-live
-          style={{ height: noGrid ? '40px' : '' }}
-        >
-          <div className="flex items-center">
-            {!closedLive && (
-              <div className={styles.buttonsLeft}>
-                <LiveTag
-                  isLive={livePlay}
-                  onClick={() => (livePlay ? null : jumpToLive())}
-                />
-                <div className="font-semibold px-2">
-                  <AssistDuration />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {totalAssistSessions > 1 && !noGrid ? (
-            <div>
-              <AssistSessionsTabs session={session} />
-            </div>
-          ) : null}
-
-          <div className="flex items-center h-full gap-2">
-            <ControlButton
-              onClick={() => toggleBottomTools(CONSOLE)}
-              active={bottomBlock === CONSOLE}
-              label="Console"
-              hasErrors={logRedCount > 0 || showExceptions}
-            />
-            <ControlButton
-              onClick={() => toggleBottomTools(NETWORK)}
-              active={bottomBlock === NETWORK}
-              label="Network"
-            />
-          </div>
-        </div>
+    <div className="m-tl">
+      {!closedLive && (
+        <>
+          <button
+            type="button"
+            className={`m-live-chip${livePlay ? ' is-live' : ''}`}
+            onClick={() => (livePlay ? null : jumpToLive())}
+            title={livePlay ? undefined : t('Jump to live')}
+          >
+            <i className="m-live-chip__dot" aria-hidden="true" />
+            {livePlay ? t('Live') : t('Go live')}
+          </button>
+          <span className="m-tl__clock m-mono">
+            <AssistDuration />
+          </span>
+        </>
+      )}
+      {session.liveOnly ? <span className="flex-1" /> : <Timeline />}
+      {totalAssistSessions > 1 && !noGrid ? (
+        <AssistSessionsTabs session={session} />
       ) : null}
     </div>
   );

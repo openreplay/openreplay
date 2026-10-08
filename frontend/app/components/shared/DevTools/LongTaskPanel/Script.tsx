@@ -1,7 +1,8 @@
-import React from 'react';
-import { LongAnimationTask } from './type';
-import { Tag } from 'antd';
+import { Chip } from '@/ui/data/Chip';
 import { Code } from 'lucide-react';
+import React from 'react';
+
+import { LongAnimationTask } from './type';
 
 function getAddress(script: LongAnimationTask['scripts'][number]) {
   return `${script.sourceURL}${script.sourceFunctionName ? ':' + script.sourceFunctionName : ''}${script.sourceCharPosition && script.sourceCharPosition >= 0 ? ':' + script.sourceCharPosition : ''}`;
@@ -51,8 +52,8 @@ function InfoEntry({
 }) {
   return (
     <div className={'flex items-center gap-1 text-sm'}>
-      <div className={'text-disabled-text'}>{title}</div>
-      <div className="font-mono color-gray-medium">{value}</div>
+      <div className={'text-content-disabled'}>{title}</div>
+      <div className="font-mono text-content-muted">{value}</div>
     </div>
   );
 }
@@ -60,10 +61,12 @@ function InfoEntry({
 function Script({ script }: { script: LongAnimationTask['scripts'][number] }) {
   return (
     <div className="flex flex-col mb-4">
-      <Tag className="w-fit font-mono text-sm font-bold flex gap-1 items-center rounded-lg">
-        <Code size={12} />
-        <ScriptTitle script={script} />
-      </Tag>
+      <span className="w-fit font-mono">
+        <Chip kind="tag">
+          <Code size={12} />
+          <ScriptTitle script={script} />
+        </Chip>
+      </span>
       <ScriptInfo script={script} />
     </div>
   );

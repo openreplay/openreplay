@@ -1,8 +1,9 @@
+import { useChartTheme } from '@/ui/data/chart';
+import { NoContent } from '@/ui/feedback/NoContent';
 import React from 'react';
-import { NoContent } from 'UI';
-import { Styles } from 'Components/Dashboard/Widgets/common';
-import Sparkline from 'Components/Charts/Sparkline';
 import { useTranslation } from 'react-i18next';
+
+import Sparkline, { withAlpha } from 'Components/Charts/Sparkline';
 
 interface Props {
   data: any;
@@ -11,6 +12,7 @@ interface Props {
 
 function Chart(props: Props) {
   const { t } = useTranslation();
+  const c = useChartTheme().series[0] ?? '';
   const { data, label } = props;
 
   return (
@@ -28,9 +30,9 @@ function Chart(props: Props) {
         name={label}
         type="area"
         height={90}
-        color={Styles.compareColors[2]}
-        gradient={['rgba(128, 141, 255, 0.5)', 'rgba(128, 141, 255, 0.2)']}
-        strokeColor={Styles.strokeColor}
+        color={c}
+        gradient={[withAlpha(c, 0.35), withAlpha(c, 0.05)]}
+        strokeColor={c}
         strokeWidth={2}
         strokeOpacity={0.8}
       />

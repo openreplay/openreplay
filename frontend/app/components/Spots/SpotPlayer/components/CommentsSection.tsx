@@ -1,163 +1,115 @@
-import { CloseOutlined, SendOutlined } from '@ant-design/icons';
-import { Button, Input, Tooltip } from 'antd';
-import cn from 'classnames';
+import { Input } from '@/ui/inputs/input';
+import { useToast } from '@/ui/overlays/toast';
+import { Tooltip } from '@/ui/overlays/tooltip';
+import { SendHorizontal } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 
 import { resentOrDate } from 'App/date';
 import { useStore } from 'App/mstore';
-import { useTranslation } from 'react-i18next';
+import { hashString } from 'App/types/session/session';
+import { PanelBar } from 'Components/Session/ReplayScreen/PanelBar';
 
-function CommentsSection({ onClose }: { onClose?: () => void }) {
+import { SessionAvatar } from 'Shared/SessionAvatar/SessionAvatar';
+
+/** The thread on a spot, with the composer pinned to the panel's foot. */
+function CommentsSection() {
   const { t } = useTranslation();
+  const toast = useToast();
   const { spotStore, userStore } = useStore();
   const userEmail = userStore.account.name;
   const loggedIn = !!userEmail;
   const comments = spotStore.currentSpot?.comments ?? [];
-  return (
-    <div
-      className="h-full p-4 bg-white border-l absolute z-50 right-0 top-0 lg:block"
-      style={{ minWidth: 320, width: 320 }}
-    >
-      <div className="flex items-center justify-between mb-2">
-        <div className="font-medium text-lg">{t('Comments')}</div>
-        <Button onClick={onClose} type="text" size="small">
-          <CloseOutlined />
-        </Button>
-      </div>
-      <div
-        className="overflow-y-auto flex flex-col gap-4 mt-2"
-        style={{ height: 'calc(100dvh - 132px)' }}
-      >
-        {comments.map((comment) => (
-          <div
-            key={comment.createdAt}
-            className="flex flex-col gap-2 border-b border-dotted pb-2"
-          >
-            <div className="flex items-center gap-2">
-              <div className="w-9 h-9 text-xs bg-tealx rounded-full flex items-center justify-center color-white uppercase">
-                {comment.user[0]}
-              </div>
-              <div className="font-medium flex flex-col ">
-                {comment.user}
-                <div className="text-xs text-disabled-text font-normal">
-                  {resentOrDate(new Date(comment.createdAt).getTime())}
-                </div>
-              </div>
-            </div>
-            <div>{comment.text}</div>
-          </div>
-        ))}
+  const [text, setText] = React.useState('');
+  const [name, setName] = React.useState<string>(userEmail ?? '');
 
-        <BottomSection
-          unloggedLimit={comments.length > 5}
-          loggedLimit={comments.length > 25}
-          loggedIn={loggedIn}
-          userEmail={userEmail}
-        />
-      </div>
-    </div>
-  );
-}
+  const limited = loggedIn ? comments.length > 25 : comments.length > 5;
+  const needsName = !loggedIn && name.trim().length === 0;
+  const canSend = text.trim().length > 0 && !needsName && !limited;
 
-function BottomSection({
-  loggedIn,
-  userEmail,
-  unloggedLimit,
-  loggedLimit,
-}: {
-  loggedLimit: boolean;
-  unloggedLimit: boolean;
-  loggedIn?: boolean;
-  userEmail?: string;
-}) {
-  const { t } = useTranslation();
-  const [commentText, setCommentText] = React.useState('');
-  const [userName, setUserName] = React.useState<string>(userEmail ?? '');
-  const { spotStore } = useStore();
-
-  const addComment = async () => {
+  const send = async () => {
+    if (!canSend) return;
     try {
-      await spotStore.addComment(
-        spotStore.currentSpot!.spotId,
-        commentText,
-        userName,
-      );
-      setCommentText('');
-    } catch (e) {
+      await spotStore.addComment(spotStore.currentSpot!.spotId, text, name);
+      setText('');
+    } catch {
       toast.error(t('Failed to add comment; Try again later'));
     }
   };
 
-  const unlogged = userName.trim().length === 0 && unloggedLimit;
-  const disableSubmit =
-    commentText.trim().length === 0 || unlogged || loggedLimit;
   return (
-    <div
-      className={cn(
-        'mt-auto border-t	p-2',
-        loggedIn ? 'bg-white' : 'bg-active-dark-blue',
-      )}
-    >
-      <div className="flex items-center gap-2">
-        <div className="flex flex-col w-full gap-2">
+    <div className="flex h-full min-h-0 flex-col">
+      <PanelBar
+        note={
+          comments.length === 0
+            ? t('No comments yet')
+            : comments.length === 1
+              ? t('1 comment')
+              : t('{{count}} comments', { count: comments.length })
+        }
+      />
+      <ul className="m-spanel__list m-rs__comments">
+        {comments.map((c) => (
+          <li key={c.createdAt} className="m-spanel__row m-rs__comment">
+            <span className="m-spanel__cell">
+              <SessionAvatar seed={hashString(c.user)} size={20} />
+              <span className="m-spanel__body">
+                <span className="m-spanel__line">
+                  <span className="m-spanel__label m-rs__comment-author m-truncate">
+                    {c.user}
+                  </span>
+                  <span className="m-spanel__tail">
+                    {resentOrDate(new Date(c.createdAt).getTime())}
+                  </span>
+                </span>
+                <p className="m-rs__comment-text">{c.text}</p>
+              </span>
+            </span>
+          </li>
+        ))}
+      </ul>
+      {!loggedIn ? (
+        <div className="m-rs__composer">
           <Input
-            readOnly={loggedIn}
-            disabled={loggedIn}
+            value={name}
             placeholder={t('Add a name')}
-            required
-            className="w-full disabled:hidden"
-            value={userName}
-            onChange={(e) => setUserName(e.target.value)}
-          />
-          <Input.TextArea
-            className="w-full"
-            rows={3}
-            autoSize={{ minRows: 3, maxRows: 3 }}
-            maxLength={120}
-            value={commentText}
-            onChange={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setCommentText(e.target.value);
-            }}
-            placeholder={t('Add a comment...')}
+            onChange={(e) => setName(e.target.value)}
           />
         </div>
+      ) : null}
+      <div className="m-rs__composer">
+        <Input
+          value={text}
+          maxLength={120}
+          placeholder={t('Add a comment...')}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && void send()}
+        />
         <Tooltip
           title={
-            !disableSubmit
-              ? ''
-              : unlogged
-                ? t('Limited to 5 Messages. Join team to send more.')
-                : t('Limited to 25 Messages.')
+            limited
+              ? loggedIn
+                ? t('Limited to 25 Messages.')
+                : t('Limited to 5 Messages. Join team to send more.')
+              : t('Send')
           }
         >
-          <Button
-            type="primary"
-            onClick={addComment}
-            disabled={disableSubmit}
-            icon={<SendOutlined className="ps-0.5" />}
-            shape="circle"
-          />
+          <span>
+            <button
+              type="button"
+              className="m-rs__send"
+              aria-label={t('Send comment')}
+              disabled={!canSend}
+              onClick={() => void send()}
+            >
+              <SendHorizontal size={14} aria-hidden="true" />
+            </button>
+          </span>
         </Tooltip>
       </div>
     </div>
   );
 }
-
-// const promoTitles = ['Found this Spot helpful?', 'Enjoyed this recording?'];
-//
-//   <div>
-//     <div className={'text-xl'}>{promoTitles[0]}</div>
-//     <div className={'my-2'}>
-//       With Spot, capture issues and provide your team with detailed insights for frictionless experiences.
-//     </div>
-//     <Button>
-//       Spot Your Issues Now
-//     </Button>
-//   </div>
-// )}
 
 export default observer(CommentsSection);

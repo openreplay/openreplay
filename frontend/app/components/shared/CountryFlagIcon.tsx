@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { flagUrl } from 'Shared/flagAssets';
 
@@ -11,12 +12,15 @@ const CountryFlagIcon: React.FC<CountryFlagProps> = ({
   countryCode,
   style,
 }) => {
+  const { t } = useTranslation();
   const url = flagUrl(countryCode);
 
   return url ? (
     <img src={url} alt={countryCode} style={style} loading="lazy" />
   ) : (
-    <div className="text-xs bg-gray-bg px-1 rounded-sm color-white">N/A</div>
+    <div className="text-xs bg-surface-sunken px-1 rounded-sm text-content-muted">
+      {t('N/A')}
+    </div>
   );
 };
 

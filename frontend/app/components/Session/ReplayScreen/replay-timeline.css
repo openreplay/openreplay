@@ -1,0 +1,175 @@
+.m-tl {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-4);
+  flex: none;
+  height: var(--m-control-height-lg);
+  padding-inline: var(--m-space-4);
+  border-top: 1px solid var(--m-border-default);
+  background: var(--m-surface-sunken);
+
+  container-type: inline-size;
+}
+
+.m-tl__clock {
+  flex: none;
+  font-size: var(--m-text-2xs);
+  color: var(--m-content-muted);
+  font-variant-numeric: tabular-nums;
+}
+.m-tl__clock--total {
+  color: var(--m-content-disabled);
+}
+
+.m-tl__settings {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+}
+
+.m-tl__settings-hit {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  cursor: pointer;
+}
+.m-tl__tags {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-1);
+}
+.m-tl__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-1);
+  height: var(--m-control-height-xs, 1.375rem);
+  padding-inline: var(--m-space-2);
+  border-radius: var(--m-radius-control);
+  border: var(--m-border-width) solid var(--m-border-subtle);
+  background: var(--m-surface-raised);
+  color: var(--m-content-secondary);
+  font-size: var(--m-text-2xs);
+  font-weight: var(--m-weight-medium);
+  white-space: nowrap;
+}
+.m-tl__tag svg {
+  flex: none;
+  color: var(--m-content-muted);
+}
+.m-tl__settings-hit:hover .m-tl__tag {
+  color: var(--m-content-primary);
+  border-color: var(--m-border-default);
+}
+
+@container (max-width: 34rem) {
+  .m-tl__tag span {
+    display: none;
+  }
+  .m-tl__tag {
+    padding-inline: var(--m-space-1);
+  }
+}
+
+.m-tl__menu {
+  min-width: 14rem;
+}
+.m-tl__menu-head {
+  margin: 0;
+  padding: var(--m-space-2) var(--m-space-5) var(--m-space-1);
+  font-size: var(--m-text-2xs);
+  letter-spacing: var(--m-tracking-wide);
+  color: var(--m-content-muted);
+}
+.m-tl__menu-check {
+  display: inline-flex;
+  width: 12px;
+  flex: none;
+  color: var(--m-content-primary);
+}
+.m-tl__menu-icon {
+  flex: none;
+  color: var(--m-content-muted);
+}
+
+.m-tl__menu-word {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-3);
+}
+
+.m-tl__menu-switch {
+  justify-content: space-between;
+  gap: var(--m-space-6);
+}
+.m-tl__menu-switch .m-switch {
+  pointer-events: none;
+}
+
+.m-autoplay {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-5);
+  height: var(--m-control-height-lg);
+  padding-inline: var(--m-space-5) var(--m-space-3);
+  border: var(--m-border-width) solid var(--m-border-subtle);
+  border-radius: var(--m-radius-control);
+  background: var(--m-surface-raised);
+  box-shadow: var(--m-shadow-popover);
+  font-size: var(--m-text-sm);
+  color: var(--m-content-primary);
+}
+.m-autoplay__text b {
+  font-weight: var(--m-weight-medium);
+  font-variant-numeric: tabular-nums;
+}
+.m-autoplay__actions {
+  display: inline-flex;
+  gap: var(--m-space-2);
+}
+
+.m-tl__menu-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--m-space-1);
+  padding: var(--m-space-1) var(--m-space-3) var(--m-space-3);
+}
+.m-tl__chip {
+  height: 1.375rem;
+  padding-inline: var(--m-space-3);
+  border-radius: var(--m-radius-chip);
+  border: var(--m-border-width) solid var(--m-border-subtle);
+  font-family: var(--m-font-mono);
+  font-size: var(--m-text-2xs);
+  color: var(--m-content-secondary);
+}
+.m-tl__chip:hover {
+  background: var(--m-surface-hover);
+}
+.m-tl__chip.is-on {
+  background: var(--m-surface-active);
+  border-color: var(--m-border-default);
+  color: var(--m-content-primary);
+}
+
+.m-tl__time {
+  display: inline-flex;
+  align-items: center;
+  height: 1.5rem;
+  padding-inline: var(--m-space-2);
+  border-radius: var(--m-radius-control);
+  font-family: var(--m-font-mono);
+  font-size: var(--m-text-2xs);
+  color: var(--m-content-muted);
+}
+.m-tl__time:hover {
+  background: var(--m-surface-hover);
+  color: var(--m-content-primary);
+}
+.m-tl__time-sep {
+  padding-inline: var(--m-space-1);
+  color: var(--m-content-disabled);
+}

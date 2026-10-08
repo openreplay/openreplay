@@ -1,3 +1,7 @@
+import { Button } from '@/ui/actions/button';
+import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
+import { toast } from '@/ui/overlays/toast';
+import { Tooltip } from '@/ui/overlays/tooltip';
 import {
   CallingState,
   ConnectionStatus,
@@ -5,13 +9,17 @@ import {
   RequestLocalStream,
 } from 'Player';
 import type { LocalStream } from 'Player';
-import { Button } from 'antd';
-import cn from 'classnames';
-import { Headset } from 'lucide-react';
+import {
+  Headset,
+  MonitorUp,
+  MonitorX,
+  Pencil,
+  PencilOff,
+  PhoneOff,
+} from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'react-toastify';
 
 import {
   ILivePlayerContext,
@@ -20,10 +28,8 @@ import {
 import ScreenRecorder from 'App/components/Session_/ScreenRecorder/ScreenRecorder';
 import { useStore } from 'App/mstore';
 import { audioContextManager } from 'App/utils/screenRecorder';
-import { Icon, Tooltip, confirm } from 'UI';
 
 import ChatWindow from '../../ChatWindow';
-import stl from './AassistActions.module.css';
 
 function onError(e: any) {
   console.log(e);
@@ -197,18 +203,10 @@ function AssistActions({ userId, isCallActive, agentIds }: Props) {
       .catch(onError);
   }
 
-  const confirmCall = async () => {
+  const [confirming, setConfirming] = useState(false);
+  const confirmCall = () => {
     if (callRequesting || remoteRequesting) return;
-
-    if (
-      await confirm({
-        header: t('Start Call'),
-        confirmButton: t('Call'),
-        confirmation: `${t('Are you sure you want to call')} ${userId || t('User')}?`,
-      })
-    ) {
-      call();
-    }
+    setConfirming(true);
   };
 
   const requestControl = () => {
@@ -233,91 +231,83 @@ function AssistActions({ userId, isCallActive, agentIds }: Props) {
     }
   }, [onCall]);
 
+  const controlDisabled =
+    cannotCall || !livePlay || callRequesting || remoteRequesting;
+  const callDisabled = cannotCall || callRequesting || remoteRequesting;
+
   return (
-    <div className="flex items-center">
+    <>
       {(onCall || remoteActive) && (
-        <>
-          <div
-            className={cn('cursor-pointer p-2 flex items-center', {
-              [stl.disabled]: cannotCall || !livePlay,
-            })}
-            onClick={() => toggleAnnotation(!annotating)}
-            role="button"
-          >
-            <Button
-              icon={
-                <Icon name={annotating ? 'pencil-stop' : 'pencil'} size={16} />
-              }
-              type={'text'}
-              size="small"
-              className={annotating ? 'text-red' : 'text-main'}
-            >
-              {t('Annotate')}
-            </Button>
-          </div>
-          <div className={stl.divider} />
-        </>
-      )}
-
-      {/* @ts-ignore wtf? */}
-      <ScreenRecorder />
-
-      {/* @ts-ignore */}
-      <Tooltip
-        title={livePlay ? '' : t('Call user to initiate remote control')}
-      >
-        <div
-          className={cn('cursor-pointer p-2 flex items-center', {
-            [stl.disabled]:
-              cannotCall || !livePlay || callRequesting || remoteRequesting,
-          })}
-          onClick={requestControl}
-          role="button"
+        <Tooltip
+          title={
+            annotating
+              ? t('Stop annotating')
+              : t("Draw on the visitor's screen")
+          }
         >
           <Button
-            type={'text'}
-            className={remoteActive ? 'text-red' : 'text-teal'}
-            icon={
-              <Icon
-                name={remoteActive ? 'window-x' : 'remote-control'}
-                size={16}
-                color={remoteActive ? 'red' : 'main'}
-              />
-            }
-            size="small"
+            className={`m-rs__assist${annotating ? ' is-on' : ''}`}
+            aria-pressed={annotating}
+            disabled={cannotCall || !livePlay}
+            onClick={() => toggleAnnotation(!annotating)}
           >
-            {t('Remote Control')}
+            {annotating ? <PencilOff size={13} /> : <Pencil size={13} />}
+            {t('Annotate')}
           </Button>
-        </div>
+        </Tooltip>
+      )}
+
+      {/* @ts-ignore */}
+      <ScreenRecorder />
+
+      <Tooltip
+        title={
+          livePlay
+            ? remoteActive
+              ? t('Give control back')
+              : t("Take control of the visitor's screen")
+            : t('Call user to initiate remote control')
+        }
+      >
+        <span>
+          <Button
+            className={`m-rs__assist${remoteActive ? ' is-on' : ''}`}
+            aria-pressed={remoteActive}
+            disabled={controlDisabled}
+            onClick={requestControl}
+          >
+            {remoteActive ? <MonitorX size={13} /> : <MonitorUp size={13} />}
+            {remoteActive ? t('Stop control') : t('Remote control')}
+          </Button>
+        </span>
       </Tooltip>
 
       <Tooltip
         title={
           onCall
-            ? ''
+            ? undefined
             : cannotCall
               ? t("You don't have the permissions to perform this action.")
               : `${t('Call')} ${userId || t('User')}`
         }
       >
-        <div
-          className={cn('cursor-pointer p-2 flex items-center', {
-            [stl.disabled]: cannotCall || callRequesting || remoteRequesting,
-          })}
-          onClick={onCall ? callObject?.end : confirmCall}
-          role="button"
-        >
-          <Button
-            icon={<Headset size={16} />}
-            type={'text'}
-            className={
-              onCall ? 'text-red' : isPrestart ? 'text-green' : 'text-main'
-            }
-            size="small"
-          >
-            {onCall ? t('End') : isPrestart ? t('Join Call') : t('Call')}
-          </Button>
-        </div>
+        <span>
+          {onCall ? (
+            <Button variant="danger" onClick={() => callObject?.end()}>
+              <PhoneOff size={13} />
+              {t('End')}
+            </Button>
+          ) : (
+            <Button
+              variant="primary"
+              disabled={callDisabled}
+              onClick={confirmCall}
+            >
+              <Headset size={13} />
+              {isPrestart ? t('Join call') : t('Call')}
+            </Button>
+          )}
+        </span>
       </Tooltip>
 
       <div className="fixed ml-3 left-0 top-0" style={{ zIndex: 999 }}>
@@ -331,7 +321,24 @@ function AssistActions({ userId, isCallActive, agentIds }: Props) {
           />
         )}
       </div>
-    </div>
+
+      <ConfirmDialog
+        open={confirming}
+        title={t('Start call?')}
+        okText={t('Call')}
+        danger={false}
+        onCancel={() => setConfirming(false)}
+        onOk={() => {
+          setConfirming(false);
+          call();
+        }}
+      >
+        {t(
+          'Call {{user}}? Their browser rings, and they choose whether to pick up.',
+          { user: userId || t('User') },
+        )}
+      </ConfirmDialog>
+    </>
   );
 }
 

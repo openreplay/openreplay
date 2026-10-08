@@ -1,20 +1,21 @@
-import React from 'react';
-import { screenRecorder } from 'App/utils/screenRecorder';
-import { Tooltip, Button } from 'antd';
-import { Icon } from 'UI';
-import { Disc } from 'lucide-react';
+import { Button } from '@/ui/actions/button';
+import { toast } from '@/ui/overlays/toast';
+import { Tooltip } from '@/ui/overlays/tooltip';
 import { SessionRecordingStatus } from 'Player';
-import { recordingsService } from 'App/services';
-import { toast } from 'react-toastify';
-import { formatTimeOrDate } from 'App/date';
-import {
-  PlayerContext,
-  ILivePlayerContext,
-} from 'App/components/Session/playerContext';
+import { CircleStop, Disc } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
-import { ENTERPRISE_REQUEIRED } from 'App/constants';
-import { useStore } from 'App/mstore';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+
+import {
+  ILivePlayerContext,
+  PlayerContext,
+} from 'App/components/Session/playerContext';
+import { ENTERPRISE_REQUEIRED } from 'App/constants';
+import { formatTimeOrDate } from 'App/date';
+import { useStore } from 'App/mstore';
+import { recordingsService } from 'App/services';
+import { screenRecorder } from 'App/utils/screenRecorder';
 
 let stopRecorderCb: () => void;
 
@@ -129,37 +130,28 @@ function ScreenRecorder() {
 
   if (!isSupported() || !isEnterprise) {
     return (
-      <div className="p-2">
-        {/* @ts-ignore */}
-        <Tooltip
-          title={isEnterprise ? supportedMessage : ENTERPRISE_REQUEIRED(t)}
-        >
-          <Button icon={<Disc size={16} />} disabled type="text">
-            {t('Record Activity')}
+      <Tooltip
+        title={isEnterprise ? supportedMessage : ENTERPRISE_REQUEIRED(t)}
+      >
+        <span>
+          <Button className="m-rs__assist" disabled>
+            <Disc size={13} />
+            {t('Record activity')}
           </Button>
-        </Tooltip>
-      </div>
+        </span>
+      </Tooltip>
     );
   }
 
   return (
-    <div
+    <Button
+      className={`m-rs__assist${isRecording ? ' is-on' : ''}`}
+      aria-pressed={isRecording}
       onClick={!isRecording ? recordingRequest : stopRecordingHandler}
-      className="p-2"
     >
-      <Button
-        icon={
-          <Icon
-            name={!isRecording ? 'stop-record-circle' : 'record-circle'}
-            size={16}
-          />
-        }
-        type="text"
-        className={isRecording ? 'text-red' : 'text-main'}
-      >
-        {isRecording ? t('Stop Recording') : t('Record Activity')}
-      </Button>
-    </div>
+      {isRecording ? <CircleStop size={13} /> : <Disc size={13} />}
+      {isRecording ? t('Stop recording') : t('Record activity')}
+    </Button>
   );
 }
 

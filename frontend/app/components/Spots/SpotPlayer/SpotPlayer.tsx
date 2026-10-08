@@ -1,33 +1,46 @@
+import { Loader } from '@/ui/feedback/Loader';
+import { Icon } from '@/ui/icons/Icon';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { useHistory, useParams } from 'App/routing';
+import { useTranslation } from 'react-i18next';
 
 import { useStore } from 'App/mstore';
+import { spotsList } from 'App/routes';
+import { useHistory, useParams } from 'App/routing';
+import { ownsKeys } from 'App/utils/keys';
 import {
   debounceUpdate,
   getDefaultPanelHeight,
 } from 'Components/Session/Player/ReplayPlayer/PlayerInst';
-import { SpotOverviewPanelCont } from 'Components/Session_/OverviewPanel/OverviewPanel';
+import PhoneHorizontalWarn from 'Components/Session/Player/SharedComponents/PhoneHorizontal';
+import { DevToolsFrame } from 'Components/Session/ReplayScreen/DevToolsFrame';
+import { ReplayScreen } from 'Components/Session/ReplayScreen/ReplayScreen';
+import 'Components/Session/ReplayScreen/replay-player.css';
 import withPermissions from 'Components/hocs/withPermissions';
-import { EscapeButton, Loader } from 'UI';
 
 import AccessError from './components/AccessError';
+import CommentsSection from './components/CommentsSection';
+import MobilePlayerOverlay from './components/MobileControlOverlay';
 import SpotConsole from './components/Panels/SpotConsole';
 import SpotNetwork from './components/Panels/SpotNetwork';
+import SpotActivity from './components/SpotActivity';
 import SpotLocation from './components/SpotLocation';
 import SpotPlayerControls from './components/SpotPlayerControls';
-import SpotPlayerHeader from './components/SpotPlayerHeader';
-import SpotPlayerSideBar from './components/SpotSideBar';
-import SpotTimeline from './components/SpotTimeline';
+import { SpotActions, SpotLead } from './components/SpotPlayerHeader';
 import SpotVideoContainer from './components/SpotVideoContainer';
-// import VideoJS from "./components/Vjs"; backup player
-import { Tab } from './consts';
-import spotPlayerStore, { PANELS } from './spotPlayerStore';
-import PhoneHorizontalWarn from 'Components/Session/Player/SharedComponents/PhoneHorizontal';
-import MobilePlayerOverlay from './components/MobileControlOverlay';
+import { TABS, Tab } from './consts';
+import spotPlayerStore, { PANELS, PanelType } from './spotPlayerStore';
+
+// X-Ray carries echarts: loaded when the panel opens
+const SpotOverviewPanelCont = React.lazy(() =>
+  import('Components/Session_/OverviewPanel/OverviewPanel').then((m) => ({
+    default: m.SpotOverviewPanelCont,
+  })),
+);
 
 function SpotPlayer() {
+  const { t } = useTranslation();
   const defaultHeight = getDefaultPanelHeight();
   const history = useHistory();
   const [panelHeight, setPanelHeight] = React.useState(defaultHeight);
@@ -58,29 +71,6 @@ function SpotPlayer() {
     );
   };
 
-  const handleResize = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    const startY = e.clientY;
-    const startHeight = panelHeight;
-
-    const handleMouseUp = () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-
-    const handleMouseMove = (e: MouseEvent) => {
-      const deltaY = e.clientY - startY;
-      const diff = startHeight - deltaY;
-      const max =
-        diff > window.innerHeight / 1.5 ? window.innerHeight / 1.5 : diff;
-      const newHeight = Math.max(50, max);
-      setPanelHeight(newHeight);
-      debounceUpdate(newHeight);
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  };
   React.useEffect(() => {
     const query = new URLSearchParams(window.location.search);
     const pubKey = query.get('pub_key');
@@ -123,12 +113,7 @@ function SpotPlayer() {
       });
 
     const ev = (e: KeyboardEvent) => {
-      if (
-        e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLTextAreaElement
-      ) {
-        return false;
-      }
+      if (ownsKeys(e.target)) return false;
       if (e.key === 'Escape') {
         spotPlayerStore.setIsFullScreen(false);
       }
@@ -171,64 +156,76 @@ function SpotPlayer() {
     );
   }
 
-  const closeTab = () => {
-    setActiveTab(null);
-  };
-
-  const onPanelClose = () => {
-    spotPlayerStore.setActivePanel(null);
-  };
-
-  const { isFullScreen } = spotPlayerStore;
-  // 2nd player option
-  // const base64toblob = (str: string) => {
-  //   const byteCharacters = atob(str);
-  //   const byteNumbers = new Array(byteCharacters.length);
-  //   for (let i = 0; i < byteCharacters.length; i++) {
-  //     byteNumbers[i] = byteCharacters.charCodeAt(i);
-  //   }
-  //   const byteArray = new Uint8Array(byteNumbers);
-  //   return new Blob([byteArray]);
-  // };
-  //
-  // const url = URL.createObjectURL(base64toblob(spotStore.currentSpot.streamFile));
-  // const videoJsOptions = {
-  //   autoplay: true,
-  //   controls: true,
-  //   responsive: false,
-  //   fluid: false,
-  //   fill: true,
-  //   sources: [{
-  //     src: url,
-  //     type: 'application/x-mpegURL'
-  //   }]
-  // };
+  const spot = spotStore.currentSpot;
+  const { isFullScreen, activePanel } = spotPlayerStore;
+  const comments = spot.comments ?? [];
+  const devtools: { key: PanelType; label: string }[] = [
+    { key: PANELS.OVERVIEW, label: 'X-Ray' },
+    { key: PANELS.CONSOLE, label: t('Console') },
+    { key: PANELS.NETWORK, label: t('Network') },
+  ];
+  const togglePanel = (panel: PanelType) =>
+    spotPlayerStore.setActivePanel(panel === activePanel ? null : panel);
 
   return (
     <div
       className={cn(
-        'w-screen h-dvh flex flex-col overflow-hidden',
-        isFullScreen ? 'relative' : '',
+        'relative flex min-h-0 flex-1 flex-col overflow-hidden',
+        !loggedIn && 'h-dvh w-screen bg-surface-canvas p-3',
       )}
     >
       <PhoneHorizontalWarn />
-      {isFullScreen ? (
-        <EscapeButton onClose={() => spotPlayerStore.setIsFullScreen(false)} />
-      ) : null}
-      <SpotPlayerHeader
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        title={spotStore.currentSpot.title}
-        user={spotStore.currentSpot.user}
-        date={spotStore.currentSpot.createdAt}
-        resolution={spotPlayerStore.resolution}
-        platform={spotPlayerStore.platform}
-        browserVersion={spotPlayerStore.browserVersion}
-      />
-      <div className="w-full h-full flex">
-        <div className="w-full h-full flex flex-col justify-between">
-          <SpotLocation />
-          <div className={cn('w-full h-full', isFullScreen ? '' : 'relative')}>
+      <ReplayScreen
+        back={
+          loggedIn
+            ? {
+                label: t('All Spots'),
+                onClick: () => history.push(spotsList()),
+              }
+            : undefined
+        }
+        lead={
+          <>
+            {!loggedIn ? (
+              <a
+                href="https://openreplay.com/platform/spot/"
+                target="_blank"
+                rel="noreferrer"
+                className="m-spotp__brand"
+              >
+                <Icon name="orSpot" size={22} />
+                <span>{t('Spot')}</span>
+              </a>
+            ) : null}
+            <SpotLead
+              title={spot.title}
+              user={spot.user}
+              date={spot.createdAt}
+              resolution={spotPlayerStore.resolution}
+              platform={spotPlayerStore.platform}
+              browserVersion={spotPlayerStore.browserVersion}
+            />
+          </>
+        }
+        actions={<SpotActions />}
+        panels={[
+          { key: TABS.ACTIVITY, label: t('Activity') },
+          {
+            key: TABS.COMMENTS,
+            label: t('Comments'),
+            count: comments.length || undefined,
+          },
+        ]}
+        panel={activeTab}
+        onPanel={(key) => setActiveTab(key as Tab | null)}
+        renderPanel={(key) =>
+          key === TABS.COMMENTS ? <CommentsSection /> : <SpotActivity />
+        }
+        fullscreen={isFullScreen}
+      >
+        <section className="m-player">
+          {isFullScreen ? null : <SpotLocation />}
+          <div className="relative flex min-h-0 flex-1">
             <MobilePlayerOverlay
               isPlaying={spotPlayerStore.isPlaying}
               onPlay={() => spotPlayerStore.setIsPlaying(true)}
@@ -236,57 +233,41 @@ function SpotPlayer() {
               onJumpForward={jumpForward}
               onJumpBackward={jumpBackward}
             />
-            {/* <VideoJS backup player */}
-            {/*  options={videoJsOptions} */}
-            {/* /> */}
             <SpotVideoContainer
-              videoURL={spotStore.currentSpot.videoURL!}
-              streamFile={spotStore.currentSpot.streamFile}
-              thumbnail={spotStore.currentSpot.thumbnail}
+              videoURL={spot.videoURL!}
+              streamFile={spot.streamFile}
+              thumbnail={spot.thumbnail}
               checkReady={() => spotStore.checkIsProcessed(spotId)}
             />
           </div>
-          {!isFullScreen && spotPlayerStore.activePanel ? (
-            <div
-              style={{
-                height: panelHeight,
-                maxWidth: activeTab ? 'calc(100vw - 320px)' : '100vw',
-                width: '100%',
-                position: 'relative',
-                overflow: 'hidden',
+          {isFullScreen ? null : (
+            <DevToolsFrame
+              tabs={devtools}
+              open={activePanel}
+              onToggle={togglePanel}
+              height={panelHeight}
+              onHeight={(h) => {
+                setPanelHeight(h);
+                debounceUpdate(h);
               }}
             >
-              <div
-                onMouseDown={handleResize}
-                className="w-full h-2 cursor-ns-resize absolute top-0 left-0 z-20"
-              />
-              {spotPlayerStore.activePanel ? (
-                <div className="w-full h-full bg-white">
-                  {spotPlayerStore.activePanel === PANELS.CONSOLE ? (
-                    <SpotConsole onClose={onPanelClose} />
-                  ) : null}
-                  {spotPlayerStore.activePanel === PANELS.NETWORK ? (
-                    <SpotNetwork
-                      onClose={onPanelClose}
-                      panelHeight={panelHeight}
-                    />
-                  ) : null}
-                  {spotPlayerStore.activePanel === PANELS.OVERVIEW ? (
-                    <SpotOverviewConnector jump={spotPlayerStore.setTime} />
-                  ) : null}
-                </div>
+              {activePanel === PANELS.CONSOLE ? (
+                <SpotConsole onClose={() => togglePanel(PANELS.CONSOLE)} />
               ) : null}
-            </div>
-          ) : null}
-          <SpotTimeline />
-          {isFullScreen ? null : <SpotPlayerControls />}
-        </div>
-        <SpotPlayerSideBar
-          activeTab={activeTab}
-          onClose={closeTab}
-          comments={spotStore.currentSpot?.comments ?? []}
-        />
-      </div>
+              {activePanel === PANELS.NETWORK ? (
+                <SpotNetwork
+                  onClose={() => togglePanel(PANELS.NETWORK)}
+                  panelHeight={panelHeight}
+                />
+              ) : null}
+              {activePanel === PANELS.OVERVIEW ? (
+                <SpotOverviewConnector jump={spotPlayerStore.setTime} />
+              ) : null}
+            </DevToolsFrame>
+          )}
+          <SpotPlayerControls />
+        </section>
+      </ReplayScreen>
     </div>
   );
 }
@@ -295,27 +276,36 @@ const SpotOverviewConnector = observer(
   ({ jump }: { jump: (time: number) => null }) => {
     const endTime = spotPlayerStore.duration * 1000;
     const time = spotPlayerStore.time * 1000;
-    const resourceList = spotPlayerStore.network
-      .filter(
-        (r: any) => r.isRed || r.isYellow || (r.status && r.status >= 400),
-      )
-      .filter((i: any) => i.type === 'xhr');
-    const exceptionsList = spotPlayerStore.logs.filter(
-      (l) => l.level === 'error',
+    // time ticks ~10x a second for the pointer; the lists only change with the data
+    const { network, logs } = spotPlayerStore;
+    const resourceList = React.useMemo(
+      () =>
+        network.filter(
+          (r: any) =>
+            r.type === 'xhr' &&
+            (r.isRed || r.isYellow || (r.status && r.status >= 400)),
+        ),
+      [network],
+    );
+    const exceptionsList = React.useMemo(
+      () => logs.filter((l) => l.level === 'error'),
+      [logs],
     );
 
     const onClose = () => {
       spotPlayerStore.setActivePanel(null);
     };
     return (
-      <SpotOverviewPanelCont
-        exceptionsList={exceptionsList}
-        resourceList={resourceList}
-        spotTime={time}
-        spotEndTime={endTime}
-        onClose={onClose}
-        time={time}
-      />
+      <React.Suspense fallback={null}>
+        <SpotOverviewPanelCont
+          exceptionsList={exceptionsList}
+          resourceList={resourceList}
+          spotTime={time}
+          spotEndTime={endTime}
+          onClose={onClose}
+          time={time}
+        />
+      </React.Suspense>
     );
   },
 );

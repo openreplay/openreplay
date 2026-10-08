@@ -1,8 +1,9 @@
-import React, { useContext } from 'react';
 import { observer } from 'mobx-react-lite';
-import DraggableCircle from 'Components/Session_/Player/Controls/components/DraggableCircle';
-import TimeTracker from 'Components/Session_/Player/Controls/TimeTracker';
+import React, { useContext } from 'react';
+
 import { PlayerContext } from 'Components/Session/playerContext';
+import TimeTracker from 'Components/Session_/Player/Controls/TimeTracker';
+import DraggableCircle from 'Components/Session_/Player/Controls/components/DraggableCircle';
 
 function TimelineTracker({
   scale,

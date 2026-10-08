@@ -1,0 +1,289 @@
+/* The replay queue as a dock (prototype sessions-dock.css). Our main column
+   scrolls, so the dock hangs off a zero-height sticky anchor at the foot of the
+   plane instead of the column itself. */
+.m-sdock-anchor {
+  position: sticky;
+  bottom: var(--m-space-5);
+  z-index: var(--m-z-dock);
+  flex: none;
+  height: 0;
+  margin-top: auto;
+}
+
+.m-sdock-zone {
+  position: absolute;
+  left: 50%;
+  translate: -50% 0;
+  z-index: var(--m-z-dock);
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  padding: var(--m-space-9) var(--m-space-8) 0;
+  max-width: calc(100% - 2 * var(--m-space-6));
+  pointer-events: none;
+}
+.m-sdock-reach {
+  display: flex;
+  padding: var(--m-space-6) var(--m-space-7);
+  min-width: 0;
+  pointer-events: auto;
+}
+.m-sdock-anchor > .m-sdock-zone {
+  bottom: 0;
+  padding-bottom: var(--m-space-3);
+  width: auto;
+}
+.m-sdock-anchor > .m-sdock-zone.is-over-replay {
+  padding-bottom: calc(var(--m-sdock-lift, 0px) + var(--m-space-4));
+}
+
+.m-sdock {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--m-radius-full);
+  background: var(--m-content-decorative);
+  border: var(--m-border-width) solid transparent;
+  opacity: 0.55;
+  transition:
+    width var(--m-duration-slow) var(--m-ease-out),
+    height var(--m-duration-slow) var(--m-ease-out),
+    border-radius var(--m-duration-slow) var(--m-ease-out),
+    background-color var(--m-duration-slow) var(--m-ease-out),
+    border-color var(--m-duration-slow) var(--m-ease-out),
+    box-shadow var(--m-duration-slow) var(--m-ease-out),
+    opacity var(--m-duration-fast) var(--m-ease-out);
+}
+.m-sdock-zone:hover .m-sdock {
+  opacity: 0.85;
+}
+.m-sdock.is-open {
+  width: var(--m-sdock-w);
+  height: var(--m-sdock-h);
+  border-radius: var(--m-radius-track);
+  background: var(--m-surface-raised);
+  border-color: var(--m-border-subtle);
+  box-shadow: var(--m-shadow-popover);
+  opacity: 1;
+}
+
+.m-sdock.is-peek {
+  width: var(--m-sdock-pw);
+  height: var(--m-sdock-ph);
+  background: var(--m-surface-raised);
+  border-color: var(--m-border-subtle);
+  box-shadow: var(--m-shadow-popover);
+  opacity: 1;
+}
+.m-sdock__pill {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  width: max-content;
+  height: 2rem;
+  padding-inline: var(--m-space-2) var(--m-space-4);
+  font-size: var(--m-text-xs);
+  color: var(--m-content-primary);
+  white-space: nowrap;
+  opacity: 0;
+}
+.m-sdock__pill-name {
+  max-width: 20ch;
+}
+.m-sdock.is-peek > .m-sdock__pill {
+  animation: m-morph-in var(--m-duration-slow) var(--m-ease-out) both;
+}
+.m-sdock:not(.is-peek) > .m-sdock__pill {
+  animation: none;
+  opacity: 0;
+}
+
+.m-sdock__body {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-1);
+  width: max-content;
+  max-width: calc(100vw - var(--m-nav-width) - 2 * var(--m-space-8));
+  padding: var(--m-space-1);
+  opacity: 0;
+}
+.m-sdock.is-open .m-sdock__body {
+  animation: m-morph-in var(--m-duration-slow) var(--m-ease-out) both;
+}
+.m-sdock:not(.is-open) > .m-sdock__body {
+  animation: none;
+  opacity: 0;
+}
+
+.m-sdock__strip {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+.m-sdock__strip::-webkit-scrollbar {
+  display: none;
+}
+
+.m-sdock__thumb {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 2.75rem;
+  border-radius: var(--m-radius-control);
+  background: var(--m-surface-active);
+  pointer-events: none;
+}
+
+.m-sdock__tab {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  height: 2.75rem;
+  border-radius: var(--m-radius-control);
+  color: var(--m-content-secondary);
+  transition:
+    color var(--m-duration-instant) var(--m-ease-out),
+    background-color var(--m-duration-instant) var(--m-ease-out);
+}
+.m-sdock__tab:hover {
+  color: var(--m-content-primary);
+}
+.m-sdock__tab:hover:not(.is-on) {
+  background: var(--m-surface-hover);
+}
+.m-sdock__tab.is-on {
+  color: var(--m-content-primary);
+  font-weight: var(--m-weight-medium);
+}
+
+.m-sdock__open {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  height: 100%;
+  min-width: 0;
+  padding-inline: var(--m-space-3) var(--m-space-2);
+  border-radius: inherit;
+  font-size: var(--m-text-xs);
+  white-space: nowrap;
+}
+.m-sdock__open {
+  text-align: left;
+}
+.m-sdock__text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+  line-height: 1.2;
+}
+.m-sdock__name {
+  max-width: 20ch;
+}
+.m-sdock__text .m-ss__meta {
+  max-width: 20ch;
+  overflow: hidden;
+}
+.m-sdock__text .m-ss__meta-chip {
+  max-width: 5.5rem;
+  height: 1rem;
+  line-height: 1rem;
+  padding-inline: var(--m-space-2);
+}
+
+.m-sdock__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-right: var(--m-space-1);
+  border-radius: var(--m-radius-control);
+  color: var(--m-content-muted);
+  opacity: 0;
+  transition:
+    opacity var(--m-duration-instant) var(--m-ease-out),
+    background-color var(--m-duration-instant) var(--m-ease-out),
+    color var(--m-duration-instant) var(--m-ease-out);
+}
+.m-sdock__tab:hover .m-sdock__close,
+.m-sdock__close:focus-visible {
+  opacity: 1;
+}
+.m-sdock__close:hover {
+  background: var(--m-surface-active);
+  color: var(--m-content-primary);
+}
+.m-sdock__close:focus-visible {
+  outline: 2px solid var(--m-focus-ring);
+  outline-offset: -2px;
+}
+
+.m-sdock__arrow,
+.m-sdock__clear {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-1);
+  flex: none;
+  height: 2.75rem;
+  padding-inline: var(--m-space-2);
+  border-radius: var(--m-radius-control);
+  color: var(--m-content-muted);
+  transition:
+    background-color var(--m-duration-instant) var(--m-ease-out),
+    color var(--m-duration-instant) var(--m-ease-out);
+}
+.m-sdock__arrow:hover,
+.m-sdock__clear:hover {
+  background: var(--m-surface-hover);
+  color: var(--m-content-primary);
+}
+.m-sdock__arrow:focus-visible,
+.m-sdock__clear:focus-visible {
+  outline: 2px solid var(--m-focus-ring);
+  outline-offset: -2px;
+}
+.m-sdock__arrow--left {
+  border-right: var(--m-border-width) solid var(--m-border-subtle);
+  border-radius: var(--m-radius-control) 0 0 var(--m-radius-control);
+}
+.m-sdock__arrow--right {
+  border-left: var(--m-border-width) solid var(--m-border-subtle);
+  border-radius: 0 var(--m-radius-control) var(--m-radius-control) 0;
+}
+
+.m-sdock__clear {
+  border-left: var(--m-border-width) solid var(--m-border-subtle);
+  border-radius: 0 var(--m-radius-control) var(--m-radius-control) 0;
+}
+.m-sdock__arrow--right + .m-sdock__clear {
+  margin-left: var(--m-space-1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m-sdock {
+    transition: none;
+  }
+  .m-sdock.is-open .m-sdock__body {
+    animation: none;
+    opacity: 1;
+  }
+  .m-sdock.is-peek > .m-sdock__pill {
+    animation: none;
+    opacity: 1;
+  }
+}

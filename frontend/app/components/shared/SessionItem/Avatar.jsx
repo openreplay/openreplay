@@ -1,0 +1,54 @@
+import { Icon } from '@/ui/icons/Icon';
+import { Tooltip } from '@/ui/overlays/tooltip';
+import cn from 'classnames';
+import React from 'react';
+
+import { avatarIconName } from 'App/iconNames';
+
+function Avatar({
+  isActive = false,
+  isAssist = false,
+  width = '38px',
+  height = '38px',
+  iconSize = 24,
+  seed,
+}) {
+  const iconName = avatarIconName(seed);
+  return (
+    <Tooltip
+      title={
+        !isAssist ? '' : isActive ? 'Active user' : 'User might be inactive'
+      }
+    >
+      <div
+        className={cn(
+          // stl.wrapper,
+          'border flex shrink-0 items-center justify-center rounded-full relative bg-tealx-light',
+        )}
+        style={{ width, height }}
+      >
+        {/* <img src={`/assets/${iconName}`} width={iconSize} height={iconSize} /> */}
+        <Icon name={iconName} size={iconSize} color="tealx" />
+        {isAssist && (
+          <div
+            className={cn('w-2 h-2 rounded-full absolute right-0 bottom-0', {
+              'bg-green': isActive,
+              'bg-orange': !isActive,
+            })}
+            style={{ marginRight: '3px', marginBottom: '3px' }}
+          >
+            {isActive ? null : (
+              <Icon
+                name="sleep"
+                size={9}
+                style={{ position: 'absolute', right: -6, top: -3 }}
+              />
+            )}
+          </div>
+        )}
+      </div>
+    </Tooltip>
+  );
+}
+
+export default Avatar;

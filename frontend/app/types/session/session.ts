@@ -1,8 +1,6 @@
 import { Duration } from 'luxon';
 import { toJS } from 'mobx';
 
-import { Note } from 'App/services/NotesService';
-
 import SessionError, { IError } from './error';
 import SessionEvent, {
   EventData,
@@ -135,7 +133,6 @@ export interface ISession {
   agentIds?: string[];
   isCallActive?: boolean;
   agentToken?: string;
-  notes?: Note[];
   mixedEventsWithIssues?: Array<InjectedEvent>;
   fileKey?: string;
   platform: 'web' | 'ios' | 'android';
@@ -170,7 +167,6 @@ const emptyValues = {
   domURL: [],
   devtoolsURL: [],
   mobsUrl: [],
-  notes: [],
   canvasURL: [],
   canvasFrames: [],
   metadata: {},
@@ -289,8 +285,6 @@ export default class Session {
 
   agentToken: ISession['agentToken'];
 
-  notes: ISession['notes'];
-
   mixedEventsWithIssues: ISession['mixedEventsWithIssues'];
 
   frustrations: Array<IIssue | InjectedEvent>;
@@ -340,7 +334,6 @@ export default class Session {
       devtoolsURL = [],
       mobsUrl = [],
       crashes = [],
-      notes = [],
       canvasURL = [],
       canvasFrames = [],
       uxtVideo = [],
@@ -391,8 +384,6 @@ export default class Session {
         (i, k) => new Issue({ ...i, time: i.timestamp - startedAt, key: k }),
       ) || [];
 
-    const rawNotes = notes;
-
     const frustrationEvents = events.filter((ev) => {
       if (ev.type === TYPES.CLICK || ev.type === TYPES.INPUT) {
         // @ts-ignore
@@ -408,7 +399,7 @@ export default class Session {
       [...frustrationEvents, ...frustrationIssues].sort(sortEvents) || [];
 
     const mixedEventsWithIssues = mergeEventLists(
-      mergeEventLists(events, rawNotes),
+      events,
       frustrationIssues,
     ).sort(sortEvents);
 
@@ -446,7 +437,6 @@ export default class Session {
       mobsUrl: Array.isArray(mobsUrl) ? mobsUrl : [mobsUrl],
       domURL,
       devtoolsURL,
-      notes,
       canvasURL,
       canvasFrames,
       videoURL: Array.isArray(videoURL) ? videoURL : [videoURL],

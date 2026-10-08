@@ -5,10 +5,11 @@ import {
   liveFiltersMap,
 } from 'Types/filter/newFilter';
 import { makeAutoObservable, reaction } from 'mobx';
-import Search from 'App/mstore/types/search';
+
+import { sessionStore } from 'App/mstore';
 import { checkFilterValue } from 'App/mstore/types/filter';
 import FilterItem, { IFilter } from 'App/mstore/types/filterItem';
-import { sessionStore } from 'App/mstore';
+import Search from 'App/mstore/types/search';
 import { searchService } from 'App/services';
 
 const PER_PAGE = 10;
@@ -69,7 +70,8 @@ class SearchStoreLive {
       () => this.instance,
       () => {
         this.currentPage = 1;
-        void this.fetchSessions();
+        // a new question supersedes whatever is in flight
+        void this.fetchSessions(true);
       },
     );
 
@@ -77,7 +79,7 @@ class SearchStoreLive {
     reaction(
       () => this.currentPage,
       () => {
-        void this.fetchSessions();
+        void this.fetchSessions(true);
       },
     );
   }
@@ -228,20 +230,28 @@ class SearchStoreLive {
     this.loading = val;
   };
 
+  private fetchSeq = 0;
+
+  /** Unforced calls (the poll) skip while a request is in flight; forced ones
+      supersede it, and only the latest response is applied. */
   fetchSessions = async (force?: boolean) => {
     if (!force && this.loading) {
       return;
     }
+    const seq = ++this.fetchSeq;
     this.setLoading(true);
     try {
-      await sessionStore.fetchLiveSessions({
-        ...this.instance.toSearch(),
-        page: this.currentPage,
-      });
+      await sessionStore.fetchLiveSessions(
+        {
+          ...this.instance.toSearch(),
+          page: this.currentPage,
+        },
+        () => seq !== this.fetchSeq,
+      );
     } catch (e) {
       console.error('Error fetching sessions:', e);
     } finally {
-      this.setLoading(false);
+      if (seq === this.fetchSeq) this.setLoading(false);
     }
   };
 }

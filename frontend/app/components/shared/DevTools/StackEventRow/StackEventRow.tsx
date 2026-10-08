@@ -1,6 +1,7 @@
-import React from 'react';
-import { Icon } from 'UI';
+import { Icon } from '@/ui/icons/Icon';
 import cn from 'classnames';
+import React from 'react';
+
 import JumpButton from '../JumpButton';
 import { TabTag } from '../NetworkPanel/NetworkPanelComp';
 
@@ -19,36 +20,26 @@ function StackEventRow(props: Props) {
     : event.payload;
   message = typeof message === 'string' ? message : JSON.stringify(message);
 
-  const iconProps: any = React.useMemo(() => {
-    const { source } = event;
-    return {
-      name: `integrations/${source}`,
-      size: 18,
-      className: 'mx-3',
-    };
-  }, [event]);
-
   return (
     <div
       style={style}
       data-scroll-item={event.isRed}
       onClick={props.onClick}
-      className={cn(
-        'group flex items-center py-2 px-4 border-b cursor-pointer relative',
-        'hover:bg-active-blue',
-        { 'bg-teal-light': isActive, 'error color-red': event.isRed },
-      )}
+      className={cn('m-dt__row m-dt__stack has-tail group', {
+        'is-now': isActive,
+        'is-error': event.isRed,
+      })}
     >
-      <div className={cn('mr-auto flex items-start')}>
+      {event.tabNum ? (
         <TabTag tabName={event.tabName} tabNum={event.tabNum} />
-        <Icon {...iconProps} />
-        <div>
-          <div className="capitalize font-medium mb-1 leading-none">
-            {event.name}
-          </div>
-          <div className="code-font text-xs">{message}</div>
-        </div>
-      </div>
+      ) : null}
+      <Icon name={`integrations/${event.source}` as any} size={14} />
+      <span className="m-dt__stack-body">
+        <span className="m-dt__stack-name">{event.name}</span>
+        {message ? (
+          <span className="m-dt__stack-msg m-mono m-truncate">{message}</span>
+        ) : null}
+      </span>
       <JumpButton time={event.time} onClick={onJump} />
     </div>
   );
