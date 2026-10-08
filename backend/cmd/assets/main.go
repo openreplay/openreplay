@@ -139,6 +139,10 @@ func main() {
 				log.Error(ctx, "can't send SessionEnd to raw topic: %s", err)
 			}
 		case *messages.AssetCache:
+			if b := m.Meta().Batch(); b == nil || b.Topic() != cfg.TopicCache {
+				log.Warn(ctx, "AssetCache from untrusted topic dropped, session: %d, url: %s", m.SessionID(), m.URL)
+				return
+			}
 			cacher.CacheURL(m.SessionID(), m.URL)
 		case *messages.JSException:
 			sourceList, err := assets.ExtractJSExceptionSources(&m.Payload)

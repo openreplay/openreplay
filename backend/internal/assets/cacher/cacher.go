@@ -10,7 +10,6 @@ import (
 	"io"
 	"math/rand"
 	"mime"
-	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -113,12 +112,9 @@ func NewCacher(log logger.Logger, cfg *config.Config, store objectstorage.Object
 		httpClient: &http.Client{
 			Timeout: time.Duration(cfg.AssetsHTTPTimeout) * time.Second,
 			Transport: &http.Transport{
-				Proxy:           http.ProxyFromEnvironment,
-				TLSClientConfig: tlsConfig,
-				DialContext: (&net.Dialer{
-					Timeout:   5 * time.Second,
-					KeepAlive: 30 * time.Second,
-				}).DialContext,
+				Proxy:               http.ProxyFromEnvironment,
+				TLSClientConfig:     tlsConfig,
+				DialContext:         guardedDialer(cfg.AssetsAllowPrivate),
 				TLSHandshakeTimeout: 5 * time.Second,
 				MaxConnsPerHost:     8,
 				MaxIdleConns:        100,
@@ -183,13 +179,25 @@ func (c *cacher) cacheURL(t *Task) {
 		return
 	}
 	start := time.Now()
-	req, _ := http.NewRequest("GET", t.requestURL, nil)
+	req, err := http.NewRequest("GET", t.requestURL, nil)
+	if err != nil || (req.URL.Scheme != "http" && req.URL.Scheme != "https") {
+		if err == nil {
+			err = fmt.Errorf("unsupported scheme %q", req.URL.Scheme)
+		}
+		c.permanent(ctx, t, "bad_url", err)
+		return
+	}
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36")
 	for k, v := range c.requestHeaders {
 		req.Header.Set(k, v)
 	}
 	res, err := c.httpClient.Do(req)
 	if err != nil {
+		var blocked *blockedAddrError
+		if errors.As(err, &blocked) {
+			c.permanent(ctx, t, "blocked_address", err)
+			return
+		}
 		c.retry(ctx, t, 0, "network", err)
 		return
 	}

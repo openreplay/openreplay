@@ -41,6 +41,7 @@ type Config struct {
 	AssetsPerHostLimit   int               `env:"ASSETS_PER_HOST_LIMIT,default=8"`
 	AssetsWorkerCount    int               `env:"ASSETS_WORKER_COUNT,default=64"`
 	AssetsHTTPTimeout    int               `env:"ASSETS_HTTP_TIMEOUT,default=6"` // seconds
+	AssetsAllowPrivate   bool              `env:"ASSETS_ALLOW_PRIVATE_NETWORKS,default=false"`
 	AssetsQueueSize      int               `env:"ASSETS_QUEUE_SIZE,default=128"`
 	InsecureSkipVerify   bool              `env:"INSECURE_SKIP_VERIFY,default=true"`
 	ProducerCloseTimeout int               `env:"PRODUCER_CLOSE_TIMEOUT,default=15000"`
