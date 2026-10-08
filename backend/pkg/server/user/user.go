@@ -36,6 +36,7 @@ type User struct {
 	ServiceAccount bool            `json:"serviceAccount"`
 	IsEnterprise   bool            `json:"isEnterprise"`
 	AuthMethod     string
+	Projects       map[uint32]bool `json:"-"`
 }
 
 func (u *User) HasPermission(perm string) bool {
@@ -44,6 +45,13 @@ func (u *User) HasPermission(perm string) bool {
 	}
 	_, ok := u.Permissions[perm]
 	return ok
+}
+
+func (u *User) CanAccessProject(projectID uint32) bool {
+	if u.Projects == nil {
+		return true
+	}
+	return u.Projects[projectID]
 }
 
 func (u *User) GetIDAsString() string {
