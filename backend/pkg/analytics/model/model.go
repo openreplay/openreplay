@@ -23,12 +23,12 @@ type FilterGroup struct {
 }
 
 type Series struct {
-	Name      string      `json:"name"`
-	Filter    FilterGroup `json:"filter"`
-	CreatedAt time.Time   `json:"createdAt" validate:"omitempty"`
-	SeriesID  *int64      `json:"seriesId,omitempty" validate:"omitempty"` // Optional, used for updates
-	MetricID  *int64      `json:"metricId,omitempty" validate:"omitempty"` // Optional, used for updates
-	Index     *int16      `json:"index,omitempty" validate:"omitempty"`    // Optional, used for ordering
+	Name      string      `json:"name" db:"name"`
+	Filter    FilterGroup `json:"filter" db:"filter"`
+	CreatedAt time.Time   `json:"createdAt" validate:"omitempty" db:"created_at"`
+	SeriesID  *int64      `json:"seriesId,omitempty" validate:"omitempty" db:"series_id"` // Optional, used for updates
+	MetricID  *int64      `json:"metricId,omitempty" validate:"omitempty" db:"metric_id"` // Optional, used for updates
+	Index     *int16      `json:"index,omitempty" validate:"omitempty" db:"index"`        // Optional, used for ordering
 }
 
 type SeriesFilter struct {
@@ -164,41 +164,41 @@ func ValidateFilterFields(sl validator.StructLevel) {
 }
 
 type Session struct {
-	Duration              uint32             `json:"duration" ch:"duration"`
-	ErrorsCount           uint16             `json:"errorsCount" ch:"errors_count"`
-	EventsCount           uint16             `json:"eventsCount" ch:"events_count"`
-	IssueTypes            []string           `json:"issueTypes" ch:"issue_types"`
-	PagesCount            uint16             `json:"pagesCount" ch:"pages_count"`
-	Platform              string             `json:"platform" ch:"platform"`
-	ProjectId             uint16             `json:"projectId" ch:"project_id"`
-	SessionId             string             `json:"sessionId" ch:"session_id"`
-	StartTs               uint64             `json:"startTs" ch:"start_ts"`
-	Timezone              string             `json:"timezone" ch:"timezone"`
-	UserAnonymousId       *string            `json:"userAnonymousId" ch:"user_anonymous_id"`
-	UserBrowser           string             `json:"userBrowser" ch:"user_browser"`
-	UserCity              string             `json:"userCity" ch:"user_city"`
-	UserCountry           string             `json:"userCountry" ch:"user_country"`
-	UserDevice            *string            `json:"userDevice" ch:"user_device"`
-	UserDeviceType        string             `json:"userDeviceType" ch:"user_device_type"`
-	UserId                string             `json:"userId" ch:"user_id"`
-	UserOs                string             `json:"userOs" ch:"user_os"`
-	UserState             string             `json:"userState" ch:"user_state"`
-	UserUuid              string             `json:"userUuid" ch:"user_uuid"`
-	ScreenWidth           int16              `json:"screenWidth" ch:"screen_width"`
-	ScreenHeight          int16              `json:"screenHeight" ch:"screen_height"`
-	Viewed                bool               `json:"viewed" ch:"viewed"`
-	TotalNumberOfSessions uint64             `json:"-" ch:"total_number_of_sessions"`
-	Metadata              map[string]*string `json:"metadata" ch:"metadata"`
-	Metadata1             *string            `json:"-" ch:"metadata_1"`
-	Metadata2             *string            `json:"-" ch:"metadata_2"`
-	Metadata3             *string            `json:"-" ch:"metadata_3"`
-	Metadata4             *string            `json:"-" ch:"metadata_4"`
-	Metadata5             *string            `json:"-" ch:"metadata_5"`
-	Metadata6             *string            `json:"-" ch:"metadata_6"`
-	Metadata7             *string            `json:"-" ch:"metadata_7"`
-	Metadata8             *string            `json:"-" ch:"metadata_8"`
-	Metadata9             *string            `json:"-" ch:"metadata_9"`
-	Metadata10            *string            `json:"-" ch:"metadata_10"`
+	Duration              uint32             `json:"duration" ch:"duration" db:"duration"`
+	ErrorsCount           uint16             `json:"errorsCount" ch:"errors_count" db:"errors_count"`
+	EventsCount           uint16             `json:"eventsCount" ch:"events_count" db:"events_count"`
+	IssueTypes            []string           `json:"issueTypes" ch:"issue_types" db:"issue_types"`
+	PagesCount            uint16             `json:"pagesCount" ch:"pages_count" db:"pages_count"`
+	Platform              string             `json:"platform" ch:"platform" db:"platform"`
+	ProjectId             uint16             `json:"projectId" ch:"project_id" db:"project_id"`
+	SessionId             string             `json:"sessionId" ch:"session_id" db:"session_id"`
+	StartTs               uint64             `json:"startTs" ch:"start_ts" db:"start_ts"`
+	Timezone              string             `json:"timezone" ch:"timezone" db:"timezone"`
+	UserAnonymousId       *string            `json:"userAnonymousId" ch:"user_anonymous_id" db:"user_anonymous_id"`
+	UserBrowser           string             `json:"userBrowser" ch:"user_browser" db:"user_browser"`
+	UserCity              string             `json:"userCity" ch:"user_city" db:"user_city"`
+	UserCountry           string             `json:"userCountry" ch:"user_country" db:"user_country"`
+	UserDevice            *string            `json:"userDevice" ch:"user_device" db:"user_device"`
+	UserDeviceType        string             `json:"userDeviceType" ch:"user_device_type" db:"user_device_type"`
+	UserId                string             `json:"userId" ch:"user_id" db:"user_id"`
+	UserOs                string             `json:"userOs" ch:"user_os" db:"user_os"`
+	UserState             string             `json:"userState" ch:"user_state" db:"user_state"`
+	UserUuid              string             `json:"userUuid" ch:"user_uuid" db:"user_uuid"`
+	ScreenWidth           int16              `json:"screenWidth" ch:"screen_width" db:"screen_width"`
+	ScreenHeight          int16              `json:"screenHeight" ch:"screen_height" db:"screen_height"`
+	Viewed                bool               `json:"viewed" ch:"viewed" db:"viewed"`
+	TotalNumberOfSessions uint64             `json:"-" ch:"total_number_of_sessions" db:"total_number_of_sessions"`
+	Metadata              map[string]*string `json:"metadata" ch:"metadata" db:"-"`
+	Metadata1             *string            `json:"-" ch:"metadata_1" db:"metadata_1"`
+	Metadata2             *string            `json:"-" ch:"metadata_2" db:"metadata_2"`
+	Metadata3             *string            `json:"-" ch:"metadata_3" db:"metadata_3"`
+	Metadata4             *string            `json:"-" ch:"metadata_4" db:"metadata_4"`
+	Metadata5             *string            `json:"-" ch:"metadata_5" db:"metadata_5"`
+	Metadata6             *string            `json:"-" ch:"metadata_6" db:"metadata_6"`
+	Metadata7             *string            `json:"-" ch:"metadata_7" db:"metadata_7"`
+	Metadata8             *string            `json:"-" ch:"metadata_8" db:"metadata_8"`
+	Metadata9             *string            `json:"-" ch:"metadata_9" db:"metadata_9"`
+	Metadata10            *string            `json:"-" ch:"metadata_10" db:"metadata_10"`
 }
 
 type SessionsSearchRequest struct {
