@@ -1,0 +1,60 @@
+.m-armada {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  color: var(--m-armada);
+}
+.m-armada__svg {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.m-armada__glow {
+  position: absolute;
+  inset: -22%;
+  border-radius: var(--m-radius-full);
+  background: radial-gradient(
+    circle,
+    var(--m-armada) 0%,
+    var(--m-armada) 22%,
+    transparent 68%
+  );
+  opacity: 0.2;
+  transition: opacity var(--m-duration-fast) var(--m-ease-out);
+}
+
+.m-nav-item:hover .m-armada__glow,
+.m-nav-item.is-active .m-armada__glow {
+  opacity: 0.34;
+}
+
+.m-armada__lead,
+.m-armada__wing,
+.m-armada__tail {
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+.m-armada__lead {
+  stroke-width: 2.6;
+}
+.m-armada__wing {
+  stroke-width: 2;
+  opacity: 0.8;
+}
+.m-armada__tail {
+  stroke-width: 1.6;
+  opacity: 0.55;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m-armada__glow {
+    transition: none;
+  }
+}

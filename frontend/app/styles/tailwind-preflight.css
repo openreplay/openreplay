@@ -80,7 +80,7 @@ h6 {
     font-weight: inherit;
 }
 
-a {
+a:not([class^='m-']):not([class*=' m-']) {
     color: var(--color-main)!important;
     text-decoration: inherit;
 }

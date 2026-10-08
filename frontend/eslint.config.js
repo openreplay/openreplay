@@ -1,16 +1,18 @@
 import js from '@eslint/js';
 import ts from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
+import prettierConfig from 'eslint-config-prettier';
+import i18next from 'eslint-plugin-i18next';
+import importPlugin from 'eslint-plugin-import';
+import pluginJest from 'eslint-plugin-jest';
+import jsxA11y from 'eslint-plugin-jsx-a11y';
 import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
-import jsxA11y from 'eslint-plugin-jsx-a11y';
-import prettierConfig from 'eslint-config-prettier';
-import importPlugin from 'eslint-plugin-import';
+import globals from 'globals';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import pluginJest from 'eslint-plugin-jest';
-import i18next from 'eslint-plugin-i18next';
-import globals from 'globals'; // You might need to install this package
+
+// You might need to install this package
 
 // mimic CommonJS variables -- not needed if using CommonJS
 const __filename = fileURLToPath(import.meta.url);
@@ -18,7 +20,7 @@ const __dirname = path.dirname(__filename);
 
 export default [
   // Vendored, minified third-party sources: never our lint surface.
-  { ignores: ['app/assets/prism/**', '**/*.min.js'] },
+  { ignores: ['**/*.min.js'] },
   js.configs.recommended,
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
@@ -27,7 +29,7 @@ export default [
       '**/*.test.tsx',
       '**/*.test.js',
       '**/__tests__/**',
-      '**/*.min.js'
+      '**/*.min.js',
     ],
     languageOptions: {
       parser: tsParser,
@@ -180,8 +182,8 @@ export default [
       'no-undef': 'off', // Turn off no-undef for test files since Jest globals are handled
     },
   },
-  // App code reaches the UI library only through the 'UI' barrel; the library
-  // itself never imports its own barrel, which would be circular.
+  // app/components/ui is a compat barrel kept for the saas overlay only; FOSS code
+  // imports the kit directly from @/ui/<group>/<file>.
   {
     files: ['app/**/*.{ts,tsx,js,jsx}'],
     ignores: ['app/components/ui/**'],
@@ -191,34 +193,9 @@ export default [
         {
           patterns: [
             {
-              // UI/Icons/* is the generated icon set, not barrel API.
-              regex: '^UI/(?!Icons/)',
+              regex: '^(UI|App/components/ui|Components/ui)(/|$)',
               message:
-                "Import from the 'UI' barrel instead, e.g. import { Icon } from 'UI'.",
-            },
-          ],
-        },
-      ],
-    },
-  },
-  {
-    files: ['app/components/ui/**/*.{ts,tsx,js,jsx}'],
-    rules: {
-      'no-restricted-imports': [
-        'error',
-        {
-          paths: [
-            {
-              name: 'UI',
-              message:
-                'Circular: the UI library must not import its own barrel. Use a relative import, e.g. ../Icon.',
-            },
-          ],
-          patterns: [
-            {
-              group: ['UI/*'],
-              message:
-                'Circular: use a relative import instead, e.g. ../Icon.',
+                "Legacy compat for saas only; import the kit instead, e.g. import { Icon } from '@/ui/icons/Icon'.",
             },
           ],
         },

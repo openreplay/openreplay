@@ -1,0 +1,70 @@
+.m-listen {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.m-listen__dot {
+  position: relative;
+  width: 33.3%;
+  height: 33.3%;
+  border-radius: var(--m-radius-full);
+  background: var(--m-content-accent);
+}
+
+.m-listen__glow,
+.m-listen__halo {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--m-radius-full);
+  background: radial-gradient(
+    circle,
+    var(--m-content-accent) 0%,
+    var(--m-content-accent) 30%,
+    transparent 72%
+  );
+}
+.m-listen__glow {
+  opacity: 0.22;
+  transform: scale(0.8);
+
+  animation: m-live-glow-rest var(--m-duration-live) var(--m-ease-in-out)
+    infinite;
+}
+@keyframes m-live-glow-rest {
+  0%,
+  100% {
+    opacity: 0.32;
+    transform: scale(0.9);
+  }
+  55% {
+    opacity: 0.14;
+    transform: scale(0.7);
+  }
+}
+.m-listen__halo {
+  opacity: 0;
+  transform: scale(0.34);
+  animation: m-live-halo var(--m-duration-live) var(--m-ease-out) infinite;
+}
+@keyframes m-live-halo {
+  0% {
+    transform: scale(0.34);
+    opacity: 0.5;
+  }
+  70%,
+  100% {
+    transform: scale(1.15);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .m-listen__halo {
+    animation: none;
+    opacity: 0;
+  }
+  .m-listen__glow {
+    animation: none;
+  }
+}

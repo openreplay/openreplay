@@ -1,0 +1,126 @@
+.m-checkrow {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-4);
+  width: 100%;
+  min-height: 1.75rem;
+  padding: var(--m-space-2) var(--m-space-4);
+  border-radius: var(--m-radius-control);
+  color: var(--m-content-secondary);
+  font-size: var(--m-text-sm);
+  text-align: left;
+  transition: background-color var(--m-duration-instant) var(--m-ease-out);
+}
+
+.m-checkrow:hover {
+  background: var(--m-surface-hover);
+}
+.m-checkrow--on {
+  color: var(--m-content-primary);
+}
+
+.m-checkrow__box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border: 1px solid transparent;
+  border-radius: var(--m-radius-check);
+  background: transparent;
+  color: var(--m-content-inverse);
+  transition:
+    border-color var(--m-duration-instant) var(--m-ease-out),
+    background-color var(--m-duration-instant) var(--m-ease-out);
+}
+
+.m-checkrow:hover .m-checkrow__box,
+.m-checkrow:focus-visible .m-checkrow__box {
+  border-color: var(--m-border-strong);
+  background: var(--m-surface-default);
+}
+
+.m-checkrow--on .m-checkrow__box,
+.m-checkrow--on:hover .m-checkrow__box {
+  background: var(--m-action-primary-bg);
+  border-color: var(--m-action-primary-bg);
+  color: var(--m-action-primary-fg);
+}
+
+.m-checkrow--boxed .m-checkrow__box {
+  border-color: var(--m-border-strong);
+  background: var(--m-surface-default);
+}
+.m-checkrow--boxed.m-checkrow--on .m-checkrow__box {
+  background: var(--m-action-primary-bg);
+  border-color: var(--m-action-primary-bg);
+}
+
+.m-checkrow--single .m-checkrow__box {
+  border-radius: var(--m-radius-full);
+}
+
+.m-checkrow__icon {
+  display: inline-flex;
+  flex: none;
+  color: var(--m-content-decorative);
+}
+.m-checkrow--on .m-checkrow__icon {
+  color: var(--m-content-secondary);
+}
+
+.m-checkrow__label {
+  flex: 1;
+}
+
+.m-checkrow--hinted {
+  align-items: flex-start;
+  min-height: 2.75rem;
+  padding-block: var(--m-space-3);
+}
+.m-checkrow--hinted .m-checkrow__box {
+  margin-top: 2px;
+}
+.m-checkrow--hinted .m-checkrow__icon {
+  margin-top: 1px;
+}
+
+.m-checkrow__lead {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+.m-checkrow--hinted .m-checkrow__label {
+  white-space: normal;
+  font-weight: var(--m-weight-medium);
+}
+.m-checkrow__hint {
+  font-size: var(--m-text-xs);
+  line-height: var(--m-leading-snug);
+  color: var(--m-content-muted);
+  white-space: normal;
+}
+.m-checkrow--on .m-checkrow__hint {
+  color: var(--m-content-secondary);
+}
+
+.m-checkrow__meta {
+  flex: none;
+  font-size: var(--m-text-xs);
+  color: var(--m-content-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.m-checkrow:disabled {
+  color: var(--m-content-disabled);
+  cursor: not-allowed;
+}
+.m-checkrow:disabled:hover {
+  background: transparent;
+}
+.m-checkrow:disabled .m-checkrow__hint {
+  color: var(--m-content-disabled);
+}

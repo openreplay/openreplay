@@ -1,0 +1,105 @@
+.m-dr__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-3);
+  flex: none;
+  height: var(--m-control-height-sm);
+  padding-inline: var(--m-space-4);
+  border: 1px solid var(--m-border-default);
+  border-radius: var(--m-radius-control);
+  background: var(--m-surface-default);
+  color: var(--m-content-secondary);
+  font-size: var(--m-text-sm);
+  transition:
+    border-color var(--m-duration-fast) var(--m-ease-out),
+    background-color var(--m-duration-fast) var(--m-ease-out),
+    color var(--m-duration-fast) var(--m-ease-out);
+}
+
+.m-dr__trigger:hover {
+  border-color: var(--m-border-strong);
+  color: var(--m-content-primary);
+}
+
+.m-dr__trigger--subtle {
+  border-color: transparent;
+  background: transparent;
+}
+.m-dr__trigger--subtle:hover {
+  border-color: transparent;
+  background: var(--m-surface-hover);
+}
+.m-dr__trigger.is-open {
+  background: var(--m-surface-hover);
+  color: var(--m-content-primary);
+}
+
+.m-dr__trigger.is-active {
+  color: var(--m-content-primary);
+}
+
+.m-dr__value {
+  white-space: nowrap;
+}
+
+.m-dr__trigger.is-open {
+  position: relative;
+  z-index: calc(var(--m-z-dropdown) + 2);
+}
+
+.m-dr__caret {
+  color: var(--m-content-decorative);
+}
+.m-dr__trigger:hover .m-dr__caret,
+.m-dr__trigger.is-open .m-dr__caret {
+  color: var(--m-content-secondary);
+}
+
+.m-dr__menu {
+  display: flex;
+  flex-direction: column;
+
+  min-width: 14.5rem;
+
+  padding: var(--m-space-3);
+}
+
+.m-dr__field {
+  padding: var(--m-space-2) var(--m-space-3) var(--m-space-3);
+  color: var(--m-content-muted);
+  font-size: var(--m-text-2xs);
+  font-weight: var(--m-weight-medium);
+  letter-spacing: var(--m-tracking-wide);
+  text-transform: uppercase;
+}
+
+.m-dr__rule {
+  margin: var(--m-space-2) var(--m-space-3);
+  border-top: 1px solid var(--m-border-subtle);
+}
+
+.m-dr__picker {
+  display: grid;
+  border-top: var(--m-border-width) solid var(--m-border-subtle);
+  margin-top: var(--m-space-3);
+}
+
+.m-dr__fields {
+  display: grid;
+  gap: var(--m-space-3);
+  padding: var(--m-space-4) var(--m-space-4) 0;
+}
+
+.m-dr__input {
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  font-size: var(--m-text-xs);
+}
+
+.m-dr__input.is-active {
+  border-color: var(--m-border-strong);
+  background: var(--m-surface-default);
+}
+.m-dr__input.is-bad {
+  border-color: var(--m-border-danger);
+}

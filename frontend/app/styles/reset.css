@@ -8,11 +8,6 @@
 
 body, html {
   height: 100%;
-  background: $gray-lightest;
-  font-family: 'Roboto', 'ArialMT', 'Arial';
-  font-size: 14px;
-  font-weight: 400;
-  color: $gray-darkest;
 }
 
 input, button {
@@ -25,8 +20,8 @@ button {
   font-weight: 400;
 }
 
-textarea:focus,
-input:not(.ant-input-number-input, .ant-input, .nofocus):focus {
+textarea:not([data-slot], [class^='m-'], [class*=' m-']):focus,
+input:not(.nofocus, [data-slot], [class^='m-'], [class*=' m-']):focus {
   border: solid thin $teal !important;
 }
 
@@ -55,11 +50,6 @@ input:not(.ant-input-number-input, .ant-input, .nofocus):focus {
       background: $gray-medium;
     }
   }
-}
-
-h1, h2, h3, h4, h5 {
-  font-family: 'Roboto', 'ArialMT', 'Arial';
-  font-weight: 500;
 }
 
 * {

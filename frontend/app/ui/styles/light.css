@@ -1,0 +1,79 @@
+.m-lt {
+  --m-lt-color: var(--m-content-accent);
+  --m-lt-len: 2.75rem;
+  --m-lt-spread: 1.4rem;
+  position: absolute;
+  pointer-events: none;
+}
+
+.m-lt__core,
+.m-lt__bloom {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: var(--m-radius-full);
+  transform-origin: center;
+}
+
+.m-lt--x .m-lt__core {
+  width: var(--m-lt-len);
+  height: 2px;
+  margin-top: -1px;
+  margin-left: calc(var(--m-lt-len) / -2);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in oklab, var(--m-lt-color) 8%, transparent) 18%,
+    color-mix(in oklab, var(--m-lt-color) 26%, transparent) 31%,
+    color-mix(in oklab, var(--m-lt-color) 62%, transparent) 42%,
+    var(--m-lt-color) 50%,
+    color-mix(in oklab, var(--m-lt-color) 62%, transparent) 58%,
+    color-mix(in oklab, var(--m-lt-color) 26%, transparent) 69%,
+    color-mix(in oklab, var(--m-lt-color) 8%, transparent) 82%,
+    transparent 100%
+  );
+  filter: blur(0.6px);
+}
+.m-lt--y .m-lt__core {
+  height: var(--m-lt-len);
+  width: 2px;
+  margin-left: -1px;
+  margin-top: calc(var(--m-lt-len) / -2);
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    color-mix(in oklab, var(--m-lt-color) 8%, transparent) 18%,
+    color-mix(in oklab, var(--m-lt-color) 26%, transparent) 31%,
+    color-mix(in oklab, var(--m-lt-color) 62%, transparent) 42%,
+    var(--m-lt-color) 50%,
+    color-mix(in oklab, var(--m-lt-color) 62%, transparent) 58%,
+    color-mix(in oklab, var(--m-lt-color) 26%, transparent) 69%,
+    color-mix(in oklab, var(--m-lt-color) 8%, transparent) 82%,
+    transparent 100%
+  );
+  filter: blur(0.6px);
+}
+
+.m-lt__bloom {
+  background: radial-gradient(
+    closest-side ellipse,
+    color-mix(in oklab, var(--m-lt-color) 55%, transparent) 0%,
+    color-mix(in oklab, var(--m-lt-color) 34%, transparent) 30%,
+    color-mix(in oklab, var(--m-lt-color) 14%, transparent) 55%,
+    color-mix(in oklab, var(--m-lt-color) 4%, transparent) 76%,
+    transparent 100%
+  );
+  filter: blur(5px);
+}
+.m-lt--x .m-lt__bloom {
+  width: calc(var(--m-lt-len) * 2.9);
+  height: var(--m-lt-spread);
+  margin-left: calc(var(--m-lt-len) * -1.45);
+  margin-top: calc(var(--m-lt-spread) / -2);
+}
+.m-lt--y .m-lt__bloom {
+  height: calc(var(--m-lt-len) * 2.9);
+  width: var(--m-lt-spread);
+  margin-top: calc(var(--m-lt-len) * -1.45);
+  margin-left: calc(var(--m-lt-spread) / -2);
+}

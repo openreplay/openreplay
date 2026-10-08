@@ -1,0 +1,140 @@
+.m-brandmark {
+  display: block;
+  flex: none;
+  color: var(--m-brand-mark);
+}
+
+.m-brandmark__s {
+  transition-property: var(--mark-props);
+  transition-duration: var(--m-duration-slow);
+  transition-timing-function: var(--m-ease-out);
+}
+
+.m-brandmark.is-turned .m-brandmark__s--a,
+[data-mark-host]:hover > .m-brandmark .m-brandmark__s--a,
+[data-mark-host]:focus-visible > .m-brandmark .m-brandmark__s--a {
+  x: var(--mark-ax);
+  y: var(--mark-ay);
+  width: var(--mark-as);
+  height: var(--mark-as);
+  rx: var(--mark-ar);
+}
+
+.m-brandmark.is-turned .m-brandmark__s--b,
+[data-mark-host]:hover > .m-brandmark .m-brandmark__s--b,
+[data-mark-host]:focus-visible > .m-brandmark .m-brandmark__s--b {
+  x: var(--mark-bx);
+  y: var(--mark-by);
+  width: var(--mark-bs);
+  height: var(--mark-bs);
+  rx: var(--mark-br);
+}
+
+/* Loading loop: turn, hold, turn back, hold (1.12s), in CSS rather than
+   re-rendering the svg twice a second. */
+.m-brandmark.is-looping .m-brandmark__s {
+  animation: 1120ms linear infinite;
+}
+.m-brandmark.is-looping .m-brandmark__s--a {
+  animation-name: m-mark-loop-a;
+}
+.m-brandmark.is-looping .m-brandmark__s--b {
+  animation-name: m-mark-loop-b;
+}
+
+@keyframes m-mark-loop-a {
+  0% {
+    x: var(--mark-a0x);
+    y: var(--mark-a0y);
+    width: var(--mark-a0s);
+    height: var(--mark-a0s);
+    rx: var(--mark-a0r);
+    animation-timing-function: cubic-bezier(
+      0.22,
+      1,
+      0.36,
+      1
+    ); /* --m-ease-out */
+  }
+  34% {
+    x: var(--mark-ax);
+    y: var(--mark-ay);
+    width: var(--mark-as);
+    height: var(--mark-as);
+    rx: var(--mark-ar);
+  }
+  50% {
+    x: var(--mark-ax);
+    y: var(--mark-ay);
+    width: var(--mark-as);
+    height: var(--mark-as);
+    rx: var(--mark-ar);
+    animation-timing-function: cubic-bezier(
+      0.22,
+      1,
+      0.36,
+      1
+    ); /* --m-ease-out */
+  }
+  84%,
+  100% {
+    x: var(--mark-a0x);
+    y: var(--mark-a0y);
+    width: var(--mark-a0s);
+    height: var(--mark-a0s);
+    rx: var(--mark-a0r);
+  }
+}
+
+@keyframes m-mark-loop-b {
+  0% {
+    x: var(--mark-b0x);
+    y: var(--mark-b0y);
+    width: var(--mark-b0s);
+    height: var(--mark-b0s);
+    rx: var(--mark-b0r);
+    animation-timing-function: cubic-bezier(
+      0.22,
+      1,
+      0.36,
+      1
+    ); /* --m-ease-out */
+  }
+  34% {
+    x: var(--mark-bx);
+    y: var(--mark-by);
+    width: var(--mark-bs);
+    height: var(--mark-bs);
+    rx: var(--mark-br);
+  }
+  50% {
+    x: var(--mark-bx);
+    y: var(--mark-by);
+    width: var(--mark-bs);
+    height: var(--mark-bs);
+    rx: var(--mark-br);
+    animation-timing-function: cubic-bezier(
+      0.22,
+      1,
+      0.36,
+      1
+    ); /* --m-ease-out */
+  }
+  84%,
+  100% {
+    x: var(--mark-b0x);
+    y: var(--mark-b0y);
+    width: var(--mark-b0s);
+    height: var(--mark-b0s);
+    rx: var(--mark-b0r);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m-brandmark__s {
+    transition: none;
+  }
+  .m-brandmark.is-looping .m-brandmark__s {
+    animation: none;
+  }
+}
