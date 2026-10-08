@@ -1,0 +1,93 @@
+.m-strip { flex: none; background: var(--m-surface-default); }
+
+.m-strip--cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-space-5);
+  container-type: inline-size;
+  padding: var(--m-space-7) 0 var(--m-space-9);
+  border-top: 1px solid var(--m-border-default);
+  background: var(--m-surface-sunken);
+}
+
+.m-strip__head {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-6);
+  height: var(--m-control-height-lg);
+  flex: none;
+  padding-inline: var(--m-space-8);
+}
+
+.m-strip__label {
+  display: flex;
+  align-items: baseline;
+  gap: var(--m-space-3);
+  flex: none;
+  font-size: var(--m-text-md);
+  font-weight: var(--m-weight-medium);
+  color: var(--m-content-primary);
+}
+.m-strip__of {
+  font-size: var(--m-text-xs);
+  color: var(--m-content-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.m-strip__hint { font-size: var(--m-text-xs); color: var(--m-content-muted); }
+
+.m-strip__tools { display: flex; align-items: center; gap: var(--m-space-3); flex: none; margin-left: auto; }
+.m-strip__search { width: 14rem; }
+
+.m-strip__loading { position: relative; }
+
+.m-strip__scrim {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+    backdrop-filter: blur(2px);
+  background: color-mix(in oklab, var(--m-surface-sunken) 40%, transparent);
+}
+
+.m-strip__rail {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--m-space-6);
+  padding-inline: var(--m-space-8);
+}
+
+@container (max-width: 53rem) {
+  .m-strip__rail {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: 14rem;
+    overflow-x: auto;
+    scroll-padding-inline: var(--m-space-8);
+    scrollbar-width: thin;
+  }
+}
+
+.m-strip__suggest {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: var(--m-z-dropdown);
+  list-style: none;
+  margin: 0;
+  padding: var(--m-space-2);
+  border: 1px solid var(--m-border-subtle);
+  border-radius: var(--m-radius-surface);
+  background: var(--m-surface-raised);
+}
+.m-strip__suggest button {
+  display: block;
+  width: 100%;
+  padding: var(--m-space-2) var(--m-space-3);
+  border-radius: var(--m-radius-control);
+  text-align: left;
+  font-size: var(--m-text-xs);
+  color: var(--m-content-primary);
+}
+.m-strip__suggest button:hover { background: var(--m-surface-hover); }

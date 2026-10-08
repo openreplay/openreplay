@@ -1,26 +1,26 @@
 import withPageTitle from 'HOCs/withPageTitle';
 import withPermissions from 'HOCs/withPermissions';
-import { Button } from 'antd';
-import { Album, Settings as SettingsIcon } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
-import React, { useEffect, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { useStore } from 'App/mstore';
-import { useHistory } from 'App/routing';
 
-import PreferencesPage from '../PreferencesPage';
 import RunsTab from './components/RunsTab';
 import SettingsTab from './components/SettingsTab';
+import { SyntheticsStandalone } from './components/SyntheticsFrame';
 import TestsTab from './components/TestsTab';
 import { KaiTab, kaiUi, useKaiUi } from './components/shared/uiStore';
 import { useQueryParam } from './components/shared/useUrlState';
 import { BrowserTestsProjectProvider } from './queries';
 
-function SmartTests() {
-  const { t } = useTranslation();
+const SECTIONS: { key: KaiTab; Body: React.ComponentType }[] = [
+  { key: 'tests', Body: TestsTab },
+  { key: 'runs', Body: RunsTab },
+  { key: 'settings', Body: SettingsTab },
+];
+
+function SmartTests({ standalone = false }: { standalone?: boolean }) {
   const { projectsStore } = useStore();
-  const history = useHistory();
   // held in the ui store so drawers can deep-link across tabs ("View runs")
   const { activeTab } = useKaiUi();
   // and mirrored in the URL (?tab=) so a reload / shared link restores it
@@ -43,63 +43,28 @@ function SmartTests() {
   }, [activeTab, setTabParam]);
   const siteId = String(projectsStore.activeSiteId ?? '');
 
-  const tabItems = [
-    {
-      key: 'tests',
-      label: t('Tests'),
-      children: <TestsTab />,
-    },
-    {
-      key: 'runs',
-      label: t('Runs'),
-      children: <RunsTab />,
-    },
-    {
-      // only core config lives here; behaviour toggles + notifications are on
-      // Preferences > Agents
-      key: 'settings',
-      label: t('Environments'),
-      children: <SettingsTab />,
-    },
-  ];
+  // a visited section stays mounted, so its filters and handoffs survive a tab switch
+  const [visited, setVisited] = useState<KaiTab[]>([activeTab]);
+  if (!visited.includes(activeTab)) setVisited([...visited, activeTab]);
 
   return (
     <BrowserTestsProjectProvider value={siteId}>
-      <PreferencesPage
-        title={t('Test Agents')}
-        help={t(
-          'End-to-end tests our agents write and maintain from your real user journeys. Review a draft, approve it, and schedule it — the agent runs it and reports every regression here.',
+      <SyntheticsStandalone value={standalone}>
+        {SECTIONS.filter((s) => visited.includes(s.key)).map(
+          ({ key, Body }) => (
+            <div
+              key={key}
+              className={key === activeTab ? 'contents' : 'hidden'}
+            >
+              <Body />
+            </div>
+          ),
         )}
-        actions={
-          <>
-            {/* notifications + behaviour live in the shared agent preferences */}
-            <Button
-              type="text"
-              size="small"
-              icon={<SettingsIcon size={14} />}
-              onClick={() => history.push('/client/agents?agent=tests')}
-            >
-              <span className="max-md:hidden">{t('Settings')}</span>
-            </Button>
-            <a
-              href="https://docs.openreplay.com/"
-              target="_blank"
-              rel="noreferrer"
-            >
-              <Button type="text" size="small" icon={<Album size={14} />}>
-                <span className="max-md:hidden">{t('Docs')}</span>
-              </Button>
-            </a>
-          </>
-        }
-        tabs={tabItems}
-        activeTab={activeTab}
-        onTabChange={(k) => kaiUi.setActiveTab(k as KaiTab)}
-      />
+      </SyntheticsStandalone>
     </BrowserTestsProjectProvider>
   );
 }
 
-export default withPageTitle('Test Agents - OpenReplay')(
+export default withPageTitle('Synthetics - OpenReplay')(
   withPermissions(['BROWSER_TESTS'], '')(observer(SmartTests)),
 );

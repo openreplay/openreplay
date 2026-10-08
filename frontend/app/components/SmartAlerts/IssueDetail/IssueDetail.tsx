@@ -1,90 +1,61 @@
 import withPageTitle from '@/components/hocs/withPageTitle';
 import withPermissions from '@/components/hocs/withPermissions';
-import { AutoComplete, Button, Input, Tooltip } from 'antd';
-import {
-  ArrowLeft,
-  ExternalLink,
-  Eye,
-  EyeOff,
-  Info,
-  Loader,
-} from 'lucide-react';
+import { Button } from '@/ui/actions/button';
+import { BrandMark } from '@/ui/brand/BrandMark';
+import { CountSuffix } from '@/ui/data/CountSuffix';
+import { EmptyState } from '@/ui/feedback/EmptyState';
+import { type FilterDimension, FilterMenu } from '@/ui/filters/FilterMenu';
+import { Input } from '@/ui/inputs/input';
+import { Segmented } from '@/ui/inputs/toggle-group';
+import { Tooltip } from '@/ui/overlays/tooltip';
+import { Info, Search, Split, Tag as TagIcon, X } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'react-toastify';
 
 import { useStore } from 'App/mstore';
 import { useHistory, useParams } from 'App/routing';
 import { smartIssueSession, smartIssues, withSiteId } from 'App/saasComponents';
+import { ReplayScreen } from 'Components/Session/ReplayScreen/ReplayScreen';
 
-import TagFilter, { SegmentFilter } from '../IssueList/TagFilter';
-import { FoundInChips, syncScopeToUrl } from '../segments/SegmentScope';
+import { syncScopeToUrl } from '../segments/SegmentScope';
 import {
   CriticalDialog,
   HideIssueModal,
   type IssueSessionCard,
   JOURNEY_SEARCH_SUGGESTIONS,
-  LinearIcon,
   NotCriticalDialog,
+  RenameIssueModal,
 } from '../shared';
-import ProblemCard from './ProblemCard';
+import type { MatchMode } from '../shared/model';
+import IssueActions from './IssueActions';
+import IssueWriteUp from './IssueWriteUp';
 import SessionCard from './SessionCard';
+import './session-strip.css';
 
-const SHOWN_LIMIT = 3;
+const STEP = 3;
 const MAX_EXAMPLES = 10;
+type Key = 'tags' | 'segments';
 
 function IssueDetail() {
-  const { issuesStore, projectsStore, integrationsStore } = useStore();
+  const { issuesStore, projectsStore } = useStore();
   const { t } = useTranslation();
   const siteId = projectsStore.activeSiteId;
   const history = useHistory();
   const params = useParams() as { issueId?: string };
-  // the URL carries the (encoded) issue id; resolve it from cache/list or fetch
   const id = params.issueId ? decodeURIComponent(params.issueId) : '';
   const idParam = params.issueId ?? '';
   const issue = issuesStore.byId(id);
-  /* the integration list is fetched on demand, not at app boot */
-  React.useEffect(() => {
-    void integrationsStore.integrations.ensureIntegrations(siteId);
-  }, [siteId]);
-  const linearConnected =
-    integrationsStore.integrations.integratedServices.some(
-      (int: any) => int.name === 'linear',
-    );
-  const ticket = issue ? issuesStore.tickets[issue.id] : undefined;
 
-  const [ticketHover, setTicketHover] = React.useState(false);
   const [hideOpen, setHideOpen] = React.useState(false);
   const [critOpen, setCritOpen] = React.useState(false);
-  const [notCritTarget, setNotCritTarget] = React.useState<{
-    id: string;
-    head: string;
-  } | null>(null);
+  const [renameOpen, setRenameOpen] = React.useState(false);
+  const [notCritOpen, setNotCritOpen] = React.useState(false);
   const [query, setQuery] = React.useState('');
   const [searchQuery, setSearchQuery] = React.useState('');
-  const [visibleCount, setVisibleCount] = React.useState(SHOWN_LIMIT);
-  // shared title slot: cards report their natural line counts here; the grid
-  // slots every title at the max the visible cards need (capped at 3)
-  const [titleLineCounts, setTitleLineCounts] = React.useState<
-    Record<string, number>
-  >({});
-  const reportTitleLines = React.useCallback((id: string, n: number) => {
-    setTitleLineCounts((prev) =>
-      prev[id] === n ? prev : { ...prev, [id]: n },
-    );
-  }, []);
+  const [searching, setSearching] = React.useState(false);
+  const [visibleCount, setVisibleCount] = React.useState(STEP);
 
-  const createTicket = async () => {
-    const created = await issuesStore.createTicket(id, 'linear');
-    if (created) {
-      toast.success(t('Linear ticket created'));
-    } else {
-      toast.error(t('Failed to create the Linear ticket'));
-    }
-  };
-
-  // sessions-only detail filters (segment scope + tag filter), mirrored to ?seg=
   const filterKey = `${issuesStore.detailScope.join(',')}|${
     issuesStore.detailMatch
   }:${issuesStore.detailLabels.join(',')}`;
@@ -95,16 +66,11 @@ function IssueDetail() {
   React.useEffect(() => {
     if (id) void issuesStore.loadIssue(id);
   }, [id]);
-  // seed the sessions-only filters from the issue itself — the issue fetch
-  // carries its journey labels + segments, so pre-select them and scope the
-  // sample to this issue's journeys/segments. OR-matched so several labels don't
-  // over-narrow. A shared ?seg= URL still wins for the segment scope. Cleared on
-  // leave so nothing leaks over.
+  // seed the sessions-only filters from the issue; a shared ?seg= wins for scope
   React.useEffect(() => {
     const seg = new URLSearchParams(window.location.search).get('seg');
-    if (seg) {
-      issuesStore.setDetailScope(seg.split(',').filter(Boolean));
-    } else {
+    if (seg) issuesStore.setDetailScope(seg.split(',').filter(Boolean));
+    else {
       issuesStore.setDetailScope(issue?.segmentIds ?? []);
       syncScopeToUrl(issuesStore.detailScope);
     }
@@ -119,351 +85,306 @@ function IssueDetail() {
     if (issue) void issuesStore.loadSessions(issue.id, searchQuery);
   }, [issue?.id, searchQuery, filterKey]);
 
-  // NB: this hook must stay above the early `!issue` return — moving it below
-  // makes the hook count differ between renders ("Rendered more hooks…").
   const ql = query.trim().toLowerCase();
-  const suggestions = React.useMemo(() => {
-    if (!ql) return [];
-    return JOURNEY_SEARCH_SUGGESTIONS.filter((s) =>
-      s.toLowerCase().includes(ql),
-    ).map((s) => {
-      const at = s.toLowerCase().indexOf(ql);
-      return {
-        value: s,
-        label: (
-          <span>
-            {s.slice(0, at)}
-            <b>{s.slice(at, at + ql.length)}</b>
-            {s.slice(at + ql.length)}
-          </span>
-        ),
-      };
-    });
-  }, [ql]);
+  const suggestions = React.useMemo(
+    () =>
+      ql
+        ? JOURNEY_SEARCH_SUGGESTIONS.filter(
+            (s) => s.toLowerCase().includes(ql) && s.toLowerCase() !== ql,
+          ).slice(0, 6)
+        : [],
+    [ql],
+  );
 
   const back = () => history.push(withSiteId(smartIssues(), siteId));
-  const openReplay = (s: IssueSessionCard) => {
-    const q = s.issueTimestamp ? `?jumpto=${s.issueTimestamp}` : '';
+  const sessionPath = (s: IssueSessionCard) =>
+    withSiteId(smartIssueSession(idParam, s.sessionId), siteId);
+  const openReplay = (s: IssueSessionCard) =>
     history.push(
-      withSiteId(smartIssueSession(idParam, s.sessionId), siteId) + q,
+      sessionPath(s) + (s.issueTimestamp ? `?jumpto=${s.issueTimestamp}` : ''),
     );
-  };
-  const shareUrl = (s: IssueSessionCard) =>
-    `${window.location.origin}${withSiteId(
-      smartIssueSession(idParam, s.sessionId),
-      siteId,
-    )}`;
 
-  if (!issue) {
-    return (
-      <div className="mx-auto w-full" style={{ maxWidth: 1360 }}>
-        <div className="rounded-lg border bg-white flex flex-col p-4 gap-4">
-          <Button
-            type="text"
-            size="small"
-            icon={<ArrowLeft size={15} />}
-            onClick={back}
-            className="self-start -ml-2"
-          >
-            {t('Back to Issues')}
-          </Button>
-          <div className="p-8 text-center color-gray-medium">
-            {issuesStore.loading || issuesStore.isLoadingIssue(id)
-              ? t('Loading…')
-              : t('Issue not found.')}
-          </div>
-        </div>
-      </div>
+  const screen = (children: React.ReactNode, actions?: React.ReactNode) => (
+    <ReplayScreen
+      back={{ label: t('Issues'), onClick: back }}
+      lead={
+        <nav className="m-ihdr__crumb" aria-label={t('Breadcrumb')}>
+          <span>{t('This issue')}</span>
+        </nav>
+      }
+      actions={actions}
+    >
+      {children}
+    </ReplayScreen>
+  );
+
+  if (!issue)
+    return screen(
+      <EmptyState
+        art="issues"
+        title={
+          issuesStore.loading || issuesStore.isLoadingIssue(id)
+            ? t('Loading…')
+            : t('Issue not found')
+        }
+      />,
     );
-  }
 
-  const critState = issuesStore.critState(issue.id);
-
-  // examples are a sample: show a few, "load more" reveals up to MAX_EXAMPLES;
-  // the footer reports the full matched-session total from the search
   const sessions = issuesStore.exampleSessions(issue.id, searchQuery);
   const total = issuesStore.sessionsCount(issue.id, searchQuery);
   const loadingSessions = issuesStore.isLoadingSessions(issue.id, searchQuery);
   const maxExamples = Math.min(MAX_EXAMPLES, sessions.length);
   const shown = sessions.slice(0, Math.min(visibleCount, maxExamples));
-  const canLoadMore = shown.length < maxExamples;
-
-  // title slot only counts CURRENTLY VISIBLE cards, so it shrinks back when a
-  // long-titled card loads out / filters away (capped at 3 lines)
-  const titleLines = Math.min(
-    3,
-    Math.max(1, ...shown.map((s) => titleLineCounts[s.sessionId] ?? 1)),
-  );
+  const filtered =
+    issuesStore.detailScope.length > 0 || issuesStore.detailLabels.length > 0;
 
   const runSearch = (v: string) => {
-    setSearchQuery(v);
-    setVisibleCount(SHOWN_LIMIT);
+    setQuery(v);
+    setSearchQuery(v.trim());
+    setVisibleCount(STEP);
   };
-  const loadMore = () =>
-    setVisibleCount((c) => Math.min(maxExamples, c + SHOWN_LIMIT));
+  const clearFilters = () => {
+    issuesStore.clearDetailScope();
+    issuesStore.clearDetailLabels();
+    syncScopeToUrl([]);
+  };
 
-  const search = (
-    <AutoComplete
-      value={query}
-      onChange={setQuery}
-      options={suggestions}
-      onSelect={runSearch}
-      listHeight={160}
-      style={{ width: '100%' }}
-    >
-      <Input.Search
-        allowClear
-        size="small"
-        maxLength={256}
-        placeholder={t('Describe the journey to find…')}
-        onSearch={runSearch}
+  const matchFooter = (value: MatchMode, set: (m: MatchMode) => void) => (
+    <span className="ml-auto inline-flex items-center gap-2">
+      {t('Match')}
+      <Segmented
+        value={value}
+        onChange={(v) => set(v as MatchMode)}
+        ariaLabel={t('Match')}
+        options={[
+          { value: 'any', label: t('Any') },
+          { value: 'all', label: t('All') },
+        ]}
       />
-    </AutoComplete>
+    </span>
   );
+  const dimensions: FilterDimension<Key>[] = [
+    {
+      key: 'tags',
+      label: t('Tags'),
+      icon: <TagIcon size={14} />,
+      options: issuesStore.allTags.map((tag) => ({ value: tag, label: tag })),
+      footer:
+        issuesStore.detailLabels.length > 1
+          ? matchFooter(issuesStore.detailMatch, issuesStore.setDetailMatch)
+          : undefined,
+    },
+    ...(issuesStore.originSegments.length
+      ? [
+          {
+            key: 'segments' as Key,
+            label: t('Segments'),
+            icon: <Split size={14} />,
+            options: issuesStore.originSegments.map((s) => ({
+              value: s.id,
+              label: s.name,
+              icon: <Split size={13} />,
+            })),
+          },
+        ]
+      : []),
+  ];
 
   return (
-    <div
-      className="mx-auto w-full flex flex-col gap-4"
-      style={{ maxWidth: 1360 }}
-    >
-      <Button
-        type="text"
-        size="small"
-        icon={<ArrowLeft size={15} />}
-        onClick={back}
-        className="self-start -ml-2"
-      >
-        {t('Back to Issues')}
-      </Button>
+    <>
+      {screen(
+        <div className="m-work__scroll">
+          <IssueWriteUp issue={issue} title={issue.head} />
+          <section
+            className="m-strip m-strip--cards"
+            aria-label={t('Sessions that hit this issue')}
+          >
+            <header className="m-strip__head">
+              <h2 className="m-strip__label">
+                {t('Sessions that hit it')}
+                {shown.length === total ? (
+                  <CountSuffix n={total} />
+                ) : (
+                  <span className="m-strip__of">
+                    {t('{{shown}} of {{total}}', {
+                      shown: shown.length,
+                      total: total.toLocaleString(),
+                    })}
+                  </span>
+                )}
+                <Tooltip
+                  title={t(
+                    'A sample of the sessions where the agent detected this issue, not the full set. Search or load more to see other examples.',
+                  )}
+                >
+                  <Info
+                    size={13}
+                    className="self-center text-content-decorative"
+                  />
+                </Tooltip>
+              </h2>
+              {!searching && (
+                <p className="m-strip__hint">
+                  {t('Pick the one you want to watch.')}
+                </p>
+              )}
+              <div className="m-strip__tools">
+                {searching || searchQuery ? (
+                  <div className="m-strip__search relative">
+                    <Search
+                      size={13}
+                      aria-hidden="true"
+                      className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-content-decorative"
+                    />
+                    <Input
+                      autoFocus
+                      className="pl-7 pr-7"
+                      placeholder={t('Describe the journey to find…')}
+                      aria-label={t('Search these sessions')}
+                      value={query}
+                      maxLength={256}
+                      onChange={(e) => setQuery(e.currentTarget.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') runSearch(query);
+                        if (e.key === 'Escape') {
+                          runSearch('');
+                          setSearching(false);
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-content-decorative hover:text-content-primary"
+                      aria-label={t('Close the search')}
+                      onClick={() => {
+                        runSearch('');
+                        setSearching(false);
+                      }}
+                    >
+                      <X size={13} />
+                    </button>
+                    {suggestions.length > 0 && (
+                      <ul className="m-strip__suggest m-pop m-elevated">
+                        {suggestions.map((s) => (
+                          <li key={s}>
+                            <button
+                              type="button"
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                runSearch(s);
+                              }}
+                            >
+                              {s}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ) : (
+                  <Tooltip title={t('Search these sessions')}>
+                    <span>
+                      <Button
+                        size="icon"
+                        aria-label={t('Search these sessions')}
+                        onClick={() => setSearching(true)}
+                      >
+                        <Search size={15} />
+                      </Button>
+                    </span>
+                  </Tooltip>
+                )}
+                <FilterMenu<Key>
+                  dimensions={dimensions}
+                  label={t('Filter these sessions')}
+                  isActive={(key, value) =>
+                    key === 'tags'
+                      ? issuesStore.detailLabels.includes(value)
+                      : issuesStore.detailScope.includes(value)
+                  }
+                  onToggle={(key, value) => {
+                    if (key === 'tags') issuesStore.toggleDetailLabel(value);
+                    else {
+                      issuesStore.toggleDetailScope(value);
+                      syncScopeToUrl(issuesStore.detailScope);
+                    }
+                  }}
+                  activeCount={
+                    issuesStore.detailLabels.length +
+                    issuesStore.detailScope.length
+                  }
+                />
+              </div>
+            </header>
 
-      <div className="rounded-lg border bg-white">
-        <ProblemCard
-          framed
-          issue={{ ...issue, critical: critState !== 'none' }}
-          editable
-          onRename={(newName) => issuesStore.rename(issue.id, newName)}
-          onOpenCritical={() => setCritOpen(true)}
-          onRemoveCritical={() => setNotCritTarget(issue)}
-          criticalMine={critState === 'mine'}
-          criticalBy={
-            issuesStore.matchedRules(issue.id).find((r) => !r.mine)?.createdBy
-          }
-          actions={
-            <>
-              <Tooltip
+            {loadingSessions ? (
+              <div className="m-strip__loading">
+                <div className="m-strip__rail" aria-hidden="true">
+                  {[0, 1, 2].map((i) => (
+                    <div key={i} className="m-scard m-scard--skeleton">
+                      <span className="m-scard__frame m-skeleton" />
+                      <span className="m-skeleton h-3 w-3/4" />
+                      <span className="m-skeleton h-3 w-1/2" />
+                    </div>
+                  ))}
+                </div>
+                <div className="m-strip__scrim">
+                  <span className="inline-flex flex-col items-center gap-2 text-xs text-content-muted">
+                    <BrandMark size={22} loop />
+                    {t('Searching journeys…')}
+                  </span>
+                </div>
+              </div>
+            ) : shown.length === 0 ? (
+              <EmptyState
                 title={
-                  linearConnected
-                    ? undefined
-                    : t(
-                        'Connect your Linear project to create tickets from OpenReplay',
-                      )
+                  filtered
+                    ? t('No sampled session matches these filters')
+                    : searchQuery
+                      ? t('No session matches this search')
+                      : t('No example sessions yet')
                 }
-              >
-                {/* a disabled antd Button gets pointer-events: none, so the
-                    tooltip needs a hoverable wrapper of its own */}
-                <span className="inline-flex">
-                  <Button
-                    type="primary"
-                    size="small"
-                    disabled={!linearConnected}
-                    loading={issuesStore.ticketPending === issue.id}
-                    icon={
-                      ticket || (ticketHover && linearConnected) ? (
-                        <ExternalLink size={14} />
-                      ) : (
-                        <LinearIcon size={14} />
-                      )
-                    }
-                    onMouseEnter={() => setTicketHover(true)}
-                    onMouseLeave={() => setTicketHover(false)}
-                    onClick={
-                      ticket
-                        ? () => window.open(ticket.url, '_blank', 'noopener')
-                        : createTicket
-                    }
-                  >
-                    {ticket ? t('View ticket') : t('Create ticket')}
-                  </Button>
-                </span>
-              </Tooltip>
-              {/* follows the ISSUE's own flag, not the list's visibility
-                  filter — this page is deep-linkable and `all` mixes both */}
-              {issue.hidden ? (
-                <Button
-                  size="small"
-                  icon={<Eye size={14} />}
-                  onClick={() => issuesStore.unhide(issue.id)}
-                >
-                  {t('Unhide')}
-                </Button>
-              ) : (
-                <Button
-                  size="small"
-                  icon={<EyeOff size={14} />}
-                  onClick={() => setHideOpen(true)}
-                >
-                  {t('Hide')}
-                </Button>
-              )}
-            </>
-          }
-        />
-        {(issue.segmentIds.length > 0 || issuesStore.segments.length > 0) && (
-          <div className="px-4 pb-4 -mt-1">
-            <FoundInChips issue={issue} />
-          </div>
-        )}
-      </div>
-
-      <div className="flex flex-col gap-3">
-        {/* toolbar shares the cards' 3-column grid so the search aligns flush with the cards below */}
-        <div className="grid items-center gap-x-4 gap-y-2 md:grid-cols-3">
-          <div className="flex items-center justify-between gap-3 flex-wrap md:col-span-2">
-            <div className="flex items-center gap-1.5">
-              <span className="text-base font-semibold color-gray-darkest">
-                {t('Example sessions')}
-              </span>
-              <Tooltip
-                title={t(
-                  'A sample of the sessions where the agent detected this issue, not the full set. Search or load more to see other examples.',
-                )}
-              >
-                <Info size={15} className="color-gray-medium" />
-              </Tooltip>
-            </div>
-            {/* sessions-only filters — headline stats stay global */}
-            <div className="flex items-center gap-2">
-              <TagFilter
-                allTags={issuesStore.allTags}
-                labels={issuesStore.detailLabels}
-                match={issuesStore.detailMatch}
-                onToggle={issuesStore.toggleDetailLabel}
-                onSetMatch={issuesStore.setDetailMatch}
-                onClear={issuesStore.clearDetailLabels}
-                onCreateTag={issuesStore.addCustomTag}
+                action={
+                  filtered ? (
+                    <Button onClick={clearFilters}>{t('Clear filters')}</Button>
+                  ) : undefined
+                }
               />
-              {issuesStore.originSegments.length > 0 && (
-                <SegmentFilter
-                  segments={issuesStore.originSegments.map((s) => ({
-                    id: s.id,
-                    name: s.name,
-                    mine: s.mine,
-                  }))}
-                  origins={issuesStore.detailScope}
-                  onToggleOrigin={(o) => {
-                    if (o === 'full') return; // no full-traffic row here
-                    issuesStore.toggleDetailScope(o);
-                    syncScopeToUrl(issuesStore.detailScope);
-                  }}
-                  onSetOrigins={(ids) => {
-                    issuesStore.setDetailScope(
-                      ids.filter((o): o is string => o !== 'full'),
-                    );
-                    syncScopeToUrl(issuesStore.detailScope);
-                  }}
-                  onClear={() => {
-                    issuesStore.clearDetailScope();
-                    syncScopeToUrl([]);
-                  }}
-                  showFullTraffic={false}
-                />
-              )}
-            </div>
-          </div>
-          {search}
-        </div>
-
-        {loadingSessions ? (
-          <div className="flex flex-col items-center justify-center gap-2 py-16 rounded-lg border bg-white">
-            <Loader
-              size={22}
-              className="animate-spin"
-              style={{ color: 'var(--color-teal)' }}
-            />
-            <span className="text-sm font-medium color-gray-dark">
-              {t('Searching journeys…')}
-            </span>
-            <span className="text-xs color-gray-medium">
-              {t('This might take a bit.')}
-            </span>
-          </div>
-        ) : shown.length === 0 ? (
-          <div className="p-6 text-center rounded-lg border bg-white text-sm color-gray-medium flex flex-col items-center gap-2">
-            {issuesStore.detailScope.length > 0 ||
-            issuesStore.detailLabels.length > 0 ? (
-              <>
-                <span>
-                  {t('No sampled sessions match the selected filters.')}
-                </span>
-                <Button
-                  size="small"
-                  onClick={() => {
-                    issuesStore.clearDetailScope();
-                    issuesStore.clearDetailLabels();
-                    syncScopeToUrl([]);
-                  }}
-                >
-                  {t('Clear filters')}
-                </Button>
-              </>
-            ) : searchQuery ? (
-              t('No sessions match this search.')
             ) : (
-              t('No example sessions.')
+              <>
+                <div className="m-strip__rail">
+                  {shown.map((s) => (
+                    <SessionCard
+                      key={s.sessionId}
+                      s={s}
+                      onClick={() => openReplay(s)}
+                      shareUrl={`${window.location.origin}${sessionPath(s)}`}
+                    />
+                  ))}
+                </div>
+                {shown.length < maxExamples && (
+                  <div className="flex justify-center">
+                    <Button
+                      onClick={() =>
+                        setVisibleCount((c) => Math.min(maxExamples, c + STEP))
+                      }
+                    >
+                      {t('Show more')}
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 max-sm:grid-cols-1">
-              {shown.map((s) => (
-                <SessionCard
-                  key={s.sessionId}
-                  s={s}
-                  onClick={() => openReplay(s)}
-                  titleLines={titleLines}
-                  onTitleLines={reportTitleLines}
-                  shareUrl={shareUrl(s)}
-                />
-              ))}
-            </div>
-            <div className="flex items-center justify-between px-4 py-3 shadow-xs w-full bg-white rounded-lg max-md:gap-2">
-              <span className="text-sm color-gray-dark">
-                {t('Showing')}{' '}
-                <span className="font-medium">{shown.length}</span>{' '}
-                {shown.length === 1 ? t('example') : t('examples')} {t('of')}{' '}
-                <span className="font-medium">{total.toLocaleString()}</span>{' '}
-                {t('sessions')}
-                {issuesStore.detailScope.length > 0 && (
-                  <>
-                    {' · '}
-                    {t('shown for {{names}}', {
-                      names: issuesStore.detailScope
-                        .map((id) => issuesStore.segmentById(id)?.name)
-                        .filter(Boolean)
-                        .join(', '),
-                    })}
-                  </>
-                )}
-                {issuesStore.detailLabels.length > 0 && (
-                  <>
-                    {' · '}
-                    {t('tagged {{tags}}', {
-                      tags: issuesStore.detailLabels.join(
-                        issuesStore.detailMatch === 'any' ? ' or ' : ' and ',
-                      ),
-                    })}
-                  </>
-                )}
-              </span>
-              {canLoadMore && (
-                <Button size="small" onClick={loadMore}>
-                  {t('Load more')}
-                </Button>
-              )}
-            </div>
-          </>
-        )}
-      </div>
+          </section>
+        </div>,
+        <IssueActions
+          issue={issue}
+          onOpenCritical={() => setCritOpen(true)}
+          onNotCritical={() => setNotCritOpen(true)}
+          onRename={() => setRenameOpen(true)}
+          onHide={() => setHideOpen(true)}
+        />,
+      )}
 
       <HideIssueModal
         open={hideOpen}
@@ -475,19 +396,26 @@ function IssueDetail() {
           setHideOpen(false);
         }}
       />
-
+      <RenameIssueModal
+        open={renameOpen}
+        initial={issue.head}
+        onCancel={() => setRenameOpen(false)}
+        onConfirm={(name) => {
+          issuesStore.rename(issue.id, name);
+          setRenameOpen(false);
+        }}
+      />
       <CriticalDialog
         issueId={critOpen ? issue.id : null}
         issueHead={issue.head}
         onClose={() => setCritOpen(false)}
       />
-
       <NotCriticalDialog
-        issue={notCritTarget}
+        issue={notCritOpen ? issue : null}
         reasons={issuesStore.reasons.criticality}
-        onClose={() => setNotCritTarget(null)}
+        onClose={() => setNotCritOpen(false)}
       />
-    </div>
+    </>
   );
 }
 

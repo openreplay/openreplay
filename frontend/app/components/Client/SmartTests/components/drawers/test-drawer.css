@@ -1,0 +1,204 @@
+/* The one destructive fact in this feature, said before the steps. */
+.m-tdrawer__fx {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--m-space-4);
+  margin: var(--m-space-5) var(--m-space-6) 0;
+  padding: var(--m-space-4);
+  border: 1px solid var(--m-status-warning-border);
+  border-radius: var(--m-radius-control);
+  background: var(--m-status-warning-bg);
+  color: var(--m-status-warning-fg);
+  font-size: var(--m-text-sm);
+  line-height: var(--m-leading-snug);
+}
+.m-tdrawer__fx svg {
+  flex: none;
+  margin-top: 1px;
+}
+
+.m-tdrawer__vpair {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  margin-left: var(--m-space-3);
+  font-family: var(--m-font-num);
+  font-size: var(--m-text-sm);
+  font-weight: var(--m-weight-regular);
+  color: var(--m-content-muted);
+}
+
+.m-tdrawer__sum {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-3);
+  font-size: var(--m-text-sm);
+  color: var(--m-content-muted);
+}
+
+.m-tdrawer__vswitch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  height: var(--m-control-height-sm);
+  padding-inline: var(--m-space-4);
+  border: 1px solid var(--m-border-default);
+  border-radius: var(--m-radius-control);
+  font-family: var(--m-font-num);
+  font-size: var(--m-text-xs);
+  color: var(--m-content-secondary);
+}
+.m-tdrawer__vswitch:hover {
+  border-color: var(--m-border-strong);
+  color: var(--m-content-primary);
+}
+
+.m-tdrawer__note {
+  font-size: var(--m-text-sm);
+  color: var(--m-content-muted);
+}
+
+.m-tdrawer__dirty {
+  font-size: var(--m-text-sm);
+  color: var(--m-content-muted);
+}
+
+/* The last ten runs, oldest → newest; each opens that run. */
+.m-tdrawer__trend {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-2);
+}
+.m-tdrawer__trend button {
+  display: inline-flex;
+  color: var(--m-content-success);
+  transition: opacity var(--m-duration-instant) var(--m-ease-out);
+}
+.m-tdrawer__trend button.is-failed {
+  color: var(--m-content-danger);
+}
+.m-tdrawer__trend button.is-more {
+  color: var(--m-content-muted);
+}
+.m-tdrawer__trend button:hover {
+  opacity: 0.7;
+}
+
+/* A section jumped to (Schedule from the row menu) flashes once. */
+@keyframes m-tdrawer-flash {
+  from {
+    background: var(--m-surface-selected);
+  }
+  to {
+    background: transparent;
+  }
+}
+.m-tdrawer__flash {
+  animation: m-tdrawer-flash 1.2s var(--m-ease-out);
+}
+
+.m-tags {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--m-space-3);
+}
+.m-tags__add {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  height: 1.375rem;
+  padding-inline: var(--m-space-3);
+  border: 1px dashed var(--m-border-default);
+  border-radius: var(--m-radius-chip);
+  font-size: var(--m-text-xs);
+  color: var(--m-content-muted);
+}
+.m-tags__add:hover {
+  border-color: var(--m-border-strong);
+  color: var(--m-content-primary);
+}
+.m-tags__input {
+  width: 8rem;
+}
+.m-tags__sugg {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-2);
+}
+.m-tags__sugg button {
+  height: 1.375rem;
+  padding-inline: var(--m-space-3);
+  border-radius: var(--m-radius-chip);
+  background: var(--m-surface-hover);
+  font-size: var(--m-text-xs);
+  color: var(--m-content-secondary);
+}
+.m-tags__sugg button:hover {
+  background: var(--m-surface-active);
+  color: var(--m-content-primary);
+}
+.m-tags__full {
+  font-size: var(--m-text-xs);
+  color: var(--m-content-muted);
+}
+
+/* The draft's three decisions, in order. Later ones unlock once the steps are approved. */
+.m-dwiz {
+  display: flex;
+  align-items: center;
+  padding: var(--m-space-5) var(--m-space-6) 0;
+}
+.m-dwiz__item {
+  display: flex;
+  align-items: center;
+  flex: none;
+}
+.m-dwiz__item + .m-dwiz__item {
+  flex: 1;
+}
+.m-dwiz__line {
+  flex: 1;
+  height: 1px;
+  margin-inline: var(--m-space-4);
+  background: var(--m-border-default);
+}
+.m-dwiz__item.is-done + .m-dwiz__item .m-dwiz__line,
+.m-dwiz__item.is-current .m-dwiz__line {
+  background: var(--m-content-accent);
+}
+.m-dwiz__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-3);
+  font-size: var(--m-text-sm);
+  color: var(--m-content-muted);
+}
+.m-dwiz__btn:disabled {
+  cursor: default;
+}
+.m-dwiz__item.is-current .m-dwiz__btn {
+  color: var(--m-content-primary);
+  font-weight: var(--m-weight-medium);
+}
+.m-dwiz__item.is-done .m-dwiz__btn {
+  color: var(--m-content-secondary);
+}
+.m-dwiz__bullet {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 1px solid var(--m-border-default);
+  border-radius: var(--m-radius-full);
+  font-family: var(--m-font-num);
+  font-size: var(--m-text-2xs);
+  color: var(--m-content-muted);
+}
+.m-dwiz__item.is-current .m-dwiz__bullet,
+.m-dwiz__item.is-done .m-dwiz__bullet {
+  border-color: transparent;
+  background: var(--m-action-accent-bg);
+  color: var(--m-action-accent-fg);
+}

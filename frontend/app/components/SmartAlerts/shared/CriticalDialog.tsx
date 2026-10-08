@@ -1,4 +1,9 @@
-import { Button, Input, Modal, Tooltip } from 'antd';
+import { Button } from '@/ui/actions/button';
+import { Chip } from '@/ui/data/Chip';
+import { Textarea } from '@/ui/inputs/textarea';
+import '@/ui/overlays/dialogs.css';
+import { Modal } from '@/ui/overlays/modal';
+import { Tooltip } from '@/ui/overlays/tooltip';
 import { AlertTriangle } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
@@ -20,8 +25,8 @@ export function CriticalRuleFields({
 }) {
   const { t } = useTranslation();
   return (
-    <div className="flex flex-col gap-3">
-      <Input.TextArea
+    <div className="flex flex-col gap-2">
+      <Textarea
         autoFocus={autoFocus}
         rows={3}
         maxLength={300}
@@ -31,19 +36,18 @@ export function CriticalRuleFields({
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
-      <span className="text-xs color-gray-medium">{caption}</span>
+      <span className="text-xs text-content-muted">{caption}</span>
     </div>
   );
 }
 
-/* The critical dialog: describe what's critical rather than just flagging it.
-   Four states drive title/footer — undescribed, mine, team, muted. */
+/* Describe what's critical rather than just flagging it.
+   Four states drive title and footer: undescribed, mine, team, muted. */
 export default observer(function CriticalDialog({
   issueId,
   issueHead,
   onClose,
 }: {
-  /** null closes it */
   issueId: string | null;
   issueHead: string;
   onClose: () => void;
@@ -66,26 +70,24 @@ export default observer(function CriticalDialog({
         : 'team';
   const authoring = state === 'undescribed' || state === 'team';
 
+  // seeded when the dialog opens; a store refresh while it's open must not
+  // overwrite what the user is typing
+  const wasOpen = React.useRef(false);
   React.useEffect(() => {
-    if (open) setDesc(authoring ? issueHead : '');
+    if (open && !wasOpen.current) setDesc(authoring ? issueHead : '');
+    wasOpen.current = open;
   }, [open, issueHead, authoring]);
 
-  const removeFromCritical = () => {
-    if (issueId == null) return;
-    // no reason prompt on this path — that's what NotCriticalDialog is for
-    issuesStore.setNotCriticalForMe(issueId);
-    onClose();
-  };
   const save = () => {
     if (issueId == null || !desc.trim()) return;
     issuesStore.addCriticalRule(desc.trim(), issueId);
     onClose();
   };
-
   const rules = state === 'muted' ? underlying : matched;
 
   return (
     <Modal
+      width={520}
       title={
         state === 'muted'
           ? t('Not critical for you')
@@ -95,24 +97,26 @@ export default observer(function CriticalDialog({
       }
       open={open}
       onCancel={onClose}
-      onOk={save}
-      okText={t('Save')}
-      okButtonProps={{ disabled: !desc.trim() }}
-      footer={(_, { OkBtn, CancelBtn }) => (
-        <div className="flex items-center">
+      footer={
+        <div className="m-dlg__foot w-full">
           {state === 'mine' && (
-            <Tooltip
-              placement="topLeft"
-              title={t('Only this issue. Your description stays.')}
-            >
-              <Button type="text" danger onClick={removeFromCritical}>
-                {t('Not critical for me')}
-              </Button>
+            <Tooltip title={t('Only this issue. Your description stays.')}>
+              <span>
+                <Button
+                  variant="danger-outline"
+                  onClick={() => {
+                    if (issueId != null)
+                      issuesStore.setNotCriticalForMe(issueId);
+                    onClose();
+                  }}
+                >
+                  {t('Not critical for me')}
+                </Button>
+              </span>
             </Tooltip>
           )}
           {state === 'muted' && (
             <Button
-              type="text"
               onClick={() => {
                 if (issueId != null) issuesStore.restoreCritical(issueId);
                 onClose();
@@ -122,47 +126,46 @@ export default observer(function CriticalDialog({
             </Button>
           )}
           <span className="ml-auto flex items-center gap-2">
-            <CancelBtn />
-            {authoring && <OkBtn />}
+            <Button variant="subtle" onClick={onClose}>
+              {authoring ? t('Cancel') : t('Close')}
+            </Button>
+            {authoring && (
+              <Button variant="primary" disabled={!desc.trim()} onClick={save}>
+                {t('Save')}
+              </Button>
+            )}
           </span>
         </div>
-      )}
-      cancelText={authoring ? t('Cancel') : t('Close')}
+      }
     >
-      <p className="mb-3 color-gray-dark">
-        {state === 'muted'
-          ? t(
-              'You removed “{{head}}” from your critical list. It was flagged by:',
-              { head: issueHead },
-            )
-          : `“${issueHead}”`}
+      <p className="m-dlg__lede">
+        {state === 'muted' ? (
+          <>
+            {t('You removed')}{' '}
+            <span className="m-dlg__subject">{issueHead}</span>{' '}
+            {t('from your critical list. It was flagged by:')}
+          </>
+        ) : (
+          <span className="m-dlg__subject">{issueHead}</span>
+        )}
       </p>
 
       {rules.length > 0 && (
-        <div className="flex flex-col gap-2 mb-4">
+        <div className="m-dlg__matched">
           {rules.map((r) => (
             <div
               key={r.id}
-              className="flex items-start gap-2.5 rounded-lg border p-3"
+              className={`m-dlg__rule${state === 'muted' ? '' : ' is-matched'}`}
             >
               <AlertTriangle
-                size={15}
-                className="mt-0.5 shrink-0"
-                style={{
-                  color:
-                    state === 'muted'
-                      ? 'var(--color-gray-medium)'
-                      : 'var(--color-red)',
-                }}
+                size={13}
+                className="m-dlg__rule-icon"
+                aria-hidden="true"
               />
-              <div className="flex flex-col gap-0.5">
-                <span>{r.description}</span>
-                <span className="text-sm color-gray-medium">
-                  {r.mine
-                    ? t('Your description')
-                    : t('{{name}}’s description', { name: r.createdBy })}
-                </span>
-              </div>
+              <span className="m-dlg__rule-text">{r.description}</span>
+              <Chip tone={r.mine ? 'danger' : 'neutral'}>
+                {r.mine ? t('Yours') : r.createdBy}
+              </Chip>
             </div>
           ))}
         </div>
@@ -170,7 +173,7 @@ export default observer(function CriticalDialog({
 
       {authoring && (
         <div className="flex flex-col gap-3">
-          <span className="color-gray-dark">
+          <p className="m-dlg__none">
             {matched.length
               ? t(
                   'Describe it in your own words to make it critical for you too.',
@@ -178,7 +181,7 @@ export default observer(function CriticalDialog({
               : t(
                   'Describe what makes issues like this critical. The agent reads your description and flags what matches, so this is a rule, not a one-off.',
                 )}
-          </span>
+          </p>
           <CriticalRuleFields
             autoFocus
             value={desc}

@@ -1,33 +1,54 @@
-import { Button, Input, Popover, Segmented, Switch, Tooltip } from 'antd';
+import { IconButton } from '@/ui/actions/IconButton';
+import { Button } from '@/ui/actions/button';
+import { Switch } from '@/ui/inputs/switch';
+import { Segmented } from '@/ui/inputs/toggle-group';
+import { PopoverSearch } from '@/ui/overlays/PopoverSearch';
+import { PopoverPanel } from '@/ui/overlays/popover';
+import { useToast } from '@/ui/overlays/toast';
+import { Tooltip } from '@/ui/overlays/tooltip';
 import {
-  ChevronDown,
   ChevronLeft,
   Globe,
   Info,
   Lock,
   Pencil,
   Plus,
-  Search,
   Split,
 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'react-toastify';
 
 import { useStore } from 'App/mstore';
-import { mobileScreen } from 'App/utils/isMobile';
 
 import type { SavedSegment } from '../api';
 import SegmentConditions from './SegmentConditions';
 import SegmentDrawer from './SegmentDrawer';
-import './captureSwitch.css';
+import './capture.css';
 
-/* The Traffic Segments entry point: a pill by the "Issues" title that is both
-   the capture on/off switch and the door to a popover with two views — the
-   capturing segments and the picker (only team-visible segments are eligible). */
+function Conditions({ segment }: { segment: SavedSegment }) {
+  return (
+    <PopoverPanel
+      placement="leftTop"
+      content={
+        <div className="m-capture__conditions">
+          <SegmentConditions segment={segment} />
+        </div>
+      }
+    >
+      <button
+        type="button"
+        className="m-capture__hint"
+        aria-label={segment.name}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <Info size={13} />
+      </button>
+    </PopoverPanel>
+  );
+}
 
-function SegmentRow({
+const SegmentRow = observer(function SegmentRow({
   segment,
   onEdit,
 }: {
@@ -36,132 +57,58 @@ function SegmentRow({
 }) {
   const { issuesStore } = useStore();
   const { t } = useTranslation();
+  const toast = useToast();
   return (
-    <div className="flex items-center gap-2 py-2 px-2 -mx-2 rounded-lg group hover:bg-gray-lightest transition-colors">
-      <span
-        className={`text-sm font-medium truncate min-w-0 flex-1 cursor-default ${
-          segment.active ? 'color-gray-darkest' : 'color-gray-dark'
-        }`}
-      >
-        {segment.name}
-      </span>
-      <Popover
-        content={<SegmentConditions segment={segment} />}
-        placement={mobileScreen ? 'bottom' : 'left'}
-        trigger={mobileScreen ? 'click' : 'hover'}
-        mouseEnterDelay={0.45}
-      >
-        <span className="shrink-0 flex items-center cursor-help color-gray-medium">
-          <Info size={13} />
-        </span>
-      </Popover>
-
+    <div className="m-capture__row">
+      <span className="m-capture__name m-truncate">{segment.name}</span>
+      <Conditions segment={segment} />
       <Switch
-        size="small"
         checked={segment.active}
         aria-label={`${segment.name} — ${segment.active ? t('on') : t('off')}`}
-        onChange={(on) => {
+        onCheckedChange={(on) => {
           if (issuesStore.toggleSegment(segment.id, on))
             toast.info(
-              t('No active segments left — capture switched to full traffic.'),
+              t('No active segments left. Capture switched to full traffic.'),
             );
         }}
       />
-
-      <span className="w-6 shrink-0 flex items-center justify-center">
-        {segment.mine ? (
-          <Tooltip title={t('Edit')} placement="top">
-            <button
-              type="button"
-              aria-label={t('Edit segment')}
-              onClick={() => onEdit(segment)}
-              className="w-6 h-6 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-coarse:opacity-100 transition-opacity color-gray-medium"
-            >
-              <Pencil size={14} />
-            </button>
-          </Tooltip>
-        ) : (
-          <Tooltip
-            title={t('Only {{name}} can edit this segment.', {
-              name: segment.createdBy,
-            })}
-            placement="top"
+      {segment.mine ? (
+        <Tooltip title={t('Edit')}>
+          <button
+            type="button"
+            className="m-capture__act"
+            aria-label={t('Edit segment')}
+            onClick={() => onEdit(segment)}
           >
-            <span className="w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-40 pointer-coarse:opacity-40 transition-opacity cursor-not-allowed color-gray-medium">
-              <Pencil size={14} />
-            </span>
-          </Tooltip>
-        )}
-      </span>
-    </div>
-  );
-}
-
-function CandidateRow({
-  segment,
-  onEnable,
-}: {
-  segment: SavedSegment;
-  onEnable: (s: SavedSegment) => void;
-}) {
-  const { t } = useTranslation();
-  const eligible = segment.isPublic;
-  return (
-    <div
-      role={eligible ? 'button' : undefined}
-      onClick={eligible ? () => onEnable(segment) : undefined}
-      className={`flex items-center gap-2 py-2 px-2 -mx-2 rounded-lg transition-colors${
-        eligible ? ' cursor-pointer hover:bg-gray-lightest group' : ''
-      }`}
-      style={eligible ? undefined : { opacity: 0.55 }}
-    >
-      <span className="text-sm font-medium truncate min-w-0 flex-1 color-gray-darkest">
-        {segment.name}
-      </span>
-      <Popover
-        content={<SegmentConditions segment={segment} />}
-        placement={mobileScreen ? 'bottom' : 'left'}
-        trigger={mobileScreen ? 'click' : 'hover'}
-        mouseEnterDelay={0.45}
-      >
-        <span
-          className="shrink-0 flex items-center cursor-help color-gray-medium"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Info size={13} />
-        </span>
-      </Popover>
-      {eligible ? (
-        <span
-          className="w-4 shrink-0 flex items-center opacity-0 group-hover:opacity-100 pointer-coarse:opacity-100 transition-opacity"
-          style={{ color: 'var(--color-main)' }}
-        >
-          <Plus size={15} />
-        </span>
+            <Pencil size={13} />
+          </button>
+        </Tooltip>
       ) : (
         <Tooltip
-          title={t('Private — make it team-visible to capture traffic.')}
-          placement="left"
+          title={t('Only {{name}} can edit this segment.', {
+            name: segment.createdBy,
+          })}
         >
-          <span className="w-4 shrink-0 flex items-center cursor-help color-gray-medium">
+          <span className="m-capture__act" aria-hidden="true">
             <Lock size={13} />
           </span>
         </Tooltip>
       )}
     </div>
   );
-}
+});
 
+/* Traffic segments: what the agent captures, full traffic or chosen segments. */
 function SegmentsIndicator() {
   const { issuesStore } = useStore();
   const { t } = useTranslation();
+  const toast = useToast();
   const [open, setOpen] = React.useState(false);
   const [view, setView] = React.useState<'main' | 'picker'>('main');
-  const [pickerQuery, setPickerQuery] = React.useState('');
+  const [query, setQuery] = React.useState('');
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<SavedSegment | null>(null);
-  // pin rows listed on open so a switched-off row can be undone in place
-  // (off rows drop from the list on the next open)
+  // rows listed on open stay listed, so a switched-off one can be undone in place
   const [pinned, setPinned] = React.useState<string[]>([]);
 
   const listed = issuesStore.segments.filter(
@@ -172,7 +119,7 @@ function SegmentsIndicator() {
   const activeCount = issuesStore.activeSegmentCount;
   const segmentsMode = issuesStore.captureMode === 'segments';
 
-  const q = pickerQuery.trim().toLowerCase();
+  const q = query.trim().toLowerCase();
   const allCandidates = issuesStore.segments
     .filter(
       (s) => (s.isPublic || s.mine) && !s.active && !pinned.includes(s.id),
@@ -186,82 +133,63 @@ function SegmentsIndicator() {
 
   const onOpenChange = (o: boolean) => {
     setOpen(o);
-    if (o) {
-      setPinned(issuesStore.capturingSegments.map((s) => s.id));
-    } else {
+    if (o) setPinned(issuesStore.capturingSegments.map((s) => s.id));
+    else {
       setView('main');
-      setPickerQuery('');
+      setQuery('');
     }
   };
-
-  const startCreate = () => {
-    setEditing(null);
-    setOpen(false);
-    setDrawerOpen(true);
-  };
-  const startEdit = (s: SavedSegment) => {
+  const openDrawer = (s: SavedSegment | null) => {
     setEditing(s);
     setOpen(false);
     setDrawerOpen(true);
   };
-
   const enable = (s: SavedSegment) => {
     issuesStore.enableCapture(s.id);
     setPinned((p) => (p.includes(s.id) ? p : [...p, s.id]));
     setView('main');
-    setPickerQuery('');
+    setQuery('');
     toast.success(t('{{name}} added to traffic segments.', { name: s.name }));
   };
 
-  const sectionTitle = (label: string) => (
-    <div className="text-[11px] font-medium uppercase tracking-wider mt-3 mb-0.5 color-gray-medium">
-      {label}
-    </div>
-  );
-
-  const mainView = (
+  const main = (
     <>
-      <div className="pb-2.5 border-b -mx-1 px-1">
-        <div className="flex items-center gap-1.5">
-          <span className="text-base font-semibold color-gray-darkest">
-            {t('Traffic Segments')}
-          </span>
+      <div className="m-capture__head">
+        <span className="m-capture__title">
+          {t('Traffic segments')}
           <Tooltip
-            placement="bottom"
             title={t(
-              "Choose what the agent captures: the full traffic sample, or only sessions matching your active segments. Anyone can switch — it's the project's shared capture setting.",
+              "Choose what the agent captures: the full traffic sample, or only sessions matching your active segments. It's the project's shared capture setting.",
             )}
           >
-            <span className="flex items-center cursor-help color-gray-medium">
-              <Info size={14} />
-            </span>
+            <Info size={13} className="text-content-decorative" />
           </Tooltip>
-        </div>
-        <div className="text-xs mt-0.5 color-gray-medium">
+        </span>
+        <span className="m-capture__note">
           {t('Capture everything, or only the traffic you care about.')}
-        </div>
+        </span>
       </div>
-
-      <div className="mt-3 flex flex-col gap-1.5">
+      <div className="m-capture__mode">
         <Segmented
           block
           value={issuesStore.captureMode}
           onChange={(v) => issuesStore.setCaptureMode(v as 'full' | 'segments')}
+          ariaLabel={t('Capture')}
           options={[
             {
               value: 'full',
-              icon: <Globe size={14} />,
+              icon: <Globe size={13} />,
               label: t('Full traffic'),
             },
             {
               value: 'segments',
-              disabled: activeCount === 0,
-              icon: <Split size={14} />,
+              icon: <Split size={13} />,
               label: t('Segments'),
+              disabled: activeCount === 0,
             },
           ]}
         />
-        <span className="text-xs color-gray-medium">
+        <span className="m-capture__note">
           {segmentsMode
             ? t('Only sessions matching active segments are captured.')
             : activeCount === 0
@@ -271,203 +199,132 @@ function SegmentsIndicator() {
                 )}
         </span>
       </div>
-
-      {listed.length === 0 ? (
-        <div className="text-sm py-3 color-gray-medium">
-          {t(
-            'No capturing segments yet — the agent captures the full traffic sample. Add one to capture only the part you care about.',
-          )}
-        </div>
-      ) : (
-        <div
-          className={`transition-opacity duration-200${segmentsMode ? '' : ' opacity-50'}`}
-        >
-          {mine.length > 0 && sectionTitle(t('Mine'))}
-          {mine.map((s) => (
-            <SegmentRow key={s.id} segment={s} onEdit={startEdit} />
-          ))}
-          {team.length > 0 && sectionTitle(t('Team'))}
-          {team.map((s) => (
-            <SegmentRow key={s.id} segment={s} onEdit={startEdit} />
-          ))}
-        </div>
-      )}
-
-      <div className="border-t mt-2.5 pt-2 -mx-1 px-1">
-        <Button
-          type="text"
-          icon={<Plus size={15} />}
-          onClick={() => setView('picker')}
-          className="w-full"
-        >
+      <div className={`m-capture__list${segmentsMode ? '' : ' is-dim'}`}>
+        {listed.length === 0 ? (
+          <p className="m-capture__empty">
+            {t(
+              'No capturing segments yet. Add one to capture only the part you care about.',
+            )}
+          </p>
+        ) : (
+          <>
+            {mine.length > 0 && (
+              <p className="m-capture__section">{t('Mine')}</p>
+            )}
+            {mine.map((s) => (
+              <SegmentRow key={s.id} segment={s} onEdit={openDrawer} />
+            ))}
+            {team.length > 0 && (
+              <p className="m-capture__section">{t('Team')}</p>
+            )}
+            {team.map((s) => (
+              <SegmentRow key={s.id} segment={s} onEdit={openDrawer} />
+            ))}
+          </>
+        )}
+      </div>
+      <div className="m-capture__foot">
+        <Button variant="subtle" onClick={() => setView('picker')}>
+          <Plus size={14} />
           {t('Add segment')}
         </Button>
       </div>
     </>
   );
 
-  const pickerView = (
+  const picker = (
     <>
-      <div className="flex items-center gap-1 pb-2.5 border-b -mx-1 px-1">
-        <Button
-          type="text"
-          size="small"
-          icon={<ChevronLeft size={15} />}
+      <div className="m-capture__back">
+        <IconButton
+          icon={<ChevronLeft size={14} />}
+          label={t('Back')}
+          variant="ghost"
           onClick={() => setView('main')}
-          aria-label={t('Back')}
-          className="px-1!"
         />
-        <span className="text-base font-semibold color-gray-darkest">
-          {t('Add segment')}
-        </span>
+        <span className="m-capture__title">{t('Add segment')}</span>
       </div>
-
-      <div className="mt-2.5">
-        <Input
-          size="small"
-          allowClear
-          autoFocus
-          placeholder={t('Search segments')}
-          prefix={
-            <Search
-              size={14}
-              className="color-gray-medium"
-              style={{ marginRight: 2 }}
-            />
-          }
-          value={pickerQuery}
-          onChange={(e) => setPickerQuery(e.target.value)}
-        />
-      </div>
-
-      {!q && candidates.length > 0 && sectionTitle(t('Recently updated'))}
-
-      <div
-        className="overflow-y-auto mt-1 -mx-1 px-1"
-        style={{ maxHeight: 264 }}
-      >
+      <PopoverSearch
+        placeholder={t('Search segments')}
+        value={query}
+        onChange={setQuery}
+      />
+      <div className="m-capture__list">
+        {!q && candidates.length > 0 && (
+          <p className="m-capture__section">{t('Recently updated')}</p>
+        )}
         {candidates.length ? (
-          candidates.map((s) => (
-            <CandidateRow key={s.id} segment={s} onEnable={enable} />
-          ))
+          candidates.map((s) =>
+            s.isPublic ? (
+              <button
+                key={s.id}
+                type="button"
+                className="m-capture__row"
+                onClick={() => enable(s)}
+              >
+                <span className="m-capture__name m-truncate">{s.name}</span>
+                <Conditions segment={s} />
+                <span className="m-capture__act">
+                  <Plus size={14} />
+                </span>
+              </button>
+            ) : (
+              <div key={s.id} className="m-capture__row is-locked">
+                <span className="m-capture__name m-truncate">{s.name}</span>
+                <Tooltip
+                  title={t(
+                    'Private. Make it team-visible to capture its traffic.',
+                  )}
+                >
+                  <span className="m-capture__hint">
+                    <Lock size={13} />
+                  </span>
+                </Tooltip>
+              </div>
+            ),
+          )
         ) : (
-          <div className="text-sm px-1 py-3 color-gray-medium">
+          <p className="m-capture__empty">
             {q
-              ? t('No segments match “{{q}}”', { q: pickerQuery })
+              ? t('No segments match “{{q}}”', { q: query })
               : t(
-                  'Every existing segment is already capturing — create a new one below.',
+                  'Every existing segment is already capturing. Create a new one below.',
                 )}
-          </div>
+          </p>
         )}
       </div>
-
-      <div className="border-t mt-2 pt-2 -mx-1 px-1">
-        <Button
-          type="text"
-          icon={<Plus size={15} />}
-          onClick={startCreate}
-          className="w-full"
-        >
+      <div className="m-capture__foot">
+        <Button variant="subtle" onClick={() => openDrawer(null)}>
+          <Plus size={14} />
           {t('Create new')}
         </Button>
       </div>
     </>
   );
 
-  const content = (
-    <div
-      className="flex flex-col"
-      style={{ width: 'min(340px, calc(100vw - 48px))' }}
-    >
-      {view === 'main' ? mainView : pickerView}
-    </div>
-  );
-
-  const canSegment = activeCount > 0;
-  const onSwitch = (on: boolean) => {
-    issuesStore.setCaptureMode(on ? 'segments' : 'full');
-  };
-
   return (
     <>
-      <Popover
+      <PopoverPanel
         open={open}
         onOpenChange={onOpenChange}
-        trigger="click"
-        placement="bottomLeft"
-        content={content}
-      >
-        <Tooltip
-          placement="bottom"
-          title={
-            open
-              ? ''
-              : segmentsMode
-                ? t(
-                    'Capturing only active segments ({{count}}) — switch off for full traffic',
-                    { count: activeCount },
-                  )
-                : canSegment
-                  ? t(
-                      'Capturing full traffic — switch on to capture only active segments',
-                    )
-                  : t(
-                      'Capturing full traffic — open to add a segment and capture less',
-                    )
-          }
-        >
-          <div
-            role="button"
-            tabIndex={0}
-            aria-expanded={open}
-            aria-label={t('Traffic segments settings')}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                setOpen(!open);
-              }
-            }}
-            className="capture-pill border rounded-md flex items-center gap-2 pl-1.5 pr-2 shrink-0 cursor-pointer select-none"
-            style={{ height: 24 }}
-          >
-            <span
-              className="flex items-center"
-              onClick={
-                segmentsMode || canSegment
-                  ? (e) => e.stopPropagation()
-                  : undefined
-              }
-            >
-              <Switch
-                size="small"
-                checked={segmentsMode}
-                disabled={!segmentsMode && !canSegment}
-                className={`capture-switch${segmentsMode ? ' seg-live-border' : ''}`}
-                style={
-                  !segmentsMode && !canSegment
-                    ? { pointerEvents: 'none' }
-                    : undefined
-                }
-                checkedChildren={<Split size={10} />}
-                unCheckedChildren={<Globe size={10} />}
-                aria-label={t('Segment capture')}
-                onChange={onSwitch}
-              />
-            </span>
-            <span className="text-base color-gray-darkest">
-              {t('Traffic segments')}
-              {segmentsMode && (
-                <span className="color-gray-dark">
-                  {' '}
-                  · {t('{{count}} active', { count: activeCount })}
-                </span>
-              )}
-            </span>
-            <ChevronDown size={13} style={{ opacity: 0.6 }} />
+        placement="bottomRight"
+        content={
+          <div className="m-capture__panel">
+            {view === 'main' ? main : picker}
           </div>
-        </Tooltip>
-      </Popover>
-
+        }
+      >
+        <IconButton
+          icon={segmentsMode ? <Split size={15} /> : <Globe size={15} />}
+          label={
+            segmentsMode
+              ? t('Capturing {{count}} segments', { count: activeCount })
+              : t('Capturing full traffic')
+          }
+          count={segmentsMode ? activeCount : 0}
+          active={segmentsMode}
+          open={open}
+        />
+      </PopoverPanel>
       <SegmentDrawer
         open={drawerOpen}
         segment={editing}

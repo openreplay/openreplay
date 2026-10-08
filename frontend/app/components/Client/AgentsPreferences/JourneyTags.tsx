@@ -1,6 +1,11 @@
-import { Button, Input, Segmented, Table, message } from 'antd';
-import type { TableColumnsType } from 'antd';
-import { PencilIcon, Plus, Tag as TagIcon, Trash2 } from 'lucide-react';
+import { Button } from '@/ui/actions/button';
+import { type Column, DataTable } from '@/ui/data/table';
+import { EmptyState } from '@/ui/feedback/EmptyState';
+import { FilterStrip } from '@/ui/filters/FilterStrip';
+import { SearchField } from '@/ui/inputs/SearchField';
+import { ListFooter } from '@/ui/layout/ListFooter';
+import { useToast } from '@/ui/overlays/toast';
+import { PencilIcon, Plus, Trash2 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -8,9 +13,6 @@ import { useTranslation } from 'react-i18next';
 import { useStore } from 'App/mstore';
 import type { JourneyTag } from 'App/mstore/issuesStore';
 import { TagDialog } from 'Components/SmartAlerts/shared';
-
-import CountSuffix from 'Shared/CountSuffix';
-import FullPagination from 'Shared/FullPagination';
 
 import { useConfirms } from './confirms';
 
@@ -25,6 +27,7 @@ function JourneyTags() {
   const { issuesStore } = useStore();
   const { confirmDelete } = useConfirms();
 
+  const toast = useToast();
   const [source, setSource] = React.useState<SourceKey>('openreplay');
   const [q, setQ] = React.useState('');
   const [page, setPage] = React.useState(1);
@@ -65,7 +68,7 @@ function JourneyTags() {
   const saveTag = (name: string, description: string) => {
     if (nameTaken(name, editing?.id)) {
       // the dialog stays open so the name can be fixed in place
-      message.warning(t('A tag called “{{name}}” already exists.', { name }));
+      toast.info(t('A tag called “{{name}}” already exists.', { name }));
       return;
     }
     if (editing) {
@@ -74,13 +77,13 @@ function JourneyTags() {
       // the store refuses the write when it can't reach the project — never
       // report success for something that didn't happen
       if (!issuesStore.addCustomTag(name, description)) {
-        message.error(t('Couldn’t create the tag. Please try again.'));
+        toast.error(t('Couldn’t create the tag. Please try again.'));
         return;
       }
       // a tag you author is yours, so show the side it landed on
       setSource('yours');
       setPage(1);
-      message.success(
+      toast.success(
         t('Tag created. The agent starts applying it to new sessions.'),
       );
     }
@@ -88,41 +91,48 @@ function JourneyTags() {
     setEditing(null);
   };
 
-  const columns: TableColumnsType<JourneyTag> = [
+  const columns: Column<JourneyTag>[] = [
     {
       title: t('Name'),
-      dataIndex: 'name',
+      key: 'name',
       width: 190,
-      render: (n: string) => <span className="font-medium">{n}</span>,
+      render: (row) => (
+        <span className="text-sm font-medium text-content-primary">
+          {row.name}
+        </span>
+      ),
     },
     {
       title: t('Description'),
-      dataIndex: 'description',
-      render: (d: string) => (
-        <span style={{ color: 'var(--color-gray-dark)' }}>{d}</span>
+      key: 'description',
+      render: (row) => (
+        <span className="text-sm text-content-secondary">
+          {row.description}
+        </span>
       ),
     },
     {
       title: '',
       key: 'actions',
       width: 84,
-      render: (_, row) => (
+      align: 'right',
+      render: (row) => (
         <div className="flex items-center justify-end gap-1">
           <Button
-            type="text"
+            variant="subtle"
             className="invisible group-hover:visible"
-            icon={<PencilIcon size={16} />}
             aria-label={t('Edit')}
             onClick={() => {
               setEditing(row);
               setDialogOpen(true);
             }}
-          />
+            size="icon"
+          >
+            <PencilIcon size={16} />
+          </Button>
           <Button
-            type="text"
-            danger
+            variant="danger-subtle"
             className="invisible group-hover:visible"
-            icon={<Trash2 size={16} />}
             aria-label={t('Delete')}
             onClick={() =>
               confirmDelete({
@@ -134,98 +144,91 @@ function JourneyTags() {
                 onOk: () => issuesStore.removeTag(row.id),
               })
             }
-          />
+            size="icon"
+          >
+            <Trash2 size={16} />
+          </Button>
         </div>
       ),
     },
   ];
 
-  const sourceOptions = [
-    {
-      value: 'openreplay',
-      label: (
-        <span>
-          {t('By OpenReplay')}
-          <CountSuffix n={issuesStore.predefinedTags.length} />
-        </span>
-      ),
-    },
-    {
-      value: 'yours',
-      label: (
-        <span>
-          {t('Mine')}
-          <CountSuffix n={issuesStore.customTags.length} />
-        </span>
-      ),
-    },
-  ];
-
-  const emptyText = ql ? (
-    t('No tags match “{{q}}”', { q: q.trim() })
-  ) : (
-    <div className="flex flex-col items-center justify-center py-4">
-      <TagIcon size={36} style={{ color: 'var(--color-gray-medium)' }} />
-      <div className="text-center my-4">
-        {source === 'yours'
-          ? t(
-              'No tags of your own yet. Add one and describe the journey in plain words; the agent applies it automatically.',
-            )
-          : t('No tags left in OpenReplay’s set. Your own tags still apply.')}
-      </div>
-    </div>
-  );
-
   return (
-    <div className="flex flex-col rounded-lg border bg-white">
-      <div className="flex items-center justify-between gap-2 px-4 py-3 border-b flex-wrap">
-        <Segmented
-          size="small"
-          value={source}
-          onChange={(v) => {
-            setSource(v as SourceKey);
+    <div className="m-prefcard">
+      <div className="m-prefcard__bar">
+        <FilterStrip
+          label={t('Whose tags')}
+          items={[
+            {
+              key: 'openreplay',
+              label: t('By OpenReplay'),
+              count: issuesStore.predefinedTags.length,
+            },
+            {
+              key: 'yours',
+              label: t('Mine'),
+              count: issuesStore.customTags.length,
+            },
+          ]}
+          selected={[source]}
+          onSelect={(k) => {
+            setSource(k as SourceKey);
             setQ('');
             setPage(1);
           }}
-          options={sourceOptions}
         />
-        <div className="flex items-center gap-2">
-          <Input.Search
-            size="small"
-            allowClear
-            maxLength={256}
+        <span className="m-prefcard__actions">
+          <SearchField
+            placeholder={t('Filter by name or description')}
             value={q}
-            onChange={(e) => {
-              setQ(e.target.value);
+            onChange={(v) => {
+              setQ(v);
               setPage(1);
             }}
-            placeholder={t('Filter by name or description')}
-            style={{ width: 264 }}
           />
-          <Button size="small" icon={<Plus size={14} />} onClick={openCreate}>
+          <Button onClick={openCreate}>
+            <Plus size={14} />
             {t('Add tag')}
           </Button>
-        </div>
+        </span>
       </div>
 
-      <Table<JourneyTag>
-        size="small"
-        rowKey="id"
-        columns={columns}
-        dataSource={pageRows}
-        pagination={false}
-        rowClassName="group"
-        locale={{ emptyText }}
-      />
+      {pageRows.length === 0 ? (
+        <EmptyState
+          title={
+            ql
+              ? t('No tags match “{{q}}”', { q: q.trim() })
+              : source === 'yours'
+                ? t('No tags of your own yet')
+                : t('No tags left in OpenReplay’s set')
+          }
+          hint={
+            ql
+              ? undefined
+              : source === 'yours'
+                ? t(
+                    'Add one and describe the journey in plain words; the agent applies it automatically.',
+                  )
+                : t('Your own tags still apply.')
+          }
+        />
+      ) : (
+        <DataTable<JourneyTag>
+          ariaLabel={t('Journey tags')}
+          columns={columns}
+          rows={pageRows}
+          rowKey={(r) => String(r.id)}
+          rowClassName={() => 'group'}
+        />
+      )}
 
       {shown.length > PAGE_SIZE && (
-        <FullPagination
+        <ListFooter
           page={safePage}
-          limit={PAGE_SIZE}
+          pageSize={PAGE_SIZE}
           total={shown.length}
-          listLen={pageRows.length}
-          onPageChange={setPage}
-          entity={t('tags')}
+          noun={[t('tag'), t('tags')]}
+          onPage={setPage}
         />
       )}
 

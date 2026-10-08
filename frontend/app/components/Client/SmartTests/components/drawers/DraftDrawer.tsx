@@ -1,13 +1,13 @@
-import { Button } from 'antd';
+import { Button } from '@/ui/actions/button';
+import { useToast } from '@/ui/overlays/toast';
 import { ArrowLeft, ArrowRight, CalendarClock, Check, X } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'react-toastify';
 
 import { RunDefaults, TestCase } from '../shared/types';
 import { isScheduled } from '../shared/utils';
 import EditableSteps from './EditableSteps';
-import { EntityDrawer, Section, TagEditor } from './EntityDrawer';
+import { DrawerFooter, EntityDrawer, Section, TagEditor } from './EntityDrawer';
 import RunSettingsFields, { RunSettings } from './RunSettingsFields';
 
 // Pre-fill env / viewport / region from Settings' defaults; never overwrite real values.
@@ -57,6 +57,7 @@ function DraftDrawer({
   defaults,
 }: Props) {
   const { t } = useTranslation();
+  const toast = useToast();
   const [draft, setDraft] = useState<TestCase | null>(() =>
     test ? withDefaults(test, defaults) : null,
   );
@@ -122,144 +123,104 @@ function DraftDrawer({
 
   const footer =
     step === 0 ? (
-      <div className="flex items-center justify-between">
-        {/* Dismiss rejects the proposal → the X ("reject a suggestion") rather than the
-            bin ("delete something you built") */}
-        <Button
-          type="text"
-          danger
-          icon={<X size={15} />}
-          onClick={dismiss}
-          aria-label={t('Dismiss')}
-        >
-          <span className="max-sm:hidden">{t('Dismiss')}</span>
-        </Button>
-        <div className="flex items-center gap-2">
-          <Button onClick={saveDraft}>{t('Save draft')}</Button>
-          <Button
-            type="primary"
-            onClick={approveSteps}
-            icon={<ArrowRight size={15} />}
-            iconPosition="end"
-          >
-            {t('Approve steps')}
+      <DrawerFooter
+        left={
+          /* Dismiss rejects the proposal → the X ("reject a suggestion") rather than
+             the bin ("delete something you built") */
+          <Button variant="danger-subtle" onClick={dismiss}>
+            <X size={14} />
+            {t('Dismiss')}
           </Button>
-        </div>
-      </div>
+        }
+        right={
+          <>
+            <Button onClick={saveDraft}>{t('Save draft')}</Button>
+            <Button variant="primary" onClick={approveSteps}>
+              {t('Approve steps')}
+              <ArrowRight size={14} />
+            </Button>
+          </>
+        }
+      />
     ) : step === 1 ? (
-      <div className="flex items-center justify-between">
-        <Button
-          type="text"
-          onClick={() => setStep(0)}
-          icon={<ArrowLeft size={15} />}
-          aria-label={t('Back')}
-        >
-          <span className="max-sm:hidden">{t('Back')}</span>
-        </Button>
-        <div className="flex items-center gap-2">
-          <Button type="text" onClick={finalize}>
-            <span className="max-sm:hidden">
-              {scheduled
-                ? t('Skip tags & finish')
-                : t('Finish without schedule')}
-            </span>
-            <span className="sm:hidden">{t('Finish')}</span>
+      <DrawerFooter
+        left={
+          <Button variant="subtle" onClick={() => setStep(0)}>
+            <ArrowLeft size={14} />
+            {t('Back')}
           </Button>
-          <Button
-            type="primary"
-            onClick={() => setStep(2)}
-            icon={<ArrowRight size={15} />}
-            iconPosition="end"
-          >
-            <span className="max-sm:hidden">{t('Continue to tags')}</span>
-            <span className="sm:hidden">{t('Continue')}</span>
-          </Button>
-        </div>
-      </div>
+        }
+        right={
+          <>
+            <Button variant="subtle" onClick={finalize}>
+              <span className="max-sm:hidden">
+                {scheduled
+                  ? t('Skip tags & finish')
+                  : t('Finish without schedule')}
+              </span>
+              <span className="sm:hidden">{t('Finish')}</span>
+            </Button>
+            <Button variant="primary" onClick={() => setStep(2)}>
+              <span className="max-sm:hidden">{t('Continue to tags')}</span>
+              <span className="sm:hidden">{t('Continue')}</span>
+              <ArrowRight size={14} />
+            </Button>
+          </>
+        }
+      />
     ) : (
-      <div className="flex items-center justify-between">
-        <Button
-          type="text"
-          onClick={() => setStep(1)}
-          icon={<ArrowLeft size={15} />}
-        >
-          {t('Back')}
-        </Button>
-        <Button type="primary" onClick={finalize} icon={<Check size={15} />}>
-          {t('Done')}
-        </Button>
-      </div>
+      <DrawerFooter
+        left={
+          <Button variant="subtle" onClick={() => setStep(1)}>
+            <ArrowLeft size={14} />
+            {t('Back')}
+          </Button>
+        }
+        right={
+          <Button variant="primary" onClick={finalize}>
+            <Check size={14} />
+            {t('Done')}
+          </Button>
+        }
+      />
     );
 
   return (
     <EntityDrawer
+      size="wide"
       open={open}
       onClose={handleClose}
-      eyebrow={t('Draft')}
+      eyebrow={`${t('Draft')}${draft.isNew ? ` · ${t('New')}` : ''}`}
       title={draft.title}
       onTitleChange={(title) => patch({ title })}
       footer={footer}
     >
-      {/* custom stepper — antd's theme algorithm can't derive a palette from the app's
-          CSS-var primary */}
-      <div className="px-6 pt-5">
-        <div className="flex items-center">
-          {stepLabels.map((label, i) => {
-            const done = i < step;
-            const active = i === step;
-            const reachable = i === 0 || approved;
-            return (
-              <React.Fragment key={label}>
-                {i > 0 && (
-                  <div
-                    className="flex-1 h-px mx-2"
-                    style={{
-                      background:
-                        i <= step
-                          ? 'var(--color-main)'
-                          : 'var(--color-gray-light)',
-                    }}
-                  />
-                )}
-                <button
-                  type="button"
-                  disabled={!reachable}
-                  onClick={() => goStep(i)}
-                  className={`flex items-center gap-2 ${
-                    reachable ? 'cursor-pointer' : 'cursor-default'
-                  }`}
-                >
-                  <span
-                    className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold shrink-0"
-                    style={
-                      done || active
-                        ? { background: 'var(--color-main)', color: '#fff' }
-                        : {
-                            background: 'var(--color-gray-lightest)',
-                            color: 'var(--color-gray-medium)',
-                            border: '1px solid var(--color-gray-light)',
-                          }
-                    }
-                  >
-                    {done ? <Check size={14} /> : i + 1}
-                  </span>
-                  <span
-                    className={`text-sm ${
-                      active
-                        ? 'font-medium text-black'
-                        : done
-                          ? 'text-black'
-                          : 'text-disabled-text'
-                    }`}
-                  >
-                    {label}
-                  </span>
-                </button>
-              </React.Fragment>
-            );
-          })}
-        </div>
-      </div>
+      <ol className="m-dwiz" aria-label={t('Review steps')}>
+        {stepLabels.map((label, i) => {
+          const done = i < step;
+          const reachable = i === 0 || approved;
+          return (
+            <li
+              key={label}
+              className={`m-dwiz__item${i === step ? ' is-current' : ''}${done ? ' is-done' : ''}`}
+              aria-current={i === step ? 'step' : undefined}
+            >
+              {i > 0 && <span className="m-dwiz__line" aria-hidden="true" />}
+              <button
+                type="button"
+                className="m-dwiz__btn"
+                disabled={!reachable}
+                onClick={() => goStep(i)}
+              >
+                <span className="m-dwiz__bullet" aria-hidden="true">
+                  {done ? <Check size={11} strokeWidth={2.5} /> : i + 1}
+                </span>
+                {label}
+              </button>
+            </li>
+          );
+        })}
+      </ol>
 
       {step === 0 && (
         <EditableSteps
@@ -272,31 +233,33 @@ function DraftDrawer({
       )}
 
       {step === 1 && (
-        <Section title={t('Where & when it runs')}>
-          <RunSettingsFields
-            value={settings}
-            onChange={patch}
-            defaults={defaults}
-            defaultHints
-          />
-          <div className="mt-3 flex items-start gap-2 text-sm text-disabled-text">
-            <CalendarClock size={14} className="mt-0.5 shrink-0" />
-            <span>
+        <Section
+          title={t('Where & when it runs')}
+          hint={
+            <span className="inline-flex items-start gap-2">
+              <CalendarClock size={13} className="mt-0.5 shrink-0" />
               {scheduled
                 ? t('It will run automatically on this schedule.')
                 : t(
                     'No schedule yet — the test will be Approved and you can run it manually or schedule it later.',
                   )}
             </span>
-          </div>
+          }
+        >
+          <RunSettingsFields
+            value={settings}
+            onChange={patch}
+            defaults={defaults}
+            defaultHints
+          />
         </Section>
       )}
 
       {step === 2 && (
-        <Section title={t('Tags')}>
-          <div className="text-sm text-disabled-text mb-3">
-            {t('Add up to 3 tags to organise this test (optional).')}
-          </div>
+        <Section
+          title={t('Tags')}
+          hint={t('Add up to 3 tags to organise this test (optional).')}
+        >
           <TagEditor value={draft.tags} onChange={(tags) => patch({ tags })} />
         </Section>
       )}

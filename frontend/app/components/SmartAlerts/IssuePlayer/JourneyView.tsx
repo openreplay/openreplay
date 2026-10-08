@@ -1,201 +1,125 @@
+import { Chip } from '@/ui/data/Chip';
 import { Play } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import 'Components/Session/ReplayScreen/journey-panel.css';
+import 'Components/Session/ReplayScreen/side-panel.css';
 import { PlayerContext } from 'Components/Session/playerContext';
 
-import { type IssueSessionCard, TagChip } from '../shared';
-
-const STEP_BLUE = '#394EFF';
-const RAIL = '#A7BFFF';
-const RAIL_LEAD = 14;
+import { type IssueSessionCard } from '../shared';
 
 const fmtTime = (ms: number): string => {
   const total = Math.max(0, Math.round(ms / 1000));
-  const m = Math.floor(total / 60);
-  const sec = total % 60;
-  return `${m}:${String(sec).padStart(2, '0')}`;
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
 };
 
-/* One step row. Memoized: the parent re-renders every player time tick, so
-   without this the whole timeline re-renders at playback framerate. `onJump`
-   must be referentially stable (useCallback in parent) for the memo to hold. */
+// memoized: the parent re-renders on every player tick
 const Step = React.memo(function Step({
   name,
   ms,
-  first,
   last,
+  past,
   active,
   onJump,
 }: {
   name: string;
   ms: number;
-  first: boolean;
   last: boolean;
+  past: boolean;
   active: boolean;
   onJump: (ms: number) => void;
 }) {
   const { t } = useTranslation();
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      title={t('Jump to {{time}}', { time: fmtTime(ms) })}
-      onClick={() => onJump(ms)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onJump(ms);
-        }
-      }}
-      className="group flex gap-2.5 -mx-2 px-2 rounded cursor-pointer transition-colors hover:bg-active-blue"
-      style={{ background: active ? 'var(--color-active-blue)' : undefined }}
-    >
-      <div className="flex flex-col items-center shrink-0" style={{ width: 7 }}>
-        <span
-          style={{
-            height: RAIL_LEAD,
-            width: 1,
-            background: first ? 'transparent' : RAIL,
-          }}
-        />
-        <span
-          style={{
-            width: active ? 8 : 6,
-            height: active ? 8 : 6,
-            borderRadius: 9999,
-            background: STEP_BLUE,
-            boxShadow: active ? '0 0 0 3px rgba(57,78,255,0.18)' : undefined,
-          }}
-        />
-        {!last && (
+    <li className="m-jrn__item">
+      <button
+        type="button"
+        className={`m-jrn__step${active ? ' is-active' : ''}${past ? ' is-past' : ''}`}
+        onClick={() => onJump(ms)}
+        aria-current={active ? 'step' : undefined}
+        title={t('Jump to {{time}}', { time: fmtTime(ms) })}
+      >
+        <span className="m-spanel__time m-jrn__at m-mono">{fmtTime(ms)}</span>
+        <span className="m-jrn__thread" aria-hidden="true">
           <span
-            style={{ flex: 1, width: 1, minHeight: 8, background: RAIL }}
+            className={`m-jrn__wire m-jrn__wire--lead${past ? ' is-past' : ''}`}
           />
-        )}
-      </div>
-      <div className="py-2 flex items-baseline justify-between gap-2 min-w-0 flex-1">
-        <span
-          style={{
-            fontSize: 13,
-            lineHeight: 1.45,
-            color: 'var(--color-gray-dark)',
-            fontWeight: active ? 500 : 400,
-          }}
-        >
-          {name}
+          <span className="m-jrn__node">
+            <Play size={10} strokeWidth={2} aria-hidden="true" />
+          </span>
+          {!last && (
+            <span
+              className={`m-jrn__wire m-jrn__wire--tail${past ? ' is-past' : ''}`}
+            />
+          )}
         </span>
-        <span
-          className="shrink-0 flex items-center gap-1 tabular-nums"
-          style={{ fontSize: 11, color: 'var(--color-gray-medium)' }}
-        >
-          <Play
-            size={9}
-            strokeWidth={0}
-            className="opacity-0 transition-opacity group-hover:opacity-100"
-            style={{ fill: STEP_BLUE }}
-          />
-          {fmtTime(ms)}
+        <span className="m-jrn__body">
+          <span className="m-jrn__row">
+            <span className="m-jrn__label">{name}</span>
+          </span>
         </span>
-      </div>
-    </div>
+      </button>
+    </li>
   );
 });
 
-/* The session's journey. With per-step timings (`card.journeySteps`) it's a
-   clickable step timeline — each step seeks the player to its moment and the
-   step at the current playhead is highlighted. Falls back to a single journey
-   block when a session has no steps. */
+/** The session's journey; each step seeks the player, the current one is lit. */
 const JourneyView = observer(({ card }: { card?: IssueSessionCard }) => {
   const { t } = useTranslation();
   const { player, store } = React.useContext(PlayerContext);
   const nowMs: number = (store?.get?.() as any)?.time ?? 0;
   const jump = React.useCallback((ms: number) => player?.jump(ms), [player]);
-
   const steps = card?.journeySteps ?? [];
   const journey = card?.journey?.trim();
   const tags = card?.tags ?? [];
 
-  if (steps.length === 0 && !journey && tags.length === 0) return null;
-
-  // ---- stepped timeline (real timings) ----
-  if (steps.length > 0) {
-    // -1 until the playhead reaches step 0, so nothing is highlighted during
-    // the lead-in
-    let current = -1;
-    steps.forEach((s, i) => {
-      if (nowMs >= s.relativeTimestamp - 500) current = i;
-    });
+  if (steps.length === 0 && !journey && tags.length === 0)
     return (
-      <div className="flex flex-col">
-        {steps.map((s, i) => (
-          <Step
-            key={`${s.name}-${i}`}
-            name={s.name}
-            ms={s.relativeTimestamp}
-            first={i === 0}
-            last={i === steps.length - 1}
-            active={i === current}
-            onJump={jump}
-          />
-        ))}
-        {tags.length > 0 && (
-          <div className="flex items-center gap-1.5 flex-wrap mt-3 ml-4">
-            {tags.map((tag) => (
-              <TagChip key={tag} label={tag} />
-            ))}
-          </div>
-        )}
-      </div>
+      <p className="px-6 py-5 text-xs text-content-muted">
+        {t('No journey recorded for this session.')}
+      </p>
     );
-  }
 
-  // ---- fallback: single journey block (no steps for this session) ----
+  let current = -1;
+  steps.forEach((s, i) => {
+    if (nowMs >= s.relativeTimestamp - 500) current = i;
+  });
+
   return (
-    <div className="flex gap-2.5">
-      <div
-        className="flex flex-col items-center shrink-0 pt-2"
-        style={{ width: 7 }}
-      >
-        <span
-          style={{
-            width: 8,
-            height: 8,
-            borderRadius: 9999,
-            background: STEP_BLUE,
-          }}
-        />
-      </div>
-      <div className="py-1 flex flex-col items-start gap-2 min-w-0 flex-1">
-        <button
-          type="button"
-          onClick={() => player?.jump(0)}
-          title={t('Jump to start')}
-          className="tabular-nums cursor-pointer"
-          style={{ fontSize: 11, color: 'var(--color-gray-medium)' }}
-        >
-          0:00
-        </button>
-        {journey && (
-          <span
-            style={{
-              fontSize: 13,
-              lineHeight: 1.55,
-              color: 'var(--color-gray-dark)',
-            }}
-          >
-            {journey}
-          </span>
-        )}
-        {tags.length > 0 && (
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {tags.map((tag) => (
-              <TagChip key={tag} label={tag} />
-            ))}
-          </div>
-        )}
-      </div>
+    <div className="flex flex-col gap-4">
+      {steps.length > 0 ? (
+        <ol className="m-jrn__list">
+          {steps.map((s, i) => (
+            <Step
+              key={`${s.name}-${i}`}
+              name={s.name}
+              ms={s.relativeTimestamp}
+              last={i === steps.length - 1}
+              past={i <= current}
+              active={i === current}
+              onJump={jump}
+            />
+          ))}
+        </ol>
+      ) : journey ? (
+        <div className="m-jrn__answers">
+          <section className="m-jrn__answer">
+            <h3>{t('Journey')}</h3>
+            <p>{journey}</p>
+          </section>
+        </div>
+      ) : null}
+      {tags.length > 0 && (
+        <div className="flex flex-wrap gap-2 px-6">
+          {tags.map((tag) => (
+            <Chip key={tag} kind="tag">
+              {tag}
+            </Chip>
+          ))}
+        </div>
+      )}
     </div>
   );
 });

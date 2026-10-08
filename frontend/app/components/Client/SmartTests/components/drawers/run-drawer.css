@@ -1,0 +1,527 @@
+/* ── the steps of one run ────────────────────────────────────────────────── */
+/* ── THE STEPS ───────────────────────────────────────────────────────────────
+   A TIMELINE, not a table of rows. The marks are joined by a rail that is drawn
+   solid down to the step the run has reached and hairline below it, so "where
+   are we" is answered by the shape of the column before you have read a word.
+
+   ⚠ The row separators went when the rail arrived. A vertical rail crossing a
+   horizontal rule at every step is two grids fighting, and the rail already
+   does the separating - this list has LESS ink than it did, not more, which was
+   the condition on adding anything at all. */
+.m-rd__steps {
+  display: flex;
+  flex-direction: column;
+}
+
+.m-rd__step {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--m-space-4);
+  padding: var(--m-space-4) 0;
+}
+
+/* ONE WIRE PER GAP - CIRCLE TO CIRCLE - and it deliberately overflows its own
+   row. Two earlier versions both cut the gap in half: first two segments meeting
+   at a node, then one segment per ROW, which is the same mistake wearing a
+   different name because a row's box is centred on its node rather than spanning
+   between two. Either way a pulse crossed half the gap, stopped, and the other
+   half started later. Gabriel, twice: "the pulse between two steps is divided in
+   two segments - can't you have only one segment from one circle to another?"
+
+   So the wire starts at THIS row's node and ends 18px into the NEXT row, which
+   is that node's centre: `top: 18px; bottom: -18px`. One element, one gap, one
+   pulse. It works because a row is not a stacking context and every node carries
+   z-index 1, so the next node paints over the end of the wire that runs under
+   it - the circle covers the wire, exactly as it does at the near end. */
+.m-rd__step::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 18px;
+  bottom: -18px;
+  width: 1px;
+  z-index: 0;
+  background-color: var(--m-border-default);
+}
+/* nothing hangs below the last node */
+.m-rd__step:last-child::before {
+  content: none;
+}
+
+/* ── A RUN IN FLIGHT ─────────────────────────────────────────────────────────
+   EVERY STEP LOOKS THE SAME, because every step IS the same to us: the runner
+   does not say where it is, so nothing here may imply that it does. Same empty
+   ring, same colour, same weight, and the text of all of them sweeping at once
+   - one object in progress rather than a list with a cursor in it.
+
+   The one thing with a direction is the WIRE: a single pulse walks down the
+   connectors, one step at a time, which is the only claim the drawer can
+   honestly make about a running test. */
+
+/* THE TEXT SWEEPS HORIZONTALLY, and every row at the same rate: the band is
+   sized in PIXELS rather than as a percentage of each line, so a two-word step
+   and a nine-word step are not sweeping at different speeds. Every row starts
+   at the same left edge and shares one phase, so it reads as one wave crossing
+   the panel rather than as five lines each doing their own thing. */
+.m-rd__steps.is-live .m-rd__step-text {
+  background-image: linear-gradient(
+    90deg,
+    var(--m-content-muted) 0%,
+    var(--m-content-primary) 50%,
+    var(--m-content-muted) 100%
+  );
+  background-size: 15rem 100%;
+  background-repeat: repeat-x;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  /* no per-step delay: they are all loading at the same time, and staggering
+     them would say one of them is further along */
+  animation: m-rd-text var(--m-duration-live) linear infinite;
+}
+@keyframes m-rd-text {
+  from {
+    background-position-x: -15rem;
+  }
+  to {
+    background-position-x: 0;
+  }
+}
+
+/* ONE PULSE, ONE STEP AT A TIME. The band crosses a row in the first eighth of
+   the cycle and the wire rests for the other seven, and each row starts 0.3s
+   after the one above it - so at any moment exactly one connector is lit and
+   the lit one is moving down. A pulse that ran the whole cycle would have every
+   wire glowing at once, which is a list breathing, not a run progressing. */
+.m-rd__steps.is-live .m-rd__step::before {
+  background-image: linear-gradient(
+    180deg,
+    transparent 0%,
+    var(--m-content-accent) 50%,
+    transparent 100%
+  );
+  /* a 20px band in a 38px gap: short enough that you watch it travel rather
+     than watch the whole connector light up and go out */
+  background-size: 100% 1.25rem;
+  background-repeat: no-repeat;
+  animation: m-rd-wire var(--m-duration-live) linear infinite;
+  animation-delay: calc(var(--i, 0) * 0.3s);
+}
+@keyframes m-rd-wire {
+  0% {
+    background-position-y: -1.25rem;
+  }
+  13% {
+    background-position-y: calc(100% + 1.25rem);
+  }
+  100% {
+    background-position-y: calc(100% + 1.25rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* The run is still legibly in flight - the eyebrow and the chip both say so -
+     it just does not move. */
+  .m-rd__steps.is-live .m-rd__step-text {
+    animation: none;
+    background-image: none;
+    color: var(--m-content-secondary);
+  }
+  .m-rd__steps.is-live .m-rd__step::before {
+    animation: none;
+    background-image: none;
+  }
+}
+
+/* ── the mark ──
+   One ring for every step; the outcome is drawn inside it. It is FILLED with
+   the panel's surface and sits a layer above the wire, so the rail can run
+   straight through the row and still be covered by the node. */
+.m-rd__mark {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  margin-top: 3px;
+}
+.m-rd__ring {
+  stroke: var(--m-border-strong);
+  fill: var(--m-surface-default);
+}
+.m-rd__in {
+  stroke: var(--m-content-decorative);
+}
+
+.m-rd__mark.is-passed .m-rd__ring {
+  stroke: var(--m-border-default);
+}
+.m-rd__mark.is-skipped .m-rd__ring,
+.m-rd__mark.is-skipped .m-rd__in {
+  stroke: var(--m-content-disabled);
+}
+/* the only colour in the column, and only when something is wrong */
+.m-rd__mark.is-failed .m-rd__ring,
+.m-rd__mark.is-failed .m-rd__in {
+  stroke: var(--m-content-danger);
+}
+
+/* RUNNING has no glyph and no colour of its own: the bare ring, the same one an
+   unreached step wears, because those are the same thing. */
+
+.m-rd__step-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-space-2);
+}
+.m-rd__step-text {
+  font-size: var(--m-text-md);
+  line-height: 1.375rem;
+  color: var(--m-content-primary);
+}
+/* A step the run never reached is not a step that failed. */
+.m-rd__step.is-skipped .m-rd__step-text,
+.m-rd__step.is-unknown .m-rd__step-text {
+  color: var(--m-content-muted);
+}
+
+/* The error belongs to its step. Monospace because it is machine output, and
+   the only red on the panel. */
+.m-rd__error {
+  padding: var(--m-space-3) var(--m-space-4);
+  border-left: 2px solid var(--m-status-danger-border);
+  border-radius: 0 var(--m-radius-control) var(--m-radius-control) 0;
+  background: var(--m-status-danger-bg);
+  font-family: var(--m-font-mono);
+  font-size: var(--m-text-xs);
+  line-height: var(--m-leading-snug);
+  color: var(--m-content-danger);
+  overflow-wrap: anywhere;
+}
+
+.m-rd__shots {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  flex: none;
+  margin-top: 1px;
+  padding-inline: var(--m-space-3);
+  height: 1.25rem;
+  border-radius: var(--m-radius-chip);
+  font-family: var(--m-font-num);
+  font-size: var(--m-text-xs);
+  color: var(--m-content-muted);
+  opacity: 0;
+  transition: opacity var(--m-duration-instant) var(--m-ease-out);
+}
+.m-rd__step:hover .m-rd__shots {
+  opacity: 1;
+}
+.m-rd__shots:hover {
+  background: var(--m-surface-active);
+  color: var(--m-content-primary);
+}
+
+/* ── activity ─────────────────────────────────────────────────────────────── */
+.m-rd__tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--m-space-3);
+}
+/* The count is why anybody opens the tab, so it is the one coloured thing on it. */
+.m-rd__tab em {
+  font-style: normal;
+  font-weight: var(--m-weight-medium);
+  color: var(--m-content-danger);
+}
+
+.m-rd__panel {
+  margin-top: var(--m-space-4);
+}
+.m-rd__none {
+  font-size: var(--m-text-sm);
+  color: var(--m-content-muted);
+}
+
+/* Screenshots: a placeholder that says so. A stock image here would be a lie
+   about what this build captures. */
+.m-rd__shotview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-space-4);
+}
+.m-rd__frame {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--m-space-3);
+  aspect-ratio: 16 / 9;
+  /* Capped: at the drawer's width the ratio alone makes the placeholder the
+     tallest thing in the panel, and it is the least informative. */
+  max-height: 13rem;
+  border: 1px dashed var(--m-border-default);
+  border-radius: var(--m-radius-surface);
+  background: var(--m-surface-sunken);
+  font-size: var(--m-text-xs);
+  color: var(--m-content-muted);
+}
+.m-rd__frame.is-fail {
+  border-color: var(--m-status-danger-border);
+}
+
+.m-rd__filmstrip {
+  display: flex;
+  gap: var(--m-space-2);
+  flex-wrap: wrap;
+}
+.m-rd__thumb {
+  width: 1.625rem;
+  height: 1.625rem;
+  border: 1px solid var(--m-border-default);
+  border-radius: var(--m-radius-control);
+  font-family: var(--m-font-num);
+  font-size: var(--m-text-xs);
+  color: var(--m-content-secondary);
+}
+.m-rd__thumb.is-on {
+  background: var(--m-surface-active);
+  color: var(--m-content-primary);
+}
+.m-rd__thumb.is-fail {
+  border-color: var(--m-status-danger-border);
+  color: var(--m-content-danger);
+}
+
+/* Network: the failures are the reason the tab exists. */
+
+/* The HAR phases as one bar. Six numbers in a column is six numbers nobody
+   compares; the bar IS the comparison. */
+
+/* Console: machine output, so mono, and the level is the only colour. */
+.m-rd__console {
+  display: flex;
+  flex-direction: column;
+}
+.m-rd__line {
+  display: flex;
+  gap: var(--m-space-4);
+  padding: var(--m-space-3) 0;
+  border-top: 1px solid var(--m-border-subtle);
+  font-family: var(--m-font-mono);
+  font-size: var(--m-text-xs);
+  line-height: var(--m-leading-snug);
+}
+.m-rd__line:first-child {
+  border-top: none;
+}
+.m-rd__at {
+  flex: none;
+  width: 3rem;
+  color: var(--m-content-disabled);
+  font-variant-numeric: tabular-nums;
+}
+.m-rd__msg {
+  flex: 1;
+  min-width: 0;
+  color: var(--m-content-secondary);
+  overflow-wrap: anywhere;
+}
+.m-rd__line.is-warn .m-rd__msg {
+  color: var(--m-content-warning);
+}
+.m-rd__line.is-error .m-rd__msg {
+  color: var(--m-content-danger);
+}
+
+.m-rd__foot {
+  font-size: var(--m-text-sm);
+  color: var(--m-content-muted);
+}
+
+/* ── the expanded activity ───────────────────────────────────────────────────
+   Same three tabs, same components, room to look at them. The stage is a FIXED
+   height so switching tabs - or landing on an empty console - never resizes the
+   window under the cursor, which is the note this pattern earned in production
+   the first time it shipped without one. */
+/* The eyebrow sits above the name inside the dialog's own title, the way the
+   drawer's header says it. */
+.m-rdmodal__eyebrow {
+  display: block;
+  margin-bottom: 2px;
+  font-size: var(--m-text-2xs);
+  font-weight: var(--m-weight-medium);
+  letter-spacing: var(--m-tracking-wider);
+  text-transform: uppercase;
+  color: var(--m-content-muted);
+}
+.m-rdmodal__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-space-4);
+}
+
+.m-rdmodal__stage {
+  height: min(60vh, 32rem);
+  min-height: 20rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Filling the stage: the picture takes the room and the strip stays under it. */
+.m-rd__shotview.is-fill {
+  height: 100%;
+}
+.m-rd__shotview.is-fill .m-rd__frame {
+  flex: 1;
+  aspect-ratio: auto;
+  max-height: none;
+}
+
+.m-rd__frame.is-clickable {
+  cursor: zoom-in;
+  width: 100%;
+}
+.m-rd__frame.is-clickable:hover {
+  border-color: var(--m-border-strong);
+  color: var(--m-content-secondary);
+}
+
+/* ── ours on top of the prototype's drawer ───────────────────────────────── */
+
+.m-rd__summary {
+  font-size: var(--m-text-sm);
+  line-height: var(--m-leading-snug);
+  color: var(--m-content-secondary);
+  white-space: pre-line;
+}
+.m-rd__summary + .m-rd__error {
+  margin-top: var(--m-space-3);
+}
+
+.m-rd__skipped {
+  font-size: var(--m-text-xs);
+  color: var(--m-content-disabled);
+}
+
+/* Per-step request counts: a quiet link into the Network tab. */
+.m-rd__reqs {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  font-size: var(--m-text-xs);
+  color: var(--m-content-muted);
+}
+.m-rd__reqs:hover:not(:disabled) {
+  color: var(--m-content-accent);
+}
+.m-rd__reqs:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.m-rd__reqs .is-fail {
+  color: var(--m-content-danger);
+}
+.m-rd__reqs .is-warn {
+  color: var(--m-content-warning);
+}
+
+.m-rd__jumps {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--m-space-5);
+}
+.m-rd__jumps button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  font-size: var(--m-text-xs);
+  color: var(--m-content-accent);
+}
+.m-rd__jumps button:hover {
+  text-decoration: underline;
+}
+
+/* Real screenshots: the frame letterboxes the picture. */
+.m-rd__stepsel {
+  width: 100%;
+}
+.m-rd__frame {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  max-height: none;
+  border-style: solid;
+  overflow: hidden;
+}
+.m-rd__img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.m-rd__placeholder {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--m-space-2);
+  font-size: var(--m-text-xs);
+  color: var(--m-content-muted);
+}
+.m-rd__badge {
+  position: absolute;
+  padding: 1px var(--m-space-3);
+  border-radius: var(--m-radius-chip);
+  font-size: var(--m-text-2xs);
+  font-weight: var(--m-weight-medium);
+}
+.m-rd__badge.is-fail {
+  top: var(--m-space-3);
+  right: var(--m-space-3);
+  background: var(--m-status-danger-bg);
+  color: var(--m-content-danger);
+}
+.m-rd__badge.is-count {
+  bottom: var(--m-space-3);
+  right: var(--m-space-3);
+  border: 1px solid var(--m-border-subtle);
+  background: var(--m-surface-default);
+  color: var(--m-content-secondary);
+}
+.m-rd__nav {
+  position: absolute;
+  top: 50%;
+  translate: 0 -50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid var(--m-border-default);
+  border-radius: var(--m-radius-full);
+  background: var(--m-surface-default);
+  color: var(--m-content-secondary);
+  box-shadow: var(--m-shadow-sm);
+}
+.m-rd__nav:hover {
+  color: var(--m-content-primary);
+  border-color: var(--m-border-strong);
+}
+.m-rd__nav.is-prev {
+  left: var(--m-space-3);
+}
+.m-rd__nav.is-next {
+  right: var(--m-space-3);
+}
+.m-rd__shotview.is-fill .m-rd__frame {
+  flex: 1;
+  min-height: 0;
+}
+.m-rd__filmstrip {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  flex: none;
+}
+.m-rd__thumb {
+  flex: none;
+}

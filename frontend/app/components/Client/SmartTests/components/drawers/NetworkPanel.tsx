@@ -1,14 +1,19 @@
-import { Button, Tooltip } from 'antd';
+import { Button } from '@/ui/actions/button';
+import { StatTile } from '@/ui/data/StatTile';
+import { FilterStrip } from '@/ui/filters/FilterStrip';
+import { useToast } from '@/ui/overlays/toast';
+import { Tooltip } from '@/ui/overlays/tooltip';
 import { ChevronLeft, Copy, Download } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'react-toastify';
 
 import { formatMs } from 'App/date';
 import { formatBytes } from 'App/utils';
 
 import { NetworkRequest } from '../shared/types';
-import { TINT } from '../shared/utils';
+import './network-panel.css';
+
+const ROW_PAGE = 200;
 
 // A stripped HAR-file-viewer: type filter chips, a clickable request list, and a detail
 // view with headers, payload, response and timing. Clicking a request REPLACES the list
@@ -79,11 +84,6 @@ const pathOf = (url: string) => {
   }
 };
 
-const statusColor = (status: number) =>
-  status === 0 || status >= 400
-    ? 'var(--color-red)'
-    : 'var(--color-green-dark)';
-
 const STATUS_TEXT: Record<number, string> = {
   200: 'OK',
   201: 'Created',
@@ -103,25 +103,14 @@ const STATUS_TEXT: Record<number, string> = {
 function HeaderRows({ rows }: { rows?: { name: string; value: string }[] }) {
   const { t } = useTranslation();
   if (!rows || rows.length === 0)
-    return (
-      <div className="text-sm text-disabled-text py-3">
-        {t('Nothing to show.')}
-      </div>
-    );
+    return <p className="m-rd__none">{t('Nothing to show.')}</p>;
   return (
-    <div className="border rounded-lg overflow-hidden divide-y">
+    <div className="m-net__kv">
       {rows.map((h, i) => (
         // header names repeat (set-cookie, link…), so the index is part of the key
-        <div
-          key={`${h.name}-${i}`}
-          className="flex items-start gap-3 px-3 py-2 text-xs font-mono max-sm:flex-col max-sm:gap-0.5"
-        >
-          <span className="w-40 shrink-0 text-gray-dark font-medium break-all max-sm:w-auto">
-            {h.name}
-          </span>
-          <span className="flex-1 min-w-0 text-gray-darkest break-all">
-            {h.value}
-          </span>
+        <div key={`${h.name}-${i}`} className="m-net__kv-row">
+          <span className="m-net__kv-k">{h.name}</span>
+          <span className="m-net__kv-v">{h.value}</span>
         </div>
       ))}
     </div>
@@ -130,17 +119,8 @@ function HeaderRows({ rows }: { rows?: { name: string; value: string }[] }) {
 
 function CodeBlock({ text }: { text?: string }) {
   const { t } = useTranslation();
-  if (!text)
-    return (
-      <div className="text-sm text-disabled-text py-3">
-        {t('Nothing to show.')}
-      </div>
-    );
-  return (
-    <pre className="border rounded-lg p-3 text-xs font-mono whitespace-pre-wrap break-all bg-gray-lightest max-h-72 overflow-auto">
-      {text}
-    </pre>
-  );
+  if (!text) return <p className="m-rd__none">{t('Nothing to show.')}</p>;
+  return <pre className="m-net__code">{text}</pre>;
 }
 
 type DetailTab =
@@ -160,6 +140,7 @@ function Detail({
   onClose: () => void;
 }) {
   const { t } = useTranslation();
+  const toast = useToast();
   const [tab, setTab] = useState<DetailTab>('reqHeaders');
   const errored = isNetError(req);
 
@@ -192,15 +173,6 @@ function Detail({
     toast.success(t('URL copied'));
   };
 
-  const stat = (label: string, value: React.ReactNode) => (
-    <div className="border rounded-lg px-3 py-2 min-w-0">
-      <div className="text-xs uppercase tracking-wide text-disabled-text">
-        {label}
-      </div>
-      <div className="text-sm font-medium text-black truncate">{value}</div>
-    </div>
-  );
-
   const timingRows: { label: string; value?: number }[] = [
     { label: t('DNS lookup'), value: req.timing?.dns },
     { label: t('Initial connection'), value: req.timing?.connect },
@@ -210,107 +182,59 @@ function Detail({
   ].filter((r) => r.value != null);
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="m-net__detail">
       {/* the detail replaces the list, so the way out is "back", not "close" */}
-      <button
-        type="button"
-        onClick={onClose}
-        className="self-start inline-flex items-center gap-1 text-sm text-main hover:underline"
-      >
-        <ChevronLeft size={15} /> {t('Back to requests')}
+      <button type="button" onClick={onClose} className="m-net__back">
+        <ChevronLeft size={14} /> {t('Back to requests')}
       </button>
 
-      <div className="border rounded-lg p-3 flex flex-col gap-3">
-        <div className="flex items-start gap-2">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span
-                className="inline-flex items-center gap-1 text-sm font-medium rounded px-1.5 py-0.5"
-                style={{
-                  background: errored ? TINT.red : TINT.green,
-                  color: statusColor(req.status),
-                }}
-              >
-                {req.status === 0
-                  ? t('ERR')
-                  : `${req.status} ${STATUS_TEXT[req.status] ?? ''}`.trim()}
-              </span>
-              <span className="text-sm font-semibold text-black">
-                {req.method}
-              </span>
-              {req.protocol && (
-                <span className="text-xs text-disabled-text">
-                  {req.protocol}
-                </span>
-              )}
-            </div>
-            <div className="mt-1 text-xs text-disabled-text">
-              {hostOf(req.url)}
-              {req.ip ? ` · ${req.ip}` : ''}
-            </div>
-            <div className="mt-1.5 text-sm font-mono text-black break-all">
-              {pathOf(req.url)}
-            </div>
-            <button
-              type="button"
-              onClick={copyUrl}
-              className="mt-1.5 inline-flex items-center gap-1 text-xs text-disabled-text hover:text-black"
-            >
-              <Copy size={12} /> {t('Copy full URL')}
-            </button>
-          </div>
+      <div className="m-net__card">
+        <div className="m-net__head">
+          <span className={`m-net__code-chip${errored ? ' is-bad' : ''}`}>
+            {req.status === 0
+              ? t('ERR')
+              : `${req.status} ${STATUS_TEXT[req.status] ?? ''}`.trim()}
+          </span>
+          <span className="m-net__method-lg">{req.method}</span>
+          {req.protocol && <span className="m-net__muted">{req.protocol}</span>}
+        </div>
+        <span className="m-net__muted">
+          {hostOf(req.url)}
+          {req.ip ? ` · ${req.ip}` : ''}
+        </span>
+        <span className="m-net__path">{pathOf(req.url)}</span>
+        <button type="button" onClick={copyUrl} className="m-net__copy">
+          <Copy size={12} /> {t('Copy full URL')}
+        </button>
+
+        <div className="m-net__stats">
+          <StatTile value={fmtBytes(req.size)} label={t('Size')} />
+          <StatTile value={fmtMs(req.duration)} label={t('Total time')} />
+          <StatTile value={req.type} label={t('Type')} />
+          <StatTile
+            value={
+              absoluteStart ? (
+                <Tooltip title={absoluteStart}>
+                  <span>{offset}</span>
+                </Tooltip>
+              ) : (
+                offset
+              )
+            }
+            label={t('Started')}
+          />
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          {stat(t('Size'), fmtBytes(req.size))}
-          {stat(t('Total time'), fmtMs(req.duration))}
-          {stat(t('Type'), req.type)}
-          {stat(
-            t('Started'),
-            absoluteStart ? (
-              <Tooltip title={absoluteStart}>
-                <span>{offset}</span>
-              </Tooltip>
-            ) : (
-              offset
-            ),
-          )}
-        </div>
-
-        <div className="flex flex-wrap gap-1.5">
-          {tabs.map((tb) => {
-            const active = tab === tb.key;
-            return (
-              <button
-                key={tb.key}
-                type="button"
-                onClick={() => setTab(tb.key)}
-                className={`text-xs font-medium rounded-full px-2.5 py-1 border transition ${
-                  active
-                    ? ''
-                    : 'bg-gray-lightest text-gray-dark border-transparent hover:bg-gray-light'
-                }`}
-                style={
-                  active
-                    ? {
-                        background: 'var(--color-active-blue)',
-                        borderColor: 'var(--color-teal)',
-                        color: 'var(--color-teal)',
-                      }
-                    : undefined
-                }
-              >
-                {tb.label}
-                {tb.count != null && (
-                  <span className={active ? '' : 'text-disabled-text'}>
-                    {' '}
-                    ({tb.count})
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
+        <FilterStrip
+          label={t('Request details')}
+          items={tabs.map((tb) => ({
+            key: tb.key,
+            label: tb.label,
+            count: tb.count,
+          }))}
+          selected={[tab]}
+          onSelect={(k) => setTab(k as DetailTab)}
+        />
 
         <div>
           {tab === 'reqHeaders' && <HeaderRows rows={req.requestHeaders} />}
@@ -319,20 +243,13 @@ function Detail({
           {tab === 'response' && <CodeBlock text={req.response} />}
           {tab === 'timing' &&
             (timingRows.length === 0 ? (
-              <div className="text-sm text-disabled-text py-3">
-                {t('No timing captured.')}
-              </div>
+              <p className="m-rd__none">{t('No timing captured.')}</p>
             ) : (
-              <div className="border rounded-lg overflow-hidden divide-y">
+              <div className="m-net__kv">
                 {timingRows.map((r) => (
-                  <div
-                    key={r.label}
-                    className="flex items-center justify-between px-3 py-2 text-xs"
-                  >
-                    <span className="text-gray-dark">{r.label}</span>
-                    <span className="font-mono text-gray-darkest">
-                      {fmtMs(r.value)}
-                    </span>
+                  <div key={r.label} className="m-net__kv-row is-timing">
+                    <span className="m-net__kv-k">{r.label}</span>
+                    <span className="m-net__kv-v">{fmtMs(r.value)}</span>
                   </div>
                 ))}
               </div>
@@ -342,10 +259,6 @@ function Detail({
     </div>
   );
 }
-
-/** Grid columns shared by the request list header + rows. Phones drop At + Size. */
-const NET_GRID =
-  'grid items-center gap-2 grid-cols-[52px_56px_minmax(0,1fr)_58px_64px_60px] max-sm:grid-cols-[40px_48px_minmax(0,1fr)_52px]';
 
 function NetworkPanel({
   reqs,
@@ -373,6 +286,9 @@ function NetworkPanel({
   );
 
   // carry each request's index in `reqs` so the row can select it without a lookup
+  // a HAR can hold thousands of requests: draw a page at a time (per filter)
+  const [pager, setPager] = useState({ filter, limit: ROW_PAGE });
+  const limit = pager.filter === filter ? pager.limit : ROW_PAGE;
   const visible = useMemo(() => {
     const all = (reqs ?? []).map((r, idx) => ({ r, idx }));
     if (filter === 'all') return all;
@@ -382,13 +298,9 @@ function NetworkPanel({
 
   if (!reqs || reqs.length === 0)
     return (
-      <div
-        className={`text-sm text-disabled-text text-center border rounded-lg ${
-          fillHeight ? 'h-full flex items-center justify-center' : 'py-8'
-        }`}
-      >
+      <p className="m-rd__none">
         {t('No network activity captured for this run.')}
-      </div>
+      </p>
     );
 
   const cur = selected != null ? reqs[selected] : null;
@@ -396,7 +308,7 @@ function NetworkPanel({
   // the detail REPLACES the list — one view at a time, stable height
   if (cur)
     return (
-      <div className={fillHeight ? 'h-full overflow-y-auto' : ''}>
+      <div className={fillHeight ? 'h-full overflow-y-auto' : undefined}>
         <Detail
           req={cur}
           startedAt={startedAt}
@@ -406,109 +318,76 @@ function NetworkPanel({
     );
 
   return (
-    <div
-      className={`flex flex-col gap-3 ${fillHeight ? 'h-full min-h-0' : ''}`}
-    >
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex flex-wrap gap-1.5">
-          {FILTERS.map((f) => {
-            const active = filter === f.key;
-            const isErr = f.key === 'errors';
-            return (
-              <button
-                key={f.key}
-                type="button"
-                onClick={() => setFilter(f.key)}
-                className={`text-xs font-medium rounded-full px-2.5 py-1 border transition ${
-                  active ? '' : 'bg-white text-gray-dark hover:bg-gray-lightest'
-                }`}
-                style={
-                  active
-                    ? {
-                        background: 'var(--color-active-blue)',
-                        borderColor: 'var(--color-teal)',
-                        color: 'var(--color-teal)',
-                      }
-                    : { borderColor: 'var(--color-gray-light)' }
-                }
-              >
-                {t(f.label)}
-                {isErr && errorCount > 0 && (
-                  <span className={active ? '' : 'text-red'}>
-                    {' '}
-                    {errorCount}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
+    <div className={`m-net${fillHeight ? ' is-fill' : ''}`}>
+      <div className="m-net__bar">
+        <FilterStrip
+          label={t('Filter requests')}
+          items={FILTERS.map((f) => ({
+            key: f.key,
+            label: t(f.label),
+            count:
+              f.key === 'errors' && errorCount > 0 ? errorCount : undefined,
+          }))}
+          selected={[filter]}
+          onSelect={setFilter}
+        />
         <Tooltip title={t('Download the captured network as a .HAR file')}>
-          <Button
-            size="small"
-            icon={<Download size={14} />}
-            className="shrink-0"
-            disabled={!onDownload}
-            onClick={onDownload}
-          >
-            {t('Download')} .HAR
-          </Button>
+          <span>
+            <Button disabled={!onDownload} onClick={onDownload}>
+              <Download size={13} />
+              {t('.HAR')}
+            </Button>
+          </span>
         </Tooltip>
       </div>
 
-      <div
-        className={`border rounded-lg text-xs ${
-          fillHeight ? 'flex-1 min-h-0 overflow-y-auto' : 'overflow-hidden'
-        }`}
-      >
-        <div
-          className={`${NET_GRID} px-3 py-1.5 bg-gray-lightest border-b text-disabled-text font-medium uppercase tracking-wide ${
-            fillHeight ? 'sticky top-0 z-1' : ''
-          }`}
-        >
+      <div className="m-net__list">
+        <div className="m-net__row is-head">
           <span>{t('Status')}</span>
           <span>{t('Method')}</span>
           <span>{t('Request')}</span>
           <Tooltip title={t('When it fired, relative to the run start')}>
-            <span className="text-right max-sm:hidden">{t('At')}</span>
+            <span className="is-num is-wide">{t('At')}</span>
           </Tooltip>
-          <span className="text-right max-sm:hidden">{t('Size')}</span>
-          <span className="text-right">{t('Time')}</span>
+          <span className="is-num is-wide">{t('Size')}</span>
+          <span className="is-num">{t('Time')}</span>
         </div>
         {visible.length === 0 ? (
-          <div className="px-3 py-6 text-center text-disabled-text">
-            {t('No requests match this filter.')}
-          </div>
+          <p className="m-net__empty">{t('No requests match this filter.')}</p>
         ) : (
-          visible.map(({ r, idx }) => (
+          visible.slice(0, limit).map(({ r, idx }) => (
             <button
               key={idx}
               type="button"
               onClick={() => setSelected(idx)}
-              className={`${NET_GRID} w-full text-left px-3 py-1.5 border-b last:border-b-0 transition hover:bg-gray-lightest`}
+              className={`m-net__row${isNetError(r) ? ' is-bad' : ''}`}
             >
-              <span
-                className="font-medium"
-                style={{ color: statusColor(r.status) }}
-              >
+              <span className="m-net__status">
                 {r.status === 0 ? t('ERR') : r.status}
               </span>
-              <span className="text-disabled-text">{r.method}</span>
-              <span className="min-w-0 truncate">
-                <span className="text-disabled-text">{hostOf(r.url)}</span>
-                <span className="text-gray-darkest"> {pathOf(r.url)}</span>
+              <span className="m-net__muted">{r.method}</span>
+              <span className="m-net__url">
+                <span className="m-net__muted">{hostOf(r.url)}</span>{' '}
+                {pathOf(r.url)}
               </span>
-              <span className="text-right text-disabled-text tabular-nums max-sm:hidden">
-                {fmtOffset(r.time)}
-              </span>
-              <span className="text-right text-disabled-text max-sm:hidden">
-                {fmtBytes(r.size)}
-              </span>
-              <span className="text-right text-disabled-text">
+              <span className="is-num is-wide">{fmtOffset(r.time)}</span>
+              <span className="is-num is-wide">{fmtBytes(r.size)}</span>
+              <span className="is-num">
                 {r.duration ? `${Math.round(r.duration)}ms` : '—'}
               </span>
             </button>
           ))
+        )}
+        {visible.length > limit && (
+          <button
+            type="button"
+            className="m-net__more"
+            onClick={() => setPager({ filter, limit: limit + ROW_PAGE })}
+          >
+            {t('Show {{n}} more', {
+              n: Math.min(ROW_PAGE, visible.length - limit),
+            })}
+          </button>
         )}
       </div>
     </div>

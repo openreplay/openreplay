@@ -1,13 +1,15 @@
 import withPageTitle from 'HOCs/withPageTitle';
-import { Divider, Switch, Typography } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useStore } from 'App/mstore';
 import { useHistory, useLocation } from 'App/routing';
-import { NoPermission } from 'UI';
+import { agentIssuesEnabled, agentTestsEnabled } from 'App/utils/split-utils';
 
+import NoPermission from 'Shared/NoPermission/NoPermission';
+
+import { PrefToggle } from '../PrefSection';
 import PreferencesPage from '../PreferencesPage';
 import {
   useNotifications,
@@ -22,8 +24,6 @@ import JourneyTags from './JourneyTags';
    rules, notifications and behaviour toggles live here rather than as a
    Settings tab on each agent page. */
 
-// display:block is load-bearing: Typography.Text renders a span, max-width does
-// nothing to an inline element
 const PROSE = { display: 'block', maxWidth: '72ch' } as const;
 
 type AgentKey = 'tests' | 'issues';
@@ -34,14 +34,23 @@ const AGENT_PERMISSION: Record<AgentKey, string> = {
   issues: 'SMART_ISSUES',
 };
 
+const AGENT_ENABLED: Record<AgentKey, () => boolean> = {
+  tests: agentTestsEnabled,
+  issues: agentIssuesEnabled,
+};
+
 // HOCs/withPermissions' rule as a hook, since the check picks tabs rather than
 // gating the whole render
 function usePermittedAgents(): AgentKey[] {
   const { userStore } = useStore();
   const granted = userStore.account.permissions ?? [];
   const unrestricted = userStore.isAdmin || !userStore.isEnterprise;
+  // the plan has to include the agent too: a tab for an agent the account
+  // doesn't have would only show controls for an API that isn't there
   return AGENTS.filter(
-    (key) => unrestricted || granted.includes(AGENT_PERMISSION[key]),
+    (key) =>
+      AGENT_ENABLED[key]() &&
+      (unrestricted || granted.includes(AGENT_PERMISSION[key])),
   );
 }
 
@@ -55,12 +64,12 @@ function PrefRow({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-0.5">
-      <span className="font-medium">{label}</span>
-      <Typography.Text type="secondary" className="text-sm!" style={PROSE}>
+    <div className="m-pref__field">
+      <span className="m-pref__label">{label}</span>
+      <p className="m-pref__hint" style={PROSE}>
         {hint}
-      </Typography.Text>
-      <div className="flex flex-col gap-2.5 mt-3">{children}</div>
+      </p>
+      <div className="flex flex-col gap-2.5 mt-1">{children}</div>
     </div>
   );
 }
@@ -74,12 +83,7 @@ function Channel({
   checked: boolean;
   onChange: (v: boolean) => void;
 }) {
-  return (
-    <span className="flex items-center gap-2.5">
-      <Switch size="small" checked={checked} onChange={onChange} />
-      {label}
-    </span>
-  );
+  return <PrefToggle checked={checked} onChange={onChange} label={label} />;
 }
 
 /** a titled group inside a panel. */
@@ -93,14 +97,12 @@ function PrefSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className="flex flex-col gap-6">
-      <div className="flex flex-col gap-0.5 -mb-1.5">
-        <Typography.Title level={5} style={{ marginBottom: 0 }}>
-          {title}
-        </Typography.Title>
-        <Typography.Text type="secondary" className="text-sm!" style={PROSE}>
+    <section className="flex flex-col gap-5">
+      <div className="m-pref__block-lead">
+        <h3 className="m-pref__block-title">{title}</h3>
+        <p className="m-pref__block-hint" style={PROSE}>
           {hint}
-        </Typography.Text>
+        </p>
       </div>
       {children}
     </section>
@@ -149,7 +151,7 @@ const TestsPanel = observer(() => {
         </PrefRow>
       </PrefSection>
 
-      <Divider />
+      <hr className="m-pref__rule" />
 
       <PrefSection
         title={t('Behaviour')}

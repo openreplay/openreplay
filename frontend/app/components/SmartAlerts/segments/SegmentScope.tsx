@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { useStore } from 'App/mstore';
 
 import type { Issue } from '../shared/model';
+import './segment-chip.css';
 
 /* Segment identity on the issue page + replay panel.
    · `SegmentChip` — the one look for a named segment, everywhere.
@@ -23,36 +24,23 @@ export function SegmentChip({
   on?: boolean;
   onClick?: () => void;
 }) {
-  const className =
-    'inline-flex items-center gap-1.5 border rounded-full px-2.5 py-0.5 transition-colors';
-  const style: React.CSSProperties = on
-    ? {
-        color: 'var(--color-main)',
-        borderColor: 'var(--color-main)',
-        background: 'var(--color-active-blue)',
-      }
-    : { color: 'var(--color-gray-darkest)' };
-  const icon = (
-    <Split
-      size={12}
-      style={{ color: on ? 'var(--color-main)' : 'var(--color-gray-medium)' }}
-    />
+  const content = (
+    <>
+      <Split size={11} aria-hidden="true" />
+      <span className="m-truncate">{name}</span>
+    </>
   );
   return onClick ? (
     <button
       type="button"
       onClick={onClick}
-      className={`${className} cursor-pointer`}
-      style={style}
+      aria-pressed={on}
+      className={`m-segchip${on ? ' is-on' : ''}`}
     >
-      {icon}
-      {name}
+      {content}
     </button>
   ) : (
-    <span className={`${className} cursor-default`} style={style}>
-      {icon}
-      {name}
-    </span>
+    <span className="m-segchip is-static">{content}</span>
   );
 }
 
@@ -81,11 +69,11 @@ export const FoundInChips = observer(function FoundInChips({
   };
 
   return (
-    <div className="flex items-center gap-2 flex-wrap text-sm">
-      <span className="color-gray-medium">{t('Found in:')}</span>
+    <span className="inline-flex flex-wrap items-center gap-2">
       {ids.length === 0 ? (
-        <span className="inline-flex items-center gap-1.5 border rounded-full px-2.5 py-0.5 color-gray-medium">
-          <Globe size={12} /> {t('full traffic')}
+        <span className="m-segchip is-static">
+          <Globe size={11} aria-hidden="true" />
+          {t('Full traffic')}
         </span>
       ) : (
         ids.map((id) => (
@@ -97,6 +85,6 @@ export const FoundInChips = observer(function FoundInChips({
           />
         ))
       )}
-    </div>
+    </span>
   );
 });

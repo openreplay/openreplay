@@ -603,10 +603,11 @@ export async function updateProjectSettings(
 
 /** Project capture mode, derived from the real project settings. `active` /
     `instructions` stay empty here — the active set is read from each saved
-    search's `isCapture`, and instructions have no backing yet. */
+    search's `isCapture`, and instructions have no backing yet. Null when the
+    smart-issues API is unreachable. */
 export const getSegmentCapture = async (
   projectId: string,
-): Promise<SegmentCaptureState> => {
+): Promise<SegmentCaptureState | null> => {
   try {
     const { captureSegmentsOnly } = await getProjectSettings(projectId);
     return {
@@ -615,8 +616,7 @@ export const getSegmentCapture = async (
       instructions: {},
     };
   } catch {
-    // don't let a settings error break the segment list it loads alongside
-    return { mode: 'full', active: [], instructions: {} };
+    return null;
   }
 };
 
