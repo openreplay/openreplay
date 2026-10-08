@@ -1,8 +1,11 @@
+import { NoContent } from '@/ui/feedback/NoContent';
+import { Icon } from '@/ui/icons/Icon';
 import React from 'react';
-import { NoContent, Icon } from 'UI';
-import TimeseriesChart from 'Components/Charts/TimeseriesChart';
-import { Styles } from '../../common';
 import { useTranslation } from 'react-i18next';
+
+import TimeseriesChart from 'Components/Charts/TimeseriesChart';
+
+import { Styles } from '../../common';
 
 interface Props {
   data: any;
@@ -29,13 +32,14 @@ function CallsErrors5xx(props: Props) {
         data={metric.data.chart}
         xInterval={metric.params.density / 7}
         yLabel="Number of Errors"
-        series={(Array.isArray(metric.data.namesMap) ? metric.data.namesMap : []).map(
-          (key: string, index: number) => ({
-            key,
-            name: key,
-            color: Styles.colors[index % Styles.colors.length],
-          }),
-        )}
+        series={(Array.isArray(metric.data.namesMap)
+          ? metric.data.namesMap
+          : []
+        ).map((key: string, index: number) => ({
+          key,
+          name: key,
+          color: Styles.colors[index % Styles.colors.length],
+        }))}
       />
     </NoContent>
   );

@@ -1,3 +1,4 @@
+import { Loader } from '@/ui/feedback/Loader';
 import { getStartAndEndTimestampsByDensity } from 'Types/dashboard/helper';
 import { FilterKey } from 'Types/filter/filterType';
 import { observer } from 'mobx-react-lite';
@@ -24,21 +25,17 @@ import useIsMounted from 'App/hooks/useIsMounted';
 import { useStore } from 'App/mstore';
 import { debounce } from 'App/utils';
 import {
+  type NestedData,
   buildLevelTree,
   collectTimestamps,
   computeSelectionFromTopN,
   getDepth,
   remapTimestamps,
-  type NestedData,
 } from 'App/utils/breakdownTree';
 import { hasSampling } from 'App/utils/split-utils';
-import BarChart from 'Components/Charts/BarChart';
-import ColumnChart from 'Components/Charts/ColumnChart';
-import LineChart from 'Components/Charts/LineChart';
-import PieChart from 'Components/Charts/PieChart';
+import TrendChart from 'Components/Charts/TrendChart';
 import SessionsBy from 'Components/Dashboard/Widgets/CustomMetricsWidgets/SessionsBy';
 import SessionsByWithBreakdown from 'Components/Dashboard/Widgets/CustomMetricsWidgets/SessionsByWithBreakdown';
-import { Icon, Loader } from 'UI';
 
 import BugNumChart from '../../Widgets/CustomMetricsWidgets/BigNumChart';
 import { breakdownName } from '../BreakdownFilter/breakdownDimensions';
@@ -503,79 +500,22 @@ function WidgetChart(props: Props) {
           })
         : compDataCopy.namesMap;
 
-      if (viewType === 'lineChart') {
+      if (
+        viewType === 'lineChart' ||
+        viewType === 'areaChart' ||
+        viewType === 'barChart' ||
+        viewType === 'progressChart' ||
+        viewType === 'pieChart'
+      ) {
         return (
-          <LineChart
-            chartName={_metric.name}
+          <TrendChart
+            viewType={viewType}
             inGrid={!props.isPreview}
             data={chartData}
             compData={compDataCopy}
             onSeriesFocus={onFocus}
             onClick={onChartClick}
-            height={height}
-            label={
-              _metric.metricOf ? labels[_metric.metricOf] : labels.sessionCount
-            }
-          />
-        );
-      }
-      if (viewType === 'areaChart') {
-        return (
-          <LineChart
-            isArea
-            chartName={_metric.name}
-            data={chartData}
-            inGrid={!props.isPreview}
-            onClick={onChartClick}
-            onSeriesFocus={onFocus}
-            label={
-              _metric.metricOf ? labels[_metric.metricOf] : labels.sessionCount
-            }
-          />
-        );
-      }
-      if (viewType === 'barChart') {
-        return (
-          <BarChart
-            inGrid={!props.isPreview}
-            height={height}
-            data={chartData}
-            compData={compDataCopy}
-            params={params}
-            colors={colors}
-            onSeriesFocus={onFocus}
-            onClick={onChartClick}
-            label={
-              _metric.metricOf ? labels[_metric.metricOf] : labels.sessionCount
-            }
-          />
-        );
-      }
-
-      if (viewType === 'progressChart') {
-        return (
-          <ColumnChart
-            height={height}
-            inGrid={!props.isPreview}
-            horizontal
-            data={chartData}
-            compData={compDataCopy}
-            params={params}
-            colors={colors}
-            onSeriesFocus={onFocus}
-            label={
-              _metric.metricOf ? labels[_metric.metricOf] : labels.sessionCount
-            }
-          />
-        );
-      }
-      if (viewType === 'pieChart') {
-        return (
-          <PieChart
-            height={height}
-            inGrid={!props.isPreview}
-            data={chartData}
-            onSeriesFocus={onFocus}
+            height={height ?? 240}
             label={
               _metric.metricOf ? labels[_metric.metricOf] : labels.sessionCount
             }
@@ -685,27 +625,13 @@ function WidgetChart(props: Props) {
     if (metricType === HEATMAP) {
       if (!props.isPreview) {
         return _metric.thumbnail ? (
-          <div
-            style={{
-              height: '229px',
-              overflow: 'hidden',
-              marginBottom: '10px',
-            }}
-          >
-            <img
-              src={_metric.thumbnail}
-              alt="clickmap thumbnail"
-              className="w-full h-full object-cover"
-            />
+          <div className="m-cmap__thumb">
+            <img src={_metric.thumbnail} alt={t('Click map thumbnail')} />
           </div>
         ) : (
-          <div
-            className="flex items-center relative justify-center"
-            style={{ height: '229px' }}
-          >
-            <Icon name="info-circle" className="mr-2" size="14" />
+          <p className="m-funnel__empty">
             {t('No data available for the selected period.')}
-          </div>
+          </p>
         );
       }
       return <ClickMapCard />;
@@ -763,11 +689,10 @@ function WidgetChart(props: Props) {
     if (metricType === RETENTION) {
       if (viewType === 'trend') {
         return (
-          <LineChart
-            height={height}
+          <TrendChart
+            viewType="lineChart"
+            height={height ?? 240}
             data={data}
-            colors={colors}
-            params={params}
             onClick={onChartClick}
           />
         );

@@ -1,16 +1,12 @@
+import { Button } from '@/ui/actions/button';
+import { DrawerFooter } from '@/ui/overlays/EntityDrawer';
+import { Trash2 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
-import { SLACK, TEAMS, WEBHOOK } from 'App/constants/schedule';
 import { useStore } from 'App/mstore';
-import { SlideModal, confirm } from 'UI';
-
-import AlertForm from '../AlertForm';
-
-interface Select {
-  label: string;
-  value: string | number;
-}
+import AlertFields from 'Components/Dashboard/components/Alerts/AlertFields';
 
 interface Props {
   showModal?: boolean;
@@ -18,76 +14,62 @@ interface Props {
   onClose?: () => void;
 }
 
-function AlertFormModal(props: Props) {
-  const { alertsStore, settingsStore } = useStore();
-  const { metricId = null, showModal = false } = props;
-  const [showForm, setShowForm] = useState(false);
-  const { webhooks } = settingsStore;
+/** Alert on the card being viewed: its series are the metrics on offer. */
+function AlertFormModal({ onClose }: Props) {
+  const { t } = useTranslation();
+  const { alertsStore, settingsStore, metricStore } = useStore();
+  const { instance, loading, triggerOptions: all } = alertsStore;
+
   useEffect(() => {
-    settingsStore.fetchWebhooks();
+    void settingsStore.fetchWebhooks();
+    void alertsStore.fetchTriggerOptions();
   }, []);
 
-  const slackChannels: Select[] = [];
-  const hooks: Select[] = [];
-  const msTeamsChannels: Select[] = [];
+  const series = metricStore.instance.series;
+  const triggerOptions =
+    series.length > 0
+      ? all
+          .filter((o: any) => series.some((s: any) => s.seriesId === o.value))
+          .map((o: any) => ({
+            ...o,
+            label: o.label.split('.').slice(1).join('.'),
+          }))
+      : all;
 
-  webhooks.forEach((hook) => {
-    const option = { value: hook.webhookId, label: hook.name };
-    if (hook.type === SLACK) {
-      slackChannels.push(option);
-    }
-    if (hook.type === WEBHOOK) {
-      hooks.push(option);
-    }
-    if (hook.type === TEAMS) {
-      msTeamsChannels.push(option);
-    }
-  });
-
-  const saveAlert = (instance) => {
-    const wasUpdating = instance.exists();
-    alertsStore.save(instance).then(() => {
-      if (!wasUpdating) {
-        toggleForm(null, false);
-      }
-      if (props.onClose) {
-        props.onClose();
-      }
-    });
-  };
-
-  const onDelete = async (instance) => {
-    if (
-      await confirm({
-        header: 'Confirm',
-        confirmButton: 'Yes, delete',
-        confirmation: 'Are you sure you want to permanently delete this alert?',
-      })
-    ) {
-      alertsStore.remove(instance.alertId).then(() => {
-        toggleForm(null, false);
-      });
-    }
-  };
-
-  const toggleForm = (instance, state) => {
-    if (instance) {
-      alertsStore.init(instance);
-    }
-    return setShowForm(state || !showForm);
-  };
+  const save = () => alertsStore.save(instance).then(() => onClose?.());
+  const remove = () =>
+    alertsStore.remove(instance.alertId).then(() => onClose?.());
 
   return (
-    <AlertForm
-      metricId={metricId}
-      edit={alertsStore.edit}
-      slackChannels={slackChannels}
-      msTeamsChannels={msTeamsChannels}
-      webhooks={hooks}
-      onSubmit={saveAlert}
-      onClose={props.onClose}
-      onDelete={onDelete}
-    />
+    <div className="flex h-full flex-col">
+      <div className="m-alertf__drawer flex-1 overflow-y-auto">
+        <AlertFields triggerOptions={triggerOptions} withName />
+      </div>
+      <DrawerFooter
+        left={
+          instance.exists() ? (
+            <Button variant="danger-outline" onClick={() => void remove()}>
+              <Trash2 size={13} />
+              {t('Delete')}
+            </Button>
+          ) : null
+        }
+        right={
+          <>
+            <Button variant="subtle" onClick={onClose}>
+              {t('Cancel')}
+            </Button>
+            <Button
+              variant="primary"
+              disabled={loading || !instance.validate()}
+              onClick={() => void save()}
+            >
+              {instance.exists() ? t('Update') : t('Create')}
+            </Button>
+          </>
+        }
+      />
+    </div>
   );
 }
 

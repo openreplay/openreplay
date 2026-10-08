@@ -1,3 +1,4 @@
+import { useChartTheme } from '@/ui/data/chart';
 import { LineChart } from 'echarts/charts';
 import { MarkLineComponent } from 'echarts/components';
 import React from 'react';
@@ -51,7 +52,11 @@ const CURSOR_SERIES_ID = '__band0';
 const AREA_FILL_OPACITY = 0.6;
 
 /* echarts stamps sans-serif on its own text; the old SVG inherited the app's. */
-const FONT_FAMILY = 'Roboto, sans-serif';
+const FONT_FAMILY = 'IBM Plex Sans, sans-serif';
+const token = (name: string, fallback: string) =>
+  getComputedStyle(document.documentElement)
+    .getPropertyValue(`--m-${name}`)
+    .trim() || fallback;
 
 /* Pointer sync. echarts.connect() forwards the source chart's seriesIndex, so a
    strip whose series is null at that index — FPS while the tab was hidden,
@@ -199,6 +204,8 @@ function PerformanceAreaChart(props: Props) {
     };
   }, [groupId]);
 
+  // the option reads --m-* tokens; a theme switch has to rebuild it
+  const theme = useChartTheme();
   const hasXLabels = Boolean(xFormatter);
   const hasYLabel = Boolean(yFormatter);
   const hasTooltip = Boolean(tooltipFormatter);
@@ -286,7 +293,7 @@ function PerformanceAreaChart(props: Props) {
           axisLine: {
             show: true,
             onZero: false,
-            lineStyle: { color: '#666', width: 1 },
+            lineStyle: { color: token('border-subtle', '#e8eced'), width: 1 },
           },
           splitLine: { show: false },
           axisTick: { show: false, customValues: ticks },
@@ -294,9 +301,9 @@ function PerformanceAreaChart(props: Props) {
             ? {
                 inside: true,
                 margin: 4,
-                fontSize: 12,
+                fontSize: 10,
                 fontFamily: FONT_FAMILY,
-                color: '#333',
+                color: token('content-disabled', '#9fa6a8'),
                 customValues: ticks,
                 formatter: (v: number) => latest.current.xFormatter?.(v) ?? '',
               }
@@ -322,7 +329,11 @@ function PerformanceAreaChart(props: Props) {
               confine: true,
               axisPointer: {
                 type: 'line',
-                lineStyle: { color: '#ccc', width: 1, type: 'solid' },
+                lineStyle: {
+                  color: token('border-strong', '#ccc'),
+                  width: 1,
+                  type: 'solid',
+                },
               },
               // The formatter returns its own styled wrapper; echarts would
               // otherwise paint a second box around it.
@@ -347,9 +358,10 @@ function PerformanceAreaChart(props: Props) {
             silent: true,
             style: {
               text: label,
-              fontSize: 14,
+              fontSize: 10,
+              fontWeight: 500,
               fontFamily: FONT_FAMILY,
-              fill: 'var(--color-gray-darkest)',
+              fill: token('content-muted', '#5c6568'),
             },
           },
           ...(yText && axisMax != null
@@ -361,9 +373,9 @@ function PerformanceAreaChart(props: Props) {
                   silent: true,
                   style: {
                     text: yText(axisMax),
-                    fontSize: 14,
+                    fontSize: 10,
                     fontFamily: FONT_FAMILY,
-                    fill: '#666',
+                    fill: token('content-disabled', '#9fa6a8'),
                   },
                 },
               ]
@@ -389,6 +401,7 @@ function PerformanceAreaChart(props: Props) {
     xFormatter,
     yFormatter,
     hasTooltip,
+    theme,
   ]);
 
   // Moves every frame during playback — patch just that series.

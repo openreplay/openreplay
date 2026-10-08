@@ -1,7 +1,10 @@
-import { DownOutlined, UndoOutlined } from '@ant-design/icons';
+import { MenuButton } from '@/ui/actions/menu-button';
+import { Chip } from '@/ui/data/Chip';
+import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
+import { ListFooter } from '@/ui/layout/ListFooter';
+import { PagePanel } from '@/ui/layout/PageCard';
+import { toast } from '@/ui/overlays/toast';
 import { FilterKey } from 'Types/filter/filterType';
-import { Button, Dropdown, Tag, Tooltip } from 'antd';
-import cn from 'classnames';
 import { DateTime } from 'luxon';
 import { observer } from 'mobx-react-lite';
 import React, {
@@ -12,17 +15,18 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'react-toastify';
 
 import { FUNNEL, HEATMAP, TABLE, USER_PATH } from 'App/constants/card';
 import useIsMounted from 'App/hooks/useIsMounted';
 import { useStore } from 'App/mstore';
 import Session from 'App/types/session/session';
-import { debounce, numberWithCommas } from 'App/utils';
-import { Loader, NoContent, Pagination } from 'UI';
+import { debounce } from 'App/utils';
 
-import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
-import SessionItem from 'Shared/SessionItem';
+import {
+  type SessionField,
+  SessionsTable,
+} from 'Shared/SessionsTable/SessionsTable';
+import { useOpenSession } from 'Shared/SessionsTable/useOpenSession';
 
 import { checkIsSingleSeries } from '../WidgetForm/WidgetFormNew';
 
@@ -55,17 +59,12 @@ const getListSessionsBySeries = (
   return result;
 };
 
-function WidgetSessions({ className = '' }) {
+function WidgetSessions() {
   const { t } = useTranslation();
-  const {
-    dashboardStore,
-    metricStore,
-    sessionStore,
-    customFieldStore,
-    filterStore,
-  } = useStore();
+  const { open, hover } = useOpenSession();
+  const { dashboardStore, metricStore, sessionStore, filterStore } = useStore();
   const isMounted = useIsMounted();
-  const listRef = useRef(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   const [activeSeries, setActiveSeries] = useState('all');
   const [seriesOptions, setSeriesOptions] = useState([
@@ -127,7 +126,6 @@ function WidgetSessions({ className = '' }) {
     // 3. Regular filter - use value directly
     return firstFilter?.value?.[0] || '';
   }, [filter.filters]);
-  const metaList = customFieldStore.list.map((i) => i.key);
 
   useEffect(() => {
     if (widget.series) {
@@ -350,140 +348,89 @@ function WidgetSessions({ className = '' }) {
     loadData();
   };
 
-  const seriesDropdownItems = seriesOptions.map((opt) => ({
-    key: opt.value,
-    label: <div onClick={() => setActiveSeries(opt.value)}>{opt.label}</div>,
-  }));
-
   return (
-    <div
-      className={cn(
-        className,
-        'bg-white p-3 pb-0 rounded-xl shadow-xs border mt-3',
-      )}
-    >
-      <div className="flex flex-col md:flex-row md:items-center justify-between">
-        <div>
-          <div className="flex flex-col md:flex-row items-baseline gap-2">
-            <h2 className="text-xl">
+    <div ref={listRef}>
+      <PagePanel
+        head={
+          <>
+            <span className="m-pa__head-title">
               {metricStore.clickMapSearch ? t('Clicks') : t('Sessions')}
-            </h2>
-            <div className="flex items-center gap-1">
-              <div className="color-gray-medium">
-                {metricStore.clickMapLabel &&
-                  `on \"${metricStore.clickMapLabel}\" `}
-                {t('between')}{' '}
-                <span className="font-medium color-gray-darkest">
-                  {startTime}
-                </span>{' '}
-                {t('and')}{' '}
-                <span className="font-medium color-gray-darkest">
-                  {endTime}
-                </span>
-              </div>
-              {hasFilters && (
-                <Tooltip title={t('Clear Drilldown')}>
-                  <Button type="text" size="small" onClick={clearFilters}>
-                    <UndoOutlined />
-                  </Button>
-                </Tooltip>
-              )}
-            </div>
-          </div>
-          {hasFilters && widget.metricType === 'table' && (
-            <Tag
-              closable
-              onClose={clearFilters}
-              className="truncate max-w-44 rounded-lg"
-            >
-              {filterText}
-            </Tag>
-          )}
-        </div>
-        <div className="flex items-center gap-4">
-          {isSingleSeries ? null : (
-            <div className="flex items-center md:ml-6">
-              <span className="mr-2 color-gray-medium">
-                {t('Filter by Series')}
+            </span>
+            <span className="m-cardp__between">
+              {metricStore.clickMapLabel
+                ? `${t('on')} "${metricStore.clickMapLabel}" · `
+                : ''}
+              {t('between {{start}} and {{end}}', {
+                start: startTime,
+                end: endTime,
+              })}
+            </span>
+            {hasFilters ? (
+              <span className="m-cardp__drill">
+                <Chip
+                  kind="tag"
+                  onRemove={clearFilters}
+                  removeLabel={t('Clear drilldown')}
+                >
+                  {(widget.metricType === 'table' && filterText) ||
+                    t('Drilldown')}
+                </Chip>
               </span>
-              <Dropdown
-                menu={{
-                  items: seriesDropdownItems,
-                  selectable: true,
-                  selectedKeys: [activeSeries],
-                }}
-                trigger={['click']}
-              >
-                <Button type="text" size="small">
-                  {seriesOptions.find((o) => o.value === activeSeries)?.label ||
-                    t('Select Series')}
-                  <DownOutlined />
-                </Button>
-              </Dropdown>
-            </div>
-          )}
-        </div>
-      </div>
-      <div className="mt-3">
-        <Loader loading={loading}>
-          <NoContent
-            show={filteredSessions.sessions.length === 0}
-            title={
-              <div className="flex flex-col items-center">
-                <AnimatedSVG name={ICONS.NO_SESSIONS} size={60} />
-                <div className="mt-4 text-center">
-                  {t('No relevant sessions found for the selected time period')}
-                </div>
-              </div>
-            }
-          >
-            {filteredSessions.sessions.map((s) => (
-              <React.Fragment key={s.sessionId}>
-                <SessionItem
-                  noWrap
-                  disableUser
-                  session={s}
-                  metaList={metaList}
+            ) : null}
+            {isSingleSeries ? null : (
+              <div className="m-page__controls">
+                <MenuButton
+                  ariaLabel={t('Filter by series')}
+                  label={`${t('Filter by series')} · ${
+                    seriesOptions.find((o) => o.value === activeSeries)
+                      ?.label ?? t('All')
+                  }`}
+                  value={activeSeries}
+                  onChange={setActiveSeries}
+                  options={seriesOptions}
+                  align="end"
                 />
-                <div className="border-b" />
-              </React.Fragment>
-            ))}
-            <div
-              className="flex items-center justify-between p-5"
-              ref={listRef}
-            >
-              <div>
-                {t('Showing')}{' '}
-                <span className="font-medium">
-                  {(metricStore.sessionsPage - 1) *
-                    metricStore.sessionsPageSize +
-                    1}
-                </span>{' '}
-                {t('to')}{' '}
-                <span className="font-medium">
-                  {(metricStore.sessionsPage - 1) *
-                    metricStore.sessionsPageSize +
-                    filteredSessions.sessions.length}
-                </span>{' '}
-                {t('of')}{' '}
-                <span className="font-medium">
-                  {numberWithCommas(filteredSessions.total)}
-                </span>{' '}
-                {t('sessions.')}
               </div>
-              <Pagination
-                page={metricStore.sessionsPage}
-                total={filteredSessions.total}
-                onPageChange={(p) => changePage(p)}
-                limit={metricStore.sessionsPageSize}
-                debounceRequest={500}
-              />
-            </div>
-          </NoContent>
-        </Loader>
-      </div>
+            )}
+          </>
+        }
+      >
+        {loading && filteredSessions.sessions.length === 0 ? (
+          <SkeletonRows rows={4} columns={[24, 16, 16, 28, 16]} />
+        ) : filteredSessions.sessions.length === 0 ? (
+          <p className="m-cardp__none">
+            {t('No relevant sessions found for the selected time period.')}
+          </p>
+        ) : (
+          <>
+            <SessionsTable
+              rows={filteredSessions.sessions}
+              fields={CARD_FIELDS}
+              onOpen={open}
+              onHover={hover}
+              liveBadge={false}
+            />
+            <ListFooter
+              page={metricStore.sessionsPage}
+              pageSize={metricStore.sessionsPageSize}
+              total={filteredSessions.total}
+              noun={[t('session'), t('sessions')]}
+              onPage={changePage}
+            />
+          </>
+        )}
+      </PagePanel>
     </div>
   );
 }
+
+const CARD_FIELDS: readonly SessionField[] = [
+  'started',
+  'duration',
+  'events',
+  'pages',
+  'location',
+  'device',
+];
 
 export default observer(WidgetSessions);

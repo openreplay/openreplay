@@ -1,9 +1,36 @@
 import FilterItem from '@/mstore/types/filterItem';
 import FilterSeries from '@/mstore/types/filterSeries';
+import { IconButton } from '@/ui/actions/IconButton';
+import { Button } from '@/ui/actions/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItems,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/ui/actions/dropdown-menu';
+import { Loader } from '@/ui/feedback/Loader';
+import { CheckRow } from '@/ui/inputs/CheckRow';
+import { Segmented } from '@/ui/inputs/toggle-group';
+import { PageCard, PagePanel } from '@/ui/layout/PageCard';
+import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
+import { RenameDialog } from '@/ui/overlays/RenameDialog';
+import { Modal } from '@/ui/overlays/modal';
+import { useToast } from '@/ui/overlays/toast';
+import { Tooltip } from '@/ui/overlays/tooltip';
 import { FilterKey } from 'Types/filter/filterType';
-import { Segmented, Space, Tooltip } from 'antd';
-import cn from 'classnames';
-import { LayoutPanelLeft, LayoutPanelTop } from 'lucide-react';
+import copy from 'copy-to-clipboard';
+import {
+  Bell,
+  Grid2x2Plus,
+  Link2,
+  MoreHorizontal,
+  PanelLeft,
+  PanelRight,
+  PanelTop,
+  Pencil,
+  Trash2,
+} from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -18,23 +45,22 @@ import {
   USER_PATH,
   WEBVITALS,
 } from 'App/constants/card';
-import { PANEL_SIZES } from 'App/constants/panelSizes';
 import { useStore } from 'App/mstore';
 import Widget from 'App/mstore/types/widget';
 import { dashboardMetricDetails, metricDetails, withSiteId } from 'App/routes';
 import { Prompt, useHistory, useLocation } from 'App/routing';
 import { mobileScreen } from 'App/utils/isMobile';
-import {
-  CARD_LIST,
-  CardType,
-} from 'Components/Dashboard/components/DashboardList/NewDashModal/ExampleCards';
-import WidgetFormNew from 'Components/Dashboard/components/WidgetForm/WidgetFormNew';
+import AlertFormModal from 'Components/Alerts/AlertFormModal/AlertFormModal';
+import { CARD_LIST, type CardType } from 'Components/Dashboard/cardPresets';
+import BreakdownFilter from 'Components/Dashboard/components/BreakdownFilter/BreakdownFilter';
+import WidgetFormNew, {
+  supportsBreakdown,
+} from 'Components/Dashboard/components/WidgetForm/WidgetFormNew';
 import { renderClickmapThumbnail } from 'Components/Dashboard/components/WidgetForm/renderMap';
-import WidgetViewHeader from 'Components/Dashboard/components/WidgetView/WidgetViewHeader';
-import { Loader } from 'UI';
+import { useModal } from 'Components/ModalContext';
 
-import Breadcrumb from 'Shared/Breadcrumb';
-
+import { cardIcon, cardTypeLabel } from '../../cardIcons';
+import '../../product-analytics.css';
 import CardUserList from '../CardUserList/CardUserList';
 import WidgetPreview from '../WidgetPreview';
 import WidgetSessions from '../WidgetSessions';
@@ -45,11 +71,22 @@ interface Props {
   siteId: any;
 }
 
+type Layout = 'left' | 'top' | 'right';
 const LAYOUT_KEY = '$__metric_form__layout__$';
+const LEGACY_LAYOUT: Record<Layout, string> = {
+  left: 'flex-row',
+  top: 'flex-col',
+  right: 'flex-row-reverse',
+};
 
-function getDefaultState() {
-  if (mobileScreen) return 'flex-col';
-  return localStorage.getItem(LAYOUT_KEY) || 'flex-row';
+function readLayout(): Layout {
+  if (mobileScreen) return 'top';
+  try {
+    const v = localStorage.getItem(LAYOUT_KEY);
+    if (v === 'top' || v === 'flex-col') return 'top';
+    if (v === 'right' || v === 'flex-row-reverse') return 'right';
+  } catch {}
+  return 'left';
 }
 
 function WidgetView({
@@ -58,9 +95,19 @@ function WidgetView({
   },
 }: Props) {
   const { t } = useTranslation();
-  const [layout, setLayout] = useState(getDefaultState);
-  const { metricStore, dashboardStore, settingsStore, filterStore } =
-    useStore();
+  const [layout, setLayoutState] = useState<Layout>(readLayout);
+  const [renaming, setRenaming] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const toast = useToast();
+  const { openModal, closeModal } = useModal();
+  const {
+    metricStore,
+    dashboardStore,
+    settingsStore,
+    filterStore,
+    alertsStore,
+  } = useStore();
   const widget = metricStore.instance;
   const loading = metricStore.isLoading;
   const [expanded] = useState(!metricId || metricId === 'create');
@@ -253,10 +300,55 @@ function WidgetView({
     }
   };
 
-  const updateLayout = (val: string) => {
-    localStorage.setItem(LAYOUT_KEY, val);
-    setLayout(val);
+  const setLayout = (l: Layout) => {
+    try {
+      localStorage.setItem(LAYOUT_KEY, l);
+    } catch {}
+    setLayoutState(l);
   };
+
+  const copyLink = () => {
+    copy(window.location.href);
+    toast.success(t('Link copied to clipboard'));
+  };
+
+  const remove = () => {
+    setDeleting(false);
+    metricStore
+      .delete(widget)
+      .then(() => history.goBack())
+      .catch(() => toast.error(t('Failed to remove card')));
+  };
+
+  const openAlert = () => {
+    const seriesId = widget.series[0]?.seriesId || '';
+    alertsStore.init({ query: { left: seriesId } } as any);
+    openModal(<AlertFormModal onClose={closeModal} />, {
+      placement: 'right',
+      width: 620,
+    });
+  };
+
+  const save = () => {
+    if (widget.metricType === USER_PATH) widget.hideExcess = true;
+    void onSave();
+  };
+
+  const KindIcon = cardIcon(widget.metricType, widget.metricOf);
+  const kindLabel = cardTypeLabel(t, widget.metricType, widget.metricOf);
+  const exists = widget.exists();
+  const showsSessions =
+    widget.metricOf !== FilterKey.SESSIONS &&
+    widget.metricOf !== FilterKey.ERRORS &&
+    [
+      TABLE,
+      TIMESERIES,
+      HEATMAP,
+      INSIGHTS,
+      FUNNEL,
+      USER_PATH,
+      WEBVITALS,
+    ].includes(widget.metricType);
 
   return (
     <Loader loading={loading || !cardReady}>
@@ -269,86 +361,253 @@ function WidgetView({
             : 'You have unsaved changes. Are you sure you want to leave?'
         }
       />
-      <div style={{ maxWidth: PANEL_SIZES.maxWidth, margin: 'auto' }}>
-        <Breadcrumb
-          items={[
-            {
-              label: dashboardName || 'Cards',
-              to: queryDashboardId
+      <PageCard
+        back={{
+          label: dashboardName || t('Cards'),
+          onClick: () =>
+            history.push(
+              queryDashboardId
                 ? withSiteId(`/dashboard/${queryDashboardId}`, siteId)
                 : withSiteId('/metrics', siteId),
-            },
-            { label: widget.name },
-          ]}
-        />
-        <Space direction="vertical" className="w-full!" size={14}>
-          <WidgetViewHeader
-            onSave={onSave}
-            undoChanges={undoChanges}
-            layoutControl={
-              mobileScreen ? null : (
-                <Segmented
-                  size="small"
-                  value={layout}
-                  onChange={updateLayout}
-                  options={[
+            ),
+        }}
+        title={widget.name}
+        meta={
+          <Tooltip title={kindLabel}>
+            <span className="m-cardp__kind" aria-label={kindLabel}>
+              <KindIcon size={13} aria-hidden="true" />
+            </span>
+          </Tooltip>
+        }
+        actions={
+          <>
+            <Button
+              variant={!exists || hasChanged ? 'primary' : 'subtle'}
+              disabled={metricStore.isSaving || (exists && !hasChanged)}
+              onClick={save}
+            >
+              {exists ? t('Update') : t('Create')}
+            </Button>
+            <Tooltip
+              title={
+                exists
+                  ? t('Copy link to clipboard')
+                  : t('Save the card to get a link')
+              }
+            >
+              <span>
+                <IconButton
+                  icon={<Link2 size={14} />}
+                  label={t('Copy link')}
+                  variant="outline"
+                  disabled={!exists}
+                  onClick={copyLink}
+                />
+              </span>
+            </Tooltip>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <span>
+                  <IconButton
+                    icon={<MoreHorizontal size={15} />}
+                    label={t('More')}
+                    variant="ghost"
+                  />
+                </span>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {mobileScreen ? null : (
+                  <>
+                    <div
+                      className="m-cardp__arrange"
+                      role="group"
+                      aria-label={t('Definition')}
+                    >
+                      <span className="m-cardp__arrange-title">
+                        {t('Definition')}
+                      </span>
+                      <Segmented<Layout>
+                        value={layout}
+                        onChange={setLayout}
+                        ariaLabel={t('Definition')}
+                        options={[
+                          {
+                            value: 'left',
+                            icon: <PanelLeft size={14} />,
+                            title: t('Definition on the left'),
+                          },
+                          {
+                            value: 'top',
+                            icon: <PanelTop size={14} />,
+                            title: t('Definition on top'),
+                          },
+                          {
+                            value: 'right',
+                            icon: <PanelRight size={14} />,
+                            title: t('Definition on the right'),
+                          },
+                        ]}
+                      />
+                    </div>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                <DropdownMenuItems
+                  items={[
                     {
-                      value: 'flex-row',
-                      icon: (
-                        <Tooltip title={t('Filters on Left')}>
-                          <LayoutPanelLeft size={16} />
-                        </Tooltip>
-                      ),
+                      key: 'rename',
+                      icon: <Pencil size={13} />,
+                      label: t('Rename'),
+                      onClick: () => setRenaming(true),
                     },
                     {
-                      value: 'flex-col',
-                      icon: (
-                        <Tooltip title={t('Filters on Top')}>
-                          <LayoutPanelTop size={16} />
-                        </Tooltip>
-                      ),
+                      key: 'dashboard',
+                      icon: <Grid2x2Plus size={13} />,
+                      label: t('Add to dashboard'),
+                      disabled: !exists,
+                      onClick: () => setAdding(true),
                     },
                     {
-                      value: 'flex-row-reverse',
-                      icon: (
-                        <Tooltip title={t('Filters on Right')}>
-                          <div className="rotate-180">
-                            <LayoutPanelLeft size={16} />
-                          </div>
-                        </Tooltip>
-                      ),
+                      key: 'alert',
+                      icon: <Bell size={13} />,
+                      label: t('Set alerts'),
+                      disabled: !exists || widget.metricType !== TIMESERIES,
+                      onClick: openAlert,
+                    },
+                    { key: 'd1', type: 'divider' },
+                    {
+                      key: 'delete',
+                      icon: <Trash2 size={13} />,
+                      label: t('Delete'),
+                      danger: true,
+                      disabled: !exists,
+                      onClick: () => setDeleting(true),
                     },
                   ]}
                 />
-              )
-            }
-          />
-          <div className={cn('flex gap-4', layout)}>
-            <div className={layout.startsWith('flex-row') ? 'w-1/3' : 'w-full'}>
-              <WidgetFormNew layout={layout} />
-            </div>
-            <div className={layout.startsWith('flex-row') ? 'w-2/3' : 'w-full'}>
-              <WidgetPreview name={widget.name} isEditing={expanded} />
-              {widget.metricOf !== FilterKey.SESSIONS &&
-                widget.metricOf !== FilterKey.ERRORS &&
-                ([
-                  TABLE,
-                  TIMESERIES,
-                  HEATMAP,
-                  INSIGHTS,
-                  FUNNEL,
-                  USER_PATH,
-                  WEBVITALS,
-                ].includes(widget.metricType) ? (
-                  <WidgetSessions />
-                ) : null)}
-              {widget.metricType === RETENTION && <CardUserList />}
-            </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
+        }
+        split
+      >
+        <div className={`m-cardp m-cardp--${layout}`}>
+          <div className="m-cardp__side">
+            <PagePanel
+              spills
+              head={<span className="m-pa__head-title">{t('Definition')}</span>}
+            >
+              <WidgetFormNew layout={LEGACY_LAYOUT[layout]} />
+            </PagePanel>
+            {supportsBreakdown(widget) ? (
+              <BreakdownFilter
+                metric={widget}
+                observeChanges={() => widget.updateKey('hasChanged', true)}
+              />
+            ) : null}
           </div>
-        </Space>
-      </div>
+          <PagePanel
+            head={<span className="m-pa__head-title">{t('Preview')}</span>}
+          >
+            <WidgetPreview name={widget.name} isEditing={expanded} />
+          </PagePanel>
+        </div>
+        {showsSessions ? <WidgetSessions /> : null}
+        {widget.metricType === RETENTION ? <CardUserList /> : null}
+      </PageCard>
+
+      <RenameDialog
+        open={renaming}
+        title={t('Rename card')}
+        value={widget.name}
+        onCancel={() => setRenaming(false)}
+        onOk={(name) => {
+          metricStore.merge({ name });
+          setRenaming(false);
+        }}
+      />
+      <AddToDashboard
+        open={adding}
+        onClose={() => setAdding(false)}
+        metricId={widget.metricId}
+      />
+      <ConfirmDialog
+        open={deleting}
+        title={t('Remove this card?')}
+        okText={t('Remove')}
+        danger
+        onCancel={() => setDeleting(false)}
+        onOk={remove}
+      >
+        {t(
+          '{{name}} is removed from the library and from every dashboard it is on. This action is permanent and cannot be undone.',
+          { name: widget.name },
+        )}
+      </ConfirmDialog>
     </Loader>
   );
 }
+
+const AddToDashboard = observer(
+  ({
+    open,
+    onClose,
+    metricId,
+  }: {
+    open: boolean;
+    onClose: () => void;
+    metricId: number;
+  }) => {
+    const { t } = useTranslation();
+    const { dashboardStore } = useStore();
+    const [picked, setPicked] = useState<string[]>([]);
+    const close = () => {
+      setPicked([]);
+      onClose();
+    };
+    const add = async () => {
+      for (const id of picked) {
+        const d = dashboardStore.getDashboard(id);
+        if (d) await dashboardStore.addWidgetToDashboard(d, [metricId]);
+      }
+      close();
+    };
+    return (
+      <Modal
+        width={440}
+        title={t('Add to dashboards')}
+        open={open}
+        onCancel={close}
+        okText={
+          picked.length > 1
+            ? t('Add to {{n}} dashboards', { n: picked.length })
+            : t('Add')
+        }
+        okDisabled={picked.length === 0}
+        onOk={() => void add()}
+      >
+        <div className="m-cardp__dash-list">
+          {dashboardStore.dashboards.map((d) => {
+            const id = d.dashboardId!;
+            return (
+              <CheckRow
+                key={id}
+                on={picked.includes(id)}
+                onToggle={() =>
+                  setPicked((p) =>
+                    p.includes(id) ? p.filter((x) => x !== id) : [...p, id],
+                  )
+                }
+                meta={d.isPublic ? t('Team') : t('Private')}
+              >
+                {d.name}
+              </CheckRow>
+            );
+          })}
+        </div>
+      </Modal>
+    );
+  },
+);
 
 export default observer(WidgetView);
