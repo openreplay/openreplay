@@ -6,9 +6,13 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
+	"strings"
 	"sync/atomic"
 	"syscall"
 	"time"
+
+	"golang.org/x/net/http/httpproxy"
 )
 
 type blockedAddrError struct {
@@ -29,6 +33,7 @@ var blockedNets = func() []*net.IPNet {
 		"198.51.100.0/24", // documentation
 		"203.0.113.0/24",  // documentation
 		"240.0.0.0/4",     // reserved + broadcast
+		"::/96",           // IPv4-compatible (deprecated)
 		"64:ff9b::/96",    // NAT64
 		"64:ff9b:1::/48",  // local-use NAT64
 		"2001::/32",       // Teredo (embeds IPv4)
@@ -63,14 +68,46 @@ func isBlockedIP(ip net.IP) bool {
 
 type dialFunc func(ctx context.Context, network, addr string) (net.Conn, error)
 
-func guardedDialer(allowPrivate bool) dialFunc {
+func proxyAddrs(cfg *httpproxy.Config) map[string]struct{} {
+	addrs := map[string]struct{}{}
+	for _, raw := range []string{cfg.HTTPProxy, cfg.HTTPSProxy} {
+		if raw == "" {
+			continue
+		}
+		u, err := url.Parse(raw)
+		if err != nil || u.Scheme == "" || u.Host == "" {
+			if u, err = url.Parse("http://" + raw); err != nil {
+				continue
+			}
+		}
+		port := u.Port()
+		if port == "" {
+			switch u.Scheme {
+			case "https":
+				port = "443"
+			case "socks5":
+				port = "1080"
+			default:
+				port = "80"
+			}
+		}
+		addrs[net.JoinHostPort(strings.ToLower(u.Hostname()), port)] = struct{}{}
+	}
+	return addrs
+}
+
+func guardedDialer(allowPrivate bool, exempt map[string]struct{}) dialFunc {
+	plain := &net.Dialer{
+		Timeout:   5 * time.Second,
+		KeepAlive: 30 * time.Second,
+	}
 	if allowPrivate {
-		return (&net.Dialer{
-			Timeout:   5 * time.Second,
-			KeepAlive: 30 * time.Second,
-		}).DialContext
+		return plain.DialContext
 	}
 	return func(ctx context.Context, network, addr string) (net.Conn, error) {
+		if _, ok := exempt[strings.ToLower(addr)]; ok {
+			return plain.DialContext(ctx, network, addr)
+		}
 		var attempted atomic.Int32
 		dialer := &net.Dialer{
 			Timeout:   5 * time.Second,
@@ -103,7 +140,7 @@ func (c *cacher) checkRedirect(req *http.Request, via []*http.Request) error {
 	if len(via) >= 10 {
 		return errors.New("stopped after 10 redirects")
 	}
-	if !c.origins.allows(req.URL) {
+	if (req.URL.Scheme != "http" && req.URL.Scheme != "https") || !c.origins.allows(req.URL) {
 		return &originNotAllowedError{origin: originKey(req.URL)}
 	}
 	return c.checkProxiedDestination(req)

@@ -114,6 +114,7 @@ func NewCacher(log logger.Logger, cfg *config.Config, store objectstorage.Object
 	if err != nil {
 		return nil, errors.Wrap(err, "ASSETS_ALLOWED_GLOBAL_ORIGINS")
 	}
+	proxyCfg := httpproxy.FromEnvironment()
 
 	c := &cacher{
 		log:        log,
@@ -124,7 +125,7 @@ func NewCacher(log logger.Logger, cfg *config.Config, store objectstorage.Object
 			Transport: &http.Transport{
 				Proxy:               http.ProxyFromEnvironment,
 				TLSClientConfig:     tlsConfig,
-				DialContext:         guardedDialer(cfg.AssetsAllowPrivate),
+				DialContext:         guardedDialer(cfg.AssetsAllowPrivate, proxyAddrs(proxyCfg)),
 				TLSHandshakeTimeout: 5 * time.Second,
 				MaxConnsPerHost:     8,
 				MaxIdleConns:        100,
@@ -148,7 +149,7 @@ func NewCacher(log logger.Logger, cfg *config.Config, store objectstorage.Object
 		allowPrivate:   cfg.AssetsAllowPrivate,
 		httpTimeout:    time.Duration(cfg.AssetsHTTPTimeout) * time.Second,
 		origins:        origins,
-		proxy:          httpproxy.FromEnvironment().ProxyFunc(),
+		proxy:          proxyCfg.ProxyFunc(),
 	}
 	c.httpClient.CheckRedirect = c.checkRedirect
 	c.workers = NewPool(cfg.AssetsWorkerCount, cfg.AssetsQueueSize, c.CacheFile)

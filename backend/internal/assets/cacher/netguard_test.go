@@ -49,7 +49,7 @@ func TestGuardedDialerBlocksLoopback(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	client := &http.Client{Transport: &http.Transport{DialContext: guardedDialer(false)}}
+	client := &http.Client{Transport: &http.Transport{DialContext: guardedDialer(false, nil)}}
 	_, err := client.Get(srv.URL)
 	assertBlocked(t, err)
 
@@ -59,7 +59,7 @@ func TestGuardedDialerBlocksLoopback(t *testing.T) {
 	_, err = client.Get("http://localhost:" + port + "/")
 	assertBlocked(t, err)
 
-	client = &http.Client{Transport: &http.Transport{DialContext: guardedDialer(true)}}
+	client = &http.Client{Transport: &http.Transport{DialContext: guardedDialer(true, nil)}}
 	res, err := client.Get(srv.URL)
 	if err != nil {
 		t.Fatalf("allowPrivate dial failed: %v", err)
@@ -79,7 +79,7 @@ func TestGuardedDialerBlocksRedirectTarget(t *testing.T) {
 			first = false
 			return (&net.Dialer{}).DialContext(ctx, network, addr)
 		}
-		return guardedDialer(false)(ctx, network, addr)
+		return guardedDialer(false, nil)(ctx, network, addr)
 	}}
 	edge := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, internal.URL, http.StatusFound)
@@ -87,6 +87,42 @@ func TestGuardedDialerBlocksRedirectTarget(t *testing.T) {
 	defer edge.Close()
 
 	_, err := (&http.Client{Transport: transport}).Get(edge.URL)
+	assertBlocked(t, err)
+}
+
+func TestProxyAddrs(t *testing.T) {
+	got := proxyAddrs(&httpproxy.Config{
+		HTTPProxy:  "http://Proxy.Corp:3128",
+		HTTPSProxy: "10.0.0.5", // no scheme, no port
+	})
+	for _, want := range []string{"proxy.corp:3128", "10.0.0.5:80"} {
+		if _, ok := got[want]; !ok {
+			t.Errorf("missing %s in %v", want, got)
+		}
+	}
+	if len(proxyAddrs(&httpproxy.Config{})) != 0 {
+		t.Fatal("empty config must produce no exemptions")
+	}
+}
+
+func TestGuardedDialerExemptsProxyAddress(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("via proxy"))
+	}))
+	defer srv.Close()
+	u, _ := url.Parse(srv.URL)
+
+	exempt := proxyAddrs(&httpproxy.Config{HTTPProxy: "http://" + u.Host})
+	client := &http.Client{Transport: &http.Transport{DialContext: guardedDialer(false, exempt)}}
+	res, err := client.Get(srv.URL)
+	if err != nil {
+		t.Fatalf("exempted proxy address should be dialed: %v", err)
+	}
+	res.Body.Close()
+
+	other := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	defer other.Close()
+	_, err = client.Get(other.URL)
 	assertBlocked(t, err)
 }
 
