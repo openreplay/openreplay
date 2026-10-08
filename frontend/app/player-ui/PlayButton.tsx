@@ -1,7 +1,8 @@
-import { PlayPauseSessionShortcut } from 'Components/Session_/Player/Controls/components/KeyboardHelp';
+import { Tooltip } from '@/ui/overlays/tooltip';
+import { Pause, Play, RotateCw } from 'lucide-react';
 import React from 'react';
-import { Icon } from 'UI';
-import { Popover } from 'antd';
+
+import { PlayPauseSessionShortcut } from 'Components/Session_/Player/Controls/components/KeyboardHelp';
 
 export enum PlayingState {
   Playing,
@@ -15,39 +16,42 @@ interface IProps {
   state: PlayingState;
 }
 
+// lucide, not <Icon>: the legacy set loads all 499 glyphs (~200KB gz) for one
 const Values = {
-  [PlayingState.Playing]: {
-    icon: 'pause-fill' as const,
-    label: 'Pause',
-  },
+  [PlayingState.Playing]: { Glyph: Pause, filled: true, label: 'Pause' },
   [PlayingState.Completed]: {
-    icon: 'arrow-clockwise' as const,
+    Glyph: RotateCw,
+    filled: false,
     label: 'Replay this session',
   },
-  [PlayingState.Paused]: {
-    icon: 'play-fill-new' as const,
-    label: 'Play',
-  },
+  [PlayingState.Paused]: { Glyph: Play, filled: true, label: 'Play' },
 };
 
 export function PlayButton({ togglePlay, iconSize, state }: IProps) {
-  const { icon, label } = Values[state];
+  const { Glyph, filled, label } = Values[state];
 
   return (
-    <Popover
-      content={
-        <div className="flex gap-2 items-center">
+    <Tooltip
+      title={
+        <span className="flex gap-2 items-center">
           <PlayPauseSessionShortcut />
-          <div>{label}</div>
-        </div>
+          {label}
+        </span>
       }
     >
-      <div
+      <button
+        type="button"
+        aria-label={label}
         onClick={togglePlay}
-        className="hover-main color-main cursor-pointer rounded-full hover:bg-indigo-lightest"
+        className="m-hover inline-flex items-center justify-center rounded-full text-content-accent"
       >
-        <Icon name={icon} size={iconSize} color="inherit" />
-      </div>
-    </Popover>
+        <Glyph
+          size={iconSize}
+          fill={filled ? 'currentColor' : 'none'}
+          strokeWidth={filled ? 0 : 2}
+          aria-hidden="true"
+        />
+      </button>
+    </Tooltip>
   );
 }

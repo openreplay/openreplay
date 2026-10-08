@@ -1,196 +1,92 @@
-import { DownOutlined, CopyOutlined, StopOutlined } from '@ant-design/icons';
-import { Button, Dropdown, MenuProps, Segmented } from 'antd';
+import { IconButton } from '@/ui/actions/IconButton';
+import { InlineSelect } from '@/ui/inputs/select';
+import { Switch } from '@/ui/inputs/switch';
 import copy from 'copy-to-clipboard';
-import React, { useState } from 'react';
+import { Check, Copy } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
-import { useStore } from 'App/mstore';
-import {
-  formatExpirationTime,
-  HOUR_SECS,
-  DAY_SECS,
-  WEEK_SECS,
-} from 'App/utils/index';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-enum Intervals {
-  hour,
-  threeHours,
-  day,
-  week,
-}
+import { useStore } from 'App/mstore';
+import { DAY_SECS, HOUR_SECS, WEEK_SECS } from 'App/utils/index';
+
+const EXPIRY = {
+  hour: HOUR_SECS,
+  threeHours: 3 * HOUR_SECS,
+  day: DAY_SECS,
+  week: WEEK_SECS,
+} as const;
+type Expiry = keyof typeof EXPIRY;
 
 function AccessModal() {
   const { t } = useTranslation();
   const { spotStore } = useStore();
-  const [isCopied, setIsCopied] = useState(false);
-  const [isPublic, setIsPublic] = useState(!!spotStore.pubKey);
-  const [generated, setGenerated] = useState(!!spotStore.pubKey);
-  const [selectedInterval, setSelectedInterval] = useState<Intervals>(
-    Intervals.hour,
-  );
-  const [loadingKey, setLoadingKey] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [expiry, setExpiry] = useState<Expiry>('hour');
+  const [busy, setBusy] = useState(false);
+  const isPublic = !!spotStore.pubKey;
 
-  const expirationValues = {
-    [Intervals.hour]: HOUR_SECS,
-    [Intervals.threeHours]: 3 * HOUR_SECS,
-    [Intervals.day]: DAY_SECS,
-    [Intervals.week]: WEEK_SECS,
-  };
   const spotId = spotStore.currentSpot!.spotId!;
-  const spotLink = `${window.location.origin}/view-spot/${spotId}${
+  const link = `${window.location.origin}/view-spot/${spotId}${
     spotStore.pubKey ? `?pub_key=${spotStore.pubKey.value}` : ''
   }`;
 
-  const menuItems: MenuProps['items'] = [
-    {
-      key: Intervals.hour.toString(),
-      label: <div>{t('1 Hour')}</div>,
-    },
-    {
-      key: Intervals.threeHours.toString(),
-      label: <div>{t('3 Hours')}</div>,
-    },
-    {
-      key: Intervals.day.toString(),
-      label: <div>{t('1 Day')}</div>,
-    },
-    {
-      key: Intervals.week.toString(),
-      label: <div>{t('1 Week')}</div>,
-    },
-  ];
-
-  const onMenuClick: MenuProps['onClick'] = async ({ key }) => {
-    const val = expirationValues[Number(key) as Intervals];
-    setSelectedInterval(Number(key) as Intervals);
-    await spotStore.generateKey(spotId, val);
-  };
-
-  const changeAccess = async (toPublic: boolean) => {
-    if (isPublic && !toPublic && spotStore.pubKey) {
-      await spotStore.generateKey(spotId, 0);
-      setIsPublic(toPublic);
-    } else {
-      setIsPublic(toPublic);
+  const setPublic = async (on: boolean) => {
+    setBusy(true);
+    try {
+      await spotStore.generateKey(spotId, on ? EXPIRY[expiry] : 0);
+    } finally {
+      setBusy(false);
     }
   };
-
-  const revokeKey = async () => {
-    await spotStore.generateKey(spotId, 0);
-    setGenerated(false);
-    setIsPublic(false);
+  const changeExpiry = async (v: Expiry) => {
+    setExpiry(v);
+    await spotStore.generateKey(spotId, EXPIRY[v]);
   };
-
-  const generateInitial = async () => {
-    setLoadingKey(true);
-    const k = await spotStore.generateKey(
-      spotId,
-      expirationValues[Intervals.hour],
-    );
-    setGenerated(!!k);
-    setLoadingKey(false);
-  };
-
   const onCopy = () => {
-    setIsCopied(true);
-    copy(spotLink);
-    setTimeout(() => setIsCopied(false), 2000);
+    copy(link);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
   };
 
   return (
-    <div className="flex flex-col gap-4 align-start w-96 p-1">
-      <div>
-        <Segmented
-          options={[
-            {
-              value: 'internal',
-              label: 'Internal',
-            },
-            {
-              value: 'public',
-              label: 'Public',
-            },
-          ]}
-          value={isPublic ? 'public' : 'internal'}
-          onChange={(value) => changeAccess(value === 'public')}
+    <div className="m-rs__access">
+      <label className="m-rs__access-row">
+        <span>{t('Anyone with the link can view')}</span>
+        <Switch
+          checked={isPublic}
+          disabled={busy}
+          onCheckedChange={(on) => void setPublic(on)}
+        />
+      </label>
+      <div className="m-rs__access-link">
+        <span className="m-mono m-truncate">{link}</span>
+        <IconButton
+          icon={copied ? <Check size={12} /> : <Copy size={12} />}
+          label={isPublic ? t('Copy public link') : t('Copy link')}
+          variant="ghost"
+          onClick={onCopy}
         />
       </div>
-      {!isPublic ? (
-        <>
-          <div>
-            <div className="text-black/50">
-              {t('Link for internal team members')}
-            </div>
-            <div className="px-2 py-1 rounded-lg bg-indigo-lightest whitespace-nowrap text-ellipsis overflow-hidden">
-              {spotLink}
-            </div>
-          </div>
-          <div className="w-fit">
-            <Button
-              size="small"
-              onClick={onCopy}
-              type="default"
-              icon={<CopyOutlined />}
-            >
-              {isCopied ? t('Copied!') : t('Copy Link')}
-            </Button>
-          </div>
-        </>
-      ) : !generated ? (
-        <div className="w-fit p-1">
-          <Button
-            loading={spotStore.isLoading}
-            onClick={generateInitial}
-            type="primary"
-            size="small"
-            className="mt-1"
-          >
-            {t('Enable Public Sharing')}
-          </Button>
-        </div>
+      {isPublic ? (
+        <label className="m-rs__access-row">
+          <span>{t('Link expires in')}</span>
+          <InlineSelect
+            ariaLabel={t('Link expires in')}
+            value={expiry}
+            onChange={(v) => void changeExpiry(v)}
+            options={[
+              { value: 'hour', label: t('1 hour') },
+              { value: 'threeHours', label: t('3 hours') },
+              { value: 'day', label: t('1 day') },
+              { value: 'week', label: t('1 week') },
+            ]}
+          />
+        </label>
       ) : (
-        <div className="flex flex-col gap-4 px-1">
-          <div>
-            <div className="text-black/50">
-              {t('Anyone with the following link can access this Spot')}
-            </div>
-            <div className="px-2 py-1 rounded-lg bg-indigo-lightest whitespace-nowrap text-ellipsis overflow-hidden">
-              {spotLink}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <div>{t('Link expires in')}</div>
-            <Dropdown menu={{ items: menuItems, onClick: onMenuClick }}>
-              <div className="flex items-center cursor-pointer">
-                {loadingKey
-                  ? t('Loading')
-                  : formatExpirationTime(expirationValues[selectedInterval])}
-                <DownOutlined />
-              </div>
-            </Dropdown>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-fit">
-              <Button
-                type="default"
-                size="small"
-                onClick={onCopy}
-                icon={<CopyOutlined />}
-              >
-                {isCopied ? 'Copied!' : 'Copy Link'}
-              </Button>
-            </div>
-            <Button
-              type="text"
-              size="small"
-              icon={<StopOutlined />}
-              onClick={revokeKey}
-            >
-              {t('Disable Public Sharing')}
-            </Button>
-          </div>
-        </div>
+        <p className="m-rs__access-hint">
+          {t('Only members of this workspace can open the spot.')}
+        </p>
       )}
     </div>
   );

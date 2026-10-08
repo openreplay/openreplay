@@ -7,11 +7,11 @@
   justify-content: center;
   border-radius: 50%;
   opacity: 0;
-  transition: all .2s; /* Animation */
+  transition: all 0.2s; /* Animation */
 }
 
 .zoomIcon {
   opacity: 1;
   transform: scale(1.8);
-  transition: all .8s;
+  transition: all 0.8s;
 }

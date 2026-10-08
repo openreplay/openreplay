@@ -1,7 +1,7 @@
-import React from 'react';
-import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
-import VerticalLine from '../VerticalLine';
+import React from 'react';
+
+import { PlayerContext } from 'App/components/Session/playerContext';
 
 function VerticalPointerLine() {
   const { store } = React.useContext(PlayerContext);
@@ -17,10 +17,14 @@ export function VerticalPointerLineComp({
   time: number;
   endTime: number;
 }) {
-  const scale = 100 / endTime;
-  const left = time * scale;
-
-  return <VerticalLine left={left} className="border-teal" />;
+  const p = endTime ? Math.min(1, Math.max(0, time / endTime)) : 0;
+  return (
+    <i
+      className="m-dt__wf-head m-dt__xray-head"
+      style={{ '--p': p } as React.CSSProperties}
+      aria-hidden="true"
+    />
+  );
 }
 
 export default observer(VerticalPointerLine);

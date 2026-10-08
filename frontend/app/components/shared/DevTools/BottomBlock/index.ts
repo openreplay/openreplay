@@ -1,6 +1,6 @@
 import BottomBlock from './BottomBlock';
-import Header from './Header';
 import Content from './Content';
+import Header from './Header';
 
 BottomBlock.Header = Header;
 BottomBlock.Content = Content;

@@ -1,19 +1,20 @@
-import React, { useMemo, useContext, useState, useRef } from 'react';
+import { Duration } from 'luxon';
+import { observer } from 'mobx-react-lite';
+import React, { useContext, useMemo, useRef, useState } from 'react';
+
+import {
+  ILivePlayerContext,
+  PlayerContext,
+} from 'App/components/Session/playerContext';
 import { useStore } from 'App/mstore';
+import { debounce } from 'App/utils';
 import TimeTracker from 'Components/Session_/Player/Controls/TimeTracker';
-import stl from 'Components/Session_/Player/Controls/timeline.module.css';
-import DraggableCircle from 'Components/Session_/Player/Controls/components/DraggableCircle';
 import CustomDragLayer, {
   OnDragCallback,
 } from 'Components/Session_/Player/Controls/components/CustomDragLayer';
-import { debounce } from 'App/utils';
+import DraggableCircle from 'Components/Session_/Player/Controls/components/DraggableCircle';
 import TooltipContainer from 'Components/Session_/Player/Controls/components/TooltipContainer';
-import {
-  PlayerContext,
-  ILivePlayerContext,
-} from 'App/components/Session/playerContext';
-import { observer } from 'mobx-react-lite';
-import { Duration } from 'luxon';
+import stl from 'Components/Session_/Player/Controls/timeline.module.css';
 
 function Timeline() {
   const { sessionStore } = useStore();
@@ -59,8 +60,8 @@ function Timeline() {
 
   const getLiveTime = (e: React.MouseEvent) => {
     const duration = new Date().getTime() - startedAt;
-    // @ts-ignore type mismatch from react?
-    const p = e.nativeEvent.offsetX / e.target.offsetWidth;
+    const rect = progressRef.current?.getBoundingClientRect();
+    const p = rect ? (e.clientX - rect.left) / rect.width : 0;
     const time = Math.max(Math.round(p * duration), 0);
 
     return [time, duration];
@@ -112,23 +113,15 @@ function Timeline() {
     e: React.MouseEvent<HTMLDivElement>,
     customEndTime?: number,
   ) => {
-    // @ts-ignore type mismatch from react?
-    const p = e.nativeEvent.offsetX / e.target.offsetWidth;
+    const rect = progressRef.current?.getBoundingClientRect();
+    const p = rect ? (e.clientX - rect.left) / rect.width : 0;
     const targetTime = customEndTime || endTime;
 
     return Math.max(Math.round(p * targetTime), 0);
   };
 
   return (
-    <div
-      className="flex items-center absolute w-full"
-      style={{
-        top: '-4px',
-        zIndex: 100,
-        maxWidth: 'calc(100% - 1rem)',
-        left: '0.5rem',
-      }}
-    >
+    <div className="relative flex flex-1 min-w-0 items-center">
       <div
         className={stl.progress}
         onClick={ready ? jumpToTime : undefined}
@@ -140,11 +133,7 @@ function Timeline() {
       >
         <TooltipContainer />
         <DraggableCircle left={time * scale} onDrop={onDragEnd} live />
-        <CustomDragLayer
-          onDrag={onDrag}
-          minX={0}
-          maxX={progressRef.current ? progressRef.current.offsetWidth : 0}
-        />
+        <CustomDragLayer onDrag={onDrag} containerRef={progressRef} />
         <TimeTracker scale={scale} live left={time * scale} />
 
         <div className={stl.timeline} ref={timelineRef} />

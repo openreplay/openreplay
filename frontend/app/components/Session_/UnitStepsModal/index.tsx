@@ -1,6 +1,12 @@
+import { IconButton } from '@/ui/actions/IconButton';
+import { Button } from '@/ui/actions/button';
+import { CodeBlock } from '@/ui/data/CodeBlock';
+import { Icon } from '@/ui/icons/Icon';
+import { InlineSelect } from '@/ui/inputs/select';
+import { Switch } from '@/ui/inputs/switch';
+import { Segmented } from '@/ui/inputs/toggle-group';
 import type Screen from 'Player/web/Screen/Screen';
-import { Button, Checkbox, Select } from 'antd';
-import { ChevronDown, ChevronRight, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -8,8 +14,9 @@ import { useTranslation } from 'react-i18next';
 import { durationFromMs } from 'App/date';
 import { useStore } from 'App/mstore';
 import { Input as InputEvent, TYPES } from 'App/types/session/event';
+import 'Components/Session/ReplayScreen/activity-panel.css';
+import 'Components/Session/ReplayScreen/export-e2e.css';
 import { PlayerContext } from 'Components/Session/playerContext';
-import { CodeBlock, Icon } from 'UI';
 
 import {
   cypressEvents,
@@ -37,11 +44,23 @@ export const getDefaultFramework = () => {
   return stored ?? 'cypress';
 };
 
-export const frameworkIcons = {
-  cypress: <Icon name={'cypress'} size={18} />,
-  puppeteer: <Icon name={'puppeteer'} size={18} />,
-  playwright: <Icon name={'pwright'} size={18} />,
-  k6: <div className="text-disabled-text text-lg">k6</div>,
+type Framework = 'cypress' | 'puppeteer' | 'playwright' | 'k6';
+const FRAMEWORKS: { key: Framework; label: string }[] = [
+  { key: 'cypress', label: 'Cypress' },
+  { key: 'puppeteer', label: 'Puppeteer' },
+  { key: 'playwright', label: 'Playwright' },
+  { key: 'k6', label: 'k6' },
+];
+
+export const frameworkIcons: Record<Framework, React.ReactNode> = {
+  cypress: <Icon name="cypress" size={13} />,
+  puppeteer: <Icon name="puppeteer" size={13} />,
+  playwright: <Icon name="pwright" size={13} />,
+  k6: (
+    <span className="m-e2e__k6 m-mono" aria-hidden="true">
+      k6
+    </span>
+  ),
 };
 
 interface MultiInputEntry {
@@ -415,175 +434,118 @@ function UnitStepsModal({ onClose }: Props) {
   };
 
   return (
-    <div
-      className={'bg-white h-screen w-full flex flex-col items-start gap-2 p-4'}
-      style={{ marginTop: -50 }}
-    >
-      <div className={'flex items-center justify-between w-full'}>
-        <div className={'font-semibold text-xl'}>{t('Copy Events')}</div>
-        <div className={'cursor-pointer'} onClick={onClose}>
-          <X size={18} />
-        </div>
-      </div>
-      <Select
-        className={'w-full'}
-        size="small"
-        options={[
-          {
-            label: (
-              <div className={'flex items-center gap-2'}>
-                <Icon name={'cypress'} size={18} />
-                <div>{t('Cypress')}</div>
-              </div>
-            ),
-            value: 'cypress',
-          },
-          {
-            label: (
-              <div className={'flex items-center gap-2'}>
-                <Icon name={'puppeteer'} size={18} />
-                <div>{t('Puppeteer')}</div>
-              </div>
-            ),
-            value: 'puppeteer',
-          },
-          {
-            label: (
-              <div className={'flex items-center gap-2'}>
-                <Icon name={'pwright'} size={18} />
-                <div>{t('Playwright')}</div>
-              </div>
-            ),
-            value: 'playwright',
-          },
-          {
-            label: (
-              <div className={'flex items-center gap-2'}>
-                <div className="text-disabled-text text-lg">k6</div>
-                <div>{t('Grafana K6')}</div>
-              </div>
-            ),
-            value: 'k6',
-          },
-        ]}
-        value={activeFramework}
-        onChange={changeFramework}
-      />
-      <Checkbox
-        checked={uiPlayerStore.exportEventsSelection.enabled}
-        onChange={(e) => toggleZoom(e.target.checked)}
-      >
-        {t('Select events on the timeline')}
-      </Checkbox>
-      <div className={'flex items-center gap-2 w-full'}>
-        <Select
-          className={'w-42'}
-          value={mode}
-          size="small"
-          onChange={setMode}
-          options={[
-            { label: t('Events Only'), value: 'events' },
-            { label: t('Complete Test'), value: 'test' },
-          ]}
+    <div className="m-e2e-panel">
+      <div className="m-feat__formhead">
+        <span className="flex-1">{t('Export as E2E test')}</span>
+        <IconButton
+          icon={<X size={14} />}
+          label={t('Close')}
+          variant="ghost"
+          onClick={onClose}
         />
-        {selectorInputsCount > 0 && (
-          <Button
-            size="small"
-            onClick={resolveInputValues}
-            loading={uiPlayerStore.resolvingInputs}
-          >
-            {resolvedValues.size > 0
-              ? t('Re-resolve Input Values')
-              : t('Resolve Input Values')}
-          </Button>
-        )}
       </div>
-      {multiInputs.length > 0 && (
-        <div className={'w-full'}>
-          <div
-            className={
-              'flex items-center gap-1 cursor-pointer text-sm font-medium'
-            }
-            onClick={() => setPickInputsOpen(!pickInputsOpen)}
-          >
-            {pickInputsOpen ? (
-              <ChevronDown size={14} />
-            ) : (
-              <ChevronRight size={14} />
-            )}
-            {t('Inputs with similar selector')} ({multiInputs.length})
-          </div>
-          {pickInputsOpen && (
-            <div
-              className={
-                'mt-1 border rounded p-2 flex flex-col gap-2 max-h-40 overflow-y-auto text-xs'
-              }
+      <div className="m-e2e__body">
+        <Segmented
+          block
+          ariaLabel={t('Framework')}
+          value={activeFramework as Framework}
+          onChange={changeFramework}
+          options={FRAMEWORKS.map((f) => ({
+            value: f.key,
+            label: f.label,
+            icon: f.key === 'k6' ? undefined : frameworkIcons[f.key],
+          }))}
+        />
+        <label className="m-e2e__row">
+          <Switch
+            checked={uiPlayerStore.exportEventsSelection.enabled}
+            onCheckedChange={(on) => toggleZoom(on)}
+          />
+          <span>{t('Select events on the timeline')}</span>
+        </label>
+        <div className="m-e2e__row">
+          <InlineSelect
+            ariaLabel={t('What to export')}
+            value={mode as 'events' | 'test'}
+            onChange={setMode}
+            options={[
+              { label: t('Complete test'), value: 'test' },
+              { label: t('Events only'), value: 'events' },
+            ]}
+          />
+          {selectorInputsCount > 0 && (
+            <Button
+              variant="subtle"
+              onClick={resolveInputValues}
+              disabled={uiPlayerStore.resolvingInputs}
             >
+              {uiPlayerStore.resolvingInputs
+                ? t('Resolving…')
+                : resolvedValues.size > 0
+                  ? t('Re-resolve input values')
+                  : t('Resolve input values')}
+            </Button>
+          )}
+        </div>
+        {multiInputs.length > 0 && (
+          <details
+            className="m-e2e__inputs"
+            open={pickInputsOpen}
+            onToggle={(e) => setPickInputsOpen(e.currentTarget.open)}
+          >
+            <summary>
+              {t('Inputs with similar selector')} ({multiInputs.length})
+            </summary>
+            <div className="m-e2e__inputs-list">
               {multiInputs.map((entry) => {
                 const key = `${entry.time}_${entry.selector}`;
                 const picked = pickedInputs.get(key) ?? 0;
                 return (
                   <div key={key}>
-                    <div
+                    <button
+                      type="button"
                       onClick={() => jumpToMs(entry.time)}
-                      className={
-                        'font-mono text-disabled-text mb-1 cursor-pointer hover:text-black'
-                      }
+                      className="m-e2e__input-sel m-mono"
                     >
                       {entry.selector}{' '}
-                      <span className={'text-gray-400'}>
-                        @{durationFromMs(entry.time)}
-                      </span>
-                    </div>
-                    <div className={'flex flex-col gap-0.5 pl-2'}>
-                      {entry.elements.map((el) => (
-                        <div
-                          key={el.index}
-                          className={`flex items-center gap-1 px-1 py-0.5 rounded cursor-pointer ${
-                            picked === el.index
-                              ? 'bg-active-blue font-medium'
-                              : 'hover:bg-gray-lightest'
-                          }`}
-                          onClick={() =>
-                            pickInput(entry.selector, entry.time, el.index)
-                          }
-                          onMouseEnter={() =>
-                            highlightInput(entry.selector, entry.time, el.index)
-                          }
-                          onMouseLeave={clearHighlight}
-                        >
-                          <span className={'font-mono'}>
-                            {el.parentSelector ? `${el.parentSelector} > ` : ''}
-                            {entry.selector}
+                      <span>@{durationFromMs(entry.time)}</span>
+                    </button>
+                    {entry.elements.map((el) => (
+                      <button
+                        type="button"
+                        key={el.index}
+                        className={`m-e2e__input-el${picked === el.index ? ' is-on' : ''}`}
+                        onClick={() =>
+                          pickInput(entry.selector, entry.time, el.index)
+                        }
+                        onMouseEnter={() =>
+                          highlightInput(entry.selector, entry.time, el.index)
+                        }
+                        onMouseLeave={clearHighlight}
+                      >
+                        <span className="m-mono m-truncate">
+                          {el.parentSelector ? `${el.parentSelector} > ` : ''}
+                          {entry.selector}
+                        </span>
+                        <span className="m-e2e__input-idx">[{el.index}]</span>
+                        {el.value && (
+                          <span className="m-e2e__input-val m-truncate">
+                            {`"${el.value}"`}
                           </span>
-                          <span className={'text-gray-400'}>[{el.index}]</span>
-                          {el.value && (
-                            <span
-                              className={
-                                'text-green-600 ml-auto truncate max-w-[120px]'
-                              }
-                            >
-                              {`"${el.value}"`}
-                            </span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
+                        )}
+                      </button>
+                    ))}
                   </div>
                 );
               })}
             </div>
-          )}
-        </div>
-      )}
-      <div className={'w-full'}>
+          </details>
+        )}
         <CodeBlock
-          width={540}
-          height={'calc(100vh - 174px)'}
-          extra={`${events.length} Events`}
-          copy
           code={eventStr}
-          language={'javascript'}
+          language="JavaScript"
+          caption={t('{{n}} events', { n: events.length })}
+          copyLabel={t('Copy test')}
         />
       </div>
     </div>

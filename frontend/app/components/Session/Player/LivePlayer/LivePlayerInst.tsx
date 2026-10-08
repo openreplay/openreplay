@@ -1,6 +1,8 @@
+import { WebNetworkPanel } from '@/components/shared/DevTools/NetworkPanel';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   ILivePlayerContext,
@@ -12,10 +14,10 @@ import {
   debounceUpdate,
   getDefaultPanelHeight,
 } from 'Components/Session/Player/ReplayPlayer/PlayerInst';
+import { DevToolsFrame } from 'Components/Session/ReplayScreen/DevToolsFrame';
 import stl from 'Components/Session_/Player/player.module.css';
 
 import ConsolePanel from 'Shared/DevTools/ConsolePanel';
-import { WebNetworkPanel } from '@/components/shared/DevTools/NetworkPanel';
 
 import LiveControls from './LiveControls';
 import Overlay from './Overlay';
@@ -26,6 +28,7 @@ interface IProps {
 }
 
 function Player({ fullView, isMultiview }: IProps) {
+  const { t } = useTranslation();
   const { uiPlayerStore, sessionStore } = useStore();
   const isAssist = window.location.pathname.includes('/assist/');
   const closedLive =
@@ -54,31 +57,10 @@ function Player({ fullView, isMultiview }: IProps) {
 
   if (!playerContext.player) return null;
 
-  const maxWidth = '100vw';
-
-  const handleResize = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    const startY = e.clientY;
-    const startHeight = panelHeight;
-
-    const handleMouseUp = () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-
-    const handleMouseMove = (e: MouseEvent) => {
-      const deltaY = e.clientY - startY;
-      const diff = startHeight - deltaY;
-      const max = diff > window.innerHeight / 2 ? window.innerHeight / 2 : diff;
-      const newHeight = Math.max(50, max);
-      setPanelHeight(newHeight);
-      playerContext.player.scale();
-      debounceUpdate(newHeight);
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  };
+  const tab =
+    playerContext.store.get().tabStates?.[playerContext.store.get().currentTab];
+  const consoleErrors =
+    (tab?.logMarkedCountNow ?? 0) > 0 || (tab?.exceptionsList?.length ?? 0) > 0;
 
   return (
     <div className={cn(stl.playerBody, 'flex flex-1 flex-col relative')}>
@@ -89,25 +71,28 @@ function Player({ fullView, isMultiview }: IProps) {
           ref={screenWrapper}
         />
       </div>
-      {bottomBlock ? (
-        <div
-          style={{
-            maxWidth,
-            width: '100%',
-            height: panelHeight,
-            position: 'relative',
-            overflow: 'hidden',
+      {!fullView && !isMultiview ? (
+        <DevToolsFrame
+          tabs={[
+            { key: CONSOLE, label: t('Console'), errors: consoleErrors },
+            { key: NETWORK, label: t('Network') },
+          ]}
+          open={
+            bottomBlock === CONSOLE || bottomBlock === NETWORK ? bottomBlock : 0
+          }
+          onToggle={(k) => uiPlayerStore.toggleBottomBlock(k)}
+          height={panelHeight}
+          onHeight={(h) => {
+            setPanelHeight(h);
+            playerContext.player.scale();
+            debounceUpdate(h);
           }}
         >
-          <div
-            onMouseDown={handleResize}
-            className="w-full h-2 cursor-ns-resize absolute top-0 left-0 z-20"
-          />
           {bottomBlock === CONSOLE ? <ConsolePanel isLive /> : null}
           {bottomBlock === NETWORK ? (
             <WebNetworkPanel isLive panelHeight={panelHeight} />
           ) : null}
-        </div>
+        </DevToolsFrame>
       ) : null}
       {!fullView && !isMultiview ? (
         <LiveControls jump={playerContext.player.jump} />

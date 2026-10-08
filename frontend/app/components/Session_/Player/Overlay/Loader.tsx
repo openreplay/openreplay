@@ -1,5 +1,6 @@
+import { Loader } from '@/ui/feedback/Loader';
 import React from 'react';
-import { Loader } from 'UI';
+
 import ovStl from './overlay.module.css';
 
 export default function OverlayLoader() {

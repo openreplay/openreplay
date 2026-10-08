@@ -9,7 +9,7 @@ import Counter from 'App/components/shared/SessionItem/Counter';
 
 import ChatControls from '../ChatControls/ChatControls';
 import VideoContainer from '../components/VideoContainer';
-import stl from './chatWindow.module.css';
+import './call.css';
 
 export interface Props {
   incomeStream: { stream: MediaStream; isAgent: boolean }[] | null;
@@ -49,25 +49,22 @@ function ChatWindow({
 
   return (
     <div ref={dragRef}>
-      <div
-        className={cn(stl.wrapper, 'fixed radius bg-white shadow-xl mt-16')}
-        style={{ width: '280px' }}
-      >
-        <div className="handle flex items-center p-2 cursor-move select-none border-b">
-          <div className={stl.headerTitle}>
-            <b>{t('Call with')}&nbsp;</b> {userId || t('Anonymous User')}
-            <br />
-            {incomeStream && incomeStream.length > 2
-              ? t(' (+ other agents in the call)')
-              : ''}
+      <div className="m-call">
+        <div className="handle m-call__head">
+          <div className="m-call__title">
+            <span className="m-call__who">
+              {t('Call with')} {userId || t('Anonymous User')}
+            </span>
+            {incomeStream && incomeStream.length > 2 ? (
+              <span className="m-call__more">
+                {t('+ other agents in the call')}
+              </span>
+            ) : null}
           </div>
-          <Counter
-            startTime={new Date().getTime()}
-            className="text-sm ml-auto"
-          />
+          <Counter startTime={new Date().getTime()} className="m-call__time" />
         </div>
         <div
-          className={cn(stl.videoWrapper, 'relative')}
+          className="m-call__video"
           style={{ minHeight: onlyLocalEnabled ? 210 : 'unset' }}
         >
           {incomeStream ? (
@@ -81,7 +78,7 @@ function ChatWindow({
               </React.Fragment>
             ))
           ) : (
-            <div className={stl.noVideo}>
+            <div className="m-call__none">
               {t('Error obtaining incoming streams')}
             </div>
           )}

@@ -1,6 +1,6 @@
 import React from 'react';
+
 import { PlayerContext } from 'App/components/Session/playerContext';
-import VerticalLine from '../VerticalLine';
 
 interface Props {
   children: React.ReactNode;
@@ -9,15 +9,16 @@ interface Props {
 
 const OverviewPanelContainer = React.memo((props: Props) => {
   const { player } = React.useContext(PlayerContext);
-
   const { endTime } = props;
-  const [mouseX, setMouseX] = React.useState(0);
-  const [mouseIn, setMouseIn] = React.useState(false);
-  const onClickTrack = (e: any) => {
-    if (e.target.className.includes('ant-popover')) {
-      return;
-    }
-    const p = e.nativeEvent.offsetX / e.target.offsetWidth;
+
+  const onClickTrack = (e: React.MouseEvent<HTMLDivElement>) => {
+    // portalled popovers bubble through the React tree
+    if (!e.currentTarget.contains(e.target as Node)) return;
+    const track = e.currentTarget.querySelector('.m-dt__lane-track');
+    if (!track) return;
+    const rect = track.getBoundingClientRect();
+    if (e.clientX < rect.left) return;
+    const p = (e.clientX - rect.left) / rect.width;
     const time = Math.max(Math.round(p * endTime), 0);
     if (time) {
       player.jump(time);
@@ -25,12 +26,8 @@ const OverviewPanelContainer = React.memo((props: Props) => {
   };
 
   return (
-    <div
-      className="overflow-x-auto overflow-y-hidden bg-gray-lightest"
-      onClick={onClickTrack}
-    >
-      {mouseIn && <VerticalLine left={mouseX} className="border-gray-medium" />}
-      <div className="">{props.children}</div>
+    <div className="m-dt__xray" onClick={onClickTrack}>
+      {props.children}
     </div>
   );
 });

@@ -17,7 +17,8 @@ function SpotNetwork({
     spotPlayerStore.time,
     list,
   );
-  const listNow = list.slice(0, index);
+  // the slice changes only when the index does, not on every tick
+  const listNow = React.useMemo(() => list.slice(0, index), [list, index]);
 
   return (
     <NetworkPanelComp

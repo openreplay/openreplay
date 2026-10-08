@@ -1,44 +1,30 @@
-import { CloseOutlined } from '@ant-design/icons';
+import { IconButton } from '@/ui/actions/IconButton';
 import { mergeEventLists, sortEvents } from 'Types/session';
-import { TYPES } from 'Types/session/event';
-import { Button, Switch, Tooltip } from 'antd';
-import cn from 'classnames';
-import { Search } from 'lucide-react';
+import { ListFilter } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { VList, VListHandle } from 'virtua';
 
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { useStore } from 'App/mstore';
-import { Icon } from 'UI';
+import { PanelBar } from 'Components/Session/ReplayScreen/PanelBar';
+import 'Components/Session/ReplayScreen/activity-panel.css';
 
-import { frameworkIcons, getDefaultFramework } from '../UnitStepsModal';
-import EventGroupWrapper from './EventGroupWrapper';
-import EventSearch from './EventSearch/EventSearch';
-import styles from './eventsBlock.module.css';
+import ActivityRow from './ActivityRow';
 
 interface IProps {
   setActiveTab: (tab?: string) => void;
 }
 
-const MODES = {
-  SELECT: 'select',
-  SEARCH: 'search',
-  EXPORT: 'export',
-};
-
-function EventsBlock(props: IProps) {
-  const defaultFramework = getDefaultFramework();
-  const [mode, setMode] = React.useState(MODES.SELECT);
+function EventsBlock(_props: IProps) {
   const { t } = useTranslation();
-  const { notesStore, uiPlayerStore, sessionStore } = useStore();
+  const { uiPlayerStore, sessionStore } = useStore();
   const session = sessionStore.current;
   const mixedEventsWithIssues = session.mixedEventsWithIssues;
   const incidents = session.incidents;
   const { filteredEvents } = sessionStore;
   const query = sessionStore.eventsQuery;
-  const { eventsIndex } = sessionStore;
   const setEventFilter = sessionStore.setEventQuery;
   const [mouseOver, setMouseOver] = React.useState(false);
   const scroller = React.useRef<VListHandle>(null);
@@ -46,22 +32,8 @@ function EventsBlock(props: IProps) {
   const zoomStartTs = uiPlayerStore.timelineZoom.startTs;
   const zoomEndTs = uiPlayerStore.timelineZoom.endTs;
   const { store, player } = React.useContext(PlayerContext);
-  const [currentTimeEventIndex, setCurrentTimeEventIndex] = React.useState(0);
-  const notes = notesStore.sessionNotes;
 
-  const {
-    time,
-    endTime,
-    playing,
-    tabStates,
-    tabChangeEvents = [],
-  } = store.get();
-
-  const filterOutNote = (id: any) => {
-    notesStore.filterOutNote(id);
-  };
-
-  const { setActiveTab } = props;
+  const { time, tabStates, tabChangeEvents = [] } = store.get();
 
   const filteredLength = filteredEvents?.length || 0;
 
@@ -82,14 +54,13 @@ function EventsBlock(props: IProps) {
       });
     }
 
-    const eventsWithMobxNotes = [
+    const eventsWithIncidents = [
       ...(incidents ?? []),
       ...(mixedEventsWithIssues ?? []),
-      ...(notes ?? []),
     ].sort(sortEvents);
 
     const allEvents = mergeEventLists(
-      filteredLength > 0 ? filteredEvents : eventsWithMobxNotes,
+      (filteredLength > 0 ? filteredEvents : eventsWithIncidents) as any[],
       tabChangeEvents,
     );
     const filteredCombinedEvents: any[] = [];
@@ -122,217 +93,103 @@ function EventsBlock(props: IProps) {
       query,
       filteredLength,
       mixedEventsWithIssues,
-      notes,
       incidents,
       tabChangeEvents,
       uiPlayerStore.showOnlySearchEvents,
     ],
   );
 
-  const findLastFitting = (time: number) => {
-    const allEvents = usedEvents.concat(incidents);
-    if (!allEvents.length) return 0;
-    let i = allEvents.length - 1;
-    if (time > endTime / 2) {
-      while (i > 0) {
-        const event = allEvents[i];
-        if ('time' in event && event.time <= time) break;
-        i--;
-      }
-      return i;
+  // runs every player tick: binary search over the time-sorted list (it used
+  // to copy the list with the incidents appended again and scan it linearly)
+  const currentTimeEventIndex = React.useMemo(() => {
+    let lo = 0;
+    let hi = usedEvents.length - 1;
+    let found = 0;
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1;
+      if ((usedEvents[mid]?.time ?? 0) <= time) {
+        found = mid;
+        lo = mid + 1;
+      } else hi = mid - 1;
     }
-    let l = 0;
-    while (l < i) {
-      const event = allEvents[l];
-      if ('time' in event && event.time >= time) break;
-      l++;
-    }
-    return l;
-  };
+    return found;
+  }, [usedEvents, time]);
 
-  useEffect(() => {
-    setCurrentTimeEventIndex(findLastFitting(time));
-  }, [time]);
-
-  const write = ({
-    target: { value },
-  }: React.ChangeEvent<HTMLInputElement>) => {
+  const scrollTop = () =>
+    setTimeout(() => scroller.current?.scrollToIndex(0), 100);
+  const write = (value: string) => {
     setEventFilter({ query: value });
-
-    setTimeout(() => {
-      if (!scroller.current) return;
-
-      scroller.current.scrollToIndex(0);
-    }, 100);
+    scrollTop();
   };
 
-  const clearSearch = () => {
-    setEventFilter({ query: '' });
-
-    setTimeout(() => {
-      if (!scroller.current) return;
-
-      scroller.current.scrollToIndex(0);
-    }, 100);
-  };
-
-  React.useEffect(
-    () => () => {
-      clearSearch();
-    },
-    [],
-  );
+  React.useEffect(() => () => setEventFilter({ query: '' }), []);
   React.useEffect(() => {
-    if (scroller.current) {
-      if (!mouseOver) {
-        scroller.current.scrollToIndex(currentTimeEventIndex, {
-          align: 'center',
-        });
-      }
+    if (scroller.current && !mouseOver) {
+      scroller.current.scrollToIndex(currentTimeEventIndex, {
+        align: 'center',
+      });
     }
   }, [currentTimeEventIndex]);
 
-  const onEventClick = (_: React.MouseEvent, event: { time: number }) => {
-    player.jump(event.time);
-  };
+  const seek = React.useCallback((at: number) => player.jump(at), [player]);
+  const searchedOnly = uiPlayerStore.showOnlySearchEvents;
 
-  const onMouseOver = () => setMouseOver(true);
-  const onMouseLeave = () => setMouseOver(false);
-
-  const renderGroup = ({ index }: { index: number }) => {
-    const isLastEvent = index === usedEvents.length - 1;
-    const isLastInGroup =
-      isLastEvent || usedEvents[index + 1]?.type === TYPES.LOCATION;
-    const event = usedEvents[index];
-    const isNote = 'noteId' in event;
-    const isTabChange = 'type' in event && event.type === 'TABCHANGE';
-    const isIncident = 'type' in event && event.type === 'INCIDENT';
-    const isCurrent = index === currentTimeEventIndex;
-    const isPrev = index < currentTimeEventIndex;
-    const isSearched = event.isHighlighted;
-
-    return (
-      <EventGroupWrapper
-        query={query}
-        presentInSearch={eventsIndex.includes(index)}
-        isFirst={index == 0}
-        onEventClick={onEventClick}
-        event={event}
-        isLastEvent={isLastEvent}
-        isLastInGroup={isLastInGroup}
-        isCurrent={isCurrent}
-        isSearched={isSearched}
-        showSelection={!playing}
-        isNote={isNote}
-        isTabChange={isTabChange}
-        isIncident={isIncident}
-        isPrev={isPrev}
-        filterOutNote={filterOutNote}
-        setActiveTab={setActiveTab}
-      />
-    );
-  };
-
-  const isEmptySearch = query && (usedEvents.length === 0 || !usedEvents);
-  const isEmptyFromSearchFilter =
-    !isEmptySearch &&
-    uiPlayerStore.showOnlySearchEvents &&
-    usedEvents.length === 0;
   return (
-    <>
-      <div
-        className={cn(
-          styles.header,
-          'py-4 px-2 bg-linear-to-t from-transparent to-neutral-gray-lightest h-[57px]',
-        )}
+    <div className="m-act" data-openreplay-masked>
+      <PanelBar
+        find={{
+          value: query,
+          onChange: write,
+          placeholder: t('Find in activity'),
+        }}
       >
-        {mode === MODES.SELECT ? (
-          <div className={'flex items-center gap-2'}>
-            <Button
-              onClick={() => setActiveTab('EXPORT')}
-              type={'default'}
-              shape={'circle'}
-            >
-              {frameworkIcons[defaultFramework]}
-            </Button>
-            <Button
-              className={'flex items-center gap-2'}
-              onClick={() => setMode(MODES.SEARCH)}
-            >
-              <Search size={14} />
-              <div>
-                {t('Search')}&nbsp;{usedEvents.length}&nbsp;{t('events')}
-              </div>
-            </Button>
-            <Tooltip title={t('Close Panel')} placement="bottom">
-              <Button
-                className="ml-auto"
-                type="text"
-                onClick={() => {
-                  setActiveTab('');
-                }}
-                icon={<CloseOutlined />}
-              />
-            </Tooltip>
-          </div>
-        ) : null}
-        {mode === MODES.SEARCH ? (
-          <div className={'flex items-center gap-2'}>
-            <EventSearch
-              onChange={write}
-              setActiveTab={setActiveTab}
-              value={query}
-              eventsText={
-                usedEvents.length
-                  ? `${usedEvents.length} ${t('Events')}`
-                  : `0 ${t('Events')}`
-              }
-            />
-            <Button type={'text'} onClick={() => setMode(MODES.SELECT)}>
-              {t('Cancel')}
-            </Button>
-          </div>
-        ) : null}
-      </div>
-      <div
-        className={cn('flex-1 pb-4', styles.eventsList)}
-        id="eventList"
-        data-openreplay-masked
-        onMouseOver={onMouseOver}
-        onMouseLeave={onMouseLeave}
-      >
-        {isEmptySearch && (
-          <div className="flex items-center p-4">
-            <Icon name="binoculars" size={18} />
-            <span className="ml-2">{t('No Matching Results')}</span>
-          </div>
+        {uiPlayerStore.showSearchEventsSwitchButton && (
+          <IconButton
+            icon={<ListFilter size={13} />}
+            label={
+              searchedOnly
+                ? t('Showing the searched events. Click for everything.')
+                : t('Searched events only')
+            }
+            variant="ghost"
+            pressed={searchedOnly}
+            onClick={() => uiPlayerStore.setShowOnlySearchEvents(!searchedOnly)}
+          />
         )}
-        {isEmptyFromSearchFilter && (
-          <div className="flex flex-col items-center gap-3 p-4 text-center">
-            <Icon name="binoculars" size={18} />
-            <span>{t('No matching events')}</span>
-            <div className="flex items-center gap-2">
-              <Switch
-                size="small"
-                checked={uiPlayerStore.showOnlySearchEvents}
-                onChange={uiPlayerStore.setShowOnlySearchEvents}
-                style={{
-                  background: uiPlayerStore.showOnlySearchEvents
-                    ? '#f0a930'
-                    : 'rgba(0, 0, 0, 0.25)',
-                }}
+      </PanelBar>
+      {usedEvents.length === 0 ? (
+        <p className="m-spanel__none">
+          {query || searchedOnly
+            ? t('Nothing in the activity matches that.')
+            : t('Nothing recorded yet.')}
+        </p>
+      ) : (
+        <div
+          className="m-act__scroll"
+          onMouseOver={() => setMouseOver(true)}
+          onMouseLeave={() => setMouseOver(false)}
+        >
+          <VList
+            data={usedEvents}
+            className="m-act__list"
+            ref={scroller}
+            role="list"
+            aria-label={t('Activity')}
+          >
+            {(event, i) => (
+              <ActivityRow
+                key={event.key ?? `${event.time}-${i}`}
+                event={event}
+                now={i === currentTimeEventIndex}
+                ahead={event.time > time}
+                isFirst={i === 0}
+                onSeek={seek}
               />
-              <span className="text-sm">{t('Search Events Only')}</span>
-            </div>
-          </div>
-        )}
-        <VList data={usedEvents} className={styles.eventsList} ref={scroller}>
-          {(_, i) => {
-            return renderGroup({ index: i });
-          }}
-        </VList>
-      </div>
-    </>
+            )}
+          </VList>
+        </div>
+      )}
+    </div>
   );
 }
 

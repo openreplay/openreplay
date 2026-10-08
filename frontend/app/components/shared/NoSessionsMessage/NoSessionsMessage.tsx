@@ -1,76 +1,55 @@
 import { trackerInstance } from '@/init/openreplay';
-import { Alert, Button, Space } from 'antd';
+import { Button } from '@/ui/actions/button';
+import { Notice } from '@/ui/feedback/Notice';
 import { SquareArrowOutUpRight } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useStore } from 'App/mstore';
-import { onboarding as onboardingRoute } from 'App/routes';
+import { onboarding as onboardingRoute, withSiteId } from 'App/routes';
 import { useNavigate } from 'App/routing';
-
-import * as routes from '../../../routes';
-
-const { withSiteId } = routes;
 
 function NoSessionsMessage() {
   const { t } = useTranslation();
   const { projectsStore } = useStore();
-  const { siteId } = projectsStore;
   const navigate = useNavigate();
-  const activeSite = projectsStore.active;
-  const showNoSessions = !!activeSite && !activeSite.recorded;
-  const onboardingPath = withSiteId(onboardingRoute('installing'), siteId);
+  const site = projectsStore.active;
+  if (!site || site.recorded) return null;
 
-  const openTroubleshoot = () => {
+  const troubleshoot = () => {
     trackerInstance.event('troubleshoot_clicked');
     window.open(
       'https://docs.openreplay.com/en/troubleshooting/session-recordings/',
       '_blank',
     );
   };
+
   return (
-    <>
-      {showNoSessions && (
-        <div className="w-full mb-5">
-          <Space orientation="vertical" className="w-full!">
-            <Alert
-              className="border-transparent rounded-lg w-full flex flex-col md:flex-row"
-              title={t(
-                'Your sessions will appear here soon. It may take a few minutes as sessions are optimized for efficient playback.',
-              )}
-              type="warning"
-              showIcon
-              action={
-                <Space>
-                  <Button
-                    type="link"
-                    size="small"
-                    onClick={openTroubleshoot}
-                    icon={
-                      <div className="color-black fill-black hover:color-primary hover:fill-primary">
-                        <SquareArrowOutUpRight size={16} />
-                      </div>
-                    }
-                  >
-                    <div className="text-black hover:text-primary">
-                      {t('Troubleshoot')}
-                    </div>
-                  </Button>
-                  <Button
-                    type="default"
-                    size="small"
-                    onClick={() => navigate(onboardingPath)}
-                  >
-                    {t('Complete Project Setup')}
-                  </Button>
-                </Space>
-              }
-            />
-          </Space>
-        </div>
-      )}
-    </>
+    <Notice kind="info">
+      <span className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <span className="min-w-0 flex-1">
+          {t(
+            'Your sessions will appear here soon. It may take a few minutes as sessions are optimized for efficient playback.',
+          )}
+        </span>
+        <span className="flex items-center gap-2">
+          <Button variant="subtle" onClick={troubleshoot}>
+            {t('Troubleshoot')}
+            <SquareArrowOutUpRight size={12} />
+          </Button>
+          <Button
+            onClick={() =>
+              navigate(
+                withSiteId(onboardingRoute('installing'), projectsStore.siteId),
+              )
+            }
+          >
+            {t('Complete project setup')}
+          </Button>
+        </span>
+      </span>
+    </Notice>
   );
 }
 

@@ -1,67 +1,60 @@
-import React from 'react';
-import cn from 'classnames';
-import { Icon } from 'UI';
-import { useStore } from 'App/mstore';
+import { Tooltip } from '@/ui/overlays/tooltip';
+import { Eye, Play, Plus } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
-import { useHistory } from 'App/routing';
-import { multiview, liveSession, withSiteId } from 'App/routes';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+
 import {
-  PlayerContext,
   ILivePlayerContext,
+  PlayerContext,
 } from 'App/components/Session/playerContext';
+import { useStore } from 'App/mstore';
+import { liveSession, multiview, withSiteId } from 'App/routes';
+import { useHistory } from 'App/routing';
 
-interface ITab {
+function Slot({
+  kind,
+  onClick,
+  isDisabled,
+}: {
+  kind: 'current' | 'other' | 'empty';
   onClick?: () => void;
-  classNames?: string;
-  children: React.ReactNode;
-  style?: Record<string, any>;
   isDisabled?: boolean;
-}
-
-function Tab(props: ITab) {
+}) {
+  const { t } = useTranslation();
+  const label =
+    kind === 'current'
+      ? t('Watching this session')
+      : kind === 'other'
+        ? t('Switch to this session')
+        : t('Add a session to the grid');
   return (
-    <div
-      onClick={props.onClick}
-      className={cn(
-        'p-1 rounded-sm flex items-center justify-center',
-        !props.isDisabled ? 'cursor-pointer' : 'cursor-not-allowed',
-        props.classNames,
-      )}
-      style={props.style}
-    >
-      {props.children}
-    </div>
+    <Tooltip title={label}>
+      <button
+        type="button"
+        className={`m-live-slot is-${kind}`}
+        aria-label={label}
+        aria-current={kind === 'current' ? 'true' : undefined}
+        disabled={isDisabled || kind === 'current'}
+        onClick={onClick}
+      >
+        {kind === 'current' ? (
+          <Eye size={12} />
+        ) : kind === 'other' ? (
+          <Play size={12} />
+        ) : (
+          <Plus size={12} />
+        )}
+      </button>
+    </Tooltip>
   );
 }
 
-export const InactiveTab = React.memo((props: Omit<ITab, 'children'>) => (
-  <Tab
-    onClick={props.onClick}
-    classNames={cn(
-      'hover:bg-gray-bg bg-gray-light',
-      !props.isDisabled ? 'cursor-pointer' : 'cursor-not-allowed',
-      props.classNames,
-    )}
-  >
-    <Icon name="plus" size="22" color="white" />
-  </Tab>
-));
-
-const ActiveTab = React.memo((props: Omit<ITab, 'children'>) => (
-  <Tab
-    onClick={props.onClick}
-    classNames="hover:bg-teal"
-    style={{ background: 'rgba(57, 78, 255, 0.5)' }}
-  >
-    <Icon name="play-fill-new" size="22" color="white" />
-  </Tab>
-));
-
-const CurrentTab = React.memo(() => (
-  <Tab classNames="bg-teal color-white">
-    <span style={{ fontSize: '0.65rem' }}>PLAYING</span>
-  </Tab>
-));
+export const InactiveTab = React.memo(
+  (props: { onClick?: () => void; isDisabled?: boolean }) => (
+    <Slot kind="empty" onClick={props.onClick} isDisabled={props.isDisabled} />
+  ),
+);
 
 function AssistTabs({ session }: { session: Record<string, any> }) {
   const history = useHistory();
@@ -88,7 +81,7 @@ function AssistTabs({ session }: { session: Record<string, any> }) {
   const openGrid = () => {
     if (isDisabled) return;
     const sessionIdQuery = encodeURIComponent(
-      assistMultiviewStore.sessions.map((s) => s.sessionId).join(','),
+      assistMultiviewStore.sessions.map((s) => s?.sessionId).join(','),
     );
     return history.push(withSiteId(multiview(sessionIdQuery), siteId));
   };
@@ -99,32 +92,23 @@ function AssistTabs({ session }: { session: Record<string, any> }) {
   };
 
   return (
-    <div
-      className="grid grid-cols-2 w-28 h-full"
-      style={{
-        gap: '4px',
-        opacity: isDisabled ? 0.6 : 1,
-        cursor: isDisabled ? 'not-allowed' : undefined,
-      }}
-    >
+    <div className="m-live-slots" role="group">
       {assistMultiviewStore.sortedSessions.map(
         (session: { key: number; sessionId: string }) => (
-          <React.Fragment key={session.key}>
-            {assistMultiviewStore.isActive(session.sessionId) ? (
-              <CurrentTab />
-            ) : (
-              <ActiveTab
-                isDisabled={isDisabled}
-                onClick={() => openLiveSession(session.sessionId)}
-              />
-            )}
-          </React.Fragment>
+          <Slot
+            key={session.key}
+            kind={
+              assistMultiviewStore.isActive(session.sessionId)
+                ? 'current'
+                : 'other'
+            }
+            isDisabled={isDisabled}
+            onClick={() => openLiveSession(session.sessionId)}
+          />
         ),
       )}
       {placeholder.map((_, i) => (
-        <React.Fragment key={i}>
-          <InactiveTab isDisabled={isDisabled} onClick={openGrid} />
-        </React.Fragment>
+        <Slot key={i} kind="empty" isDisabled={isDisabled} onClick={openGrid} />
       ))}
     </div>
   );

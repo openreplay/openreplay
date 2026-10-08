@@ -1,13 +1,15 @@
-import React, { useContext } from 'react';
-import {
-  PlayerContext,
-  MobilePlayerContext,
-} from 'Components/Session/playerContext';
-import { observer } from 'mobx-react-lite';
-import { getTimelinePosition } from './getTimelinePosition';
 import { useStore } from '@/mstore';
+import { Tooltip } from '@/ui/overlays/tooltip';
+import { observer } from 'mobx-react-lite';
+import React, { useContext } from 'react';
+
+import {
+  MobilePlayerContext,
+  PlayerContext,
+} from 'Components/Session/playerContext';
+
 import { getTimelineEventWidth } from './getTimelineEventWidth';
-import { Tooltip } from 'antd';
+import { getTimelinePosition } from './getTimelinePosition';
 
 function EventsList() {
   const { store } = useContext(PlayerContext);
@@ -42,7 +44,7 @@ function EventsList() {
         <div
           /* @ts-ignore TODO */
           key={`${e.key}_${e.time}`}
-          className={`absolute w-[2px] h-[10px] z-4 pointer-events-none ${e.isHighlighted ? 'bg-[#f0a930]' : 'bg-[#394eff]'}`}
+          className={`absolute w-[2px] h-[10px] z-4 pointer-events-none ${e.isHighlighted ? 'bg-[var(--m-chart-2)]' : 'bg-content-disabled'}`}
           style={{ left: `${getTimelinePosition(e.time, scale)}%` }}
         />
       ))}
@@ -81,7 +83,7 @@ function MobileEventsList() {
         <div
           /* @ts-ignore TODO */
           key={`${e.key}_${e.time}`}
-          className={`absolute w-[2px] h-[10px] z-3 pointer-events-none ${e.isHighlighted ? 'bg-[#f0a930]' : 'bg-[#394eff]'}`}
+          className={`absolute w-[2px] h-[10px] z-3 pointer-events-none ${e.isHighlighted ? 'bg-[var(--m-chart-2)]' : 'bg-content-disabled'}`}
           style={{ left: `${getTimelinePosition(e.time, scale)}%` }}
         />
       ))}

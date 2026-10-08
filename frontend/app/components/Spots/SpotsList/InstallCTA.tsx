@@ -1,10 +1,12 @@
-import { ChromeOutlined } from '@ant-design/icons';
-import { Alert, Button } from 'antd';
-import { ArrowUpRight } from 'lucide-react';
+import { Button } from '@/ui/actions/button';
+import { Notice } from '@/ui/feedback/Notice';
+import { SquareArrowOutUpRight } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 export const extKey = '__$spot_ext_exist$__';
+export const STORE_URL =
+  'https://chromewebstore.google.com/detail/openreplay-spot-record-re/ckigbicapkkgfomcfmcbaaplllopgbid';
 
 function InstallCTA() {
   const { t } = useTranslation();
@@ -46,44 +48,26 @@ function InstallCTA() {
 
   if (!isChromium && !extExist) {
     return (
-      <Alert
-        title={t(
+      <Notice kind="info" className="m-spot-cta">
+        {t(
           'Spot is designed for Chrome. Please install Chrome and navigate to this page to start using Spot.',
         )}
-        type="warning"
-        className="w-full justify-between font-medium text-lg rounded-lg border-0 mb-4"
-      />
+      </Notice>
     );
   }
-
+  if (extExist) return null;
   return (
-    <>
-      {extExist ? null : (
-        <Alert
-          title={t(
-            'It looks like you haven’t installed the Spot extension yet.',
-          )}
-          type="warning"
-          action={
-            <Button
-              type="primary"
-              icon={<ChromeOutlined />}
-              className="text-lg! flex! items-center! gap-2!"
-              onClick={() =>
-                window.open(
-                  'https://chromewebstore.google.com/detail/openreplay-spot-record-re/ckigbicapkkgfomcfmcbaaplllopgbid?pli=1',
-                  '_blank',
-                )
-              }
-            >
-              <div>{t('Get Chrome Extension')}</div>
-              <ArrowUpRight />
-            </Button>
-          }
-          className="w-full! justify-between! font-medium! text-lg! rounded-lg! border-0! mb-4!"
-        />
-      )}
-    </>
+    <Notice kind="info" className="m-spot-cta">
+      <span>
+        {t('It looks like you haven’t installed the Spot extension yet.')}
+      </span>
+      <Button asChild variant="secondary">
+        <a href={STORE_URL} target="_blank" rel="noreferrer">
+          {t('Get the extension')}
+          <SquareArrowOutUpRight size={13} aria-hidden="true" />
+        </a>
+      </Button>
+    </Notice>
   );
 }
 

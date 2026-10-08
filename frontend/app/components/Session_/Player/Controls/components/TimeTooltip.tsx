@@ -1,8 +1,10 @@
-import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { useStore } from 'App/mstore';
-import stl from './styles.module.css';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { useStore } from 'App/mstore';
+
+import stl from './styles.module.css';
 
 function TimeTooltip() {
   const { t } = useTranslation();
@@ -17,10 +19,10 @@ function TimeTooltip() {
   } = timeLineTooltip;
   return (
     <div
-      className={`${stl.timeTooltip} p-2 rounded-lg min-w-40 max-w-64`}
+      className={stl.timeTooltip}
       style={{
         top: 0,
-        left: `calc(${offset}px - 0.5rem)`,
+        left: `${offset}px`,
         display: isVisible ? 'block' : 'none',
         transform: 'translate(-50%, -110%)',
         whiteSpace: 'nowrap',
@@ -31,18 +33,16 @@ function TimeTooltip() {
       {localTime ? (
         <>
           <br />
-          <span className="text-gray-light">
-            {t('local:')}
-            {localTime}
+          <span className={stl.timeTooltipSub}>
+            {`${t('Local')}: ${localTime}`}
           </span>
         </>
       ) : null}
       {userTime ? (
         <>
           <br />
-          <span className="text-gray-light">
-            {t('user:')}
-            {userTime}
+          <span className={stl.timeTooltipSub}>
+            {`${t('User')}: ${userTime}`}
           </span>
         </>
       ) : null}

@@ -53,6 +53,8 @@ export default class TagWatchStore {
       return tagId;
     } catch (e) {
       console.error(e);
+      // callers say what happened; a swallowed error read as success
+      throw e;
     }
   };
 
@@ -64,6 +66,8 @@ export default class TagWatchStore {
       void filterStore.fetchFilters(String(projectStore.activeSiteId), true);
     } catch (e) {
       console.error(e);
+      // callers say what happened; a swallowed error read as success
+      throw e;
     }
   };
 
@@ -86,6 +90,8 @@ export default class TagWatchStore {
       }
     } catch (e) {
       console.error(e);
+      // callers say what happened; a swallowed error read as success
+      throw e;
     }
   };
 }

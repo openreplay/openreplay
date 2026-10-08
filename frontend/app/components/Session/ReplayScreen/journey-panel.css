@@ -1,0 +1,179 @@
+.m-jrn {
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  width: 18.5rem;
+  min-height: 0;
+  background: var(--m-surface-default);
+  border-left: 1px solid var(--m-border-default);
+}
+
+.m-jrn__answers {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-space-7);
+  padding: var(--m-space-6) var(--m-space-5) var(--m-space-8);
+}
+
+.m-jrn__answer h3 {
+  margin-bottom: var(--m-space-4);
+  font-size: var(--m-text-xs);
+  font-weight: var(--m-weight-medium);
+  color: var(--m-content-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--m-tracking-wide);
+}
+
+.m-jrn__answer p {
+  font-size: var(--m-text-sm);
+  line-height: var(--m-leading-relaxed);
+  color: var(--m-content-secondary);
+}
+
+.m-jrn__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.m-jrn__list {
+  display: flex;
+  flex-direction: column;
+  padding: var(--m-space-5) var(--m-space-5) var(--m-space-8);
+  list-style: none;
+}
+
+.m-jrn__item {
+  display: flex;
+  flex-direction: column;
+}
+
+.m-jrn__thread {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: none;
+  width: 1.25rem;
+  align-self: stretch;
+}
+
+.m-jrn__wire {
+  width: 1px;
+  flex: 1;
+  min-height: var(--m-space-3);
+  background: var(--m-border-strong);
+}
+
+.m-jrn__wire.is-past {
+  background: var(--m-border-accent);
+}
+
+.m-jrn__wire--lead {
+  flex: none;
+  /* beats .m-jrn__wire's min-height, which otherwise clamps the lead */
+  min-height: 0;
+  /* the -0.6px is measured: this face's half-leading isn't symmetric, so the
+     node centres on the label's first line only with it */
+  height: calc(
+    var(--m-space-4) - (1.25rem - var(--m-text-xs) * var(--m-leading-snug)) /
+      2 - 0.6px
+  );
+}
+.m-jrn__wire--tail {
+  min-height: var(--m-space-4);
+}
+
+.m-jrn__node {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 1px solid var(--m-border-strong);
+  border-radius: var(--m-radius-full);
+  background: var(--m-surface-default);
+  color: var(--m-content-muted);
+  transition:
+    border-color var(--m-duration-fast) var(--m-ease-out),
+    color var(--m-duration-fast) var(--m-ease-out);
+}
+
+.m-jrn__step {
+  display: flex;
+  gap: var(--m-space-3);
+  width: 100%;
+  margin-inline: calc(var(--m-space-3) * -1);
+  padding-inline: var(--m-space-3);
+  padding-block: 0 var(--m-space-1);
+  border: 0;
+  border-radius: var(--m-radius-control);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--m-duration-instant) var(--m-ease-out);
+}
+.m-jrn__step:hover {
+  background: var(--m-surface-hover);
+}
+.m-jrn__step:focus-visible {
+  outline: 2px solid var(--m-border-accent);
+  outline-offset: -2px;
+}
+
+.m-jrn__step.is-past .m-jrn__node {
+  border-color: var(--m-border-accent);
+}
+
+.m-jrn__step.is-active {
+  background: var(--m-surface-selected);
+}
+.m-jrn__step.is-active .m-jrn__node {
+  border-color: var(--m-border-accent);
+  box-shadow: 0 0 0 2px var(--m-surface-selected);
+}
+.m-jrn__step.is-active .m-jrn__label {
+  color: var(--m-content-primary);
+  font-weight: var(--m-weight-medium);
+}
+
+.m-jrn__step.is-failure .m-jrn__node,
+.m-jrn__step.is-failure.is-past .m-jrn__node {
+  border-color: var(--m-border-danger);
+  color: var(--m-content-danger);
+}
+
+.m-jrn__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-space-1);
+  flex: 1;
+  min-width: 0;
+  padding-block: var(--m-space-4);
+}
+
+.m-jrn__row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--m-space-4);
+  min-width: 0;
+}
+
+.m-jrn__label {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--m-text-xs);
+  line-height: var(--m-leading-snug);
+  color: var(--m-content-secondary);
+}
+
+/* the clock sits in the shared first column (.m-spanel__time), level with the label */
+.m-jrn__step .m-jrn__at {
+  padding-top: var(--m-space-4);
+}
+
+@media (max-width: 1240px) {
+  .m-jrn {
+    display: none;
+  }
+}

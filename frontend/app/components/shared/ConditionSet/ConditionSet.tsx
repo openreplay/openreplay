@@ -1,208 +1,118 @@
-import React from 'react';
-import { Icon, Input } from 'UI';
-import cn from 'classnames';
+import { IconButton } from '@/ui/actions/IconButton';
+import { Input } from '@/ui/inputs/input';
+import { Trash2 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
-import { Typography, Button } from 'antd';
-import { BranchesOutlined } from '@ant-design/icons';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus } from 'lucide-react';
-import { useStore } from 'App/mstore';
-import { Filter } from '@/mstore/types/filterConstants';
-import FilterSelection from 'Shared/Filters/FilterSelection';
-import FilterListHeader from 'Shared/Filters/FilterList/FilterListHeader';
-import UnifiedFilterList from 'Shared/Filters/FilterList/UnifiedFilterList';
+
+import {
+  FilterBar,
+  buildFilterEditor,
+  seriesTarget,
+  useCatalogue,
+} from 'Shared/FilterEditor';
+
+import './condition-set.css';
 
 interface Props {
   set: number;
   removeCondition: (ind: number) => void;
   index: number;
   readonly?: boolean;
-  onAddFilter: (filter: Record<string, any>) => void;
   conditions: any;
   bottomLine1: string;
   bottomLine2: string;
+  onChanged: () => void;
   onPercentChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onUpdateFilter: (filterIndex: number, filter: any) => void;
-  onRemoveFilter: (filterIndex: number) => void;
-  onChangeEventsOrder: (_: any, { name, value }: any) => void;
   changeName: (name: string) => void;
   isMobile?: boolean;
 }
 
+/** One recording condition: a rule set on the shared filter bar plus its capture rate. */
 function ConditionSetComponent({
   removeCondition,
   index,
   set,
   readonly,
-  onAddFilter,
   bottomLine1,
   bottomLine2,
   onPercentChange,
   conditions,
-  onUpdateFilter,
-  onRemoveFilter,
-  isMobile,
+  onChanged,
   changeName,
 }: Props) {
-  const { filterStore } = useStore();
   const { t } = useTranslation();
+  const all = useCatalogue();
+  const entries = React.useMemo(
+    () => all.filter((e) => (e.source as any)?.isConditional),
+    [all],
+  );
+  const editor = buildFilterEditor(seriesTarget(conditions.filter, onChanged));
+  const [name, setName] = React.useState(conditions.name ?? '');
+  React.useEffect(() => setName(conditions.name ?? ''), [conditions.name]);
 
-  const indexedFilters = conditions.filter.filters.map((f, i) => ({
-    ...f,
-    originalIndex: i,
-  }));
-  const activeFilters = indexedFilters.map((f) => f.name);
-  const actualEvents = indexedFilters.filter((f) => f.isEvent);
-  const actualProperties = indexedFilters.filter((f) => !f.isEvent);
-
-  const allFilterOptions: Filter[] = filterStore.getCurrentProjectFilters();
-  const allowedOptions = allFilterOptions.filter((f) => f.isConditional);
-  const eventOptions: Filter[] = allowedOptions.filter((i) => i.isEvent);
-  const propertyOptions: Filter[] = allowedOptions.filter((i) => !i.isEvent);
-  const disableEvents = false;
-
-  const onFilterMove = (draggedIdx: number, targetIdx: number) => {
-    conditions.filter.moveFilter(draggedIdx, targetIdx);
-  };
   return (
-    <div className="border bg-white rounded-sm">
-      <div className="flex items-center border-b px-4 py-2 gap-2">
-        {conditions.name ? (
-          <div className="flex gap-2">
-            <BranchesOutlined rotate={90} />
-            <Typography.Text
-              className="underline decoration-dashed decoration-black cursor-pointer"
-              editable={{
-                onChange: changeName,
-                triggerType: ['icon', 'text'],
-                maxLength: 20,
-              }}
-            >
-              {conditions.name}
-            </Typography.Text>
-          </div>
-        ) : (
-          <>
-            <div>{t('Condition')}</div>
-            <div className="p-2 rounded-sm bg-gray-lightest">
-              {t('Set')}
-              {set}
-            </div>
-          </>
-        )}
-        {readonly ? null : (
-          <div
-            className={cn(
-              'p-2 px-4 cursor-pointer rounded-sm ml-auto',
-              'hover:bg-teal-light',
-            )}
-            onClick={() => removeCondition(index)}
-          >
-            <Icon name="trash" color="main" />
-          </div>
-        )}
-      </div>
-      <div className="p-2">
-        <div className={conditions.filter.filters.length > 0 ? 'p-2 mb-2' : ''}>
-          <FilterListHeader
-            title="Events"
-            showEventsOrder={false}
-            filterSelection={
-              <FilterSelection
-                disabled={disableEvents}
-                activeFilters={activeFilters}
-                filters={eventOptions}
-                onFilterClick={onAddFilter}
-              >
-                <Button type="default" size="small">
-                  <div className="flex items-center gap-1">
-                    <Plus size={16} strokeWidth={1} />
-                    <span>Add</span>
-                  </div>
-                </Button>
-              </FilterSelection>
-            }
-          />
-
-          <UnifiedFilterList
-            title="Events"
-            filters={actualEvents}
-            isDraggable={true}
-            showIndices={true}
-            className="mt-2"
-            handleRemove={
-              disableEvents
-                ? undefined
-                : (idx) => onRemoveFilter(actualEvents[idx].originalIndex)
-            }
-            handleUpdate={(idx, filter) =>
-              onUpdateFilter(actualEvents[idx].originalIndex, filter)
-            }
-            handleAdd={onAddFilter}
-            handleMove={(draggedIdx, newPos) => {
-              const dragged = actualEvents[draggedIdx];
-              const target = actualEvents[newPos];
-              onFilterMove(dragged.originalIndex, target.originalIndex);
-            }}
-          />
-
-          <FilterListHeader
-            title="Filters"
-            showEventsOrder={actualProperties.length > 0}
-            filterSelection={
-              <FilterSelection
-                filters={propertyOptions}
-                onFilterClick={onAddFilter}
-                activeFilters={activeFilters}
-              >
-                <Button type="default" size="small">
-                  <div className="flex items-center gap-1">
-                    <Plus size={16} strokeWidth={1} />
-                    <span>Add</span>
-                  </div>
-                </Button>
-              </FilterSelection>
-            }
-          />
-
-          <UnifiedFilterList
-            title="Filters"
-            filters={actualProperties}
-            isDraggable={false}
-            showIndices={false}
-            className="mt-2"
-            isHeatmap={false}
-            handleRemove={(idx) =>
-              onRemoveFilter(actualProperties[idx].originalIndex)
-            }
-            handleUpdate={(idx, filter) =>
-              onUpdateFilter(actualProperties[idx].originalIndex, filter)
-            }
-            handleAdd={onAddFilter}
-            handleMove={onFilterMove}
-          />
-          {readonly && !conditions.filter?.filters?.length ? (
-            <div className="p-2">{t('No conditions')}</div>
-          ) : null}
-        </div>
-      </div>
-      <div className="px-4 py-2 flex items-center gap-2 border-t">
-        <span>{bottomLine1}</span>
+    <section className="m-condset">
+      <header className="m-condset__head">
         {readonly ? (
-          <div className="font-semibold">{conditions.rolloutPercentage}%</div>
+          <span className="m-condset__name">
+            {conditions.name || `${t('Condition set')} ${set}`}
+          </span>
         ) : (
           <Input
-            type="text"
-            width={60}
-            value={conditions.rolloutPercentage}
-            onChange={onPercentChange}
-            leadingButton={<div className="p-2 text-disabled-text">%</div>}
+            variant="bare"
+            className="m-condset__name px-0"
+            value={name}
+            maxLength={20}
+            placeholder={`${t('Condition set')} ${set}`}
+            aria-label={t('Condition set name')}
+            onChange={(e) => setName(e.target.value)}
+            onBlur={() => name.trim() && changeName(name.trim())}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+            }}
           />
         )}
-
+        {readonly ? null : (
+          <IconButton
+            icon={<Trash2 size={14} />}
+            label={t('Remove condition set')}
+            variant="ghost"
+            onClick={() => removeCondition(index)}
+          />
+        )}
+      </header>
+      {readonly && !conditions.filter?.filters?.length ? (
+        <p className="m-condset__none">{t('No conditions')}</p>
+      ) : (
+        <div className="m-condset__rules">
+          <FilterBar
+            variant="panel"
+            editor={editor}
+            entries={entries}
+            lead={t('Say which sessions this set records')}
+          />
+        </div>
+      )}
+      <footer className="m-condset__foot">
+        <span>{bottomLine1}</span>
+        {readonly ? (
+          <strong>{conditions.rolloutPercentage}%</strong>
+        ) : (
+          <span className="m-condset__rate">
+            <Input
+              className="tabular-nums"
+              inputMode="numeric"
+              value={conditions.rolloutPercentage}
+              aria-label={t('Capture rate')}
+              suffix="%"
+              onChange={onPercentChange}
+            />
+          </span>
+        )}
         <span>{bottomLine2}</span>
-      </div>
-    </div>
+      </footer>
+    </section>
   );
 }
 

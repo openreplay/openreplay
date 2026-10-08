@@ -1,10 +1,8 @@
-import { Alert } from 'antd';
+import { Notice } from '@/ui/feedback/Notice';
 import ENV from 'env';
 import { ArrowUpRight, X } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-
-import { Icon } from 'UI';
 
 const localhostWarn = (project: string) => `${project}_localhost_warn`;
 const vModeWarn = (project: string) => `${project}_v_mode_warn`;
@@ -135,7 +133,7 @@ const WarnBadge = React.memo(
     };
     const defaultContainerClass = 'lg:flex flex-col hidden';
     const defaultWarnClass =
-      'px-3 py-.5 border border-gray-lighter shadow-xs rounded-sm bg-active-blue flex items-center justify-between';
+      'px-3 py-.5 border border-border-subtle shadow-xs rounded-sm bg-surface-selected flex items-center justify-between';
 
     const mergedContainerStyle = {
       ...defaultContainerStyle,
@@ -174,7 +172,7 @@ const WarnBadge = React.memo(
               className="py-1 ml-3 cursor-pointer"
               onClick={() => closeWarning(WARNINGS.LOCALHOST)}
             >
-              <Icon name="close" size={16} color="black" />
+              <X size={16} aria-hidden="true" />
             </div>
           </div>
         ) : null}
@@ -210,12 +208,12 @@ const WarnBadge = React.memo(
               className="py-1 ml-3 cursor-pointer"
               onClick={() => closeWarning(WARNINGS.TRACKER_VERSION)}
             >
-              <Icon name="close" size={16} color="#000000" />
+              <X size={16} aria-hidden="true" />
             </div>
           </div>
         ) : null}
         {warnings[WARNINGS.VIRTUAL_ELS_FAIL] ? (
-          <div className="px-3 py-1 border border-gray-lighter drop-shadow-md rounded-sm bg-active-blue flex items-center justify-between">
+          <div className="px-3 py-1 border border-border-subtle drop-shadow-md rounded-sm bg-surface-selected flex items-center justify-between">
             <div className="flex flex-col">
               <div>
                 {t(
@@ -252,12 +250,9 @@ export function PartialSessionBadge() {
         bottom: '1.3rem',
       }}
     >
-      <Alert
-        message={t('You are viewing a portion of full session')}
-        type="info"
-        className="border-0 rounded-lg py-0.5"
-        showIcon
-      />
+      <Notice kind="info">
+        {t('You are viewing a portion of full session')}
+      </Notice>
     </div>
   );
 }

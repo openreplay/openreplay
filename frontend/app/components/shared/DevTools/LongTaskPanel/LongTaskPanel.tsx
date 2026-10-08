@@ -1,16 +1,15 @@
-import { InfoCircleOutlined } from '@ant-design/icons';
-import { Input, Segmented, Select, Tag } from 'antd';
-import { Hourglass } from 'lucide-react';
+import { InlineSelect } from '@/ui/inputs/select';
+import { ChevronRight, Hourglass } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { VList, VListHandle } from 'virtua';
 
 import { PlayerContext } from 'App/components/Session/playerContext';
-import { Icon, NoContent } from 'UI';
 
 import BottomBlock from '../BottomBlock';
 import JumpButton from '../JumpButton';
+import { Keyword, NoData, PanelTabs } from '../PanelKit';
 import { useRegExListFilterMemo } from '../useListFilter';
 import Script from './Script';
 import TaskTimeline from './TaskTimeline';
@@ -52,11 +51,6 @@ function LongTaskPanel() {
     searchValue,
   );
 
-  const onFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearchValue(value);
-  };
-
   const onRowClick = (time: number) => {
     player.jump(time);
   };
@@ -95,62 +89,37 @@ function LongTaskPanel() {
   return (
     <BottomBlock style={{ height: '100%' }}>
       <BottomBlock.Header>
-        <div className="flex items-center gap-2">
-          <span className="font-semibold color-gray-medium mr-4">
-            {t('Long Tasks')}
-          </span>
-        </div>
-        <div className="flex items-center gap-4">
-          <Segmented
-            size={'small'}
-            value={tab}
-            onChange={setTab}
-            options={[
-              { label: t('All'), value: 'all' },
-              {
-                label: (
-                  <div>
-                    {t('Blocking')} ({blockingTasks})
-                  </div>
-                ),
-                value: 'blocking',
-              },
-            ]}
-          />
-          <Select
-            size="small"
-            className="rounded-lg"
+        <PanelTabs
+          label={t('Long tasks')}
+          active={tab}
+          onSelect={(v) => setTab(v as typeof tab)}
+          items={[
+            { key: 'all', label: t('All'), count: longTasks.length },
+            { key: 'blocking', label: t('Blocking'), count: blockingTasks },
+          ]}
+        />
+        <div className="m-dt__bar-right">
+          <InlineSelect
+            ariaLabel={t('Sort tasks')}
             value={sortBy}
             onChange={setSortBy}
-            popupMatchSelectWidth={150}
-            dropdownStyle={{ minWidth: '150px' }}
             options={[
-              { label: t('Default Order'), value: 'timeAsc' },
-              { label: t('Blocking Duration'), value: 'blockingDesc' },
-              { label: t('Task Duration'), value: 'durationDesc' },
+              { label: t('Default order'), value: 'timeAsc' },
+              { label: t('Blocking duration'), value: 'blockingDesc' },
+              { label: t('Task duration'), value: 'durationDesc' },
             ]}
           />
-          <Input.Search
-            className="rounded-lg"
-            placeholder={t('Filter by name or source URL')}
-            name="filter"
-            onChange={onFilterChange}
+          <Keyword
             value={searchValue}
-            size="small"
+            onChange={setSearchValue}
+            placeholder={t('Filter by name or source URL')}
           />
         </div>
       </BottomBlock.Header>
       <BottomBlock.Content>
-        <NoContent
-          title={
-            <div className="capitalize flex items-center gap-2">
-              <InfoCircleOutlined size={18} />
-              {t('No Data')}
-            </div>
-          }
-          size="small"
-          show={filteredList.length === 0}
-        >
+        {filteredList.length === 0 ? (
+          <NoData hint={t('No long animation frames were recorded.')} />
+        ) : (
           <VList ref={_list} itemSize={25} data={rows}>
             {(task) => (
               <LongTaskRow
@@ -160,7 +129,7 @@ function LongTaskPanel() {
               />
             )}
           </VList>
-        </NoContent>
+        )}
       </BottomBlock.Content>
     </BottomBlock>
   );
@@ -173,14 +142,11 @@ function LongTaskRow({
   task: Row;
   onJump: (time: number) => void;
 }) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = React.useState(false);
 
   return (
-    <div
-      className={
-        'relative border-b border-gray-lighter group hover:bg-active-blue py-1 px-4 pe-8'
-      }
-    >
+    <div className="m-dt__row m-dt__task has-tail group">
       <div className="flex flex-col w-full">
         <TaskTitle
           expanded={expanded}
@@ -190,15 +156,13 @@ function LongTaskRow({
         {expanded ? (
           <>
             <TaskTimeline task={task} />
-            <div className={'flex items-center gap-1 mb-2'}>
-              <div className={'text-black font-medium'}>
-                First UI event timestamp:
-              </div>
-              <div className="color-gray-medium font-mono block">
+            <p className="m-dt__task-fact">
+              {t('First UI event timestamp:')}{' '}
+              <span className="m-mono">
                 {Math.round(task.firstUIEventTimestamp)} ms
-              </div>
-            </div>
-            <div className={'text-black font-medium'}>Scripts:</div>
+              </span>
+            </p>
+            <p className="m-dt__task-fact">{t('Scripts:')}</p>
             <div className="flex flex-col gap-1">
               {task.scripts.map((script, index) => (
                 <Script script={script} key={index} />
@@ -226,6 +190,7 @@ function TaskTitle({
   expanded: boolean;
   toggleExpand: () => void;
 }) {
+  const { t } = useTranslation();
   const isBlocking =
     entry.blockingDuration !== undefined && entry.blockingDuration > 0;
 
@@ -234,27 +199,20 @@ function TaskTitle({
   );
   const { title, plusMore } = getFirstTwoScripts(scriptTitles);
   return (
-    <div
-      className={'flex items-center gap-1 text-sm cursor-pointer'}
-      onClick={toggleExpand}
-    >
-      <Icon name={expanded ? 'caret-down-fill' : 'caret-right-fill'} />
-      <span className="font-mono font-bold">{title}</span>
-      <Tag color="default" variant="filled">
-        {plusMore}
-      </Tag>
-      <span className={'color-gray-medium font-mono'}>
+    <div className="m-dt__task-title" onClick={toggleExpand}>
+      <span className="m-dt__rowopen" aria-expanded={expanded}>
+        <ChevronRight size={11} />
+      </span>
+      <span className="m-mono m-dt__task-name">{title}</span>
+      {plusMore ? <span className="m-dt__chip">{plusMore}</span> : null}
+      <span className="m-mono m-dt__task-ms">
         {Math.round(entry.duration)} ms
       </span>
       {isBlocking ? (
-        <Tag
-          variant="filled"
-          color="red"
-          className="font-mono! rounded-lg! text-xs! flex! gap-1! items-center! color-red!"
-        >
-          <Hourglass size={11} /> {Math.round(entry.blockingDuration!)}
-          <div>ms blocking</div>
-        </Tag>
+        <span className="m-dt__chip is-bad m-mono">
+          <Hourglass size={11} /> {Math.round(entry.blockingDuration!)} ms{' '}
+          {t('blocking')}
+        </span>
       ) : null}
     </div>
   );

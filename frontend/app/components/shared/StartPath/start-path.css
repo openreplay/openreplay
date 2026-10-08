@@ -1,0 +1,99 @@
+.m-path {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--m-space-2);
+}
+.m-path__step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--m-space-3);
+  width: 9.5rem;
+  text-align: center;
+}
+
+.m-path__step + .m-path__step::before {
+  content: '';
+  position: absolute;
+  top: 1.25rem;
+  right: calc(50% + 1.5rem);
+  width: calc(100% - 3rem + var(--m-space-2));
+  height: 1px;
+  background: var(--m-border-default);
+}
+.m-path__ring {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--m-radius-full);
+  border: 1.5px solid var(--m-border-strong);
+  background: var(--m-surface-default);
+  color: var(--m-content-secondary);
+}
+.m-path__ring svg {
+  width: 16px;
+  height: 16px;
+}
+.m-path__n {
+  position: absolute;
+  right: -0.375rem;
+  bottom: -0.375rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: var(--m-radius-full);
+  border: 1.5px solid var(--m-surface-default);
+  background: var(--m-surface-sunken);
+  color: var(--m-content-secondary);
+  font-family: var(--m-font-num);
+  font-size: var(--m-text-2xs);
+  font-weight: var(--m-weight-medium);
+  line-height: 1;
+}
+.m-path__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.m-path__label {
+  font-size: var(--m-text-xs);
+  font-weight: var(--m-weight-medium);
+  color: var(--m-content-primary);
+  line-height: var(--m-leading-snug);
+}
+.m-path__hint {
+  font-size: var(--m-text-2xs);
+  color: var(--m-content-muted);
+  line-height: var(--m-leading-snug);
+}
+
+@media (max-width: 640px) {
+  .m-path {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--m-space-4);
+  }
+  .m-path__step {
+    flex-direction: row;
+    text-align: left;
+    width: auto;
+  }
+  .m-path__step + .m-path__step::before {
+    top: auto;
+    right: auto;
+    left: 1.25rem;
+    bottom: calc(100% + var(--m-space-1));
+    width: 1px;
+    height: calc(var(--m-space-4) - var(--m-space-1) * 2);
+  }
+}

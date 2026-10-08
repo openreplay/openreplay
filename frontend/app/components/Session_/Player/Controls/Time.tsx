@@ -1,8 +1,9 @@
-import React from 'react';
-import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
-import { PlayTime, RealPlayTime } from 'App/player-ui';
+import React from 'react';
+
+import { PlayerContext } from 'App/components/Session/playerContext';
 import { useStore } from 'App/mstore';
+import { PlayTime, RealPlayTime } from 'App/player-ui';
 
 interface IProps {
   format: string;

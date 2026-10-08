@@ -1,47 +1,61 @@
-import React, { useEffect, useState } from 'react';
-import { Modal, Loader } from 'UI';
-import { createIOSPlayer } from 'Player';
-import { wrapPlayerStore } from 'Components/Session/playerStore';
+import { Chip } from '@/ui/data/Chip';
+import { Loader } from '@/ui/feedback/Loader';
+import { toast } from '@/ui/overlays/toast';
 import withLocationHandlers from 'HOCs/withLocationHandlers';
-import { useStore } from 'App/mstore';
-import MobilePlayerHeader from 'Components/Session/Player/MobilePlayer/MobilePlayerHeader';
+import { createIOSPlayer } from 'Player';
 import { observer } from 'mobx-react-lite';
-import { Note } from 'App/services/NotesService';
-import { useParams } from 'App/routing';
-import { toast } from 'react-toastify';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { IFRAME } from 'App/constants/storageKeys';
+import { countDaysFrom } from 'App/date';
+import { useStore } from 'App/mstore';
+import { sessions as sessionsRoute, withSiteId } from 'App/routes';
+import { useNavigate, useParams } from 'App/routing';
 import PlayerErrorBoundary from 'Components/Session/Player/PlayerErrorBoundary';
+import { wrapPlayerStore } from 'Components/Session/playerStore';
+
+import PlayerBlock from './Player/MobilePlayer/PlayerBlock';
+import ReplayActions from './ReplayScreen/ReplayActions';
+import ReplayLead from './ReplayScreen/ReplayLead';
+import { ReplayScreen } from './ReplayScreen/ReplayScreen';
+import RightBlock from './RightBlock';
 import {
   IOSPlayerContext,
-  defaultContextValue,
   MobilePlayerContext,
+  defaultContextValue,
 } from './playerContext';
-import PlayerContent from './Player/MobilePlayer/PlayerContent';
-import ReadNote from '../Session_/Player/Controls/components/ReadNote';
-
-const TABS = {
-  EVENTS: 'User Events',
-};
 
 let playerInst: IOSPlayerContext['player'] | undefined;
 
 function MobilePlayer(props: any) {
-  const {
-    notesStore,
-    sessionStore,
-    uiPlayerStore,
-    integrationsStore,
-    userStore,
-  } = useStore();
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { sessionStore, uiPlayerStore, integrationsStore, projectsStore } =
+    useStore();
   const session = sessionStore.current;
   const [activeTab, setActiveTab] = useState('');
-  const [noteItem, setNoteItem] = useState<Note | undefined>(undefined);
   // @ts-ignore
   const [contextValue, setContextValue] =
     useState<IOSPlayerContext>(defaultContextValue);
   const params: { sessionId: string } = useParams();
-  const { fullscreen } = uiPlayerStore;
-  const { toggleFullscreen } = uiPlayerStore;
-  const { closeBottomBlock } = uiPlayerStore;
+  const { fullscreen, toggleFullscreen, closeBottomBlock } = uiPlayerStore;
+  const hideBack = localStorage.getItem(IFRAME) === 'true';
+  const [fullView, setFullView] = useState(false);
+
+  const back = () => {
+    const { sessionPath } = sessionStore;
+    const list = withSiteId(sessionsRoute(), projectsStore.siteId!);
+    if (
+      !sessionPath?.pathname ||
+      sessionPath.pathname === document.location.pathname ||
+      sessionPath.pathname.includes('/session/')
+    ) {
+      navigate(list);
+    } else {
+      navigate(sessionPath.pathname + sessionPath.search);
+    }
+  };
 
   useEffect(() => {
     playerInst = undefined;
@@ -55,17 +69,15 @@ function MobilePlayer(props: any) {
     );
     setContextValue({ player: IOSPlayerInst, store: PlayerStore });
     playerInst = IOSPlayerInst;
-
-    notesStore.fetchSessionNotes(session.sessionId).then((r) => {
-      const note = props.query.get('note');
-      if (note) {
-        setNoteItem(notesStore.getNoteById(parseInt(note, 10), r));
-        IOSPlayerInst.pause();
-      }
-    });
   }, [session.sessionId]);
 
-  const { messagesProcessed } = contextValue.store?.get() || {};
+  useEffect(() => {
+    setFullView(
+      new URLSearchParams(location.search).get('fullview') === 'true',
+    );
+  }, [session.sessionId]);
+
+  const { messagesProcessed, error } = contextValue.store?.get() || {};
 
   React.useEffect(() => {
     if (
@@ -77,25 +89,14 @@ function MobilePlayer(props: any) {
   }, [session.events, session.errors, contextValue.player, messagesProcessed]);
 
   React.useEffect(() => {
-    if (noteItem !== undefined) {
-      contextValue.player.pause();
-    }
-
-    if (
-      activeTab === '' &&
-      !noteItem !== undefined &&
-      messagesProcessed &&
-      contextValue.player
-    ) {
+    if (activeTab === '' && messagesProcessed && contextValue.player) {
       const jumpToTime = props.query.get('jumpto');
-
       if (jumpToTime) {
         contextValue.player.jump(parseInt(jumpToTime));
       }
-
       contextValue.player.play();
     }
-  }, [activeTab, noteItem, messagesProcessed]);
+  }, [activeTab, messagesProcessed]);
 
   useEffect(
     () => () => {
@@ -108,11 +109,6 @@ function MobilePlayer(props: any) {
     },
     [params.sessionId],
   );
-
-  const onNoteClose = () => {
-    setNoteItem(undefined);
-    contextValue.player.play();
-  };
 
   if (!session.sessionId) {
     return (
@@ -129,43 +125,82 @@ function MobilePlayer(props: any) {
     );
   }
 
+  const {
+    width = 0,
+    height = 0,
+    showEvents = false,
+  } = contextValue.store?.get() || {};
+  const onPanel = (key: string | null) => {
+    const next = key ?? '';
+    if ((next === '') !== (activeTab === '') && contextValue.player) {
+      if (next === '' || !showEvents) contextValue.player.toggleEvents();
+    }
+    setActiveTab(next);
+  };
+
+  const player = !contextValue.player ? (
+    <Loader style={{ margin: 'auto' }} />
+  ) : error ? (
+    <NotReady startedAt={session.startedAt ?? 0} />
+  ) : (
+    <PlayerBlock
+      activeTab={activeTab}
+      setActiveTab={onPanel}
+      fullView={fullView}
+    />
+  );
+
   return (
     <MobilePlayerContext.Provider value={contextValue}>
-      <MobilePlayerHeader
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        tabs={TABS}
-        fullscreen={fullscreen}
-      />
       <PlayerErrorBoundary>
-        {contextValue.player ? (
-          <PlayerContent
-            activeTab={activeTab}
-            fullscreen={fullscreen}
-            setActiveTab={setActiveTab}
-            session={session}
-          />
+        {fullView ? (
+          player
         ) : (
-          <Loader
-            style={{
-              position: 'fixed',
-              top: '0%',
-              left: '50%',
-              transform: 'translateX(-50%)',
-            }}
-          />
+          <ReplayScreen
+            back={
+              hideBack ? undefined : { label: t('Sessions'), onClick: back }
+            }
+            lead={<ReplayLead width={width} height={height} />}
+            actions={
+              <>
+                <Chip kind="status" tone="success">
+                  {session.platform === 'ios' ? 'iOS' : 'Android'} {t('beta')}
+                </Chip>
+                <ReplayActions activeTab={activeTab} setActiveTab={onPanel} />
+              </>
+            }
+            panels={[{ key: 'EVENTS', label: t('Activity') }]}
+            panel={activeTab || null}
+            onPanel={onPanel}
+            renderPanel={(key) => (
+              <RightBlock activeTab={key} setActiveTab={onPanel} embedded />
+            )}
+            fullscreen={fullscreen}
+          >
+            {player}
+          </ReplayScreen>
         )}
-        <Modal open={noteItem !== undefined} onClose={onNoteClose}>
-          {noteItem !== undefined ? (
-            <ReadNote
-              note={noteItem}
-              onClose={onNoteClose}
-              notFound={!noteItem}
-            />
-          ) : null}
-        </Modal>
       </PlayerErrorBoundary>
     </MobilePlayerContext.Provider>
+  );
+}
+
+function NotReady({ startedAt }: { startedAt: number }) {
+  const { t } = useTranslation();
+  const old = countDaysFrom(startedAt) > 2;
+  return (
+    <div className="m-player items-center justify-center text-center">
+      <p className="text-lg">
+        {old
+          ? t('Session not found.')
+          : t('This session is still being processed.')}
+      </p>
+      <p className="text-sm text-content-muted">
+        {old
+          ? t('Please check your data retention policy.')
+          : t('Please check it again in a few minutes.')}
+      </p>
+    </div>
   );
 }
 

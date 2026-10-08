@@ -1,5 +1,6 @@
-import React from 'react';
 import type { MarkedTarget } from 'Player';
+import React from 'react';
+
 import Marker from './ElementsMarker/Marker';
 
 export default function ElementsMarker({

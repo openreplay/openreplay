@@ -1,16 +1,14 @@
-import {
-  CaretDownOutlined,
-  ControlOutlined,
-  MutedOutlined,
-  SoundOutlined,
-} from '@ant-design/icons';
-import { Button, InputNumber, Popover, Slider } from 'antd';
-import cn from 'classnames';
+import { IconButton } from '@/ui/actions/IconButton';
+import { Button } from '@/ui/actions/button';
+import { NumberInput } from '@/ui/inputs/number-input';
+import { PopoverPanel } from '@/ui/overlays/popover';
+import { AudioLines, ChevronDown, Volume2, VolumeX } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useContext, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { PlayerContext } from 'App/components/Session/playerContext';
-import { useTranslation } from 'react-i18next';
+
 import { canAutoplay } from './utils';
 
 function DropdownAudioPlayer({
@@ -239,89 +237,85 @@ function DropdownAudioPlayer({
     }
   };
 
-  const buttonIcon =
-    'px-2 cursor-pointer border border-gray-light hover:border-main hover:text-main hover:z-10 h-fit';
   return (
     <div className="relative">
       {hasInteractionError ? (
-        <div
-          className="fixed h-screen w-screen bottom-0 left-0 z-50 bg-gray-lighter opacity-70 cursor-pointer"
+        <button
+          type="button"
+          className="fixed bottom-0 left-0 z-50 flex h-screen w-screen items-center justify-center bg-[var(--m-scrim)]"
           onClick={onInteract}
         >
-          <div className="flex items-center justify-center h-full">
-            <div className="text-black">{t('Click to resume replay.')}</div>
-          </div>
-        </div>
+          <span className="rounded-control bg-surface-raised px-4 py-2 text-sm text-content-primary">
+            {t('Click to resume replay.')}
+          </span>
+        </button>
       ) : null}
-      <div className="flex items-center" style={{ height: 24 }}>
-        <Popover
-          trigger="click"
+      <div className="flex items-center">
+        <PopoverPanel
+          placement="top"
+          className="p-3"
           content={
-            <div
-              className="flex flex-col gap-2 rounded-sm"
-              style={{ height: 200 }}
-            >
-              <Slider vertical value={volume} onChange={onVolumeChange} />
-              <Button
-                className="flex items-center justify-center py-4 px-4"
+            <div className="flex items-center gap-3">
+              <IconButton
+                icon={isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+                label={isMuted ? t('Unmute') : t('Mute')}
+                variant="ghost"
                 onClick={toggleMute}
-                shape="circle"
-              >
-                {isMuted ? <MutedOutlined /> : <SoundOutlined />}
-              </Button>
+              />
+              <input
+                type="range"
+                min={0}
+                max={100}
+                value={volume}
+                aria-label={t('Volume')}
+                className="w-32 accent-[var(--m-content-accent)]"
+                onChange={(e) => onVolumeChange(Number(e.target.value))}
+              />
             </div>
           }
         >
-          <div className={cn(buttonIcon, 'rounded-l')}>
-            {isMuted ? <MutedOutlined /> : <SoundOutlined />}
-          </div>
-        </Popover>
-        <div
+          <span>
+            <IconButton
+              icon={isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+              label={t('Audio volume')}
+              variant="ghost"
+            />
+          </span>
+        </PopoverPanel>
+        <IconButton
+          icon={<ChevronDown size={14} />}
+          label={t('Audio track synchronization')}
+          variant="ghost"
           onClick={toggleVisible}
-          style={{ marginLeft: -1 }}
-          className={cn(buttonIcon, 'rounded-r')}
-        >
-          <CaretDownOutlined />
-        </div>
+        />
       </div>
 
       {isVisible ? (
         <div
-          className="absolute left-1/2 top-0 border shadow-sm border-gray-light rounded-sm bg-white p-4 flex flex-col gap-4 mb-4"
+          className="m-elevated absolute left-1/2 top-0 flex flex-col gap-4 rounded-surface border border-border-subtle bg-surface-raised p-4"
           style={{
             width: 240,
             transform: 'translate(-75%, -110%)',
             zIndex: 101,
           }}
         >
-          <div className="font-semibold flex items-center gap-2">
-            <ControlOutlined />
-            <div>{t('Audio Track Synchronization')}</div>
+          <div className="flex items-center gap-2 text-sm font-medium text-content-primary">
+            <AudioLines size={14} />
+            {t('Audio track synchronization')}
           </div>
-          <InputNumber
-            style={{ width: 180 }}
+          <NumberInput
             value={deltaInputValue}
-            size="small"
-            step="0.250"
-            name="audio delta"
-            formatter={(value) => `${value}s`}
-            parser={(value) => value?.replace('s', '') as unknown as number}
-            stringMode
-            onChange={handleDelta}
+            step={0.25}
+            aria-label={t('Audio delta in seconds')}
+            suffix="s"
+            onChange={(v) => handleDelta(v ?? 0)}
           />
           <div className="w-full flex items-center gap-2">
-            <Button size="small" type="primary" onClick={onSync}>
+            <Button variant="primary" onClick={onSync}>
               {t('Sync')}
             </Button>
-            <Button size="small" onClick={onCancel}>
-              {t('Cancel')}
-            </Button>
-            <Button
-              size="small"
-              type="text"
-              className="ml-auto"
-              onClick={onReset}
-            >
+            <Button onClick={onCancel}>{t('Cancel')}</Button>
+            <Button variant="subtle" className="ml-auto" onClick={onReset}>
               {t('Reset')}
             </Button>
           </div>

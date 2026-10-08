@@ -1,6 +1,6 @@
-import { Tooltip } from 'antd';
-import cn from 'classnames';
+import { Tooltip } from '@/ui/overlays/tooltip';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   i: number;
@@ -13,42 +13,29 @@ interface Props {
 }
 
 function Tab({ i, tab, currentTab, changeTab, isLive, isClosed, name }: Props) {
+  const { t } = useTranslation();
+  const shown = currentTab === tab;
+  const title = name || t('Tab {{n}}', { n: i + 1 });
   return (
-    <div
-      key={tab}
-      style={{
-        marginBottom: '-2px',
-      }}
-      onClick={() => changeTab?.(tab)}
-      className={cn(
-        'self-end py-1 px-4 text-sm',
-        changeTab && !isLive ? 'cursor-pointer' : 'cursor-default',
-        currentTab === tab
-          ? 'border-gray-lighter border-t border-l border-r border-b-white! bg-white rounded-tl rounded-tr font-semibold'
-          : 'cursor-pointer border-gray-lighter border-b! border-t-transparent! border-l-transparent! border-r-transparent!',
-      )}
+    <Tooltip
+      title={isClosed ? t('{{title}} · closed', { title }) : title}
+      side="bottom"
+      delay={500}
     >
-      <Tooltip
-        title={name && name.length > 20 ? name : ''}
-        mouseEnterDelay={0.5}
+      <button
+        type="button"
+        role="tab"
+        aria-selected={shown}
+        disabled={isLive}
+        className={`m-rtabs__tab${shown ? ' is-shown' : ''}${isClosed ? ' is-closed' : ''}`}
+        onClick={() => changeTab?.(tab)}
       >
-        <div className="flex items-center gap-2">
-          <div className="bg-gray-light rounded-full min-w-5 min-h-5 w-5 h-5 flex items-center justify-center text-xs">
-            <div>{i + 1}</div>
-          </div>
-          <div
-            className={cn('whitespace-nowrap', isClosed ? 'line-through' : '')}
-            style={{
-              maxWidth: 114,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}
-          >
-            {name || `Tab ${i + 1}`}
-          </div>
-        </div>
-      </Tooltip>
-    </div>
+        <span className="m-rtabs__n m-mono" aria-hidden="true">
+          {i + 1}
+        </span>
+        <span className="m-rtabs__title m-truncate">{title}</span>
+      </button>
+    </Tooltip>
   );
 }
 

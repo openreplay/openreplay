@@ -1,13 +1,16 @@
-import React, { useState } from 'react';
 import cn from 'classnames';
+import { ChevronRight, CircleAlert, Info, TriangleAlert } from 'lucide-react';
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import ExplainButton from 'Shared/DevTools/ExplainButton';
-import { Icon, CopyButton } from 'UI';
-import JumpButton from 'Shared/DevTools/JumpButton';
+import JumpButton, { RowCopy } from 'Shared/DevTools/JumpButton/JumpButton';
+
 import TabTag from '../TabTag';
 
 interface Props {
   log: any;
-  iconProps: any;
+  iconProps?: any;
   jump?: any;
   renderWithNL?: any;
   style?: any;
@@ -16,118 +19,106 @@ interface Props {
   showSingleTab: boolean;
   sessionId: string;
 }
+
+const urlRegex = /(https?:\/\/[^\s)]+)/g;
+
+function renderLine(l: string) {
+  return l.split(urlRegex).map((part, index) =>
+    urlRegex.test(part) ? (
+      <a
+        key={`link-${index}`}
+        className="m-dt__loglink"
+        href={part}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {part}
+      </a>
+    ) : (
+      part
+    ),
+  );
+}
+
+const levelOf = (log: any) =>
+  log.isRed ? 'error' : log.isYellow ? 'warn' : 'info';
+const LEVEL_ICON = { error: CircleAlert, warn: TriangleAlert, info: Info };
+
 function ConsoleRow(props: Props) {
-  const { log, iconProps, jump, renderWithNL, style } = props;
+  const { t } = useTranslation();
+  const { log, jump, style } = props;
   const [expanded, setExpanded] = useState(false);
-  const lines = log.value?.split('\n').filter((l: any) => !!l) || [];
+  const lines: string[] =
+    log.value?.split('\n').filter((l: string) => !!l) || [];
   const canExpand = lines.length > 1;
   const clickable = canExpand || !!log.errorId;
+  const level = levelOf(log);
+  const Icon = LEVEL_ICON[level];
 
-  const toggleExpand = () => {
-    setExpanded(!expanded);
-  };
-
-  const urlRegex = /(https?:\/\/[^\s)]+)/g;
-  const renderLine = (l: string) => {
-    const parts = l.split(urlRegex);
-    const formattedLine = parts.map((part, index) => {
-      if (urlRegex.test(part)) {
-        return (
-          <a
-            key={`link-${index}`}
-            className="link text-main"
-            href={part}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {part}
-          </a>
-        );
-      }
-      return part;
-    });
-
-    return formattedLine;
-  };
-
-  const titleLine = lines[0];
-  const restLines = lines.slice(1);
   const logSource = props.showSingleTab ? -1 : props.getTabNum?.(log.tabId);
-  const logTabId = log.tabId;
+  const message = log.message ? `${log.value} ${log.message}` : log.value;
 
-  const logMessage = (log) =>
-    log.message ? `${log.value} ${log.message}` : log.value;
   return (
     <div
       style={style}
-      className={cn(
-        'border-b border-neutral-950/5 flex items-start gap-2 py-1 px-4 pe-8 overflow-hidden group relative',
-        {
-          info: !log.isYellow && !log.isRed,
-          warn: log.isYellow,
-          error: log.isRed,
-          'cursor-pointer': clickable,
-        },
-      )}
+      className={cn('m-dt__row m-dt__log has-tail group', {
+        'is-error': level === 'error',
+        'is-warn': level === 'warn',
+        'is-open': canExpand && expanded,
+        'is-inert': !clickable,
+      })}
       onClick={
         clickable
-          ? () => (log.errorId ? props.onClick?.() : toggleExpand())
+          ? () => (log.errorId ? props.onClick?.() : setExpanded(!expanded))
           : undefined
       }
+      data-scroll-item={log.isRed}
     >
-      {logSource !== -1 && <TabTag logSource={logSource} logTabId={logTabId} />}
-      <Icon size="14" {...iconProps} className="mt-0.5" />
-      <div key={log.key} data-scroll-item={log.isRed}>
-        <div className="flex items-start text-sm">
-          <div
-            className={cn('flex items-start', {
-              'cursor-pointer underline decoration-dotted decoration-gray-400':
-                !!log.errorId,
-            })}
-          >
-            {canExpand && (
-              <Icon
-                name={expanded ? 'caret-down-fill' : 'caret-right-fill'}
-                className="mr-2"
-              />
-            )}
-            <span className="font-mono ">{renderWithNL(titleLine)}</span>
-          </div>
-          {log.errorId && (
-            <div className="ml-2 overflow-hidden text-ellipsis text-wrap font-mono">
-              <span className="w-full">{log.message}</span>
-            </div>
-          )}
-        </div>
-        {canExpand &&
-          expanded &&
-          restLines.map((l: string, i: number) => (
-            <div
-              key={l.slice(0, 4) + i}
-              className="ml-4 mb-1 text-xs"
-              style={{ fontFamily: 'Menlo, Monaco, Consolas' }}
-            >
-              {renderLine(l)}
-            </div>
+      {logSource != null && logSource !== -1 && (
+        <TabTag logSource={logSource} logTabId={log.tabId} />
+      )}
+      {canExpand ? (
+        <span
+          className="m-dt__rowopen"
+          aria-expanded={expanded}
+          aria-label={expanded ? t('Collapse') : t('Expand')}
+        >
+          <ChevronRight size={11} />
+        </span>
+      ) : (
+        <span className="m-dt__rowopen is-empty" aria-hidden="true" />
+      )}
+      <Icon
+        size={12}
+        className={`m-dt__level is-${level}`}
+        aria-hidden="true"
+      />
+      <span className="m-dt__logtext m-mono">
+        {renderLine(lines[0] ?? '')}
+        {log.errorId && (
+          <span className="m-dt__logmsg m-dt__logref"> {log.message}</span>
+        )}
+      </span>
+      {canExpand && expanded && (
+        <pre className="m-dt__logbody m-mono">
+          {lines.slice(1).map((l, i) => (
+            <div key={i}>{renderLine(l)}</div>
           ))}
-      </div>
+        </pre>
+      )}
       <JumpButton
         extra={
           <>
-            <CopyButton variant="default" isIcon content={logMessage(log)} />
+            <RowCopy text={message} />
             <ExplainButton
               sessionId={props.sessionId}
-              log={{
-                level: log.level,
-                message: logMessage(log),
-              }}
+              log={{ level: log.level, message }}
             />
           </>
         }
         time={log.time}
-        onClick={() => {
-          jump(log.time);
-        }}
+        onClick={() => jump(log.time)}
       />
     </div>
   );

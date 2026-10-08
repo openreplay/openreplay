@@ -1,6 +1,7 @@
 import React from 'react';
-import cn from 'classnames';
-import styles from 'Components/Session_/playerBlock.module.css';
+
+import 'Components/Session/ReplayScreen/replay-player.css';
+
 import Player from './LivePlayerInst';
 import SubHeader from './LivePlayerSubHeader';
 
@@ -9,19 +10,15 @@ interface IProps {
   isMultiview?: boolean;
 }
 
-function LivePlayerBlock(props: IProps) {
-  const { fullView = false, isMultiview } = props;
-
-  const shouldShowSubHeader = !fullView && !isMultiview;
-
+function LivePlayerBlock({ fullView = false, isMultiview }: IProps) {
   return (
-    <div
-      className={cn(styles.playerBlock, 'flex flex-col', 'overflow-x-hidden')}
-      style={{ zIndex: undefined, minWidth: isMultiview ? '100%' : undefined }}
+    <section
+      className="m-player"
+      style={{ minWidth: isMultiview ? '100%' : undefined }}
     >
-      {shouldShowSubHeader ? <SubHeader live /> : null}
+      {!fullView && !isMultiview ? <SubHeader /> : null}
       <Player fullView={fullView} isMultiview={isMultiview} />
-    </div>
+    </section>
   );
 }
 

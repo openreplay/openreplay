@@ -1,22 +1,26 @@
 /* eslint-disable i18next/no-literal-string */
+import { Icon } from '@/ui/icons/Icon';
+import { PopoverPanel } from '@/ui/overlays/popover';
 import React from 'react';
-import { useModal } from 'App/components/Modal';
-import { Icon } from 'UI';
-import { shortDurationFromMs } from 'App/date';
+
 import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorDetailsModal';
+import { useModal } from 'App/components/Modal';
+import { PlayerContext } from 'App/components/Session/playerContext';
+import { shortDurationFromMs } from 'App/date';
+import { useStore } from 'App/mstore';
+
 import FetchDetails from 'Shared/FetchDetailsModal';
 import GraphQLDetailsModal from 'Shared/GraphQLDetailsModal';
-import { PlayerContext } from 'App/components/Session/playerContext';
-import { Popover } from 'antd';
+
 import StackEventModal from '../StackEventModal';
 import {
-  shortenResourceName,
-  NetworkElement,
-  getFrustration,
-  FrustrationElement,
-  StackEventElement,
-  PerformanceElement,
   ExceptionElement,
+  FrustrationElement,
+  NetworkElement,
+  PerformanceElement,
+  StackEventElement,
+  getFrustration,
+  shortenResourceName,
 } from './Dots';
 
 interface Props {
@@ -42,6 +46,7 @@ const TimelinePointer = React.memo((props: Props) => {
   const item = isGrouped ? pointer : pointer[0];
 
   const { showModal } = useModal();
+  const { uiPlayerStore } = useStore();
   const createEventClickHandler = (pointer: any, type: any) => (e: any) => {
     if (props.noClick) return;
     e.stopPropagation();
@@ -53,14 +58,13 @@ const TimelinePointer = React.memo((props: Props) => {
     if (type === 'ERRORS') {
       showModal(<ErrorDetailsModal errorId={pointer.errorId} />, {
         right: true,
-        width: 1200,
+        size: 'wide',
       });
     }
 
     if (type === 'EVENT') {
       showModal(<StackEventModal event={pointer} />, {
         right: true,
-        width: 450,
       });
     }
 
@@ -68,8 +72,9 @@ const TimelinePointer = React.memo((props: Props) => {
       if (pointer.tp === 'graph_ql') {
         showModal(<GraphQLDetailsModal resource={pointer} />, {
           right: true,
-          width: 500,
         });
+      } else if (uiPlayerStore.requestSheetHosts > 0) {
+        uiPlayerStore.openRequestSheet([pointer], 0);
       } else {
         showModal(
           <FetchDetails
@@ -159,18 +164,19 @@ function GroupedIssue({
   const title = `${items.length} ${subStr[type]} Observed`;
 
   return (
-    <Popover
+    <PopoverPanel
       placement="right"
-      title={title}
+      className="p-3"
       content={
         <div style={{ maxHeight: 160, overflowY: 'auto' }}>
+          <p className="mb-2 text-xs font-medium text-content-muted">{title}</p>
           {items.map((pointer) => (
             <div
               key={pointer.time}
               onClick={createEventClickHandler(pointer, type)}
-              className="flex items-center gap-2 mb-1 cursor-pointer border-b border-transparent hover:border-gray-lightest"
+              className="m-hover flex items-center gap-2 rounded-control px-2 py-1 cursor-pointer text-sm"
             >
-              <div className="text-secondary">
+              <div className="text-content-muted tabular-nums">
                 @{shortDurationFromMs(pointer.time)}
               </div>
               <RenderLineData type={type} item={pointer} />
@@ -179,13 +185,10 @@ function GroupedIssue({
         </div>
       }
     >
-      <div
-        onClick={onClick}
-        className="h-5 w-5 cursor-pointer rounded-full bg-red text-white font-bold flex items-center justify-center text-xs"
-      >
+      <button type="button" onClick={onClick} className="m-dt__mark is-group">
         {items.length}
-      </div>
-    </Popover>
+      </button>
+    </PopoverPanel>
   );
 }
 
