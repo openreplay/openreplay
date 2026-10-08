@@ -1,5 +1,11 @@
+import { useLocalSort } from '@/lib/use-local-sort';
+import { type Column, DataTable } from '@/ui/data/table';
+import { EmptyState } from '@/ui/feedback/EmptyState';
+import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
+import { Segmented } from '@/ui/inputs/toggle-group';
+import { ListFooter } from '@/ui/layout/ListFooter';
+import { PagePanel } from '@/ui/layout/PageCard';
 import { useQuery } from '@tanstack/react-query';
-import { Segmented, Table } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -8,99 +14,136 @@ import { useStore } from 'App/mstore';
 import { dataManagement, withSiteId } from 'App/routes';
 import { useHistory } from 'App/routing';
 
-import FullPagination from 'Shared/FullPagination';
+import { type DistinctProperty, fetchList } from '../Properties/api';
 
-import { fetchList } from '../Properties/api';
+type Scope = 'all' | 'default' | 'custom';
+const PAGE_SIZE = 10;
+
+const SORT: Record<
+  string,
+  (a: DistinctProperty, b: DistinctProperty) => number
+> = {
+  name: (a, b) => a.name.localeCompare(b.name),
+  displayName: (a, b) => a.displayName.localeCompare(b.displayName),
+};
 
 function DistinctEventPropsList({ eventName }: { eventName: string }) {
+  const { t } = useTranslation();
+  const history = useHistory();
   const { projectsStore } = useStore();
   const siteId = projectsStore.activeSiteId!;
-  const history = useHistory();
-  const path = dataManagement.properties() + '?view=events&property=';
-  const onRow = (record: any) => {
-    return {
-      onClick: () => {
-        history.push(withSiteId(path + record.name, siteId));
-      },
-    };
-  };
-  const limit = 10;
+  const [scope, setScope] = React.useState<Scope>('all');
   const [page, setPage] = React.useState(1);
-  const onPageChange = (page: number) => {
-    setPage(page);
-  };
-  const { t } = useTranslation();
-  const [view, setView] = React.useState<'all' | 'default' | 'custom'>('all');
   const { data = { properties: [], total: 0 }, isPending } = useQuery({
     queryKey: ['distinct-event-props-list', siteId, eventName],
     queryFn: () => fetchList('events', eventName),
   });
+  const ours = data.properties.filter((p) => p.autoCaptured);
+  const yours = data.properties.filter((p) => !p.autoCaptured);
+  const shown =
+    scope === 'all' ? data.properties : scope === 'default' ? ours : yours;
+  const { sort, onSort, sorted } = useLocalSort(shown, SORT);
+  const rows = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  const filteredProps = React.useMemo(() => {
-    let viewProps: any = [];
-    if (view === 'all') {
-      viewProps = data.properties;
-    } else if (view === 'default') {
-      viewProps = data.properties.filter((prop) => prop.autoCaptured);
-    } else if (view === 'custom') {
-      viewProps = data.properties.filter((prop) => !prop.autoCaptured);
-    }
-    return viewProps.slice((page - 1) * limit, page * limit);
-  }, [data.properties, view, page]);
-
-  const tableCols = [
+  const columns: Column<DistinctProperty>[] = [
     {
       title: t('Name'),
-      dataIndex: 'name',
       key: 'name',
-      sorter: (a: any, b: any) => a.name.localeCompare(b.name),
+      width: '26%',
+      sortable: true,
+      render: (p) => (
+        <span className="m-truncate m-dmg__mono block">{p.name}</span>
+      ),
     },
     {
-      title: t('Display Name'),
-      dataIndex: 'displayName',
+      title: t('Display name'),
       key: 'displayName',
-      sorter: (a: any, b: any) => a.displayName.localeCompare(b.displayName),
+      width: '24%',
+      sortable: true,
+      render: (p) => <span className="m-truncate block">{p.displayName}</span>,
     },
     {
       title: t('Description'),
-      dataIndex: 'description',
       key: 'description',
+      width: '50%',
+      render: (p) => (
+        <span className="m-truncate block text-content-secondary">
+          {p.description || '—'}
+        </span>
+      ),
     },
   ];
+
   return (
-    <div className="flex flex-col gap-4 bg-white border rounded-lg">
-      <div className="px-4 pt-4 flex items-center gap-4">
-        <div className="font-semibold text-lg">{t('Event Properties')}</div>
-        <Segmented
-          options={[
-            { label: t('All'), value: 'all' },
-            { label: t('OpenReplay Properties'), value: 'default' },
-            { label: t('Your Properties'), value: 'custom' },
-          ]}
-          value={view}
-          onChange={(value) => setView(value as 'all' | 'default' | 'custom')}
+    <PagePanel
+      head={
+        <>
+          <span className="m-ditem__head-title">{t('Event properties')}</span>
+          <div className="m-page__controls">
+            <Segmented
+              value={scope}
+              onChange={(v) => {
+                setScope(v as Scope);
+                setPage(1);
+              }}
+              ariaLabel={t('Which properties')}
+              options={[
+                { value: 'all', label: t('All') },
+                {
+                  value: 'default',
+                  label: t('OpenReplay ({{n}})', { n: ours.length }),
+                },
+                {
+                  value: 'custom',
+                  label: t('Yours ({{n}})', { n: yours.length }),
+                },
+              ]}
+            />
+          </div>
+        </>
+      }
+    >
+      {isPending ? (
+        <SkeletonRows rows={4} columns={[26, 24, 50]} />
+      ) : shown.length === 0 ? (
+        <EmptyState
+          title={
+            scope === 'custom'
+              ? t('No properties of your own on this event')
+              : t('No properties on this event')
+          }
+          hint={t(
+            'Send properties with the event from your code and they will be listed here.',
+          )}
         />
-      </div>
-      <Table
-        // @ts-ignore
-        columns={tableCols}
-        dataSource={filteredProps}
-        rowKey="name"
-        loading={isPending}
-        pagination={false}
-        scroll={{ x: 'max-content' }}
-        onRow={onRow}
-        rowClassName={'cursor-pointer'}
-      />
-      <FullPagination
-        page={page}
-        limit={limit}
-        total={data.total}
-        listLen={data.properties.length}
-        onPageChange={onPageChange}
-        entity={'properties'}
-      />
-    </div>
+      ) : (
+        <>
+          <DataTable<DistinctProperty>
+            rowKey={(p) => p.name}
+            columns={columns}
+            rows={rows}
+            sort={sort}
+            onSort={onSort}
+            onRowClick={(p) =>
+              history.push(
+                withSiteId(
+                  `${dataManagement.properties()}?view=events&property=${encodeURIComponent(p.name)}`,
+                  siteId,
+                ),
+              )
+            }
+            ariaLabel={t('Event properties')}
+          />
+          <ListFooter
+            page={page}
+            pageSize={PAGE_SIZE}
+            total={shown.length}
+            noun={[t('property'), t('properties')]}
+            onPage={setPage}
+          />
+        </>
+      )}
+    </PagePanel>
   );
 }
 

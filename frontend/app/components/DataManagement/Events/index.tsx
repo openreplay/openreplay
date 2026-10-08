@@ -1,9 +1,18 @@
 import withPageTitle from '@/components/hocs/withPageTitle';
-import { DownOutlined } from '@ant-design/icons';
+import { useLocalSort } from '@/lib/use-local-sort';
+import { IconButton } from '@/ui/actions/IconButton';
+import { Button } from '@/ui/actions/button';
+import { type Column, DataTable } from '@/ui/data/table';
+import { EmptyState } from '@/ui/feedback/EmptyState';
+import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
+import { FilterStrip } from '@/ui/filters/FilterStrip';
+import { SearchField } from '@/ui/inputs/SearchField';
+import { ListFooter } from '@/ui/layout/ListFooter';
+import { PageCard } from '@/ui/layout/PageCard';
+import { Tooltip } from '@/ui/overlays/tooltip';
 import { useQuery } from '@tanstack/react-query';
 import withPermissions from 'HOCs/withPermissions';
-import { Button, Dropdown, Input, MenuProps } from 'antd';
-import { Album } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -12,39 +21,38 @@ import { useStore } from 'App/mstore';
 import { sessions, withSiteId } from 'App/routes';
 import { useHistory, useLocation } from 'App/routing';
 
+import '../data-management.css';
+import { DM_DOCS, HiddenMark, compact } from '../shared';
 import DistinctEventPage from './DistinctEvent';
-import EventsList from './EventsList';
-import { fetchList } from './api';
+import { type DistinctEvent, fetchList } from './api';
 
 type EventFilter = 'all' | 'autocaptured' | 'my_events';
 
-const localKey = 'data-management-events-filter';
-function getDefaultValue(): EventFilter {
-  const stored = localStorage.getItem(localKey);
-  if (stored && ['all', 'autocaptured', 'my_events'].includes(stored)) {
-    return stored as EventFilter;
-  }
+const PAGE_SIZE = 10;
+const FILTER_KEY = 'data-management-events-filter';
+const readFilter = (): EventFilter => {
+  try {
+    const v = localStorage.getItem(FILTER_KEY);
+    if (v === 'autocaptured' || v === 'my_events') return v;
+  } catch {}
   return 'all';
-}
+};
+
+const SORT: Record<string, (a: DistinctEvent, b: DistinctEvent) => number> = {
+  name: (a, b) => a.name.localeCompare(b.name),
+  displayName: (a, b) => a.displayName.localeCompare(b.displayName),
+  count: (a, b) => a.count - b.count,
+};
 
 function EventsListPage() {
-  const [eventFilter, setEventFilter] =
-    React.useState<EventFilter>(getDefaultValue);
-  const location = useLocation();
-  const searchParams = new URLSearchParams(location.search);
-  const shownEvent = searchParams.get('event');
   const { t } = useTranslation();
-  const [query, setQuery] = React.useState('');
-  const { projectsStore, filterStore, searchStore } = useStore();
   const history = useHistory();
+  const location = useLocation();
+  const shownEvent = new URLSearchParams(location.search).get('event');
+  const { projectsStore, filterStore, searchStore } = useStore();
   const siteId = projectsStore.activeSiteId;
-  const toEvent = (name: string) => {
-    history.push({
-      search: new URLSearchParams({ event: name }).toString(),
-    });
-  };
-
-  const limit = 10;
+  const [filter, setFilter] = React.useState<EventFilter>(readFilter);
+  const [query, setQuery] = React.useState('');
   const [page, setPage] = React.useState(1);
   const {
     data = { events: [], total: 0 },
@@ -54,127 +62,227 @@ function EventsListPage() {
     queryKey: ['distinct-events-list', siteId],
     queryFn: () => fetchList(),
   });
-  const onPageChange = (page: number) => {
-    setPage(page);
-  };
-  const onSearch = (value: string) => {
-    setQuery(value);
-    setPage(1);
-  };
-  const list = React.useMemo(() => {
-    if (shownEvent) return [];
-    const filteredByType = data.events.filter((e) => {
-      if (eventFilter === 'all') return true;
-      if (eventFilter === 'autocaptured') return e.autoCaptured;
-      return !e.autoCaptured; // my_events
-    });
-    const sortedList = filteredByType.sort((a, b) => b.count - a.count);
-    if (!query) {
-      return sortedList.slice((page - 1) * limit, page * limit);
-    }
-    const filtered = sortedList.filter(
-      (event) =>
-        event.name.toLowerCase().includes(query.toLowerCase()) ||
-        event.displayName.toLowerCase().includes(query.toLowerCase()) ||
-        event.description.toLowerCase().includes(query.toLowerCase()),
-    );
-    return filtered.slice((page - 1) * limit, page * limit);
-  }, [page, data.events, query, shownEvent, eventFilter]);
+
+  const q = query.trim().toLowerCase();
+  const visible = React.useMemo(
+    () =>
+      data.events
+        .filter((e) =>
+          filter === 'all'
+            ? true
+            : filter === 'autocaptured'
+              ? e.autoCaptured
+              : !e.autoCaptured,
+        )
+        .filter(
+          (e) =>
+            !q ||
+            e.name.toLowerCase().includes(q) ||
+            e.displayName.toLowerCase().includes(q) ||
+            e.description.toLowerCase().includes(q),
+        )
+        .sort((a, b) => b.count - a.count),
+    [data.events, filter, q],
+  );
+  const { sort, onSort, sorted } = useLocalSort(visible, SORT);
+  const rows = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   if (shownEvent) {
     const event = data.events.find((e) => e.name === shownEvent);
-    if (event) {
-      const openSessions = () => {
-        const filter = filterStore.findEvent({ name: event.name });
-        const path = withSiteId(sessions(), siteId!);
-        if (filter) {
-          searchStore.addFilterOnce(filter);
-          history.push(path);
-        }
-      };
+    const back = () => history.push({ search: '' });
+    if (isPending)
       return (
-        <DistinctEventPage
-          event={event}
-          siteId={siteId!}
-          openSessions={openSessions}
-          refetchList={refetch}
-        />
+        <PageCard
+          back={{ label: t('Events'), onClick: back }}
+          title={shownEvent}
+        >
+          <SkeletonRows rows={4} columns={[30, 70]} />
+        </PageCard>
       );
-    } else {
-      return <div>{t('Event {{name}} not found', { name: shownEvent })}</div>;
-    }
+    if (!event)
+      return (
+        <PageCard
+          back={{ label: t('Events'), onClick: back }}
+          title={shownEvent}
+        >
+          <EmptyState
+            art="events"
+            title={t('Event {{name}} not found', { name: shownEvent })}
+            action={<Button onClick={back}>{t('Back to events')}</Button>}
+          />
+        </PageCard>
+      );
+    const openSessions = () => {
+      const f = filterStore.findEvent({ name: event.name });
+      if (!f) return;
+      searchStore.addFilterOnce(f);
+      history.push(withSiteId(sessions(), siteId!));
+    };
+    return (
+      <DistinctEventPage
+        event={event}
+        onBack={back}
+        openSessions={openSessions}
+        refetchList={refetch}
+      />
+    );
   }
 
-  const filterOptions = [
-    { key: 'all', label: t('All Events') },
-    { key: 'autocaptured', label: t('Autocaptured') },
-    { key: 'my_events', label: t('Custom') },
-  ];
-
-  const handleFilterChange: MenuProps['onClick'] = ({ key }) => {
-    const newFilter = key as EventFilter;
-    setEventFilter(newFilter);
-    localStorage.setItem(localKey, newFilter);
+  const pick = (key: string) => {
+    setFilter(key as EventFilter);
+    setPage(1);
+    try {
+      localStorage.setItem(FILTER_KEY, key);
+    } catch {}
   };
 
-  const menuItems: MenuProps['items'] = filterOptions.map((option) => ({
-    key: option.key,
-    label: option.label,
-  }));
+  const columns: Column<DistinctEvent>[] = [
+    {
+      title: t('Event name'),
+      key: 'name',
+      width: '22%',
+      sortable: true,
+      render: (e) => (
+        <span className="m-dmg__identity-cell">
+          <span className="m-truncate m-dmg__mono">{e.name}</span>
+          {e.status === 'hidden' && <HiddenMark />}
+        </span>
+      ),
+    },
+    {
+      title: t('Display name'),
+      key: 'displayName',
+      width: '20%',
+      sortable: true,
+      render: (e) => <span className="m-truncate block">{e.displayName}</span>,
+    },
+    {
+      title: t('Description'),
+      key: 'description',
+      width: '40%',
+      render: (e) =>
+        e.description ? (
+          <Tooltip title={e.description} delay={400}>
+            <span className="m-truncate block text-content-secondary">
+              {e.description}
+            </span>
+          </Tooltip>
+        ) : (
+          <span className="text-content-disabled">—</span>
+        ),
+    },
+    {
+      title: t('30-day volume'),
+      key: 'count',
+      width: '18%',
+      align: 'right',
+      sortable: true,
+      render: (e) => (
+        <span className="m-dmg__mono">{compact.format(e.count)}</span>
+      ),
+    },
+  ];
+
+  const counts = {
+    all: data.events.length,
+    autocaptured: data.events.filter((e) => e.autoCaptured).length,
+    my_events: data.events.filter((e) => !e.autoCaptured).length,
+  };
 
   return (
-    <div
-      className="flex flex-col rounded-lg border bg-white mx-auto"
-      style={{ maxWidth: 1360 }}
+    <PageCard
+      title={t('Events')}
+      subtitle={t(
+        'Every event name the tracker has recorded, autocaptured or custom.',
+      )}
+      actions={
+        <>
+          <SearchField
+            placeholder={t('Search events')}
+            value={query}
+            onChange={(v) => {
+              setQuery(v);
+              setPage(1);
+            }}
+          />
+          <IconButton
+            icon={<BookOpen size={14} />}
+            label={t('Documentation')}
+            variant="ghost"
+            onClick={() => window.open(DM_DOCS, '_blank')}
+          />
+        </>
+      }
+      toolbar={
+        <FilterStrip
+          label={t('Filter by kind')}
+          items={[
+            { key: 'all', label: t('All events'), count: counts.all },
+            {
+              key: 'autocaptured',
+              label: t('Autocaptured'),
+              count: counts.autocaptured,
+            },
+            { key: 'my_events', label: t('Custom'), count: counts.my_events },
+          ]}
+          selected={[filter]}
+          onSelect={pick}
+        />
+      }
     >
-      <div className={'flex flex-col gap-2 md:gap-0 md:flex-row md:items-center md:justify-between border-b px-4 py-2'}>
-        <div className="flex items-center gap-2">
-          <div className={'font-semibold text-lg capitalize'}>
-            {t('Events')}
-          </div>
-          <Dropdown
-            menu={{ items: menuItems, onClick: handleFilterChange }}
-            trigger={['click']}
-          >
-            <Button type="text" size="small">
-              {filterOptions.find((opt) => opt.key === eventFilter)?.label}
-              <DownOutlined />
+      {isPending ? (
+        <SkeletonRows rows={5} columns={[22, 20, 40, 18]} />
+      ) : data.events.length === 0 ? (
+        <EmptyState
+          art="events"
+          title={t('No events yet')}
+          hint={t(
+            'Clicks, pages and inputs name themselves as sessions come in. Rename the ones that matter; the rest keep the name they arrived with.',
+          )}
+        />
+      ) : visible.length === 0 ? (
+        <EmptyState
+          art="search"
+          title={
+            q ? t('No events match your search') : t('No events of this kind')
+          }
+          hint={t('Clear the search, or pick another filter.')}
+          action={
+            <Button
+              onClick={() => {
+                setQuery('');
+                pick('all');
+              }}
+            >
+              {t('Show all events')}
             </Button>
-          </Dropdown>
-        </div>
-        <div className="flex items-center gap-2">
-          <a
-            href="https://docs.openreplay.com/en/product-analytics/data-management/"
-            target="_blank"
-            rel="noreferrer"
-          >
-            <Button type={'text'} icon={<Album size={14} />}>
-              {t('Docs')}
-            </Button>
-          </a>
-          <div className="min-w-50 md:w-1/4 md:min-w-75">
-            <Input.Search
-              size={'small'}
-              placeholder={t('Filter by name or description')}
-              value={query}
-              allowClear
-              maxLength={256}
-              onChange={(e) => onSearch(e.target.value)}
-            />
-          </div>
-        </div>
-      </div>
-      <EventsList
-        toEvent={toEvent}
-        list={list}
-        page={page}
-        limit={limit}
-        total={query ? list.length : data.total}
-        listLen={list.length}
-        isPending={isPending}
-        onPageChange={onPageChange}
-      />
-    </div>
+          }
+        />
+      ) : (
+        <>
+          <DataTable<DistinctEvent>
+            rowKey={(e) => e.name}
+            columns={columns}
+            rows={rows}
+            sort={sort}
+            onSort={onSort}
+            onRowClick={(e) =>
+              history.push({
+                search: new URLSearchParams({ event: e.name }).toString(),
+              })
+            }
+            ariaLabel={t('Events')}
+          />
+          <ListFooter
+            page={page}
+            pageSize={PAGE_SIZE}
+            total={visible.length}
+            noun={[t('event'), t('events')]}
+            onPage={setPage}
+          />
+        </>
+      )}
+    </PageCard>
   );
 }
 

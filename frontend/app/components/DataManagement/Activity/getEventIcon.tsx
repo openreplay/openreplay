@@ -1,32 +1,32 @@
-import { Icon } from 'UI';
+import { OpenReplayMark } from '@/ui/brand/OpenReplayMark';
 import {
-  Code,
-  MousePointerClick,
-  SquareActivity,
-  Navigation,
-  TextCursorInput,
   ArrowUpDown,
+  Code2,
+  MousePointerClick,
+  Navigation,
+  SquareActivity,
+  TextCursorInput,
 } from 'lucide-react';
 import React from 'react';
 
-export const getEventIcon = (isAutocapture: boolean, eventName: string) => {
-  if (!isAutocapture) {
-    return <Code size={16} />;
-  }
-  if (eventName === 'LOCATION') {
-    return <Navigation size={16} />;
-  }
-  if (eventName === 'CLICK') {
-    return <MousePointerClick size={16} />;
-  }
-  if (eventName === 'PERFORMANCE') {
-    return <SquareActivity size={16} />;
-  }
-  if (eventName === 'INPUT') {
-    return <TextCursorInput size={16} />;
-  }
-  if (eventName === 'REQUEST') {
-    return <ArrowUpDown size={16} />;
-  }
-  return <Icon name={'logo-small'} size={16} color={'black'} />;
+const AUTO: Record<string, typeof Code2> = {
+  LOCATION: Navigation,
+  CLICK: MousePointerClick,
+  PERFORMANCE: SquareActivity,
+  INPUT: TextCursorInput,
+  REQUEST: ArrowUpDown,
+};
+
+export const getEventIcon = (
+  isAutocapture: boolean,
+  eventName: string,
+  size = 13,
+) => {
+  if (!isAutocapture) return <Code2 size={size} aria-hidden="true" />;
+  const Glyph = AUTO[eventName];
+  return Glyph ? (
+    <Glyph size={size} aria-hidden="true" />
+  ) : (
+    <OpenReplayMark variant="plain" size={size - 1} />
+  );
 };

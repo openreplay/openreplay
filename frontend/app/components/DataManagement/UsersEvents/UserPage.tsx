@@ -1,276 +1,275 @@
-import React from 'react';
-import { Dropdown, Popover, Button } from 'antd';
-import { MoreOutlined, DeleteOutlined } from '@ant-design/icons';
-import { useModal } from 'App/components/Modal';
-import withPermissions from 'HOCs/withPermissions';
-import UserPropertiesModal from './components/UserPropertiesModal';
-import Tag from './components/Tag';
-import Breadcrumb from 'Shared/Breadcrumb';
-import { dataManagement, withSiteId } from 'App/routes';
-import { useParams, useHistory } from 'App/routing';
-import { useStore } from 'App/mstore';
+import { CopyButton } from '@/ui/actions/CopyButton';
+import { IconButton } from '@/ui/actions/IconButton';
+import { Button } from '@/ui/actions/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItems,
+  DropdownMenuTrigger,
+} from '@/ui/actions/dropdown-menu';
+import { RelativeTime } from '@/ui/data/RelativeTime';
+import { EmptyState } from '@/ui/feedback/EmptyState';
+import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
+import { PageCard, PagePanel } from '@/ui/layout/PageCard';
+import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
+import { PopoverPanel } from '@/ui/overlays/popover';
+import { useToast } from '@/ui/overlays/toast';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import Activity from './components/UserActivity';
+import withPermissions from 'HOCs/withPermissions';
+import { MoreHorizontal, Trash2 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
-import { CopyButton, confirm, CountryFlag } from 'UI';
-import NameAvatar from 'Shared/NameAvatar';
-import { toast } from 'react-toastify';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
 
-const card = 'rounded-lg border bg-white';
+import { useStore } from 'App/mstore';
+import { dataManagement, withSiteId } from 'App/routes';
+import { useHistory, useParams } from 'App/routing';
+
+import '../data-management.css';
+import { PersonAvatar, Where } from './components/PersonAvatar';
+import Activity from './components/UserActivity';
+import UserPropertiesDrawer, {
+  flatPropertiesOf,
+} from './components/UserPropertiesDrawer';
 
 function UserPage() {
-  const { userId } = useParams<{ userId: string }>();
-  return (
-    <div className={'flex flex-col gap-2 mx-auto'} style={{ maxWidth: 1360 }}>
-      <UserInfo userId={userId} />
-      <Activity userId={userId} />
-    </div>
-  );
-}
-
-function UserInfo({ userId }: { userId: string }) {
+  const { t } = useTranslation();
+  const toast = useToast();
   const history = useHistory();
-  const { showModal } = useModal();
-  const { analyticsStore, projectsStore } = useStore();
+  const { userId } = useParams<{ userId: string }>();
+  const { analyticsStore, projectsStore, settingsStore } = useStore();
   const queryClient = useQueryClient();
   const siteId = projectsStore.activeSiteId;
+  const timezone = settingsStore.sessionSettings.timezone?.value;
+  const [propsOpen, setPropsOpen] = React.useState(false);
+  const [deleting, setDeleting] = React.useState(false);
   const queryKey = ['user-info', siteId, userId];
   const {
     data: user,
     refetch,
-    failureCount,
+    isPending,
     error,
+    failureCount,
   } = useQuery({
     queryKey,
-    retry: (c, e) => {
-      if (e.cause?.status === 404) {
-        return false;
-      }
-      return c < 3;
-    },
-    queryFn: async () => {
-      const response = await analyticsStore.fetchUserInfo(userId);
-      return response;
-    },
+    enabled: !!userId,
+    retry: (c, e: any) => e?.cause?.status !== 404 && c < 3,
+    queryFn: () => analyticsStore.fetchUserInfo(userId!),
   });
 
-  const onPropSave = async (
-    path: string,
+  const toList = () =>
+    history.push(withSiteId(dataManagement.usersList(), siteId ?? ''));
+
+  const saveProp = async (
+    path: 'flat' | 'properties',
     key: string,
     value: string | number,
   ) => {
     if (!user) return;
-    // i.e if path is 'properties', then payload = { properties: { ...user.properties, [key]: value } }
-
     const payload =
       path === 'properties'
-        ? {
-            [path]: {
-              ...user[path],
-              [key]: value,
-            },
-          }
-        : { ['$' + key]: value };
-
-    await analyticsStore.updateUser(user.userId, payload);
-    setTimeout(() => {
-      refetch();
-    }, 100);
+        ? { properties: { ...user.properties, [key]: value } }
+        : { [`$${key}`]: value };
+    const ok = await analyticsStore.updateUser(user.userId, payload);
+    if (ok) void refetch();
+    else toast.error(t('Failed to update property'));
   };
 
-  const onDelete = async (userId: string) => {
-    const confirmed = await confirm({
-      header: 'Delete User',
-      confirmation: 'Are you sure you want to permanently delete this user?',
-      confirmButton: 'Yes, Delete',
-    } as any);
-    if (!confirmed) return;
-    const deleted = await analyticsStore.deleteUser(userId);
-    if (!deleted) {
-      toast.error('Failed to delete user');
+  const remove = async () => {
+    setDeleting(false);
+    if (!user) return;
+    const ok = await analyticsStore.deleteUser(user.userId);
+    if (!ok) {
+      toast.error(t('Failed to delete user'));
       return;
     }
     queryClient.removeQueries({ queryKey });
-    history.push(
-      withSiteId(dataManagement.usersList(), projectsStore.activeSiteId ?? ''),
-    );
+    toList();
   };
 
-  const dropdownItems = [
-    {
-      label: 'Delete User',
-      key: 'delete-user',
-      icon: <DeleteOutlined />,
-      onClick: () => {
-        onDelete(userId);
-      },
-    },
-  ];
+  const notFound =
+    (error as any)?.cause?.status === 404 || (!!error && failureCount > 2);
+  const label =
+    user && user.name !== 'N/A' ? user.name : user?.email || user?.userId || '';
+  const ids = user?.distinctId ?? [];
+  const propCount = user
+    ? Object.keys(user.properties).length +
+      Object.keys(flatPropertiesOf(user)).length
+    : 0;
 
-  const showAll = () => {
-    if (!user) return;
-    showModal(
-      <UserPropertiesModal
-        properties={user.properties}
-        rawProperties={user.raw}
-        onSave={(path, key, value) => onPropSave(path, key, value)}
-      />,
-      {
-        width: 620,
-        right: true,
-      },
-    );
-  };
-
-  const openList = () => {
-    history.push(
-      withSiteId(dataManagement.usersList(), projectsStore.activeSiteId ?? ''),
-    );
-  };
-  const propLength = Object.keys(user?.properties ?? {}).length + 7;
-  if (error?.cause?.status === 404 || failureCount > 2) {
+  if (notFound)
     return (
-      <>
-        <Breadcrumb
-          items={[
-            {
-              label: 'Users',
-              to: dataManagement.usersList(),
-              withSiteId: true,
-            },
-            { label: 'User Details' },
-          ]}
+      <PageCard
+        back={{ label: t('People'), onClick: toList }}
+        title={t('Person')}
+      >
+        <EmptyState
+          art="people"
+          title={t('This person was not found')}
+          hint={t('They may have been deleted, or the link is wrong.')}
+          action={<Button onClick={toList}>{t('Back to people')}</Button>}
         />
-
-        <div className={card}>
-          <div className="flex flex-col items-center justify-center p-8 gap-4">
-            <h2 className="text-xl font-semibold p-4 border-b">
-              Something went wrong or user was not found
-            </h2>
-            <div className="p-4">
-              The user you are looking for does not exist.
-            </div>
-            <Button onClick={openList}>Go Back</Button>
-          </div>
-        </div>
-      </>
+      </PageCard>
     );
-  }
 
   return (
-    <>
-      <Breadcrumb
-        items={[
-          {
-            label: 'People',
-            to: dataManagement.usersList(),
-            withSiteId: true,
-          },
-          { label: user?.name || user?.userId || 'User Details' },
-        ]}
-      />
-
-      <div className={card}>
-        <div className="flex items-center justify-between p-4 border-b">
-          <div className="flex items-center gap-2">
-            {user?.avatarUrl ? (
-              <img
-                src={user.avatarUrl}
-                alt="avatar"
-                className="h-12 w-12 rounded-full"
-                style={{
-                  objectFit: 'cover',
-                }}
+    <PageCard
+      back={{ label: t('People'), onClick: toList }}
+      title={label || t('Person')}
+      split
+    >
+      <PagePanel>
+        {isPending || !user ? (
+          <SkeletonRows rows={2} columns={[40, 60]} />
+        ) : (
+          <div className="m-person__card">
+            <div className="m-person__who">
+              <PersonAvatar
+                userId={user.userId}
+                avatarUrl={user.avatarUrl}
+                size={48}
               />
-            ) : (
-              <NameAvatar name={user?.name || 'N/A'} size={48} />
-            )}
-            <div className="flex flex-col">
-              <div className="text-xl font-semibold">{user?.name || 'N/A'}</div>
-              <div className={'flex items-center gap-2'}>
-                <div>{user?.userId}</div>
-                <CopyButton content={user?.userId || ''} isIcon />
+              <div className="m-person__names">
+                <span className="m-person__name m-truncate">{label}</span>
+                <span className="m-person__id">
+                  <span className="m-dmg__mono m-truncate">{user.userId}</span>
+                  <CopyButton
+                    text={user.userId}
+                    label={t('Copy user ID')}
+                    variant="ghost"
+                  />
+                </span>
               </div>
             </div>
-          </div>
-          {user?.email ? (
-            <div className="flex flex-col">
-              <div className={'font-semibold'}>Email</div>
-              <div className={'flex items-center gap-2'}>
-                <div>{user?.email}</div>
-                <CopyButton content={user?.email || ''} isIcon />
-              </div>
-            </div>
-          ) : null}
-          <div className="flex flex-col">
-            <div className={'font-semibold'}>Distinct ID</div>
-            <div>
-              {user?.distinctId[0]}
-              {user?.distinctId?.length && user?.distinctId.length > 1 && (
-                <Popover
-                  title={
-                    <div className={'text-disabled-text'}>
-                      Tracking IDs linked to this user
-                    </div>
-                  }
-                  trigger={'click'}
-                  placement={'bottom'}
-                  arrow={false}
-                  content={
-                    <div className={'flex flex-col gap-2'}>
-                      {user?.distinctId.map((id) => (
-                        <div className={'w-full group flex justify-between'}>
-                          <span>{id}</span>
-                          <div className={'ml-2 invisible group-hover:visible'}>
-                            <CopyButton content={id} isIcon />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  }
-                >
-                  <div className={'w-fit cursor-pointer inline-block ml-2'}>
-                    <Tag>+{user?.distinctId.length - 1}</Tag>
-                  </div>
-                </Popover>
+            <dl className="m-person__facts">
+              {user.email && (
+                <div className="m-person__fact">
+                  <dt>{t('Email')}</dt>
+                  <dd>
+                    <span className="m-truncate">{user.email}</span>
+                    <CopyButton
+                      text={user.email}
+                      label={t('Copy email')}
+                      variant="ghost"
+                    />
+                  </dd>
+                </div>
               )}
-            </div>
-          </div>
-          <div className="flex flex-col">
-            <div className={'font-semibold'}>Location</div>
-            <div className={'flex items-center gap-2'}>
-              <CountryFlag
-                userCity={user?.city}
-                userState={user?.state}
-                country={user?.country}
-              />
-              {user?.userLocation}
-            </div>
-          </div>
-          <div className={'flex items-center gap-4'}>
-            <div onClick={showAll} className={'link font-semibold'}>
-              +{propLength} properties
-            </div>
-            <Dropdown
-              menu={{ items: dropdownItems }}
-              trigger={['click']}
-              placement={'bottomRight'}
-            >
-              <div className={'cursor-pointer'}>
-                <MoreOutlined />
+              {ids.length > 0 && (
+                <div className="m-person__fact">
+                  <dt>{t('Distinct ID')}</dt>
+                  <dd>
+                    <span className="m-dmg__mono m-truncate">{ids[0]}</span>
+                    {ids.length > 1 && (
+                      <PopoverPanel
+                        placement="bottomLeft"
+                        className="p-5"
+                        content={
+                          <div className="m-person__ids">
+                            <p className="m-person__ids-title">
+                              {t('Tracking IDs linked to this user')}
+                            </p>
+                            <ul className="m-person__ids">
+                              {ids.map((id) => (
+                                <li key={id}>
+                                  <span className="m-dmg__mono m-truncate">
+                                    {id}
+                                  </span>
+                                  <CopyButton
+                                    text={id}
+                                    label={t('Copy {{id}}', { id })}
+                                    variant="ghost"
+                                  />
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        }
+                      >
+                        <button type="button" className="m-person__more">
+                          +{ids.length - 1}
+                        </button>
+                      </PopoverPanel>
+                    )}
+                  </dd>
+                </div>
+              )}
+              <div className="m-person__fact">
+                <dt>{t('Location')}</dt>
+                <dd>
+                  <Where
+                    city={user.city}
+                    state={user.state}
+                    country={user.country}
+                  />
+                </dd>
               </div>
-            </Dropdown>
+              {user.lastSeen ? (
+                <div className="m-person__fact">
+                  <dt>{t('Last seen')}</dt>
+                  <dd>
+                    <RelativeTime at={user.lastSeen} timezone={timezone} />
+                  </dd>
+                </div>
+              ) : null}
+            </dl>
+            <div className="m-person__actions">
+              <Button variant="subtle" onClick={() => setPropsOpen(true)}>
+                {t('+{{n}} properties', { n: propCount })}
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <span>
+                    <IconButton
+                      icon={<MoreHorizontal size={15} />}
+                      label={t('More')}
+                      variant="ghost"
+                    />
+                  </span>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItems
+                    items={[
+                      {
+                        key: 'delete',
+                        icon: <Trash2 size={13} />,
+                        label: t('Delete user'),
+                        danger: true,
+                        onClick: () => setDeleting(true),
+                      },
+                    ]}
+                  />
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
-        </div>
-        {/* <div className="flex items-center p-4">
-          <Users size={14} />
-          <div className={'mr-4 ml-2'}>Cohorts</div>
-          {testUser.cohorts.map((cohort) => (
-            <Tag>{cohort}</Tag>
-          ))}
-        </div> */}
-      </div>
-    </>
+        )}
+      </PagePanel>
+
+      {userId && <Activity userId={userId} name={label || userId} />}
+
+      {user && (
+        <UserPropertiesDrawer
+          open={propsOpen}
+          onClose={() => setPropsOpen(false)}
+          user={user}
+          onSave={saveProp}
+        />
+      )}
+      <ConfirmDialog
+        open={deleting}
+        title={t('Delete this user?')}
+        okText={t('Delete')}
+        danger
+        onCancel={() => setDeleting(false)}
+        onOk={() => void remove()}
+      >
+        {t(
+          '{{name}} and their properties are permanently deleted. Their sessions stay in Recordings, without a name on them.',
+          { name: label },
+        )}
+      </ConfirmDialog>
+    </PageCard>
   );
 }
 

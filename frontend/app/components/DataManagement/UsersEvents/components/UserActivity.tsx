@@ -1,186 +1,223 @@
-import React from 'react';
-import EventDetailsModal, {
-  Triangle,
-} from 'Components/DataManagement/Activity/EventDetailsModal';
-import Event from 'App/mstore/types/Analytics/Event';
-import { EyeOff } from 'lucide-react';
-import { tsToCheckRecent } from 'App/date';
-import { useModal } from 'App/components/Modal';
-import EventsByDay from './EventsByDay';
-import { useStore } from 'App/mstore';
+import { IconButton } from '@/ui/actions/IconButton';
+import { Button } from '@/ui/actions/button';
+import { EmptyState } from '@/ui/feedback/EmptyState';
+import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
+import { CheckRow } from '@/ui/inputs/CheckRow';
+import { DateRange } from '@/ui/inputs/DateRange';
+import { ListFooter } from '@/ui/layout/ListFooter';
+import { PagePanel } from '@/ui/layout/PageCard';
+import { PopoverSearch } from '@/ui/overlays/PopoverSearch';
+import { PopoverPanel } from '@/ui/overlays/popover';
 import { useQuery } from '@tanstack/react-query';
-import SelectDateRange from 'Shared/SelectDateRange/SelectDateRange';
 import Period, { LAST_7_DAYS } from 'Types/app/period';
+import { ChevronRight, EyeOff, Play } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
-import { Button } from 'antd';
-import FilterEntriesModal from 'Components/DataManagement/FilterEntriesModal';
-import FullPagination from 'Shared/FullPagination';
-import { hashString } from 'App/types/session/session';
-import UserSessionsModal from 'Shared/UserSessionsModal';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
 
-const card = 'rounded-lg border bg-white';
+import { formatTs, tsToCheckRecent } from 'App/date';
+import { useStore } from 'App/mstore';
+import type Event from 'App/mstore/types/Analytics/Event';
+import { getLocalHourFormat } from 'App/utils/intlUtils';
+import EventDetailsDrawer from 'Components/DataManagement/Activity/EventDetailsDrawer';
+import { getEventIcon } from 'Components/DataManagement/Activity/getEventIcon';
 
-function Activity({ userId }: { userId: string }) {
-  const limit = 50;
+import UserSessionsDrawer from 'Shared/UserSessionsDrawer';
+
+const LIMIT = 50;
+
+function UserActivity({ userId, name }: { userId: string; name: string }) {
+  const { t } = useTranslation();
+  const { analyticsStore, filterStore, projectsStore } = useStore();
   const [page, setPage] = React.useState(1);
-  const [period, setPeriod] = React.useState<{
-    start: number;
-    end: number;
-    rangeName: string;
-  }>(Period({ rangeName: LAST_7_DAYS }));
+  const [period, setPeriod] = React.useState(() =>
+    Period({ rangeName: LAST_7_DAYS }),
+  );
+  const [hidden, setHidden] = React.useState<string[]>([]);
+  const [typeQuery, setTypeQuery] = React.useState('');
+  const [openEvent, setOpenEvent] = React.useState<string | null>(null);
+  const [sessionsOpen, setSessionsOpen] = React.useState(false);
 
-  const onDateChange = (period: any) => {
-    const { start, end, rangeName } = period;
-    setPeriod(Period({ start, end, rangeName }));
-  };
-  const { analyticsStore, projectsStore, searchStore, filterStore } =
-    useStore();
   const eventTypes = filterStore
     .getCurrentProjectFilters()
     .filter((f) => f.isEvent)
-    .map((f) => ({ title: f.displayName ?? f.name, key: f.name }));
-  const [hiddenTypes, setHiddenTypes] = React.useState<string[]>([]);
-  const [editCols, setEditCols] = React.useState(false);
-  const { showModal, hideModal } = useModal();
-  const { data: list, isPending } = useQuery({
+    .map((f) => ({ key: f.name, title: f.displayName ?? f.name }));
+  const shownTypes = eventTypes.filter(
+    (e) =>
+      !typeQuery || e.title.toLowerCase().includes(typeQuery.toLowerCase()),
+  );
+
+  const { data, isPending } = useQuery({
+    // the same user id can exist in two projects: the key carries the project
     queryKey: [
       'user-events',
+      projectsStore.activeSiteId,
       userId,
       period.start,
       period.end,
-      hiddenTypes,
+      hidden,
       page,
     ],
-    queryFn: async () => {
-      const response = await analyticsStore.fetchUserEvents(
+    queryFn: () =>
+      analyticsStore.fetchUserEvents(
         userId,
         'desc',
         period,
-        hiddenTypes,
+        hidden,
         page,
-        limit,
-      );
-      return response;
-    },
+        LIMIT,
+      ),
   });
+  const events = data?.events ?? [];
+  const total = data?.total ?? 0;
 
-  const onItemClick = (ev: Event) => {
-    if (!projectsStore.activeSiteId) return;
-    showModal(
-      <EventDetailsModal
-        event_id={ev.event_id}
-        siteId={projectsStore.activeSiteId}
-        onClose={hideModal}
-      />,
-      {
-        width: 620,
-        right: true,
-      },
+  const days = events.reduce<{ key: string; events: Event[] }[]>((acc, ev) => {
+    const key = tsToCheckRecent(ev.created_at, 'LLL dd, yyyy');
+    const last = acc[acc.length - 1];
+    if (last?.key === key) last.events.push(ev);
+    else acc.push({ key, events: [ev] });
+    return acc;
+  }, []);
+
+  const toggleType = (key: string) => {
+    setHidden((h) =>
+      h.includes(key) ? h.filter((k) => k !== key) : [...h, key],
     );
+    setPage(1);
   };
 
-  const byDays: Record<string, Event[]> = (list?.events ?? []).reduce(
-    (acc, ev) => {
-      const date = tsToCheckRecent(ev.created_at, 'LLL dd, yyyy');
-      if (!acc[date]) {
-        acc[date] = [];
-      }
-      acc[date].push(ev);
-      return acc;
-    },
-    {},
-  );
-
-  const toggleEvents = () => {
-    setTimeout(() => {
-      setEditCols(true);
-    }, 0);
-  };
-
-  const getName = (filterName: string) =>
-    filterStore.getFilterDisplayName(filterName);
-
-  const saveShownTypes = (cols: any[]) => {
-    const selected = eventTypes.filter((et) => cols.includes(et.key));
-    setHiddenTypes(
-      eventTypes
-        .map((et) => et.key)
-        .filter((key) => !selected.find((st) => st.key === key)),
-    );
-    setEditCols(false);
-  };
-
-  const total = list?.total ?? 0;
-  const onPageChange = (newPage: number) => {
-    setPage(newPage);
-  };
-
-  const openSessions = () => {
-    const hash = hashString(userId) as unknown as string;
-    showModal(<UserSessionsModal userId={userId} name="User" />, {
-      width: 700,
-      right: true,
-    });
-  };
   return (
-    <div className={card}>
-      <div className={'px-4 py-2 flex items-center gap-2 relative'}>
-        <div className={'text-lg font-semibold'}>Activity</div>
-        <div className={'link flex gap-1 items-center'} onClick={openSessions}>
-          <span>Play Sessions</span>
-          <Triangle size={10} color={'blue'} />
-        </div>
-        <div className={'ml-auto'} />
-        <div className="relative">
-          {editCols ? (
-            <FilterEntriesModal
-              columns={eventTypes}
-              onSelect={saveShownTypes}
-              onClose={() => setEditCols(false)}
-              hiddenCols={hiddenTypes}
-              topOffset={'top-8'}
-              header={'Show/Hide Event Types'}
-              subheader={'Select event types to display in the activity feed.'}
-              searchText={'Search event types'}
-              confirmText={'Show Selected'}
-            />
-          ) : null}
-          <Button
-            className={'flex items-center gap-2'}
-            type={'text'}
-            size={'small'}
-            onClick={toggleEvents}
-          >
-            <EyeOff size={16} />
-            <span className={'font-medium'}>Hide Events</span>
+    <PagePanel
+      head={
+        <div className="m-person__acthead">
+          <span className="m-ditem__head-title">{t('Activity')}</span>
+          <Button variant="subtle" onClick={() => setSessionsOpen(true)}>
+            <Play size={13} />
+            {t('Play sessions')}
           </Button>
+          <div className="m-page__controls">
+            <PopoverPanel
+              placement="bottomRight"
+              content={
+                <div className="m-person__types">
+                  <PopoverSearch
+                    placeholder={t('Search event types')}
+                    value={typeQuery}
+                    onChange={setTypeQuery}
+                  />
+                  <div className="m-person__types-list">
+                    {shownTypes.map((e) => (
+                      <CheckRow
+                        key={e.key}
+                        on={!hidden.includes(e.key)}
+                        onToggle={() => toggleType(e.key)}
+                      >
+                        {e.title}
+                      </CheckRow>
+                    ))}
+                  </div>
+                  {hidden.length > 0 && (
+                    <div className="m-person__types-foot">
+                      <Button
+                        variant="subtle"
+                        onClick={() => {
+                          setHidden([]);
+                          setPage(1);
+                        }}
+                      >
+                        {t('Show all')}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              }
+            >
+              <span>
+                <IconButton
+                  icon={<EyeOff size={14} />}
+                  label={t('Hide events')}
+                  count={hidden.length}
+                  active={hidden.length > 0}
+                />
+              </span>
+            </PopoverPanel>
+            <DateRange
+              field={t('Occurred')}
+              period={period}
+              onChange={(p) => {
+                setPeriod(p);
+                setPage(1);
+              }}
+            />
+          </div>
         </div>
-        <SelectDateRange isAnt period={period} onChange={onDateChange} right />
-      </div>
+      }
+    >
       {isPending ? (
-        <div className="p-4">Loading...</div>
-      ) : (list?.events ?? []).length === 0 ? (
-        <div className="p-4">
-          No events found for the selected period or user.
-        </div>
-      ) : null}
-      <EventsByDay
-        getName={getName}
-        byDays={byDays}
-        onItemClick={onItemClick}
-      />
-      {list && total > limit ? (
-        <FullPagination
-          page={page}
-          limit={limit}
-          total={total}
-          listLen={list?.events.length}
-          onPageChange={onPageChange}
-          entity={'events'}
+        <SkeletonRows rows={6} columns={[15, 85]} />
+      ) : events.length === 0 ? (
+        <EmptyState
+          title={t('No events in this window')}
+          hint={
+            hidden.length
+              ? t('Widen the date range, or show the event types you hid.')
+              : t('Widen the date range to see older activity.')
+          }
         />
-      ) : null}
-    </div>
+      ) : (
+        <div className="m-ptl">
+          {days.map((d) => (
+            <div key={d.key}>
+              <div className="m-ptl__day">{d.key}</div>
+              {d.events.map((e) => (
+                <button
+                  key={e.event_id}
+                  type="button"
+                  className="m-ptl__row"
+                  onClick={() => setOpenEvent(e.event_id)}
+                >
+                  <span className="m-ptl__time">
+                    {formatTs(e.created_at, getLocalHourFormat())}
+                  </span>
+                  <span className="m-ptl__icon">
+                    {getEventIcon(e.isAutoCapture, e.event_name, 12)}
+                  </span>
+                  <span className="m-ptl__name m-truncate">
+                    {filterStore.getFilterDisplayName(e.event_name)}
+                  </span>
+                  <span className="m-ptl__env">{e.environment}</span>
+                  <ChevronRight
+                    size={13}
+                    className="m-ptl__chev"
+                    aria-hidden="true"
+                  />
+                </button>
+              ))}
+            </div>
+          ))}
+          {total > LIMIT && (
+            <ListFooter
+              page={page}
+              pageSize={LIMIT}
+              total={total}
+              noun={[t('event'), t('events')]}
+              onPage={setPage}
+            />
+          )}
+        </div>
+      )}
+      <EventDetailsDrawer
+        eventId={openEvent}
+        onClose={() => setOpenEvent(null)}
+      />
+      <UserSessionsDrawer
+        open={sessionsOpen}
+        onClose={() => setSessionsOpen(false)}
+        userId={userId}
+        name={name}
+      />
+    </PagePanel>
   );
 }
 
-export default observer(Activity);
+export default observer(UserActivity);
