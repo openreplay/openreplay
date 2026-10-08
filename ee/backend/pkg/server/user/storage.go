@@ -10,7 +10,9 @@ import (
 func getUserFromDB(conn pool.Pool, userID, tenantID int, tokenType TokenType) (*User, error) {
 	query := fmt.Sprintf(`
 		SELECT user_id, users.tenant_id, users.name, email, EXTRACT(epoch FROM %s)::BIGINT AS jwt_iat, roles.permissions,
-		       (users.service_account = true AND NOT EXISTS (SELECT 1 FROM public.basic_authentication WHERE user_id = users.user_id)) AS service_account
+		       (users.service_account = true AND NOT EXISTS (SELECT 1 FROM public.basic_authentication WHERE user_id = users.user_id)) AS service_account,
+		       roles.all_projects,
+		       ARRAY(SELECT roles_projects.project_id FROM public.roles_projects WHERE roles_projects.role_id = roles.role_id) AS project_ids
 	   	FROM public.users as users
 	   	JOIN tenants on users.tenant_id = tenants.tenant_id
 		JOIN roles on users.role_id = roles.role_id
@@ -19,8 +21,11 @@ func getUserFromDB(conn pool.Pool, userID, tenantID int, tokenType TokenType) (*
 	user := &User{AuthMethod: "jwt"}
 	var permissions []string
 	var jwtIat sql.NullInt64
+	var allProjects bool
+	var projectIDs []uint32
 	if err := conn.QueryRow(query, userID, tenantID).
-		Scan(&user.ID, &user.TenantID, &user.Name, &user.Email, &jwtIat, &permissions, &user.ServiceAccount); err != nil {
+		Scan(&user.ID, &user.TenantID, &user.Name, &user.Email, &jwtIat, &permissions, &user.ServiceAccount,
+			&allProjects, &projectIDs); err != nil {
 		return nil, fmt.Errorf("user not found", err)
 	}
 
@@ -31,6 +36,13 @@ func getUserFromDB(conn pool.Pool, userID, tenantID int, tokenType TokenType) (*
 	user.Permissions = make(map[string]bool)
 	for _, permission := range permissions {
 		user.Permissions[permission] = true
+	}
+
+	if !allProjects {
+		user.Projects = make(map[uint32]bool, len(projectIDs))
+		for _, projectID := range projectIDs {
+			user.Projects[projectID] = true
+		}
 	}
 
 	return user, nil
