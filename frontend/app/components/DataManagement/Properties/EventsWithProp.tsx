@@ -1,5 +1,10 @@
+import { useLocalSort } from '@/lib/use-local-sort';
+import { type Column, DataTable } from '@/ui/data/table';
+import { EmptyState } from '@/ui/feedback/EmptyState';
+import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
+import { ListFooter } from '@/ui/layout/ListFooter';
+import { PagePanel } from '@/ui/layout/PageCard';
 import { useQuery } from '@tanstack/react-query';
-import { Table } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -7,100 +12,115 @@ import { useTranslation } from 'react-i18next';
 import { useStore } from 'App/mstore';
 import { dataManagement, withSiteId } from 'App/routes';
 import { useHistory } from 'App/routing';
-import { TextEllipsis } from 'UI';
 
-import FullPagination from 'Shared/FullPagination';
+import { type DistinctEvent, fetchListByProp } from '../Events/api';
 
-import { fetchListByProp } from '../Events/api';
+const PAGE_SIZE = 10;
+const SORT: Record<string, (a: DistinctEvent, b: DistinctEvent) => number> = {
+  name: (a, b) => a.name.localeCompare(b.name),
+  displayName: (a, b) => a.displayName.localeCompare(b.displayName),
+};
 
 function EventsWithProp({ propName }: { propName: string }) {
-  const { projectsStore } = useStore();
-  const siteId = projectsStore.activeSiteId!;
-  const history = useHistory();
-  const path = dataManagement.eventsList() + '?event=';
-  const onRow = (record: any) => {
-    return {
-      onClick: () => {
-        history.push(withSiteId(path + record.name, siteId));
-      },
-    };
-  };
-  const { filterStore } = useStore();
-  const limit = 10;
-  const [page, setPage] = React.useState(1);
-  const onPageChange = (page: number) => {
-    setPage(page);
-  };
   const { t } = useTranslation();
+  const history = useHistory();
+  const { projectsStore, filterStore } = useStore();
+  const siteId = projectsStore.activeSiteId!;
+  const [page, setPage] = React.useState(1);
   const { data = { events: [], total: 0 }, isPending } = useQuery({
     queryKey: ['events-with-prop', siteId, propName],
     queryFn: () => fetchListByProp(propName),
   });
+  const events = React.useMemo(
+    () =>
+      data.events.map((e) => ({
+        ...e,
+        displayName:
+          filterStore.findEvent({ name: e.name })?.displayName || e.name,
+      })),
+    [data.events],
+  );
+  const { sort, onSort, sorted } = useLocalSort(events, SORT);
+  const rows = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  const filteredEvents = React.useMemo(() => {
-    const eventsWithDispNames = data.events.map((event) => {
-      const eventDispName = filterStore.findEvent({
-        name: event.name,
-      })?.displayName;
-      return {
-        ...event,
-        displayName: eventDispName || event.name,
-      };
-    });
-    return eventsWithDispNames.slice((page - 1) * limit, page * limit);
-  }, [data.events, page]);
-
-  const tableCols = [
+  const columns: Column<DistinctEvent>[] = [
     {
-      title: t('Event Name'),
-      dataIndex: 'name',
+      title: t('Event name'),
       key: 'name',
-      width: '15%',
-      sorter: (a: any, b: any) => a.name.localeCompare(b.name),
-    },
-    {
-      title: t('Display Name'),
-      dataIndex: 'displayName',
-      key: 'displayName',
-      width: '20%',
-      sorter: (a: any, b: any) => a.displayName.localeCompare(b.displayName),
-      render: (text: string) => (
-        <TextEllipsis className="link" maxWidth={'185px'} text={text} />
+      width: '26%',
+      sortable: true,
+      render: (e) => (
+        <span className="m-truncate m-dmg__mono block">{e.name}</span>
       ),
     },
     {
+      title: t('Display name'),
+      key: 'displayName',
+      width: '24%',
+      sortable: true,
+      render: (e) => <span className="m-truncate block">{e.displayName}</span>,
+    },
+    {
       title: t('Description'),
-      dataIndex: 'description',
       key: 'description',
-      width: '65%',
-      render: (text: string) => <TextEllipsis text={text} maxWidth={'700px'} />,
+      width: '50%',
+      render: (e) => (
+        <span className="m-truncate block text-content-secondary">
+          {e.description || '—'}
+        </span>
+      ),
     },
   ];
+
   return (
-    <div className="flex flex-col gap-2 bg-white border rounded-lg">
-      <div className="px-4 pt-4 font-semibold text-lg">
-        {t('Events with this property')}
-      </div>
-      <Table
-        // @ts-ignore
-        columns={tableCols}
-        dataSource={filteredEvents}
-        rowKey="name"
-        loading={isPending}
-        pagination={false}
-        scroll={{ x: 'max-content' }}
-        onRow={onRow}
-        rowClassName={'cursor-pointer'}
-      />
-      <FullPagination
-        page={page}
-        limit={limit}
-        total={data.total}
-        listLen={data.events.length}
-        onPageChange={onPageChange}
-        entity={'events'}
-      />
-    </div>
+    <PagePanel
+      head={
+        <span className="m-ditem__head-title">
+          {t('Events with this property')}
+          <span className="m-dmg__count">
+            {' · '}
+            {data.total.toLocaleString()}
+          </span>
+        </span>
+      }
+    >
+      {isPending ? (
+        <SkeletonRows rows={4} columns={[26, 24, 50]} />
+      ) : events.length === 0 ? (
+        <EmptyState
+          title={t('No event sends this property')}
+          hint={t(
+            'Attach it to an event from your code and the event will be listed here.',
+          )}
+        />
+      ) : (
+        <>
+          <DataTable<DistinctEvent>
+            rowKey={(e) => e.name}
+            columns={columns}
+            rows={rows}
+            sort={sort}
+            onSort={onSort}
+            onRowClick={(e) =>
+              history.push(
+                withSiteId(
+                  `${dataManagement.eventsList()}?event=${encodeURIComponent(e.name)}`,
+                  siteId,
+                ),
+              )
+            }
+            ariaLabel={t('Events with this property')}
+          />
+          <ListFooter
+            page={page}
+            pageSize={PAGE_SIZE}
+            total={events.length}
+            noun={[t('event'), t('events')]}
+            onPage={setPage}
+          />
+        </>
+      )}
+    </PagePanel>
   );
 }
 

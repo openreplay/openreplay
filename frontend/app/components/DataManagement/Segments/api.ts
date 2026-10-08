@@ -1,6 +1,10 @@
 import { client, filterStore } from '@/mstore';
 import FilterItem from '@/mstore/types/filterItem';
 
+/** The API sends epoch ms on some rows and ISO strings on others. */
+const toMs = (v: number | string | undefined): number =>
+  typeof v === 'string' ? Date.parse(v) || 0 : (v ?? 0);
+
 export class Segment {
   name: string;
   filters: FilterItem[] = [];
@@ -31,8 +35,8 @@ export class Segment {
         : [];
       this.isPublic = data.isPublic || false;
       this.id = data.searchId ? String(data.searchId) : '';
-      this.updatedAt = data.updatedAt || data.createdAt || 0;
-      this.createdAt = data.createdAt || 0;
+      this.updatedAt = toMs(data.updatedAt) || toMs(data.createdAt);
+      this.createdAt = toMs(data.createdAt);
       this.userId = data.userId;
       this.userName = data.userName ?? '';
       this.sessionsCount = data.sessionsCount ?? 0;
@@ -51,8 +55,8 @@ interface ApiSegment {
   isPublic: boolean;
   userId?: number;
   userName?: string;
-  createdAt?: number;
-  updatedAt?: number;
+  createdAt?: number | string;
+  updatedAt?: number | string;
   sessionsCount?: number;
   usersCount?: number;
   isCapture?: boolean;
