@@ -1,9 +1,8 @@
+import { CodeBlock } from '@/ui/data/CodeBlock';
 import React from 'react';
-
-import { CodeBlock } from 'UI';
+import { useTranslation } from 'react-i18next';
 
 import ToggleContent from 'Shared/ToggleContent';
-import { useTranslation } from 'react-i18next';
 
 function AssistNpm(props) {
   const { t } = useTranslation();

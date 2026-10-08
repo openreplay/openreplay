@@ -1,6 +1,7 @@
+import { toast } from '@/ui/overlays/toast';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
 import { client } from 'App/mstore';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'react-toastify';
 
 export type ServiceName = 'datadog' | 'dynatrace' | 'elasticsearch' | 'sentry';
 export const serviceNames: Record<ServiceName, string> = {
@@ -14,9 +15,7 @@ export async function getIntegrationData<T>(
   name: ServiceName,
   projectId: string,
 ): Promise<T> {
-  const r = await client.get(
-    `/${projectId}/integration/${name}`,
-  );
+  const r = await client.get(`/${projectId}/integration/${name}`);
   return r.json();
 }
 
@@ -81,31 +80,31 @@ export async function saveIntegration<T>(
 ) {
   const method = exists ? 'patch' : 'post';
   try {
-    const r = await client[method](
-      `/${projectId}/integration/${name}`,
-      { data },
-    );
+    const r = await client[method](`/${projectId}/integration/${name}`, {
+      data,
+    });
     if (r.ok) {
       toast.success(`${name} integration saved`);
     } else {
       toast.error(`Failed to save ${name} integration`);
     }
     return r.ok;
-  } catch (e) {
+  } catch (e: any) {
     console.error(e);
-    if (e.response.status === 422) {
+    // the API client throws with the Response as `cause`
+    const status = (e?.cause ?? e?.response)?.status;
+    if (status === 422) {
       toast.error(`Invalid credentials for ${name}`);
     } else {
       toast.error(`Failed to save ${name} integration`);
     }
+    return false;
   }
 }
 
 export async function removeIntegration(name: string, projectId: string) {
   try {
-    const r = await client.delete(
-      `/${projectId}/integration/${name}`,
-    );
+    const r = await client.delete(`/${projectId}/integration/${name}`);
     if (r.ok) {
       toast.success(`${name} integration removed`);
     } else {

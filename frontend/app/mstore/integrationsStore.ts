@@ -1,9 +1,9 @@
+import { toast } from '@/ui/overlays/toast';
 import { makeAutoObservable } from 'mobx';
 
+import { serviceNames } from 'App/components/Client/Integrations/apiMethods';
 import { integrationsService } from 'App/services';
 
-import { serviceNames } from 'App/components/Client/Integrations/apiMethods';
-import { toast } from 'react-toastify';
 import { MessengerConfig } from './types/integrations/messengers';
 import {
   DatadogInt,
@@ -78,11 +78,13 @@ class GenericIntegrationsStore {
     this.setLoading(true);
     try {
       const { data } = await integrationsService.fetchList(undefined, siteId);
+      // the project was switched while this was in flight: not its list
+      if (siteId && siteId !== this.siteId) return;
       this.setList(data);
     } catch (e) {
       console.log(e);
     } finally {
-      this.setLoading(false);
+      if (!siteId || siteId === this.siteId) this.setLoading(false);
     }
   };
 }
@@ -223,8 +225,9 @@ class MessengerIntegrationStore {
     this.errors = errors;
   };
 
-  saveIntegration = async (): Promise<void> => {
-    if (!this.instance) return;
+  /** Resolves true once the channel is saved; a failure has already been toasted. */
+  saveIntegration = async (): Promise<boolean> => {
+    if (!this.instance) return false;
     this.setLoading(true);
     try {
       const response = await integrationsService.saveIntegration(
@@ -237,12 +240,14 @@ class MessengerIntegrationStore {
           response.errors[0] ||
             "Couldn't process the request: check your data.",
         );
-        return response;
+        return false;
       }
       this.instance.edit({ webhookId: response.data.webhookId });
       this.setList([...this.list, this.instance]);
+      return true;
     } catch (e) {
       toast.error("Couldn't process the request: check your data.");
+      return false;
     } finally {
       this.setLoading(false);
     }
@@ -293,8 +298,8 @@ class MessengerIntegrationStore {
     this.instance.edit(data);
   };
 
-  update = async () => {
-    if (!this.instance) return;
+  update = async (): Promise<boolean> => {
+    if (!this.instance) return false;
     this.setLoading(true);
     try {
       const response = await integrationsService.updateMessengerInt(
@@ -307,15 +312,17 @@ class MessengerIntegrationStore {
           response.errors[0] ||
             "Couldn't process the request: check your data.",
         );
-        return response;
+        return false;
       }
       this.setList(
         this.list.map((int) =>
           int.webhookId === this.instance?.webhookId ? this.instance : int,
         ),
       );
+      return true;
     } catch (e) {
       toast.error("Couldn't process the request: check your data.");
+      return false;
     } finally {
       this.setLoading(false);
     }

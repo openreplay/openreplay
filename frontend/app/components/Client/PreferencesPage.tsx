@@ -1,20 +1,23 @@
-import { Tabs, Tooltip } from 'antd';
-import type { TabsProps } from 'antd';
+import { IconButton } from '@/ui/actions/IconButton';
+import { Tabs, TabsList, TabsTrigger } from '@/ui/layout/tabs';
+import { Tooltip } from '@/ui/overlays/tooltip';
 import { ArrowLeft, Info } from 'lucide-react';
 import React from 'react';
 
-const HEADER = 'flex items-center gap-2 border-b px-4 h-14 shrink-0';
-const ACTIONS = 'flex items-center gap-2 ml-auto';
+interface TabItem {
+  key: string;
+  label: React.ReactNode;
+  children?: React.ReactNode;
+}
 
 interface Props {
+  /** The shell prints the section title; this one shows only on a sub-view (with onBack). */
   title: React.ReactNode;
-  /** muted value beside the title — a count, usually */
+  /** muted value beside the bar's start — a count, usually */
   value?: React.ReactNode;
-  /** help tooltip on an info icon after the title */
   help?: string;
-  /** right-hand controls — pass them size="small" */
   actions?: React.ReactNode;
-  tabs?: TabsProps['items'];
+  tabs?: TabItem[];
   activeTab?: string;
   onTabChange?: (key: string) => void;
   onBack?: () => void;
@@ -23,6 +26,7 @@ interface Props {
   children?: React.ReactNode;
 }
 
+/** A preferences section's toolbar, tabs and body inside the preferences shell. */
 function PreferencesPage({
   title,
   value,
@@ -35,46 +39,62 @@ function PreferencesPage({
   flush = false,
   children,
 }: Props) {
+  // a lone help icon repeats the shell's lede, so it only rides along
+  const bar = onBack || value != null || actions;
+  const current = tabs?.find((i) => i.key === activeTab) ?? tabs?.[0];
   return (
-    <div className="bg-white rounded-lg border overflow-hidden">
-      <div className={HEADER}>
-        {onBack && (
-          <button
-            type="button"
-            onClick={onBack}
-            className="flex items-center -ml-1 mr-0.5 cursor-pointer"
-            style={{ color: 'var(--color-gray-medium)' }}
-          >
-            <ArrowLeft size={16} />
-          </button>
-        )}
-        <h1 className="text-lg font-semibold m-0 capitalize-first">{title}</h1>
-        {value !== undefined && value !== null && (
-          <span className="color-gray-medium">{value}</span>
-        )}
-        {help && (
-          <Tooltip placement="bottom" title={help}>
-            <span
-              className="flex items-center cursor-help"
-              style={{ color: 'var(--color-gray-medium)' }}
-            >
-              <Info size={15} />
-            </span>
-          </Tooltip>
-        )}
-        {/* the row is a fixed height, so pass small controls: size="small" */}
-        {actions && <div className={ACTIONS}>{actions}</div>}
-      </div>
-
-      {tabs && (
+    <div className="m-pref__page">
+      {bar ? (
+        <div className="m-pref__bar">
+          {onBack ? (
+            <>
+              <IconButton
+                icon={<ArrowLeft size={15} />}
+                label="Back"
+                variant="ghost"
+                onClick={onBack}
+              />
+              <h3 className="m-pref__bar-title">{title}</h3>
+            </>
+          ) : null}
+          {value != null ? (
+            <span className="m-pref__bar-value">{value}</span>
+          ) : null}
+          {help ? (
+            <Tooltip title={help} side="bottom">
+              <span className="m-pref__bar-help" aria-label={help}>
+                <Info size={14} />
+              </span>
+            </Tooltip>
+          ) : null}
+          {actions ? (
+            <div className="m-pref__bar-actions">{actions}</div>
+          ) : null}
+        </div>
+      ) : null}
+      {tabs?.length ? (
         <Tabs
-          activeKey={activeTab}
-          onChange={onTabChange}
-          items={tabs}
-          tabBarStyle={{ paddingLeft: 16, paddingRight: 16, marginBottom: 0 }}
-        />
-      )}
-      {children && <div className={flush ? undefined : 'p-5'}>{children}</div>}
+          value={current?.key}
+          onValueChange={(k) => onTabChange?.(k)}
+          className="m-pref__tabs"
+        >
+          <TabsList className="border-b-0">
+            {tabs.map((i) => (
+              <TabsTrigger key={i.key} value={i.key}>
+                {i.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      ) : null}
+      {current?.children ? (
+        <div className="m-pref__page-body">{current.children}</div>
+      ) : null}
+      {children ? (
+        <div className={flush ? 'm-pref__page-flush' : 'm-pref__page-body'}>
+          {children}
+        </div>
+      ) : null}
     </div>
   );
 }

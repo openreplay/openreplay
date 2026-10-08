@@ -1,21 +1,24 @@
+import { toast } from '@/ui/overlays/toast';
 import withPageTitle from 'HOCs/withPageTitle';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'react-toastify';
 
 import { useStore } from 'App/mstore';
 import { userService } from 'App/services';
-import ModuleCard from 'Components/Client/Modules/ModuleCard';
 
 import { modules as list } from '.';
-import PreferencesPage from '../PreferencesPage';
+import { PrefBlock, PrefList, PrefListRow, PrefToggle } from '../PrefSection';
+
+const NO_MODULES: string[] = [];
 
 function Modules() {
   const { t, i18n } = useTranslation();
   const { userStore } = useStore();
   const { updateModule } = userStore;
-  const modules = userStore.account.settings?.modules ?? [];
+  // a stable empty list: a fresh `[]` each render re-ran the effect below,
+  // which set state, which rendered again — forever
+  const modules: string[] = userStore.account.settings?.modules ?? NO_MODULES;
   const isEnterprise = userStore.isEnterprise;
   const [modulesState, setModulesState] = React.useState<any[]>([]);
 
@@ -55,30 +58,30 @@ function Modules() {
   }, [modules, i18n.language]);
 
   return (
-    <div>
-      <PreferencesPage title={t('Modules')}>
-        <ul className="ml-4 list-disc">
-          <li>
-            {t(
-              "OpenReplay's modules are a collection of advanced features that provide enhanced functionality.",
-            )}
-          </li>
-          <li>
-            {t(
-              'Easily enable any desired module within the user interface to access its capabilities',
-            )}
-          </li>
-        </ul>
-      </PreferencesPage>
-
-      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+    <PrefBlock
+      flush
+      title={t('Product features')}
+      hint={t(
+        "OpenReplay's modules are advanced features you can switch on or off for this workspace.",
+      )}
+    >
+      <PrefList>
         {modulesState.map((module) => (
-          <div key={module.key} className="flex flex-col h-full">
-            <ModuleCard module={module} onToggle={onToggle} />
-          </div>
+          <PrefListRow
+            key={module.key}
+            title={module.label}
+            sub={module.description}
+            control={
+              <PrefToggle
+                checked={!module.isEnabled}
+                onChange={() => void onToggle(module)}
+                label={!module.isEnabled ? t('On') : t('Off')}
+              />
+            }
+          />
         ))}
-      </div>
-    </div>
+      </PrefList>
+    </PrefBlock>
   );
 }
 

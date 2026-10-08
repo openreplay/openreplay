@@ -1,5 +1,7 @@
 import { action, makeAutoObservable, observable } from 'mobx';
+
 import { userService } from 'App/services';
+
 import Notification from './types/notification';
 
 export default class NotificationStore {

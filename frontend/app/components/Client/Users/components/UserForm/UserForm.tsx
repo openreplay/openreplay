@@ -1,199 +1,211 @@
-import { Button, Tooltip } from 'antd';
-import cn from 'classnames';
+import { Button } from '@/ui/actions/button';
+import { Notice } from '@/ui/feedback/Notice';
+import { Input } from '@/ui/inputs/input';
+import { SimpleSelect } from '@/ui/inputs/select';
+import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
+import {
+  DrawerFooter,
+  EntityDrawer,
+  Field,
+  Section,
+} from '@/ui/overlays/EntityDrawer';
+import { Tooltip } from '@/ui/overlays/tooltip';
+import copy from 'copy-to-clipboard';
+import { Link2, UserCog } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useModal } from 'App/components/Modal';
 import { useStore } from 'App/mstore';
-import { CopyButton, Form, Icon, Input, confirm } from 'UI';
 
-import Select from 'Shared/Select';
+import { PrefToggle } from '../../../PrefSection';
 
-function UserForm({
-  showMakeOwnerButton,
-  canMakeOwner,
-  makeOwnerTooltip,
-  handleMakeOwner,
-}: {
-  showMakeOwnerButton: boolean;
-  canMakeOwner: boolean;
-  makeOwnerTooltip: string | undefined;
-  handleMakeOwner: (e: React.MouseEvent) => void;
-}) {
+/** Invite someone, or edit a member: name, admin rights, role, ownership. */
+function UserForm({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { t } = useTranslation();
-  const { hideModal } = useModal();
   const { userStore, roleStore } = useStore();
-  const { isEnterprise } = userStore;
-  const isSmtp = userStore.account.smtp;
-  const isSaving = userStore.saving;
-  const user: any = userStore.instance || userStore.initUser();
+  const { isEnterprise, account } = userStore;
+  const user: any = userStore.instance;
+  const [confirm, setConfirm] = React.useState<'delete' | 'owner' | null>(null);
+  if (!user) return null;
+
+  const exists = user.exists();
+  const isOwner = !!account.superAdmin;
+  const canMakeOwner = user.isJoined && user.userId !== account.id;
+  const ownerHint = !user.isJoined
+    ? t('User has not accepted the invitation yet')
+    : user.userId === account.id
+      ? t('Cannot transfer ownership to yourself')
+      : undefined;
   const roles = roleStore.list
-    .filter((r) => (r.protected ? user.isSuperAdmin : true))
-    .map((r) => ({ label: r.name, value: r.roleId }));
+    .filter((r: any) => (r.protected ? user.isSuperAdmin : true))
+    .map((r: any) => ({ value: String(r.roleId), label: r.name }));
 
-  const onChangeCheckbox = (e: any) => {
-    user.updateKey('isAdmin', !user.isAdmin);
-  };
-
-  const onSave = () => {
+  const save = () =>
     userStore.saveUser(user).then(() => {
-      hideModal();
-      userStore.fetchLimits();
+      onClose();
+      void userStore.fetchLimits();
     });
-  };
-
-  const write = ({ target: { name, value } }) => {
-    user.updateKey(name, value);
-  };
-
-  const deleteHandler = async () => {
-    if (
-      await confirm({
-        header: t('Confirm'),
-        confirmButton: t('Yes, delete'),
-        confirmation: t(
-          'Are you sure you want to permanently delete this user?',
-        ),
-      })
-    ) {
-      userStore.deleteUser(user.userId).then(() => {
-        hideModal();
-        userStore.fetchLimits();
-      });
-    }
-  };
 
   return (
-    <div className="bg-white h-screen p-6">
-      <div className="">
-        <h1 className="text-2xl mb-4">
-          {`${user.exists() ? 'Update' : 'Invite'} User`}
-        </h1>
-      </div>
-      <Form onSubmit={onSave}>
-        <Form.Field>
-          <label>{t('Full Name')}</label>
-          <Input
-            name="name"
-            autoFocus
-            maxLength="50"
-            value={user.name}
-            onChange={write}
-            className="w-full"
-            id="name-field"
+    <>
+      <EntityDrawer
+        open={open}
+        onClose={onClose}
+        eyebrow={t('Team')}
+        title={exists ? user.name || user.email : t('Invite someone')}
+        footer={
+          <DrawerFooter
+            left={
+              exists ? (
+                <Button
+                  variant="danger-outline"
+                  disabled={user.isSuperAdmin}
+                  onClick={() => setConfirm('delete')}
+                >
+                  {t('Remove')}
+                </Button>
+              ) : null
+            }
+            right={
+              <>
+                <Button variant="subtle" onClick={onClose}>
+                  {t('Cancel')}
+                </Button>
+                <Button
+                  variant="primary"
+                  disabled={!user.valid(isEnterprise) || userStore.saving}
+                  onClick={() => void save()}
+                >
+                  {exists ? t('Update') : t('Send invitation')}
+                </Button>
+              </>
+            }
           />
-        </Form.Field>
-
-        <div className="form-group">
-          <label>{t('Email Address')}</label>
-          <Input
-            disabled={user.exists()}
-            name="email"
-            maxLength="320"
-            value={user.email}
-            onChange={write}
-            className="w-full"
-          />
-        </div>
-        {!isSmtp && (
-          <div className={cn('mb-4 p-2 bg-amber rounded-sm')}>
-            {t('SMTP is not configured (see')}&nbsp;
-            <a
-              className="link"
-              href="https://docs.openreplay.com/configuration/configure-smtp"
-              target="_blank"
-              rel="noreferrer"
-            >
-              {t('here')}
-            </a>{' '}
-            {t(
-              'how to set it up). You can still add new users, but you’d have to manually copy then send them the invitation link.',
-            )}
-          </div>
-        )}
-        <Form.Field>
-          <label className="flex items-start cursor-pointer">
-            <input
-              name="admin"
-              type="checkbox"
-              checked={!!user.isAdmin || !!user.isSuperAdmin}
-              onChange={onChangeCheckbox}
-              disabled={user.isSuperAdmin}
-              className="mt-1"
+        }
+      >
+        <Section title={t('Who')}>
+          <Field label={t('Full name')}>
+            <Input
+              autoFocus
+              maxLength={50}
+              value={user.name ?? ''}
+              onChange={(e) => user.updateKey('name', e.target.value)}
             />
-            <div className="ml-2 select-none">
-              <span>{t('Admin Privileges')}</span>
-              <div className="text-sm color-gray-medium -mt-1">
-                {t('Can manage Projects and team members.')}
-              </div>
-            </div>
-          </label>
-        </Form.Field>
-        {user.exists() && showMakeOwnerButton && (
-          <div className="mb-4">
-            <Tooltip title={makeOwnerTooltip}>
-              <div
-                className={cn(
-                  'flex gap-2 items-center w-fit',
-                  canMakeOwner ? 'link cursor-pointer' : 'text-disabled-text',
-                )}
-                onClick={handleMakeOwner}
+          </Field>
+          <Field label={t('Email address')}>
+            <Input
+              type="email"
+              maxLength={320}
+              disabled={exists}
+              value={user.email ?? ''}
+              placeholder="you@acme.com"
+              onChange={(e) => user.updateKey('email', e.target.value)}
+            />
+          </Field>
+          {!account.smtp ? (
+            <Notice kind="info">
+              {t(
+                'SMTP is not configured, so no email is sent. Copy the invitation link and send it yourself.',
+              )}{' '}
+              <a
+                className="link"
+                href="https://docs.openreplay.com/configuration/configure-smtp"
+                target="_blank"
+                rel="noreferrer"
               >
-                <Icon name="user-switch" />
-                <span>{t('Make Owner')}</span>
-              </div>
-            </Tooltip>
-          </div>
-        )}
-
-        {isEnterprise && (
-          <Form.Field>
-            <label htmlFor="role">{t('Role')}</label>
-            <Select
-              placeholder={t('Select Role')}
-              selection
-              options={roles}
-              name="roleId"
-              defaultValue={user.roleId}
-              onChange={({ value }) => user.updateKey('roleId', value.value)}
-              className="block"
-              isDisabled={user.isSuperAdmin}
+                {t('How to set it up')}
+              </a>
+            </Notice>
+          ) : null}
+        </Section>
+        <Section
+          title={t('What they can reach')}
+          hint={t('You can change this at any time from the members list.')}
+        >
+          <div className="flex flex-col items-start gap-4">
+            <PrefToggle
+              checked={!!user.isAdmin || !!user.isSuperAdmin}
+              disabled={user.isSuperAdmin}
+              onChange={(v) => user.updateKey('isAdmin', v)}
+              label={t('Admin — can manage projects and team members')}
             />
-          </Form.Field>
-        )}
-      </Form>
-
-      <div className="flex items-center">
-        <div className="flex items-center mr-auto">
-          <Button
-            onClick={onSave}
-            disabled={!user.valid(isEnterprise) || isSaving}
-            loading={isSaving}
-            type="primary"
-            className="float-left mr-2"
-          >
-            {user.exists() ? t('Update') : t('Invite')}
-          </Button>
-          {user.exists() && <Button onClick={hideModal}>{t('Cancel')}</Button>}
-        </div>
-        {!user.exists() ? null : (
-          <div>
-            <Button disabled={user.isSuperAdmin} onClick={deleteHandler}>
-              <Icon name="trash" size="16" />
-            </Button>
+            {isEnterprise ? (
+              <Field label={t('Role')}>
+                <SimpleSelect<string>
+                  value={user.roleId != null ? String(user.roleId) : undefined}
+                  placeholder={t('Select role')}
+                  ariaLabel={t('Role')}
+                  disabled={user.isSuperAdmin}
+                  onChange={(v) => v && user.updateKey('roleId', Number(v))}
+                  options={roles}
+                />
+              </Field>
+            ) : null}
+            {exists && isOwner ? (
+              <Tooltip title={ownerHint}>
+                <span className="self-start">
+                  <Button
+                    variant="subtle"
+                    disabled={!canMakeOwner}
+                    onClick={() => setConfirm('owner')}
+                  >
+                    <UserCog size={14} />
+                    {t('Make owner')}
+                  </Button>
+                </span>
+              </Tooltip>
+            ) : null}
+            {!user.isJoined && user.invitationLink ? (
+              <Button
+                variant="subtle"
+                className="self-start"
+                onClick={() => copy(user.invitationLink)}
+              >
+                <Link2 size={14} />
+                {t('Copy invite link')}
+              </Button>
+            ) : null}
           </div>
+        </Section>
+      </EntityDrawer>
+      <ConfirmDialog
+        open={confirm === 'delete'}
+        title={t('Remove {{name}}?', { name: user.name || user.email })}
+        okText={t('Remove')}
+        danger
+        onCancel={() => setConfirm(null)}
+        onOk={() => {
+          setConfirm(null);
+          void userStore.deleteUser(user.userId).then(() => {
+            onClose();
+            void userStore.fetchLimits();
+          });
+        }}
+      >
+        {t(
+          'They lose access immediately. Nothing they recorded or bookmarked is deleted.',
         )}
-      </div>
-
-      {!user.isJoined && user.invitationLink && (
-        <CopyButton
-          content={user.invitationLink}
-          className="link mt-4"
-          btnText="Copy invite link"
-        />
-      )}
-    </div>
+      </ConfirmDialog>
+      <ConfirmDialog
+        open={confirm === 'owner'}
+        title={t('Transfer ownership?')}
+        okText={t('Yes, transfer')}
+        onCancel={() => setConfirm(null)}
+        onOk={() => {
+          setConfirm(null);
+          void userStore
+            .makeOwner(user.userId)
+            .then(() => userStore.fetchUsers())
+            .then(onClose);
+        }}
+      >
+        {t(
+          'There can only be one owner account. By proceeding, the ownership will be transferred to {{name}}. You will lose your owner privileges.',
+          { name: user.name },
+        )}
+      </ConfirmDialog>
+    </>
   );
 }
 

@@ -1,9 +1,11 @@
-import { makeAutoObservable, runInAction, reaction } from 'mobx';
+import { makeAutoObservable, reaction, runInAction } from 'mobx';
+
 import {
   GLOBAL_HAS_NO_RECORDINGS,
   SITE_ID_STORAGE_KEY,
 } from 'App/constants/storageKeys';
 import { projectsService } from 'App/services';
+
 import GDPR from './types/gdpr';
 import Project from './types/project';
 
@@ -55,7 +57,9 @@ export default class BaseProjectsStore {
   syncProjectInList = (project: Partial<Project>) => {
     const index = this.list.findIndex((site) => site.id === project.id);
     if (index !== -1) {
+      this.listWrites += 1;
       this.list[index] = this.list[index].edit(project);
+      this.relink();
     }
   };
 
@@ -198,18 +202,59 @@ export default class BaseProjectsStore {
     }
   };
 
+  // bumped by every local write, so a refresh that started earlier can't undo it
+  private listWrites = 0;
+
+  /** `active` and `config.project` are references into `list`: re-point them
+      after the list or one of its items is replaced. */
+  private relink = () => {
+    if (this.siteId)
+      this.active = this.list.find((site) => site.id === this.siteId) ?? null;
+    if (this.config.pid != null) {
+      const project = this.list.find(
+        (site) => site.projectId === this.config.pid,
+      );
+      if (project) this.config.project = project;
+    }
+    if (this.list.some((site) => site.recorded)) {
+      localStorage.removeItem(GLOBAL_HAS_NO_RECORDINGS);
+    } else {
+      localStorage.setItem(GLOBAL_HAS_NO_RECORDINGS, 'true');
+    }
+  };
+
+  /** Re-reads the list in place. No loading flag: the app shell renders a
+      spinner instead of the routes while `sitesLoading` is set. */
+  refreshList = async () => {
+    const writes = this.listWrites;
+    try {
+      const response = await projectsService.fetchList();
+      if (writes !== this.listWrites) return;
+      runInAction(() => {
+        this.list = response.data.map((data) => new Project(data));
+        this.relink();
+      });
+    } catch (error) {
+      console.error('Failed to refresh site list:', error);
+    }
+  };
+
   save = async (projectData: Partial<Project>) => {
     this.setLoading(true);
     try {
       const response = await projectsService.saveProject(projectData);
 
       const newSite = new Project(response.data);
-      const index = this.list.findIndex((site) => site.id === newSite.id);
-      if (index !== -1) {
-        this.list[index] = newSite;
-      } else {
-        this.list.push(newSite);
-      }
+      runInAction(() => {
+        this.listWrites += 1;
+        const index = this.list.findIndex((site) => site.id === newSite.id);
+        if (index !== -1) {
+          this.list[index] = newSite;
+        } else {
+          this.list.push(newSite);
+        }
+        this.relink();
+      });
       // this.setSiteId(newSite.id!);
       // this.active = newSite;
       return newSite;
@@ -223,13 +268,9 @@ export default class BaseProjectsStore {
   updateProjectRecordingStatus = (siteId: string, status: boolean) => {
     const site = this.list.find((site) => site.id === siteId);
     if (site) {
+      this.listWrites += 1;
       site.recorded = status;
-      const hasRecordings = this.list.some((site) => site.recorded);
-      if (!hasRecordings) {
-        localStorage.setItem(GLOBAL_HAS_NO_RECORDINGS, 'true');
-      } else {
-        localStorage.removeItem(GLOBAL_HAS_NO_RECORDINGS);
-      }
+      this.relink();
     }
   };
 
@@ -238,11 +279,13 @@ export default class BaseProjectsStore {
     try {
       await projectsService.removeProject(projectId);
       runInAction(() => {
+        this.listWrites += 1;
         this.list = this.list.filter((site) => site.id !== projectId);
         this.setConfigProject();
         if (this.active?.id === projectId) {
           this.setSiteId(this.list[0].id!);
         }
+        this.relink();
       });
     } catch (error) {
       throw error || new Error('An error occurred while deleting the project.');
@@ -260,10 +303,12 @@ export default class BaseProjectsStore {
       });
       runInAction(() => {
         const updatedSite = new Project(response.data);
+        this.listWrites += 1;
         const index = this.list.findIndex((site) => site.id === updatedSite.id);
         if (index !== -1) {
           this.list[index] = updatedSite;
         }
+        this.relink();
       });
     } catch (error) {
       throw error || new Error('An error occurred while updating the project.');
@@ -274,9 +319,11 @@ export default class BaseProjectsStore {
 
   setConfigProject = (pid?: number) => {
     if (!pid) {
-      const firstProject = this.list[0];
-      this.config.pid = firstProject?.projectId ?? undefined;
-      this.config.project = firstProject ?? null;
+      // the project being worked in, else the first one
+      const fallback =
+        this.list.find((p) => p.id === this.active?.id) ?? this.list[0];
+      this.config.pid = fallback?.projectId ?? undefined;
+      this.config.project = fallback ?? null;
       return;
     }
 
