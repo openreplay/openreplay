@@ -26,6 +26,7 @@ import (
 	"openreplay/backend/pkg/url/assets"
 
 	"github.com/pkg/errors"
+	"golang.org/x/net/http/httpproxy"
 )
 
 const MAX_CACHE_DEPTH = 5
@@ -52,6 +53,8 @@ type cacher struct {
 	hashKeys       bool
 	resolver       *resolver.Resolver
 	gzipAssets     bool
+	allowPrivate   bool
+	proxy          func(*url.URL) (*url.URL, error)
 	samplerDone    chan struct{}
 }
 
@@ -135,6 +138,14 @@ func NewCacher(log logger.Logger, cfg *config.Config, store objectstorage.Object
 		hashKeys:       cfg.KeyScheme == assets.KeySchemeHash,
 		resolver:       urlResolver,
 		gzipAssets:     cfg.AssetsCompression == config.CompressionGzip,
+		allowPrivate:   cfg.AssetsAllowPrivate,
+		proxy:          httpproxy.FromEnvironment().ProxyFunc(),
+	}
+	c.httpClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		if len(via) >= 10 {
+			return errors.New("stopped after 10 redirects")
+		}
+		return c.checkProxiedDestination(req)
 	}
 	c.workers = NewPool(cfg.AssetsWorkerCount, cfg.AssetsQueueSize, c.CacheFile)
 	c.scheduler = newScheduler(cfg.AssetsRetryHeapLimit, c.workers.tryAddTask, func(n int) {
@@ -190,6 +201,10 @@ func (c *cacher) cacheURL(t *Task) {
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36")
 	for k, v := range c.requestHeaders {
 		req.Header.Set(k, v)
+	}
+	if err := c.checkProxiedDestination(req); err != nil {
+		c.permanent(ctx, t, "blocked_address", err)
+		return
 	}
 	res, err := c.httpClient.Do(req)
 	if err != nil {
