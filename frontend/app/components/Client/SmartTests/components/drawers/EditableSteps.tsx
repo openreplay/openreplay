@@ -1,4 +1,4 @@
-import { Tooltip } from 'antd';
+import { Tooltip } from '@/ui/overlays/tooltip';
 import {
   ArrowDown,
   ArrowUp,
@@ -6,7 +6,6 @@ import {
   ChevronRight,
   CornerDownLeft,
   GripVertical,
-  Minus,
   Plus,
   Trash2,
   X,
@@ -16,13 +15,10 @@ import { useDrag, useDrop } from 'react-dnd';
 import { useTranslation } from 'react-i18next';
 
 import { StepDecision, StepItem, isStruck } from '../shared/revisions';
-import { TINT_SOFT } from '../shared/utils';
 import { Section } from './EntityDrawer';
+import './step-list.css';
 
 const STEP_DND = 'KAI_STEP';
-// shared by the insert line and the drag drop line so "add here" and "move here" read
-// identically
-const LINE = 'var(--color-main)';
 
 interface Props {
   steps: string[];
@@ -41,6 +37,10 @@ interface Props {
   onItemsChange?: (items: StepItem[]) => void;
   /** the per-line ✓/✕ pair (parent toggles: same side clicked again un-decides) */
   onDecide?: (idx: number, decision: StepDecision) => void;
+  /** an older version: no gaps, grips or actions */
+  readOnly?: boolean;
+  /** a line under the section title */
+  hint?: React.ReactNode;
 }
 
 /** Suggestions arrive UNDECIDED (both ghost), so the first click is a real action: the
@@ -53,11 +53,6 @@ function DecisionButtons({
   onDecide: (decision: StepDecision) => void;
 }) {
   const { t } = useTranslation();
-  const base =
-    'shrink-0 w-6 h-6 rounded flex items-center justify-center transition-colors';
-  const selected = 'bg-white text-gray-darkest border shadow-sm';
-  const idle =
-    'text-gray-medium hover:text-gray-darkest hover:bg-gray-lightest';
   return (
     <>
       <Tooltip
@@ -72,14 +67,9 @@ function DecisionButtons({
           aria-label={t('Accept suggestion')}
           aria-pressed={decision === 'accepted'}
           onClick={() => onDecide('accepted')}
-          className={`${base} ${decision === 'accepted' ? selected : idle}`}
-          style={
-            decision === 'accepted'
-              ? { borderColor: 'var(--color-gray-light)' }
-              : undefined
-          }
+          className={`m-step__act is-yes${decision === 'accepted' ? ' is-on' : ''}`}
         >
-          <Check size={14} />
+          <Check size={13} />
         </button>
       </Tooltip>
       <Tooltip
@@ -94,14 +84,9 @@ function DecisionButtons({
           aria-label={t('Reject suggestion')}
           aria-pressed={decision === 'rejected'}
           onClick={() => onDecide('rejected')}
-          className={`${base} ${decision === 'rejected' ? selected : idle}`}
-          style={
-            decision === 'rejected'
-              ? { borderColor: 'var(--color-gray-light)' }
-              : undefined
-          }
+          className={`m-step__act is-no${decision === 'rejected' ? ' is-on' : ''}`}
         >
-          <X size={14} />
+          <X size={13} />
         </button>
       </Tooltip>
     </>
@@ -112,74 +97,41 @@ function DecisionButtons({
 function AddStepRow({ onClick }: { onClick: () => void }) {
   const { t } = useTranslation();
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="group flex items-center gap-2.5 rounded px-1 -mx-1 py-1.5 text-left hover:bg-gray-lightest"
-    >
-      <span className="w-5 h-6 flex items-center justify-center shrink-0 text-disabled-text">
-        <Plus size={14} />
+    <button type="button" onClick={onClick} className="m-step is-add">
+      <span className="m-step__lead">
+        <Plus size={13} aria-hidden="true" />
       </span>
-      <span className="flex-1 text-[15px] leading-6 text-disabled-text">
-        {t('Add step...')}
-      </span>
+      <span className="m-step__text">{t('Add step…')}</span>
     </button>
   );
 }
 
 /** The gap between two steps — same height whether inserting or dragging, so starting a
- *  drag never reflows the list. */
+ *  drag never reflows the list. "Add here" and "move here" are one line. */
 function Gap({
   onInsert,
   dragging,
   isDropTarget,
-  always,
-  label,
 }: {
   onInsert: () => void;
   dragging?: boolean;
   isDropTarget?: boolean;
-  always?: boolean;
-  label?: string;
 }) {
   const { t } = useTranslation();
-
-  if (dragging) {
-    return (
-      <div className="h-5 flex items-center" aria-hidden>
-        <div
-          className="w-full h-0.5 rounded-full"
-          style={{ background: isDropTarget ? LINE : 'transparent' }}
-        />
-      </div>
-    );
-  }
-
-  const reveal = always
-    ? 'opacity-100'
-    : 'opacity-0 group-hover/ins:opacity-100';
   return (
     <div
-      role="button"
-      aria-label={label ?? t('Insert step')}
-      onClick={onInsert}
-      // no hover on touch to reveal it, so there it would only catch stray taps
-      className={`group/ins relative flex items-center justify-center cursor-pointer ${
-        always ? 'h-7' : 'h-5 pointer-coarse:pointer-events-none'
-      }`}
+      className={`m-steps__gap${isDropTarget ? ' is-target' : ''}${dragging ? ' is-dragging' : ''}`}
     >
-      <div
-        className={`absolute inset-x-0 h-0.5 rounded-full ${reveal}`}
-        style={{ background: LINE }}
-      />
-      <div
-        className={`relative z-10 flex items-center gap-1 rounded-full bg-main text-[#fff] shadow-sm ${reveal} ${
-          label ? 'pl-1 pr-2 py-0.5' : 'p-0.5'
-        }`}
+      <button
+        type="button"
+        className="m-steps__insert"
+        aria-label={t('Insert a step here')}
+        tabIndex={dragging ? -1 : undefined}
+        onClick={onInsert}
       >
-        <Plus size={12} />
-        {label && <span className="text-xs font-medium">{label}</span>}
-      </div>
+        <span className="m-steps__line" aria-hidden="true" />
+        <Plus size={12} aria-hidden="true" />
+      </button>
     </div>
   );
 }
@@ -209,6 +161,7 @@ interface StepRowProps {
   groupMeta?: string;
   groupCollapsed?: boolean;
   onToggleGroup?: () => void;
+  readOnly?: boolean;
 }
 
 /** One step. Drag the grip (it replaces the number on hover) to reorder; click the text
@@ -235,6 +188,7 @@ function StepRow({
   groupMeta,
   groupCollapsed,
   onToggleGroup,
+  readOnly,
 }: StepRowProps) {
   const { t } = useTranslation();
   const ref = useRef<HTMLDivElement>(null);
@@ -256,7 +210,7 @@ function StepRow({
       return { idx };
     },
     // a struck row is leaving the test — nothing to reorder
-    canDrag: !editing && !struck,
+    canDrag: !editing && !struck && !readOnly,
     end: () => onDragEnd(),
     collect: (m) => ({ isDragging: m.isDragging() }),
   });
@@ -264,182 +218,174 @@ function StepRow({
   preview(ref);
   drag(handleRef);
 
+  const cls = [
+    'm-step',
+    isGroup ? 'is-group' : '',
+    addedOn ? 'is-added' : '',
+    removedOn ? 'is-removed' : '',
+    struck ? 'is-struck' : '',
+    isDragging ? 'is-dragging' : '',
+    editing ? 'is-editing' : '',
+    readOnly ? 'is-readonly' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
     <div
       ref={ref}
       data-step-row
       onClick={isGroup ? onToggleGroup : undefined}
-      style={{
-        opacity: isDragging ? 0.4 : 1,
-        ...(!editing && addedOn ? { background: TINT_SOFT.green } : {}),
-        ...(!editing && removedOn ? { background: TINT_SOFT.red } : {}),
-      }}
-      className={`group flex items-start gap-2.5 rounded px-1 -mx-1 py-1.5 ${
-        editing ? 'bg-active-blue' : struck ? '' : 'hover:bg-gray-lightest'
-      }${isGroup ? ' cursor-pointer select-none' : ''}`}
+      className={cls}
     >
-      {struck ? (
-        // a row leaving the test: red − where the number would be, no drag handle
-        <span className="w-5 h-6 flex items-center justify-center shrink-0 leading-6">
-          <Minus size={14} className="text-red" />
-        </span>
-      ) : (
-        // step number at rest; on row hover it becomes the drag handle in the same slot
-        // (inside the row, so moving onto it never loses the hover state)
-        <span className="relative w-5 h-6 flex items-center justify-center shrink-0 leading-6">
-          <span
-            className={`text-sm ${editing ? '' : 'group-hover:opacity-0'} ${
-              addedOn ? '' : 'text-disabled-text'
-            }`}
-            style={addedOn ? { color: 'var(--color-green-dark)' } : undefined}
-          >
-            {isGroup ? (
-              <ChevronRight
-                size={15}
-                className="transition-transform text-gray-medium"
-                style={
-                  groupCollapsed ? undefined : { transform: 'rotate(90deg)' }
-                }
-              />
-            ) : (
-              number
-            )}
-          </span>
-          {!editing && (
-            <Tooltip title={t('Drag to reorder')}>
-              <span
-                ref={handleRef}
-                aria-label={t('Drag to reorder')}
-                // opacity, not display:none — a handle that leaves the layout mid-drag
-                // makes Chromium cancel the native drag
-                onClick={(e) => e.stopPropagation()}
-                className="absolute inset-0 flex opacity-0 group-hover:opacity-100 items-center justify-center cursor-grab text-gray-medium hover:text-gray-darkest"
-              >
-                <GripVertical size={15} />
-              </span>
-            </Tooltip>
-          )}
+      {/* the number at rest; on hover the grip takes its slot, so the row never widens */}
+      <span className="m-step__lead">
+        {isGroup ? (
+          <ChevronRight
+            size={14}
+            className="m-step__chev"
+            style={groupCollapsed ? undefined : { transform: 'rotate(90deg)' }}
+          />
+        ) : (
+          <span className="m-step__num">{number ?? ''}</span>
+        )}
+        {!editing && !struck && !readOnly && (
+          <Tooltip title={t('Drag to reorder')}>
+            <span
+              ref={handleRef}
+              aria-label={t('Drag to reorder')}
+              // opacity, not display:none — a handle that leaves the layout mid-drag
+              // makes Chromium cancel the native drag
+              onClick={(e) => e.stopPropagation()}
+              className="m-step__grip"
+            >
+              <GripVertical size={13} />
+            </span>
+          </Tooltip>
+        )}
+      </span>
+
+      {(addedOn || removedOn) && (
+        <span className="m-step__mark" aria-hidden="true">
+          {addedOn ? '+' : '−'}
         </span>
       )}
 
       {editing ? (
-        // native input (not antd) so its box exactly matches the static text line —
-        // antd's <Input> carries its own line-height and reflows the row
         <input
           ref={inputRef}
           value={draft}
-          placeholder={t('Describe the step')}
+          aria-label={t('Step')}
+          placeholder={t('What does this step do?')}
           onChange={(e) => setDraft(e.target.value)}
           onBlur={onBlur}
           onKeyDown={(e) => {
             if (e.key === 'Enter') onEnter();
-            else if (e.key === 'Escape') onEscape();
+            else if (e.key === 'Escape') {
+              // abandons the line, never the drawer
+              e.stopPropagation();
+              onEscape();
+            }
           }}
-          className="flex-1 text-[15px] leading-6 bg-transparent outline-none border-0 p-0 m-0 text-black placeholder:text-disabled-text"
+          className="m-step__input"
         />
       ) : isGroup ? (
-        <span className="flex-1 text-left text-[15px] leading-6 break-words font-medium">
+        <span className="m-step__text">
           {step}
-          {groupMeta && (
-            <span className="font-normal text-disabled-text">
-              {' '}
-              · {groupMeta}
-            </span>
-          )}
+          {groupMeta && <span className="m-step__meta"> · {groupMeta}</span>}
         </span>
       ) : (
         <button
           type="button"
-          onClick={() => !struck && onStartEdit(idx)}
-          className={`flex-1 text-left text-[15px] leading-6 break-words ${
-            struck ? 'line-through text-disabled-text cursor-default' : ''
-          }`}
+          onClick={() => onStartEdit(idx)}
+          disabled={struck || readOnly}
+          className="m-step__text"
         >
           {step || (
-            <span className="text-disabled-text italic">
-              {t('Empty — click to edit')}
-            </span>
+            <span className="m-step__empty">{t('Empty — click to edit')}</span>
           )}
         </button>
       )}
 
-      {/* one right-aligned controls column, same edge on every row, so nothing jumps
-          between suggestion rows and plain rows */}
-      <div className="flex items-center justify-end gap-0.5 shrink-0 self-start min-w-[60px]">
-        {editing ? (
-          // mousedown-preventDefault keeps the input focused so its onBlur doesn't fire
-          // first and commit/close before the click handler runs
-          <>
-            <button
-              type="button"
-              aria-label={t('Move step up')}
-              disabled={!canMoveUp}
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => onMove(-1)}
-              className="hidden pointer-coarse:flex w-6 h-6 rounded items-center justify-center text-gray-medium disabled:opacity-30"
-            >
-              <ArrowUp size={14} />
-            </button>
-            <button
-              type="button"
-              aria-label={t('Move step down')}
-              disabled={!canMoveDown}
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => onMove(1)}
-              className="hidden pointer-coarse:flex w-6 h-6 rounded items-center justify-center text-gray-medium disabled:opacity-30"
-            >
-              <ArrowDown size={14} />
-            </button>
-            <Tooltip title={t('Confirm — Enter')}>
+      {!readOnly && (
+        <span className="m-step__actions">
+          {editing ? (
+            // mousedown-preventDefault keeps the input focused so its onBlur doesn't fire
+            // first and commit/close before the click handler runs
+            <>
               <button
                 type="button"
-                aria-label={t('Confirm step')}
+                aria-label={t('Move step up')}
+                disabled={!canMoveUp}
                 onMouseDown={(e) => e.preventDefault()}
-                onClick={onEnter}
-                className="w-6 h-6 rounded flex items-center justify-center text-blue hover:bg-white"
+                onClick={() => onMove(-1)}
+                className="m-step__act is-touch"
               >
-                <CornerDownLeft size={14} />
+                <ArrowUp size={13} />
               </button>
-            </Tooltip>
-            <Tooltip title={t('Delete step')}>
               <button
                 type="button"
-                aria-label={t('Delete step')}
+                aria-label={t('Move step down')}
+                disabled={!canMoveDown}
                 onMouseDown={(e) => e.preventDefault()}
-                onClick={() => onRemove(idx)}
-                className="w-6 h-6 rounded flex items-center justify-center text-gray-medium hover:text-red hover:bg-red-lightest"
+                onClick={() => onMove(1)}
+                className="m-step__act is-touch"
               >
-                <Trash2 size={14} />
+                <ArrowDown size={13} />
+              </button>
+              <Tooltip title={t('Confirm — Enter')}>
+                <button
+                  type="button"
+                  aria-label={t('Confirm step')}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={onEnter}
+                  className="m-step__act is-yes"
+                >
+                  <CornerDownLeft size={13} />
+                </button>
+              </Tooltip>
+              <Tooltip title={t('Delete step')}>
+                <button
+                  type="button"
+                  aria-label={t('Delete step')}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => onRemove(idx)}
+                  className="m-step__act"
+                >
+                  <Trash2 size={13} />
+                </button>
+              </Tooltip>
+            </>
+          ) : item.kind && item.kind !== 'group' && onDecide ? (
+            <DecisionButtons
+              decision={item.decision}
+              onDecide={(d) => onDecide(idx, d)}
+            />
+          ) : (
+            <Tooltip
+              title={
+                isGroup
+                  ? t('Remove label — its steps join the group above')
+                  : t('Delete step')
+              }
+            >
+              <button
+                type="button"
+                aria-label={
+                  isGroup ? t('Remove group label') : t('Delete step')
+                }
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRemove(idx);
+                }}
+                className="m-step__act is-quiet"
+              >
+                <Trash2 size={13} />
               </button>
             </Tooltip>
-          </>
-        ) : item.kind && item.kind !== 'group' && onDecide ? (
-          <DecisionButtons
-            decision={item.decision}
-            onDecide={(d) => onDecide(idx, d)}
-          />
-        ) : (
-          <Tooltip
-            title={
-              isGroup
-                ? t('Remove label — its steps join the group above')
-                : t('Delete step')
-            }
-          >
-            <button
-              type="button"
-              aria-label={isGroup ? t('Remove group label') : t('Delete step')}
-              onClick={(e) => {
-                e.stopPropagation();
-                onRemove(idx);
-              }}
-              className="opacity-0 group-hover:opacity-100 pointer-coarse:opacity-100 transition-opacity shrink-0 w-6 h-6 rounded flex items-center justify-center text-gray-medium hover:text-red hover:bg-red-lightest"
-            >
-              <Trash2 size={14} />
-            </button>
-          </Tooltip>
-        )}
-      </div>
+          )}
+        </span>
+      )}
     </div>
   );
 }
@@ -460,6 +406,8 @@ function EditableSteps({
   reviewItems,
   onItemsChange,
   onDecide,
+  readOnly,
+  hint,
 }: Props) {
   const { t } = useTranslation();
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
@@ -693,9 +641,14 @@ function EditableSteps({
   // mutation of collapsedGroups, so the user's expansion returns on drop
   const groupDragging =
     draggingIdx != null && items[draggingIdx]?.kind === 'group';
-  const sectionTitle =
-    title ??
-    (items.length > 0 ? `${t('Steps')} · ${items.length}` : t('Steps'));
+  const sectionTitle = title ?? (
+    <>
+      {t('Steps')}
+      {items.length > 0 && (
+        <span className="m-dsec__count">{items.length}</span>
+      )}
+    </>
+  );
 
   // live numbering over the steps the list would actually keep — struck rows and group
   // labels don't count
@@ -722,16 +675,22 @@ function EditableSteps({
   }
 
   return (
-    <Section title={sectionTitle} action={headerAction}>
+    <Section title={sectionTitle} action={headerAction} hint={hint}>
       {items.length === 0 ? (
-        <Gap onInsert={() => insertAt(0)} always label={t('Add step')} />
+        readOnly ? null : (
+          <button
+            type="button"
+            className="m-steps__first"
+            onClick={() => insertAt(0)}
+          >
+            <Plus size={14} aria-hidden="true" />
+            {t('Write the first step')}
+          </button>
+        )
       ) : (
         <div
-          className={`flex flex-col ${
-            bounded
-              ? 'max-h-[50vh] overflow-y-auto overscroll-contain pr-1'
-              : ''
-          }`}
+          className="m-steps"
+          style={bounded ? { maxHeight: '46vh', overflowY: 'auto' } : undefined}
           ref={listRef}
         >
           {items.map((item, idx) => {
@@ -747,22 +706,22 @@ function EditableSteps({
                 key={idx}
                 aria-hidden={hidden || undefined}
                 data-collapsed-row={hidden ? 'true' : undefined}
-                style={{
-                  display: 'grid',
-                  gridTemplateRows: hidden ? '0fr' : '1fr',
-                  transition: 'grid-template-rows 0.18s ease',
-                }}
+                className="m-steps__slot"
+                style={{ gridTemplateRows: hidden ? '0fr' : '1fr' }}
               >
-                <div style={{ overflow: 'hidden', minHeight: 0 }}>
-                  <Gap
-                    onInsert={() => insertAt(idx)}
-                    dragging={dragging}
-                    isDropTarget={dropAt === idx}
-                  />
+                <div className="m-steps__clip">
+                  {!readOnly && (
+                    <Gap
+                      onInsert={() => insertAt(idx)}
+                      dragging={dragging}
+                      isDropTarget={dropAt === idx}
+                    />
+                  )}
                   <StepRow
                     idx={idx}
                     item={item}
                     number={number}
+                    readOnly={readOnly}
                     groupCollapsed={
                       isGroupRow
                         ? collapsedGroups.has(groupKey(item)) || groupDragging
@@ -796,13 +755,19 @@ function EditableSteps({
               </div>
             );
           })}
-          {/* trailing gap keeps the rhythm + hosts the end drop line */}
-          <Gap
-            onInsert={() => insertAt(items.length)}
-            dragging={dragging}
-            isDropTarget={dropAt === items.length}
-          />
-          {!dragging && <AddStepRow onClick={() => insertAt(items.length)} />}
+          {!readOnly && (
+            <>
+              {/* trailing gap keeps the rhythm + hosts the end drop line */}
+              <Gap
+                onInsert={() => insertAt(items.length)}
+                dragging={dragging}
+                isDropTarget={dropAt === items.length}
+              />
+              {!dragging && (
+                <AddStepRow onClick={() => insertAt(items.length)} />
+              )}
+            </>
+          )}
         </div>
       )}
     </Section>

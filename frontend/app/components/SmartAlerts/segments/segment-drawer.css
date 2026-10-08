@@ -1,0 +1,27 @@
+.m-sd__foot {
+  display: flex;
+  align-items: center;
+
+  justify-content: space-between;
+  gap: var(--m-space-4);
+  width: 100%;
+}
+
+.m-sd__foot-right {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-3);
+}
+
+.m-sd__row {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-3);
+  font-size: var(--m-text-sm);
+}
+
+.m-sd__note {
+  margin-block: var(--m-space-3);
+  font-size: var(--m-text-xs);
+  color: var(--m-content-muted);
+}

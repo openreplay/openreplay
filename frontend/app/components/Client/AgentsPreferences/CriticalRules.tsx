@@ -1,5 +1,11 @@
-import { Button, Input, Modal, Segmented, Table, Tooltip, message } from 'antd';
-import type { TableColumnsType } from 'antd';
+import { Button } from '@/ui/actions/button';
+import { type Column, DataTable } from '@/ui/data/table';
+import { EmptyState } from '@/ui/feedback/EmptyState';
+import { FilterStrip } from '@/ui/filters/FilterStrip';
+import { SearchField } from '@/ui/inputs/SearchField';
+import { Modal } from '@/ui/overlays/modal';
+import { useToast } from '@/ui/overlays/toast';
+import { Tooltip } from '@/ui/overlays/tooltip';
 import { AlertTriangle, PencilIcon, Plus, Trash2 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
@@ -8,8 +14,6 @@ import { useTranslation } from 'react-i18next';
 import { useStore } from 'App/mstore';
 import type { CriticalRule } from 'App/mstore/issuesStore';
 import { CriticalRuleFields } from 'Components/SmartAlerts/shared';
-
-import CountSuffix from 'Shared/CountSuffix';
 
 import { useConfirms } from './confirms';
 
@@ -24,6 +28,7 @@ function CriticalRules() {
   const { t } = useTranslation();
   const { issuesStore } = useStore();
   const { confirmDelete } = useConfirms();
+  const toast = useToast();
 
   const [scope, setScope] = React.useState<Scope>('all');
   const [q, setQ] = React.useState('');
@@ -53,7 +58,7 @@ function CriticalRules() {
       issuesStore.updateCriticalRule(editing.id, text);
     } else {
       issuesStore.addCriticalRule(text);
-      message.success(
+      toast.success(
         t('Saved. The agent applies it as it reviews new sessions.'),
       );
     }
@@ -61,28 +66,27 @@ function CriticalRules() {
     setEditing(null);
   };
 
-  const columns: TableColumnsType<CriticalRule> = [
+  const columns: Column<CriticalRule>[] = [
     {
       title: t('What’s critical'),
-      dataIndex: 'description',
-      render: (d: string) => (
-        <span className="flex items-start gap-2.5">
+      key: 'description',
+      render: (row) => (
+        <span className="flex items-start gap-2.5 text-sm text-content-primary">
           <AlertTriangle
-            size={15}
-            className="mt-0.5 shrink-0"
-            style={{ color: 'var(--color-red)' }}
+            size={14}
+            className="mt-0.5 shrink-0 text-content-danger"
           />
-          {d}
+          {row.description}
         </span>
       ),
     },
     {
       title: t('Added by'),
-      dataIndex: 'createdBy',
+      key: 'createdBy',
       width: 150,
-      render: (name: string, row) => (
-        <span style={{ color: 'var(--color-gray-dark)' }}>
-          {row.mine ? t('You') : name}
+      render: (row) => (
+        <span className="text-sm text-content-secondary">
+          {row.mine ? t('You') : row.createdBy}
         </span>
       ),
     },
@@ -90,26 +94,27 @@ function CriticalRules() {
       title: '',
       key: 'actions',
       width: 84,
-      render: (_, row) => (
+      align: 'right',
+      render: (row) => (
         <div className="flex items-center justify-end gap-1">
           {row.mine ? (
             <>
               <Button
-                type="text"
+                variant="subtle"
                 className="invisible group-hover:visible"
-                icon={<PencilIcon size={16} />}
                 aria-label={t('Edit')}
                 onClick={() => {
                   setEditing(row);
                   setDesc(row.description);
                   setDialogOpen(true);
                 }}
-              />
+                size="icon"
+              >
+                <PencilIcon size={16} />
+              </Button>
               <Button
-                type="text"
-                danger
+                variant="danger-subtle"
                 className="invisible group-hover:visible"
-                icon={<Trash2 size={16} />}
                 aria-label={t('Delete')}
                 onClick={() => {
                   const orphans = issuesStore.rulesOnlyMatch(row.id);
@@ -126,7 +131,10 @@ function CriticalRules() {
                     onOk: () => issuesStore.removeCriticalRule(row.id),
                   });
                 }}
-              />
+                size="icon"
+              >
+                <Trash2 size={16} />
+              </Button>
             </>
           ) : (
             <Tooltip
@@ -136,12 +144,14 @@ function CriticalRules() {
             >
               <span className="inline-flex">
                 <Button
-                  type="text"
+                  variant="subtle"
                   disabled
                   className="invisible group-hover:visible"
-                  icon={<PencilIcon size={16} />}
                   aria-label={t('Edit')}
-                />
+                  size="icon"
+                >
+                  <PencilIcon size={16} />
+                </Button>
               </span>
             </Tooltip>
           )}
@@ -151,79 +161,61 @@ function CriticalRules() {
   ];
 
   return (
-    <div className="flex flex-col rounded-lg border bg-white">
-      <div className="flex items-center justify-between gap-2 px-4 py-3 border-b flex-wrap">
-        <Segmented
-          size="small"
-          value={scope}
-          onChange={(v) => {
-            setScope(v as Scope);
-            setQ('');
-          }}
-          options={[
+    <div className="m-prefcard">
+      <div className="m-prefcard__bar">
+        <FilterStrip
+          label={t('Whose descriptions')}
+          items={[
+            { key: 'all', label: t('Everyone'), count: all.length },
             {
-              value: 'all',
-              label: (
-                <span>
-                  {t('Everyone')}
-                  <CountSuffix n={all.length} />
-                </span>
-              ),
-            },
-            {
-              value: 'mine',
-              label: (
-                <span>
-                  {t('Mine')}
-                  <CountSuffix n={all.filter((r) => r.mine).length} />
-                </span>
-              ),
+              key: 'mine',
+              label: t('Mine'),
+              count: all.filter((r) => r.mine).length,
             },
           ]}
+          selected={[scope]}
+          onSelect={(k) => {
+            setScope(k as Scope);
+            setQ('');
+          }}
         />
-        <div className="flex items-center gap-2">
-          <Input.Search
-            size="small"
-            allowClear
-            maxLength={256}
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
+        <span className="m-prefcard__actions">
+          <SearchField
             placeholder={t('Filter by description or author')}
-            style={{ width: 264 }}
+            value={q}
+            onChange={setQ}
           />
-          <Button size="small" icon={<Plus size={14} />} onClick={openCreate}>
+          <Button onClick={openCreate}>
+            <Plus size={14} />
             {t('Add description')}
           </Button>
-        </div>
+        </span>
       </div>
 
-      <Table<CriticalRule>
-        size="small"
-        rowKey="id"
-        columns={columns}
-        dataSource={shown}
-        pagination={false}
-        rowClassName="group"
-        locale={{
-          emptyText: ql ? (
-            t('Nothing matches “{{q}}”', { q: q.trim() })
-          ) : (
-            <div className="flex flex-col items-center justify-center py-4">
-              <AlertTriangle
-                size={36}
-                style={{ color: 'var(--color-gray-medium)' }}
-              />
-              <div className="text-center my-4">
-                {scope === 'mine'
-                  ? t(
-                      'You have not described anything yet. Add one and the agent flags what matches, for you.',
-                    )
-                  : t('Nothing is described as critical yet.')}
-              </div>
-            </div>
-          ),
-        }}
-      />
+      {shown.length === 0 ? (
+        <EmptyState
+          title={
+            ql
+              ? t('Nothing matches “{{q}}”', { q: q.trim() })
+              : scope === 'mine'
+                ? t('You have not described anything yet')
+                : t('Nothing is described as critical yet')
+          }
+          hint={
+            ql
+              ? undefined
+              : t('Add one and the agent flags the issues that match, for you.')
+          }
+        />
+      ) : (
+        <DataTable<CriticalRule>
+          ariaLabel={t('What’s critical')}
+          columns={columns}
+          rows={shown}
+          rowKey={(r) => String(r.id)}
+          rowClassName={() => 'group'}
+        />
+      )}
 
       <Modal
         title={editing ? t('Edit description') : t('What’s critical to you?')}
@@ -234,9 +226,9 @@ function CriticalRules() {
         }}
         onOk={save}
         okText={editing ? t('Save') : t('Add description')}
-        okButtonProps={{ disabled: !desc.trim() }}
+        okDisabled={!desc.trim()}
       >
-        <p className="mb-3" style={{ color: 'var(--color-gray-dark)' }}>
+        <p className="m-dlg__lede">
           {t(
             'Describe it in plain words. The agent reads your description and flags the issues that match, and only you can change it.',
           )}

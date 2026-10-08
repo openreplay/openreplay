@@ -1,33 +1,44 @@
+import { IconButton } from '@/ui/actions/IconButton';
+import { Button } from '@/ui/actions/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItems,
+  DropdownMenuTrigger,
+  type MenuItem,
+} from '@/ui/actions/dropdown-menu';
+import { MoreCount } from '@/ui/data/MoreCount';
+import { RelativeTime } from '@/ui/data/RelativeTime';
+import { type Column, DataTable, type TableSort } from '@/ui/data/table';
+import { EmptyState } from '@/ui/feedback/EmptyState';
+import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
+import { ActiveFilters } from '@/ui/filters/ActiveFilters';
+import { DisplayShell } from '@/ui/filters/DisplayMenu';
+import { type FilterDimension, FilterMenu } from '@/ui/filters/FilterMenu';
+import { FilterStrip } from '@/ui/filters/FilterStrip';
+import { SearchField } from '@/ui/inputs/SearchField';
+import { ListFooter } from '@/ui/layout/ListFooter';
+import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
+import { useToast } from '@/ui/overlays/toast';
+import { Tooltip } from '@/ui/overlays/tooltip';
 import { useQueryClient } from '@tanstack/react-query';
 import {
-  Badge,
-  Button,
-  Dropdown,
-  Grid,
-  Input,
-  Segmented,
-  Select,
-  Skeleton,
-  Table,
-  Tooltip,
-  Typography,
-} from 'antd';
-import type { TableColumnsType } from 'antd';
-import {
   Calendar,
-  EllipsisVertical,
+  ClipboardCheck,
+  Footprints,
   Merge,
+  MoreHorizontal,
   Play,
   Plus,
-  Radar,
+  Route,
+  Server,
   ShieldAlert,
+  Tag as TagIcon,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'react-toastify';
 
-import CountSuffix from 'Shared/CountSuffix';
-import FullPagination from 'Shared/FullPagination';
+import { StartPath } from 'Shared/StartPath/StartPath';
 
 import {
   createTest as apiCreateTest,
@@ -49,9 +60,9 @@ import {
   useTriggerRun,
   useUpdateTest,
 } from '../queries';
+import { SyntheticsFrame } from './SyntheticsFrame';
 import DraftDrawer from './drawers/DraftDrawer';
 import TestDrawer from './drawers/TestDrawer';
-import './kai-table.css';
 import {
   apiTestToVM,
   settableTransition,
@@ -77,24 +88,39 @@ import {
   getStatusTag,
   hasNoEnvironment,
   isScheduled,
-  relativeTime,
   scheduleLabel,
   scheduleShort,
 } from './shared/utils';
+import './tests-page.css';
 
 // The list is server-driven: filters / sort / pagination are query params and the tab
 // badges come from /tests/counts, so they stay absolute past one page.
 // needs_review is a flag, not a stored status — its tab sends ?needsReview=true.
 type StatusTab = 'all' | 'needs_review' | TestStatus;
+type FilterKey = 'env' | 'tags';
 const PAGE_SIZE = 20;
-// antd column dataIndex → API sortField (only these are server-sortable).
+// column key → API sortField (only these are server-sortable).
 const SORT_FIELD: Record<string, ListTestsParams['sortField']> = {
   title: 'name',
-  createdAt: 'created_at',
+  created: 'created_at',
 };
+const COLUMNS = ['tags', 'env', 'schedule', 'created', 'status'] as const;
+const HIDDEN_KEY = '$__tests_columns_hidden__$';
+const readHidden = (): string[] => {
+  try {
+    return localStorage.getItem(HIDDEN_KEY)?.split(',').filter(Boolean) ?? [];
+  } catch {
+    return [];
+  }
+};
+
+function NotSet({ children }: { children: string }) {
+  return <span className="m-tests__unset">{children}</span>;
+}
 
 function TestsTab() {
   const { t } = useTranslation();
+  const toast = useToast();
   const updateMut = useUpdateTest();
   const deleteMut = useDeleteTest();
   const bulkMut = useBulkTests();
@@ -114,12 +140,11 @@ function TestsTab() {
   const [statusTab, setStatusTab] = useState<StatusTab>('all');
   const [envFilter, setEnvFilter] = useState('all');
   const [tagFilter, setTagFilter] = useState('all');
-  const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
-  const [sortBy, setSortBy] = useState<{
-    field?: string;
-    order?: 'ascend' | 'descend';
-  }>({});
+  const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
+  const [sortBy, setSortBy] = useState<TableSort | null>(null);
   const [page, setPage] = useState(1);
+  const [hidden, setHidden] = useState<string[]>(readHidden);
+  const [deleteKeys, setDeleteKeys] = useState<string[]>([]);
   // the opened test drawer IS the ?test= param — open iff present. No separate state, so
   // browser back/forward just open/close it (no state↔URL sync loop).
   const [openKey, setOpenKey] = useQueryParam('test');
@@ -129,8 +154,6 @@ function TestsTab() {
   // merge-in-review: the base test (first selected) carrying a client-only pendingMerge.
   // Nothing persists until "Combine".
   const [mergeTest, setMergeTest] = useState<TestCase | null>(null);
-  // below md: secondary columns drop and the table scrolls sideways
-  const narrow = Grid.useBreakpoint().md === false;
 
   // debounce the search box (the setState runs in a timer callback, not synchronously
   // in the effect body)
@@ -149,7 +172,7 @@ function TestsTab() {
     [search, envFilter, tagFilter],
   );
 
-  const sortField = sortBy.field ? SORT_FIELD[sortBy.field] : undefined;
+  const sortField = sortBy ? SORT_FIELD[sortBy.key] : undefined;
   const listParams: ListTestsParams = {
     page,
     limit: PAGE_SIZE,
@@ -159,8 +182,8 @@ function TestsTab() {
         ? undefined
         : statusTab,
     ...(statusTab === 'needs_review' ? { needsReview: true } : {}),
-    ...(sortField && sortBy.order
-      ? { sortField, sortOrder: sortBy.order === 'ascend' ? 'asc' : 'desc' }
+    ...(sortField && sortBy
+      ? { sortField, sortOrder: sortBy.desc ? 'desc' : 'asc' }
       : {}),
   };
 
@@ -314,6 +337,8 @@ function TestsTab() {
       toast.success(t('Test created'));
     } catch {
       toast.error(t('Failed to create test'));
+      // bring the wizard back with everything entered, for a retry
+      setDraftTest(intended);
     }
     invalidateAll();
   };
@@ -361,26 +386,42 @@ function TestsTab() {
     (tc) => tc.status === 'paused' && !hasNoEnvironment(tc),
   ).length;
 
-  const bulkUpdate = (
+  // one bulk request (and one list refetch), not a PUT + refetch per test
+  const bulkSetStatus = (
     predicate: (tc: TestCase) => boolean,
-    patch: (tc: TestCase) => Partial<TestCase>,
+    to: TestCase['status'],
   ) => {
     const targets = selected.filter(predicate);
     setSelectedKeys([]);
-    targets.forEach((tc) => updateTest({ ...tc, ...patch(tc) }));
+    if (!targets.length) return;
+    const status = settableTransition(targets[0].status, to);
+    if (!status) return;
+    bulkMut.mutate(
+      {
+        testIds: targets.map((tc) => tc.key),
+        action: 'update',
+        update: { status },
+      },
+      {
+        onSuccess: (res) => {
+          if (res?.failed?.length)
+            toast.error(
+              t('{{n}} tests could not be updated', { n: res.failed.length }),
+            );
+        },
+        onError: () => toast.error(t('Failed to update test')),
+      },
+    );
   };
   const pauseSelected = () =>
-    bulkUpdate(
-      (tc) => tc.status === 'active',
-      () => ({ status: 'paused' }),
-    );
+    bulkSetStatus((tc) => tc.status === 'active', 'paused');
   const resumeSelected = () =>
-    bulkUpdate(
+    bulkSetStatus(
       (tc) => tc.status === 'paused' && !hasNoEnvironment(tc),
-      () => ({ status: 'active' }),
+      'active',
     );
-  const deleteSelected = () => {
-    const testIds = selectedKeys.map(String);
+  const deleteMany = (testIds: string[]) => {
+    if (testIds.length === 1) return removeTest(testIds[0]);
     setSelectedKeys([]);
     if (openKey && testIds.includes(openKey)) setOpenKey(null);
     bulkMut.mutate(
@@ -426,6 +467,8 @@ function TestsTab() {
       toast.success(t('Merged {{n}} tests', { n: sourceKeys.length }));
     } catch {
       toast.error(t('Failed to merge tests'));
+      // reopen the merge review as it was, for a retry
+      setMergeTest(base);
     }
     invalidateAll();
   };
@@ -446,525 +489,568 @@ function TestsTab() {
     });
   };
 
-  const faded = (n: number) => <CountSuffix n={n} />;
-  const statusOptions = [
-    {
-      value: 'all',
-      label: (
-        <span>
-          {t('All')}
-          {faded(allCount)}
-        </span>
-      ),
-    },
-    // only when something awaits review — no point in an always-empty tab
-    ...(needsReviewCount > 0
-      ? [
-          {
-            value: 'needs_review',
-            label: (
-              <span>
-                {t('Needs review')}
-                {faded(needsReviewCount)}
-              </span>
-            ),
-          },
-        ]
-      : []),
-    {
-      value: 'draft',
-      label: (
-        <span>
-          {t('Drafts')}
-          {faded(draftCount)}
-        </span>
-      ),
-    },
-    {
-      value: 'approved',
-      label: (
-        <span>
-          {t('Approved')}
-          {faded(approvedCount)}
-        </span>
-      ),
-    },
-    {
-      value: 'active',
-      label: (
-        <span>
-          {t('Active')}
-          {faded(activeCount)}
-        </span>
-      ),
-    },
-    {
-      value: 'paused',
-      label: (
-        <span>
-          {t('Paused')}
-          {faded(pausedCount)}
-        </span>
-      ),
-    },
-  ];
-
-  const rowMenu = (tc: TestCase) => {
-    let items;
-    if (tc.status === 'draft') {
-      items = [
-        { key: 'open', label: t('Review draft') },
-        { key: 'merge', label: t('Merge with…') },
-        { type: 'divider' as const },
-        { key: 'dismiss', label: t('Dismiss'), danger: true },
-      ];
-    } else {
-      const controls: {
-        key: string;
-        label: React.ReactNode;
-        disabled?: boolean;
-      }[] = [];
-      // a needs-review test (with pause-on-revision) is frozen until reviewed
-      if (!reviewBlocked(tc)) {
-        if (tc.status === 'active')
-          controls.push({ key: 'pause', label: t('Pause') });
-        if (tc.status === 'paused') {
-          const blocked = hasNoEnvironment(tc);
-          controls.push({
-            key: 'resume',
-            disabled: blocked,
-            label: blocked ? (
-              <Tooltip
-                title={t(
-                  'Set an environment in this test’s settings to resume.',
-                )}
-                placement="left"
-              >
-                <span>{t('Resume')}</span>
-              </Tooltip>
-            ) : (
-              t('Resume')
-            ),
-          });
-        }
-        // gate on the actual schedule, not status: an already-scheduled test (active,
-        // paused, or approved-with-cron) can only be unscheduled
-        if (!isScheduled(tc.schedule))
-          controls.push({ key: 'schedule', label: t('Schedule') });
-        else controls.push({ key: 'unschedule', label: t('Unschedule') });
-      }
-      items = [
-        ...controls,
-        {
-          key: 'open',
-          label: needsReview(tc) ? t('Review changes') : t('Settings'),
-        },
-        // stuck "needs review" with no suggestion to act on → clear the flag directly
-        ...(tc.needsReview && !tc.pendingRevision
-          ? [{ key: 'markReviewed', label: t('Mark as reviewed') }]
-          : []),
-        { key: 'duplicate', label: t('Duplicate') },
-        { key: 'merge', label: t('Merge with…') },
-        { type: 'divider' as const },
-        { key: 'delete', label: t('Delete'), danger: true },
-      ];
-    }
-    return {
-      items,
-      onClick: ({
-        key,
-        domEvent,
-      }: {
-        key: string;
-        domEvent: React.SyntheticEvent;
-      }) => {
-        domEvent.stopPropagation();
-        if (key === 'open') openRow(tc);
-        else if (key === 'schedule') openSchedule(tc);
-        else if (key === 'unschedule') unschedule(tc);
-        else if (key === 'duplicate') duplicateTest(tc);
-        else if (key === 'merge') {
-          setSelectedKeys((prev) =>
-            prev.includes(tc.key) ? prev : [...prev, tc.key],
-          );
-          toast.info(
-            t('Select the tests to merge with, then hit Merge in the toolbar.'),
-          );
-        } else if (key === 'pause') updateTest({ ...tc, status: 'paused' });
-        else if (key === 'resume') updateTest({ ...tc, status: 'active' });
-        else if (key === 'markReviewed') clearReview(tc);
-        else if (key === 'dismiss') {
-          // announce it — a row that vanishes silently reads as lost
-          removeTest(tc.key);
-          toast.success(t('Draft dismissed'));
-        } else if (key === 'delete') removeTest(tc.key);
-      },
-    };
+  const mergeWith = (tc: TestCase) => {
+    setSelectedKeys((prev) =>
+      prev.includes(tc.key) ? prev : [...prev, tc.key],
+    );
+    toast.info(
+      t('Select the tests to merge with, then hit Merge in the toolbar.'),
+    );
   };
 
-  const columns: TableColumnsType<TestCase> = [
+  // A draft is the agent's suggestion (dismissed), anything else is someone's work
+  // (deleted) — a row never offers both.
+  const rowMenu = (tc: TestCase): MenuItem[] => {
+    const open = { key: 'open', onClick: () => openRow(tc) };
+    const del: MenuItem = {
+      key: 'delete',
+      label: t('Delete'),
+      danger: true,
+      onClick: () => setDeleteKeys([tc.key]),
+    };
+    if (tc.status === 'draft')
+      return [
+        { ...open, label: t('Review draft') },
+        { key: 'merge', label: t('Merge with…'), onClick: () => mergeWith(tc) },
+        { key: 'd1', type: 'divider' },
+        {
+          key: 'dismiss',
+          label: t('Dismiss'),
+          danger: true,
+          onClick: () => {
+            // announce it — a row that vanishes silently reads as lost
+            removeTest(tc.key);
+            toast.success(t('Draft dismissed'));
+          },
+        },
+      ];
+    const controls: MenuItem[] = [];
+    // a needs-review test (with pause-on-revision) is frozen until reviewed
+    if (!reviewBlocked(tc)) {
+      if (tc.status === 'active')
+        controls.push({
+          key: 'pause',
+          label: t('Pause'),
+          onClick: () => updateTest({ ...tc, status: 'paused' }),
+        });
+      if (tc.status === 'paused') {
+        const blocked = hasNoEnvironment(tc);
+        controls.push({
+          key: 'resume',
+          disabled: blocked,
+          label: blocked ? (
+            <Tooltip
+              title={t('Set an environment in this test’s settings to resume.')}
+              side="left"
+            >
+              <span>{t('Resume')}</span>
+            </Tooltip>
+          ) : (
+            t('Resume')
+          ),
+          onClick: () => updateTest({ ...tc, status: 'active' }),
+        });
+      }
+      // gate on the actual schedule, not status: an already-scheduled test (active,
+      // paused, or approved-with-cron) can only be unscheduled
+      controls.push(
+        isScheduled(tc.schedule)
+          ? {
+              key: 'unschedule',
+              label: t('Unschedule'),
+              onClick: () => unschedule(tc),
+            }
+          : {
+              key: 'schedule',
+              label: t('Schedule'),
+              onClick: () => openSchedule(tc),
+            },
+      );
+    }
+    return [
+      ...controls,
+      {
+        ...open,
+        label: needsReview(tc) ? t('Review changes') : t('Settings'),
+      },
+      // stuck "needs review" with no suggestion to act on → clear the flag directly
+      ...(tc.needsReview && !tc.pendingRevision
+        ? [
+            {
+              key: 'markReviewed',
+              label: t('Mark as reviewed'),
+              onClick: () => clearReview(tc),
+            },
+          ]
+        : []),
+      {
+        key: 'duplicate',
+        label: t('Duplicate'),
+        onClick: () => duplicateTest(tc),
+      },
+      { key: 'merge', label: t('Merge with…'), onClick: () => mergeWith(tc) },
+      { key: 'd1', type: 'divider' },
+      del,
+    ];
+  };
+
+  const columns: (Column<TestCase> & { key: string })[] = [
     {
       title: t('Test'),
-      dataIndex: 'title',
-      sorter: true,
-      showSorterTooltip: false,
-      render: (title: string, tc) => (
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="font-medium truncate">{title}</span>
-          <VersionLabel version={tc.version} />
-          {tc.hasSideEffects && (
-            <Tooltip
-              title={t(
-                'Has side effects. Running this test affects real data (orders / accounts / payments).',
-              )}
-            >
-              <span className="shrink-0 flex items-center text-warning-text">
-                <ShieldAlert size={14} />
-              </span>
-            </Tooltip>
-          )}
-          {/* a pending revision (or an unopened new draft) waits for the user */}
-          {(needsReview(tc) || (tc.status === 'draft' && tc.isNew)) && (
-            <Tooltip
-              title={
-                needsReview(tc)
-                  ? t('New version — not reviewed yet')
-                  : t('New — not reviewed yet')
-              }
-            >
-              <span className="shrink-0 flex items-center">
-                <Badge color="var(--color-main)" />
-              </span>
-            </Tooltip>
-          )}
-        </div>
-      ),
+      key: 'title',
+      sortable: true,
+      render: (tc) => {
+        // a pending revision (or an unopened new draft) waits for the user
+        const dot = needsReview(tc)
+          ? t('New version — not reviewed yet')
+          : tc.status === 'draft' && tc.isNew
+            ? t('New — not reviewed yet')
+            : null;
+        return (
+          <div className="m-tests__title-cell">
+            {dot ? (
+              <Tooltip title={dot}>
+                <span className="m-dot is-slot" role="img" aria-label={dot} />
+              </Tooltip>
+            ) : (
+              <span className="m-dot is-slot is-off" aria-hidden="true" />
+            )}
+            <span className="m-tests__title m-truncate">{tc.title}</span>
+            <VersionLabel version={tc.version} />
+            {tc.hasSideEffects && (
+              <Tooltip
+                title={t(
+                  'Has side effects. Running this test changes real data: orders, accounts, payments.',
+                )}
+              >
+                <span
+                  className="m-tests__fx"
+                  aria-label={t('Has side effects')}
+                >
+                  <ShieldAlert size={13} aria-hidden="true" />
+                </span>
+              </Tooltip>
+            )}
+          </div>
+        );
+      },
     },
     {
       title: t('Tags'),
-      dataIndex: 'tags',
-      width: 190,
-      responsive: ['md'],
-      render: (tags: string[]) => <RowTags tags={tags} />,
+      key: 'tags',
+      width: 184,
+      render: (tc) => <RowTags tags={tc.tags} />,
     },
     {
       title: t('Environment'),
-      dataIndex: 'envNames',
-      width: 150,
-      responsive: ['md'],
-      showSorterTooltip: false,
-      render: (envNames?: string[]) => {
-        if (!envNames || envNames.length === 0)
-          return (
-            <span className="text-disabled-text italic">{t('Not set')}</span>
-          );
-        const [first, ...rest] = envNames;
+      key: 'env',
+      width: 148,
+      render: (tc) => {
+        const envs = tc.envNames ?? [];
+        if (envs.length === 0) return <NotSet>{t('Not set')}</NotSet>;
         return (
-          <Tooltip title={envNames.join(', ')}>
-            <span className="text-gray-dark">
-              {first}
-              {rest.length > 0 && (
-                <span className="text-gray-medium"> +{rest.length}</span>
-              )}
-            </span>
-          </Tooltip>
+          <div className="m-tests__chips">
+            <span className="m-tests__env m-truncate">{envs[0]}</span>
+            <MoreCount hidden={envs.slice(1)} />
+          </div>
         );
       },
     },
     {
       title: t('Schedule'),
-      dataIndex: 'schedule',
-      width: 180,
-      responsive: ['md'],
-      showSorterTooltip: false,
-      render: (_: unknown, tc) =>
+      key: 'schedule',
+      width: 168,
+      render: (tc) =>
         !isScheduled(tc.schedule) ? (
-          <span className="text-disabled-text italic">
-            {t('Not scheduled')}
-          </span>
+          <NotSet>{t('Not scheduled')}</NotSet>
         ) : (
           <Tooltip title={scheduleLabel(t, tc.schedule)}>
-            <span className="flex items-center gap-1.5 text-gray-dark">
-              <Calendar size={13} className="shrink-0 text-gray-medium" />
-              <span className="truncate">{scheduleShort(t, tc.schedule)}</span>
+            <span className="m-tests__sched">
+              <Calendar size={12} aria-hidden="true" />
+              <span className="m-truncate">
+                {scheduleShort(t, tc.schedule)}
+              </span>
             </span>
           </Tooltip>
         ),
     },
     {
       title: t('Created'),
-      dataIndex: 'createdAt',
-      width: 120,
-      responsive: ['md'],
-      sorter: true, // server-sorted via created_at (see SORT_FIELD)
-      showSorterTooltip: false,
-      render: (ts?: number) =>
-        ts ? (
-          <Tooltip
-            title={new Date(ts).toLocaleDateString(undefined, {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric',
-            })}
-          >
-            <span className="text-disabled-text">{relativeTime(t, ts)}</span>
-          </Tooltip>
-        ) : (
-          <span className="text-disabled-text">—</span>
-        ),
+      key: 'created',
+      width: 104,
+      sortable: true,
+      render: (tc) =>
+        tc.createdAt ? <RelativeTime at={tc.createdAt} /> : <NotSet>—</NotSet>,
     },
     {
       title: t('Status'),
-      dataIndex: 'status',
-      width: 120,
-      showSorterTooltip: false,
-      render: (_: unknown, tc) =>
+      key: 'status',
+      width: 124,
+      render: (tc) =>
         getStatusTag(reviewBlocked(tc) ? 'needs_review' : tc.status, t),
     },
     {
       title: '',
-      dataIndex: 'actions',
-      width: 104,
+      key: 'actions',
+      width: 76,
       align: 'right',
-      render: (_: unknown, tc) => (
-        <div className="flex items-center justify-end">
+      render: (tc) => (
+        <div className="m-tests__actions">
+          {/* a draft is a proposal: nothing to run yet */}
           {tc.status !== 'draft' && (
             <Tooltip
               title={
                 reviewBlocked(tc)
                   ? t('Runs are paused until the new version is reviewed.')
-                  : t('Run now')
+                  : undefined
               }
             >
-              <Button
-                type="text"
-                icon={<Play size={16} />}
-                aria-label={t('Run now')}
-                disabled={reviewBlocked(tc)}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  runNow(tc);
-                }}
-              />
+              <span>
+                <IconButton
+                  icon={<Play size={14} />}
+                  label={t('Run now')}
+                  variant="ghost"
+                  disabled={reviewBlocked(tc)}
+                  onClick={() => runNow(tc)}
+                />
+              </span>
             </Tooltip>
           )}
-          <Dropdown
-            trigger={['click']}
-            placement="bottomRight"
-            menu={rowMenu(tc)}
-          >
-            <Button
-              type="text"
-              icon={<EllipsisVertical size={16} />}
-              aria-label={t('Actions')}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <span>
+                <IconButton
+                  icon={<MoreHorizontal size={15} />}
+                  label={t('Actions for {{name}}', { name: tc.title })}
+                  variant="ghost"
+                />
+              </span>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
               onClick={(e) => e.stopPropagation()}
-            />
-          </Dropdown>
+            >
+              <DropdownMenuItems items={rowMenu(tc)} />
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       ),
     },
   ];
+  const visible = columns.filter(
+    (c) => !hidden.includes(c.key as (typeof COLUMNS)[number]),
+  );
 
-  if (isPending) {
-    return (
-      <div className="p-4">
-        <Skeleton active paragraph={{ rows: 5 }} />
-      </div>
-    );
-  }
+  const columnLabel: Record<(typeof COLUMNS)[number], string> = {
+    tags: t('Tags'),
+    env: t('Environment'),
+    schedule: t('Schedule'),
+    created: t('Created'),
+    status: t('Status'),
+  };
+  const saveHidden = (next: string[]) => {
+    setHidden(next);
+    try {
+      if (next.length) localStorage.setItem(HIDDEN_KEY, next.join(','));
+      else localStorage.removeItem(HIDDEN_KEY);
+    } catch {}
+  };
 
+  /* ── filters ── */
+  const dimensions: FilterDimension<FilterKey>[] = [
+    {
+      key: 'env',
+      label: t('Environment'),
+      icon: <Server size={14} />,
+      single: true,
+      options: envOptions,
+    },
+    {
+      key: 'tags',
+      label: t('Tags'),
+      icon: <TagIcon size={14} />,
+      single: true,
+      options: allTags.map((tag) => ({ value: tag, label: tag })),
+    },
+  ];
+  const isActive = (key: FilterKey, value: string) =>
+    key === 'env' ? envFilter === value : tagFilter === value;
+  const onToggle = (key: FilterKey, value: string) => {
+    const set = key === 'env' ? setEnvFilter : setTagFilter;
+    set((prev) => (prev === value ? 'all' : value));
+  };
+  const chips = [
+    ...(envFilter !== 'all'
+      ? [
+          {
+            key: 'env' as const,
+            value: envFilter,
+            dimension: t('Environment'),
+            label: envNameById.get(envFilter) ?? envFilter,
+          },
+        ]
+      : []),
+    ...(tagFilter !== 'all'
+      ? [
+          {
+            key: 'tags' as const,
+            value: tagFilter,
+            dimension: t('Tag'),
+            label: tagFilter,
+          },
+        ]
+      : []),
+  ];
+  const clearFilters = () => {
+    setEnvFilter('all');
+    setTagFilter('all');
+    setQuery('');
+  };
+
+  const statusItems = [
+    { key: 'all', label: t('All'), count: allCount },
+    // only when something awaits review — no point in an always-empty tab
+    ...(needsReviewCount > 0
+      ? [
+          {
+            key: 'needs_review',
+            label: t('Needs review'),
+            count: needsReviewCount,
+          },
+        ]
+      : []),
+    { key: 'draft', label: t('Drafts'), count: draftCount },
+    { key: 'approved', label: t('Approved'), count: approvedCount },
+    { key: 'active', label: t('Active'), count: activeCount },
+    { key: 'paused', label: t('Paused'), count: pausedCount },
+  ];
+
+  const filtered =
+    statusTab !== 'all' ||
+    !!search ||
+    envFilter !== 'all' ||
+    tagFilter !== 'all';
   // first-run empty state — only when there are genuinely no tests, not when a filter
   // simply matched nothing
-  const noTests =
-    total === 0 &&
-    statusTab === 'all' &&
-    !search &&
-    envFilter === 'all' &&
-    tagFilter === 'all';
-  if (noTests && !creating) {
-    return (
-      <div className="flex flex-col items-center text-center gap-3 py-16 px-4">
-        <div className="w-12 h-12 rounded-full bg-gray-lightest flex items-center justify-center">
-          <Radar size={22} className="text-gray-medium" />
-        </div>
-        <Typography.Text strong className="text-base!">
-          {t('Watching your sessions')}
-        </Typography.Text>
-        <Typography.Text type="secondary" className="max-w-md">
-          {t(
-            'As real users move through your app, the agent learns the journeys they take. Once it has seen a full journey across enough sessions, it drafts a test here for you to review.',
-          )}
-        </Typography.Text>
-        <span className="text-sm text-disabled-text">
-          {t('Nothing to set up — drafts will appear as they are ready.')}
-        </span>
-        <Button
-          type="primary"
-          icon={<Plus size={14} />}
-          onClick={addTest}
-          className="mt-1"
-        >
-          {t('Add test manually')}
+  const firstRun = (
+    <EmptyState
+      art="tests"
+      title={t('Watching your sessions')}
+      hint={t(
+        'The agent learns the journeys real users take and drafts a test for each one it has seen enough times. You review, it runs.',
+      )}
+      action={
+        <Button onClick={addTest}>
+          <Plus size={14} />
+          {t('Add a test by hand')}
         </Button>
-      </div>
+      }
+    >
+      <StartPath
+        steps={[
+          {
+            icon: <Route />,
+            label: t('Users take a journey'),
+            hint: t('Sign-up, checkout, search'),
+          },
+          {
+            icon: <Footprints />,
+            label: t('The agent learns a journey'),
+            hint: t('After enough sessions'),
+          },
+          {
+            icon: <ClipboardCheck />,
+            label: t('Review the draft'),
+            hint: t('Approve, then it runs'),
+          },
+        ]}
+      />
+    </EmptyState>
+  );
+  const emptyTab: Record<StatusTab, string> = {
+    all: t('No tests yet'),
+    draft: t('No drafts waiting'),
+    needs_review: t('Nothing to review'),
+    approved: t('Nothing approved and idle'),
+    active: t('No tests are running'),
+    paused: t('Nothing is paused'),
+    rejected: t('No tests yet'),
+  };
+  const empty =
+    search || envFilter !== 'all' || tagFilter !== 'all' ? (
+      <EmptyState
+        art="search"
+        title={t('No tests match these filters')}
+        hint={t('Clear them to see the whole list again.')}
+        action={<Button onClick={clearFilters}>{t('Clear filters')}</Button>}
+      />
+    ) : (
+      <EmptyState
+        title={emptyTab[statusTab]}
+        hint={t('Pick another tab to see the rest of the list.')}
+      />
     );
-  }
+
+  const deleteTargets = tests.filter((tc) => deleteKeys.includes(tc.key));
+  const deleteOne = deleteKeys.length === 1 ? deleteTargets[0] : undefined;
 
   return (
-    <div className="flex flex-col">
-      {/* controls bar — status tabs (left) + search & filters (right) */}
-      <div className="flex items-center justify-between gap-2 px-4 py-3 border-b flex-wrap">
-        {narrow ? (
-          <Select
-            size="small"
-            value={statusTab}
-            onChange={(v) => setStatusTab(v as StatusTab)}
-            options={statusOptions}
-            popupMatchSelectWidth={false}
-            style={{ minWidth: 150 }}
+    <SyntheticsFrame
+      actions={
+        <>
+          <SearchField
+            placeholder={t('Search tests')}
+            value={query}
+            onChange={setQuery}
           />
-        ) : (
-          <Segmented
-            size="small"
-            value={statusTab}
-            onChange={(v) => setStatusTab(v as StatusTab)}
-            options={statusOptions}
+          <Button variant="primary" onClick={addTest}>
+            <Plus size={14} />
+            {t('Add test')}
+          </Button>
+        </>
+      }
+      toolbar={
+        <>
+          <FilterStrip
+            label={t('Filter by status')}
+            items={statusItems}
+            selected={[statusTab]}
+            onSelect={(key) => setStatusTab(key as StatusTab)}
           />
-        )}
-        {selectedKeys.length > 0 ? (
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm text-disabled-text">
-              {selectedKeys.length} {t('selected')}
-            </span>
-            {selActive > 0 && (
-              <Button size="small" onClick={pauseSelected}>
-                {t('Pause')} ({selActive})
-              </Button>
-            )}
-            {selPaused > 0 && (
-              <Button size="small" onClick={resumeSelected}>
-                {t('Resume')} ({selPaused})
-              </Button>
-            )}
-            {selectedKeys.length >= 2 && (
-              <Tooltip
-                title={
-                  mergeBlocked
-                    ? t(
-                        'A selected test has a review pending — resolve it first.',
-                      )
-                    : undefined
-                }
-              >
+          {/* a selection swaps the controls for what applies to it, each with its count */}
+          <div className="m-page__controls">
+            {selectedKeys.length > 0 ? (
+              <>
+                <span className="m-tests__selcount">
+                  {t('{{n}} selected', { n: selectedKeys.length })}
+                </span>
+                {selActive > 0 && (
+                  <Button onClick={pauseSelected}>
+                    {t('Pause')} ({selActive})
+                  </Button>
+                )}
+                {selPaused > 0 && (
+                  <Button onClick={resumeSelected}>
+                    {t('Resume')} ({selPaused})
+                  </Button>
+                )}
+                {selectedKeys.length >= 2 && (
+                  <Tooltip
+                    title={
+                      mergeBlocked
+                        ? t(
+                            'A selected test has a review pending — resolve it first.',
+                          )
+                        : undefined
+                    }
+                  >
+                    <span>
+                      <Button
+                        disabled={mergeBlocked}
+                        onClick={() => void startMerge()}
+                      >
+                        <Merge size={13} />
+                        {t('Merge')} ({selectedKeys.length})
+                      </Button>
+                    </span>
+                  </Tooltip>
+                )}
                 <Button
-                  size="small"
-                  disabled={mergeBlocked}
-                  icon={<Merge size={13} />}
-                  onClick={startMerge}
+                  variant="danger-outline"
+                  onClick={() => setDeleteKeys(selectedKeys)}
                 >
-                  {t('Merge')} ({selectedKeys.length})
+                  {t('Delete')} ({selectedKeys.length})
                 </Button>
-              </Tooltip>
+                <Button variant="subtle" onClick={() => setSelectedKeys([])}>
+                  {t('Clear')}
+                </Button>
+              </>
+            ) : (
+              <>
+                <FilterMenu<FilterKey>
+                  dimensions={dimensions}
+                  isActive={isActive}
+                  onToggle={onToggle}
+                  activeCount={chips.length}
+                  label={t('Filter tests')}
+                />
+                <DisplayShell
+                  label={t('Display tests')}
+                  changeCount={hidden.length ? 1 : 0}
+                  onReset={() => saveHidden([])}
+                  rows={[]}
+                  fields={COLUMNS.map((k) => ({
+                    value: k,
+                    label: columnLabel[k],
+                    on: !hidden.includes(k),
+                  }))}
+                  onToggleField={(k) =>
+                    saveHidden(
+                      hidden.includes(k)
+                        ? hidden.filter((h) => h !== k)
+                        : [...hidden, k],
+                    )
+                  }
+                />
+              </>
             )}
-            <Button size="small" danger onClick={deleteSelected}>
-              {t('Delete')} ({selectedKeys.length})
-            </Button>
-            <Button
-              size="small"
-              type="text"
-              onClick={() => setSelectedKeys([])}
-            >
-              {t('Clear')}
-            </Button>
           </div>
-        ) : (
-          <div className="flex items-center gap-2 flex-wrap">
-            <Input.Search
-              size="small"
-              allowClear
-              placeholder={t('Search tests')}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              style={{ width: 170 }}
-            />
-            <Select
-              size="small"
-              value={envFilter}
-              onChange={setEnvFilter}
-              style={{ width: 150 }}
-              options={[
-                { value: 'all', label: t('All environments') },
-                ...envOptions,
-              ]}
-            />
-            <Select
-              size="small"
-              value={tagFilter}
-              onChange={setTagFilter}
-              style={{ width: 130 }}
-              options={[
-                { value: 'all', label: t('All tags') },
-                ...allTags.map((tag) => ({ value: tag, label: tag })),
-              ]}
-            />
-            <Button
-              size="small"
-              type="primary"
-              icon={<Plus size={14} />}
-              onClick={addTest}
-            >
-              {t('Add test')}
-            </Button>
-          </div>
-        )}
-      </div>
-
-      <Table<TestCase>
-        className="kai-table"
-        rowKey="key"
-        columns={columns}
-        tableLayout={narrow ? 'fixed' : undefined}
-        scroll={narrow ? { x: 520 } : undefined}
-        dataSource={tests}
-        pagination={false}
-        rowSelection={{
-          selectedRowKeys: selectedKeys,
-          onChange: setSelectedKeys,
-          columnWidth: 44,
+        </>
+      }
+    >
+      <ActiveFilters<FilterKey>
+        chips={chips}
+        onRemove={onToggle}
+        onClearAll={() => {
+          setEnvFilter('all');
+          setTagFilter('all');
         }}
-        rowClassName={(tc) =>
-          `cursor-pointer${tc.status === 'draft' && tc.isNew ? ' kai-row-new' : ''}`
-        }
-        onChange={(_p, _f, sorter) => {
-          const s = Array.isArray(sorter) ? sorter[0] : sorter;
-          setSortBy({ field: s.field as string, order: s.order ?? undefined });
-          setPage(1);
-        }}
-        onRow={(tc) => ({
-          onClick: (e) => {
-            const el = e.target as HTMLElement;
-            if (
-              el.closest('button') ||
-              el.closest('.ant-checkbox-wrapper') ||
-              el.closest('.ant-table-selection-column') ||
-              el.closest('.ant-dropdown')
-            )
-              return;
-            openRow(tc);
-          },
-        })}
-        locale={{ emptyText: t('No tests match these filters.') }}
+        resultCount={total}
+        noun={[t('test'), t('tests')]}
       />
-
-      {total > 0 && (
-        <FullPagination
-          page={page}
-          limit={PAGE_SIZE}
-          total={total}
-          listLen={tests.length}
-          onPageChange={setPage}
-          entity="tests"
-        />
+      {isPending ? (
+        <SkeletonRows rows={7} columns={[34, 16, 12, 14, 8, 10]} />
+      ) : total === 0 && !filtered ? (
+        firstRun
+      ) : tests.length === 0 ? (
+        empty
+      ) : (
+        <>
+          <DataTable<TestCase>
+            className="m-tests__table"
+            ariaLabel={t('Tests')}
+            columns={visible}
+            rows={tests}
+            rowKey={(tc) => tc.key}
+            rowClassName={(tc) =>
+              tc.status === 'draft' && tc.isNew
+                ? 'm-tests__row is-new'
+                : 'm-tests__row'
+            }
+            sort={sortBy}
+            onSort={(key, desc) => {
+              setSortBy(key ? { key, desc } : null);
+              setPage(1);
+            }}
+            selection={{
+              selected: selectedKeys,
+              onChange: setSelectedKeys,
+              label: (tc) => t('Select {{name}}', { name: tc.title }),
+            }}
+            onRowClick={(tc) => openRow(tc)}
+          />
+          <ListFooter
+            page={page}
+            pageSize={PAGE_SIZE}
+            total={total}
+            noun={[t('test'), t('tests')]}
+            onPage={(p) => {
+              // selection is per page: the bulk verbs act on the rows in view
+              setSelectedKeys([]);
+              setPage(p);
+            }}
+          />
+        </>
       )}
 
       {/* keyed by the RESOLVED test, not by ?test= — a deep-linked test arrives after
@@ -1019,7 +1105,28 @@ function TestsTab() {
         onMergeAccept={commitMerge}
         onCancelMerge={() => setMergeTest(null)}
       />
-    </div>
+      <ConfirmDialog
+        open={deleteKeys.length > 0}
+        title={
+          deleteOne
+            ? t('Delete this test?')
+            : t('Delete {{n}} tests?', { n: deleteKeys.length })
+        }
+        okText={t('Delete')}
+        danger
+        onCancel={() => setDeleteKeys([])}
+        onOk={() => {
+          deleteMany(deleteKeys);
+          setDeleteKeys([]);
+        }}
+      >
+        {deleteOne
+          ? t('“{{title}}” and its run history will be removed.', {
+              title: deleteOne.title,
+            })
+          : t('The selected tests and their run history will be removed.')}
+      </ConfirmDialog>
+    </SyntheticsFrame>
   );
 }
 

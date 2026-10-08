@@ -1,12 +1,11 @@
-import { Select, Typography } from 'antd';
+import { SimpleSelect } from '@/ui/inputs/select';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import CountryFlagIcon from 'Shared/CountryFlagIcon';
 
 import { useEnvironments } from '../queries';
-import { Field } from './drawers/EntityDrawer';
-import { RunDefaults } from './shared/types';
+import { Resolution, RunDefaults } from './shared/types';
 import {
   LOOKUP_LIMIT,
   REGION_OPTIONS,
@@ -22,71 +21,68 @@ interface Props {
 }
 
 // The preset environment / device / region that pre-fill a new test's run settings.
-// Single-select — the multi-select matrix lives per-test (RunSettingsFields).
+// Single values — the multi-select matrix lives per-test (RunSettingsFields).
 function Defaults({ value, onChange }: Props) {
   const { t } = useTranslation();
   const { data } = useEnvironments({ limit: LOOKUP_LIMIT });
-  const envOptions = (data?.items ?? []).map((env) => ({
-    value: env.environmentId,
-    label: env.name,
-  }));
 
   return (
-    <section className="flex flex-col gap-3">
-      <div>
-        <Typography.Title level={5} style={{ marginBottom: 0 }}>
-          {t('Default run configuration')}
-        </Typography.Title>
-        <Typography.Text type="secondary" className="text-sm!">
-          {t('New tests start with these. You can override them per test.')}
-        </Typography.Text>
-      </div>
-      <div className="grid grid-cols-3 gap-3 max-sm:grid-cols-1">
-        <Field label={t('Default environment')}>
-          <Select
-            allowClear
-            showSearch={false}
+    <section className="m-envs__section">
+      <header className="m-envs__head">
+        <div>
+          <h2 className="m-envs__title">{t('Default run configuration')}</h2>
+          <p className="m-envs__sub">
+            {t('New tests start with these. You can override them per test.')}
+          </p>
+        </div>
+      </header>
+      <div className="m-envs__defaults">
+        <label className="m-envs__field">
+          <span className="m-envs__label">{t('Environment')}</span>
+          <SimpleSelect
+            clearable
             value={value.envId}
-            style={{ width: '100%' }}
-            placeholder={t('Select environment')}
+            placeholder={t('Not set')}
+            ariaLabel={t('Default environment')}
             onChange={(envId) => onChange({ envId })}
-            options={envOptions}
+            options={(data?.items ?? []).map((env) => ({
+              value: env.environmentId,
+              label: env.name,
+            }))}
           />
-        </Field>
-
-        <Field label={t('Default viewport')}>
-          <Select
-            showSearch={false}
+        </label>
+        <label className="m-envs__field">
+          <span className="m-envs__label">{t('Viewport')}</span>
+          <SimpleSelect<Resolution>
             value={value.resolution}
-            style={{ width: '100%' }}
-            placeholder={t('Select viewport')}
+            placeholder={t('Not set')}
+            ariaLabel={t('Default viewport')}
             onChange={(resolution) => onChange({ resolution })}
             options={RESOLUTION_OPTIONS.map((o) => {
               const Icon = RESOLUTION_ICON[o.value];
               return {
                 value: o.value,
                 label: (
-                  <span className="flex items-center gap-1.5">
-                    <Icon size={15} />
+                  <span className="inline-flex items-center gap-1.5">
+                    <Icon size={14} aria-hidden="true" />
                     {t(o.label)}
                   </span>
                 ),
               };
             })}
           />
-        </Field>
-
-        <Field label={t('Default region')}>
-          <Select
-            showSearch={false}
+        </label>
+        <label className="m-envs__field">
+          <span className="m-envs__label">{t('Region')}</span>
+          <SimpleSelect
             value={value.region}
-            style={{ width: '100%' }}
-            placeholder={t('Select region')}
+            placeholder={t('Not set')}
+            ariaLabel={t('Default region')}
             onChange={(region) => onChange({ region })}
             options={REGION_OPTIONS.map((o) => ({
               value: o.value,
               label: (
-                <span className="flex items-center gap-1.5">
+                <span className="inline-flex items-center gap-1.5">
                   <CountryFlagIcon
                     countryCode={o.country}
                     style={{ width: 16, borderRadius: 2 }}
@@ -96,7 +92,7 @@ function Defaults({ value, onChange }: Props) {
               ),
             }))}
           />
-        </Field>
+        </label>
       </div>
     </section>
   );

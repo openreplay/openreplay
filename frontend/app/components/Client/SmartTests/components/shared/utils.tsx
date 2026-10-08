@@ -1,4 +1,5 @@
-import { Tag, Tooltip } from 'antd';
+import { Chip, type ChipTone } from '@/ui/data/Chip';
+import { MoreCount } from '@/ui/data/MoreCount';
 import { TFunction } from 'i18next';
 import {
   CheckCircle2,
@@ -24,23 +25,6 @@ import {
 // The API clamps list `limit` to 100. Every "fetch the whole set to resolve names /
 // options" lookup in this feature uses that ceiling.
 export const LOOKUP_LIMIT = 100;
-
-// Brand tints shared by every status chip, banner and row wash in this feature, so the
-// same state never renders at two different alphas. TINT = chips/banners, TINT_SOFT =
-// full-row backgrounds (a chip alpha across a whole row reads far too heavy).
-export const TINT = {
-  red: 'rgba(204, 0, 0, 0.1)',
-  green: 'rgba(66, 174, 94, 0.12)',
-  indigo: 'rgba(97, 95, 255, 0.12)',
-  blue: 'rgba(57, 78, 255, 0.1)',
-  orange: 'rgba(226, 137, 64, 0.14)',
-} as const;
-export const TINT_SOFT = {
-  red: 'rgba(204, 0, 0, 0.06)',
-  green: 'rgba(66, 174, 94, 0.1)',
-} as const;
-// borders need more opacity than fills to stay visible
-export const TINT_BORDER = { red: 'rgba(204, 0, 0, 0.35)' } as const;
 
 export const RESOLUTION_OPTIONS: { value: Resolution; label: string }[] = [
   { value: 'desktop', label: 'Desktop' },
@@ -92,52 +76,34 @@ export const regionCountry = (r?: string): string =>
 // test keeps its real status and the review is signalled by the blue dot only.
 export type DisplayStatus = TestLifecycle | 'needs_review';
 
+const STATUS_TONE: Record<DisplayStatus, ChipTone> = {
+  draft: 'neutral',
+  needs_review: 'info',
+  approved: 'neutral',
+  active: 'success',
+  paused: 'warning',
+};
+
+export const statusLabel = (status: DisplayStatus, t: TFunction) =>
+  ({
+    draft: t('Draft'),
+    needs_review: t('Needs review'),
+    approved: t('Approved'),
+    active: t('Active'),
+    paused: t('Paused'),
+  })[status];
+
 export const getStatusTag = (
   status: DisplayStatus,
   t: TFunction,
   className?: string,
-) => {
-  if (status === 'draft') {
-    return (
-      <Tag variant="filled" className={className}>
-        {t('Draft')}
-      </Tag>
-    );
-  }
-  const cfg =
-    status === 'active'
-      ? {
-          label: t('Active'),
-          background: TINT.green,
-          color: 'var(--color-green-dark)',
-        }
-      : status === 'approved'
-        ? {
-            label: t('Approved'),
-            background: TINT.indigo,
-            color: 'var(--color-indigo)',
-          }
-        : status === 'needs_review'
-          ? {
-              label: t('Needs review'),
-              background: TINT.blue,
-              color: 'var(--color-main)',
-            }
-          : {
-              label: t('Paused'),
-              background: TINT.orange,
-              color: 'var(--color-orange-dark)',
-            };
-  return (
-    <Tag
-      variant="filled"
-      className={className}
-      style={{ background: cfg.background, color: cfg.color, border: 'none' }}
-    >
-      {cfg.label}
-    </Tag>
-  );
-};
+) => (
+  <span className={className}>
+    <Chip kind="status" tone={STATUS_TONE[status]}>
+      {statusLabel(status, t)}
+    </Chip>
+  </span>
+);
 
 // Leading icon so the outcome reads without relying on colour alone.
 export const getRunResult = (
@@ -147,38 +113,22 @@ export const getRunResult = (
 ) => {
   const cfg =
     status === 'running'
-      ? {
-          label: t('Running'),
-          background: TINT.indigo,
-          color: 'var(--color-indigo)',
-          Icon: Loader,
-          spin: true,
-        }
+      ? { label: t('Running'), tone: 'info' as const, Icon: Loader, spin: true }
       : status === 'failed'
-        ? {
-            label: t('Failed'),
-            background: TINT.red,
-            color: 'var(--color-red)',
-            Icon: XCircle,
-          }
-        : {
-            label: t('Passed'),
-            background: TINT.green,
-            color: 'var(--color-green-dark)',
-            Icon: CheckCircle2,
-          };
+        ? { label: t('Failed'), tone: 'danger' as const, Icon: XCircle }
+        : { label: t('Passed'), tone: 'success' as const, Icon: CheckCircle2 };
   const { Icon } = cfg;
   return (
-    <Tag
-      variant="filled"
-      className={className}
-      style={{ background: cfg.background, color: cfg.color, border: 'none' }}
-    >
-      <span className="inline-flex items-center gap-1">
-        <Icon size={12} className={cfg.spin ? 'animate-spin' : ''} />
+    <span className={className}>
+      <Chip kind="status" tone={cfg.tone}>
+        <Icon
+          size={11}
+          aria-hidden="true"
+          className={'spin' in cfg && cfg.spin ? 'animate-spin' : ''}
+        />
         {cfg.label}
-      </span>
-    </Tag>
+      </Chip>
+    </span>
   );
 };
 
@@ -191,43 +141,25 @@ export const VersionLabel = ({
   version?: number;
   always?: boolean;
 }) => {
+  const { t } = useTranslation();
   if (!version || (!always && version < 2)) return null;
-  return (
-    <span
-      className="shrink-0 text-xs leading-none text-gray-medium border rounded px-1 py-0.5 font-medium"
-      style={{ borderColor: 'var(--color-gray-light)' }}
-    >
-      v{version}
-    </span>
-  );
+  return <Chip kind="tag">{t('v{{n}}', { n: version })}</Chip>;
 };
 
-// First 2 tags shown, the rest folded into a +N hint.
+// First tag shown, the rest folded into a +N hint.
 export const RowTags = ({ tags }: { tags?: string[] }) => {
   const { t } = useTranslation();
   if (!tags || tags.length === 0)
-    return <span className="text-disabled-text italic">{t('Not set')}</span>;
-  const shown = tags.slice(0, 2);
-  const rest = tags.slice(2);
+    return (
+      <span className="text-sm italic text-content-disabled">
+        {t('Not set')}
+      </span>
+    );
   return (
-    <div className="flex items-center gap-1 overflow-hidden">
-      {shown.map((tag) => (
-        <span
-          key={tag}
-          className="text-xs px-2 py-0.5 rounded border whitespace-nowrap bg-gray-lightest text-gray-dark"
-          style={{ borderColor: 'var(--color-gray-light)' }}
-        >
-          {tag}
-        </span>
-      ))}
-      {rest.length > 0 && (
-        <Tooltip title={rest.join(', ')}>
-          <span className="text-xs text-gray-medium shrink-0 cursor-default">
-            +{rest.length}
-          </span>
-        </Tooltip>
-      )}
-    </div>
+    <span className="inline-flex min-w-0 items-center gap-2 overflow-hidden">
+      <Chip kind="tag">{tags[0]}</Chip>
+      <MoreCount hidden={tags.slice(1)} />
+    </span>
   );
 };
 

@@ -1,12 +1,15 @@
 import withPageTitle from '@/components/hocs/withPageTitle';
 import withPermissions from '@/components/hocs/withPermissions';
+import { IconButton } from '@/ui/actions/IconButton';
+import { ImpactMeter } from '@/ui/data/ImpactMeter';
+import { Loader } from '@/ui/feedback/Loader';
+import { PopoverPanel } from '@/ui/overlays/popover';
+import { toast } from '@/ui/overlays/toast';
 import { createWebPlayer } from 'Player';
-import { ConfigProvider, Drawer } from 'antd';
-import { wrapPlayerStore } from 'Components/Session/playerStore';
+import { ChevronLeft, ChevronRight, Share2 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'react-toastify';
 
 import { useStore } from 'App/mstore';
 import { useHistory, useParams } from 'App/routing';
@@ -16,24 +19,28 @@ import {
   smartIssues,
   withSiteId,
 } from 'App/saasComponents';
-import { mobileScreen } from 'App/utils/isMobile';
 import PlayerContent from 'Components/Session/Player/ReplayPlayer/PlayerContent';
-import PhoneHorizontalWarn from 'Components/Session/Player/SharedComponents/PhoneHorizontal';
+import { ReplayScreen } from 'Components/Session/ReplayScreen/ReplayScreen';
+import RightBlock from 'Components/Session/RightBlock';
 import {
   type IPlayerContext,
   PlayerContext,
   defaultContextValue,
 } from 'Components/Session/playerContext';
-import EventsBlock from 'Components/Session_/EventsBlock';
-import HighlightPanel from 'Components/Session_/Highlight/HighlightPanel';
-import { Loader } from 'UI';
+import { wrapPlayerStore } from 'Components/Session/playerStore';
 
+import { ShareDialog } from 'Shared/SharePopup/SharePopup';
+
+import IssueActions from '../IssueDetail/IssueActions';
 import { makeJourneyCard } from '../factories';
-import { CriticalDialog, PLAYER_OVERLAY_Z, fmtDate } from '../shared';
-import IssuePanel from './IssuePanel';
-import IssuePlayerHeader from './IssuePlayerHeader';
-
-type View = 'activity' | 'issue' | 'highlight' | null;
+import {
+  CriticalDialog,
+  HideIssueModal,
+  NotCriticalDialog,
+  RenameIssueModal,
+  fmtDate,
+  impactLevel,
+} from '../shared';
 
 /* Minimal-UI session replay for an issue. Player bootstrap mirrors WebPlayer.tsx. */
 function IssuePlayer() {
@@ -57,8 +64,12 @@ function IssuePlayer() {
     undefined,
   );
   const adjustedRef = React.useRef(false);
-  // on phones the side panel is a drawer over the replay, so start with it closed
-  const [view, setView] = React.useState<View>(mobileScreen ? null : 'issue');
+  const [panel, setPanel] = React.useState<string | null>('ISSUE');
+  const [shareAt, setShareAt] = React.useState<number | null>(null);
+  const [details, setDetails] = React.useState(false);
+  const [renameOpen, setRenameOpen] = React.useState(false);
+  const [hideOpen, setHideOpen] = React.useState(false);
+  const [notCritOpen, setNotCritOpen] = React.useState(false);
 
   const issue = issuesStore.byId(id);
   const realId = issue?.id ?? id;
@@ -228,128 +239,177 @@ function IssuePlayer() {
     history.push(
       withSiteId(issue ? smartIssueDetails(idParam) : smartIssues(), siteId),
     );
-  // the triangle opens the shared dialog (state lives in issuesStore now)
-  const critState = issue ? issuesStore.critState(issue.id) : 'none';
+  const email = card?.email ?? session.userId ?? t('Anonymous');
+  const date = card?.date ?? fmtDate(session.startedAt);
+  const variation = effCard?.variation || effCard?.journey;
+  const rows: [string, React.ReactNode][] = [
+    [t('User'), email],
+    [
+      t('Location'),
+      [card?.city ?? session.userCity, card?.country ?? session.userCountry]
+        .filter(Boolean)
+        .join(', '),
+    ],
+    [t('Browser'), card?.browser ?? session.userBrowser],
+    [t('OS'), card?.os ?? session.userOs],
+    [t('Device'), card?.device ?? session.userDeviceType],
+    [t('Started'), date],
+    ...(card?.metadata ?? []).map(
+      (m) => [m.label, m.value] as [string, React.ReactNode],
+    ),
+  ];
 
-  // the Issue panel is a RightBlock tab now, so 'issue' maps to activeTab 'ISSUE'
-  const playerActiveTab =
-    view === 'activity'
-      ? 'EVENTS'
-      : view === 'highlight'
-        ? 'HIGHLIGHT'
-        : view === 'issue'
-          ? 'ISSUE'
-          : '';
-  const setPlayerActiveTab = (tab: string) => {
-    if (tab === 'EVENTS') setView('activity');
-    else if (tab === 'HIGHLIGHT') setView('highlight');
-    else if (tab === 'ISSUE') setView('issue');
-    else if (tab === '') setView(null);
+  const lead = (
+    <div className="m-rs__who">
+      {issue && <ImpactMeter level={impactLevel(issue.impact)} compact />}
+      <div className="m-rs__names">
+        <span className="m-rs__name m-truncate">
+          {variation || issue?.head || t('Session replay')}
+        </span>
+        <span className="m-rs__meta m-truncate">
+          {variation && issue ? <span>{issue.head} ·</span> : null}
+          <span>{email}</span>
+          {date && <span>· {date}</span>}
+          <PopoverPanel
+            open={details}
+            onOpenChange={setDetails}
+            placement="bottomLeft"
+            content={
+              <dl className="m-rs__details">
+                {rows
+                  .filter(([, v]) => v)
+                  .map(([k, v]) => (
+                    <React.Fragment key={k}>
+                      <dt>{k}</dt>
+                      <dd>{v}</dd>
+                    </React.Fragment>
+                  ))}
+              </dl>
+            }
+          >
+            <button type="button" className="m-rs__more">
+              · {t('More')}
+            </button>
+          </PopoverPanel>
+        </span>
+      </div>
+    </div>
+  );
+
+  const onPanel = (key: string | null) => {
+    const player = contextValue.player;
+    if ((key == null) !== (panel == null) && player) {
+      const { showEvents } = contextValue.store?.get() || ({} as any);
+      if (key == null || !showEvents) player.toggleEvents();
+    }
+    setPanel(key);
   };
 
-  const closePanel = () => setView(null);
-  const mobilePanel =
-    view === 'activity' ? (
-      <EventsBlock setActiveTab={setPlayerActiveTab} />
-    ) : view === 'highlight' ? (
-      <HighlightPanel onClose={closePanel} />
-    ) : view === 'issue' ? (
-      <IssuePanel onClose={closePanel} />
-    ) : null;
-
-  const email = card?.email ?? session.userId ?? t('Anonymous');
-  const browser = card?.browser ?? session.userBrowser ?? '';
-  const os = card?.os ?? session.userOs ?? '';
-  const device = card?.device ?? session.userDeviceType ?? 'desktop';
-  const countryCode = card?.country ?? session.userCountry ?? '';
-  const city = card?.city ?? session.userCity ?? '';
-  const date = card?.date ?? fmtDate(session.startedAt);
-  const variation = effCard?.variation || effCard?.journey || issue?.head;
-
   return (
-    <ConfigProvider theme={{ token: { zIndexPopupBase: PLAYER_OVERLAY_Z } }}>
-      <PlayerContext.Provider value={contextValue}>
-        <div
-          className="fixed inset-0 bg-white flex flex-col overflow-hidden"
-          style={{ zIndex: PLAYER_OVERLAY_Z }}
-        >
-          <IssuePlayerHeader
-            issue={issue}
-            card={effCard}
-            email={email}
-            browser={browser}
-            os={os}
-            device={device}
-            countryCode={countryCode}
-            city={city}
-            date={date}
-            variation={variation}
-            tab={view === 'activity' || view === 'issue' ? view : null}
-            setTab={(t) => setView(t)}
-            onBack={back}
-            critState={critState}
-            onOpenCritical={() =>
-              issue && issuesStore.openCriticalDialog(issue.id)
-            }
-            prevId={prevId}
-            nextId={nextId}
-            onGoSession={goSession}
-            onHighlight={() => setView('highlight')}
-          />
-
-          <div className="flex flex-1 min-h-0 w-full">
-            <div className="flex flex-col flex-1 min-w-0 min-h-0">
-              {contextValue.player ? (
-                <PlayerContent
-                  session={session}
-                  fullscreen={false}
-                  activeTab={mobileScreen ? '' : playerActiveTab}
-                  setActiveTab={setPlayerActiveTab}
-                  minimalSubHeader
-                  fillHeight={mobileScreen}
-                />
-              ) : (
-                <div className="flex-1 flex items-center justify-center">
-                  <Loader />
-                </div>
-              )}
-            </div>
-            {/* the Issue panel now renders inside PlayerContent's RightBlock
-                (activeTab 'ISSUE'), so it shares the panel chrome natively */}
-          </div>
-
-          {mobileScreen && (
-            <Drawer
-              open={!!mobilePanel}
-              onClose={closePanel}
-              placement="right"
-              closable={false}
-              styles={{
-                wrapper: { width: 'min(360px, 85vw)' },
-                body: { padding: 0 },
-              }}
-            >
-              <div className="flex flex-col h-full bg-white">{mobilePanel}</div>
-            </Drawer>
-          )}
-
-          {/* sibling of the header/panel, never nested in a Tooltip (antd Children.only) */}
-          {issue && (
-            <CriticalDialog
-              issueId={issuesStore.criticalDialogId}
-              issueHead={issue.head}
-              onClose={issuesStore.closeCriticalDialog}
+    <PlayerContext.Provider value={contextValue}>
+      <ReplayScreen
+        back={{ label: issue ? t('Issue') : t('Issues'), onClick: back }}
+        lead={lead}
+        actions={
+          <>
+            {issue && (
+              <IssueActions
+                issue={issue}
+                onOpenCritical={() => issuesStore.openCriticalDialog(issue.id)}
+                onNotCritical={() => setNotCritOpen(true)}
+                onRename={() => setRenameOpen(true)}
+                onHide={() => setHideOpen(true)}
+              />
+            )}
+            <IconButton
+              icon={<Share2 size={15} />}
+              label={t('Share session')}
+              variant="ghost"
+              onClick={() => setShareAt(contextValue.store?.get()?.time ?? 0)}
             />
-          )}
-        </div>
-        {/* own stacking context so the warning paints above the overlay */}
-        {mobileScreen && (
-          <div className="relative" style={{ zIndex: PLAYER_OVERLAY_Z + 1 }}>
-            <PhoneHorizontalWarn />
-          </div>
+            <span className="m-rs__sep" aria-hidden="true" />
+            <IconButton
+              icon={<ChevronLeft size={15} />}
+              label={t('Previous session')}
+              variant="ghost"
+              disabled={!prevId}
+              onClick={() => prevId && goSession(prevId)}
+            />
+            <IconButton
+              icon={<ChevronRight size={15} />}
+              label={t('Next session')}
+              variant="ghost"
+              disabled={!nextId}
+              onClick={() => nextId && goSession(nextId)}
+            />
+          </>
+        }
+        panels={[
+          { key: 'ISSUE', label: t('Issue') },
+          { key: 'EVENTS', label: t('Activity') },
+        ]}
+        panel={panel}
+        onPanel={onPanel}
+        renderPanel={(key) => (
+          <RightBlock
+            activeTab={key}
+            setActiveTab={(k) => onPanel(k || null)}
+            embedded
+          />
         )}
-      </PlayerContext.Provider>
-    </ConfigProvider>
+      >
+        {contextValue.player ? (
+          <PlayerContent
+            session={session}
+            fullscreen={false}
+            activeTab={panel ?? ''}
+            setActiveTab={(k) => onPanel(k || null)}
+            fillHeight
+            noSidePanel
+          />
+        ) : (
+          <Loader style={{ margin: 'auto' }} />
+        )}
+      </ReplayScreen>
+      <ShareDialog
+        open={shareAt !== null}
+        time={shareAt ?? undefined}
+        onClose={() => setShareAt(null)}
+      />
+      {issue && (
+        <>
+          <CriticalDialog
+            issueId={issuesStore.criticalDialogId}
+            issueHead={issue.head}
+            onClose={issuesStore.closeCriticalDialog}
+          />
+          <NotCriticalDialog
+            issue={notCritOpen ? issue : null}
+            reasons={issuesStore.reasons.criticality}
+            onClose={() => setNotCritOpen(false)}
+          />
+          <RenameIssueModal
+            open={renameOpen}
+            initial={issue.head}
+            onCancel={() => setRenameOpen(false)}
+            onConfirm={(name) => {
+              issuesStore.rename(issue.id, name);
+              setRenameOpen(false);
+            }}
+          />
+          <HideIssueModal
+            open={hideOpen}
+            head={issue.head}
+            reasons={issuesStore.reasons.hide}
+            onCancel={() => setHideOpen(false)}
+            onConfirm={(reasons, note) => {
+              issuesStore.hide(issue.id, reasons, note);
+              setHideOpen(false);
+            }}
+          />
+        </>
+      )}
+    </PlayerContext.Provider>
   );
 }
 

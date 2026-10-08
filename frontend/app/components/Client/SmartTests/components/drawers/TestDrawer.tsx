@@ -1,4 +1,13 @@
-import { App, Button, Dropdown, Popconfirm, Tooltip } from 'antd';
+import { Button } from '@/ui/actions/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItems,
+  DropdownMenuTrigger,
+} from '@/ui/actions/dropdown-menu';
+import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
+import { useToast } from '@/ui/overlays/toast';
+import { Tooltip } from '@/ui/overlays/tooltip';
 import {
   Check,
   CheckCheck,
@@ -8,13 +17,12 @@ import {
   MoveRight,
   Pause,
   Play,
+  ShieldAlert,
   Trash2,
-  TriangleAlert,
   XCircle,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'react-toastify';
 
 import {
   useActivateVersion,
@@ -36,14 +44,13 @@ import {
 import { RunData, TestCase } from '../shared/types';
 import {
   LOOKUP_LIMIT,
-  VersionLabel,
   formatDuration,
   hasNoEnvironment,
   relativeTime,
   stepsToLines,
 } from '../shared/utils';
 import EditableSteps from './EditableSteps';
-import { EntityDrawer, Section, TagEditor } from './EntityDrawer';
+import { DrawerFooter, EntityDrawer, Section, TagEditor } from './EntityDrawer';
 import RunSettingsFields, { RunSettings } from './RunSettingsFields';
 
 const versionDate = (ts: number): string =>
@@ -92,7 +99,9 @@ function TestDrawer({
   onCancelMerge,
 }: Props) {
   const { t } = useTranslation();
+  const toast = useToast();
   const settingsRef = useRef<HTMLDivElement>(null);
+  const [confirm, setConfirm] = useState<'discard' | 'delete' | null>(null);
   const { data: runsData } = useRuns(test?.key, { limit: LOOKUP_LIMIT });
   // Settings → "Pause tests on new revisions": decides whether a pending revision pauses
   // the test (run controls off) or it keeps running.
@@ -115,7 +124,6 @@ function TestDrawer({
     [versionsData],
   );
 
-  const { modal } = App.useApp();
   // Buffered edits — nothing persists until Save. Only the user-editable fields live
   // here; status, the pending revision and the run history always read from `test`, so a
   // background refetch still shows through. Dropped whenever a different test lands here
@@ -191,8 +199,8 @@ function TestDrawer({
       const el = settingsRef.current;
       const id = window.setTimeout(() => {
         el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        el.classList.add('kai-flash');
-        window.setTimeout(() => el.classList.remove('kai-flash'), 1200);
+        el.classList.add('m-tdrawer__flash');
+        window.setTimeout(() => el.classList.remove('m-tdrawer__flash'), 1200);
       }, 250);
       return () => window.clearTimeout(id);
     }
@@ -259,14 +267,7 @@ function TestDrawer({
       onClose();
       return;
     }
-    modal.confirm({
-      title: t('Discard unsaved changes?'),
-      content: t('The edits you made to this test will be lost.'),
-      okText: t('Discard'),
-      okButtonProps: { danger: true },
-      cancelText: t('Keep editing'),
-      onOk: onClose,
-    });
+    setConfirm('discard');
   };
 
   const runNow = () =>
@@ -314,8 +315,8 @@ function TestDrawer({
     );
   const reviewSummary =
     changedCount > 0 ? (
-      <span className="flex items-center gap-2">
-        <span className="text-sm text-disabled-text">
+      <span className="m-tdrawer__sum">
+        <span>
           {decidedCount > 0
             ? t('{{done}} of {{total}} reviewed', {
                 done: decidedCount,
@@ -323,13 +324,8 @@ function TestDrawer({
               })
             : t('{{count}} changes', { count: changedCount })}
         </span>
-        <Button
-          size="small"
-          type="text"
-          disabled={allAccepted}
-          icon={<CheckCheck size={14} />}
-          onClick={acceptAll}
-        >
+        <Button variant="subtle" disabled={allAccepted} onClick={acceptAll}>
+          <CheckCheck size={14} />
           {t('Accept all')}
         </Button>
       </span>
@@ -382,353 +378,389 @@ function TestDrawer({
   };
 
   // ---- version switcher (older versions are read-only history) ---------
-  const versionMenu = {
-    items: [
-      { key: String(version), label: `v${version} · ${t('Current')}` },
-      ...pastVersions.map((v) => ({
-        key: String(v.version),
-        label: `v${v.version} · ${versionDate(new Date(v.createdAt).getTime())}`,
-      })),
-    ],
-    selectedKeys: [String(viewVersion ?? version)],
-    onClick: ({ key }: { key: string }) =>
-      setViewVersion(Number(key) === version ? null : Number(key)),
-  };
+  const shownVersion = viewVersion ?? version;
   const versionSwitcher =
     pastVersions.length > 0 ? (
-      <Dropdown menu={versionMenu} trigger={['click']} placement="bottomRight">
-        <button
-          type="button"
-          aria-label={t('Switch version')}
-          className="flex items-center gap-1 text-sm text-gray-dark border rounded px-2 py-0.5 hover:bg-gray-lightest"
-          style={{ borderColor: 'var(--color-gray-light)' }}
-        >
-          v{viewVersion ?? version}
-          <ChevronDown size={13} className="text-gray-medium" />
-        </button>
-      </Dropdown>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            className="m-tdrawer__vswitch"
+            aria-label={t('Showing v{{v}}. Switch version', {
+              v: shownVersion,
+            })}
+          >
+            {t('v{{n}}', { n: shownVersion })}
+            <ChevronDown size={13} aria-hidden="true" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItems
+            items={[
+              {
+                key: String(version),
+                label: `v${version} · ${t('Current')}`,
+              },
+              ...pastVersions.map((v) => ({
+                key: String(v.version),
+                label: `v${v.version} · ${versionDate(new Date(v.createdAt).getTime())}`,
+              })),
+            ].map((it) => ({
+              ...it,
+              // the tick sits in a slot every row reserves, so labels line up
+              icon:
+                Number(it.key) === shownVersion ? (
+                  <Check size={13} />
+                ) : (
+                  <span style={{ width: 13 }} aria-hidden="true" />
+                ),
+              onClick: () =>
+                setViewVersion(
+                  Number(it.key) === version ? null : Number(it.key),
+                ),
+            }))}
+          />
+        </DropdownMenuContent>
+      </DropdownMenu>
     ) : undefined;
 
+  const pausedNote = (text: string) => (
+    <span className="m-tdrawer__note max-sm:hidden">{text}</span>
+  );
+
   return (
-    <EntityDrawer
-      open={open}
-      onClose={handleClose}
-      title={view.title}
-      onTitleChange={(title) => patch({ title })}
-      autoEditTitle={creating}
-      eyebrow={
-        creating
-          ? `${t('Test')} · ${t('New')}`
-          : merge
-            ? `${t('Test')} · ${t('Merge review')}`
-            : revision && pauseOnRevision
-              ? `${t('Test')} · ${t('Needs review')}`
-              : `${t('Test')} · ${
-                  paused
-                    ? t('Paused')
-                    : test.status === 'approved'
-                      ? t('Approved')
-                      : t('Active')
-                }${version > 1 ? ` · v${version}` : ''}${
-                  revision ? ` · ${t('Needs review')}` : ''
-                }`
-      }
-      /* the header carries no primary action — running and saving live in the footer.
-         Pause / Resume is the one control here, and only for a scheduled test. */
-      headerActions={
-        creating ? undefined : merge ? (
-          <span className="text-sm text-disabled-text max-sm:block max-sm:max-w-28 max-sm:text-xs max-sm:text-right">
-            {t('Runs paused during merge review')}
-          </span>
-        ) : revision && pauseOnRevision ? (
-          <span className="text-sm text-disabled-text max-sm:block max-sm:max-w-28 max-sm:text-xs max-sm:text-right">
-            {t('Runs paused until reviewed')}
-          </span>
-        ) : canPause ? (
-          <Tooltip
+    <>
+      <EntityDrawer
+        size="wide"
+        open={open}
+        onClose={handleClose}
+        title={view.title}
+        onTitleChange={(title) => patch({ title })}
+        autoEditTitle={creating}
+        namePlaceholder={t('Name this test')}
+        eyebrow={
+          creating
+            ? `${t('Test')} · ${t('New')}`
+            : merge
+              ? `${t('Test')} · ${t('Merge review')}`
+              : revision && pauseOnRevision
+                ? `${t('Test')} · ${t('Needs review')}`
+                : `${t('Test')} · ${
+                    paused
+                      ? t('Paused')
+                      : test.status === 'approved'
+                        ? t('Approved')
+                        : t('Active')
+                  }${version > 1 ? ` · v${version}` : ''}${
+                    revision ? ` · ${t('Needs review')}` : ''
+                  }`
+        }
+        /* running and saving live in the footer; Pause / Resume is the one header
+           control, and only for a scheduled test */
+        headerActions={
+          creating ? undefined : merge ? (
+            pausedNote(t('Runs paused during merge review'))
+          ) : revision && pauseOnRevision ? (
+            pausedNote(t('Runs paused until reviewed'))
+          ) : canPause ? (
+            <Tooltip
+              title={
+                resumeBlocked
+                  ? t('Set an environment below to resume this test.')
+                  : undefined
+              }
+            >
+              <span>
+                <Button disabled={resumeBlocked} onClick={togglePause}>
+                  {paused ? <Play size={13} /> : <Pause size={13} />}
+                  {paused ? t('Resume') : t('Pause')}
+                </Button>
+              </span>
+            </Tooltip>
+          ) : undefined
+        }
+        footer={
+          creating ? (
+            <DrawerFooter
+              left={
+                <Button variant="subtle" onClick={onClose}>
+                  {t('Discard')}
+                </Button>
+              }
+              right={
+                <Button variant="primary" onClick={onCreate}>
+                  <Check size={14} />
+                  {t('Create test')}
+                </Button>
+              }
+            />
+          ) : merge ? (
+            <DrawerFooter
+              left={
+                <Button variant="subtle" onClick={cancelMerge}>
+                  {t('Cancel merge')}
+                </Button>
+              }
+              right={
+                <Button variant="primary" onClick={acceptMerge}>
+                  <Check size={14} />
+                  {t('Combine {{n}} steps', { n: mergedSteps.length })}
+                </Button>
+              }
+            />
+          ) : revision ? (
+            <DrawerFooter
+              left={
+                <Button variant="subtle" onClick={keepVersion}>
+                  {t('Keep v{{v}}', { v: version })}
+                </Button>
+              }
+              right={
+                <Button variant="primary" onClick={saveRevision}>
+                  <Check size={14} />
+                  {t('Save v{{v}}', { v: revision.toVersion })}
+                </Button>
+              }
+            />
+          ) : (
+            <DrawerFooter
+              left={
+                <Button
+                  variant="danger-subtle"
+                  onClick={() => setConfirm('delete')}
+                >
+                  <Trash2 size={14} />
+                  <span className="max-sm:hidden">{t('Delete test')}</span>
+                </Button>
+              }
+              right={
+                <>
+                  {dirty && (
+                    <span className="m-tdrawer__dirty max-sm:hidden">
+                      {t('Unsaved changes')}
+                    </span>
+                  )}
+                  {/* Run now uses the stored steps, so it runs what is saved */}
+                  <Tooltip
+                    title={
+                      dirty ? t('Runs the last saved version.') : undefined
+                    }
+                  >
+                    <span>
+                      <Button disabled={triggerMut.isPending} onClick={runNow}>
+                        <Play size={13} />
+                        {t('Run now')}
+                      </Button>
+                    </span>
+                  </Tooltip>
+                  <Button variant="primary" disabled={!dirty} onClick={save}>
+                    <Check size={14} />
+                    {t('Save')}
+                  </Button>
+                </>
+              }
+            />
+          )
+        }
+      >
+        {test.hasSideEffects && (
+          <div className="m-tdrawer__fx">
+            <ShieldAlert size={15} aria-hidden="true" />
+            <p>
+              {t(
+                'This test changes real data. Running it places real orders, accounts or payments.',
+              )}
+            </p>
+          </div>
+        )}
+        {/* the steps section wears several hats: arranging a pending merge, reviewing a
+            proposed version, viewing an older snapshot (read-only), or plain editing */}
+        {merge && mergeItems ? (
+          <EditableSteps
+            steps={[]}
+            bounded
             title={
-              resumeBlocked
-                ? t('Set an environment below to resume this test.')
+              <>
+                {t('Steps')}
+                <span className="m-dsec__count">{t('merge review')}</span>
+              </>
+            }
+            headerAction={
+              <span className="m-tdrawer__sum">
+                {t('{{groups}} groups · {{steps}} steps', {
+                  groups: mergedGroupCount,
+                  steps: mergedSteps.length,
+                })}
+              </span>
+            }
+            reviewItems={mergeItems}
+            onItemsChange={setMergeItems}
+            onStepsChange={() => {}}
+          />
+        ) : revision && reviewItems ? (
+          <EditableSteps
+            steps={[]}
+            bounded
+            title={
+              <>
+                {t('Steps')}
+                <span className="m-tdrawer__vpair">
+                  {t('v{{n}}', { n: version })}
+                  <MoveRight size={13} aria-hidden="true" />
+                  {t('v{{n}}', { n: revision.toVersion })}
+                </span>
+              </>
+            }
+            headerAction={reviewSummary}
+            reviewItems={reviewItems}
+            onItemsChange={setReviewItems}
+            onDecide={decideChange}
+            onStepsChange={() => {}}
+          />
+        ) : viewedSnapshot ? (
+          <EditableSteps
+            steps={viewedSnapshot.steps}
+            bounded
+            readOnly
+            headerAction={versionSwitcher}
+            hint={t(
+              'Saved {{date}}. An older version is history, so this list is read-only.',
+              {
+                date: versionDate(viewedSnapshot.savedAt),
+              },
+            )}
+            onStepsChange={() => {}}
+          />
+        ) : creating ? (
+          <EditableSteps
+            steps={view.steps}
+            bounded
+            onStepsChange={patchSteps}
+          />
+        ) : (
+          <EditableSteps
+            steps={view.steps}
+            bounded
+            headerAction={versionSwitcher}
+            onStepsChange={patchSteps}
+          />
+        )}
+
+        <div ref={settingsRef}>
+          <Section
+            title={t('Run settings')}
+            hint={
+              test.status === 'approved'
+                ? t(
+                    'Not scheduled. This test runs when you ask it to, until you set a schedule below.',
+                  )
                 : undefined
             }
           >
-            <Button
-              size="small"
-              disabled={resumeBlocked}
-              icon={paused ? <Play size={13} /> : <Pause size={13} />}
-              onClick={togglePause}
-            >
-              {paused ? t('Resume') : t('Pause')}
-            </Button>
-          </Tooltip>
-        ) : undefined
-      }
-      footer={
-        creating ? (
-          <div className="flex items-center justify-between">
-            <Button type="text" onClick={onClose}>
-              {t('Discard')}
-            </Button>
-            <Button
-              type="primary"
-              icon={<Check size={15} />}
-              onClick={onCreate}
-            >
-              {t('Create test')}
-            </Button>
-          </div>
-        ) : merge ? (
-          <div className="flex items-center justify-between">
-            <Button type="text" onClick={cancelMerge}>
-              {t('Cancel merge')}
-            </Button>
-            <Button
-              type="primary"
-              icon={<Check size={15} />}
-              onClick={acceptMerge}
-            >
-              {t('Combine {{n}} steps', { n: mergedSteps.length })}
-            </Button>
-          </div>
-        ) : revision ? (
-          <div className="flex items-center justify-between">
-            <Button type="text" onClick={keepVersion}>
-              {t('Keep v{{v}}', { v: version })}
-            </Button>
-            <Button
-              type="primary"
-              icon={<Check size={15} />}
-              onClick={saveRevision}
-            >
-              {t('Save v{{v}}', { v: revision.toVersion })}
-            </Button>
-          </div>
-        ) : (
-          <div className="flex items-center justify-between">
-            <Popconfirm
-              title={t('Delete this test?')}
-              okText={t('Delete')}
-              okButtonProps={{ danger: true }}
-              cancelText={t('Cancel')}
-              onConfirm={remove}
-            >
-              <Button
-                type="text"
-                danger
-                icon={<Trash2 size={15} />}
-                aria-label={t('Delete test')}
-              >
-                <span className="max-sm:hidden">{t('Delete test')}</span>
-              </Button>
-            </Popconfirm>
-            <div className="flex items-center gap-2">
-              {dirty && (
-                <span className="text-sm text-disabled-text max-sm:hidden">
-                  {t('Unsaved changes')}
-                </span>
-              )}
-              {/* Run now uses the stored steps, so it runs what is saved, not the buffer */}
-              <Tooltip
-                title={dirty ? t('Runs the last saved version.') : undefined}
-              >
-                <Button
-                  icon={<Play size={13} />}
-                  loading={triggerMut.isPending}
-                  onClick={runNow}
-                >
-                  {t('Run now')}
-                </Button>
-              </Tooltip>
-              <Button
-                type="primary"
-                icon={<Check size={15} />}
-                disabled={!dirty}
-                onClick={save}
-              >
-                {t('Save')}
-              </Button>
-            </div>
-          </div>
-        )
-      }
-    >
-      {test.hasSideEffects && (
-        <div className="flex items-start gap-2 mb-4 px-3 py-2 rounded text-sm bg-warning-surface text-warning-text">
-          <TriangleAlert size={16} className="shrink-0 mt-0.5" />
-          <span>
-            {t(
-              'This test has side effects — running it changes real data (orders, accounts, payments). Review its steps before triggering a run.',
-            )}
-          </span>
+            <RunSettingsFields value={settings} onChange={patch} />
+          </Section>
         </div>
-      )}
-      {/* the steps section wears several hats: arranging a pending merge, reviewing a
-          proposed version, viewing an older snapshot (read-only), or plain editing */}
-      {merge && mergeItems ? (
-        <EditableSteps
-          steps={[]}
-          bounded
-          title={`${t('Steps')} · ${t('merge review')}`}
-          headerAction={
-            <span className="text-sm text-disabled-text">
-              {t('{{groups}} groups · {{steps}} steps', {
-                groups: mergedGroupCount,
-                steps: mergedSteps.length,
-              })}
-            </span>
-          }
-          reviewItems={mergeItems}
-          onItemsChange={setMergeItems}
-          onStepsChange={() => {}}
-        />
-      ) : revision && reviewItems ? (
-        <EditableSteps
-          steps={[]}
-          bounded
-          title={
-            <span className="flex items-center gap-1.5">
-              {t('Steps')}
-              <span className="text-gray-medium font-normal">·</span>
-              <VersionLabel version={version} always />
-              <MoveRight size={15} className="text-gray-medium" />
-              <VersionLabel version={revision.toVersion} always />
-            </span>
-          }
-          headerAction={reviewSummary}
-          reviewItems={reviewItems}
-          onItemsChange={setReviewItems}
-          onDecide={decideChange}
-          onStepsChange={() => {}}
-        />
-      ) : viewedSnapshot ? (
+
         <Section
-          title={
-            <span className="flex items-center gap-1.5">
-              {`${t('Steps')} · ${viewedSnapshot.steps.length}`}
-              <span className="text-sm text-disabled-text font-normal">
-                {t('saved {{date}} · read-only', {
-                  date: versionDate(viewedSnapshot.savedAt),
-                })}
-              </span>
-            </span>
-          }
-          action={versionSwitcher}
+          title={t('Tags')}
+          action={<span className="m-tdrawer__note">{t('Up to 3')}</span>}
         >
-          <div className="flex flex-col max-h-[50vh] overflow-y-auto overscroll-contain pr-1">
-            {viewedSnapshot.steps.map((step, idx) => (
-              <div
-                key={idx}
-                className="flex items-start gap-2.5 rounded px-1 -mx-1 py-1.5"
-              >
-                <span className="w-5 h-6 flex items-center justify-center shrink-0 leading-6 text-sm text-disabled-text">
-                  {idx + 1}
-                </span>
-                <span className="flex-1 text-[15px] leading-6 break-words text-gray-dark">
-                  {step}
-                </span>
-              </div>
-            ))}
-          </div>
+          <TagEditor value={view.tags} onChange={(tags) => patch({ tags })} />
         </Section>
-      ) : creating ? (
-        <EditableSteps steps={view.steps} bounded onStepsChange={patchSteps} />
-      ) : (
-        <EditableSteps
-          steps={view.steps}
-          bounded
-          headerAction={versionSwitcher}
-          onStepsChange={patchSteps}
-        />
-      )}
 
-      <div ref={settingsRef}>
-        <Section title={t('Run settings')}>
-          {test.status === 'approved' && (
-            <div className="-mt-1 mb-3 text-sm text-disabled-text">
-              {t(
-                'Not scheduled — this test runs manually until you set a schedule below.',
-              )}
-            </div>
-          )}
-          <RunSettingsFields value={settings} onChange={patch} />
-        </Section>
-      </div>
-
-      <Section
-        title={t('Tags')}
-        className="py-3!"
-        action={
-          <span className="text-sm text-disabled-text">
-            {t('Up to 3 tags')}
-          </span>
-        }
-      >
-        <TagEditor value={view.tags} onChange={(tags) => patch({ tags })} />
-      </Section>
-
-      {/* the "last 10" trend strip: each icon is one run — hover for result · duration ·
-          when, click to open it; the trailing chevron opens the full filtered list */}
-      {(onViewRuns || onViewRun) && !creating && (
-        <Section
-          title={t('Runs')}
-          className="py-3!"
-          action={
-            runs.length > 0 ? (
-              <span className="flex items-center gap-1.5">
-                {trend.map((r) => {
-                  const failed = r.status === 'failed';
-                  const Icon = failed ? XCircle : CheckCircle2;
-                  const info = [
-                    failed ? t('Failed') : t('Passed'),
-                    r.duration != null ? formatDuration(r.duration) : null,
-                    relativeTime(t, r.date),
-                  ]
-                    .filter(Boolean)
-                    .join(' · ');
-                  return (
-                    <Tooltip key={r.key} title={info}>
+        {/* the last-10 strip: each icon is one run — hover for result · duration ·
+            when, click to open it; the trailing chevron opens the full filtered list */}
+        {(onViewRuns || onViewRun) && !creating && (
+          <Section
+            title={t('Runs')}
+            action={
+              runs.length > 0 ? (
+                <span className="m-tdrawer__trend">
+                  {trend.map((r) => {
+                    const failed = r.status === 'failed';
+                    const Icon = failed ? XCircle : CheckCircle2;
+                    const info = [
+                      failed ? t('Failed') : t('Passed'),
+                      r.duration != null ? formatDuration(r.duration) : null,
+                      relativeTime(t, r.date),
+                    ]
+                      .filter(Boolean)
+                      .join(' · ');
+                    return (
+                      <Tooltip key={r.key} title={info}>
+                        <button
+                          type="button"
+                          className={failed ? 'is-failed' : undefined}
+                          onClick={() => onViewRun?.(r)}
+                          aria-label={`${info} — ${t('View run')}`}
+                        >
+                          <Icon size={14} />
+                        </button>
+                      </Tooltip>
+                    );
+                  })}
+                  {onViewRuns && (
+                    <Tooltip
+                      title={t('View all {{count}} runs', {
+                        count: runs.length,
+                      })}
+                    >
                       <button
                         type="button"
-                        onClick={() => onViewRun?.(r)}
-                        aria-label={`${info} — ${t('View run')}`}
-                        className="flex items-center shrink-0 cursor-pointer hover:opacity-70 transition-opacity"
+                        className="is-more"
+                        onClick={() => onViewRuns(test)}
+                        aria-label={t('View all runs')}
                       >
-                        <Icon
-                          size={14}
-                          className={failed ? 'text-red' : 'text-green'}
-                        />
+                        <ChevronRight size={14} />
                       </button>
                     </Tooltip>
-                  );
-                })}
-                {onViewRuns && (
-                  <Tooltip
-                    title={t('View all {{count}} runs', { count: runs.length })}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => onViewRuns(test)}
-                      aria-label={t('View all runs')}
-                      className="text-disabled-text hover:text-main transition-colors shrink-0 flex items-center"
-                    >
-                      <ChevronRight size={14} />
-                    </button>
-                  </Tooltip>
-                )}
-              </span>
-            ) : undefined
-          }
-        >
-          {runs.length === 0 ? (
-            <div className="text-sm text-disabled-text">
-              {viewVersion != null
-                ? t('No runs on v{{v}}.', { v: viewVersion })
-                : t('No runs yet — run now or set a schedule above.')}
-            </div>
-          ) : null}
-        </Section>
-      )}
-    </EntityDrawer>
+                  )}
+                </span>
+              ) : undefined
+            }
+          >
+            {runs.length === 0 ? (
+              <p className="m-tdrawer__note">
+                {viewVersion != null
+                  ? t('No runs on v{{v}}.', { v: viewVersion })
+                  : t(
+                      'This test has never run. Run it now, or give it a schedule above.',
+                    )}
+              </p>
+            ) : null}
+          </Section>
+        )}
+      </EntityDrawer>
+      <ConfirmDialog
+        open={confirm === 'discard'}
+        title={t('Discard unsaved changes?')}
+        okText={t('Discard')}
+        danger
+        onCancel={() => setConfirm(null)}
+        onOk={() => {
+          setConfirm(null);
+          setEdits({});
+          onClose();
+        }}
+      >
+        {t('The edits you made to this test will be lost.')}
+      </ConfirmDialog>
+      <ConfirmDialog
+        open={confirm === 'delete'}
+        title={t('Delete this test?')}
+        okText={t('Delete')}
+        danger
+        onCancel={() => setConfirm(null)}
+        onOk={() => {
+          setConfirm(null);
+          remove();
+        }}
+      >
+        {t('“{{title}}” and its run history will be removed.', {
+          title: test.title,
+        })}
+      </ConfirmDialog>
+    </>
   );
 }
 
