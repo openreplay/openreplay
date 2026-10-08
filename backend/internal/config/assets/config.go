@@ -65,6 +65,9 @@ func New(log logger.Logger) *Config {
 		log.Fatal(context.Background(), "invalid ASSETS_COMPRESSION %q (expected %q or %q)",
 			cfg.AssetsCompression, CompressionNone, CompressionGzip)
 	}
+	if cfg.AssetsHTTPTimeout <= 0 {
+		log.Fatal(context.Background(), "ASSETS_HTTP_TIMEOUT must be positive, got %d", cfg.AssetsHTTPTimeout)
+	}
 	return cfg
 }
 
