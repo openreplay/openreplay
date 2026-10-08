@@ -16,7 +16,7 @@
     "isolatedModules": true,
     "moduleResolution": "bundler",
     "noEmit": true,
-    "jsx": "react",
+    "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
       "@/*": ["./app/*"],
@@ -31,11 +31,13 @@
       "Player": ["../player/src"],
       "HOCs": ["./app/components/hocs"],
       "HOCs/*": ["./app/components/hocs/*"],
-      "ENV": ["./env.ts"]
+      "ENV": ["./env.ts"],
+      "Saas/*": ["./saas/*"]
     }
   },
   "include": [
     "app",
+    "saas",
     "app/**/*.ts",
     "app/**/*.tsx",
     "app/**/*.js",

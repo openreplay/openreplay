@@ -1,0 +1,66 @@
+.m-ormark {
+  display: block;
+  flex: none;
+}
+
+.m-ormark.is-plain {
+  overflow: visible;
+  color: inherit;
+}
+.m-ormark.is-plain path {
+  fill: none;
+}
+.m-ormark.is-plain.is-filled .m-ormark__inner {
+  fill: currentColor;
+}
+
+.m-ormark__outline {
+  fill: var(--m-brand-blue, #394eff);
+}
+.m-ormark__fill {
+  fill: var(--m-brand-teal, #27a2a8);
+}
+
+.m-ormark__fill,
+.m-ormark__eye {
+  transform-box: view-box;
+  transform-origin: var(--m-ormark-origin);
+}
+
+.m-ormark__fill {
+  transition: transform var(--m-duration-slow) var(--m-ease-out) 40ms;
+}
+
+.m-ormark__eye {
+  opacity: 0;
+
+  transform: scale(1.4);
+  transition:
+    opacity var(--m-duration-fast) var(--m-ease-out),
+    transform var(--m-duration-normal) var(--m-ease-out);
+}
+
+[data-mark-host]:is(:hover, :focus-visible) .m-ormark__fill {
+  transform: translateX(var(--m-ormark-shift)) scale(var(--m-ormark-scale));
+  transition-delay: 0ms;
+}
+
+[data-mark-host]:is(:hover, :focus-visible) .m-ormark__eye {
+  opacity: 1;
+  transform: none;
+
+  transition-delay: 110ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m-ormark__fill,
+  .m-ormark__eye {
+    transition: none;
+  }
+  [data-mark-host]:is(:hover, :focus-visible) .m-ormark__fill {
+    transform: none;
+  }
+  [data-mark-host]:is(:hover, :focus-visible) .m-ormark__eye {
+    opacity: 0;
+  }
+}

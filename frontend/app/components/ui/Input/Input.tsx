@@ -1,11 +1,13 @@
+import { Icon } from '@/ui/icons/Icon';
+import { Input as KitInput } from '@/ui/inputs/input';
+import { Textarea } from '@/ui/inputs/textarea';
 import cn from 'classnames';
 import React from 'react';
-import { Input as AntInput } from 'antd';
-import Icon from '../Icon';
 
 interface Props {
   wrapperClassName?: string;
   className?: string;
+  /** legacy `Icon` name, drawn as the field's prefix */
   icon?: string;
   leadingButton?: React.ReactNode;
   type?: string;
@@ -14,9 +16,11 @@ interface Props {
   width?: number;
   [x: string]: any;
 }
+
+/** Legacy entry point; the kit input / textarea underneath. */
 const Input = React.forwardRef((props: Props, ref: any) => {
   const {
-    height = 36,
+    height,
     width = 0,
     className = '',
     leadingButton = '',
@@ -24,44 +28,40 @@ const Input = React.forwardRef((props: Props, ref: any) => {
     icon = '',
     type = 'text',
     rows = 4,
+    onPressEnter,
+    allowClear: _allowClear,
+    inputProps,
     ...rest
   } = props;
   return (
-    <div className={cn({ relative: icon || leadingButton }, wrapperClassName)}>
-      {icon && (
-        <Icon
-          name={icon}
-          className="absolute! top-0! bottom-0! my-auto! ml-4! z-10!"
-          size="14"
-        />
-      )}
+    <div className={cn({ relative: leadingButton }, wrapperClassName)}>
       {type === 'textarea' ? (
-        <AntInput.TextArea
+        <Textarea
           ref={ref}
           rows={rows}
-          style={{ resize: 'none' }}
           maxLength={500}
-          className={cn(
-            'p-2! border! border-gray-light! bg-white! w-full! rounded-lg!',
-            className,
-            { 'pl-10!': icon },
-          )}
+          className={cn('resize-none', className)}
           {...rest}
         />
       ) : (
-        <AntInput
+        <KitInput
           ref={ref}
           type={type}
-          style={{ height: `${height}px`, width: width ? `${width}px` : '' }}
-          className={cn(
-            'p-2! border! border-gray-light! bg-white! w-full! rounded-lg!',
-            className,
-            { 'pl-10!': icon },
-          )}
+          size={height && height > 32 ? 'md' : 'sm'}
+          style={width ? { width } : undefined}
+          className={className}
+          prefix={icon ? <Icon name={icon as any} size="14" /> : undefined}
+          onKeyDown={
+            onPressEnter
+              ? (e: React.KeyboardEvent<HTMLInputElement>) => {
+                  if (e.key === 'Enter') onPressEnter(e);
+                }
+              : undefined
+          }
+          {...inputProps}
           {...rest}
         />
       )}
-
       {leadingButton && (
         <div className="absolute top-0 bottom-0 right-0">{leadingButton}</div>
       )}

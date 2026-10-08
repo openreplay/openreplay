@@ -1,0 +1,188 @@
+.m-cal-wrap {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.m-cal {
+  width: fit-content;
+  margin-inline: auto;
+}
+
+.m-cal__head {
+  display: flex;
+  align-items: center;
+
+  justify-content: center;
+  gap: var(--m-space-2);
+  padding: var(--m-space-4) var(--m-space-4) var(--m-space-2);
+}
+
+.m-cal__jumps {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-2);
+}
+
+.m-cal__jump {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  height: var(--m-control-height-sm);
+  padding-inline: var(--m-space-4);
+  border: 0;
+  border-radius: var(--m-radius-control);
+  background: transparent;
+  color: var(--m-content-primary);
+  font-size: var(--m-text-sm);
+  font-weight: var(--m-weight-medium);
+  cursor: pointer;
+  transition:
+    background-color var(--m-duration-instant) var(--m-ease-out),
+    color var(--m-duration-instant) var(--m-ease-out);
+}
+
+.m-cal__jump--month {
+  min-width: 6.25rem;
+  justify-content: center;
+}
+.m-cal__jump:hover {
+  background: var(--m-surface-hover);
+}
+.m-cal__jump svg {
+  color: var(--m-content-decorative);
+}
+.m-cal__jump.is-open {
+  background: var(--m-surface-active);
+}
+
+.m-cal__grid-jump {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--m-space-2);
+  padding: var(--m-space-4);
+}
+
+.m-cal__cell {
+  height: var(--m-control-height-md);
+  border: 0;
+  border-radius: var(--m-radius-control);
+  background: transparent;
+  color: var(--m-content-secondary);
+  font-size: var(--m-text-xs);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition:
+    background-color var(--m-duration-instant) var(--m-ease-out),
+    color var(--m-duration-instant) var(--m-ease-out);
+}
+.m-cal__cell:hover:not(:disabled) {
+  background: var(--m-surface-hover);
+  color: var(--m-content-primary);
+}
+.m-cal__cell:disabled {
+  color: var(--m-content-disabled);
+  cursor: default;
+}
+.m-cal__cell.is-on {
+  background: var(--m-action-accent-bg);
+  color: var(--m-action-accent-fg);
+  font-weight: var(--m-weight-medium);
+}
+
+.m-cal .rdp-months {
+  display: flex;
+  gap: var(--m-space-6);
+}
+
+.m-cal .is-preview:not(.rdp-selected) .rdp-day_button {
+  background: var(--m-surface-hover);
+  color: var(--m-content-primary);
+  border-radius: 0;
+}
+
+.m-cal {
+  --rdp-accent-color: var(--m-content-accent);
+  padding: var(--m-space-3) var(--m-space-4) var(--m-space-4);
+  font-size: var(--m-text-xs);
+}
+
+.m-cal .rdp-month_caption {
+  display: none;
+}
+
+.m-cal .rdp-month_grid {
+  border-collapse: separate;
+  border-spacing: 1px;
+}
+
+.m-cal .rdp-weekday {
+  width: var(--m-control-height-sm);
+  height: var(--m-control-height-sm);
+  font-size: var(--m-text-2xs);
+  font-weight: var(--m-weight-regular);
+  color: var(--m-content-placeholder);
+  text-align: center;
+  text-transform: none;
+}
+
+.m-cal .rdp-day {
+  padding: 0;
+}
+
+.m-cal .rdp-day_button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--m-control-height-sm);
+  height: var(--m-control-height-sm);
+  border: 0;
+  border-radius: var(--m-radius-control);
+  background: transparent;
+  color: var(--m-content-secondary);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition:
+    background-color var(--m-duration-instant) var(--m-ease-out),
+    color var(--m-duration-instant) var(--m-ease-out);
+}
+.m-cal .rdp-day_button:hover {
+  background: var(--m-surface-hover);
+  color: var(--m-content-primary);
+}
+
+.m-cal .rdp-outside .rdp-day_button {
+  color: var(--m-content-placeholder);
+}
+.m-cal .rdp-disabled .rdp-day_button {
+  color: var(--m-content-disabled);
+  cursor: default;
+  background: transparent;
+}
+
+.m-cal .rdp-range_middle .rdp-day_button {
+  background: var(--m-surface-active);
+  color: var(--m-content-primary);
+  border-radius: 0;
+}
+.m-cal .rdp-selected:not(.rdp-range_middle) .rdp-day_button {
+  background: var(--m-action-accent-bg);
+  color: var(--m-action-accent-fg);
+  font-weight: var(--m-weight-medium);
+}
+.m-cal .rdp-range_start .rdp-day_button {
+  border-start-end-radius: 0;
+  border-end-end-radius: 0;
+}
+.m-cal .rdp-range_end .rdp-day_button {
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
+}
+.m-cal .rdp-range_start.rdp-range_end .rdp-day_button {
+  border-radius: var(--m-radius-control);
+}
+
+.m-cal .rdp-today:not(.rdp-selected) .rdp-day_button {
+  color: var(--m-content-accent);
+  font-weight: var(--m-weight-medium);
+}
