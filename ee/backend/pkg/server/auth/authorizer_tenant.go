@@ -62,5 +62,9 @@ func (a *authImpl) validateProjectAccess(r *http.Request, u *user.User) error {
 		return fmt.Errorf("project does not belong to user's tenant")
 	}
 
+	if !u.CanAccessProject(projectID) {
+		return fmt.Errorf("project is not allowed for user's role")
+	}
+
 	return nil
 }
