@@ -1,8 +1,10 @@
+import { NoContent } from '@/ui/feedback/NoContent';
+import { Icon } from '@/ui/icons/Icon';
+import { Info } from 'lucide-react';
 import React from 'react';
-import { Icon, NoContent } from 'UI';
+
 import { NO_METRIC_DATA } from 'App/constants/messages';
 import ListWithIcons from 'Components/Dashboard/Widgets/ListWithIcons';
-import { InfoCircleOutlined } from '@ant-design/icons';
 
 interface Props {
   data: any;
@@ -26,7 +28,7 @@ function SlowestDomains(props: Props) {
       style={{ minHeight: 220 }}
       title={
         <div className="flex items-center gap-2 text-base font-normal">
-          <InfoCircleOutlined size={12} /> {NO_METRIC_DATA}
+          <Info size={12} /> {NO_METRIC_DATA}
         </div>
       }
     >

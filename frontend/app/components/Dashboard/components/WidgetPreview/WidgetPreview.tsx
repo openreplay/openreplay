@@ -1,12 +1,16 @@
+import { Loader } from '@/ui/feedback/Loader';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
-import React from 'react';
-import WidgetDateRange from 'Components/Dashboard/components/WidgetDateRange/WidgetDateRange';
-import { useStore } from 'App/mstore';
-import { FUNNEL, TIMESERIES } from 'App/constants/card';
+import React, { Suspense, lazy } from 'react';
 
+import { FUNNEL, TIMESERIES } from 'App/constants/card';
+import { useStore } from 'App/mstore';
+import WidgetDateRange from 'Components/Dashboard/components/WidgetDateRange/WidgetDateRange';
 import WidgetOptions from 'Components/Dashboard/components/WidgetOptions';
-import WidgetWrapper from '../WidgetWrapper';
+
+const WidgetChart = lazy(
+  () => import('Components/Dashboard/components/WidgetChart'),
+);
 
 interface Props {
   className?: string;
@@ -37,19 +41,24 @@ function WidgetPreview(props: Props) {
 
   const presetComparison = metric.compareTo;
   return (
-    <div className={cn(className, 'bg-white rounded-xl border shadow-xs mt-0')}>
-      <div className="flex items-center gap-2 px-4 py-2 border-b justify-between flex-wrap">
-        <WidgetDateRange
-          label=""
-          hasGranularSettings={hasGranularSettings}
-          hasGranularity={hasGranularity}
-          hasComparison={hasComparison}
-          presetComparison={presetComparison}
-        />
-        <WidgetOptions />
+    <div className={cn(className, 'm-cardp__preview')}>
+      <div className="m-cardp__toolbar">
+        <div className="m-cardp__toolbar-left">
+          <WidgetDateRange
+            hasGranularSettings={hasGranularSettings}
+            hasGranularity={hasGranularity}
+            hasComparison={hasComparison}
+            presetComparison={presetComparison}
+          />
+        </div>
+        <div className="m-cardp__toolbar-right">
+          <WidgetOptions />
+        </div>
       </div>
-      <div className="py-4">
-        <WidgetWrapper widget={metric} isPreview isWidget={false} hideName />
+      <div className="m-cardp__chart">
+        <Suspense fallback={<Loader loading style={{ height: 240 }} />}>
+          <WidgetChart isPreview metric={metric} />
+        </Suspense>
       </div>
     </div>
   );

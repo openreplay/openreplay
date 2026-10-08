@@ -1,7 +1,7 @@
 import Widget from '@/mstore/types/widget';
-import { DownOutlined } from '@ant-design/icons';
+import { MenuButton } from '@/ui/actions/menu-button';
+import { Switch } from '@/ui/inputs/switch';
 import { FilterKey } from 'Types/filter/filterType';
-import { Button, Dropdown, Space, Switch } from 'antd';
 import {
   ArrowDown01,
   ChartArea,
@@ -81,228 +81,127 @@ function WidgetOptions() {
   const hasViewTypes = [TIMESERIES, FUNNEL, USER_PATH].includes(
     metric.metricType,
   );
+  const set = (patch: Record<string, any>) => {
+    metric.update(patch);
+    metric.updateKey('hasChanged', true);
+  };
+  const aggIcons: Record<string, React.ReactNode> = {
+    sessionCount: <Library />,
+    userCount: <Users />,
+    eventCount: <SquareActivity />,
+  };
+  const views = VIEW_TYPES(t)[metric.metricType] ?? [];
+  const view = views.find((v) => v.value === metric.viewType);
+
   return (
-    <div className="flex items-center gap-2">
-      {metric.metricType === USER_PATH && (
-        <>
-          <a
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              metric.update({
-                hideExcess: !metric.hideExcess,
-                hasChanged: true,
-              });
-            }}
-          >
-            <Space>
-              <Switch checked={metric.hideExcess} size="small" />
-              <span className="mr-4 color-gray-medium">
-                {t('Group Minor Paths')}
-              </span>
-            </Space>
-          </a>
-        </>
-      )}
-
+    <>
       {metric.metricType === TIMESERIES && (
-        <SeriesTypeOptions metric={metric} />
+        <MenuButton<string>
+          ariaLabel={t('What is counted')}
+          icon={aggIcons[metric.metricOf] ?? <Library />}
+          value={metric.metricOf}
+          onChange={(v) => set({ metricOf: v })}
+          options={[
+            {
+              value: 'sessionCount',
+              label: t('Total sessions'),
+              icon: <Library />,
+            },
+            { value: 'userCount', label: t('Unique users'), icon: <Users /> },
+            {
+              value: 'eventCount',
+              label: t('Total events'),
+              icon: <SquareActivity />,
+            },
+          ]}
+          align="end"
+        />
       )}
-
       {metric.metricType === TABLE && metric.metricOf === FilterKey.ERRORS && (
-        <Dropdown
-          trigger={['click']}
-          menu={{
-            selectable: true,
-            items: errorSortOptions,
-            onClick: (info: { key: string }) => handleSortChange(info.key),
-          }}
-        >
-          <Button type="text" variant="text" size="small">
-            <ArrowDown01 size={16} />
-            {metric.sortBy
-              ? errorSortOptions.find(
-                  (option: Option) => option.key === metric.sortBy,
-                )?.label
-              : t('Sort')}
-            <DownOutlined className="text-sm" />
-          </Button>
-        </Dropdown>
+        <MenuButton<string>
+          ariaLabel={t('Sort')}
+          icon={<ArrowDown01 />}
+          label={`${t('Sort')} · ${errorSortOptions.find((o) => o.key === metric.sortBy)?.label ?? errorSortOptions[0].label}`}
+          value={metric.sortBy ?? 'time'}
+          onChange={handleSortChange}
+          options={errorSortOptions.map((o) => ({
+            value: o.key,
+            label: o.label,
+          }))}
+          align="end"
+        />
       )}
-
       {(metric.metricType === FUNNEL || metric.metricType === TABLE) &&
         metric.metricOf !== FilterKey.USERID &&
         metric.metricOf !== FilterKey.ERRORS && (
-          <Dropdown
-            trigger={['click']}
-            menu={{
-              selectable: true,
-              items: [
-                { key: 'sessionCount', label: t('All Sessions') },
-                { key: 'userCount', label: t('Unique Users') },
-                { key: 'eventCount', label: t('Total Events') },
-              ],
-              onClick: (info: { key: string }) => handleChange(info.key),
-            }}
-          >
-            <Button type="text" variant="text" size="small">
-              {metricFormatLabel}
-              <DownOutlined className="text-sm" />
-            </Button>
-          </Dropdown>
+          <MenuButton<string>
+            ariaLabel={t('Metric format')}
+            icon={<Library />}
+            label={metricFormatLabel}
+            value={metric.metricFormat ?? 'sessionCount'}
+            onChange={handleChange}
+            options={[
+              { value: 'sessionCount', label: t('All Sessions') },
+              { value: 'userCount', label: t('Unique Users') },
+              { value: 'eventCount', label: t('Total Events') },
+            ]}
+            align="end"
+          />
         )}
-      {hasViewTypes && <WidgetViewTypeOptions metric={metric} />}
+      {hasViewTypes && views.length > 0 && (
+        <MenuButton<string>
+          ariaLabel={t('Visualization type')}
+          icon={view?.icon}
+          value={metric.viewType}
+          onChange={(v) => set({ viewType: v })}
+          options={views}
+          align="end"
+        />
+      )}
+      {metric.metricType === USER_PATH && (
+        <label className="m-cardp__switch">
+          <Switch
+            checked={metric.hideExcess}
+            onCheckedChange={(v) => set({ hideExcess: v })}
+            aria-label={t('Group minor paths')}
+          />
+          {t('Group minor paths')}
+        </label>
+      )}
       {metric.metricType === HEATMAP && <ClickMapRagePicker />}
-    </div>
+    </>
   );
 }
 
-const SeriesTypeOptions = observer(({ metric }: { metric: any }) => {
-  const { t } = useTranslation();
-  const items = {
-    sessionCount: t('Total Sessions'),
-    userCount: 'Unique Users',
-    eventCount: 'Total Events',
-  };
-  const chartIcons = {
-    sessionCount: <Library size={16} strokeWidth={1} />,
-    userCount: <Users size={16} strokeWidth={1} />,
-    eventCount: <SquareActivity size={16} strokeWidth={1} />,
-  } as const;
-
-  return (
-    <Dropdown
-      trigger={['click']}
-      menu={{
-        selectable: true,
-        items: Object.entries(items).map(([key, name]) => ({
-          key,
-          label: (
-            <div className="flex items-center gap-2">
-              {chartIcons[key]}
-              <div>{name}</div>
-            </div>
-          ),
-        })),
-        onClick: ({ key }: any) => {
-          metric.updateKey('metricOf', key);
-          metric.updateKey('hasChanged', true);
-        },
-      }}
-    >
-      <Button
-        type="text"
-        variant="text"
-        size="small"
-        className="btn-aggregator"
-      >
-        <Space>
-          {chartIcons[metric.metricOf]}
-          <div>{items[metric.metricOf] || t('Total Sessions')}</div>
-          <DownOutlined className="text-sm" />
-        </Space>
-      </Button>
-    </Dropdown>
-  );
-});
-
-const WidgetViewTypeOptions = observer(({ metric }: { metric: any }) => {
-  const chartTypes = {
-    lineChart: 'Line',
-    areaChart: 'Stacked Area',
-    barChart: 'Column',
-    progressChart: 'Bar',
-    columnChart: 'Horizontal Bar',
-    pieChart: 'Pie',
-    metric: 'Metric',
-    table: 'Table',
-  };
-  const funnelChartTypes = {
-    chart: 'Funnel Bar',
-    columnChart: 'Funnel Column',
-    metric: 'Metric',
-    table: 'Table',
-  };
-  const pathTypes = {
-    lineChart: 'Flow Chart',
-    sunburst: 'Sunburst',
-  };
-
-  const usedChartTypes = {
-    [FUNNEL]: funnelChartTypes,
-    [TIMESERIES]: chartTypes,
-    [USER_PATH]: pathTypes,
-  };
-  const chartIcons = {
-    [TIMESERIES]: {
-      lineChart: <ChartLine size={16} strokeWidth={1} />,
-      barChart: <ChartColumn size={16} strokeWidth={1} />,
-      areaChart: <ChartArea size={16} strokeWidth={1} />,
-      pieChart: <ChartPie size={16} strokeWidth={1} />,
-      progressChart: <ChartBar size={16} strokeWidth={1} />,
-      metric: <Hash size={16} strokeWidth={1} />,
-      table: <Table size={16} strokeWidth={1} />,
+const VIEW_TYPES = (
+  t: (s: string) => string,
+): Record<
+  string,
+  { value: string; label: string; icon: React.ReactNode }[]
+> => ({
+  [TIMESERIES]: [
+    { value: 'lineChart', label: t('Line'), icon: <ChartLine /> },
+    { value: 'areaChart', label: t('Stacked area'), icon: <ChartArea /> },
+    { value: 'barChart', label: t('Column'), icon: <ChartColumn /> },
+    { value: 'progressChart', label: t('Bar'), icon: <ChartBar /> },
+    { value: 'pieChart', label: t('Pie'), icon: <ChartPie /> },
+    { value: 'metric', label: t('Metric'), icon: <Hash /> },
+    { value: 'table', label: t('Table'), icon: <Table /> },
+  ],
+  [FUNNEL]: [
+    { value: 'chart', label: t('Funnel bar'), icon: <ChartBarBig /> },
+    {
+      value: 'columnChart',
+      label: t('Funnel column'),
+      icon: <ChartColumnBig />,
     },
-    [FUNNEL]: {
-      columnChart: <ChartColumnBig size={16} strokeWidth={1} />,
-      chart: <ChartBarBig size={16} strokeWidth={1} />,
-      metric: <Hash size={16} strokeWidth={1} />,
-      table: <Table size={16} strokeWidth={1} />,
-    },
-    [USER_PATH]: {
-      lineChart: <Split size={16} strokeWidth={1} />,
-      sunburst: <CircleDashed size={16} strokeWidth={1} />,
-    },
-  };
-  const allowedTypes = {
-    [TIMESERIES]: [
-      'lineChart',
-      'areaChart',
-      'barChart',
-      'progressChart',
-      'pieChart',
-      'metric',
-      'table',
-    ],
-    [FUNNEL]: ['chart', 'columnChart', 'metric', 'table'],
-    [USER_PATH]: ['lineChart', 'sunburst'],
-  };
-  const metricType = metric.metricType;
-  const viewType = metric.viewType;
-  return (
-    <Dropdown
-      trigger={['click']}
-      menu={{
-        selectable: true,
-        items: allowedTypes[metricType].map((key) => ({
-          key,
-          label: (
-            <div className="flex gap-2 items-center">
-              {chartIcons[metricType][key]}
-              <div>{usedChartTypes[metricType][key]}</div>
-            </div>
-          ),
-        })),
-        onClick: ({ key }: any) => {
-          metric.updateKey('viewType', key);
-          metric.updateKey('hasChanged', true);
-        },
-      }}
-    >
-      <Button
-        type="text"
-        variant="text"
-        size="small"
-        className="btn-visualization-type"
-      >
-        <Space>
-          {chartIcons[metricType][viewType]}
-          <div>{usedChartTypes[metricType][viewType]}</div>
-          <DownOutlined className="text-sm " />
-        </Space>
-      </Button>
-    </Dropdown>
-  );
+    { value: 'metric', label: t('Metric'), icon: <Hash /> },
+    { value: 'table', label: t('Table'), icon: <Table /> },
+  ],
+  [USER_PATH]: [
+    { value: 'lineChart', label: t('Flow chart'), icon: <Split /> },
+    { value: 'sunburst', label: t('Sunburst'), icon: <CircleDashed /> },
+  ],
 });
 
 export default observer(WidgetOptions);

@@ -1,310 +1,307 @@
 import { useStore } from '@/mstore';
-import Filter from '@/mstore/types/filter';
-import { Tag, Tooltip } from 'antd';
-import cn from 'classnames';
+import { Tooltip } from '@/ui/overlays/tooltip';
+import type { TFunction } from 'i18next';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { CompareTag } from 'App/components/Charts/CompareTag';
+import 'App/components/Dashboard/charts.css';
 import TopNButton from 'App/components/Dashboard/components/BreakdownFilter/TopNButton';
 import { useModal } from 'App/components/Modal';
-import Funnel from 'App/mstore/types/funnel';
-import Widget from 'App/mstore/types/widget';
-import { Icon, NoContent } from 'UI';
-
-import Funnelbar, { UxTFunnelBar } from './FunnelBar';
-import stl from './FunnelWidget.module.css';
+import type Funnel from 'App/mstore/types/funnel';
+import type FunnelStage from 'App/mstore/types/funnelStage';
+import type Widget from 'App/mstore/types/widget';
 
 interface Props {
   metric?: Widget;
   isWidget?: boolean;
   data: { funnel: Funnel; funnelBreakdown?: Record<string, Funnel> };
-  compData: { funnel: Funnel; funnelBreakdown?: Record<string, Funnel> };
+  compData?: { funnel: Funnel; funnelBreakdown?: Record<string, Funnel> };
 }
 
-function FunnelWidget(props: Props) {
+const INSIDE_MIN = 12;
+const fmt = (n: number) => (n ?? 0).toLocaleString();
+
+export function stageText(stage: FunnelStage, t: TFunction): string {
+  const subs = Array.isArray(stage.subfilters) ? stage.subfilters : [];
+  if (subs.length) {
+    const parts = subs.map((sf) =>
+      sf.value?.length && sf.value[0]
+        ? `${sf.name} ${sf.operator} ${sf.value.join(` ${t('or')} `)}`
+        : sf.name,
+    );
+    return `${stage.label} ${t('where')} ${parts.join(` ${stage.propertyOrder || 'and'} `)}`;
+  }
+  if (stage.value?.length && stage.value[0]) {
+    return `${stage.label} ${stage.operator} ${stage.value
+      .map((v) => `"${String(v)}"`)
+      .join(` ${t('or')} `)}`;
+  }
+  return stage.label;
+}
+
+function FunnelWidget({ metric, isWidget = false, data, compData }: Props) {
   const { t } = useTranslation();
   const { dashboardStore, metricStore } = useStore();
-  const [focusedFilter, setFocusedFilter] = React.useState<number | null>(null);
-  const { isWidget = false, data, metric, compData } = props;
-  const funnel = data?.funnel || { stages: [] };
-  const totalSteps = funnel.stages.length;
-  const stages = isWidget
-    ? [...funnel.stages.slice(0, 1), funnel.stages[funnel.stages.length - 1]]
-    : funnel.stages;
-  const hasMoreSteps = funnel.stages.length > 2;
-  const lastStage = funnel.stages[funnel.stages.length - 1];
-  const remainingSteps = totalSteps - 2;
   const { hideModal } = useModal();
-  const metricLabel =
-    metric?.metricFormat == 'userCount' ? t('Users') : t('Sessions');
-  const { drillDownFilter } = dashboardStore;
-  const { drillDownPeriod } = dashboardStore;
+  // the drill-down filter outlives this component (a refetch remounts it):
+  // start from the stage it still points at, so the next click clears it
+  const [focusedFilter, setFocusedFilter] = React.useState<number | null>(
+    () => {
+      const n = dashboardStore.drillDownFilter.filters?.length ?? 0;
+      return n > 0 ? n - 1 : null;
+    },
+  );
+  const funnel = data?.funnel || ({ stages: [] } as unknown as Funnel);
+  const stages = funnel.stages;
+  const isUsers = metric?.metricFormat === 'userCount';
+  const unit = isUsers ? t('users') : t('sessions');
+  const horizontal = metric?.viewType === 'columnChart';
+  const { drillDownFilter, drillDownPeriod } = dashboardStore;
   const comparisonPeriod = metric
     ? dashboardStore.comparisonPeriods[metric.metricId]
     : undefined;
   const metricFilters = metric?.series[0]?.filter.filters || [];
-
-  const applyDrillDown = (index: number, isComp?: boolean) => {
-    const filter = {
-      filters: metricFilters.slice(0, index + 1),
-    };
-    const periodTimestamps =
-      isComp && index > -1
-        ? comparisonPeriod.toTimestamps()
-        : drillDownPeriod.toTimestamps();
-
-    drillDownFilter.merge({
-      filters: filter.filters,
-      startTimestamp: periodTimestamps.startTimestamp,
-      endTimestamp: periodTimestamps.endTimestamp,
-    });
-  };
+  const noEvents = metricFilters.length === 0;
 
   useEffect(
     () => () => {
-      if (isWidget) return;
-      hideModal();
+      if (!isWidget) hideModal();
     },
     [],
   );
 
-  const focusStage = (index: number, isComp?: boolean) => {
-    funnel.stages.forEach((s, i) => {
-      // turning on all filters if one was focused already
-      if (focusedFilter === index) {
-        s.updateKey('isActive', true);
-        setFocusedFilter(null);
-      } else {
-        setFocusedFilter(index);
-        if (i === index) {
-          s.updateKey('isActive', true);
-        } else {
-          s.updateKey('isActive', false);
-        }
-      }
-    });
+  // fresh stage objects after a refetch: mark the one still in focus
+  useEffect(() => {
+    if (focusedFilter == null) return;
+    stages.forEach((s, i) => s.updateKey('isActive', i === focusedFilter));
+  }, [stages]);
 
-    applyDrillDown(focusedFilter === index ? -1 : index, isComp);
+  const applyDrillDown = (index: number) => {
+    const ts = drillDownPeriod.toTimestamps();
+    drillDownFilter.merge({
+      filters: metricFilters.slice(0, index + 1),
+      startTimestamp: ts.startTimestamp,
+      endTimestamp: ts.endTimestamp,
+    });
+  };
+
+  const focusStage = (index: number) => {
+    const clearing = focusedFilter === index;
+    stages.forEach((s, i) =>
+      s.updateKey('isActive', clearing ? true : i === index),
+    );
+    setFocusedFilter(clearing ? null : index);
+    applyDrillDown(clearing ? -1 : index);
   };
 
   const topN = metricStore.breakdownTopN;
-  const funnelBreakdown = data?.funnelBreakdown;
-  const compBreakdown = compData?.funnelBreakdown;
-  const allBreakdownKeys = funnelBreakdown ? Object.keys(funnelBreakdown) : [];
+  const breakdown = data?.funnelBreakdown;
+  const allBreakdownKeys = breakdown ? Object.keys(breakdown) : [];
   const breakdownKeys =
     topN > 0 ? allBreakdownKeys.slice(0, topN) : allBreakdownKeys;
 
-  const shownStages = React.useMemo(() => {
-    const stages: {
-      data: Funnel['stages'][0];
-      compData?: Funnel['stages'][0];
-      breakdownStages?: {
-        key: string;
-        stage: Funnel['stages'][0];
-        compStage?: Funnel['stages'][0];
-      }[];
-    }[] = [];
-    for (let i = 0; i < funnel.stages.length; i++) {
-      const stage: any = { data: funnel.stages[i], compData: undefined };
-      const compStage = compData?.funnel?.stages?.[i];
-      if (compStage) {
-        stage.compData = compStage;
-      }
-      if (funnelBreakdown) {
-        stage.breakdownStages = breakdownKeys
-          .map((key) => ({
-            key,
-            stage: funnelBreakdown[key]?.stages?.[i],
-            compStage: compBreakdown?.[key]?.stages?.[i],
-          }))
-          .filter((b) => b.stage);
-      }
-      stages.push(stage);
-    }
-
-    return stages;
-  }, [data, compData, breakdownKeys]);
-
-  const viewType = metric?.viewType;
-  const isHorizontal = viewType === 'columnChart';
-  const noEvents = metric.series[0].filter.filters.length === 0;
-  const isUsers = metric?.metricFormat === 'userCount';
-
   const compLabel = React.useMemo(() => {
-    if (!comparisonPeriod) return '';
+    if (!comparisonPeriod) return t('Previous period');
     const ts = comparisonPeriod.toTimestamps?.() ?? comparisonPeriod;
     if (!ts.startTimestamp || !ts.endTimestamp) return t('Previous period');
-    const start = new Date(ts.startTimestamp).toLocaleDateString();
-    const end = new Date(ts.endTimestamp).toLocaleDateString();
-    return `${start} – ${end}`;
+    return `${new Date(ts.startTimestamp).toLocaleDateString()} – ${new Date(ts.endTimestamp).toLocaleDateString()}`;
   }, [comparisonPeriod]);
+
+  if (stages.length === 0) {
+    return (
+      <p className="m-funnel__empty">
+        {noEvents
+          ? t('Select an event to start seeing the funnel.')
+          : t('No data available for the selected period.')}
+      </p>
+    );
+  }
+
+  const compact = isWidget && stages.length > 2;
+  const shown = compact ? [0, stages.length - 1] : stages.map((_, i) => i);
+  const hidden = compact ? stages.length - 2 : 0;
+  const compStages = compData?.funnel?.stages;
+  const compConversion = compData?.funnel?.totalConversionsPercentage;
+  const delta =
+    compConversion != null
+      ? funnel.totalConversionsPercentage - compConversion
+      : null;
+
   return (
-    <NoContent
-      style={{ minHeight: 220 }}
-      title={
-        <div className="flex items-center text-lg">
-          <Icon name="info-circle" className="mr-2" size="18" />
-          {noEvents
-            ? t('Select an event to start seeing the funnel')
-            : t('No data available for the selected period.')}
-        </div>
-      }
-      show={!stages || stages.length === 0}
+    <div
+      className={`m-fn${horizontal ? ' m-fn--columns' : ''}${compact ? ' is-compact' : ''}${isWidget ? ' is-inert' : ''}`}
     >
-      <div
-        className={cn(
-          'w-full border-b -mx-4 px-4',
-          isHorizontal
-            ? 'overflow-x-scroll custom-scrollbar flex gap-2 justify-around'
-            : '',
-        )}
-      >
-        {!isWidget &&
-          shownStages.map((stage: any, index: any) => (
-            <Stage
+      <ol className="m-fn__stages">
+        {shown.map((index, i) => {
+          const s = stages[index];
+          const share = s.completedPercentageTotal;
+          const inside = share >= INSIDE_MIN;
+          const label = stageText(s, t);
+          const c = compStages?.[index];
+          const parts = breakdown
+            ? breakdownKeys
+                .map((key) => ({
+                  key,
+                  count: breakdown[key]?.stages?.[index]?.count ?? 0,
+                }))
+                .filter((p) => p.count > 0)
+            : null;
+          const size = (pct: number) => ({
+            [horizontal ? 'height' : 'width']: `${Math.max(2, pct)}%`,
+          });
+          const body = (
+            <>
+              <span className="m-fn__head">
+                <span className="m-funnel__index">{index + 1}</span>
+                <span className="m-fn__label m-truncate" title={label}>
+                  {label}
+                </span>
+                <span className="m-fn__figs">
+                  <span className="m-fn__count">{fmt(s.count)}</span>
+                  {!inside && <span className="m-fn__pct">{share}%</span>}
+                  {index > 0 && s.droppedCount > 0 && (
+                    <span
+                      className="m-fn__drop"
+                      title={t(
+                        '{{n}} {{unit}} did not reach this step · {{pct}}%',
+                        {
+                          n: fmt(s.droppedCount),
+                          unit,
+                          pct: s.droppedPercentage,
+                        },
+                      )}
+                    >
+                      −{fmt(s.droppedCount)}
+                    </span>
+                  )}
+                </span>
+              </span>
+              <span className="m-fn__bars">
+                <span className="m-fn__track" aria-hidden="true">
+                  {parts && parts.length ? (
+                    <span className="m-fn__parts" style={size(share)}>
+                      {parts.map((p, k) => (
+                        <span
+                          key={p.key}
+                          className="m-fn__part"
+                          style={{
+                            flex: p.count,
+                            background: `var(--m-chart-${(k % 8) + 1})`,
+                          }}
+                          title={`${p.key}: ${fmt(p.count)}`}
+                        />
+                      ))}
+                    </span>
+                  ) : (
+                    <span className="m-fn__fill" style={size(share)}>
+                      {inside && <span className="m-fn__inside">{share}%</span>}
+                    </span>
+                  )}
+                </span>
+                {c ? (
+                  <span
+                    className="m-fn__ghost"
+                    title={`${compLabel}: ${fmt(c.count)} ${unit} · ${c.completedPercentageTotal}%`}
+                  >
+                    <span
+                      className="m-fn__ghost-fill"
+                      style={size(c.completedPercentageTotal)}
+                    />
+                  </span>
+                ) : null}
+              </span>
+            </>
+          );
+          const aria = t(
+            'Step {{n}}, {{label}}: {{value}} {{unit}}, {{pct}}%',
+            {
+              n: index + 1,
+              label,
+              value: fmt(s.count),
+              unit,
+              pct: share,
+            },
+          );
+          return (
+            <li
               key={index}
-              isHorizontal={isHorizontal}
-              index={index + 1}
-              isWidget={isWidget}
-              stage={stage.data}
-              compData={stage.compData}
-              breakdownStages={stage.breakdownStages}
-              focusStage={focusStage}
-              focusedFilter={focusedFilter}
-              metricLabel={metricLabel}
-              compLabel={
-                stage.compData
-                  ? `${t('Previous Step')} ${index + 1}${compLabel ? ` (${compLabel})` : ''}`
-                  : undefined
-              }
-            />
-          ))}
-
-        {isWidget && (
-          <>
-            <Stage index={1} isWidget={isWidget} stage={stages[0]} />
-
-            {hasMoreSteps && <EmptyStage total={remainingSteps} />}
-
-            {funnel.stages.length > 1 && (
-              <Stage index={totalSteps} isWidget={isWidget} stage={lastStage} />
-            )}
-          </>
-        )}
-      </div>
-      <div className="flex items-center py-2 gap-2">
-        <div className="flex items-center">
-          <span className="text-base font-medium mr-2">
-            {t('Total conversion')}
-          </span>
-          <Tooltip
-            title={`${funnel.totalConversions} ${isUsers ? t('Users') : t('Sessions')} ${funnel.totalConversionsPercentage}%`}
-          >
-            <Tag
-              variant="filled"
-              color="var(--color-gray-lightest)"
-              className="rounded-lg! text-gray!"
+              className={`m-fn__stage${focusedFilter === index ? ' is-focused' : ''}${s.isActive ? '' : ' is-muted'}`}
             >
-              {funnel.totalConversions}
-            </Tag>
-          </Tooltip>
-        </div>
-        <div className="flex items-center">
-          <span className="text-base font-medium mr-2">
-            {t('Lost conversion')}
-          </span>
-          <Tooltip
-            title={`${funnel.lostConversions} Sessions ${funnel.lostConversionsPercentage}%`}
+              {i === 1 && hidden > 0 && (
+                <span className="m-fn__more">
+                  {hidden === 1
+                    ? t('+1 step')
+                    : t('+{{n}} steps', { n: hidden })}
+                </span>
+              )}
+              {isWidget ? (
+                <span
+                  className="m-fn__stage-btn"
+                  role="group"
+                  aria-label={aria}
+                >
+                  {body}
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  className="m-fn__stage-btn"
+                  aria-label={aria}
+                  onClick={() => focusStage(index)}
+                >
+                  {body}
+                </button>
+              )}
+            </li>
+          );
+        })}
+      </ol>
+      <footer className="m-fn__foot">
+        <dl className="m-fn__stats">
+          <div
+            className="m-fn__stat"
+            title={t('{{n}} {{unit}} reached the last step', {
+              n: fmt(funnel.totalConversions),
+              unit,
+            })}
           >
-            <Tag
-              variant="filled"
-              color="var(--color-red-lightest)"
-              className="rounded-lg! text-orange!"
-            >
-              {funnel.lostConversions}
-            </Tag>
-          </Tooltip>
-        </div>
-      </div>
-      {funnel.totalDropDueToIssues > 0 && (
-        <div className="flex items-center mb-2">
-          <Icon name="magic" />{' '}
-          <span className="ml-2">
-            {funnel.totalDropDueToIssues}&nbsp;
-            {t('sessions dropped due to issues.')}
-          </span>
-        </div>
-      )}
-      {allBreakdownKeys.length > 0 && (
-        <div className="flex items-center">
+            <dt>{t('Total conversion')}</dt>
+            <dd>{funnel.totalConversionsPercentage}%</dd>
+          </div>
+          <div
+            className="m-fn__stat"
+            title={`${fmt(funnel.lostConversions)} ${unit}`}
+          >
+            <dt>{t('Lost conversion')}</dt>
+            <dd>{funnel.lostConversionsPercentage}%</dd>
+          </div>
+          {compConversion != null && (
+            <div className="m-fn__stat">
+              <dt>{compLabel}</dt>
+              <dd>
+                {compConversion}%{delta ? <CompareTag delta={delta} /> : null}
+              </dd>
+            </div>
+          )}
+          {funnel.totalDropDueToIssues > 0 && (
+            <div className="m-fn__stat">
+              <dt>{t('Dropped due to issues')}</dt>
+              <dd>
+                <Tooltip title={unit}>
+                  <span>{fmt(funnel.totalDropDueToIssues)}</span>
+                </Tooltip>
+              </dd>
+            </div>
+          )}
+        </dl>
+        {allBreakdownKeys.length > 0 && !isWidget ? (
           <TopNButton totalValues={allBreakdownKeys.length} />
-        </div>
-      )}
-    </NoContent>
+        ) : null}
+      </footer>
+    </div>
   );
 }
-
-export const EmptyStage = observer(({ total }: any) => (
-  <div
-    className={cn(
-      'flex items-center mb-4 pb-3 relative border-b -mx-4 px-4 pt-2',
-    )}
-  >
-    <IndexNumber index={0} />
-    <div
-      className="w-fit px-2 border border-teal py-1 text-center justify-center bg-teal-lightest flex items-center rounded-full color-teal"
-      style={{ width: '100px' }}
-    >
-      {`+${total} ${total > 1 ? 'steps' : 'step'}`}
-    </div>
-    <div className="border-b w-full border-dashed" />
-  </div>
-));
-
-export const Stage = observer(
-  ({
-    metricLabel,
-    stage,
-    index,
-    uxt,
-    focusStage,
-    focusedFilter,
-    compData,
-    isHorizontal,
-    breakdownStages,
-    compLabel,
-  }: any) =>
-    stage ? (
-      <div
-        className={cn('flex items-start relative pt-2', {
-          [stl['step-disabled']]: !stage.isActive,
-        })}
-      >
-        <IndexNumber index={index} />
-        {!uxt ? (
-          <Funnelbar
-            isHorizontal={isHorizontal}
-            compData={compData}
-            metricLabel={metricLabel}
-            index={index}
-            filter={stage}
-            focusStage={focusStage}
-            focusedFilter={focusedFilter}
-            breakdownStages={breakdownStages}
-            compLabel={compLabel}
-          />
-        ) : (
-          <UxTFunnelBar filter={stage} />
-        )}
-      </div>
-    ) : null,
-);
-
-export const IndexNumber = observer(({ index }: any) => (
-  <div className="z-10 w-6 h-6 border shrink-0 mr-4 text-sm rounded-full bg-gray-lightest flex items-center justify-center leading-3">
-    {index === 0 ? <Icon size="14" color="gray-dark" name="list" /> : index}
-  </div>
-));
 
 export default observer(FunnelWidget);

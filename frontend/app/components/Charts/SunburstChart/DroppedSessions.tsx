@@ -1,7 +1,8 @@
-import { Tabs } from 'antd';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/ui/layout/tabs';
 import cn from 'classnames';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { typeToNameMap } from './sunburstUtils';
 
@@ -24,6 +25,7 @@ function DroppedSessionsList({
   onLeave: () => void;
   legend: Record<string, { color: string; ids: any[] }>;
 }) {
+  const { t } = useTranslation();
   if (!dropsByUrl) return null;
   const totalDropSessions = Object.values(dropsByUrl).reduce(
     (sum, { drop }) => sum + drop,
@@ -58,18 +60,18 @@ function DroppedSessionsList({
             sortedDrops.map((item, index) => (
               <div
                 key={index}
-                className="py-1.5 px-2 hover:bg-gray-lightest rounded-sm transition-colors flex justify-between gap-2 relative"
+                className="py-1.5 px-2 hover:bg-[var(--m-surface-hover)] rounded-sm transition-colors flex justify-between gap-2 relative"
                 onMouseEnter={() => onHover(item.ids)}
                 onMouseLeave={() => onLeave()}
               >
                 <ColoredBar color={colorMap.get(item.url)} />
                 <span className="truncate flex-1 ml-1">{item.url}</span>
                 <span className="ml-2"> {item.drop}</span>
-                <span className="text-gray-400">({item.percentage}%)</span>
+                <span className="text-content-muted">({item.percentage}%)</span>
               </div>
             ))
           ) : (
-            <div>No drops found.</div>
+            <div>{t('No drops found.')}</div>
           )}
         </div>
       ),
@@ -83,7 +85,7 @@ function DroppedSessionsList({
             ? legendList.map((item) => (
                 <div
                   key={item}
-                  className="py-1.5 px-2 hover:bg-gray-lightest rounded-sm transition-colors relative"
+                  className="py-1.5 px-2 hover:bg-[var(--m-surface-hover)] rounded-sm transition-colors relative"
                   onMouseEnter={() => onHover(legend[item].ids)}
                   onMouseLeave={() => onLeave()}
                 >
@@ -97,8 +99,21 @@ function DroppedSessionsList({
     },
   ];
   return (
-    <div className="bg-white rounded-lg border shadow-sm p-4 w-[260px] absolute top-0 bottom-0 my-4 right-4">
-      <Tabs defaultActiveKey="1" items={items} />
+    <div className="absolute top-0 right-4 bottom-0 my-4 w-[260px] rounded-lg border border-[var(--m-border-subtle)] bg-[var(--m-surface-raised)] p-4">
+      <Tabs defaultValue="1">
+        <TabsList className="mb-3">
+          {items.map((it) => (
+            <TabsTrigger key={it.key} value={it.key}>
+              {it.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        {items.map((it) => (
+          <TabsContent key={it.key} value={it.key}>
+            {it.children}
+          </TabsContent>
+        ))}
+      </Tabs>
     </div>
   );
 }
@@ -133,7 +148,7 @@ function CardTitle({
       className="flex items-center gap-2 cursor-pointer mb-2"
       onClick={onClick}
     >
-      <h3 className="text-lg font-medium">{title}</h3>
+      <h3 className="text-sm font-medium">{title}</h3>
       {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
     </div>
   );

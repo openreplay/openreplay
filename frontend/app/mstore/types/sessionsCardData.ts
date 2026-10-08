@@ -70,7 +70,8 @@ class UserNameFormatter extends BaseFormatter {
       return 'Anonymous';
     }
 
-    return super.format(name);
+    // user ids are identifiers: shown as recorded, not title-cased
+    return String(name).trim();
   }
 }
 

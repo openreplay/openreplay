@@ -1,4 +1,6 @@
-import { Button, InputNumber, Popover } from 'antd';
+import { Button } from '@/ui/actions/button';
+import { NumberInput } from '@/ui/inputs/number-input';
+import { PopoverPanel } from '@/ui/overlays/popover';
 import { ChevronDown } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
@@ -47,42 +49,41 @@ function LevelControl({
       : `${label}: ${t('Top')} ${n}`;
 
   return (
-    <Popover
+    <PopoverPanel
       open={open}
       onOpenChange={setOpen}
-      trigger="click"
       placement="bottomLeft"
+      className="p-3"
       content={
         <div className="flex flex-col gap-2" style={{ width: 200 }}>
           <div className="flex items-center gap-2">
             <span className="text-sm whitespace-nowrap">{t('Show top')}</span>
-            <InputNumber
-              size="small"
+            <NumberInput
+              className="w-[70px]"
               min={1}
               max={total || 999}
               value={draft}
               onChange={(v) => v && setDraft(v)}
-              style={{ width: 70 }}
             />
-            <Button size="small" type="primary" onClick={() => apply(draft)}>
+            <Button variant="primary" onClick={() => apply(draft)}>
               {t('Apply')}
             </Button>
           </div>
-          <Button size="small" type="default" block onClick={() => apply(3)}>
+          <Button className="w-full" onClick={() => apply(3)}>
             {t('Top 3')}
           </Button>
           {total > 0 && (
-            <Button size="small" type="default" block onClick={() => apply(0)}>
+            <Button className="w-full" onClick={() => apply(0)}>
               {t('Show all')} ({total})
             </Button>
           )}
         </div>
       }
     >
-      <Button size="small" type="default">
+      <Button>
         {buttonLabel} <ChevronDown size={12} />
       </Button>
-    </Popover>
+    </PopoverPanel>
   );
 }
 
@@ -140,7 +141,10 @@ function BreakdownSelectionPanel({ data, breakdownLabels }: Props) {
     const updated = { ...metricStore.breakdownSelection };
 
     // Collect all selected paths at depth `levelIdx` using the existing selection
-    function getParentPaths(parentPath: string, currentDepth: number): string[] {
+    function getParentPaths(
+      parentPath: string,
+      currentDepth: number,
+    ): string[] {
       if (currentDepth === levelIdx) return [parentPath];
       const sel = updated[parentPath];
       const allKeys = levelTree.get(parentPath)?.map((c) => c.key) ?? [];

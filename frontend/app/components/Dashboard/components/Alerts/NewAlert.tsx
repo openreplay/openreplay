@@ -1,83 +1,35 @@
-import React, { useEffect } from 'react';
-import { Form, SegmentSelection, confirm } from 'UI';
-import { validateEmail } from 'App/validate';
-import { toast } from 'react-toastify';
-import { SLACK, WEBHOOK, TEAMS } from 'App/constants/schedule';
-import Breadcrumb from 'Shared/Breadcrumb';
-import { withSiteId, alerts } from 'App/routes';
-import { withRouter, RouteComponentProps } from 'App/routing';
-import { useStore } from 'App/mstore';
-import { observer } from 'mobx-react-lite';
+import { IconButton } from '@/ui/actions/IconButton';
+import { Button } from '@/ui/actions/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItems,
+  DropdownMenuTrigger,
+} from '@/ui/actions/dropdown-menu';
+import { Chip } from '@/ui/data/Chip';
+import { PageCard, PagePanel } from '@/ui/layout/PageCard';
+import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
+import { toast } from '@/ui/overlays/toast';
 import Alert from 'Types/alert';
-import cn from 'classnames';
-import WidgetName from '../WidgetName';
-import BottomButtons from './AlertForm/BottomButtons';
-import NotifyHooks from './AlertForm/NotifyHooks';
-import AlertListItem from './AlertListItem';
-import Condition from './AlertForm/Condition';
+import { Bell, MoreHorizontal, Trash2 } from 'lucide-react';
+import { observer } from 'mobx-react-lite';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { PANEL_SIZES } from 'App/constants/panelSizes';
 
-function Circle({ text }: { text: string }) {
-  return (
-    <div
-      style={{ left: -14, height: 26, width: 26 }}
-      className="circle rounded-full bg-gray-light flex items-center justify-center absolute top-0"
-    >
-      {text}
-    </div>
-  );
-}
+import { useStore } from 'App/mstore';
+import { alerts, withSiteId } from 'App/routes';
+import { useHistory } from 'App/routing';
 
-interface ISection {
-  index: string;
-  title: string;
-  description?: string;
-  content: React.ReactNode;
-}
+import AlertFields from './AlertFields';
+import { alertSentence } from './alertSentence';
 
-function Section({ index, title, description, content }: ISection) {
-  return (
-    <div className="w-full border-l-2 last:border-l-borderColor-transparent">
-      <div className="flex items-start relative">
-        <Circle text={index} />
-        <div className="ml-6">
-          <span className="font-medium">{title}</span>
-          {description && (
-            <div className="text-sm color-gray-medium">{description}</div>
-          )}
-        </div>
-      </div>
-
-      <div className="ml-6">{content}</div>
-    </div>
-  );
-}
-
-interface Select {
-  label: string;
-  value: string | number;
-}
-
-interface IProps extends RouteComponentProps {
-  siteId: string;
-  slackChannels: any[];
-  loading: boolean;
-  deleting: boolean;
-  triggerOptions: any[];
-  list: any;
-  onSubmit: (instance: Alert) => void;
-}
-
-function NewAlert(props: IProps) {
+function NewAlert({ siteId }: { siteId: string }) {
   const { t } = useTranslation();
-  const { alertsStore, settingsStore, userStore } = useStore();
+  const { alertsStore, settingsStore } = useStore();
   const {
     fetchTriggerOptions,
     init,
-    edit,
     save,
-    remove,
     fetchList,
     instance,
     alerts: list,
@@ -85,11 +37,10 @@ function NewAlert(props: IProps) {
     loading,
   } = alertsStore;
 
-  const deleting = loading;
+  const history = useHistory();
+  const [deleting, setDeleting] = React.useState(false);
   const { webhooks } = settingsStore;
   const { fetchWebhooks } = settingsStore;
-  const { siteId } = props;
-  const isSmtp = userStore.account.smtp;
 
   useEffect(() => {
     init({});
@@ -110,222 +61,136 @@ function NewAlert(props: IProps) {
     }
   }, [list]);
 
-  const write = ({
-    target: { value, name },
-  }: React.ChangeEvent<HTMLInputElement>) => edit({ [name]: value });
-
-  const writeOption = (
-    _: React.ChangeEvent,
-    { name, value }: { name: string; value: Record<string, any> },
-  ) => edit({ [name]: value.value });
-
-  const onChangeCheck = ({
-    target: { checked, name },
-  }: React.ChangeEvent<HTMLInputElement>) => edit({ [name]: checked });
-
-  const onDelete = async (instance: Alert) => {
-    if (
-      await confirm({
-        header: t('Confirm'),
-        confirmButton: t('Yes, delete'),
-        confirmation: t(
-          'Are you sure you want to permanently delete this alert?',
-        ),
+  const remove = () => {
+    setDeleting(false);
+    alertsStore
+      .remove(instance.alertId)
+      .then(() => {
+        history.push(withSiteId(alerts(), siteId));
+        toast.success(t('Alert deleted'));
       })
-    ) {
-      remove(instance.alertId)
-        .then(() => {
-          props.history.push(withSiteId(alerts(), siteId));
-          toast.success(t('Alert deleted'));
-        })
-        .catch(() => {
-          toast.error(t('Failed to delete an alert'));
-        });
-    }
+      .catch(() => toast.error(t('Failed to delete an alert')));
   };
 
-  const onSave = (instance: Alert) => {
+  const onSave = () => {
     const wasUpdating = instance.exists();
     save(instance)
       .then(() => {
         if (!wasUpdating) {
           toast.success(t('New alert saved'));
-          props.history.push(withSiteId(alerts(), siteId));
+          history.push(withSiteId(alerts(), siteId));
         } else {
           toast.success(t('Alert updated'));
         }
       })
-      .catch(() => {
-        toast.error(t('Failed to create an alert'));
-      });
+      .catch(() => toast.error(t('Failed to create an alert')));
   };
 
-  const slackChannels: Select[] = [];
-  const hooks: Select[] = [];
-  const msTeamsChannels: Select[] = [];
-
-  webhooks.forEach((hook) => {
-    const option = { value: hook.webhookId, label: hook.name };
-    if (hook.type === SLACK) {
-      slackChannels.push(option);
-    }
-    if (hook.type === WEBHOOK) {
-      hooks.push(option);
-    }
-    if (hook.type === TEAMS) {
-      msTeamsChannels.push(option);
-    }
-  });
-
-  const writeQueryOption = (
-    e: React.ChangeEvent,
-    { name, value }: { name: string; value: string },
-  ) => {
-    const { query } = instance;
-    edit({ query: { ...query, [name]: value } });
-  };
-
-  const changeUnit = (value: string) => {
-    alertsStore.changeUnit(value);
-  };
-
-  const writeQuery = ({
-    target: { value, name },
-  }: React.ChangeEvent<HTMLInputElement>) => {
-    const { query } = instance;
-    edit({ query: { ...query, [name]: value } });
-  };
-
-  const metric =
-    instance && instance.query.left
-      ? triggerOptions.find((i) => i.value === instance.query.left)
-      : null;
-  const unit = metric ? metric.unit : '';
-  const isThreshold = instance.detectionMethod === 'threshold';
+  const exists = instance.exists();
+  const trigger = triggerOptions.find(
+    (o: any) => o.value === instance.query.left,
+  )?.label;
 
   return (
-    <div style={{ maxWidth: PANEL_SIZES.maxWidth, margin: 'auto' }}>
-      <Breadcrumb
-        items={[
-          {
-            label: t('Alerts'),
-            to: withSiteId('/alerts', siteId),
-          },
-          { label: (instance && instance.name) || t('Alert') },
-        ]}
-      />
-      <Form
-        className="relative bg-white rounded-sm border"
-        onSubmit={() => onSave(instance)}
-        id="alert-form"
-      >
-        <div className={cn('px-6 py-4 flex justify-between items-center')}>
-          <h1 className="mb-0 text-2xl mr-4 min-w-fit">
-            <WidgetName
-              name={instance.name}
-              onUpdate={(name) =>
-                write({ target: { value: name, name: 'name' } } as any)
-              }
-              canEdit
-            />
-          </h1>
-          <div className="text-gray-600 w-full cursor-pointer" />
-        </div>
-
-        <div className="px-6 pb-3 flex flex-col">
-          <Section
-            index="1"
-            title={t('Alert based on')}
-            content={
-              <div className="">
-                <SegmentSelection
-                  outline
-                  name="detectionMethod"
-                  className="my-3 w-1/4"
-                  onSelect={(e: any, { name, value }: any) =>
-                    edit({ [name]: value })
-                  }
-                  value={{ value: instance.detectionMethod }}
-                  list={[
-                    { name: t('Threshold'), value: 'threshold' },
-                    { name: t('Change'), value: 'change' },
-                  ]}
+    <PageCard
+      back={{
+        label: t('Alerts'),
+        onClick: () => history.push(withSiteId(alerts(), siteId)),
+      }}
+      title={instance.name || t('New alert')}
+      actions={
+        exists ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <span>
+                <IconButton
+                  icon={<MoreHorizontal size={15} />}
+                  label={t('More')}
+                  variant="ghost"
                 />
-                <div className="text-sm color-gray-medium">
-                  {isThreshold &&
-                    t(
-                      'Eg. When Threshold is above 1ms over the past 15mins, notify me through Slack #foss-notifications.',
-                    )}
-                  {!isThreshold &&
-                    t(
-                      'Eg. Alert me if % change of memory.avg is greater than 10% over the past 4 hours compared to the previous 4 hours.',
-                    )}
-                </div>
-                <div className="my-4" />
-              </div>
-            }
-          />
-          <Section
-            index="2"
-            title={t('Condition')}
-            content={
-              <Condition
-                isThreshold={isThreshold}
-                writeOption={writeOption}
-                instance={instance}
-                triggerOptions={triggerOptions}
-                writeQueryOption={writeQueryOption}
-                changeUnit={changeUnit}
-                writeQuery={writeQuery}
-                unit={unit}
+              </span>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItems
+                items={[
+                  {
+                    key: 'delete',
+                    icon: <Trash2 size={13} />,
+                    label: t('Delete'),
+                    danger: true,
+                    onClick: () => setDeleting(true),
+                  },
+                ]}
               />
-            }
-          />
-          <Section
-            index="3"
-            title={t('Notify Through')}
-            description={t(
-              "You'll be noticed in app notifications. Additionally opt in to receive alerts on:",
-            )}
-            content={
-              <NotifyHooks
-                instance={instance}
-                onChangeCheck={onChangeCheck}
-                slackChannels={slackChannels}
-                msTeamsChannels={msTeamsChannels}
-                validateEmail={validateEmail}
-                hooks={hooks}
-                edit={edit}
-                isSmtp={isSmtp}
-              />
-            }
-          />
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : undefined
+      }
+      split
+    >
+      <PagePanel>
+        <div className="m-alertf__page">
+          <AlertFields triggerOptions={triggerOptions} withName />
+          <footer className="m-alertf__foot">
+            <Button
+              variant="primary"
+              disabled={loading || !instance.validate()}
+              onClick={onSave}
+            >
+              {exists ? t('Update') : t('Create')}
+            </Button>
+            {exists ? (
+              <Button
+                variant="danger-outline"
+                onClick={() => setDeleting(true)}
+              >
+                <Trash2 size={13} />
+                {t('Delete')}
+              </Button>
+            ) : null}
+          </footer>
         </div>
-
-        <div className="flex items-center justify-between p-6 border-t">
-          <BottomButtons
-            loading={loading}
-            instance={instance}
-            deleting={deleting}
-            onDelete={onDelete}
-          />
+      </PagePanel>
+      <PagePanel
+        head={
+          <span className="m-pa__head-title">
+            {t('As it will appear in the list')}
+          </span>
+        }
+      >
+        <div className="m-alertf__preview">
+          <span className="m-alertf__bell">
+            <Bell size={14} aria-hidden="true" />
+          </span>
+          <div className="m-pa__name-cell">
+            <span className="m-truncate">
+              {instance.name || t('Untitled alert')}
+            </span>
+            <span className="m-pa__rule">
+              {alertSentence(instance, webhooks, trigger)}
+            </span>
+          </div>
+          <Chip kind="tag">
+            {instance.detectionMethod === 'change'
+              ? t('Change')
+              : t('Threshold')}
+          </Chip>
         </div>
-      </Form>
-
-      <div className="bg-white mt-4 border rounded-sm mb-10">
-        {instance && (
-          <AlertListItem
-            alert={instance}
-            triggerOptions={triggerOptions}
-            demo
-            siteId=""
-            init={() => null}
-            webhooks={webhooks}
-          />
-        )}
-      </div>
-    </div>
+      </PagePanel>
+      <ConfirmDialog
+        open={deleting}
+        title={t('Delete this alert?')}
+        okText={t('Yes, delete')}
+        danger
+        onCancel={() => setDeleting(false)}
+        onOk={remove}
+      >
+        {t('{{name}} stops watching and is permanently deleted.', {
+          name: instance.name,
+        })}
+      </ConfirmDialog>
+    </PageCard>
   );
 }
 
-export default withRouter(observer(NewAlert));
+export default observer(NewAlert);

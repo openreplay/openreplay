@@ -1,6 +1,7 @@
-import React from 'react';
+import { Button } from '@/ui/actions/button';
 import cn from 'classnames';
-import { Button } from 'antd';
+import React from 'react';
+
 import stl from './table.module.css';
 
 export default class Table extends React.PureComponent {
@@ -81,7 +82,7 @@ export default class Table extends React.PureComponent {
         </div>
         {isShowMoreButtonVisible && (
           <div className="w-full flex justify-center mt-2">
-            <Button onClick={this.onLoadMoreClick} type="text">
+            <Button variant="subtle" onClick={this.onLoadMoreClick}>
               {`${rows.length} More`}
             </Button>
           </div>

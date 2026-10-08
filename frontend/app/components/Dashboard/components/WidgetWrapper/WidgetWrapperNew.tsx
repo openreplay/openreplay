@@ -1,5 +1,21 @@
-import { Card, Tooltip } from 'antd';
-import cn from 'classnames';
+import { IconButton } from '@/ui/actions/IconButton';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItems,
+  DropdownMenuTrigger,
+} from '@/ui/actions/dropdown-menu';
+import { Loader } from '@/ui/feedback/Loader';
+import { toast } from '@/ui/overlays/toast';
+import {
+  Bell,
+  Maximize2,
+  Minimize2,
+  MoreHorizontal,
+  Pencil,
+  X,
+} from 'lucide-react';
+import { runInAction } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import React, { Suspense, lazy, useRef } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
@@ -8,179 +24,200 @@ import { useTranslation } from 'react-i18next';
 import { TIMESERIES, USER_PATH } from 'App/constants/card';
 import { useStore } from 'App/mstore';
 import { dashboardMetricDetails, withSiteId } from 'App/routes';
-import { RouteComponentProps, withRouter } from 'App/routing';
-import { FilterKey } from 'App/types/filter/filterType';
-import AlertButton from 'Components/Dashboard/components/WidgetWrapper/AlertButton';
-import CardMenu from 'Components/Dashboard/components/WidgetWrapper/CardMenu';
-import { Loader } from 'UI';
+import { useHistory } from 'App/routing';
+import { dashboardService } from 'App/services';
+import AlertFormModal from 'Components/Alerts/AlertFormModal/AlertFormModal';
+import { useModal } from 'Components/ModalContext';
 
-import TemplateOverlay from './TemplateOverlay';
-import stl from './widgetWrapper.module.css';
+import { cardTypeLabel } from '../../cardIcons';
 
 const WidgetChart = lazy(
   () => import('Components/Dashboard/components/WidgetChart'),
 );
 
 interface Props {
-  className?: string;
-  widget?: any;
-  index?: number;
-  moveListItem?: any;
-  isPreview?: boolean;
-  isTemplate?: boolean;
-  dashboardId?: string;
-  siteId?: string;
-  active?: boolean;
-  history?: any;
-  onClick?: () => void;
-  isWidget?: boolean;
-  hideName?: boolean;
+  widget: any;
+  index: number;
+  moveListItem: (from: number, to: number) => void;
+  siteId: string;
   grid?: string;
-  isGridView?: boolean;
-  showMenu?: boolean;
-  isSaved?: boolean;
 }
 
-function WidgetWrapperDashboard(props: Props & RouteComponentProps) {
-  const { dashboardStore, metricStore } = useStore();
-  const {
-    isWidget = false,
-    active = false,
-    index = 0,
-    moveListItem = null,
-    isPreview = false,
-    isTemplate = false,
-    siteId,
-    grid = '',
-    isGridView = false,
-    showMenu = false,
-    isSaved = false,
-  } = props;
+/** One card on a dashboard: title, type, menu, and the chart as the drilldown. */
+function WidgetWrapperDashboard({
+  widget,
+  index,
+  moveListItem,
+  siteId,
+  grid = 'other',
+}: Props) {
   const { t } = useTranslation();
-  const { widget } = props;
-  const isTimeSeries = widget.metricType === TIMESERIES;
-  const isUserPath = widget.metricType === USER_PATH;
-  const isPredefined = widget.metricType === 'predefined';
+  const history = useHistory();
+  const { dashboardStore, metricStore, alertsStore } = useStore();
+  const { openModal, closeModal } = useModal();
   const dashboard = dashboardStore.selectedDashboard;
+  const isPredefined = widget.metricType === 'predefined';
+  const seriesId = widget.series[0]?.seriesId;
+  const canAlert =
+    !isPredefined && widget.metricType === TIMESERIES && !!seriesId;
+  const full = widget.config.col === 4;
 
   const [{ isDragging }, dragRef] = useDrag({
     type: 'item',
     item: { index, grid },
-    collect: (monitor) => ({
-      isDragging: monitor.isDragging(),
-    }),
+    collect: (monitor) => ({ isDragging: monitor.isDragging() }),
   });
-
   const [{ isOver, canDrop }, dropRef] = useDrop({
     accept: 'item',
     drop: (item: any) => {
       if (item.index === index || item.grid !== grid) return;
       moveListItem(item.index, index);
     },
-    canDrop(item) {
-      return item.grid === grid;
-    },
-    collect: (monitor: any) => ({
+    canDrop: (item: any) => item.grid === grid,
+    collect: (monitor) => ({
       isOver: monitor.isOver(),
       canDrop: monitor.canDrop(),
     }),
   });
+  const ref = useRef<HTMLElement>(null);
+  dragRef(dropRef(ref));
 
-  const onChartClick = () => {
+  const open = () => {
+    if (isPredefined || !dashboard) return;
     dashboardStore.setDrillDownPeriod(dashboardStore.period);
-    // if (!isWidget || isPredefined) return;
-    props.history.push(
+    history.push(
       withSiteId(
-        dashboardMetricDetails(dashboard?.dashboardId, widget.metricId),
+        dashboardMetricDetails(dashboard.dashboardId, widget.metricId),
         siteId,
       ),
     );
   };
 
-  const ref: any = useRef(null);
-  const dragDropRef: any = dragRef(dropRef(ref));
-  const addOverlay =
-    isTemplate ||
-    (!isPredefined &&
-      isWidget &&
-      widget.metricOf !== FilterKey.ERRORS &&
-      widget.metricOf !== FilterKey.SESSIONS);
-
-  const beforeAlertInit = () => {
+  const createAlert = () => {
     metricStore.init(widget);
+    alertsStore.init({ query: { left: seriesId } } as any);
+    openModal(<AlertFormModal onClose={closeModal} />, {
+      placement: 'right',
+      width: 620,
+    });
   };
-  const seriesId = widget.series[0] && widget.series[0].seriesId;
+
+  const setWidth = (col: number) => {
+    if (!dashboard) return;
+    const before = widget.config.col;
+    runInAction(() => {
+      widget.config.col = col;
+    });
+    dashboardService.saveWidget(dashboard.dashboardId!, widget).catch(() => {
+      // back to what the server has, unless a later resize already replaced it
+      runInAction(() => {
+        if (widget.config.col === col) widget.config.col = before;
+      });
+      toast.error(t('Could not resize the card'));
+    });
+  };
+
   return (
-    <Card
-      className={cn(
-        'relative group rounded-lg hover:border-teal transition-all duration-200 w-full h-full flex flex-col',
-        { 'hover:shadow-xs': !isTemplate && isWidget },
-      )}
-      style={{
-        userSelect: 'none',
-        opacity: isDragging ? 0.5 : 1,
-        borderColor:
-          canDrop && isOver ? '#454545' : isPreview ? 'transparent' : '#EEEEEE',
-        borderStyle: canDrop && isOver ? 'dashed' : 'solid',
-        cursor: isDragging ? 'grabbing' : 'grab',
-        ...(isUserPath ? { minHeight: 600 } : {}),
-      }}
-      ref={dragDropRef}
-      onClick={props.onClick ? props.onClick : () => null}
+    <section
+      ref={ref}
       id={`widget-${widget.metricId}`}
-      title={!props.hideName ? widget.name : null}
-      extra={[
-        <div className="flex items-center" id="no-print">
-          {!isPredefined && isTimeSeries && !isGridView && seriesId && (
-            <AlertButton initAlert={beforeAlertInit} seriesId={seriesId} />
-          )}
-
-          {showMenu && <CardMenu card={widget} key="card-menu" />}
-        </div>,
-      ]}
-      styles={{
-        header: {
-          padding: '0 14px',
-          borderBottom: 'none',
-          minHeight: 44,
-          fontWeight: 500,
-          fontSize: 14,
-        },
-        body: {
-          padding: 0,
-        },
-      }}
+      className={`m-dash__widget m-dash__widget--c${widget.config.col ?? 4}${isDragging ? ' is-dragging' : ''}${canDrop && isOver ? ' is-drop' : ''}`}
+      style={widget.metricType === USER_PATH ? { minHeight: 600 } : undefined}
     >
-      {!isTemplate && isWidget && isPredefined && (
-        <Tooltip title={t('Cannot drill down system provided metrics')}>
-          <div
-            className={cn(
-              stl.drillDownMessage,
-              'disabled text-gray text-sm invisible group-hover:visible',
-            )}
-          >
-            {t('Cannot drill down system provided metrics')}
-          </div>
-        </Tooltip>
-      )}
-
-      {addOverlay && (
-        <TemplateOverlay onClick={onChartClick} isTemplate={isTemplate} />
-      )}
-
-      <div className="px-4 flex-1" onClick={onChartClick}>
-        <Suspense fallback={<Loader loading style={{ height: '240px' }} />}>
-          <WidgetChart
-            isPreview={isPreview}
-            metric={widget}
-            isTemplate={isTemplate}
-            isWidget={isWidget}
-            isSaved={isSaved}
-          />
+      <header className="m-dash__widget-head">
+        <button
+          type="button"
+          className="m-dash__widget-title m-truncate"
+          onClick={open}
+        >
+          {widget.name}
+        </button>
+        <span className="m-dash__widget-type">
+          {cardTypeLabel(t, widget.metricType, widget.metricOf)}
+        </span>
+        <span id="no-print" className="flex items-center">
+          {canAlert ? (
+            <IconButton
+              icon={<Bell size={14} />}
+              label={t('Create alert')}
+              variant="ghost"
+              onClick={createAlert}
+            />
+          ) : null}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <span>
+                <IconButton
+                  icon={<MoreHorizontal size={14} />}
+                  label={t('Actions for {{name}}', { name: widget.name })}
+                  variant="ghost"
+                />
+              </span>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItems
+                items={[
+                  {
+                    key: 'edit',
+                    icon: <Pencil size={13} />,
+                    label: t('Edit'),
+                    onClick: open,
+                  },
+                  full
+                    ? {
+                        key: 'half',
+                        icon: <Minimize2 size={13} />,
+                        label: t('Half width'),
+                        onClick: () => setWidth(2),
+                      }
+                    : {
+                        key: 'full',
+                        icon: <Maximize2 size={13} />,
+                        label: t('Full width'),
+                        onClick: () => setWidth(4),
+                      },
+                  { key: 'd1', type: 'divider' },
+                  {
+                    key: 'remove',
+                    icon: <X size={13} />,
+                    label: t('Remove from dashboard'),
+                    danger: true,
+                    onClick: () =>
+                      dashboard &&
+                      void dashboardStore.deleteDashboardWidget(
+                        dashboard.dashboardId!,
+                        widget.widgetId,
+                      ),
+                  },
+                ]}
+              />
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </span>
+      </header>
+      <div
+        role="button"
+        tabIndex={0}
+        className={`m-dash__widget-body${isPredefined ? ' is-static' : ''}`}
+        // the body opens the card, but not when a control inside it was used
+        onClick={(e) => {
+          const hit = (e.target as HTMLElement).closest(
+            'button, a, input, select, textarea, [role="menuitem"], [role="checkbox"]',
+          );
+          if (!hit || hit === e.currentTarget) open();
+        }}
+        onKeyDown={(e) => {
+          if (e.target !== e.currentTarget) return;
+          if (e.key === 'Enter' || e.key === ' ') open();
+        }}
+        aria-label={t('Open {{name}}', { name: widget.name })}
+      >
+        <Suspense fallback={<Loader loading style={{ height: 240 }} />}>
+          <WidgetChart metric={widget} isSaved />
         </Suspense>
       </div>
-    </Card>
+    </section>
   );
 }
 
-export default withRouter(observer(WidgetWrapperDashboard));
+export default observer(WidgetWrapperDashboard);

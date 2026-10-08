@@ -1,12 +1,18 @@
-import Filter from 'App/mstore/types/filter';
-import { FilterKey } from 'App/types/filter/filterType';
+import { useStore } from '@/mstore';
+import { Button } from '@/ui/actions/button';
+import { EyeOff } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import FilterItem from 'Shared/Filters/FilterItem';
-
-import { Button } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { useStore } from '@/mstore';
+
+import Filter from 'App/mstore/types/filter';
+import { FilterKey } from 'App/types/filter/filterType';
+
+import {
+  SingleRule,
+  buildFilterEditor,
+  useCatalogue,
+} from 'Shared/FilterEditor';
 
 interface Props {
   metric: any;
@@ -28,39 +34,41 @@ function ExcludeFilters(props: Props) {
     metric.updateExcludes([f]);
   };
 
-  const onUpdateFilter = (filterIndex: any, filterItem: any) => {
-    metric.updateExcludeByIndex(filterIndex, filterItem);
-  };
-
-  const onRemoveFilter = (filterIndex: any) => {
-    metric.removeExcludeByIndex(filterIndex);
-  };
+  const all = useCatalogue();
+  const editor = buildFilterEditor({
+    filters: metric.excludes,
+    eventsOrder: 'or',
+    add: () => {},
+    update: (i, f) => metric.updateExcludeByIndex(i, f),
+    remove: (i) => metric.removeExcludeByIndex(i),
+    move: () => {},
+    setEventsOrder: () => {},
+    clear: () => metric.updateExcludes([]),
+  });
+  const rules = [...editor.events, ...editor.properties];
+  const eventEntries = all.filter((e) => e.isEvent);
 
   return (
-    <div className="mb-2 rounded-xl">
-      {metric.excludes.length > 0 ? (
-        <div className="bg-white rounded-xl border p-4">
-          <div className="text-sm color-gray-medium mr-auto mb-2">
-            {t('EXCLUDES')}
-          </div>
-          {metric.excludes.map((f: any, index: number) => (
-            <FilterItem
-              hideIndex
-              filterIndex={index}
-              filter={f}
-              onUpdate={(f) => onUpdateFilter(f.id, f)}
-              onRemoveFilter={() => onRemoveFilter(index)}
-              // saveRequestPayloads={saveRequestPayloads}
-              disableDelete={false}
-              // excludeFilterKeys={excludeFilterKeys}
-              isLast={index === metric.excludes.length - 1}
+    <div className="m-jrny__excludes">
+      {rules.length > 0 ? (
+        rules.map((rule) => (
+          <div className="m-jrny__row" key={rule.key}>
+            <span className="m-jrny__word">{t('Leaving out')}</span>
+            <SingleRule
+              filter={rule}
+              editor={editor}
+              entries={eventEntries}
+              removable
             />
-          ))}
-        </div>
+          </div>
+        ))
       ) : (
-        <Button type="link" onClick={addPageFilter} className="text-black! text-sm!">
-          {t('Add Exclusion')}
-        </Button>
+        <div className="m-jrny__row">
+          <Button variant="subtle" size="sm" onClick={addPageFilter}>
+            <EyeOff size={13} aria-hidden="true" />
+            {t('Leave pages out')}
+          </Button>
+        </div>
       )}
     </div>
   );

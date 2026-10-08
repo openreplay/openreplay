@@ -1,90 +1,100 @@
-import { useModal } from 'App/components/Modal';
+import { Button } from '@/ui/actions/button';
+import { type Column, DataTable } from '@/ui/data/table';
+import { ListFooter } from '@/ui/layout/ListFooter';
+import { ChevronRight } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
-import React, { useEffect, useState } from 'react';
-import { RouteComponentProps, withRouter } from 'App/routing';
-import { Loader, Pagination } from 'UI';
-import { Button } from 'antd';
-import { useStore } from 'App/mstore';
-import SessionsModal from './SessionsModal';
-import CardUserItem from './CardUserItem';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-interface Props {
-  history: any;
-  location: any;
-}
-function CardUserList(props: RouteComponentProps<Props>) {
-  const { t } = useTranslation();
-  const [loading, setLoading] = useState(false);
-  const { showModal } = useModal();
-  const userId = new URLSearchParams(props.location.search).get('userId');
-  const { metricStore, dashboardStore } = useStore();
+import { useStore } from 'App/mstore';
+import { useHistory, useLocation } from 'App/routing';
 
-  const [data, setData] = useState<any>([
+import { SessionAvatar } from 'Shared/SessionAvatar/SessionAvatar';
+import UserSessionsDrawer from 'Shared/UserSessionsDrawer';
+
+interface User {
+  name: string;
+  sessions: number;
+}
+
+/** Returning users under a retention card; a row opens that user's sessions. */
+function CardUserList() {
+  const { t } = useTranslation();
+  const { metricStore } = useStore();
+  const history = useHistory();
+  const location = useLocation();
+  const userId = new URLSearchParams(location.search).get('userId');
+
+  const [data] = useState<User[]>([
     { name: 'user@domain.com', sessions: 29 },
     { name: 'user@domain.com', sessions: 29 },
     { name: 'user@domain.com', sessions: 29 },
     { name: 'user@domain.com', sessions: 29 },
   ]);
-  const pageSize = data.length;
 
-  const handleClick = (issue: any) => {
-    props.history.replace({
-      search: new URLSearchParams({ userId: '123' }).toString(),
+  const openUser = (user: User) =>
+    history.replace({
+      search: new URLSearchParams({ userId: user.name }).toString(),
     });
-    // showModal(<SessionsModal list={[]} />, { right: true, width: 450 })
-  };
+  const closeUser = () => history.replace({ search: '' });
 
-  useEffect(() => {
-    if (!userId) return;
-
-    showModal(<SessionsModal userId={userId} name="test" hash="test" />, {
-      right: true,
-      width: 600,
-      onClose: () => {
-        if (props.history.location.pathname.includes('/metric')) {
-          props.history.replace({ search: '' });
-        }
-      },
-    });
-  }, [userId]);
+  const columns: Column<User>[] = [
+    {
+      title: t('User'),
+      key: 'name',
+      render: (u) => (
+        <span className="flex items-center gap-3 text-sm text-content-primary">
+          <SessionAvatar seed={u.name.length} />
+          {u.name}
+        </span>
+      ),
+    },
+    {
+      title: t('Sessions'),
+      key: 'sessions',
+      width: 120,
+      align: 'right',
+      render: (u) => (
+        <span className="inline-flex items-center gap-2 tabular-nums text-content-secondary">
+          {u.sessions}
+          <ChevronRight size={14} className="text-content-muted" />
+        </span>
+      ),
+    },
+  ];
 
   return (
-    <div className="bg-white rounded-sm p-4 border">
-      <div className="flex justify-between">
-        <h1 className="font-medium text-2xl">{t('Returning users between')}</h1>
-        <div>
-          <Button type="text">{t('All Sessions')}</Button>
-        </div>
+    <section className="m-panel">
+      <div className="flex items-center justify-between px-6 py-4">
+        <h2 className="text-base font-medium text-content-primary">
+          {t('Returning users')}
+        </h2>
+        <Button variant="subtle" size="sm">
+          {t('All sessions')}
+        </Button>
       </div>
-
-      <Loader loading={loading}>
-        {data.map((item: any, index: any) => (
-          <div key={index} onClick={() => handleClick(item)}>
-            <CardUserItem user={item} />
-          </div>
-        ))}
-      </Loader>
-
-      <div className="w-full flex items-center justify-between pt-4">
-        <div className="text-disabled-text">
-          {t('Showing')}{' '}
-          <span className="font-medium">{Math.min(data.length, pageSize)}</span>{' '}
-          {t('out of')}&nbsp;<span className="font-medium">{data.length}</span>
-          &nbsp;{t('Issues')}
-        </div>
-        <Pagination
-          page={metricStore.sessionsPage}
-          total={data.length}
-          onPageChange={(page: any) =>
-            metricStore.updateKey('sessionsPage', page)
-          }
-          limit={metricStore.sessionsPageSize}
-          debounceRequest={500}
-        />
-      </div>
-    </div>
+      <DataTable<User>
+        ariaLabel={t('Returning users')}
+        columns={columns}
+        rows={data}
+        rowKey={(_, i) => String(i)}
+        onRowClick={openUser}
+      />
+      <ListFooter
+        page={metricStore.sessionsPage}
+        pageSize={metricStore.sessionsPageSize}
+        total={data.length}
+        noun={[t('user'), t('users')]}
+        onPage={(page) => metricStore.updateKey('sessionsPage', page)}
+      />
+      <UserSessionsDrawer
+        open={!!userId}
+        onClose={closeUser}
+        userId={userId ?? ''}
+        name={userId ?? ''}
+      />
+    </section>
   );
 }
 
-export default withRouter(observer(CardUserList));
+export default observer(CardUserList);

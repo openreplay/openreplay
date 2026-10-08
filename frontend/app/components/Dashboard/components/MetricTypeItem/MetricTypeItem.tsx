@@ -1,9 +1,11 @@
-import { IconNames } from 'App/components/ui/SVG';
-import React from 'react';
-import { Icon, Tooltip } from 'UI';
+import { Icon } from '@/ui/icons/Icon';
+import { IconNames } from '@/ui/icons/SVG';
+import { Tooltip } from '@/ui/overlays/tooltip';
 import cn from 'classnames';
-import { ENTERPRISE_REQUEIRED } from 'App/constants';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { ENTERPRISE_REQUEIRED } from 'App/constants';
 
 export interface MetricType {
   title: string;
@@ -28,10 +30,10 @@ function MetricTypeItem(props: Props) {
     isList = false,
   } = props;
   return (
-    <Tooltip disabled={!disabled} title={ENTERPRISE_REQUEIRED(t)} delay={0}>
+    <Tooltip title={disabled ? ENTERPRISE_REQUEIRED(t) : null} delay={0}>
       <div
         className={cn(
-          'rounded-sm color-gray-darkest flex border border-transparent p-4 hover:bg-active-blue cursor-pointer group gap-4',
+          'rounded-sm text-content-primary flex border border-transparent p-4 hover:bg-surface-hover cursor-pointer group gap-4',
           {
             'opacity-30 pointer-events-none': disabled,
             'flex-col items-center gap-4 text-center': !isList,
@@ -50,7 +52,7 @@ function MetricTypeItem(props: Props) {
           })}
         >
           <div className="text-base">{title}</div>
-          <div className="text-sm color-gray-medium font-normal">
+          <div className="text-sm text-content-muted font-normal">
             {description}
           </div>
         </div>

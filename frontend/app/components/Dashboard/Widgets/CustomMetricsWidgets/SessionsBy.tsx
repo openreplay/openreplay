@@ -1,13 +1,29 @@
-import React from 'react';
-import { Button, Space, Empty } from 'antd';
-import { Info, ArrowRight } from 'lucide-react';
-import CardSessionsByList from 'Components/Dashboard/Widgets/CardSessionsByList';
-import { useModal } from 'Components/ModalContext';
-import Widget from '@/mstore/types/widget';
-import { useTranslation } from 'react-i18next';
-import { FilterKey } from 'Types/filter/filterType';
-import { observer } from 'mobx-react-lite';
 import { useStore } from '@/mstore';
+import { Button } from '@/ui/actions/button';
+import { BrowserIcon } from '@/ui/brand/BrowserIcon';
+import { ListFooter } from '@/ui/layout/ListFooter';
+import { EntityDrawer } from '@/ui/overlays/EntityDrawer';
+import { FilterKey } from 'Types/filter/filterType';
+import {
+  ArrowUpDown,
+  ChevronRight,
+  FileCode2,
+  Globe,
+  Laptop,
+  Link,
+  Monitor,
+  MonitorSmartphone,
+  Smartphone,
+  Tablet,
+} from 'lucide-react';
+import { observer } from 'mobx-react-lite';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+
+import 'App/components/Dashboard/charts.css';
+import { hashString } from 'App/mstore/types/session';
+
+import { SessionAvatar } from 'Shared/SessionAvatar/SessionAvatar';
 
 interface Props {
   metric?: any;
@@ -22,11 +38,6 @@ function SessionsBy(props: Props) {
   const { filterStore } = useStore();
   const [selected, setSelected] = React.useState<any>(null);
   const { total } = data;
-  const { openModal, closeModal } = useModal();
-  const modalMetric = React.useMemo(
-    () => Object.assign(new Widget(), metric),
-    [metric],
-  );
 
   const onClickHandler = async (_: any, row: any) => {
     if (metric.metricOf === FilterKey.RESOLUTIONS) {
@@ -151,69 +162,191 @@ function SessionsBy(props: Props) {
     onClick([baseFilter]);
   };
 
-  const showMore = (e: any) => {
-    e.stopPropagation();
-    openModal(
-      <CardSessionsByList
-        paginated
-        metric={modalMetric}
-        total={total}
-        list={data.values}
-        onClickHandler={(e, item) => {
-          closeModal();
-          onClickHandler(null, item);
-        }}
-        selected={selected}
-      />,
-      {
-        title: metric.name,
-        width: 600,
-      },
+  const [drawer, setDrawer] = React.useState(false);
+  const [page, setPage] = React.useState(1);
+  const values: any[] = data.values ?? [];
+  if (values.length === 0) {
+    return (
+      <p className="m-top__empty">
+        {t('No data available for the selected period.')}
+      </p>
     );
-  };
+  }
+  const more = Math.max(0, (total ?? values.length) - 3);
+  const sum = values.reduce((a, r) => a + rowCount(r), 0);
+  const pageRows = values.slice((page - 1) * DRAWER_PAGE, page * DRAWER_PAGE);
 
-  const numFmt = new Intl.NumberFormat('en-US');
-  const moreMetrics = total > 3 ? numFmt.format(total - 3) : 0;
   return (
-    <div>
-      {data.values && data.values.length === 0 ? (
-        <Empty
-          image={null}
-          style={{ minHeight: 220 }}
-          className="flex flex-col items-center justify-center"
-          imageStyle={{ height: 0 }}
-          description={
-            <div className="flex items-center gap-2 justify-center text-black">
-              <Info size={14} />
-              {t('No data available for the selected period.')}
-            </div>
-          }
-        />
-      ) : (
-        <div
-          className="flex flex-col justify-between w-full"
-          style={{ height: 220 }}
+    <div className="m-top is-compact">
+      <ol className="m-top__list">
+        {values.slice(0, 3).map((r) => (
+          <TopRow
+            key={r.name}
+            row={r}
+            dimension={metric.metricOf}
+            selected={selected === r.name}
+            onClick={() => void onClickHandler(null, r)}
+          />
+        ))}
+      </ol>
+      {more > 0 && (
+        <Button
+          variant="subtle"
+          className="m-top__more"
+          onClick={(e) => {
+            e.stopPropagation();
+            setDrawer(true);
+          }}
         >
-          {metric && (
-            <CardSessionsByList
-              list={data.values.slice(0, 3)}
-              selected={selected}
-              onClickHandler={onClickHandler}
-            />
-          )}
-          {total > 3 && (
-            <div className="flex">
-              <Button type="link" onClick={showMore}>
-                <Space className="flex! font-medium! gap-1! text-black! hover:text-main!">
-                  {moreMetrics}&nbsp;{t('More')}
-                  <ArrowRight size={16} />
-                </Space>
-              </Button>
+          {t('{{n}} more', { n: more.toLocaleString() })}
+          <ChevronRight size={13} />
+        </Button>
+      )}
+      {drawer && (
+        <span onClick={(e) => e.stopPropagation()}>
+          <EntityDrawer
+            size="wide"
+            open
+            onClose={() => setDrawer(false)}
+            title={metric.name ?? t('All values')}
+            meta={
+              <span className="m-cardd__facts">
+                <span>
+                  {t('{{n}} values', { n: values.length.toLocaleString() })}
+                </span>
+              </span>
+            }
+            footer={
+              <ListFooter
+                page={page}
+                pageSize={DRAWER_PAGE}
+                total={values.length}
+                noun={[t('value'), t('values')]}
+                onPage={setPage}
+              />
+            }
+          >
+            <div className="m-top m-top--drawer">
+              <ol className="m-top__list" start={(page - 1) * DRAWER_PAGE + 1}>
+                {pageRows.map((r, i) => (
+                  <TopRow
+                    key={r.name}
+                    row={r}
+                    rank={(page - 1) * DRAWER_PAGE + i + 1}
+                    share={sum ? rowCount(r) / sum : 0}
+                    dimension={metric.metricOf}
+                    selected={selected === r.name}
+                    onClick={() => {
+                      setDrawer(false);
+                      void onClickHandler(null, r);
+                    }}
+                  />
+                ))}
+              </ol>
             </div>
-          )}
-        </div>
+          </EntityDrawer>
+        </span>
       )}
     </div>
+  );
+}
+
+const DRAWER_PAGE = 20;
+const rowCount = (r: any) =>
+  Number(String(r.sessionCount ?? 0).replace(/[^0-9.]/g, '')) || 0;
+const pct = (x: number) =>
+  x >= 0.1 ? `${Math.round(x * 10) / 10}%` : x > 0 ? '<0.1%' : '0%';
+
+function RowMark({ dimension, row }: { dimension: string; row: any }) {
+  const label = String(row.name ?? '');
+  switch (dimension) {
+    case FilterKey.USER_BROWSER:
+      return <BrowserIcon name={label} size={15} />;
+    case FilterKey.USERID:
+      return (
+        <SessionAvatar seed={hashString(label || 'Anonymous')} size={18} />
+      );
+    case FilterKey.USER_DEVICE: {
+      const l = label.toLowerCase();
+      const I = /ipad|tablet/.test(l)
+        ? Tablet
+        : /mobile|iphone|android|smartphone|phone|moto/.test(l)
+          ? Smartphone
+          : /desktop|mac|windows|linux|laptop/.test(l)
+            ? Monitor
+            : MonitorSmartphone;
+      return <I size={15} strokeWidth={1.75} />;
+    }
+    case FilterKey.RESOLUTIONS: {
+      const w = parseInt(label, 10) || 0;
+      const I =
+        w >= 1920
+          ? Monitor
+          : w >= 1280
+            ? Laptop
+            : w >= 800
+              ? Tablet
+              : Smartphone;
+      return <I size={15} strokeWidth={1.75} />;
+    }
+    case FilterKey.REFERRER:
+      return <Globe size={15} strokeWidth={1.75} />;
+    case FilterKey.FETCH:
+      return /\.(m?js|css|json|map|ts)(\?|$)/.test(label) ? (
+        <FileCode2 size={15} strokeWidth={1.75} />
+      ) : (
+        <ArrowUpDown size={15} strokeWidth={1.75} />
+      );
+    case FilterKey.LOCATION:
+      return <Link size={15} strokeWidth={1.75} />;
+    default:
+      return <>{row.icon}</>;
+  }
+}
+
+function TopRow({
+  row,
+  rank,
+  share,
+  dimension,
+  selected,
+  onClick,
+}: {
+  row: any;
+  rank?: number;
+  share?: number;
+  dimension: string;
+  selected: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onClick();
+        }}
+        className={`m-top__row${selected ? ' is-selected' : ''}${rank != null ? ' has-rank' : ''}`}
+      >
+        {rank != null && <span className="m-top__rank">{rank}</span>}
+        <span className="m-top__mark" aria-hidden="true">
+          <RowMark dimension={dimension} row={row} />
+        </span>
+        <span className="m-top__label m-truncate" title={row.displayName}>
+          {row.displayName}
+        </span>
+        <span className="m-top__bar" aria-hidden="true">
+          <i style={{ width: `${Math.max(1.5, row.progress ?? 0)}%` }} />
+        </span>
+        <span className="m-top__value">
+          {row.sessionCount}
+          {share != null && (
+            <span className="m-top__share">{pct(share * 100)}</span>
+          )}
+        </span>
+      </button>
+    </li>
   );
 }
 

@@ -1,85 +1,82 @@
+import { EmptyState } from '@/ui/feedback/EmptyState';
+import { ListFooter } from '@/ui/layout/ListFooter';
 import { observer } from 'mobx-react-lite';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useStore } from 'App/mstore';
 import Session from 'App/mstore/types/session';
-import { NoContent, Pagination } from 'UI';
 
-import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
-import SessionItem from 'Shared/SessionItem';
+import {
+  type SessionField,
+  SessionsTable,
+  type SessionsTableProps,
+} from 'Shared/SessionsTable/SessionsTable';
+import { useOpenSession } from 'Shared/SessionsTable/useOpenSession';
+
+const FIELDS: readonly SessionField[] = [
+  'started',
+  'duration',
+  'events',
+  'location',
+  'device',
+];
 
 interface Props {
   metric: any;
   isTemplate?: boolean;
   isEdit?: boolean;
+  height?: number;
   data: any;
 }
 
-function CustomMetricTableSessions(props: Props) {
+/** The legacy sessions table card. */
+function CustomMetricTableSessions({ isEdit = false, metric, data }: Props) {
   const { t } = useTranslation();
-  const { isEdit = false, metric, data } = props;
+  const { open, hover } = useOpenSession();
 
   const sessions = useMemo(
-    () =>
-      data && data.sessions
-        ? data.sessions.map((session: any) => new Session().fromJson(session))
-        : [],
-    [],
+    () => (data?.sessions ?? []).map((s: any) => new Session().fromJson(s)),
+    [data],
   );
 
+  if (!metric || sessions.length === 0) {
+    return (
+      <EmptyState
+        art="search"
+        title={t('No sessions in this period')}
+        hint={t('Widen the time range or loosen the filters.')}
+      />
+    );
+  }
+
   return (
-    <NoContent
-      show={!metric || !data || !sessions || sessions.length === 0}
-      size="small"
-      title={
-        <div className="flex items-center justify-center flex-col">
-          <AnimatedSVG name={ICONS.NO_SESSIONS} size={170} />
-          <div className="mt-4" />
-          <div className="text-center">
-            {t('No relevant sessions found for the selected time period')}
-          </div>
-        </div>
-      }
-    >
-      <div className="pb-4">
-        {sessions &&
-          sessions.map((session: any, index: any) => (
-            <div className="border-b last:border-none" key={session.sessionId}>
-              <SessionItem session={session} />
-            </div>
-          ))}
-
-        {isEdit && (
-          <div className="mt-6 flex items-center justify-center">
-            <Pagination
-              page={metric.page}
-              total={data.total}
-              onPageChange={(page: any) => metric.updateKey('page', page)}
-              limit={data.total}
-              debounceRequest={500}
-            />
-          </div>
-        )}
-
-        {!isEdit && <ViewMore total={data.total} limit={metric.limit} />}
-      </div>
-    </NoContent>
+    <div>
+      <SessionsTable
+        rows={sessions as unknown as SessionsTableProps['rows']}
+        fields={FIELDS}
+        onOpen={open}
+        onHover={hover}
+        liveBadge={false}
+        stickyHeader={false}
+      />
+      {isEdit ? (
+        <ListFooter
+          page={metric.page}
+          pageSize={metric.limit}
+          total={data.total}
+          noun={[t('session'), t('sessions')]}
+          onPage={(page) => metric.updateKey('page', page)}
+        />
+      ) : data.total > metric.limit ? (
+        <p className="px-6 py-3 text-xs text-content-muted">
+          {t('{{shown}} of {{total}} sessions', {
+            shown: sessions.length,
+            total: data.total.toLocaleString(),
+          })}
+        </p>
+      ) : null}
+    </div>
   );
 }
 
 export default observer(CustomMetricTableSessions);
-
-function ViewMore({ total, limit }: any) {
-  const { t } = useTranslation();
-  return total > limit ? (
-    <div className="mt-4 flex items-center justify-center cursor-pointer w-fit mx-auto">
-      <div className="text-center">
-        <div className="color-teal text-lg">
-          {t('All')}&nbsp;<span className="font-medium">{total}</span>&nbsp;
-          {t('sessions')}
-        </div>
-      </div>
-    </div>
-  ) : null;
-}

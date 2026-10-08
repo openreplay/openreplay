@@ -1,13 +1,15 @@
-import React from 'react';
-import { NoContent } from 'UI';
-import { getRE } from 'App/utils';
+import { NoContent } from '@/ui/feedback/NoContent';
 import cn from 'classnames';
+import { Info } from 'lucide-react';
+import React from 'react';
+
 import { NO_METRIC_DATA } from 'App/constants/messages';
-import { InfoCircleOutlined } from '@ant-design/icons';
-import stl from './callWithErrors.module.css';
-import MethodType from './MethodType';
-import ImageInfo from './ImageInfo';
+import { getRE } from 'App/utils';
+
 import { Table } from '../../common';
+import ImageInfo from './ImageInfo';
+import MethodType from './MethodType';
+import stl from './callWithErrors.module.css';
 
 const cols = [
   {
@@ -65,7 +67,7 @@ function CallWithErrors(props: Props) {
       size="small"
       title={
         <div className="flex items-center gap-2 text-base font-normal">
-          <InfoCircleOutlined size={12} /> {NO_METRIC_DATA}
+          <Info size={12} /> {NO_METRIC_DATA}
         </div>
       }
       show={data.chart.length === 0}

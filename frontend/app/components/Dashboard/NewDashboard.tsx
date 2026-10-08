@@ -1,10 +1,12 @@
-import React, { useEffect } from 'react';
-import { observer } from 'mobx-react-lite';
-import { useStore } from 'App/mstore';
-import { withRouter, RouteComponentProps } from 'App/routing';
-import { Loader } from 'UI';
-import { withSiteId, dashboard, metrics } from 'App/routes';
+import { Loader } from '@/ui/feedback/Loader';
 import withPermissions from 'HOCs/withPermissions';
+import { observer } from 'mobx-react-lite';
+import React, { useEffect } from 'react';
+
+import { useStore } from 'App/mstore';
+import { dashboard, metrics, withSiteId } from 'App/routes';
+import { RouteComponentProps, withRouter } from 'App/routing';
+
 import DashboardRouter from './components/DashboardRouter';
 
 interface RouterProps {

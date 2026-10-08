@@ -1,11 +1,18 @@
-import React from 'react';
-import { Table, Dropdown } from 'antd';
-import type { TableProps } from 'antd';
-import Widget from 'App/mstore/types/widget';
-import Funnel from 'App/mstore/types/funnel';
+import { IconButton } from '@/ui/actions/IconButton';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItems,
+  DropdownMenuTrigger,
+} from '@/ui/actions/dropdown-menu';
+import { type Column, DataTable } from '@/ui/data/table';
 import { EllipsisVertical } from 'lucide-react';
-import { exportAntCsv } from 'App/utils';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+
+import Funnel from 'App/mstore/types/funnel';
+import Widget from 'App/mstore/types/widget';
+import { exportAntCsv } from 'App/utils';
 
 interface Props {
   metric?: Widget;
@@ -15,14 +22,15 @@ interface Props {
 
 function FunnelTable(props: Props) {
   const { t } = useTranslation();
-  const defaultTableProps: TableProps['columns'] = [
+  /* antd-shaped column specs: `exportAntCsv` reads `dataIndex` / `_pureTitle` */
+  const defaultTableProps: Record<string, any>[] = [
     {
       title: 'Conversion %',
+      _pureTitle: 'Conversion %',
       dataIndex: 'conversion',
       key: 'conversion',
-      fixed: 'left',
       width: 140,
-      render: (text: string, _, index) => (
+      render: (text: string, _: any, index: number) => (
         <div className="w-full justify-between flex">
           <div>
             {t('Overall')}
@@ -39,7 +47,8 @@ function FunnelTable(props: Props) {
     },
   ];
   const [tableProps, setTableProps] = React.useState(defaultTableProps);
-  const [tableData, setTableData] = React.useState(defaultData);
+  const [tableData, setTableData] =
+    React.useState<Record<string, any>[]>(defaultData);
 
   const joinWithOr = (vals: any[]) =>
     (vals || []).map((v) => String(v)).join(` ${t('or')} `);
@@ -64,13 +73,15 @@ function FunnelTable(props: Props) {
     const tablePropsCopy = [...defaultTableProps];
     const tableDataCopy: any[] = [{ ...defaultData[0] }];
 
-    const colsAmount = funnel.stages.length + 1;
-    const colSize = Math.round(100 / colsAmount);
     funnel.stages.forEach((st: any, ind: number) => {
       const title = buildStageTitle(st);
-      const className = `w-${colSize} max-w-[500px] overflow-hidden text-ellipsis`;
       tablePropsCopy.push({
-        title: <div className={className}>{title}</div>,
+        title: (
+          <div className="max-w-[500px] overflow-hidden text-ellipsis">
+            {title}
+          </div>
+        ),
+        _pureTitle: title,
         dataIndex: `st_${ind}`,
         key: `st_${ind}`,
         ellipsis: true,
@@ -92,18 +103,30 @@ function FunnelTable(props: Props) {
     setTableData(tableDataCopy);
   }, [props.data, props.compData, t]);
 
+  const columns: Column<Record<string, any>>[] = tableProps.map((c) => ({
+    title: c.title,
+    key: c.key,
+    width: c.width,
+    render: (row, i) =>
+      c.render ? c.render(row[c.dataIndex], row, i) : row[c.dataIndex],
+  }));
+
   return (
     <div className="-mx-4 px-2">
       <div className="mt-2 relative">
-        <Table
-          bordered
-          columns={tableProps}
-          dataSource={tableData}
-          pagination={false}
-          size="middle"
-          scroll={{ x: 'max-content' }}
-          rowClassName={(_, index) => (index > 0 ? 'opacity-70' : '')}
-        />
+        <div className="overflow-x-auto">
+          <div style={{ minWidth: 140 + (tableProps.length - 1) * 140 }}>
+            <DataTable<Record<string, any>>
+              ariaLabel={t('Funnel conversion')}
+              columns={columns}
+              rows={tableData}
+              rowKey={(_, i) => String(i)}
+              rowClassName={(row) =>
+                tableData.indexOf(row) > 0 ? 'opacity-70' : undefined
+              }
+            />
+          </div>
+        </div>
         <TableExporter
           tableColumns={tableProps}
           tableData={tableData}
@@ -135,15 +158,22 @@ export function TableExporter({
       className={`absolute ${top || 'top-0'} ${right || '-right-1'}`}
       style={{ zIndex: 10 }}
     >
-      <Dropdown
-        menu={{
-          items: [{ key: 'download', label: 'Export to CSV', onClick }],
-        }}
-      >
-        <div className="flex items-center justify-center bg-gray-lighter cursor-pointer rounded-lg h-[38px]	w-[38px] btn-export-table-data">
-          <EllipsisVertical size={16} />
-        </div>
-      </Dropdown>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <span>
+            <IconButton
+              icon={<EllipsisVertical size={15} />}
+              label={t('Table actions')}
+              variant="ghost"
+            />
+          </span>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItems
+            items={[{ key: 'download', label: t('Export to CSV'), onClick }]}
+          />
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }

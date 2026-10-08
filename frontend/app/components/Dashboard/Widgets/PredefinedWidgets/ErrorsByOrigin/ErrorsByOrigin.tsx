@@ -1,11 +1,13 @@
 // @ts-nocheck
+import { NoContent } from '@/ui/feedback/NoContent';
+import { Info } from 'lucide-react';
 import React from 'react';
-import { NoContent } from 'UI';
-import TimeseriesChart from 'Components/Charts/TimeseriesChart';
-import { NO_METRIC_DATA } from 'App/constants/messages';
-import { InfoCircleOutlined } from '@ant-design/icons';
-import { Styles } from '../../common';
 import { useTranslation } from 'react-i18next';
+
+import { NO_METRIC_DATA } from 'App/constants/messages';
+import TimeseriesChart from 'Components/Charts/TimeseriesChart';
+
+import { Styles } from '../../common';
 
 interface Props {
   data: any;
@@ -20,7 +22,7 @@ function ErrorsByOrigin(props: Props) {
       size="small"
       title={
         <div className="flex items-center gap-2 text-base font-normal">
-          <InfoCircleOutlined size={12} /> {NO_METRIC_DATA}
+          <Info size={12} /> {NO_METRIC_DATA}
         </div>
       }
       show={metric.data.chart && metric.data.chart.length === 0}
@@ -33,8 +35,16 @@ function ErrorsByOrigin(props: Props) {
         valueFormatter={Styles.tickFormatter}
         stack
         series={[
-          { key: 'firstParty', name: t('1st Party'), color: Styles.compareColors[0] },
-          { key: 'thirdParty', name: t('3rd Party'), color: Styles.compareColors[2] },
+          {
+            key: 'firstParty',
+            name: t('1st Party'),
+            color: Styles.compareColors[0],
+          },
+          {
+            key: 'thirdParty',
+            name: t('3rd Party'),
+            color: Styles.compareColors[2],
+          },
         ]}
       />
     </NoContent>

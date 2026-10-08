@@ -1,69 +1,39 @@
 import React from 'react';
-import { List, Progress, Typography } from 'antd';
-import cn from 'classnames';
+
+import '../charts.css';
 
 interface ListItem {
   icon?: any;
-  title: string;
+  name?: string;
+  title?: string;
   progress: number;
   value?: number;
+  domain?: string;
 }
 
 interface Props {
   list: ListItem[];
 }
 
+/** A predefined widget's ranked list: icon, label, count, share bar. */
 function ListWithIcons({ list = [] }: Props) {
   return (
-    <List
-      dataSource={list}
-      split={false}
-      renderItem={(row: any) => (
-        <List.Item
-          key={row.domain}
-          // onClick={(e) => onClickHandler(e, row)} // Remove onClick handler to disable click interaction
-          style={{
-            borderBottom: '1px dotted rgba(0, 0, 0, 0.05)',
-            padding: '4px 10px',
-            lineHeight: '1px',
-          }}
-          className={cn('rounded-sm')} // Remove hover:bg-active-blue and cursor-pointer
-        >
-          <List.Item.Meta
-            className="m-0"
-            avatar={row.icon ? row.icon : null}
-            title={
-              <div className="m-0">
-                <div className="flex justify-between m-0 p-0">
-                  <Typography.Text className="w-[95%]!">
-                    {row.name}
-                  </Typography.Text>
-                  <Typography.Text type="secondary">
-                    {' '}
-                    {row.value}
-                  </Typography.Text>
-                </div>
-
-                <Progress
-                  percent={row.progress}
-                  showInfo={false}
-                  strokeColor={{
-                    '0%': '#394EFF',
-                    '100%': '#394EFF',
-                  }}
-                  size={['small', 2]}
-                  style={{
-                    padding: '0 0px',
-                    margin: '0 0px',
-                    height: 4,
-                  }}
-                />
-              </div>
-            }
-          />
-        </List.Item>
-      )}
-    />
+    <div className="m-vlist">
+      {list.map((row, i) => (
+        <div key={row.domain ?? row.name ?? i} className="m-vlist__row">
+          {row.icon ?? null}
+          <div className="m-vlist__body">
+            <div className="m-vlist__line">
+              <span>{row.name ?? row.title}</span>
+              <span className="m-vlist__n">{row.value}</span>
+            </div>
+            <span className="m-vlist__bar">
+              <i style={{ width: `${row.progress}%` }} />
+            </span>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 

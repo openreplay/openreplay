@@ -1,6 +1,6 @@
+import { Button } from '@/ui/actions/button';
+import { Icon } from '@/ui/icons/Icon';
 import React from 'react';
-import { Progress, Button } from 'antd';
-import { Icon } from 'UI';
 import { useTranslation } from 'react-i18next';
 
 function LongLoader({
@@ -21,15 +21,9 @@ function LongLoader({
         <div>{t('Processing data...')}</div>
       </div>
       <div style={{ width: 180 }}>
-        <Progress
-          percent={40}
-          strokeColor={{
-            '0%': '#394EFF',
-            '100%': '#394EFF',
-          }}
-          status="active"
-          showInfo={false}
-        />
+        <div className="h-1.5 overflow-hidden rounded-full bg-[var(--m-surface-sunken)]">
+          <div className="m-skeleton h-full w-2/5 rounded-full bg-[var(--m-content-accent)]" />
+        </div>
       </div>
       <div>{t('This is taking longer than expected.')}</div>
       {withSampling ? (

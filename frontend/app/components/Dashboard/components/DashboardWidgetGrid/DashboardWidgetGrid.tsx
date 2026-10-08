@@ -1,119 +1,53 @@
-import { PlusOutlined } from '@ant-design/icons';
-import { Button, Popover, Tooltip } from 'antd';
-import cn from 'classnames';
+import { EmptyState } from '@/ui/feedback/EmptyState';
+import { Loader } from '@/ui/feedback/Loader';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useStore } from 'App/mstore';
 import WidgetWrapperNew from 'Components/Dashboard/components/WidgetWrapper/WidgetWrapperNew';
-import { Loader } from 'UI';
-
-import AddCardSection from '../AddCardSection/AddCardSection';
 
 interface Props {
   siteId: string;
-  dashboardId: string;
   id?: string;
+  addCard: React.ReactNode;
 }
 
-function DashboardWidgetGrid(props: Props) {
-  const { dashboardId, siteId } = props;
+function DashboardWidgetGrid({ siteId, id, addCard }: Props) {
+  const { t } = useTranslation();
   const { dashboardStore } = useStore();
-  const loading = dashboardStore.isLoading;
   const dashboard = dashboardStore.selectedDashboard;
-  const list = dashboard?.widgets;
+  const list = dashboard?.widgets ?? [];
 
   return (
-    <Loader loading={loading}>
-      {list?.length === 0 ? (
-        <div
-          className="flex-1 flex justify-center items-center pt-10"
-          style={{ minHeight: 620 }}
-        >
-          <AddCardSection />
+    <Loader loading={dashboardStore.isLoading}>
+      {list.length === 0 ? (
+        <div className="m-panel">
+          <EmptyState
+            art="dashboard"
+            title={t('Nothing on this dashboard yet')}
+            hint={t(
+              'Add a card from the library and it takes its place in the grid.',
+            )}
+            action={addCard}
+          />
         </div>
       ) : (
-        <div
-          className="pb-10 px-4 pt-2 grid gap-2 rounded-sm grid-cols-4 items-start"
-          id={props.id}
-        >
-          {list?.map((item: any, index: any) => (
-            <GridItem
+        <div className="m-dash__grid" id={id}>
+          {list.map((item: any, index: number) => (
+            <WidgetWrapperNew
               key={item.widgetId}
-              item={item}
               index={index}
-              dashboard={dashboard}
-              dashboardId={dashboardId}
+              widget={item}
               siteId={siteId}
+              moveListItem={(from, to) =>
+                dashboard?.swapWidgetPosition(from, to)
+              }
             />
           ))}
         </div>
       )}
     </Loader>
-  );
-}
-
-// Map col values to Tailwind classes to prevent purging
-const colSpanMap: { [key: number]: string } = {
-  1: 'lg:col-span-1',
-  2: 'lg:col-span-2',
-  3: 'lg:col-span-3',
-  4: 'lg:col-span-4',
-};
-
-function GridItem({ item, index, dashboard, dashboardId, siteId }: any) {
-  const { t } = useTranslation();
-  const [popoverOpen, setPopoverOpen] = React.useState(false);
-  const handleOpenChange = (open: boolean) => {
-    setPopoverOpen(open);
-  };
-
-  return (
-    <div
-      key={item.widgetId}
-      className={cn(
-        'col-span-4',
-        colSpanMap[item.config.col] || 'lg:col-span-4',
-        'group relative md:p-2 hover:bg-active-blue w-full rounded-xl',
-      )}
-    >
-      <WidgetWrapperNew
-        index={index}
-        widget={item}
-        moveListItem={(dragIndex: any, hoverIndex: any) =>
-          dashboard?.swapWidgetPosition(dragIndex, hoverIndex)
-        }
-        dashboardId={dashboardId}
-        siteId={siteId}
-        grid="other"
-        showMenu
-        isSaved
-      />
-      <div
-        className={cn(
-          'invisible group-hover:visible hidden',
-          'absolute -left-2 top-1/2 -translate-y-1/2',
-        )}
-      >
-        <Popover
-          open={popoverOpen}
-          onOpenChange={handleOpenChange}
-          arrow={false}
-          overlayInnerStyle={{ padding: 0, borderRadius: '0.75rem' }}
-          content={<AddCardSection handleOpenChange={handleOpenChange} />}
-          trigger="click"
-        >
-          <Tooltip title={t('Add Card')}>
-            <Button
-              icon={<PlusOutlined size={14} />}
-              shape="circle"
-              size="small"
-            />
-          </Tooltip>
-        </Popover>
-      </div>
-    </div>
   );
 }
 

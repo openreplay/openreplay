@@ -1,12 +1,14 @@
-import React from 'react';
+import { useChartTheme } from '@/ui/data/chart';
 import { SunburstChart } from 'echarts/charts';
-import { echarts, defaultOptions } from '../init';
+import React from 'react';
+
+import { defaultOptions, echarts } from '../init';
 import DroppedSessionsList from './DroppedSessions';
 import {
-  convertSankeyToSunburst,
-  sunburstTooltip,
-  grayOutTree,
   applyColorMap,
+  convertSankeyToSunburst,
+  grayOutTree,
+  sunburstTooltip,
 } from './sunburstUtils';
 
 echarts.use([SunburstChart]);
@@ -30,6 +32,7 @@ const EChartsSunburst = (props: Props) => {
   const [chartData, setChartData] = React.useState<Record<string, any>>(null);
   const [legend, setLegend] = React.useState<Record<string, any>>({});
 
+  const theme = useChartTheme();
   React.useEffect(() => {
     if (!chartRef.current || !Array.isArray(data) || data.length === 0) return;
     const { tree, colors, dropsByUrl, legendMap } = convertSankeyToSunburst(
@@ -47,7 +50,7 @@ const EChartsSunburst = (props: Props) => {
         itemStyle: {
           borderRadius: 6,
           borderWidth: 3,
-          borderColor: 'var(--color-white)',
+          borderColor: theme.surface,
         },
         center: [inGrid ? '25%' : '50%', '50%'],
         clockwise: true,
@@ -67,7 +70,7 @@ const EChartsSunburst = (props: Props) => {
     return () => {
       setDropsByUrl(null);
     };
-  }, [data, height]);
+  }, [data, height, theme]);
 
   React.useEffect(() => {
     if (!chartRef.current || !chartData) return;

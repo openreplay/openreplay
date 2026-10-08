@@ -1,5 +1,6 @@
-import { makeAutoObservable, action } from 'mobx';
 import Alert, { IAlert } from 'Types/alert';
+import { action, makeAutoObservable } from 'mobx';
+
 import { alertsService } from 'App/services';
 
 export default class AlertsStore {
@@ -72,6 +73,7 @@ export default class AlertsStore {
       this.setLoading(true);
       try {
         await alertsService.remove(id);
+        this.setAlerts(this.alerts.filter((a) => String(a.alertId) !== id));
         resolve();
       } catch (e) {
         console.error(e);
@@ -96,8 +98,12 @@ export default class AlertsStore {
     }
   };
 
+  /** The editor works on a copy: unsaved edits must not show in the list. */
   init = (inst: Partial<IAlert> | Alert) => {
-    this.instance = inst instanceof Alert ? inst : new Alert(inst, false);
+    this.instance =
+      inst instanceof Alert
+        ? new Alert(JSON.parse(JSON.stringify(inst.toData())), inst.isExists)
+        : new Alert(inst, false);
   };
 
   edit = (diff: Partial<Alert>) => {

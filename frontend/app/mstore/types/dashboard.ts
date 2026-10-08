@@ -1,7 +1,9 @@
-import { makeAutoObservable, runInAction } from 'mobx';
-import { dashboardService } from 'App/services';
-import { toast } from 'react-toastify';
+import { toast } from '@/ui/overlays/toast';
 import { DateTime } from 'luxon';
+import { makeAutoObservable, runInAction } from 'mobx';
+
+import { dashboardService } from 'App/services';
+
 import Widget from './widget';
 
 export default class Dashboard {
@@ -165,6 +167,17 @@ export default class Dashboard {
           resolve();
         })
         .catch(() => {
+          // swap the pair back where they are now: a later drop may have
+          // moved them, so the original indices can't be restored blindly
+          runInAction(() => {
+            const ia = this.widgets.indexOf(widgetA);
+            const ib = this.widgets.indexOf(widgetB);
+            if (ia < 0 || ib < 0) return;
+            this.widgets[ia] = widgetB;
+            this.widgets[ib] = widgetA;
+            widgetA.position = ib;
+            widgetB.position = ia;
+          });
           toast.error('Error updating widget position');
           reject();
         });

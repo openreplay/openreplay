@@ -1,9 +1,10 @@
 import { FilterKey } from '@/types/filter/filterType';
-import { InfoCircleOutlined } from '@ant-design/icons';
+import { useChartTheme } from '@/ui/data/chart';
+import { NoContent } from '@/ui/feedback/NoContent';
 import { SankeyChart } from 'echarts/charts';
+import { Info } from 'lucide-react';
 import React from 'react';
-
-import { NoContent } from 'App/components/ui';
+import { useTranslation } from 'react-i18next';
 
 import { defaultOptions, echarts } from './init';
 import {
@@ -53,6 +54,8 @@ const subFilters = {
 type tHighlightedLink = { id: number; shape: 'link' | 'node' };
 
 const EChartsSankey = (props: Props) => {
+  const { t } = useTranslation();
+  const theme = useChartTheme();
   const highlightOn = props.drilldownFilter?.some((f) =>
     f.filters.find((subf: any) => subf.name === 'url_path'),
   );
@@ -108,10 +111,10 @@ const EChartsSankey = (props: Props) => {
         }
         const itemColor =
           computedName === 'Others'
-            ? 'rgba(34,44,154,.9)'
+            ? theme.series[1]
             : n.eventType === 'DROP'
-              ? '#B5B7C8'
-              : '#394eff';
+              ? theme.grid
+              : theme.series[0];
 
         return {
           name: computedName,
@@ -227,11 +230,22 @@ const EChartsSankey = (props: Props) => {
                 `{body|}{percentage|${percentage}}  {sessions|${nodeVal}}`
               );
             },
-            rich: linkIconStyles,
+            rich: {
+              ...linkIconStyles,
+              header: { ...linkIconStyles.header, color: theme.text },
+              body: { ...linkIconStyles.body, color: theme.text },
+              percentage: {
+                ...linkIconStyles.percentage,
+                color: theme.textMuted,
+              },
+              sessions: { ...linkIconStyles.sessions, color: theme.textMuted },
+            },
           },
           tooltip: {
             formatter: sankeyTooltip(echartNodes, nodeValues),
-            backgroundColor: 'var(--color-white)',
+            backgroundColor: theme.raised,
+            borderColor: theme.border,
+            textStyle: { color: theme.text },
           },
           nodeAlign: 'left',
           nodeWidth: 40,
@@ -242,7 +256,7 @@ const EChartsSankey = (props: Props) => {
             opacity: 0.1,
           },
           itemStyle: {
-            color: '#394eff',
+            color: theme.series[0],
             borderRadius: 7,
           },
         },
@@ -318,7 +332,7 @@ const EChartsSankey = (props: Props) => {
       chart.dispose();
       ro.disconnect();
     };
-  }, [data, height, onChartClick]);
+  }, [data, height, onChartClick, theme]);
 
   React.useEffect(() => {
     if (!chartRef.current) return;
@@ -350,7 +364,7 @@ const EChartsSankey = (props: Props) => {
           const extraStyle =
             idx === hoveredIndex
               ? {
-                  borderColor: '#000',
+                  borderColor: theme.text,
                   borderWidth: 1,
                   borderType: 'dotted',
                 }
@@ -416,9 +430,10 @@ const EChartsSankey = (props: Props) => {
         style={{ minHeight: height }}
         title={
           <div className="flex items-center relative">
-            <InfoCircleOutlined className="hidden md:inline-block mr-1" />
-            Set a start or end point to visualize the journey. If set, try
-            adjusting filters or time range.
+            <Info size={13} className="hidden md:inline-block mr-1" />
+            {t(
+              'Set a start or end point to visualize the journey. If set, try adjusting filters or time range.',
+            )}
           </div>
         }
         show={true}

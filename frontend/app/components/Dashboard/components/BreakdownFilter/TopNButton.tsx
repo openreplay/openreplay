@@ -1,4 +1,6 @@
-import { Button, InputNumber, Popover } from 'antd';
+import { Button } from '@/ui/actions/button';
+import { NumberInput } from '@/ui/inputs/number-input';
+import { PopoverPanel } from '@/ui/overlays/popover';
 import { ChevronDown } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
@@ -34,48 +36,49 @@ function TopNButton({ totalValues, onApply, value }: Props) {
     setOpen(false);
   };
 
-  const isShowingAll = onApply ? value == null || value === totalValues : topN === 0;
+  const isShowingAll = onApply
+    ? value == null || value === totalValues
+    : topN === 0;
   const label = isShowingAll
     ? t('Showing all values')
     : `${t('Showing top')} ${topN} ${t('values')}`;
 
   return (
-    <Popover
+    <PopoverPanel
       open={open}
       onOpenChange={setOpen}
-      trigger="click"
       placement="bottomLeft"
+      className="p-3"
       content={
         <div className="flex flex-col gap-2" style={{ width: 200 }}>
           <div className="flex items-center gap-2">
             <span className="text-sm whitespace-nowrap">{t('Show top')}</span>
-            <InputNumber
-              size="small"
+            <NumberInput
+              className="w-[70px]"
               min={1}
               max={totalValues || 999}
               value={draft}
               onChange={(v) => v && setDraft(v)}
-              style={{ width: 70 }}
             />
-            <Button size="small" type="primary" onClick={() => apply(draft)}>
+            <Button variant="primary" onClick={() => apply(draft)}>
               {t('Apply')}
             </Button>
           </div>
-          <Button size="small" type="default" block onClick={() => apply(3)}>
+          <Button className="w-full" onClick={() => apply(3)}>
             {t('Show top 3')}
           </Button>
           {totalValues != null && totalValues > 0 && (
-            <Button size="small" type="default" block onClick={() => apply(0)}>
+            <Button className="w-full" onClick={() => apply(0)}>
               {t('Show all')} ({totalValues}) {t('values')}
             </Button>
           )}
         </div>
       }
     >
-      <Button size="small" type="default">
+      <Button>
         {label} <ChevronDown size={14} />
       </Button>
-    </Popover>
+    </PopoverPanel>
   );
 }
 

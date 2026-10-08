@@ -1,7 +1,9 @@
-import { Select } from 'antd';
-import cn from 'classnames';
-import { X } from 'lucide-react';
+import { MenuButton } from '@/ui/actions/menu-button';
+import { Chip } from '@/ui/data/Chip';
+import { Sigma } from 'lucide-react';
 import React from 'react';
+
+import 'App/components/Dashboard/charts.css';
 
 interface Stats {
   Min: number;
@@ -206,126 +208,87 @@ function WebVitals({
     onFocus?.(filters);
     setSelectedCard(metricName);
   };
+  const modes = [
+    { value: 'P50', label: 'Median' },
+    { value: 'P75', label: '75th percentile' },
+    { value: 'P90', label: '90th percentile' },
+    { value: 'Avg', label: 'Avg' },
+    { value: 'Min', label: 'Min' },
+    { value: 'Max', label: 'Max' },
+  ] as const;
+  const selected = metrics.find((m) => m.metricKey === selectedCard);
+
   return (
-    <div className="flex flex-col gap-4">
-      {inGrid ? (
-        <div className="mt-2" />
-      ) : (
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <div className="font-semibold">Web Vitals</div>
-            {selectedCard ? (
-              <div
-                className={cn(
-                  'cursor-pointer text-sm text-black opacity-60',
-                  'flex items-center gap-1 hover:opacity-100',
-                )}
-                onClick={() => onMetricClick(null, 'good')}
-              >
-                <div>
-                  {metrics.find((m) => m.metricKey === selectedCard)
-                    ?.description ?? 'unknown metric'}
-                </div>
-                <div>&mdash;</div>
-                <div className="capitalize">{searchedBy}</div>
-                <X size={12} />
-              </div>
-            ) : null}
-          </div>
-          <div>
-            <Select
+    <div className={`m-vitals${inGrid ? ' is-compact' : ''}`}>
+      {inGrid ? null : (
+        <div className="m-vitals__bar">
+          {selected ? (
+            <Chip
+              kind="tag"
+              onRemove={() => onMetricClick(null, 'good')}
+              removeLabel="Clear drilldown"
+            >
+              {selected.description} — {searchedBy}
+            </Chip>
+          ) : null}
+          <span className="ml-auto">
+            <MenuButton<string>
+              ariaLabel="Aggregation"
+              icon={<Sigma />}
               value={mode}
-              popupMatchSelectWidth={false}
-              onChange={(value) => setMode(value)}
-              options={[
-                { label: 'Median', value: 'P50' },
-                { label: '75th percentile', value: 'P75' },
-                { label: '90th percentile', value: 'P90' },
-                { label: 'Avg', value: 'Avg' },
-                { label: 'Min', value: 'Min' },
-                { label: 'Max', value: 'Max' },
-              ]}
+              onChange={(v) => setMode(v as typeof mode)}
+              options={modes}
+              align="end"
             />
-          </div>
+          </span>
         </div>
       )}
-      <div className={'grid grid-cols-2 gap-4'}>
-        {metrics.map((metric) => (
-          <WebVitalsCard
-            key={metric.name}
-            metricKey={metric.metricKey}
-            name={metric.name}
-            value={metric.value}
-            description={metric.description}
-            status={metric.status}
-            isSelected={selectedCard === metric.metricKey}
-            onClick={onMetricClick}
-            inGrid={inGrid}
-          />
+      <div className="m-vitals__grid">
+        {metrics.map((m) => (
+          <button
+            key={m.name}
+            type="button"
+            className={`m-vitals__tile is-${m.status}${selectedCard === m.metricKey ? ' is-selected' : ''}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onMetricClick(m.metricKey as any, m.status);
+            }}
+            aria-label={`${m.description}: ${formatVital(m.metricKey, m.value)}, ${STATUS_LABEL[m.status]}`}
+          >
+            <span className="m-vitals__head">
+              <span className="m-vitals__label">{m.name}</span>
+              {inGrid ? null : (
+                <span className="m-vitals__name m-truncate">
+                  {m.description}
+                </span>
+              )}
+            </span>
+            <span className="m-vitals__value">
+              {formatVital(m.metricKey, m.value)}
+            </span>
+            <span className="m-vitals__status">
+              <i aria-hidden="true" />
+              {STATUS_LABEL[m.status]}
+            </span>
+          </button>
         ))}
       </div>
     </div>
   );
 }
 
-const colors = {
-  good: 'green-light',
-  medium: 'yellow',
-  bad: 'red-light',
-};
+const STATUS_LABEL = {
+  good: 'Good',
+  medium: 'Needs improvement',
+  bad: 'Poor',
+} as const;
 
-function WebVitalsCard({
-  name,
-  value,
-  description,
-  status,
-  onClick,
-  metricKey,
-  isSelected,
-  inGrid = false,
-}: {
-  name: string;
-  value: number;
-  description: string;
-  metricKey: string;
-  status: 'good' | 'medium' | 'bad';
-  onClick: (
-    metricName:
-      | 'domBuildingTime'
-      | 'ttfb'
-      | 'speedIndex'
-      | 'firstContentfulPaintTime'
-      | 'lcp'
-      | 'cls'
-      | null,
-    status: 'good' | 'medium' | 'bad',
-  ) => void;
-  isSelected: boolean;
-  inGrid?: boolean;
-}) {
-  const bg = colors[status] ?? '#cccccc';
-  const valueFormatted = value
-    ? value > 1000
-      ? `${(value / 1000).toFixed(2)}s`
-      : `${Math.round(value)}ms`
-    : 'N/A';
-  return (
-    <div
-      className={cn(
-        'flex justify-between items-start gap-2 border rounded-lg shadow-xs',
-        inGrid ? 'p-2' : 'p-4',
-        `bg-${bg} cursor-pointer`,
-        isSelected ? 'border-main' : 'border-transparent',
-      )}
-      onClick={() => onClick(metricKey, status)}
-    >
-      <div>
-        <div className="text-lg font-semibold">{name}</div>
-        <div className="text-sm text-disabled-text">{description}</div>
-      </div>
-      <div className="text-xl font-bold">{valueFormatted}</div>
-    </div>
-  );
+function formatVital(key: string, value: number) {
+  if (!value) return 'N/A';
+  if (key === 'cls') return value.toFixed(2);
+  return value >= 1000
+    ? `${(value / 1000).toFixed(2)} s`
+    : `${Math.round(value)} ms`;
 }
 
 export default WebVitals;

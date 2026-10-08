@@ -1,0 +1,35 @@
+.m-cohort {
+  overflow-x: auto;
+  width: 100%;
+}
+.m-cohort__table {
+  border-collapse: separate;
+  border-spacing: 4px;
+  width: max-content;
+  font-size: var(--m-text-xs);
+  color: var(--m-content-primary);
+}
+.m-cohort__table th {
+  height: 1.75rem;
+  padding: 0 var(--m-space-3);
+  font-weight: var(--m-weight-medium);
+  color: var(--m-content-muted);
+  text-align: center;
+}
+.m-cohort__table th.is-fixed,
+.m-cohort__table td.is-fixed {
+  text-align: left;
+  white-space: nowrap;
+}
+.m-cohort__span {
+  text-align: left !important;
+}
+.m-cohort__table td {
+  min-width: 4.5rem;
+  padding: var(--m-space-2) var(--m-space-3);
+  border-radius: var(--m-radius-control);
+}
+.m-cohort__cell {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
