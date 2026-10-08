@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 	"time"
 
@@ -41,6 +42,9 @@ func New(metrics database.Database, url string) (Pool, error) {
 		return nil, fmt.Errorf("pgxpool.ParseConfig error: %v", err)
 	}
 	cfg.AfterConnect = registerCustomTypes
+	if strings.EqualFold(os.Getenv("PG_LOG_QUERIES"), "true") {
+		cfg.ConnConfig.Tracer = queryTracer{}
+	}
 	conn, err := pgxpool.NewWithConfig(context.Background(), cfg)
 	if err != nil {
 		return nil, fmt.Errorf("pgxpool.NewWithConfig error: %v", err)
@@ -126,6 +130,56 @@ func (p *poolImpl) Ping(ctx context.Context) error {
 
 func (p *poolImpl) Close() {
 	p.conn.Close()
+}
+
+// queryTracer logs every query sent to PostgreSQL when PG_LOG_QUERIES=true.
+// It hooks pgx at the driver level, so queries from the pool, from
+// transactions and from batches are all covered, with the final SQL and
+// argument values as executed (named arguments are already rewritten to
+// positional ones at this point), plus duration and error.
+type queryTracer struct{}
+
+type traceQueryKey struct{}
+
+type traceQueryData struct {
+	start time.Time
+	sql   string
+	args  []any
+}
+
+func (queryTracer) TraceQueryStart(ctx context.Context, _ *pgx.Conn, data pgx.TraceQueryStartData) context.Context {
+	return context.WithValue(ctx, traceQueryKey{}, &traceQueryData{start: time.Now(), sql: data.SQL, args: data.Args})
+}
+
+func (queryTracer) TraceQueryEnd(ctx context.Context, _ *pgx.Conn, data pgx.TraceQueryEndData) {
+	q, ok := ctx.Value(traceQueryKey{}).(*traceQueryData)
+	if !ok {
+		return
+	}
+	if data.Err != nil {
+		log.Printf("PG query FAILED (%s): %v\nSQL: %s\nargs: %v", time.Since(q.start), data.Err, q.sql, q.args)
+		return
+	}
+	log.Printf("PG query (%s, %s)\nSQL: %s\nargs: %v", time.Since(q.start), data.CommandTag, q.sql, q.args)
+}
+
+func (queryTracer) TraceBatchStart(ctx context.Context, _ *pgx.Conn, data pgx.TraceBatchStartData) context.Context {
+	log.Printf("PG batch start (%d queries)", data.Batch.Len())
+	return ctx
+}
+
+func (queryTracer) TraceBatchQuery(_ context.Context, _ *pgx.Conn, data pgx.TraceBatchQueryData) {
+	if data.Err != nil {
+		log.Printf("PG batch query FAILED: %v\nSQL: %s\nargs: %v", data.Err, data.SQL, data.Args)
+		return
+	}
+	log.Printf("PG batch query (%s)\nSQL: %s\nargs: %v", data.CommandTag, data.SQL, data.Args)
+}
+
+func (queryTracer) TraceBatchEnd(_ context.Context, _ *pgx.Conn, data pgx.TraceBatchEndData) {
+	if data.Err != nil {
+		log.Printf("PG batch FAILED: %v", data.Err)
+	}
 }
 
 var customTypes = []string{"issue_type", "_issue_type"}

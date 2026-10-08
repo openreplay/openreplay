@@ -16,11 +16,10 @@ import (
 	"openreplay/backend/pkg/analytics/model"
 
 	"openreplay/backend/pkg/logger"
-	"openreplay/backend/pkg/projects"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/jackc/pgx/v5"
-	"github.com/lib/pq"
+	"github.com/jellydator/ttlcache/v3"
 )
 
 type Search interface {
@@ -35,18 +34,36 @@ type searchImpl struct {
 	pgConn     pool.Pool
 	Logger     logger.Logger
 	filterRefs []lexicon.FilterRef
-	projects   projects.Projects
+	metaCache  *ttlcache.Cache[int, map[string]string]
 }
 
-func New(logger logger.Logger, chConn driver.Conn, pgConn pool.Pool, segments lexicon.Segments, projectsService projects.Projects) (Search, error) {
+// newMetadataCache builds the per-project metadata columns cache. A TTL <= 0
+// disables caching (nil cache). TouchOnHit is disabled so entries expire a
+// fixed TTL after they were fetched, not after last use.
+func newMetadataCache(ttl time.Duration) *ttlcache.Cache[int, map[string]string] {
+	if ttl <= 0 {
+		return nil
+	}
+	c := ttlcache.New[int, map[string]string](
+		ttlcache.WithTTL[int, map[string]string](ttl),
+		ttlcache.WithDisableTouchOnHit[int, map[string]string](),
+	)
+	go c.Start() // evicts expired entries in the background
+	return c
+}
+
+// New creates the sessions search service. metadataCacheTTL controls how long
+// a project's metadata column names (getMetadataColumns) are served from
+// memory before being re-read from PostgreSQL; a TTL <= 0 disables the cache.
+func New(logger logger.Logger, chConn driver.Conn, pgConn pool.Pool, segments lexicon.Segments, metadataCacheTTL time.Duration) (Search, error) {
 	return &searchImpl{
-		chConn:   chConn,
-		pgConn:   pgConn,
-		Logger:   logger,
-		projects: projectsService,
+		chConn: chConn,
+		pgConn: pgConn,
+		Logger: logger,
 		filterRefs: []lexicon.FilterRef{
 			lexicon.NewSegmentFilterRef(segments),
 		},
+		metaCache: newMetadataCache(metadataCacheTTL),
 	}, nil
 }
 
@@ -311,24 +328,46 @@ func sortedMetadataColumns(metasMap map[string]string) []string {
 	return keys
 }
 
+// getMetadataColumns reads the project's configured metadata names directly
+// from PostgreSQL. It deliberately avoids projects.GetProject, which serves a
+// cached project copy and pulls in the whole projects service as a dependency.
+// Successful results are cached in memory for metaCacheTTL (METADATA_CACHE_TTL,
+// default 5m); errors are not cached. The returned map must not be mutated.
 func (s *searchImpl) getMetadataColumns(projectId int) map[string]string {
 	result := make(map[string]string)
-	if s.projects == nil {
+	if s.pgConn == nil {
 		return result
 	}
-	p, err := s.projects.GetProject(uint32(projectId))
+
+	if s.metaCache != nil {
+		if item := s.metaCache.Get(projectId); item != nil {
+			return item.Value()
+		}
+	}
+	metas := make([]*string, 10)
+	scanPtrs := make([]interface{}, len(metas))
+	for i := range metas {
+		scanPtrs[i] = &metas[i]
+	}
+	err := s.pgConn.QueryRow(`
+		SELECT metadata_1, metadata_2, metadata_3, metadata_4, metadata_5,
+		       metadata_6, metadata_7, metadata_8, metadata_9, metadata_10
+		FROM public.projects
+		WHERE project_id = @projectId`,
+		pgx.NamedArgs{"projectId": projectId},
+	).Scan(scanPtrs...)
 	if err != nil {
 		s.Logger.Error(context.Background(), "Error getting project metadata: %v", err)
 		return result
-	}
-	metas := []*string{
-		p.Metadata1, p.Metadata2, p.Metadata3, p.Metadata4, p.Metadata5,
-		p.Metadata6, p.Metadata7, p.Metadata8, p.Metadata9, p.Metadata10,
 	}
 	for i, meta := range metas {
 		if meta != nil {
 			result[fmt.Sprintf("metadata_%d", i+1)] = *meta
 		}
+	}
+
+	if s.metaCache != nil {
+		s.metaCache.Set(projectId, result, ttlcache.DefaultTTL)
 	}
 	return result
 }
@@ -407,48 +446,13 @@ LIMIT @limit OFFSET @offset`,
 	resp := &model.GetSessionsResponse{Sessions: make([]model.Session, 0)}
 	metasMap := s.getMetadataColumns(projectId)
 
-	for rows.Next() {
-		var session model.Session
-		err := rows.Scan(
-			&session.SessionId,
-			&session.ProjectId,
-			&session.StartTs,
-			&session.Duration,
-			&session.Platform,
-			&session.Timezone,
-			&session.UserId,
-			&session.UserUuid,
-			&session.UserAnonymousId,
-			&session.UserBrowser,
-			&session.UserCity,
-			&session.UserCountry,
-			&session.UserDevice,
-			&session.UserDeviceType,
-			&session.UserOs,
-			&session.UserState,
-			&session.EventsCount,
-			&session.PagesCount,
-			&session.IssueTypes,
-			&session.Viewed,
-			&session.TotalNumberOfSessions,
-			&session.Metadata1,
-			&session.Metadata2,
-			&session.Metadata3,
-			&session.Metadata4,
-			&session.Metadata5,
-			&session.Metadata6,
-			&session.Metadata7,
-			&session.Metadata8,
-			&session.Metadata9,
-			&session.Metadata10,
-		)
-		if err != nil {
-			s.Logger.Error(context.Background(), "Error scanning row: %s", err)
-			return nil, err
-		}
-
-		resp.Sessions = append(resp.Sessions, session)
+	// Columns are mapped to model.Session fields by name via the db tags.
+	sessions, err := pgx.CollectRows(rows, pgx.RowToStructByNameLax[model.Session])
+	if err != nil {
+		s.Logger.Error(context.Background(), "Error scanning bookmarked sessions: %s", err)
+		return nil, err
 	}
+	resp.Sessions = append(resp.Sessions, sessions...)
 
 	if len(resp.Sessions) > 0 {
 		resp.Total = resp.Sessions[0].TotalNumberOfSessions

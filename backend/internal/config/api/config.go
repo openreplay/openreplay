@@ -22,6 +22,9 @@ type Config struct {
 	FSDir                 string        `env:"FS_DIR,required"`
 	SpotsDir              string        `env:"SPOTS_DIR,default=spots"`
 	ProjectExpiration     time.Duration `env:"PROJECT_EXPIRATION,default=10m"`
+	MetadataCacheTTL      int           `env:"METADATA_CACHE_TTL,default=300"`        // seconds
+	SessionExistsCacheTTL int           `env:"SESSION_EXISTS_CACHE_TTL,default=3600"` // seconds
+	SessionWindowCacheTTL int           `env:"SESSION_WINDOW_CACHE_TTL,default=60"`   // seconds
 	MinimumStreamDuration int           `env:"MINIMUM_STREAM_DURATION,default=15000"` // 15s
 	AssistUrl             string        `env:"ASSIST_URL"`
 	AssistKey             string        `env:"ASSIST_KEY,default=assist-secret-key"`

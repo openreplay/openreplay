@@ -179,12 +179,14 @@ func getColumnAccessor(logical string, isNumeric bool, inDProperties, inProperti
 	colName = quote(colName)
 
 	if propKey.InDProperties || propKey.InProperties {
-		// JSON extraction - the property name is bound as a parameter
+		// The properties columns are native JSON-typed, so values are read
+		// through getSubcolumn (JSONExtract* only accepts JSON strings).
+		// The property name is bound as a parameter.
 		prop := qp.Add(propKey.LogicalProperty)
 		if isNumeric {
-			return fmt.Sprintf("JSONExtractFloat(%s, %s)", colName, prop), "singleColumn"
+			return fmt.Sprintf("toFloat64OrNull(toString(getSubcolumn(%s, %s)))", colName, prop), "singleColumn"
 		}
-		return fmt.Sprintf("JSONExtractString(%s, %s)", colName, prop), "singleColumn"
+		return fmt.Sprintf("toString(getSubcolumn(%s, %s))", colName, prop), "singleColumn"
 	} else {
 		return fmt.Sprintf("%s.\"%s\"", opts.MainTableAlias, propKey.LogicalProperty), "singleColumn"
 	}

@@ -10,21 +10,25 @@ import (
 )
 
 // CardBase Common fields for the Card entity
+// The db tags map PostgreSQL column names for pgx struct scanning; db:"-"
+// marks fields that never come from a query.
 type CardBase struct {
-	WidgetId      *int64         `json:"widgetId,omitempty" validate:"omitempty"`
-	MetricId      int64          `json:"metricId" validate:"omitempty"`
-	Name          string         `json:"name" validate:"required"`
-	IsPublic      bool           `json:"isPublic" validate:"omitempty"`
-	DefaultConfig map[string]any `json:"defaultConfig"`
-	Config        map[string]any `json:"config"`
-	Thumbnail     *string        `json:"thumbnail" validate:"omitempty,url"`
-	MetricType    string         `json:"metricType" validate:"required,oneof=timeseries table funnel pathAnalysis heatMap webVital"`
-	MetricOf      string         `json:"metricOf" validate:"required"`
-	MetricFormat  string         `json:"metricFormat" validate:"required,oneof=default sessionCount userCount eventCount percentage"`
-	ViewType      string         `json:"viewType" validate:"required,oneof=lineChart areaChart barChart progressChart pieChart metric tableView table chart sunburst"`
-	MetricValue   []string       `json:"metricValue" validate:"omitempty"`
-	Series        []model.Series `json:"series" validate:"required,dive"`
-	CardInfo
+	WidgetId      *int64         `json:"widgetId,omitempty" validate:"omitempty" db:"-"`
+	MetricId      int64          `json:"metricId" validate:"omitempty" db:"-"`
+	Name          string         `json:"name" validate:"required" db:"name"`
+	IsPublic      bool           `json:"isPublic" validate:"omitempty" db:"is_public"`
+	DefaultConfig map[string]any `json:"defaultConfig" db:"-"`
+	Config        map[string]any `json:"config" db:"-"`
+	Thumbnail     *string        `json:"thumbnail" validate:"omitempty,url" db:"thumbnail"`
+	MetricType    string         `json:"metricType" validate:"required,oneof=timeseries table funnel pathAnalysis heatMap webVital" db:"metric_type"`
+	MetricOf      string         `json:"metricOf" validate:"required" db:"metric_of"`
+	MetricFormat  string         `json:"metricFormat" validate:"required,oneof=default sessionCount userCount eventCount percentage" db:"metric_format"`
+	ViewType      string         `json:"viewType" validate:"required,oneof=lineChart areaChart barChart progressChart pieChart metric tableView table chart sunburst" db:"view_type"`
+	MetricValue   []string       `json:"metricValue" validate:"omitempty" db:"metric_value"`
+	Series        []model.Series `json:"series" validate:"required,dive" db:"-"`
+	// The db tag makes pgx treat the embedded struct as a single field, so
+	// the card_info JSON column decodes directly into it.
+	CardInfo `db:"card_info"`
 }
 
 type CardInfo struct {
@@ -39,14 +43,14 @@ type CardInfo struct {
 // Card Fields specific to database operations
 type Card struct {
 	CardBase
-	ProjectID  int64      `json:"projectId" validate:"required"`
-	UserID     int64      `json:"userId" validate:"required"`
-	CardID     int64      `json:"metricId"`
-	CreatedAt  time.Time  `json:"createdAt"`
-	DeletedAt  *time.Time `json:"deletedAt,omitempty"`
-	EditedAt   *time.Time `json:"updatedAt,omitempty"`
-	OwnerEmail *string    `json:"ownerEmail,omitempty"` // Email of the user who created the card
-	OwnerName  *string    `json:"ownerName,omitempty"`  // Name of the user who created the card
+	ProjectID  int64      `json:"projectId" validate:"required" db:"project_id"`
+	UserID     int64      `json:"userId" validate:"required" db:"user_id"`
+	CardID     int64      `json:"metricId" db:"metric_id"`
+	CreatedAt  time.Time  `json:"createdAt" db:"created_at"`
+	DeletedAt  *time.Time `json:"deletedAt,omitempty" db:"deleted_at"`
+	EditedAt   *time.Time `json:"updatedAt,omitempty" db:"edited_at"`
+	OwnerEmail *string    `json:"ownerEmail,omitempty" db:"email"`    // Email of the user who created the card
+	OwnerName  *string    `json:"ownerName,omitempty" db:"user_name"` // Name of the user who created the card
 }
 
 type CardSeriesBase struct {
@@ -70,7 +74,7 @@ type CardCreateRequest struct {
 
 type CardGetResponse struct {
 	Card
-	Series []model.Series `json:"series"`
+	Series []model.Series `json:"series" db:"-"`
 }
 
 type CardUpdateRequest struct {
