@@ -12,7 +12,6 @@ import (
 	"openreplay/backend/pkg/logger"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/lib/pq"
 )
 
 type Cards interface {
@@ -33,41 +32,18 @@ func New(log logger.Logger, conn pool.Pool) Cards {
 	return &cardsImpl{log: log, pgconn: conn}
 }
 
-type rowScanner interface {
-	Scan(dest ...interface{}) error
-}
-
-func (s *cardsImpl) scanCard(r rowScanner) (*CardGetResponse, error) {
-	c := &CardGetResponse{}
-	var rawInfo []byte
-	err := r.Scan(
-		&c.CardID,
-		&c.ProjectID,
-		&c.UserID,
-		&c.Name,
-		&c.MetricType,
-		&c.ViewType,
-		&c.MetricOf,
-		&c.MetricValue,
-		&c.MetricFormat,
-		&c.IsPublic,
-		&c.CreatedAt,
-		&c.EditedAt,
-		&rawInfo,
-	)
+// scanCard collects exactly one card row. Columns are mapped to
+// CardGetResponse fields by name via the db tags; the card_info JSON column
+// decodes directly into the embedded CardInfo.
+func (s *cardsImpl) scanCard(rows pgx.Rows, err error) (*CardGetResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	var info CardInfo
-	if json.Unmarshal(rawInfo, &info) == nil {
-		c.Rows = info.Rows
-		c.StepsBefore = info.StepsBefore
-		c.StepsAfter = info.StepsAfter
-		c.StartPoint = info.StartPoint
-		c.Excludes = info.Excludes
-		c.Breakdowns = info.Breakdowns
+	card, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByNameLax[CardGetResponse])
+	if err != nil {
+		return nil, err
 	}
-	return c, nil
+	return &card, nil
 }
 
 func (s *cardsImpl) createSeries(ctx context.Context, tx *pool.Tx, metricID int64, series []model.Series) ([]model.Series, error) {
@@ -88,7 +64,8 @@ func (s *cardsImpl) createSeries(ctx context.Context, tx *pool.Tx, metricID int6
 		args[fmt.Sprintf("filter%d", i)] = string(data)
 	}
 	query := fmt.Sprintf(
-		`INSERT INTO public.metric_series (metric_id,name,index,filter) VALUES %s RETURNING series_id,metric_id,name,index,filter`,
+		`INSERT INTO public.metric_series (metric_id,name,index,filter) 
+				VALUES %s RETURNING series_id,metric_id,name,index,filter`,
 		strings.Join(placeholders, ","),
 	)
 	r, err := tx.TxQuery(query, args)
@@ -110,22 +87,17 @@ func (s *cardsImpl) createSeries(ctx context.Context, tx *pool.Tx, metricID int6
 }
 
 func (s *cardsImpl) fetchSeries(metricID int64) ([]model.Series, error) {
-	const q = `SELECT series_id,metric_id,name,index,filter FROM public.metric_series WHERE metric_id=@metricId ORDER BY index`
+	const q = `SELECT series_id,metric_id,name,index,filter 
+				FROM public.metric_series 
+				WHERE metric_id=@metricId 
+				ORDER BY index`
 	rows, err := s.pgconn.Query(q, pgx.NamedArgs{"metricId": metricID})
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	var list []model.Series
-	for rows.Next() {
-		var srs model.Series
-		if err := rows.Scan(&srs.SeriesID, &srs.MetricID, &srs.Name, &srs.Index, &srs.Filter); err != nil {
-			s.log.Error(context.Background(), "scan series: %v", err)
-			continue
-		}
-		list = append(list, srs)
-	}
-	return list, nil
+	// Columns are mapped to model.Series fields by name via the db tags; the
+	// filter JSON column decodes directly into FilterGroup.
+	return pgx.CollectRows(rows, pgx.RowToStructByNameLax[model.Series])
 }
 
 func (s *cardsImpl) Create(projectID int, userID uint64, req *CardCreateRequest) (*CardGetResponse, error) {
@@ -155,12 +127,12 @@ func (s *cardsImpl) Create(projectID int, userID uint64, req *CardCreateRequest)
 			tx.TxCommit()
 		}
 	}()
-	const ins = `INSERT INTO public.metrics (
-		project_id,user_id,name,metric_type,view_type,
-		metric_of,metric_value,metric_format,is_public,card_info, thumbnail
-	) VALUES (@projectId,@userId,@name,@metricType,@viewType,@metricOf,@metricValue,@metricFormat,@isPublic,@cardInfo,@thumbnail)
-	RETURNING metric_id,project_id,user_id,name,metric_type,view_type,metric_of,metric_value,metric_format,is_public,created_at,edited_at,card_info`
-	row := tx.TxQueryRow(ins, pgx.NamedArgs{
+	const ins = `INSERT INTO public.metrics (project_id,user_id,name,metric_type,view_type,
+		metric_of,metric_value,metric_format,is_public,card_info, thumbnail) 
+	VALUES (@projectId,@userId,@name,@metricType,@viewType,@metricOf,@metricValue,@metricFormat,@isPublic,@cardInfo,@thumbnail)
+	RETURNING metric_id,project_id,user_id,name,metric_type,view_type,
+		metric_of,metric_value,metric_format,is_public,created_at,edited_at,card_info`
+	card, err := s.scanCard(tx.TxQuery(ins, pgx.NamedArgs{
 		"projectId":    projectID,
 		"userId":       userID,
 		"name":         req.Name,
@@ -172,8 +144,7 @@ func (s *cardsImpl) Create(projectID int, userID uint64, req *CardCreateRequest)
 		"isPublic":     req.IsPublic,
 		"cardInfo":     infoData,
 		"thumbnail":    req.Thumbnail,
-	})
-	card, err := s.scanCard(row)
+	}))
 	if err != nil {
 		return nil, fmt.Errorf("create card: %w", err)
 	}
@@ -186,8 +157,8 @@ func (s *cardsImpl) Create(projectID int, userID uint64, req *CardCreateRequest)
 }
 
 func (s *cardsImpl) Get(projectID int, cardID int64) (*CardGetResponse, error) {
-	const q = `SELECT metric_id,project_id,user_id,name,metric_type,view_type,metric_of,metric_value,metric_format,is_public,created_at,edited_at,card_info FROM public.metrics WHERE metric_id=@cardId AND project_id=@projectId AND deleted_at IS NULL`
-	return s.scanCard(s.pgconn.QueryRow(q, pgx.NamedArgs{"cardId": cardID, "projectId": projectID}))
+	const q = `SELECT metric_id,project_id,user_id,name,metric_type,view_type,metric_of,metric_value,metric_format,is_public,created_at,edited_at,COALESCE(card_info,'{}') AS card_info FROM public.metrics WHERE metric_id=@cardId AND project_id=@projectId AND deleted_at IS NULL`
+	return s.scanCard(s.pgconn.Query(q, pgx.NamedArgs{"cardId": cardID, "projectId": projectID}))
 }
 
 func (s *cardsImpl) GetWithSeries(projectID int, cardID int64) (*CardGetResponse, error) {
@@ -219,16 +190,16 @@ func (s *cardsImpl) GetAllPaginated(projectID int, filters CardListFilter, sort 
 	if t := filters.GetMetricTypeFilter(); t != nil {
 		if *t == "monitors" {
 			conds = append(conds, "m.metric_type = ANY(@metricTypes)")
-			params["metricTypes"] = pq.Array([]string{"table", "webVital"})
+			params["metricTypes"] = []string{"table", "webVital"}
 
 			conds = append(conds, "m.metric_of = ANY(@metricOfs)")
-			params["metricOfs"] = pq.Array([]string{"jsException", "errors", "issues"})
+			params["metricOfs"] = []string{"jsException", "errors", "issues"}
 		} else if *t == "web_analytics" {
 			conds = append(conds, "m.metric_type=@metricType")
 			params["metricType"] = "table"
 
 			conds = append(conds, "m.metric_of != ALL(@metricOfs)")
-			params["metricOfs"] = pq.Array([]string{"webVitalUrl", "jsException", "REQUEST"})
+			params["metricOfs"] = []string{"webVitalUrl", "jsException", "REQUEST"}
 		} else {
 			conds = append(conds, "m.metric_type=@metricType")
 			params["metricType"] = *t
@@ -238,7 +209,7 @@ func (s *cardsImpl) GetAllPaginated(projectID int, filters CardListFilter, sort 
 	if ids := filters.GetDashboardIDs(); len(ids) > 0 {
 		joinClause += " LEFT JOIN public.dashboard_widgets dw ON m.metric_id=dw.metric_id"
 		conds = append(conds, "dw.dashboard_id=ANY(@dashboardIds)")
-		params["dashboardIds"] = pq.Array(ids)
+		params["dashboardIds"] = ids
 	}
 	conds = append(conds, "m.deleted_at IS NULL")
 	where := "WHERE " + strings.Join(conds, " AND ")
@@ -251,34 +222,10 @@ func (s *cardsImpl) GetAllPaginated(projectID int, filters CardListFilter, sort 
 	if err != nil {
 		return nil, fmt.Errorf("get paginated: %w", err)
 	}
-	defer rows.Close()
-
-	var cards []CardListItem
-	var total, rowTotal int
-	for rows.Next() {
-		var c CardListItem
-		if err := rows.Scan(
-			&c.CardID,
-			&c.ProjectID,
-			&c.UserID,
-			&c.OwnerEmail,
-			&c.OwnerName,
-			&c.Name,
-			&c.MetricType,
-			&c.ViewType,
-			&c.MetricOf,
-			&c.MetricValue,
-			&c.MetricFormat,
-			&c.IsPublic,
-			&c.CreatedAt,
-			&c.EditedAt,
-			&c.DeletedAt,
-			&rowTotal,
-		); err != nil {
-			return nil, fmt.Errorf("scan paginated card: %w", err)
-		}
-		total = rowTotal
-		cards = append(cards, c)
+	// Columns are mapped to Card fields by name via the db tags.
+	cards, err := pgx.CollectRows(rows, pgx.RowToStructByNameLax[Card])
+	if err != nil {
+		return nil, fmt.Errorf("scan paginated cards: %w", err)
 	}
 
 	if len(cards) == 0 && offset > 0 {
@@ -350,8 +297,16 @@ func (s *cardsImpl) Update(projectID int, cardID int64, userID uint64, req *Card
 			tx.TxCommit()
 		}
 	}()
-	const upd = `UPDATE public.metrics SET name=@name,metric_type=@metricType,view_type=@viewType,metric_of=@metricOf,metric_value=@metricValue,metric_format=@metricFormat,is_public=@isPublic,card_info=@cardInfo,thumbnail=@thumbnail WHERE metric_id=@cardId AND project_id=@projectId AND deleted_at IS NULL RETURNING metric_id,project_id,user_id,name,metric_type,view_type,metric_of,metric_value,metric_format,is_public,created_at,edited_at,card_info`
-	row := tx.TxQueryRow(upd, pgx.NamedArgs{
+	const upd = `UPDATE public.metrics 
+				 SET name=@name,metric_type=@metricType,
+				     view_type=@viewType,metric_of=@metricOf,
+				     metric_value=@metricValue,metric_format=@metricFormat,
+				     is_public=@isPublic,card_info=@cardInfo,
+				     thumbnail=@thumbnail 
+				 WHERE metric_id=@cardId AND project_id=@projectId AND deleted_at IS NULL 
+				 RETURNING metric_id,project_id,user_id,name,metric_type,view_type,
+				 	metric_of,metric_value,metric_format,is_public,created_at,edited_at,card_info`
+	card, err := s.scanCard(tx.TxQuery(upd, pgx.NamedArgs{
 		"name":         req.Name,
 		"metricType":   req.MetricType,
 		"viewType":     req.ViewType,
@@ -363,8 +318,7 @@ func (s *cardsImpl) Update(projectID int, cardID int64, userID uint64, req *Card
 		"thumbnail":    req.Thumbnail,
 		"cardId":       cardID,
 		"projectId":    projectID,
-	})
-	card, err := s.scanCard(row)
+	}))
 	if err != nil {
 		return nil, fmt.Errorf("update card: %w", err)
 	}
@@ -381,7 +335,9 @@ func (s *cardsImpl) Update(projectID int, cardID int64, userID uint64, req *Card
 }
 
 func (s *cardsImpl) Delete(projectID int, cardID int64, userID uint64) error {
-	const del = `UPDATE public.metrics SET deleted_at = now() WHERE metric_id=@cardId AND project_id=@projectId AND deleted_at IS NULL`
+	const del = `UPDATE public.metrics 
+				 SET deleted_at = now() 
+				 WHERE metric_id=@cardId AND project_id=@projectId AND deleted_at IS NULL`
 	if err := s.pgconn.Exec(del, pgx.NamedArgs{"cardId": cardID, "projectId": projectID}); err != nil {
 		return fmt.Errorf("delete card: %w", err)
 	}
