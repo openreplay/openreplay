@@ -33,7 +33,14 @@ const COPY = {
 } as const;
 
 /** Webhook channels for Slack or Teams: the list, and one channel's form beside it. */
-function MessengerForm({ kind }: { kind: 'slack' | 'msteams' }) {
+function MessengerForm({
+  kind,
+  onAdd,
+}: {
+  kind: 'slack' | 'msteams';
+  /** replaces the webhook form for new channels (SaaS adds Slack ones through OAuth) */
+  onAdd?: () => void;
+}) {
   const { t } = useTranslation();
   const { hideModal } = useModal();
   const { integrationsStore } = useStore();
@@ -99,7 +106,7 @@ function MessengerForm({ kind }: { kind: 'slack' | 'msteams' }) {
           }
           actions={
             !editing && (
-              <Button size="sm" onClick={() => open({})}>
+              <Button size="sm" onClick={() => (onAdd ? onAdd() : open({}))}>
                 <Plus size={14} />
                 {t('Add channel')}
               </Button>
