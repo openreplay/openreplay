@@ -6,15 +6,18 @@
    transform cannot parse — jest.config.mjs maps this path to a stub. */
 const flagUrls = import.meta.glob<string>(
   '../../../node_modules/country-flag-icons/3x2/*.svg',
-  { query: '?url', import: 'default', eager: true },
+  {
+    query: '?url',
+    import: 'default',
+    eager: true,
+    // short keys ('./AD.svg'): the full node_modules path, 268 times, sat in the entry chunk
+    base: '../../../node_modules/country-flag-icons/3x2',
+  },
 );
 
 const byCode: Record<string, string> = {};
 for (const [filePath, url] of Object.entries(flagUrls)) {
-  const code = filePath.slice(
-    filePath.lastIndexOf('/') + 1,
-    -'.svg'.length,
-  );
+  const code = filePath.slice(filePath.lastIndexOf('/') + 1, -'.svg'.length);
   byCode[code] = url;
 }
 

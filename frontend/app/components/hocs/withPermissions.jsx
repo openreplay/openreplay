@@ -1,7 +1,10 @@
-import { useStore } from 'App/mstore';
-import React from 'react';
-import { NoPermission, NoSessionPermission } from 'UI';
 import { observer } from 'mobx-react-lite';
+import React from 'react';
+
+import { useStore } from 'App/mstore';
+
+import NoPermission from 'Shared/NoPermission/NoPermission';
+import NoSessionPermission from 'Shared/NoPermission/NoSessionPermission';
 
 export default (
     requiredPermissions,

@@ -1,12 +1,13 @@
-import Logo from '@/layout/Logo';
-import { Button, Card } from 'antd';
+import { Button } from '@/ui/actions/button';
+import { toast } from '@/ui/overlays/toast';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'react-toastify';
 
 import { client, useStore } from 'App/mstore';
 import { sessions, withSiteId } from 'App/routes';
 import { useLocation, useNavigate } from 'App/routing';
+
+import AuthScreen from '../Auth/AuthScreen';
 
 function McpAuthorize() {
   const { t } = useTranslation();
@@ -47,45 +48,61 @@ function McpAuthorize() {
   };
 
   return (
-    <div className="flex items-center justify-center bg-gray-lightest fixed top-0 bottom-0 left-0 right-0">
-      <Card style={{ width: 400 }}>
-        <div className="flex flex-col items-center gap-4">
-          <Logo siteId={projectsStore.activeSiteId} />
-          {authorized ? (
-            <div className="flex flex-col items-center gap-4">
-              <div className="text-center">
-                {t('Authorization successful. You can close this page now.')}
-              </div>
-              <div className="link" onClick={openRoot}>
-                {t('Back to Openreplay')}
-              </div>
-            </div>
-          ) : (
+    <AuthScreen other={null} step={authorized ? 'done' : 'ask'}>
+      <div className="m-auth__form">
+        <header className="m-auth__head">
+          <h1 className="m-auth__title" id="m-auth-title">
+            {authorized ? t('Connected') : t('Connect the MCP app')}
+          </h1>
+          <p className="m-auth__lede">
+            {authorized
+              ? t('Authorization successful. You can close this page now.')
+              : t(
+                  'Openreplay MCP Application would like to connect to your account',
+                )}
+          </p>
+        </header>
+        <div className="m-auth__fields">
+          {authorized ? null : (
             <>
-              <div className="text-center">
-                <div>
-                  {t(
-                    'Openreplay MCP Application would like to connect to your account',
-                  )}
-                </div>
-                <div className="font-semibold mt-1">{accountName}</div>
-              </div>
-              <div className="flex flex-col items-center gap-2 w-full mt-2">
-                <Button type="primary" block onClick={handleAuthorize}>
-                  {t('Authorize')}
-                </Button>
-                <Button block onClick={handleLogout}>
-                  {t('Logout')}
-                </Button>
-                <div className="link mt-2" onClick={openRoot}>
-                  {t('Back to Openreplay')}
-                </div>
-              </div>
+              <p className="text-sm font-medium text-content-primary">
+                {accountName}
+              </p>
+              {/* say who is asking: the request comes from a link, so the
+                  person approving should see the client it names */}
+              <p className="text-xs text-content-muted">
+                {t('Requesting client')}:{' '}
+                <span className="m-mono text-content-primary">
+                  {clientId || t('unknown')}
+                </span>
+              </p>
             </>
           )}
+          <div className="flex flex-col gap-2">
+            {authorized ? null : (
+              <>
+                <Button
+                  variant="primary"
+                  size="md"
+                  className="w-full"
+                  onClick={handleAuthorize}
+                  // a link without a client and state has nothing to authorize
+                  disabled={!clientId || !state}
+                >
+                  {t('Authorize')}
+                </Button>
+                <Button size="md" className="w-full" onClick={handleLogout}>
+                  {t('Log out')}
+                </Button>
+              </>
+            )}
+            <Button variant="subtle" className="w-full" onClick={openRoot}>
+              {t('Back to OpenReplay')}
+            </Button>
+          </div>
         </div>
-      </Card>
-    </div>
+      </div>
+    </AuthScreen>
   );
 }
 

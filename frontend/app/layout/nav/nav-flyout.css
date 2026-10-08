@@ -1,0 +1,45 @@
+.m-flyout-root {
+  padding: var(--m-space-2) var(--m-space-2) var(--m-space-2) 6px;
+}
+
+.m-flyout {
+  width: 11rem;
+  border-radius: var(--m-radius-surface);
+  border: 1px solid var(--m-border-subtle);
+  background: var(--m-surface-raised);
+  box-shadow: var(--m-shadow-popover);
+  overflow: clip;
+}
+
+.m-flyout__head {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-4);
+  height: 1.75rem;
+  padding-inline: var(--m-space-3);
+}
+
+.m-flyout__name {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--m-text-sm);
+  font-weight: var(--m-weight-medium);
+  color: var(--m-content-primary);
+}
+
+.m-flyout__count {
+  font-family: var(--m-font-num);
+  flex: none;
+  font-size: var(--m-text-xs);
+  color: var(--m-content-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.m-flyout__sections {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-top: var(--m-space-2);
+  padding-top: var(--m-space-2);
+  border-top: 1px solid var(--m-border-subtle);
+}

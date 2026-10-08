@@ -1,146 +1,159 @@
-import React, { useState } from 'react';
-import { Loader, Icon } from 'UI';
+import { Button } from '@/ui/actions/button';
+import { Notice } from '@/ui/feedback/Notice';
+import { Field } from '@/ui/inputs/Field';
+import { Input } from '@/ui/inputs/input';
+import { Mail, MailCheck, SquareArrowOutUpRight } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
-import { useStore } from 'App/mstore';
-import { Form, Input, Button, Typography } from 'antd';
-import { SquareArrowOutUpRight } from 'lucide-react';
+import React, { type FormEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { useStore } from 'App/mstore';
+import { login } from 'App/routes';
+import { useNavigate } from 'App/routing';
+import { validateEmail } from 'App/validate';
 import withCaptcha, { WithCaptchaProps } from 'App/withRecaptcha';
 
-interface Props {}
+const SMTP_DOCS =
+  'https://docs.openreplay.com/en/configuration/configure-smtp/';
 
-function ResetPasswordRequest(props: Props & WithCaptchaProps) {
+function ResetPasswordRequest({
+  submitWithCaptcha,
+  isVerifyingCaptcha,
+  resetCaptcha,
+}: WithCaptchaProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { userStore } = useStore();
-  const { loading } = userStore;
-  const { requestResetPassword } = userStore;
-  const [requested, setRequested] = useState(false);
   const [email, setEmail] = useState('');
-  const [error, setError] = useState(null);
-  const [smtpError, setSmtpError] = useState<boolean>(false);
+  const [sentTo, setSentTo] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [smtpError, setSmtpError] = useState(false);
+  const busy = userStore.loading || isVerifyingCaptcha;
 
-  const { submitWithCaptcha, isVerifyingCaptcha, resetCaptcha } = props;
-
-  const write = (e: any) => {
-    const { name, value } = e.target;
-    if (name === 'email') setEmail(value);
-  };
-
-  const onSubmit = () => {
-    // Validation check
-    if (!email || email.trim() === '') {
-      return;
-    }
-
-    submitWithCaptcha({ email: email.trim() })
-      .then((data) => {
-        handleSubmit(data['g-recaptcha-response']);
-      })
-      .catch((error: any) => {
-        console.error('Captcha verification failed:', error);
-      });
-  };
-
-  const handleSubmit = (token?: string) => {
+  const send = (token?: string) => {
     setError(null);
-    requestResetPassword({ email: email.trim(), 'g-recaptcha-response': token })
+    setSmtpError(false);
+    const to = email.trim();
+    userStore
+      .requestResetPassword({ email: to, 'g-recaptcha-response': token })
+      .then(() => setSentTo(to))
       .catch((err: any) => {
-        if (err.message?.toLowerCase().includes('smtp')) {
-          setSmtpError(true);
-        }
-
-        setError(err.message);
-        // Reset captcha for the next attempt
+        setSmtpError(!!err.message?.toLowerCase().includes('smtp'));
+        setError(err.message || t('Something went wrong'));
         resetCaptcha();
-      })
-      .finally(() => {
-        setRequested(true);
       });
   };
+
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!validateEmail(email.trim())) return;
+    submitWithCaptcha({ email: email.trim() })
+      .then((data) => send(data['g-recaptcha-response']))
+      .catch((err: any) => console.error('Captcha verification failed:', err));
+  };
+
+  if (sentTo) {
+    return (
+      <div className="m-auth__done" role="status">
+        <span className="m-auth__mark" aria-hidden="true">
+          <MailCheck size={18} strokeWidth={1.75} />
+        </span>
+        <div>
+          <h1 className="m-auth__title" id="m-auth-title">
+            {t('Check your email')}
+          </h1>
+          <p className="m-auth__lede mt-2">
+            {t('A reset link was sent to')} <strong>{sentTo}</strong>.{' '}
+            {t('Open it to choose a new password.')}
+          </p>
+        </div>
+        <div className="m-auth__done-actions">
+          <Button
+            variant="secondary"
+            size="md"
+            onClick={() => navigate(login())}
+          >
+            {t('Back to sign in')}
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <Form
-      onFinish={onSubmit}
-      style={{ minWidth: '50%' }}
-      className="flex flex-col"
-    >
-      <Loader loading={loading || isVerifyingCaptcha}>
-        {!requested && (
-          <>
-            <Form.Item>
-              <label>{t('Email Address')}</label>
-              <Input
-                autoFocus
-                autoComplete="email"
-                type="email"
-                placeholder={t('Email')}
-                name="email"
-                onChange={write}
-                className="w-full"
-                prefix={<Icon name="envelope" size={16} />}
-                required
-              />
-            </Form.Item>
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={loading || isVerifyingCaptcha}
-              disabled={loading || isVerifyingCaptcha}
-            >
-              {isVerifyingCaptcha
-                ? t('Verifying...')
-                : loading
-                  ? t('Processing...')
-                  : t('Email Password Reset Link')}
-            </Button>
-          </>
-        )}
-
-        {requested && !error && (
-          <div className="flex flex-col items-center justify-center">
-            <div className="w-16 h-16 rounded-full bg-tealx-light flex items-center justify-center mb-2">
-              <Icon name="envelope-check" size={30} color="tealx" />
-            </div>
-            <div>
-              {t('Alright! a reset link was emailed to')}{' '}
-              <span className="font-medium">{email}</span>.{' '}
-              {t('Click on it to reset')}
-              {t('your account password.')}
-            </div>
-          </div>
-        )}
-
+    <form className="m-auth__form" onSubmit={submit} noValidate>
+      <header className="m-auth__head">
+        <h1 className="m-auth__title" id="m-auth-title">
+          {t('Reset your password')}
+        </h1>
+        <p className="m-auth__lede">
+          {t(
+            'Enter your email address and we’ll send you a link to choose a new one.',
+          )}
+        </p>
+      </header>
+      <div className="m-auth__fields">
+        <Field label={t('Email')} htmlFor="auth-reset-email">
+          <Input
+            id="auth-reset-email"
+            type="email"
+            size="md"
+            prefix={<Mail />}
+            inputMode="email"
+            autoCapitalize="none"
+            spellCheck={false}
+            autoComplete="email"
+            autoFocus
+            placeholder={t('e.g. john@example.com')}
+            value={email}
+            disabled={busy}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </Field>
         {error && (
-          <div className="flex items-center flex-col text-center">
-            <div className="w-16 h-16 rounded-full bg-red-lightest flex items-center justify-center mb-2">
-              <Icon name="envelope-x" size="30" color="red" />
-            </div>
-            {smtpError ? (
-              <Typography.Text>
-                {t(
+          <Notice kind="danger">
+            {smtpError
+              ? t(
                   'Email delivery failed due to invalid SMTP configuration. Please contact your admin.',
-                )}
+                )
+              : error}
+            {smtpError && (
+              <>
+                {' '}
                 <a
-                  href="https://docs.openreplay.com/en/configuration/configure-smtp/"
-                  className="text-neutral-900! hover:underline! flex items-center justify-center gap-1 mt-2"
+                  className="m-auth__link"
+                  href={SMTP_DOCS}
                   target="_blank"
                   rel="noreferrer"
                 >
-                  {t('Learn More')}
+                  {t('Learn more')}
                   <SquareArrowOutUpRight
-                    size={12}
-                    strokeWidth={1.5}
-                    className="inline"
+                    size={11}
+                    strokeWidth={1.75}
+                    aria-hidden="true"
+                    className="ml-1 inline align-[-1px]"
                   />
                 </a>
-              </Typography.Text>
-            ) : (
-              <Typography.Text>{error}</Typography.Text>
+              </>
             )}
-          </div>
+          </Notice>
         )}
-      </Loader>
-    </Form>
+        <Button
+          type="submit"
+          variant="primary"
+          size="md"
+          className="m-auth__submit"
+          loading={busy}
+          disabled={!validateEmail(email.trim())}
+        >
+          {isVerifyingCaptcha
+            ? t('Verifying…')
+            : userStore.loading
+              ? t('Sending…')
+              : t('Email me a reset link')}
+        </Button>
+      </div>
+    </form>
   );
 }
 

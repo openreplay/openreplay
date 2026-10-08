@@ -1,14 +1,10 @@
 import React from 'react';
+
 import ENV from '../../../../env';
+
+/** SaaS replaces this file by path (returns null there). */
 function Version() {
-  return (
-    <div
-      className="absolute bottom-0"
-      style={{ fontSize: '7px', right: '5px' }}
-    >
-      v{ENV.VERSION}
-    </div>
-  );
+  return <p className="m-user-menu__version m-mono">v{ENV.VERSION}</p>;
 }
 
 export default Version;

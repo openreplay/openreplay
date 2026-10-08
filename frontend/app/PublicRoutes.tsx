@@ -1,10 +1,10 @@
+import { Loader } from '@/ui/feedback/Loader';
 import { observer } from 'mobx-react-lite';
 import React, { Suspense, lazy, useEffect } from 'react';
 
 import { useStore } from 'App/mstore';
 import * as routes from 'App/routes';
 import { Navigate, Route, StableRoutes } from 'App/routing';
-import { Loader } from 'UI';
 
 const LOGIN_PATH = routes.login();
 const SIGNUP_PATH = routes.signup();
@@ -14,7 +14,6 @@ const SPOT_PATH = routes.spot();
 // These were the only eager imports here, so their whole component trees rode
 // in the entry chunk next to the lazy routes they sit beside.
 const Signup = lazy(() => import('Components/Signup/Signup'));
-const SupportCallout = lazy(() => import('Shared/SupportCallout'));
 const Login = lazy(() => import('Components/Login/Login'));
 const ForgotPassword = lazy(
   () => import('Components/ForgotPassword/ForgotPassword'),
@@ -24,11 +23,6 @@ const Spot = lazy(() => import('Components/Spots/SpotPlayer/SpotPlayer'));
 function PublicRoutes() {
   const { userStore } = useStore();
   const { authDetails } = userStore.authStore;
-  const { isEnterprise } = userStore;
-  const hideSupport =
-    isEnterprise ||
-    location.pathname.includes('spots') ||
-    location.pathname.includes('view-spot');
   const [loading, setLoading] = React.useState(true);
 
   useEffect(() => {
@@ -49,7 +43,6 @@ function PublicRoutes() {
           <Route path={SIGNUP_PATH} element={<Signup />} />
           <Route path="*" element={<Navigate to={LOGIN_PATH} replace />} />
         </StableRoutes>
-        {!hideSupport && <SupportCallout />}
       </Suspense>
     </Loader>
   );

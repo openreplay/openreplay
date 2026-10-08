@@ -1,31 +1,28 @@
+import { Button } from '@/ui/actions/button';
 import withPageTitle from 'HOCs/withPageTitle';
+import { RefreshCcw } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { useStore } from 'App/mstore';
 import { login } from 'App/routes';
 import { useNavigate } from 'App/routing';
-import HealthModal from 'Components/Header/HealthStatus/HealthModal/HealthModal';
+import AuthScreen from 'Components/Auth/AuthScreen';
+import {
+  HealthLinks,
+  HealthReport,
+} from 'Components/Header/HealthStatus/HealthReport';
 import { getHealthRequest } from 'Components/Header/HealthStatus/getHealth';
-import { Icon } from 'UI';
-
-import Copyright from 'Shared/Copyright';
 
 import SignupForm from './SignupForm';
 
 const LOGIN_ROUTE = login();
-const BulletItem: React.FC<{ text: string }> = ({ text }) => (
-  <div className="flex items-center mb-4">
-    <div className="mr-3 h-8 w-8 rounded-full bg-white shadow-sm flex items-center justify-center">
-      <Icon name="check" size="26" />
-    </div>
-    <div>{text}</div>
-  </div>
-);
 
 const healthStatusCheck_key = '__or__healthStatusCheck_key';
 
 const Signup: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { userStore } = useStore();
   const { authDetails } = userStore.authStore;
@@ -60,29 +57,55 @@ const Signup: React.FC = () => {
 
   if (authDetails && !healthModalPassed && !authDetails.tenants) {
     return (
-      <HealthModal
-        setShowModal={() => null}
-        healthResponse={healthStatus}
-        getHealth={getHealth}
-        isLoading={healthStatusLoading}
-        setPassed={() => setHealthModalPassed(true)}
-      />
+      <AuthScreen other="signin" step="health">
+        <div className="m-auth__form">
+          <header className="m-auth__head">
+            <h1 className="m-auth__title" id="m-auth-title">
+              {t('Check your installation')}
+            </h1>
+            <p className="m-auth__lede">
+              {healthStatus?.overallHealth
+                ? t('Every service answered. You can create the first account.')
+                : t(
+                    'Every service has to answer before the first account can be created.',
+                  )}
+            </p>
+          </header>
+          <div className="m-auth__fields">
+            <HealthReport report={healthStatus} loading={healthStatusLoading} />
+            <div className="flex items-center gap-3">
+              <Button
+                size="md"
+                disabled={healthStatusLoading}
+                onClick={() => void getHealth()}
+              >
+                <RefreshCcw
+                  size={13}
+                  className={healthStatusLoading ? 'animate-spin' : ''}
+                />
+                {t('Recheck')}
+              </Button>
+              <Button
+                variant="primary"
+                size="md"
+                className="flex-1"
+                disabled={!healthStatus?.overallHealth || healthStatusLoading}
+                onClick={() => setHealthModalPassed(true)}
+              >
+                {t('Continue')}
+              </Button>
+            </div>
+            <HealthLinks />
+          </div>
+        </div>
+      </AuthScreen>
     );
   }
 
   return (
-    <div
-      className="flex justify-center items-center gap-6"
-      style={{ height: '100vh' }}
-    >
-      <div className="flex items-center justify-center">
-        <div className="">
-          <SignupForm />
-        </div>
-      </div>
-
-      <Copyright />
-    </div>
+    <AuthScreen other="signin" step="form">
+      <SignupForm />
+    </AuthScreen>
   );
 };
 

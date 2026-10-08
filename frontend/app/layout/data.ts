@@ -1,3 +1,4 @@
+import { IconNames } from '@/ui/icons/SVG';
 import { TFunction } from 'i18next';
 import React from 'react';
 
@@ -7,8 +8,6 @@ import {
   anyAgentEnabled,
   menuHidden,
 } from 'App/utils/split-utils';
-
-import { IconNames } from '../components/ui/SVG';
 
 export interface MenuItem {
   label: React.ReactNode;
@@ -53,7 +52,6 @@ export const enum MENU {
   RECOMMENDATIONS = 'recommendations',
   VAULT = 'vault',
   BOOKMARKS = 'bookmarks',
-  HIGHLIGHTS = 'highlights',
   LIVE_SESSIONS = 'live-sessions',
   DASHBOARDS = 'dashboards',
   CARDS = 'cards',
@@ -66,6 +64,7 @@ export const enum MENU {
   SPOTS = 'spots',
   AGENTS = 'agents',
   TEST_AGENTS = 'agents-tests',
+  AUDITS = 'agents-audits',
   ACTIVITY = 'activity',
   USER = 'user-page',
   USERS = 'data-users',
@@ -100,11 +99,6 @@ export const categories: (t: TFunction) => Category[] = (t) => [
         key: MENU.BOOKMARKS,
         icon: 'bookmark',
         hidden: menuHidden.bookmarks,
-      },
-      {
-        label: t('Highlights'),
-        key: MENU.HIGHLIGHTS,
-        icon: 'chat-square-quote',
       },
     ],
   },

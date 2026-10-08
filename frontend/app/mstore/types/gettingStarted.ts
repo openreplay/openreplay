@@ -1,6 +1,7 @@
 import { action, computed, makeObservable, observable } from 'mobx';
-import { configService } from 'App/services';
+
 import { GETTING_STARTED } from 'App/constants/storageKeys';
+import { configService } from 'App/services';
 
 const stepsMap: any = {
   'Install OpenReplay': {
@@ -76,23 +77,32 @@ export class GettingStarted {
     this.status = status;
   };
 
-  fetchData() {
-    if (this.status === 'completed') {
+  // the nav remounts the meter on every rail collapse: load once per account
+  private loadedFor: string | null = null;
+
+  fetchData(account: string) {
+    if (this.status === 'completed' || this.loadedFor === account) {
       return;
     }
-    configService.fetchGettingStarted().then((data) => {
-      const newSteps = data.map((item: any) => {
-        const step = stepsMap[item.task];
+    this.loadedFor = account;
+    configService
+      .fetchGettingStarted()
+      .then((data) => {
+        const newSteps = data.map((item: any) => {
+          const step = stepsMap[item.task];
 
-        return {
-          ...step,
-          status: item.done ? 'completed' : 'pending',
-        };
+          return {
+            ...step,
+            status: item.done ? 'completed' : 'pending',
+          };
+        });
+        this.setSteps(newSteps);
+        this.setStatus(this.calculateStatus());
+        this.updateLocalStorage();
+      })
+      .catch(() => {
+        if (this.loadedFor === account) this.loadedFor = null;
       });
-      this.setSteps(newSteps);
-      this.setStatus(this.calculateStatus());
-      this.updateLocalStorage();
-    });
   }
 
   updateLocalStorage() {

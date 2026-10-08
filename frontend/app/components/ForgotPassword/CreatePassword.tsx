@@ -1,177 +1,171 @@
-import React, { useEffect, useState } from 'react';
+import { Button } from '@/ui/actions/button';
+import { Field } from '@/ui/inputs/Field';
+import { PasswordRules } from '@/ui/inputs/PasswordRules';
+import { PasswordInput } from '@/ui/inputs/password-input';
+import { Check, LinkIcon } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
-import { useStore } from 'App/mstore';
-import { Form, Input, Loader, Icon, Message } from 'UI';
-import { Button } from 'antd';
-import { validatePassword } from 'App/validate';
-import { PASSWORD_POLICY } from 'App/constants';
+import React, { type FormEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { useStore } from 'App/mstore';
+import { forgotPassword, login } from 'App/routes';
+import { useNavigate } from 'App/routing';
+import { validatePassword } from 'App/validate';
 import withCaptcha, { WithCaptchaProps } from 'App/withRecaptcha';
 
-const ERROR_DONT_MATCH = (t) => t("Passwords don't match.");
-
 interface Props {
-  params: any;
+  params: URLSearchParams;
 }
 
-function CreatePassword(props: Props & WithCaptchaProps) {
+/** Where both the invitation and the reset email land. */
+function CreatePassword({
+  params,
+  submitWithCaptcha,
+  isVerifyingCaptcha,
+  resetCaptcha,
+}: Props & WithCaptchaProps) {
   const { t } = useTranslation();
-  const { params } = props;
+  const navigate = useNavigate();
   const { userStore } = useStore();
-  const { loading } = userStore;
-  const { resetPassword } = userStore;
+  const [pw, setPw] = useState({ next: '', confirm: '' });
   const [error, setError] = useState<string | null>(null);
-  const [validationError, setValidationError] = useState<string | null>(null);
   const [updated, setUpdated] = useState(false);
-  const [passwordRepeat, setPasswordRepeat] = useState('');
-  const [password, setPassword] = useState('');
-
+  const busy = userStore.loading || isVerifyingCaptcha;
   const pass = params.get('pass');
   const invitation = params.get('invitation');
+  const mismatch = pw.confirm.length > 0 && pw.confirm !== pw.next;
+  const ready = validatePassword(pw.next) && pw.next === pw.confirm;
 
-  const { submitWithCaptcha, isVerifyingCaptcha, resetCaptcha } = props;
-
-  const handleSubmit = (token?: string) => {
-    if (!validatePassword(password)) {
-      return;
-    }
-
-    resetPassword({
-      invitation,
-      pass,
-      password,
-      'g-recaptcha-response': token,
-    })
-      .then(() => {
-        setUpdated(true);
+  const send = (token?: string) => {
+    userStore
+      .resetPassword({
+        invitation,
+        pass,
+        password: pw.next,
+        'g-recaptcha-response': token,
       })
-      .catch((err) => {
-        setError(err.message);
-        // Reset captcha for the next attempt
+      .then(() => setUpdated(true))
+      .catch((err: any) => {
+        // only a rejected link ends the flow; network / server / validation
+        // errors keep the form (the store has already toasted the reason)
+        if (err?.rejectedLink)
+          setError(err.message || t('Something went wrong'));
         resetCaptcha();
       });
   };
 
-  const onSubmit = () => {
-    // Validate before attempting captcha verification
-    if (!validatePassword(password) || password !== passwordRepeat) {
-      setValidationError(
-        password !== passwordRepeat ? ERROR_DONT_MATCH(t) : PASSWORD_POLICY(t),
-      );
-      return;
-    }
-
-    // Reset any previous errors
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!ready) return;
     setError(null);
-    setValidationError(null);
-
-    submitWithCaptcha({ pass, invitation, password })
-      .then((data) => {
-        handleSubmit(data['g-recaptcha-response']);
-      })
-      .catch((error) => {
-        console.error('Captcha verification failed:', error);
-        // The component will handle showing appropriate messages
-      });
+    submitWithCaptcha({ pass, invitation, password: pw.next })
+      .then((data) => send(data['g-recaptcha-response']))
+      .catch((err: any) => console.error('Captcha verification failed:', err));
   };
 
-  const write = (e: any) => {
-    const { name, value } = e.target;
-    if (name === 'password') setPassword(value);
-    if (name === 'passwordRepeat') setPasswordRepeat(value);
-  };
+  if (error) {
+    return (
+      <div className="m-auth__done" role="alert">
+        <span className="m-auth__mark is-danger" aria-hidden="true">
+          <LinkIcon size={17} strokeWidth={1.75} />
+        </span>
+        <div>
+          <h1 className="m-auth__title" id="m-auth-title">
+            {t('This link no longer works')}
+          </h1>
+          <p className="m-auth__lede mt-2">{error}</p>
+        </div>
+        <div className="m-auth__done-actions">
+          <Button
+            variant="primary"
+            size="md"
+            onClick={() => navigate(forgotPassword())}
+          >
+            {t('Request a new link')}
+          </Button>
+          <Button variant="subtle" size="md" onClick={() => navigate(login())}>
+            {t('Back to sign in')}
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
-  useEffect(() => {
-    if (passwordRepeat.length > 0 && passwordRepeat !== password) {
-      setValidationError(ERROR_DONT_MATCH(t));
-    } else if (passwordRepeat.length > 0 && !validatePassword(password)) {
-      setValidationError(PASSWORD_POLICY(t));
-    } else {
-      setValidationError(null);
-    }
-  }, [passwordRepeat, password, t]);
+  if (updated) {
+    return (
+      <div className="m-auth__done" role="status">
+        <span className="m-auth__mark" aria-hidden="true">
+          <Check size={18} strokeWidth={2} />
+        </span>
+        <div>
+          <h1 className="m-auth__title" id="m-auth-title">
+            {t('Password updated')}
+          </h1>
+          <p className="m-auth__lede mt-2">
+            {t('Your password has been updated. You’re signed in.')}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <Form
-      onSubmit={onSubmit}
-      style={{ minWidth: '50%' }}
-      className="flex flex-col items-center justify-center"
-    >
-      {!error && (
-        <>
-          <Loader loading={loading || isVerifyingCaptcha}>
-            <div data-hidden={updated} className="w-full">
-              <Form.Field>
-                <label>{t('New password')}</label>
-                <Input
-                  autoComplete="new-password"
-                  type="password"
-                  placeholder={t('Type here...')}
-                  name="password"
-                  onChange={write}
-                  className="w-full"
-                  icon="key"
-                  required
-                />
-              </Form.Field>
-              <Form.Field>
-                <label>{t('Confirm password')}</label>
-                <Input
-                  autoComplete="new-password"
-                  type="password"
-                  placeholder={t('Re-enter your new password')}
-                  name="passwordRepeat"
-                  onChange={write}
-                  className="w-full"
-                  icon="key"
-                  required
-                />
-              </Form.Field>
-            </div>
-          </Loader>
-          <div className="mt-4">
-            <div
-              data-hidden={!updated}
-              className="flex items-center flex-col text-center"
-            >
-              <div className="w-10 h-10 bg-tealx-lightest rounded-full flex items-center justify-center mb-3">
-                <Icon name="check" size="30" color="tealx" />
-              </div>
-              <span>{t('Your password has been updated successfully.')}</span>
-            </div>
-          </div>
-
-          {validationError && <Message error>{validationError}</Message>}
-
-          {updated ? null : (
-            <Button
-              htmlType="submit"
-              type="primary"
-              loading={loading || isVerifyingCaptcha}
-              disabled={
-                loading || isVerifyingCaptcha || validationError !== null
-              }
-              className="w-full mt-4"
-            >
-              {isVerifyingCaptcha
-                ? t('Verifying...')
-                : loading
-                  ? t('Processing...')
-                  : t('Create')}
-            </Button>
-          )}
-        </>
-      )}
-
-      {error && (
-        <div className="flex items-center flex-col text-center">
-          <div className="w-16 h-16 rounded-full bg-red-lightest flex items-center justify-center mb-2">
-            <Icon name="envelope-x" size="30" color="red" />
-          </div>
-          {error}
-        </div>
-      )}
-    </Form>
+    <form className="m-auth__form" onSubmit={submit} noValidate>
+      <header className="m-auth__head">
+        <h1 className="m-auth__title" id="m-auth-title">
+          {t('Choose your password')}
+        </h1>
+        <p className="m-auth__lede">
+          {t('Welcome to OpenReplay. Set a password and you’re signed in.')}
+        </p>
+      </header>
+      <div className="m-auth__fields">
+        <Field label={t('New password')} htmlFor="auth-np-1">
+          <PasswordInput
+            id="auth-np-1"
+            mark
+            size="md"
+            autoComplete="new-password"
+            autoFocus
+            placeholder={t('Type here…')}
+            value={pw.next}
+            disabled={busy}
+            onChange={(e) => setPw((p) => ({ ...p, next: e.target.value }))}
+          />
+          <PasswordRules password={pw.next} />
+        </Field>
+        <Field
+          label={t('Confirm password')}
+          htmlFor="auth-np-2"
+          error={mismatch ? t('Passwords don’t match.') : undefined}
+        >
+          <PasswordInput
+            id="auth-np-2"
+            mark
+            size="md"
+            autoComplete="new-password"
+            placeholder={t('Re-enter your new password')}
+            value={pw.confirm}
+            disabled={busy}
+            onChange={(e) => setPw((p) => ({ ...p, confirm: e.target.value }))}
+          />
+        </Field>
+        <Button
+          type="submit"
+          variant="primary"
+          size="md"
+          className="m-auth__submit"
+          loading={busy}
+          disabled={!ready}
+        >
+          {isVerifyingCaptcha
+            ? t('Verifying…')
+            : userStore.loading
+              ? t('Saving…')
+              : t('Set password')}
+        </Button>
+      </div>
+    </form>
   );
 }
 

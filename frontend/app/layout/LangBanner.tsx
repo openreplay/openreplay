@@ -1,33 +1,38 @@
+import { IconButton } from '@/ui/actions/IconButton';
+import { Button } from '@/ui/actions/button';
+import { Info, Languages, X } from 'lucide-react';
 import React from 'react';
-import { Languages, X, Info } from 'lucide-react';
-import { Button } from 'antd';
-import { useHistory } from 'App/routing';
+import { useTranslation } from 'react-i18next';
+
 import { client } from 'App/routes';
+import { useHistory } from 'App/routing';
+
+import './banners.css';
 
 function LangBanner({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation();
   const history = useHistory();
 
-  const onClick = () => {
-    history.push(client('account'));
-  };
   return (
-    <div className={'px-4 py-2 bg-yellow flex items-center w-screen gap-2'}>
-      <Info size={16} />
-      <div>
-        OpenReplay now supports French, Russian, Chinese, and Spanish 🎉. Update
-        your language in settings.
-      </div>
-      <div className={'ml-auto'} />
-      <Button icon={<Languages size={14} />} size={'small'} onClick={onClick}>
-        Change Language
-      </Button>
-      <Button
-        icon={<X size={16} />}
-        type={'text'}
-        shape={'circle'}
-        onClick={onClose}
-        size={'small'}
-      />
+    <div className="m-banner m-banner--warning" role="status">
+      <Info size={15} aria-hidden="true" />
+      <span className="m-banner__text">
+        {t(
+          'OpenReplay now supports French, Russian, Chinese, and Spanish. Update your language in settings.',
+        )}
+      </span>
+      <span className="m-banner__actions">
+        <Button onClick={() => history.push(client('account'))}>
+          <Languages size={13} />
+          {t('Change language')}
+        </Button>
+        <IconButton
+          icon={<X size={14} />}
+          label={t('Dismiss')}
+          variant="ghost"
+          onClick={onClose}
+        />
+      </span>
     </div>
   );
 }

@@ -1,17 +1,19 @@
-import { Button } from 'antd';
+import { Button } from '@/ui/actions/button';
 import { TriangleAlert } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 
 import { useStore } from 'App/mstore';
 
-const levelToBg: Record<string, string> = {
-  alert: 'bg-red-light',
-  error: 'bg-red-light',
-  warning: 'bg-yellow',
-  warn: 'bg-yellow',
-  info: 'bg-light-blue-bg',
-  success: 'bg-green-light',
+import './banners.css';
+
+const levelTone: Record<string, string> = {
+  alert: 'danger',
+  error: 'danger',
+  warning: 'warning',
+  warn: 'warning',
+  info: 'info',
+  success: 'success',
 };
 
 function AlertsBanner() {
@@ -21,30 +23,28 @@ function AlertsBanner() {
 
   return (
     <>
-      {alerts.map((alert, idx) => {
-        const bgClass =
-          levelToBg[alert.level?.toLowerCase() ?? ''] ?? levelToBg.info;
-        return (
-          <div
-            key={idx}
-            className={`px-4 py-2 flex items-center justify-center gap-3 w-full ${bgClass}`}
-          >
-            <TriangleAlert className="text-red" size={16} strokeWidth={2} />
-            <div className="font-bold">{alert.text}</div>
-            {alert.button && alert.url ? (
+      {alerts.map((alert, idx) => (
+        <div
+          key={idx}
+          className={`m-banner m-banner--${levelTone[alert.level?.toLowerCase() ?? ''] ?? 'info'}`}
+          role="status"
+        >
+          <TriangleAlert size={15} aria-hidden="true" />
+          <span className="m-banner__text font-medium">{alert.text}</span>
+          {alert.button && alert.url ? (
+            <span className="m-banner__actions">
               <Button
-                size="small"
-                type="primary"
+                variant="primary"
                 onClick={() =>
                   window.open(alert.url, '_blank', 'noopener,noreferrer')
                 }
               >
                 {alert.button}
               </Button>
-            ) : null}
-          </div>
-        );
-      })}
+            </span>
+          ) : null}
+        </div>
+      ))}
     </>
   );
 }

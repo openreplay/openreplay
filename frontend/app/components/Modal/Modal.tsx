@@ -1,92 +1,59 @@
-import React, { useEffect } from 'react';
-import ReactDOM from 'react-dom';
-import cn from 'classnames';
-import { useLocation, useNavigationType } from 'App/routing';
-import ModalOverlay from './ModalOverlay';
+import { Drawer, type DrawerSize } from '@/ui/overlays/drawer';
+import React, { type ReactNode, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
-const DEFAULT_WIDTH = 350;
-interface Props {
-  component: any;
-  className?: string;
-  props: any;
-  hideModal?: () => void;
+import { useLocation, useNavigationType } from 'App/routing';
+
+export interface ModalProps {
+  /** kept for callers; the drawer always opens on the right */
+  right?: boolean;
+  size?: DrawerSize;
+  /** px; overrides `size` */
   width?: number;
+  label?: string;
+  className?: string;
+  onClose?: () => void;
 }
-function Modal({ component, className = 'bg-white', props, hideModal }: Props) {
+
+interface Props {
+  component: ReactNode;
+  props: ModalProps;
+  hideModal: () => void;
+}
+
+/** The drawer behind `showModal`. Its content brings its own header. */
+function Modal({ component, props, hideModal }: Props) {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigationType = useNavigationType();
+  // the last content stays painted while the sheet slides out
+  const [shown, setShown] = useState({ component, props });
+  if (component && component !== shown.component) {
+    setShown({ component, props });
+  }
 
   useEffect(() => {
-    if (navigationType === 'POP') {
-      document.querySelector('body').style.overflow = 'visible';
-    } else if (navigationType === 'PUSH') {
-      hideModal?.();
-    }
-  }, [location.pathname, location.search, location.hash, navigationType, hideModal]);
+    if (navigationType === 'PUSH') hideModal();
+  }, [
+    location.pathname,
+    location.search,
+    location.hash,
+    navigationType,
+    hideModal,
+  ]);
 
-  return component ? (
-    ReactDOM.createPortal(
-      <ModalOverlay
-        hideModal={hideModal}
-        left={!props.right}
-        right={props.right}
-      >
-        <div
-          className={className}
-          style={{ width: `${props.width ? props.width : DEFAULT_WIDTH}px` }}
-        >
-          {component}
-        </div>
-      </ModalOverlay>,
-      document.querySelector('#modal-root'),
-    )
-  ) : (
-    <></>
+  return (
+    <Drawer
+      open={!!component}
+      onClose={hideModal}
+      label={shown.props.label ?? t('Details')}
+      size={shown.props.size}
+      width={shown.props.width}
+      className={shown.props.className}
+    >
+      {shown.component}
+    </Drawer>
   );
 }
-
-Modal.Header = function ({
-  title,
-  children,
-}: {
-  title?: string;
-  children?: any;
-}) {
-  return children ? (
-    <div>{children}</div>
-  ) : (
-    <div className="text-lg flex items-center p-4 font-medium">
-      <div>{title}</div>
-    </div>
-  );
-};
-
-Modal.Content = function ({
-  children,
-  className = 'p-4',
-}: {
-  children: any;
-  className?: string;
-}) {
-  return (
-    <div
-      className={cn('overflow-y-auto relative', className)}
-      style={{ height: 'calc(100vh - 52px)' }}
-    >
-      {children}
-    </div>
-  );
-};
-
-Modal.Footer = function ({ children, className = '' }: any) {
-  return (
-    <div
-      className={cn('absolute bottom-0 w-full left-0 right-0', className)}
-      style={{}}
-    >
-      {children}
-    </div>
-  );
-};
 
 export default Modal;

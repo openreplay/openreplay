@@ -1,9 +1,12 @@
+import { PopoverPanel } from '@/ui/overlays/popover';
+import { Activity, CircleAlert } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
+
 import HealthWidget from 'Components/Header/HealthStatus/HealthWidget';
-import { Popover, Button } from 'antd';
-import { ExclamationCircleOutlined } from '@ant-design/icons';
+
+import { healthResponseKey, lastAskedKey } from './const';
 import { getHealthRequest } from './getHealth';
-import { lastAskedKey, healthResponseKey } from './const';
 
 // Only rendered while showModal is true; the widget stays eager so the header
 // icon does not pop in.
@@ -24,7 +27,7 @@ export interface IServiceStats {
   }[];
 }
 
-function HealthStatus() {
+function HealthStatus({ variant = 'tool' }: { variant?: 'tool' | 'row' }) {
   const healthResponseSaved = localStorage.getItem(healthResponseKey) || '{}';
   const [healthResponse, setHealthResponse] = React.useState(
     JSON.parse(healthResponseSaved),
@@ -64,13 +67,17 @@ function HealthStatus() {
     }
   }, []);
 
-  const icon =
-    !isError && healthResponse?.overallHealth
-      ? 'pulse'
-      : ('exclamation-circle-fill' as const);
+  const { t } = useTranslation();
+  const [open, setOpen] = React.useState(false);
+  const healthy = !isError && healthResponse?.overallHealth;
+  const Icon = healthy ? Activity : CircleAlert;
   return (
     <>
-      <Popover
+      <PopoverPanel
+        open={open}
+        onOpenChange={setOpen}
+        placement="rightBottom"
+        sideOffset={8}
         content={
           <HealthWidget
             healthResponse={healthResponse}
@@ -81,10 +88,32 @@ function HealthStatus() {
             isError={isError}
           />
         }
-        placement="topRight"
       >
-        <Button icon={<ExclamationCircleOutlined />} />
-      </Popover>
+        {variant === 'row' ? (
+          <button
+            type="button"
+            className="m-nav-item"
+            aria-label={t('System health')}
+            style={healthy ? undefined : { color: 'var(--m-content-danger)' }}
+          >
+            <span className="m-nav-item__icon" aria-hidden="true">
+              <Icon size={15} />
+            </span>
+            <span className="m-nav-item__label m-truncate">
+              {t('System health')}
+            </span>
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="m-nav__tool"
+            aria-label={t('System health')}
+            style={healthy ? undefined : { color: 'var(--m-content-danger)' }}
+          >
+            <Icon size={15} aria-hidden="true" />
+          </button>
+        )}
+      </PopoverPanel>
       {showModal ? (
         <React.Suspense fallback={null}>
           <HealthModal

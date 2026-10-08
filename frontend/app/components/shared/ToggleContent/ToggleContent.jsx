@@ -1,5 +1,5 @@
+import { Switch } from '@/ui/inputs/switch';
 import React, { useState } from 'react';
-import { Switch } from 'antd';
 
 function ToggleContent({ label = '', first, second }) {
   const [switched, setSwitched] = useState(true);
@@ -9,7 +9,10 @@ function ToggleContent({ label = '', first, second }) {
         <div className="mr-2" onClick={() => setSwitched(!switched)}>
           {label}
         </div>
-        <Switch onChange={() => setSwitched(!switched)} checked={!switched} />
+        <Switch
+          onCheckedChange={() => setSwitched(!switched)}
+          checked={!switched}
+        />
       </div>
       <div>{switched ? first : second}</div>
     </div>

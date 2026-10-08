@@ -1,6 +1,6 @@
-import React from 'react';
+import { Tooltip } from '@/ui/overlays/tooltip';
 import copy from 'copy-to-clipboard';
-import { Tooltip } from 'UI';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 const withCopy = (WrappedComponent: React.ComponentType) => {

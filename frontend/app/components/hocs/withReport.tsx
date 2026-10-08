@@ -1,9 +1,10 @@
-import React, { useEffect } from 'react';
-import { convertElementToImage, fileNameFormat } from 'App/utils';
-import { useStore } from 'App/mstore';
+import { toast } from '@/ui/overlays/toast';
 import { observer } from 'mobx-react-lite';
-import { toast } from 'react-toastify';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { useStore } from 'App/mstore';
+import { convertElementToImage, fileNameFormat } from 'App/utils';
 
 const TEXT_GENERATING = 'Generating report...';
 const TEXT_SUCCESS = 'Report successfully generated';
@@ -168,7 +169,7 @@ export default function withReport<P extends Props>(
           >
             <div className="flex items-center">
               <img src="/assets/logo.svg" style={{ height: '30px' }} />
-              <div className="text-lg color-gray-medium ml-2 mt-1">
+              <div className="text-lg text-content-muted ml-2 mt-1">
                 {t('REPORT')}
               </div>
             </div>
@@ -189,7 +190,7 @@ export default function withReport<P extends Props>(
             </div>
           </div>
           {dashboard && dashboard.description && (
-            <div className="color-gray-medum whitespace-pre-wrap my-2">
+            <div className="text-content-muted whitespace-pre-wrap my-2">
               {dashboard.description}
             </div>
           )}
