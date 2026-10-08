@@ -1,11 +1,12 @@
-import { useStore } from 'App/mstore';
-import React from 'react';
+import { CodeBlock } from '@/ui/data/CodeBlock';
 import { observer } from 'mobx-react-lite';
-import { CodeBlock } from 'UI';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { useStore } from 'App/mstore';
 
 import DocLink from 'Shared/DocLink/DocLink';
 import ToggleContent from 'Shared/ToggleContent';
-import { useTranslation } from 'react-i18next';
 
 function ProfilerDoc() {
   const { t } = useTranslation();
@@ -50,10 +51,7 @@ const fn = profiler('call_name')(() => {
   }, thisArg); // thisArg is optional
 }`;
   return (
-    <div
-      className="bg-white h-screen overflow-y-auto"
-      style={{ width: '500px' }}
-    >
+    <div className="bg-surface-default">
       <h3 className="p-5 text-2xl">{t('Profiler')}</h3>
       <div className="p-5">
         <div>

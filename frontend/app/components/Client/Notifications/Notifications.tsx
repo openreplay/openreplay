@@ -1,12 +1,12 @@
+import { toast } from '@/ui/overlays/toast';
 import withPageTitle from 'HOCs/withPageTitle';
-import { Switch } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useStore } from 'App/mstore';
 
-import PreferencesPage from '../PreferencesPage';
+import { PrefBlock, PrefToggle } from '../PrefSection';
 
 function Notifications() {
   const { weeklyReportStore } = useStore();
@@ -18,25 +18,23 @@ function Notifications() {
 
   const onChange = () => {
     const newValue = !weeklyReportStore.weeklyReport;
-    void weeklyReportStore.fetchEditReport(newValue);
+    weeklyReportStore
+      .fetchEditReport(newValue)
+      .catch(() => toast.error(t('Could not update the weekly report')));
   };
 
   return (
-    <PreferencesPage title={t('Weekly Report')}>
-      <div>
-        <div className="text-lg font-medium">{t('Weekly project summary')}</div>
-        <div className="mb-4">
-          {t('Receive weekly report for each project on email.')}
-        </div>
-        <div className="flex items-center gap-2">
-          <Switch
-            checked={weeklyReportStore.weeklyReport}
-            onChange={onChange}
-          />
-          <span>{weeklyReportStore.weeklyReport ? t('Yes') : t('No')}</span>
-        </div>
-      </div>
-    </PreferencesPage>
+    <PrefBlock
+      title={t('Weekly project summary')}
+      hint={t('Receive a weekly report for each project by email.')}
+    >
+      <PrefToggle
+        checked={!!weeklyReportStore.weeklyReport}
+        onChange={onChange}
+        disabled={!weeklyReportStore.loaded}
+        label={weeklyReportStore.weeklyReport ? t('On') : t('Off')}
+      />
+    </PrefBlock>
   );
 }
 

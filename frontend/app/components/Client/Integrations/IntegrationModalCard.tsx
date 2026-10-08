@@ -1,5 +1,5 @@
+import { Icon } from '@/ui/icons/Icon';
 import React from 'react';
-import { Icon } from 'UI';
 
 interface Props {
   title: string;
@@ -8,24 +8,20 @@ interface Props {
   useIcon?: boolean;
 }
 
-function IntegrationModalCard(props: Props) {
-  const { title, icon, description, useIcon } = props;
+/** The head of an integration's side panel: logo, name, what it does. */
+function IntegrationModalCard({ title, icon, description, useIcon }: Props) {
   return (
-    <div className="flex items-start p-5 gap-4">
-      <div className="border rounded-lg p-2 shrink-0">
+    <div className="flex items-start gap-4 border-b border-border-subtle p-5">
+      <span className="flex size-12 shrink-0 items-center justify-center rounded-surface border border-border-subtle bg-surface-default">
         {useIcon ? (
-          <Icon name={icon} size={80} />
+          <Icon name={icon as any} size={28} />
         ) : (
-          <img
-            className="h-20 w-20"
-            src={`/assets/${icon}.svg`}
-            alt="integration"
-          />
+          <img className="size-7" src={`/assets/${icon}.svg`} alt="" />
         )}
-      </div>
-      <div>
-        <h3 className="text-2xl">{title}</h3>
-        <div>{description}</div>
+      </span>
+      <div className="flex min-w-0 flex-col gap-1">
+        <h3 className="text-lg font-medium text-content-primary">{title}</h3>
+        <p className="text-sm text-content-muted">{description}</p>
       </div>
     </div>
   );

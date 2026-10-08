@@ -1,5 +1,5 @@
+import { Input } from '@/ui/inputs/input';
 import React from 'react';
-import { Input } from 'antd';
 
 export function FormField({
   label,
@@ -17,16 +17,20 @@ export function FormField({
   errors?: string;
 }) {
   return (
-    <div className="mb-4">
-      <label className="block text-sm font-medium text-disabled-text">{label}</label>
+    <div className="m-dfield mb-4">
+      <label className="m-dfield__label" htmlFor={`if-${name}`}>
+        {label}
+      </label>
       <Input
+        id={`if-${name}`}
         type="text"
         name={name}
         value={value}
         onChange={onChange}
         autoFocus={autoFocus}
+        aria-invalid={!!errors}
       />
-      {errors && <div className="text-red-500 text-xs mt-1">{errors}</div>}
+      {errors && <div className="text-xs text-content-danger">{errors}</div>}
     </div>
   );
 }

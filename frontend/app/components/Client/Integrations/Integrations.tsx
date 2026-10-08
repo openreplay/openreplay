@@ -1,26 +1,26 @@
+import { Icon } from '@/ui/icons/Icon';
+import { SimpleSelect } from '@/ui/inputs/select';
+import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
+import { toast } from '@/ui/overlays/toast';
 import withPageTitle from 'HOCs/withPageTitle';
 import { TFunction } from 'i18next';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'react-toastify';
 
 import { useModal } from 'App/components/Modal';
 import { useStore } from 'App/mstore';
 import { namedStore } from 'App/mstore/integrationsStore';
-import { mobileScreen } from 'App/utils/isMobile';
-import IntegrationFilters from 'Components/Client/Integrations/IntegrationFilters';
 
 import DocCard from 'Shared/DocCard/DocCard';
-import SiteDropdown from 'Shared/SiteDropdown';
 
+import { PrefBlock } from '../PrefSection';
 import PreferencesPage from '../PreferencesPage';
 import DatadogForm from './Backend/DatadogForm/DatadogFormModal';
 import DynatraceFormModal from './Backend/DynatraceForm/DynatraceFormModal';
 import ElasticsearchForm from './Backend/ElasticForm/ElasticFormModal';
 import SentryForm from './Backend/SentryForm/SentryFormModal';
 import GithubForm from './GithubForm';
-import IntegrationItem from './IntegrationItem';
 import JiraForm from './JiraForm';
 import LinearForm from './LinearForm';
 import ProfilerDoc from './ProfilerDoc';
@@ -60,15 +60,14 @@ function Integrations(props: Props) {
   const fetchIntegrationList = integrationsStore.integrations.fetchIntegrations;
   const storeIntegratedList = integrationsStore.integrations.list;
   const { showModal, hideModal } = useModal();
-  const [integratedList, setIntegratedList] = useState<string[]>([]);
-  const [activeFilter, setActiveFilter] = useState<string>('all');
-
-  useEffect(() => {
-    const list = integrationsStore.integrations.integratedServices.map(
-      (item: any) => item.name,
-    );
-    setIntegratedList(list);
-  }, [storeIntegratedList]);
+  // derived, not mirrored through an effect (which rendered a stale frame first)
+  const integratedList = React.useMemo<string[]>(
+    () =>
+      integrationsStore.integrations.integratedServices.map(
+        (item: any) => item.name,
+      ),
+    [storeIntegratedList],
+  );
 
   useEffect(() => {
     if (siteId) {
@@ -78,8 +77,7 @@ function Integrations(props: Props) {
     }
   }, [siteId]);
 
-  const onClick = (integration: any, width: number) => {
-    const modalWidth = mobileScreen ? '100vw' : width;
+  const onClick = (integration: any) => {
     if (
       integration.slug &&
       integration.slug !== 'slack' &&
@@ -106,7 +104,7 @@ function Integrations(props: Props) {
         siteId,
         onClose: hideModal,
       }),
-      { right: true, modalWidth },
+      { right: true },
     );
   };
 
@@ -122,96 +120,103 @@ function Integrations(props: Props) {
     }
   };
 
-  const onChange = (key: string) => {
-    setActiveFilter(key);
-  };
-
-  const filteredIntegrations = integrations(t).filter((cat: any) => {
-    if (activeFilter === 'all') {
-      return true;
-    }
-
-    return cat.key === activeFilter;
-  });
-
-  const filters = integrations(t).map((cat: any) => ({
-    key: cat.key,
-    title: cat.title,
-    label: cat.title,
-    icon: cat.icon,
-  }));
-
-  const allIntegrations = filteredIntegrations.flatMap(
-    (cat) => cat.integrations,
-  );
-
   const activeTracker = connectedTracker(integratedList);
+  const [disconnecting, setDisconnecting] = useState<any | null>(null);
 
-  const onChangeSelect = ({ value }: any) => {
-    integrationsStore.integrations.setSiteId(value.value);
+  const open = (integration: any) => {
+    if (integration.oauth && integratedList.includes(integration.slug)) {
+      setDisconnecting(integration);
+      return;
+    }
+    onClick(integration);
   };
 
   return (
-    <>
-      <PreferencesPage
-        title={t('Integrations')}
-        actions={
-          <SiteDropdown value={siteId} onChange={onChangeSelect} size="small" />
-        }
-      >
-        <IntegrationFilters
-          onChange={onChange}
-          activeItem={activeFilter}
-          filters={filters}
+    <PreferencesPage
+      title={t('Integrations')}
+      flush
+      actions={
+        <SimpleSelect<string>
+          value={siteId ? String(siteId) : undefined}
+          ariaLabel={t('Project')}
+          onChange={(v) => v && integrationsStore.integrations.setSiteId(v)}
+          options={projectsStore.list.map((p) => ({
+            value: String(p.projectId),
+            label: p.name,
+          }))}
+          className="m-pref__w-md"
         />
-      </PreferencesPage>
-
-      <div className="mb-4" />
-
-      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        {allIntegrations.map((integration: any, i) => {
-          // a rival tracker holds the slot -> this card is disabled, not hidden
-          const blockedTracker =
-            integration.slug in issueTrackers &&
-            activeTracker &&
-            activeTracker !== integration.slug
-              ? activeTracker
-              : undefined;
-          return (
-            <React.Fragment key={`${integration.slug}+${i}`}>
-              <IntegrationItem
-                integrated={integratedList.includes(integration.slug)}
-                integration={integration}
-                useIcon={integration.useIcon}
-                onClick={() =>
-                  onClick(
-                    integration,
-                    filteredIntegrations.find((cat) =>
-                      cat.integrations.includes(integration),
-                    )?.title === 'Plugins'
-                      ? 500
-                      : 350,
-                  )
-                }
-                onDisconnect={
-                  integration.oauth
-                    ? () => onDisconnect(integration.slug)
-                    : undefined
-                }
-                disabled={blockedTracker !== undefined}
-                disabledHint={
-                  blockedTracker &&
-                  t(
-                    'Only one issue tracker can be connected at a time. Disconnect {{name}} first.',
-                    { name: issueTrackers[blockedTracker] },
-                  )
-                }
-              />
-            </React.Fragment>
-          );
-        })}
-      </div>
-    </>
+      }
+    >
+      {integrations(t).map((cat) => (
+        <PrefBlock key={cat.key} title={cat.title} hint={cat.description}>
+          <div className="m-pref__cards">
+            {cat.integrations.map((integration: any) => {
+              const on = integratedList.includes(integration.slug);
+              const blocked =
+                integration.slug in issueTrackers &&
+                activeTracker &&
+                activeTracker !== integration.slug
+                  ? activeTracker
+                  : undefined;
+              const card = (
+                <button
+                  key={integration.slug ?? integration.title}
+                  type="button"
+                  className={`m-pref__card m-hover${on ? ' is-on' : ''}`}
+                  disabled={!!blocked}
+                  onClick={() => open(integration)}
+                >
+                  <span className="m-pref__card-mark">
+                    {integration.useIcon ? (
+                      <Icon name={integration.icon} size={16} />
+                    ) : (
+                      <img
+                        src={`/assets/${integration.icon}.svg`}
+                        alt=""
+                        height={16}
+                        width={16}
+                      />
+                    )}
+                  </span>
+                  <span className="m-pref__card-lead">
+                    <span className="m-pref__card-title">
+                      {integration.title}
+                      {on ? (
+                        <span className="m-pref__on">{t('Connected')}</span>
+                      ) : null}
+                    </span>
+                    <span className="m-pref__card-sub">
+                      {blocked
+                        ? t(
+                            'Only one issue tracker can be connected at a time. Disconnect {{name}} first.',
+                            { name: issueTrackers[blocked] },
+                          )
+                        : integration.subtitle}
+                    </span>
+                  </span>
+                </button>
+              );
+              return card;
+            })}
+          </div>
+        </PrefBlock>
+      ))}
+      <ConfirmDialog
+        open={disconnecting != null}
+        title={t('Disconnect {{name}}?', { name: disconnecting?.title ?? '' })}
+        okText={t('Disconnect')}
+        danger
+        onCancel={() => setDisconnecting(null)}
+        onOk={() => {
+          const i = disconnecting;
+          setDisconnecting(null);
+          if (i) void onDisconnect(i.slug);
+        }}
+      >
+        {t('Sessions stop linking to it. You can connect it again later.')}
+      </ConfirmDialog>
+    </PreferencesPage>
   );
 }
 

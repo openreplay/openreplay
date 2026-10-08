@@ -10,10 +10,7 @@ import IntegrationForm from './IntegrationForm';
 function LinearForm(props) {
   const { t } = useTranslation();
   return (
-    <div
-      className="bg-white h-screen overflow-y-auto"
-      style={{ width: '350px' }}
-    >
+    <div className="bg-surface-default">
       <IntegrationModalCard
         title="Linear"
         icon="integrations/linear"

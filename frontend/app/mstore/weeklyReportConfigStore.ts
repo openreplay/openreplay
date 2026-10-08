@@ -1,8 +1,12 @@
 import { makeAutoObservable } from 'mobx';
+
 import { configService } from 'App/services';
 
 export default class weeklyReportConfigStore {
   public weeklyReport = false;
+
+  /** false until the saved value is known: toggling before that sends a guess */
+  public loaded = false;
 
   constructor() {
     makeAutoObservable(this);
@@ -15,20 +19,22 @@ export default class weeklyReportConfigStore {
   async fetchReport() {
     try {
       const { weeklyReport } = await configService.fetchWeeklyReport();
-      return this.setReport(weeklyReport);
+      this.setReport(weeklyReport);
+      this.setLoaded(true);
     } catch (e) {
       console.error(e);
     }
   }
 
+  setLoaded(value: boolean) {
+    this.loaded = value;
+  }
+
+  /** Rejects on failure; the toggle stays where it was and the page says so. */
   async fetchEditReport(value: boolean) {
-    try {
-      const { weeklyReport } = await configService.editWeeklyReport({
-        weeklyReport: value,
-      });
-      return this.setReport(weeklyReport);
-    } catch (e) {
-      console.error(e);
-    }
+    const { weeklyReport } = await configService.editWeeklyReport({
+      weeklyReport: value,
+    });
+    this.setReport(weeklyReport);
   }
 }

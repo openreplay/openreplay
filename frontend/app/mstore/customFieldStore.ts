@@ -1,12 +1,13 @@
-import { makeAutoObservable } from 'mobx';
-import { customFieldService } from 'App/services';
+import { FilterCategory, FilterType } from 'Types/filter/filterType';
 import {
   addElementToFiltersMap,
   addElementToLiveFiltersMap,
   clearMetaFilters,
 } from 'Types/filter/newFilter';
-import { FilterCategory, FilterType } from 'Types/filter/filterType';
+import { makeAutoObservable, runInAction } from 'mobx';
+
 import CustomField from 'App/mstore/types/customField';
+import { customFieldService } from 'App/services';
 
 class CustomFieldStore {
   isLoading: boolean = false;
@@ -35,20 +36,51 @@ class CustomFieldStore {
     Object.assign(this.instance!, field);
   };
 
+  /** The project `list` belongs to; switching clears it so a stale row can't
+      be removed from the newly selected project. */
+  listFor: string | undefined = undefined;
+
+  /** a key was added, edited or removed since the session filters were built */
+  changed = false;
+
+  /** the project the global metadata filters were last built for */
+  filtersFor: string | undefined = undefined;
+
+  private listSeq = 0;
+
   async fetchList(siteId?: string): Promise<any> {
+    const seq = ++this.listSeq;
+    if (siteId !== this.listFor) {
+      this.list = [];
+      this.listFor = siteId;
+    }
     this.isLoading = true;
     try {
       const response = await customFieldService.get(siteId);
-      this.list = response.map((item: any) => new CustomField(item));
+      if (seq !== this.listSeq) return;
+      runInAction(() => {
+        this.list = response.map((item: any) => new CustomField(item));
+      });
     } finally {
-      this.isLoading = false;
+      if (seq === this.listSeq)
+        runInAction(() => {
+          this.isLoading = false;
+        });
     }
   }
 
   async fetchListActive(siteId?: string): Promise<any> {
+    const seq = ++this.listSeq;
+    this.changed = false;
+    if (siteId !== this.listFor) {
+      this.list = [];
+      this.listFor = siteId;
+    }
     this.isLoading = true;
     try {
       const response = await customFieldService.fetchList(siteId);
+      if (seq !== this.listSeq) return;
+      this.filtersFor = siteId;
       clearMetaFilters();
       response.forEach((item: any) => {
         const calls = [addElementToFiltersMap, addElementToLiveFiltersMap];
@@ -80,7 +112,7 @@ class CustomFieldStore {
       //   });
       // });
     } finally {
-      this.isLoading = false;
+      if (seq === this.listSeq) this.isLoading = false;
     }
   }
 
@@ -109,6 +141,7 @@ class CustomFieldStore {
         ? await customFieldService.create(siteId, instance.toData())
         : await customFieldService.update(siteId, instance.toData());
       const updatedInstance = new CustomField(response);
+      this.changed = true;
 
       if (wasCreating) {
         this.list.push(updatedInstance);
@@ -127,7 +160,10 @@ class CustomFieldStore {
     this.isSaving = true;
     try {
       await customFieldService.delete(siteId, index);
-      this.list = this.list.filter((item) => item.index !== index);
+      runInAction(() => {
+        this.list = this.list.filter((item) => item.index !== index);
+        this.changed = true;
+      });
     } finally {
       this.isSaving = false;
     }

@@ -1,117 +1,121 @@
+import { IconButton } from '@/ui/actions/IconButton';
+import { Button } from '@/ui/actions/button';
+import { Chip } from '@/ui/data/Chip';
+import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
+import { Tooltip } from '@/ui/overlays/tooltip';
 import withPageTitle from 'HOCs/withPageTitle';
-import { Button } from 'antd';
-import cn from 'classnames';
+import { Lock, Pencil, Plus } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useModal } from 'App/components/Modal';
 import { useStore } from 'App/mstore';
-import { Loader, NoContent, Tooltip, confirm } from 'UI';
 
+import { PrefList, PrefListRow } from '../PrefSection';
 import PreferencesPage from '../PreferencesPage';
 import RoleForm from './components/RoleForm';
-import RoleItem from './components/RoleItem';
+
+const SHOWN = 4;
 
 function Roles() {
   const { t } = useTranslation();
   const { roleStore, projectsStore, userStore } = useStore();
   const { account } = userStore;
-  const projectsMap = projectsStore.list.reduce((acc: any, p: any) => {
-    acc[p.id] = p.name;
-    return acc;
-  }, {});
-  const roles = roleStore.list;
-  const { loading } = roleStore;
-  const { init } = roleStore;
-  const { deleteRole } = roleStore;
-  const permissionsMap: any = {};
-  roleStore.permissions.forEach((p: any) => {
-    permissionsMap[p.value] = p.text;
-  });
-  const { showModal, hideModal } = useModal();
   const isAdmin = account.admin || account.superAdmin;
+  const [editing, setEditing] = React.useState(false);
+  const projectNames: Record<string, string> = Object.fromEntries(
+    projectsStore.list.map((p: any) => [p.id, p.name]),
+  );
+  const permissionNames: Record<string, string> = Object.fromEntries(
+    roleStore.permissions.map((p: any) => [p.value, p.text]),
+  );
 
   useEffect(() => {
     void roleStore.fetchRoles();
   }, []);
 
-  const editHandler = (role: any) => {
-    init(role);
-    showModal(
-      <RoleForm
-        closeModal={hideModal}
-        permissionsMap={permissionsMap}
-        deleteHandler={deleteHandler}
-      />,
-      { right: true },
-    );
+  const open = (role: any) => {
+    roleStore.init(role);
+    setEditing(true);
   };
 
-  const deleteHandler = async (role: any) => {
-    if (
-      await confirm({
-        header: t('Roles'),
-        confirmation: t('Are you sure you want to remove this role?'),
-      })
-    ) {
-      deleteRole(role.roleId).then(hideModal);
-    }
-  };
+  const addButton = (
+    <Button variant="primary" disabled={!isAdmin} onClick={() => open({})}>
+      <Plus size={14} />
+      {t('Add role')}
+    </Button>
+  );
 
   return (
-    <Loader loading={loading}>
-      <PreferencesPage
-        title={t('Roles and Access')}
-        flush
-        actions={
+    <PreferencesPage
+      title={t('Roles and Access')}
+      flush
+      actions={
+        isAdmin ? (
+          addButton
+        ) : (
           <Tooltip
             title={t('You don’t have the permissions to perform this action.')}
-            disabled={isAdmin}
           >
-            <Button type="primary" size="small" onClick={() => editHandler({})}>
-              {t('Add')}
-            </Button>
+            <span>{addButton}</span>
           </Tooltip>
-        }
-      >
-        <NoContent
-          title={t('No roles are available')}
-          size="small"
-          show={false}
-        >
-          <div className="">
-            <div
-              className={cn(
-                'flex items-start py-3 border-b px-5 pr-20 font-medium',
-              )}
-            >
-              <div className="" style={{ width: '20%' }}>
-                {t('Title')}
-              </div>
-              <div className="" style={{ width: '30%' }}>
-                {t('Project Access')}
-              </div>
-              <div className="" style={{ width: '50%' }}>
-                {t('Feature Access')}
-              </div>
-              <div />
-            </div>
-            {roles.map((role) => (
-              <RoleItem
+        )
+      }
+    >
+      {roleStore.loading && roleStore.list.length === 0 ? (
+        <SkeletonRows rows={3} columns={[30, 40, 30]} />
+      ) : (
+        <PrefList>
+          {roleStore.list.map((role: any) => {
+            const perms: string[] = role.permissions ?? [];
+            return (
+              <PrefListRow
                 key={role.roleId}
-                role={role}
-                isAdmin={isAdmin}
-                permissions={permissionsMap}
-                projects={projectsMap}
-                editHandler={editHandler}
-                deleteHandler={deleteHandler}
+                title={
+                  <span className="m-roles__name">
+                    {role.name}
+                    {role.protected ? (
+                      <Lock size={12} aria-label={t('Built-in role')} />
+                    ) : null}
+                  </span>
+                }
+                sub={
+                  role.allProjects
+                    ? t('All projects')
+                    : (role.projects ?? [])
+                        .map((p: string) => projectNames[p] ?? p)
+                        .join(', ') || t('No projects')
+                }
+                meta={
+                  <span className="m-roles__chips">
+                    {perms.slice(0, SHOWN).map((p) => (
+                      <Chip key={p} kind="tag">
+                        {permissionNames[p] ?? p}
+                      </Chip>
+                    ))}
+                    {perms.length > SHOWN ? (
+                      <Chip kind="tag">+{perms.length - SHOWN}</Chip>
+                    ) : null}
+                  </span>
+                }
+                actions={
+                  isAdmin ? (
+                    <IconButton
+                      icon={<Pencil size={14} />}
+                      label={t('Edit {{name}}', { name: role.name })}
+                      variant="ghost"
+                      disabled={role.protected}
+                      onClick={() => open(role)}
+                    />
+                  ) : null
+                }
               />
-            ))}
-          </div>
-        </NoContent>
-      </PreferencesPage>
-    </Loader>
+            );
+          })}
+        </PrefList>
+      )}
+      <RoleForm open={editing} onClose={() => setEditing(false)} />
+    </PreferencesPage>
   );
 }
 

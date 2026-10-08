@@ -1,19 +1,28 @@
-import React from 'react';
-import { Input } from 'UI';
-import { Button, Form } from 'antd';
-import { useStore } from 'App/mstore';
+import { Button } from '@/ui/actions/button';
+import { Input } from '@/ui/inputs/input';
+import { PasswordInput } from '@/ui/inputs/password-input';
+import {
+  DrawerFooter,
+  EntityDrawer,
+  Field,
+  Section,
+} from '@/ui/overlays/EntityDrawer';
+import { useToast } from '@/ui/overlays/toast';
 import { observer } from 'mobx-react-lite';
-import { toast } from 'react-toastify';
-import { TrashIcon } from 'lucide-react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useStore } from 'App/mstore';
+
 interface Props {
+  open: boolean;
   onClose: () => void;
   onDelete: (id: string) => void;
 }
 
-function WebhookForm({ onClose, onDelete }: Props) {
+function WebhookForm({ open, onClose, onDelete }: Props) {
   const { t } = useTranslation();
+  const toast = useToast();
   const { settingsStore } = useStore();
   const {
     webhookInst: webhook,
@@ -21,74 +30,86 @@ function WebhookForm({ onClose, onDelete }: Props) {
     editWebhook,
     saving,
   } = settingsStore;
-  const write = ({ target: { value, name } }) => editWebhook({ [name]: value });
+  if (!webhook) return null;
+  const exists = webhook.exists();
 
-  const save = () => {
+  const save = () =>
     saveWebhook(webhook)
       .then(() => {
+        toast.success(t('Webhook saved'));
         onClose();
       })
-      .catch((e) => {
-        toast.error(e.message || t('Failed to save webhook'));
-      });
-  };
+      .catch((e: any) =>
+        toast.error(e?.message || t('Failed to save webhook')),
+      );
 
   return (
-    <Form onFinish={save} layout="vertical">
-      <Form.Item>
-        <label>{t('Name')}</label>
-        <Input
-          name="name"
-          defaultValue={webhook.name}
-          onChange={write}
-          placeholder={t('Name')}
-          maxLength={50}
+    <EntityDrawer
+      open={open}
+      onClose={onClose}
+      eyebrow={t('Webhook')}
+      title={exists ? webhook.name : t('New webhook')}
+      footer={
+        <DrawerFooter
+          left={
+            exists ? (
+              <Button
+                variant="danger-outline"
+                onClick={() => onDelete(webhook.webhookId)}
+              >
+                {t('Delete')}
+              </Button>
+            ) : null
+          }
+          right={
+            <>
+              <Button variant="subtle" onClick={onClose}>
+                {t('Cancel')}
+              </Button>
+              <Button
+                variant="primary"
+                disabled={!webhook.validate() || saving}
+                onClick={() => void save()}
+              >
+                {exists ? t('Update') : t('Add')}
+              </Button>
+            </>
+          }
         />
-      </Form.Item>
-
-      <Form.Item>
-        <label>{t('Endpoint')}</label>
-        <Input
-          name="endpoint"
-          defaultValue={webhook.endpoint}
-          onChange={write}
-          placeholder={t('Endpoint')}
-        />
-      </Form.Item>
-
-      <Form.Item>
-        <label>{t('Auth Header (optional)')}</label>
-        <Input
-          name="authHeader"
-          defaultValue={webhook.authHeader}
-          onChange={write}
-          placeholder={t('Auth Header')}
-        />
-      </Form.Item>
-
-      <div className="flex justify-between">
-        <div className="flex items-center">
-          <Button
-            // onClick={save}
-            disabled={!webhook.validate()}
-            loading={saving}
-            type="primary"
-            htmlType="submit"
-            className="float-left mr-2"
-          >
-            {webhook.exists() ? t('Update') : t('Add')}
-          </Button>
-          {webhook.exists() && <Button onClick={onClose}>{t('Cancel')}</Button>}
-        </div>
-        {webhook.exists() && (
-          <Button
-            icon={<TrashIcon size={16} />}
-            type="text"
-            onClick={() => onDelete(webhook.webhookId)}
+      }
+    >
+      <Section title={t('Where it goes')}>
+        <Field label={t('Name')}>
+          <Input
+            value={webhook.name ?? ''}
+            placeholder={t('Deploy notifier')}
+            maxLength={50}
+            onChange={(e) => editWebhook({ name: e.target.value })}
           />
-        )}
-      </div>
-    </Form>
+        </Field>
+        <Field label={t('Endpoint')}>
+          <Input
+            value={webhook.endpoint ?? ''}
+            placeholder="https://hooks.acme.com/openreplay"
+            onChange={(e) => editWebhook({ endpoint: e.target.value })}
+          />
+        </Field>
+      </Section>
+      <Section
+        title={t('Authentication')}
+        hint={t('Optional. Sent as an Authorization header on every call.')}
+      >
+        <Field label={t('Auth header')}>
+          {/* a credential: masked (with a reveal toggle) so a screen share doesn't leak it */}
+          <PasswordInput
+            value={webhook.authHeader ?? ''}
+            placeholder="Bearer …"
+            autoComplete="new-password"
+            onChange={(e) => editWebhook({ authHeader: e.target.value })}
+          />
+        </Field>
+      </Section>
+    </EntityDrawer>
   );
 }
 

@@ -1,7 +1,7 @@
+import { Switch } from '@/ui/inputs/switch';
+import { QuestionMarkHint } from '@/ui/overlays/QuestionMarkHint';
 import React from 'react';
-import { Switch } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { QuestionMarkHint } from 'UI';
 
 export const inactivitySettingKey = '__openreplay_skip_dom_inactivity';
 function getDefault() {
@@ -29,7 +29,7 @@ function InactivitySettings() {
         />
       </div>
       <div className="mt-2">
-        <Switch onChange={onChange} checked={skipDom} />
+        <Switch onCheckedChange={onChange} checked={skipDom} />
       </div>
     </div>
   );

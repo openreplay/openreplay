@@ -1,11 +1,15 @@
-import { useStore } from 'App/mstore';
-import React, { useState } from 'react';
-import DocLink from 'Shared/DocLink/DocLink';
-import { Tabs, CodeBlock } from 'UI';
+import { CodeBlock } from '@/ui/data/CodeBlock';
+import { Tabs, TabsList, TabsTrigger } from '@/ui/layout/tabs';
 import { observer } from 'mobx-react-lite';
-import AssistScript from './AssistScript';
-import AssistNpm from './AssistNpm';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { useStore } from 'App/mstore';
+
+import DocLink from 'Shared/DocLink/DocLink';
+
+import AssistNpm from './AssistNpm';
+import AssistScript from './AssistScript';
 
 const NPM = 'NPM';
 const SCRIPT = 'SCRIPT';
@@ -35,7 +39,7 @@ function AssistDoc() {
   };
 
   return (
-    <div className="bg-white h-screen overflow-y-auto w-full">
+    <div className="bg-surface-default h-screen overflow-y-auto w-full">
       <h3 className="p-5 text-2xl">{t('Assist')}</h3>
       <div className="p-5">
         <div>
@@ -49,11 +53,15 @@ function AssistDoc() {
         <div className="mb-4" />
 
         <div className="font-bold my-2">{t('Usage')}</div>
-        <Tabs
-          tabs={TABS}
-          active={activeTab}
-          onClick={(tab) => setActiveTab(tab)}
-        />
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList>
+            {TABS.map((tab) => (
+              <TabsTrigger key={tab.key} value={tab.key}>
+                {tab.text}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
 
         <div className="py-5">{renderActiveTab()}</div>
 

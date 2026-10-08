@@ -1,9 +1,12 @@
-import { makeAutoObservable, runInAction, observable, action } from 'mobx';
-import { auditService } from 'App/services';
+import { toast } from '@/ui/overlays/toast';
 import Period, { LAST_7_DAYS } from 'Types/app/period';
-import { toast } from 'react-toastify';
+import { DateTime } from 'luxon';
+import { action, makeAutoObservable, observable, runInAction } from 'mobx';
+
+import { auditService } from 'App/services';
 import { exportCSVFile } from 'App/utils';
-import { DateTime } from 'luxon'; // TODO
+
+// TODO
 import Audit from './types/audit';
 
 export default class AuditStore {
@@ -94,11 +97,21 @@ export default class AuditStore {
         });
     });
 
+  /** Exports what the list shows: same search, order and window, every page. */
   exportToCsv = async (): Promise<void> => {
-    const promise = this.fetchAllAudits({ limit: this.total });
+    const { startTimestamp, endTimestamp } = this.period?.toTimestamps() ?? {};
+    const promise = this.fetchAllAudits({
+      page: 1,
+      limit: this.total,
+      query: this.searchQuery,
+      order: this.order,
+      startDate: startTimestamp,
+      endDate: endTimestamp,
+    });
     toast.promise(promise, {
       pending: 'Exporting...',
       success: 'Export successful',
+      error: 'Export failed',
     });
   };
 }

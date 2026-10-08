@@ -1,16 +1,16 @@
 import React from 'react';
-import DocLink from 'Shared/DocLink/DocLink';
-import IntegrationModalCard from 'Components/Client/Integrations/IntegrationModalCard';
-import IntegrationForm from './IntegrationForm';
 import { useTranslation } from 'react-i18next';
+
+import IntegrationModalCard from 'Components/Client/Integrations/IntegrationModalCard';
+
+import DocLink from 'Shared/DocLink/DocLink';
+
+import IntegrationForm from './IntegrationForm';
 
 function GithubForm(props) {
   const { t } = useTranslation();
   return (
-    <div
-      className="bg-white h-screen overflow-y-auto"
-      style={{ width: '350px' }}
-    >
+    <div className="bg-surface-default">
       <IntegrationModalCard
         title="Github"
         icon="integrations/github"

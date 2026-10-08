@@ -1,124 +1,119 @@
 import usePageTitle from '@/hooks/usePageTitle';
+import { IconButton } from '@/ui/actions/IconButton';
+import { Button } from '@/ui/actions/button';
+import { EmptyState } from '@/ui/feedback/EmptyState';
+import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
+import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
+import { useToast } from '@/ui/overlays/toast';
 import { IWebhook } from 'Types/webhook';
-import { App, Button, List, Space, Typography } from 'antd';
-import { PencilIcon } from 'lucide-react';
+import { Trash2, Webhook as WebhookIcon } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'react-toastify';
 
 import { useStore } from 'App/mstore';
-import { useModal } from 'Components/ModalContext';
-import { Icon, Loader, NoContent } from 'UI';
 
-import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
-
-import PreferencesPage from '../PreferencesPage';
+import { PrefBlock, PrefList, PrefListRow } from '../PrefSection';
 import WebhookForm from './WebhookForm';
 
 function Webhooks() {
   const { t } = useTranslation();
+  const toast = useToast();
   const { settingsStore } = useStore();
   const { webhooks, hooksLoading: loading } = settingsStore;
-  const { openModal, closeModal } = useModal();
-  const { modal } = App.useApp();
+  const [editing, setEditing] = React.useState(false);
+  const [deleting, setDeleting] = React.useState<any | null>(null);
   usePageTitle('Webhooks - OpenReplay Preferences');
-  const customWebhooks = webhooks.filter((h) => h.type === 'webhook');
+  const custom = webhooks.filter((h) => h.type === 'webhook');
 
   useEffect(() => {
     void settingsStore.fetchWebhooks();
   }, []);
 
-  const init = (w?: Partial<IWebhook>) => {
+  const open = (w?: Partial<IWebhook>) => {
     settingsStore.initWebhook({ ...w });
-    openModal(<WebhookForm onClose={closeModal} onDelete={removeWebhook} />, {
-      title: w ? t('Edit Webhook') : t('Add Webhook'),
-    });
+    setEditing(true);
   };
 
-  const removeWebhook = async (id: string) => {
-    modal.confirm({
-      title: t('Confirm'),
-      content: t('Are you sure you want to remove this webhook?'),
-      onOk: () => {
-        settingsStore
-          .removeWebhook(id)
-          .then(() => toast.success(t('Webhook removed successfully')));
-        closeModal();
-      },
-    });
-  };
+  const remove = (id: string) =>
+    settingsStore
+      .removeWebhook(id)
+      .then(() => toast.success(t('Webhook removed successfully')))
+      .catch(() => toast.error(t('Could not remove the webhook')));
 
   return (
-    <PreferencesPage
-      title={t('Webhooks')}
-      actions={
-        <Button type="primary" size="small" onClick={() => init()}>
-          {t('Add Webhook')}
-        </Button>
-      }
-    >
-      {/* the hint used to sit under the title; the header row is one fixed
-          height now, so it leads the body instead */}
-      <Typography.Text type="secondary" className="block mb-4">
-        <Space>
-          <Icon name="info-circle-fill" size={16} />
-          {t(
-            'Leverage webhook notifications on alerts to trigger custom callbacks.',
-          )}
-        </Space>
-      </Typography.Text>
-
-      <Loader loading={loading}>
-        <NoContent
-          title={
-            <div className="flex flex-col items-center justify-center">
-              <AnimatedSVG name={ICONS.NO_WEBHOOKS} size={60} />
-              <div className="text-center my-4">{t('None added yet')}</div>
-            </div>
-          }
-          size="small"
-          show={customWebhooks.length === 0}
-        >
-          <List
-            size="small"
-            dataSource={customWebhooks}
-            renderItem={(w) => (
-              <List.Item
-                onClick={() => init(w)}
-                className="p-2! group flex justify-between items-center cursor-pointer hover:bg-active-blue transition"
-              >
-                <Space
-                  direction="vertical"
-                  className="overflow-hidden! w-full!"
-                >
-                  <Typography.Text style={{ textTransform: 'capitalize' }}>
-                    {w.name}
-                  </Typography.Text>
-                  <Typography.Text
-                    type="secondary"
-                    ellipsis={{ tooltip: w.endpoint }}
-                    style={{
-                      width: '90%',
-                      display: 'inline-block',
-                      overflow: 'hidden',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {w.endpoint}
-                  </Typography.Text>
-                </Space>
-                <Button
-                  type="text"
-                  className="invisible group-hover:visible"
-                  icon={<PencilIcon size={16} />}
-                />
-              </List.Item>
+    <>
+      <PrefBlock
+        flush
+        title={t('Endpoints')}
+        hint={t(
+          'An alert can call any of these when it fires. OpenReplay posts the alert as JSON.',
+        )}
+        actions={
+          <Button variant="primary" onClick={() => open()}>
+            {t('Add webhook')}
+          </Button>
+        }
+      >
+        {loading && custom.length === 0 ? (
+          <SkeletonRows rows={3} columns={[60, 40]} />
+        ) : custom.length === 0 ? (
+          <EmptyState
+            art="frame"
+            title={t('No endpoints yet')}
+            hint={t(
+              'Add one, then pick it on an alert. OpenReplay posts there the moment the alert fires.',
             )}
           />
-        </NoContent>
-      </Loader>
-    </PreferencesPage>
+        ) : (
+          <PrefList>
+            {custom.map((w) => (
+              <PrefListRow
+                key={w.webhookId}
+                lead={<WebhookIcon size={15} className="m-pref__proj-icon" />}
+                title={w.name}
+                sub={w.endpoint}
+                actions={
+                  <>
+                    <Button variant="subtle" size="sm" onClick={() => open(w)}>
+                      {t('Edit')}
+                    </Button>
+                    <IconButton
+                      icon={<Trash2 size={14} />}
+                      label={t('Delete {{name}}', { name: w.name })}
+                      variant="ghost"
+                      onClick={() => setDeleting(w)}
+                    />
+                  </>
+                }
+              />
+            ))}
+          </PrefList>
+        )}
+      </PrefBlock>
+      <WebhookForm
+        open={editing}
+        onClose={() => setEditing(false)}
+        onDelete={(id) => {
+          setEditing(false);
+          setDeleting(custom.find((w) => w.webhookId === id) ?? null);
+        }}
+      />
+      <ConfirmDialog
+        open={deleting != null}
+        title={t('Delete {{name}}?', { name: deleting?.name ?? '' })}
+        okText={t('Delete')}
+        danger
+        onCancel={() => setDeleting(null)}
+        onOk={() => {
+          const w = deleting;
+          setDeleting(null);
+          if (w) void remove(w.webhookId);
+        }}
+      >
+        {t('Alerts that call it stop notifying this endpoint.')}
+      </ConfirmDialog>
+    </>
   );
 }
 

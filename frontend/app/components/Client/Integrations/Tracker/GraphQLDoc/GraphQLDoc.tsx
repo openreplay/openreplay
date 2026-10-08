@@ -1,10 +1,12 @@
-import { useStore } from 'App/mstore';
+import { CodeBlock } from '@/ui/data/CodeBlock';
+import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { CodeBlock } from 'UI';
+import { useTranslation } from 'react-i18next';
+
+import { useStore } from 'App/mstore';
+
 import DocLink from 'Shared/DocLink/DocLink';
 import ToggleContent from 'Shared/ToggleContent';
-import { observer } from 'mobx-react-lite';
-import { useTranslation } from 'react-i18next';
 
 function GraphQLDoc() {
   const { t } = useTranslation();
@@ -39,7 +41,7 @@ function SomeFunctionalComponent() {
 //...
 export const recordGraphQL = tracker.use(trackerGraphQL());`;
   return (
-    <div className="bg-white h-screen overflow-y-auto w-full">
+    <div className="bg-surface-default h-screen overflow-y-auto w-full">
       <h3 className="p-5 text-2xl">{t('GraphQL')}</h3>
       <div className="p-5">
         <p>

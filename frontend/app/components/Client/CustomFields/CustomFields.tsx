@@ -1,110 +1,234 @@
-import React, { useEffect, useState } from 'react';
-import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
-import { useModal } from 'App/components/Modal';
-import { useStore } from 'App/mstore';
-import { observer } from 'mobx-react-lite';
-import { List, Space, Typography, Button, Tooltip, Empty } from 'antd';
-import { PlusIcon, Tags } from 'lucide-react';
-import { EditOutlined } from '@ant-design/icons';
 import usePageTitle from '@/hooks/usePageTitle';
-import CustomFieldForm from './CustomFieldForm';
+import { CopyButton } from '@/ui/actions/CopyButton';
+import { IconButton } from '@/ui/actions/IconButton';
+import { Button } from '@/ui/actions/button';
+import { CodeBlock } from '@/ui/data/CodeBlock';
+import { EmptyState } from '@/ui/feedback/EmptyState';
+import { Input } from '@/ui/inputs/input';
+import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
+import { RenameDialog } from '@/ui/overlays/RenameDialog';
+import { useToast } from '@/ui/overlays/toast';
+import { Pencil, Trash2 } from 'lucide-react';
+import { observer } from 'mobx-react-lite';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useStore } from 'App/mstore';
+import CustomField from 'App/mstore/types/customField';
+
+import { ExampleChip } from 'Shared/ExampleChip/ExampleChip';
+
+import { PrefBlock, PrefField, PrefList, PrefListRow } from '../PrefSection';
+
+const MAX = 10;
+const EXAMPLES = ['plan', 'accountId', 'role', 'company', 'tier'];
+const KEY_RE = /^[A-Za-z_][\w.-]*$/;
+
+const snippetFor = (platform: string, keys: string[]) =>
+  keys
+    .map((k) =>
+      platform === 'web'
+        ? `tracker.setMetadata('${k}', value);`
+        : `ORTracker.shared.setMetadata(key: "${k}", value: value)`,
+    )
+    .join('\n');
+
+/** A project's metadata keys: declared here, sent from the tracker. */
 function CustomFields() {
   usePageTitle('Metadata - OpenReplay Preferences');
   const { t } = useTranslation();
+  const toast = useToast();
   const { customFieldStore: store, projectsStore } = useStore();
-  const currentSite = projectsStore.config.project;
-  const { showModal } = useModal();
-  const fields = store.list;
-  const [loading, setLoading] = useState(false);
+  const project = projectsStore.config.project;
+  const siteId = `${project?.projectId}`;
+  const platform = project?.platform === 'web' ? 'web' : 'ios';
+  const fields: any[] = store.list;
+  const [key, setKey] = useState('');
+  const [renaming, setRenaming] = useState<any | null>(null);
+  const [deleting, setDeleting] = useState<any | null>(null);
 
   useEffect(() => {
-    setLoading(true);
-    store.fetchList(currentSite?.id).finally(() => {
-      setLoading(false);
-    });
-  }, [currentSite]);
+    void store.fetchList(project?.id ?? undefined);
+  }, [project]);
 
-  const handleInit = (field?: any) => {
-    store.init(field);
-    showModal(<CustomFieldForm siteId={`${currentSite?.projectId}`} />, {
-      title: field ? t('Edit Metadata') : t('Add Metadata'),
-      right: true,
-    });
+  const keys = fields.map((f) => f.key);
+  const remaining = MAX - fields.length;
+  const taken = keys.includes(key.trim());
+  const valid = KEY_RE.test(key.trim()) && !taken && remaining > 0;
+
+  const save = (instance: CustomField, done: string) =>
+    store
+      .save(siteId, instance)
+      .then((r: any) => {
+        if (r?.errors?.length) toast.error(r.errors[0]);
+        else toast.success(done);
+      })
+      .catch(() => toast.error(t('An error occurred while saving metadata.')));
+
+  const add = (k: string) => {
+    void save(
+      new CustomField({ key: k }),
+      t('{{key}} declared. Send it from your code and it becomes a filter.', {
+        key: k,
+      }),
+    ).then(() => setKey(''));
   };
 
-  const remaining = 10 - fields.length;
-
   return (
-    <div className="flex flex-col gap-6">
-      <Typography.Text>
-        {t(
-          'Attach key-value pairs to session replays for enhanced filtering, searching, and identifying relevant user sessions.',
-        )}
-        <a
-          href="https://docs.openreplay.com/en/session-replay/metadata"
-          className="link ml-1"
-          target="_blank"
-          rel="noreferrer"
-        >
-          {t('Learn more')}
-        </a>
-      </Typography.Text>
-
-      <Space>
-        <Tooltip
-          title={
-            remaining > 0 ? '' : t("You've reached the limit of 10 metadata.")
-          }
-        >
-          <Button
-            type="primary"
-            size="small"
-            disabled={remaining === 0}
-            onClick={() => handleInit()}
-            className="flex! items-center! gap-1!"
-          >
-            <PlusIcon size={16} />
-            <span>{t('Add Metadata')}</span>
-          </Button>
-        </Tooltip>
-        {/* {remaining === 0 && <Icon name="info-circle" size={16} color="black" />} */}
-        <Typography.Text type="secondary">
-          {remaining === 0
-            ? t('You have reached the limit of 10 metadata.')
-            : `${remaining}${t('/10 Remaining for this project')}`}
-        </Typography.Text>
-      </Space>
-
-      <List
-        locale={{
-          emptyText: (
-            <Empty
-              description={t('None added yet')}
-              image={<AnimatedSVG name={ICONS.NO_METADATA} size={60} />}
-            />
-          ),
-        }}
-        loading={loading}
-        dataSource={fields}
-        renderItem={(field: any) => (
-          <List.Item
-            onClick={() => handleInit(field)}
-            className="cursor-pointer group hover:bg-active-blue px-4!"
-            actions={[
+    <>
+      <PrefBlock
+        flush
+        title={t('Keys')}
+        hint={
+          remaining > 0
+            ? t('{{n}} of {{max}} left for this project.', {
+                n: remaining,
+                max: MAX,
+              })
+            : t('All {{max}} are in use. Remove one to add another.', {
+                max: MAX,
+              })
+        }
+      >
+        <div style={{ padding: '0 var(--m-space-7) var(--m-space-6)' }}>
+          <PrefField>
+            <div className="m-pref__row">
+              <Input
+                value={key}
+                placeholder="plan"
+                maxLength={50}
+                aria-label={t('New metadata key')}
+                className="m-pref__grow"
+                disabled={remaining === 0}
+                onChange={(e) => setKey(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && valid) add(key.trim());
+                }}
+              />
               <Button
-                type="link"
-                className="opacity-0 group-hover:opacity-100!"
-                icon={<EditOutlined size={14} />}
-              />,
-            ]}
-          >
-            <List.Item.Meta title={field.key} avatar={<Tags size={20} />} />
-          </List.Item>
+                variant="primary"
+                disabled={!valid || store.isSaving}
+                onClick={() => add(key.trim())}
+              >
+                {t('Declare')}
+              </Button>
+            </div>
+            {taken ? (
+              <p className="m-pref__field-note">
+                {t('{{key}} is already declared here.', { key: key.trim() })}
+              </p>
+            ) : null}
+          </PrefField>
+          {remaining > 0 ? (
+            <div
+              className="m-pref__keys"
+              style={{ marginTop: 'var(--m-space-4)' }}
+            >
+              {EXAMPLES.filter((e) => !keys.includes(e)).map((e) => (
+                <ExampleChip key={e} label={e} onTake={() => add(e)} />
+              ))}
+            </div>
+          ) : null}
+        </div>
+
+        {fields.length === 0 ? (
+          <EmptyState
+            art="bookmark"
+            title={t('No keys yet')}
+            hint={t(
+              'Declare one above, then send it from your code. Anything you would filter sessions by: a plan, an account, a role.',
+            )}
+          />
+        ) : (
+          <PrefList>
+            {fields.map((f) => (
+              <PrefListRow
+                key={f.index ?? f.key}
+                title={f.key}
+                actions={
+                  <>
+                    <CopyButton
+                      variant="ghost"
+                      text={snippetFor(platform, [f.key])}
+                      label={t('Copy the call for {{key}}', { key: f.key })}
+                    />
+                    <IconButton
+                      icon={<Pencil size={14} />}
+                      label={t('Rename {{key}}', { key: f.key })}
+                      variant="ghost"
+                      onClick={() => setRenaming(f)}
+                    />
+                    <IconButton
+                      icon={<Trash2 size={14} />}
+                      label={t('Remove {{key}}', { key: f.key })}
+                      variant="ghost"
+                      onClick={() => setDeleting(f)}
+                    />
+                  </>
+                }
+              />
+            ))}
+          </PrefList>
         )}
+      </PrefBlock>
+
+      {fields.length > 0 ? (
+        <PrefBlock
+          title={t('Send the values')}
+          hint={t('Call this after the tracker starts, once per key.')}
+        >
+          <CodeBlock
+            code={snippetFor(platform, keys)}
+            language={platform === 'web' ? 'JavaScript' : 'Swift'}
+            caption={t('After the tracker starts')}
+          />
+          <a
+            href="https://docs.openreplay.com/en/session-replay/metadata"
+            className="link self-start text-sm"
+            target="_blank"
+            rel="noreferrer"
+          >
+            {t('Learn more about metadata')}
+          </a>
+        </PrefBlock>
+      ) : null}
+
+      <RenameDialog
+        open={renaming != null}
+        title={t('Rename metadata key')}
+        value={renaming?.key ?? ''}
+        onCancel={() => setRenaming(null)}
+        onOk={(next) => {
+          const f = renaming;
+          setRenaming(null);
+          if (!f || !next.trim() || next.trim() === f.key) return;
+          store.init(f);
+          store.edit({ key: next.trim() });
+          void save(store.instance, t('Metadata updated'));
+        }}
       />
-    </div>
+      <ConfirmDialog
+        open={deleting != null}
+        title={t('Remove {{key}}?', { key: deleting?.key ?? '' })}
+        okText={t('Remove')}
+        danger
+        onCancel={() => setDeleting(null)}
+        onOk={() => {
+          const f = deleting;
+          setDeleting(null);
+          if (f)
+            store
+              .remove(siteId, f.index)
+              .catch(() =>
+                toast.error(t('Could not remove {{key}}', { key: f.key })),
+              );
+        }}
+      >
+        {t(
+          'Sessions stop being filterable by this key. Values already recorded are kept.',
+        )}
+      </ConfirmDialog>
+    </>
   );
 }
 

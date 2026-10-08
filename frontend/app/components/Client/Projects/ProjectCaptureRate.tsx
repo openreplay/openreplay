@@ -1,13 +1,17 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Space, Switch, Tooltip, Input, Typography } from 'antd';
-import { Icon, Loader } from 'UI';
-import cn from 'classnames';
-import ConditionalRecordingSettings from 'Shared/SessionSettings/components/ConditionalRecordingSettings';
-import { Conditions } from '@/mstore/types/FeatureFlag';
 import { useStore } from '@/mstore';
+import { Conditions } from '@/mstore/types/FeatureFlag';
 import Project from '@/mstore/types/project';
+import { Button } from '@/ui/actions/button';
+import { Loader } from '@/ui/feedback/Loader';
+import { NumberInput } from '@/ui/inputs/number-input';
+import { Tooltip } from '@/ui/overlays/tooltip';
 import { observer } from 'mobx-react-lite';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import ConditionalRecordingSettings from 'Shared/SessionSettings/components/ConditionalRecordingSettings';
+
+import { PrefBlock, PrefField, PrefToggle } from '../PrefSection';
 
 interface Props {
   project: Project;
@@ -73,94 +77,98 @@ function ProjectCaptureRate(props: Props) {
   };
 
   const onUpdate = () => {
-    updateCaptureConditions(projectId!, {
+    void updateCaptureConditions(projectId!, {
       rate: parseInt(captureRate, 10),
       conditionalCapture,
       conditions: isEnterprise
         ? conditions.map((c) => c.toCaptureCondition())
         : [],
-    });
-    setChanged(false);
+    }).then((saved) => saved && setChanged(false));
   };
 
   const updateDisabled =
     !changed ||
+    // the form still shows another project's values until this one's load
+    settingsStore.captureConditionsFor !== projectId ||
     !isAdmin ||
     (isEnterprise && conditionalCapture && conditions.length === 0);
 
   return (
     <Loader loading={loadingCaptureRate || !projectId}>
-      <Tooltip title={isAdmin ? '' : t("You don't have permission to change.")}>
-        <div className="flex flex-col gap-4 border-b pb-4">
-          <Space>
-            <Typography.Text>
-              {t('Define percentage of sessions you want to capture')}
-            </Typography.Text>
-            <Tooltip
-              title={
-                t(
-                  'Define the percentage of user sessions to be recorded for detailed replay and analysis.',
-                ) +
-                `\n${t('Sessions exceeding this specified limit will not be captured or stored.')}`
-              }
-            >
-              <Icon size={16} color="black" name="info-circle" />
-            </Tooltip>
-          </Space>
-
-          <Space className="flex! items-center! gap-6! h-6!">
-            <Switch
-              checked={conditionalCapture}
-              onChange={toggleRate}
-              checkedChildren={!isEnterprise ? '100%' : t('Conditional')}
-              disabled={!isAdmin}
-              unCheckedChildren={
-                !isEnterprise ? t('Custom') : t('Capture Rate')
-              }
-            />
-
-            {!conditionalCapture ? (
-              <div className={cn('relative', { disabled: !isAdmin })}>
-                <Input
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                    if (/^\d+$/.test(e.target.value) || e.target.value === '') {
-                      onCaptureRateChange(e.target.value);
-                    }
-                  }}
-                  value={captureRate.toString()}
-                  style={{ height: '26px', width: '70px' }}
-                  disabled={conditionalCapture}
-                  min={0}
-                  max={100}
-                />
-                <Icon
-                  className="absolute right-0 mr-2 top-0 bottom-0 m-auto"
-                  name="percent"
-                  color="gray-medium"
-                  size="18"
-                />
-              </div>
-            ) : null}
-
-            <Button
-              type="primary"
-              size="small"
-              onClick={onUpdate}
-              disabled={updateDisabled}
-            >
-              {t('Update')}
-            </Button>
-          </Space>
+      <PrefBlock
+        title={t('Capture rate')}
+        hint={t(
+          'Define the percentage of sessions you want to capture. Sessions beyond it are never recorded or stored.',
+        )}
+      >
+        <PrefField
+          label={isEnterprise ? t('Conditional') : t('Capture every session')}
+          note={
+            isEnterprise
+              ? t(
+                  'Record only the sessions that match a condition set below. Each set keeps its own rate.',
+                )
+              : undefined
+          }
+        >
+          <PrefToggle
+            checked={conditionalCapture}
+            onChange={toggleRate}
+            disabled={!isAdmin}
+            label={conditionalCapture ? t('On') : t('Off')}
+          />
+        </PrefField>
+        {!conditionalCapture ? (
+          <PrefField>
+            <div className="m-pref__row">
+              <NumberInput
+                value={captureRate === '' ? undefined : Number(captureRate)}
+                min={0}
+                max={100}
+                disabled={!isAdmin}
+                aria-label={t('Capture rate')}
+                className="m-pref__w-xs"
+                onChange={(v) =>
+                  onCaptureRateChange(
+                    v == null ? '' : String(Math.min(100, Math.max(0, v))),
+                  )
+                }
+              />
+              <span className="m-pref__hint">{t('% of sessions')}</span>
+            </div>
+          </PrefField>
+        ) : null}
+        <div className="m-pref__row">
+          <Tooltip
+            title={
+              isAdmin ? undefined : t("You don't have permission to change.")
+            }
+          >
+            <span>
+              <Button
+                variant="primary"
+                onClick={onUpdate}
+                disabled={updateDisabled}
+              >
+                {t('Update')}
+              </Button>
+            </span>
+          </Tooltip>
         </div>
-        {conditionalCapture && isEnterprise ? (
+      </PrefBlock>
+      {conditionalCapture && isEnterprise ? (
+        <PrefBlock
+          title={t('Condition sets')}
+          hint={t('A session is recorded when it matches one of these.')}
+        >
           <ConditionalRecordingSettings
             setChanged={setChanged}
             conditions={conditions}
             setConditions={setConditions}
             isMobile={isMobile}
           />
-        ) : null}
-      </Tooltip>
+        </PrefBlock>
+      ) : null}
     </Loader>
   );
 }
