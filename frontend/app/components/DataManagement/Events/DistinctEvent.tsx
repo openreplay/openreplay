@@ -1,6 +1,8 @@
-import { dataManagement, withSiteId } from '@/routes';
+import { Button } from '@/ui/actions/button';
+import { useToast } from '@/ui/overlays/toast';
+import { Play } from 'lucide-react';
 import React from 'react';
-import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 
 import DataItemPage from '../DataItemPage';
 import DistinctEventPropsList from './DistinctEventPropsList';
@@ -9,47 +11,73 @@ import { updateEventProperty } from './api';
 
 function DistinctEventPage({
   event,
-  siteId,
+  onBack,
   openSessions,
   refetchList,
 }: {
   event: DistinctEvent;
-  siteId: string;
-  openSessions: (eventName: string) => void;
+  onBack: () => void;
+  openSessions: () => void;
   refetchList: () => void;
 }) {
-  const backLink = withSiteId(dataManagement.eventsList(), siteId);
+  const { t } = useTranslation();
+  const toast = useToast();
 
-  const onSave = async (property: { key: string; value: string }) => {
+  const save = async (patch: Partial<DistinctEvent>) => {
     try {
-      const updatedEvent = { ...event };
-      updatedEvent[property.key.toLocaleLowerCase()] = property.value;
-      await updateEventProperty(updatedEvent);
+      await updateEventProperty({ ...event, ...patch });
       refetchList();
-      toast.success('Property updated successfully');
-    } catch (error) {
-      console.error(error);
-      toast.error('Failed to update property');
+      toast.success(t('Event updated'));
+    } catch (e) {
+      console.error(e);
+      toast.error(t('Failed to update event'));
     }
   };
+
   return (
     <DataItemPage
-      onSave={onSave}
-      openSessions={() => openSessions(event.name)}
-      item={{
-        name: event.name,
-        status: event.status,
-        fields: {
-          displayName: { value: event.displayName, readonly: false },
-          description: { value: event.description, readonly: false },
-          volume: { value: event.count.toString(), readonly: true },
+      back={{ label: t('Events'), onClick: onBack }}
+      title={event.displayName || event.name}
+      name={event.name}
+      actions={
+        <Button onClick={openSessions}>
+          <Play size={13} />
+          {t('Play sessions')}
+        </Button>
+      }
+      rows={[
+        {
+          label: t('Display name'),
+          value: event.displayName,
+          onSave: (v) => void save({ displayName: v }),
         },
+        {
+          label: t('Description'),
+          value: event.description,
+          multiline: true,
+          placeholder: t('What this event means'),
+          onSave: (v) => void save({ description: v }),
+        },
+        {
+          label: t('30-day volume'),
+          value: String(event.count),
+          display: (
+            <span className="m-dmg__mono">{event.count.toLocaleString()}</span>
+          ),
+        },
+        {
+          label: t('Kind'),
+          value: event.autoCaptured ? t('Autocaptured') : t('Custom'),
+          hint: event.autoCaptured
+            ? t('Sent by the tracker on its own')
+            : t('Sent by your code'),
+        },
+      ]}
+      status={{
+        hidden: event.status === 'hidden',
+        onChange: (hidden) =>
+          void save({ status: hidden ? 'hidden' : 'visible' }),
       }}
-      backLink={{
-        name: 'Events',
-        to: backLink,
-      }}
-      type="distinct_event"
       footer={<DistinctEventPropsList eventName={event.name} />}
     />
   );

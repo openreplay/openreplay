@@ -1,74 +1,58 @@
 import withPageTitle from '@/components/hocs/withPageTitle';
+import { useLocalSort } from '@/lib/use-local-sort';
+import { IconButton } from '@/ui/actions/IconButton';
+import { Button } from '@/ui/actions/button';
+import { type Column, DataTable } from '@/ui/data/table';
+import { EmptyState } from '@/ui/feedback/EmptyState';
+import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
+import { SearchField } from '@/ui/inputs/SearchField';
+import { Switch } from '@/ui/inputs/switch';
+import { ListFooter } from '@/ui/layout/ListFooter';
+import { PageCard } from '@/ui/layout/PageCard';
+import { Tabs, TabsList, TabsTrigger } from '@/ui/layout/tabs';
+import { Tooltip } from '@/ui/overlays/tooltip';
 import { useQuery } from '@tanstack/react-query';
 import withPermissions from 'HOCs/withPermissions';
-import { Button, Empty, Input, Switch, Table, Tooltip } from 'antd';
-import { Album, EyeOff } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useStore } from 'App/mstore';
 import { useHistory, useLocation } from 'App/routing';
-import SimpleEmptyImage from 'Components/DataManagement/SimpleEmptyImage';
-import { TextEllipsis } from 'UI';
 
-import FullPagination from 'Shared/FullPagination';
-import Tabs from 'Shared/Tabs';
+import '../data-management.css';
+import { DM_DOCS, HiddenMark, compact } from '../shared';
+import PropertyPage from './PropertyPage';
+import { type DistinctProperty, fetchList } from './api';
 
-import EventPropsPage from './EventPropsPage';
-import UserPropsPage from './UserProperty';
-import { fetchList } from './api';
+type View = 'users' | 'events';
 
-const showHiddenKey = 'data-management-properties-show-hidden';
-function getShowHidden(): boolean {
-  const stored = localStorage.getItem(showHiddenKey);
-  if (stored === 'false') return false;
-  return true;
-}
+const PAGE_SIZE = 10;
+const SHOW_HIDDEN_KEY = 'data-management-properties-show-hidden';
+const readShowHidden = () => {
+  try {
+    return localStorage.getItem(SHOW_HIDDEN_KEY) !== 'false';
+  } catch {
+    return true;
+  }
+};
 
-function HiddenItem() {
-  return (
-    <Tooltip title="This property is hidden from search and analytics">
-      <EyeOff className="text-disabled-text" size={14} />
-    </Tooltip>
-  );
-}
+const volumeOf = (view: View, p: DistinctProperty) =>
+  (view === 'users' ? p.usersCount : p.count) ?? 0;
 
 function ListPage() {
-  const location = useLocation();
-  const queryParams = new URLSearchParams(location.search);
-  const defaultView = queryParams.get('view') as 'users' | 'events' | null;
-  const pickedItem = queryParams.get('property');
-  const limit = 10;
-  const [page, setPage] = React.useState(1);
-  const [query, setQuery] = React.useState('');
-  const [showHidden, setShowHidden] = React.useState(getShowHidden);
   const { t } = useTranslation();
-  const [view, setView] = React.useState<'users' | 'events'>(
-    defaultView ?? 'users',
-  );
-
-  const onSearch = (value: string) => {
-    setQuery(value);
-    setPage(1);
-  };
-
-  const views = [
-    {
-      key: 'users',
-      label: (
-        <div className={'text-lg font-medium'}>{t('User Properties')}</div>
-      ),
-    },
-    {
-      key: 'events',
-      label: (
-        <div className={'text-lg font-medium'}>{t('Event Properties')}</div>
-      ),
-    },
-  ];
+  const history = useHistory();
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const view: View = params.get('view') === 'events' ? 'events' : 'users';
+  const picked = params.get('property');
   const { projectsStore } = useStore();
   const siteId = projectsStore.activeSiteId;
+  const [query, setQuery] = React.useState('');
+  const [page, setPage] = React.useState(1);
+  const [showHidden, setShowHidden] = React.useState(readShowHidden);
   const {
     data = { properties: [], total: 0 },
     isPending,
@@ -77,382 +61,228 @@ function ListPage() {
     queryKey: ['props-list', siteId, view],
     queryFn: () => fetchList(view),
   });
-  const history = useHistory();
-  const openProp = (name: string) => {
-    queryParams.set('property', name);
-    return history.push({ search: queryParams.toString() });
+
+  const q = query.trim().toLowerCase();
+  const visible = React.useMemo(
+    () =>
+      data.properties
+        .filter((p) => showHidden || p.status === 'visible')
+        .filter(
+          (p) =>
+            !q ||
+            p.name.toLowerCase().includes(q) ||
+            p.displayName.toLowerCase().includes(q) ||
+            p.description.toLowerCase().includes(q),
+        )
+        .sort((a, b) => b.createdAt - a.createdAt),
+    [data.properties, showHidden, q],
+  );
+  const sorters = React.useMemo(
+    () => ({
+      name: (a: DistinctProperty, b: DistinctProperty) =>
+        a.name.localeCompare(b.name),
+      displayName: (a: DistinctProperty, b: DistinctProperty) =>
+        a.displayName.localeCompare(b.displayName),
+      count: (a: DistinctProperty, b: DistinctProperty) =>
+        volumeOf(view, a) - volumeOf(view, b),
+    }),
+    [view],
+  );
+  const { sort, onSort, sorted } = useLocalSort(visible, sorters);
+  const rows = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const go = (next: Record<string, string | null>) => {
+    const p = new URLSearchParams(location.search);
+    Object.entries(next).forEach(([k, v]) =>
+      v == null ? p.delete(k) : p.set(k, v),
+    );
+    history.push({ search: p.toString() });
   };
 
-  React.useEffect(() => {
-    setPage(1);
-    queryParams.set('view', view);
-    history.replace({
-      search: queryParams.toString(),
-    });
-  }, [view]);
-
-  const list = React.useMemo(() => {
-    if (!data.properties) return [];
-    let filtered = data.properties;
-    if (!showHidden) {
-      filtered = filtered.filter((prop) => prop.status === 'visible');
-    }
-    if (query) {
-      const regexTest = new RegExp(query, 'i');
-      const isIncluded = (text: string) => regexTest.test(text);
-      filtered = filtered.filter(
-        (prop) =>
-          isIncluded(prop.name) ||
-          isIncluded(prop.displayName) ||
-          isIncluded(prop.description),
+  if (picked) {
+    const back = () => go({ property: null });
+    const prop = data.properties.find((p) => p.name === picked);
+    const backLabel =
+      view === 'users' ? t('User properties') : t('Event properties');
+    if (isPending || !prop)
+      return (
+        <PageCard back={{ label: backLabel, onClick: back }} title={picked}>
+          {isPending ? (
+            <SkeletonRows rows={4} columns={[30, 70]} />
+          ) : (
+            <EmptyState
+              art="properties"
+              title={t('Property {{name}} not found', { name: picked })}
+              action={<Button onClick={back}>{t('Back to properties')}</Button>}
+            />
+          )}
+        </PageCard>
       );
-    }
-    return filtered
-      .sort((a, b) => b.createdAt - a.createdAt)
-      .slice((page - 1) * limit, page * limit);
-  }, [page, data.properties, query, showHidden]);
-
-  if (pickedItem) {
-    if (view === 'users') {
-      const pickedUserProp = data.properties.find(
-        (prop) => prop.name === pickedItem,
-      );
-      if (pickedUserProp) {
-        const userWithFields = {
-          name: pickedUserProp.name,
-          status: pickedUserProp.status,
-          fields: {
-            displayName: { value: pickedUserProp.displayName, readonly: false },
-            description: { value: pickedUserProp.description, readonly: false },
-            volume: {
-              value: pickedUserProp.usersCount?.toString() ?? 0,
-              readonly: true,
-            },
-            type: { value: pickedUserProp.dataType, readonly: true },
-          },
-        };
-        return (
-          <UserPropsPage
-            siteId={siteId!}
-            properties={userWithFields}
-            raw={pickedUserProp}
-            refetchList={refetch}
-          />
-        );
-      }
-    }
-    if (view === 'events') {
-      const pickedEventProp = data.properties.find(
-        (prop) => prop.name === pickedItem,
-      );
-      if (pickedEventProp) {
-        const evWithFields = {
-          name: pickedEventProp.name,
-          status: pickedEventProp.status,
-          fields: {
-            displayName: {
-              value: pickedEventProp.displayName,
-              readonly: false,
-            },
-            description: {
-              value: pickedEventProp.description,
-              readonly: false,
-            },
-            volume: { value: pickedEventProp.count.toString(), readonly: true },
-            type: { value: pickedEventProp.dataType, readonly: true },
-          },
-        };
-        return (
-          <EventPropsPage
-            raw={pickedEventProp}
-            siteId={siteId!}
-            event={evWithFields}
-            refetchList={refetch}
-          />
-        );
-      }
-    }
+    return (
+      <PropertyPage
+        source={view}
+        property={prop}
+        back={{ label: backLabel, onClick: back }}
+        refetchList={refetch}
+      />
+    );
   }
 
-  const total = query ? list.length : data.total;
+  const columns: Column<DistinctProperty>[] = [
+    {
+      title: view === 'users' ? t('Property') : t('Name'),
+      key: 'name',
+      width: '24%',
+      sortable: true,
+      render: (p) => (
+        <span className="m-dmg__identity-cell">
+          <span className="m-truncate m-dmg__mono">{p.name}</span>
+          {p.status === 'hidden' && <HiddenMark />}
+        </span>
+      ),
+    },
+    {
+      title: t('Display name'),
+      key: 'displayName',
+      width: '20%',
+      sortable: true,
+      render: (p) => <span className="m-truncate block">{p.displayName}</span>,
+    },
+    {
+      title: t('Description'),
+      key: 'description',
+      width: '40%',
+      render: (p) =>
+        p.description ? (
+          <Tooltip title={p.description} delay={400}>
+            <span className="m-truncate block text-content-secondary">
+              {p.description}
+            </span>
+          </Tooltip>
+        ) : (
+          <span className="text-content-disabled">—</span>
+        ),
+    },
+    {
+      title: view === 'users' ? t('# Users') : t('30-day volume'),
+      key: 'count',
+      width: '16%',
+      align: 'right',
+      sortable: true,
+      render: (p) => (
+        <span className="m-dmg__mono">{compact.format(volumeOf(view, p))}</span>
+      ),
+    },
+  ];
+
   return (
-    <div
-      className="flex flex-col rounded-lg border bg-white mx-auto"
-      style={{ maxWidth: 1360 }}
-    >
-      <div
-        className={
-          'flex flex-col gap-2 md:gap-0 md:flex-row md:items-center md:justify-between border-b px-4'
-        }
-      >
-        <Tabs activeKey={view} onChange={(key) => setView(key)} items={views} />
-        <div className="flex items-center gap-2">
-          <Switch
-            checked={showHidden}
-            onChange={(checked) => {
-              setShowHidden(checked);
-              localStorage.setItem(showHiddenKey, String(checked));
-            }}
-            checkedChildren={t('All')}
-            unCheckedChildren={t('Visible')}
-          />
-          <a
-            href="https://docs.openreplay.com/en/product-analytics/data-management/"
-            target="_blank"
-            rel="noreferrer"
-          >
-            <Button type={'text'} icon={<Album size={14} />}>
-              {t('Docs')}
-            </Button>
-          </a>
-          <div className="min-w-50 md:w-1/4 md:min-w-75">
-            <Input.Search
-              value={query}
-              maxLength={256}
-              onChange={(e) => onSearch(e.target.value)}
-              size={'small'}
-              placeholder={t('Filter by name or description')}
+    <PageCard
+      title={t('Properties')}
+      subtitle={t('Attributes captured on users and events.')}
+      tabs={
+        <Tabs
+          value={view}
+          onValueChange={(v) => {
+            setPage(1);
+            go({ view: v, property: null });
+          }}
+        >
+          <TabsList aria-label={t('Which properties')} className="border-b-0">
+            <TabsTrigger value="users">{t('User properties')}</TabsTrigger>
+            <TabsTrigger value="events">{t('Event properties')}</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      }
+      actions={
+        <>
+          <label className="inline-flex items-center gap-3 text-sm text-content-secondary">
+            <Switch
+              checked={showHidden}
+              onCheckedChange={(v) => {
+                setShowHidden(v);
+                setPage(1);
+                try {
+                  localStorage.setItem(SHOW_HIDDEN_KEY, String(v));
+                } catch {}
+              }}
+              aria-label={t('Show hidden properties')}
             />
-          </div>
-        </div>
-      </div>
-      {view === 'users' ? (
-        <UserPropsList
-          list={list}
-          page={page}
-          isLoading={isPending}
-          toUserProp={openProp}
-          limit={limit}
-          total={total}
-          onPageChange={(page) => setPage(page)}
+            <span>{showHidden ? t('All') : t('Visible only')}</span>
+          </label>
+          <SearchField
+            placeholder={
+              view === 'users'
+                ? t('Search user properties')
+                : t('Search event properties')
+            }
+            value={query}
+            onChange={(v) => {
+              setQuery(v);
+              setPage(1);
+            }}
+          />
+          <IconButton
+            icon={<BookOpen size={14} />}
+            label={t('Documentation')}
+            variant="ghost"
+            onClick={() => window.open(DM_DOCS, '_blank')}
+          />
+        </>
+      }
+    >
+      {isPending ? (
+        <SkeletonRows rows={5} columns={[24, 20, 40, 16]} />
+      ) : data.properties.length === 0 ? (
+        <EmptyState
+          art="properties"
+          title={t('No properties yet')}
+          hint={
+            view === 'users'
+              ? t(
+                  'What your code attaches to a person: plan, company, role, one key at a time. Send one and it is catalogued here.',
+                )
+              : t(
+                  'What an event carries with it: the page, the element, the value. The first events bring the first keys.',
+                )
+          }
+        />
+      ) : visible.length === 0 ? (
+        <EmptyState
+          art="search"
+          title={t('No properties match')}
+          hint={t('Clear the search, or show the hidden ones too.')}
+          action={
+            <Button
+              onClick={() => {
+                setQuery('');
+                setShowHidden(true);
+              }}
+            >
+              {t('Show all properties')}
+            </Button>
+          }
         />
       ) : (
-        <EventPropsList
-          list={list}
-          limit={limit}
-          total={total}
-          page={page}
-          isLoading={isPending}
-          toEventProp={openProp}
-          onPageChange={(page) => setPage(page)}
-        />
+        <>
+          <DataTable<DistinctProperty>
+            rowKey={(p) => p.name}
+            columns={columns}
+            rows={rows}
+            sort={sort}
+            onSort={onSort}
+            onRowClick={(p) => go({ property: p.name })}
+            ariaLabel={t('Properties')}
+          />
+          <ListFooter
+            page={page}
+            pageSize={PAGE_SIZE}
+            total={visible.length}
+            noun={[t('property'), t('properties')]}
+            onPage={setPage}
+          />
+        </>
       )}
-    </div>
-  );
-}
-
-function EventPropsList({
-  toEventProp,
-  list,
-  limit,
-  total,
-  page,
-  isLoading,
-  onPageChange,
-}: {
-  toEventProp: (name: string) => void;
-  onPageChange: (page: number) => void;
-  list: any[];
-  limit: number;
-  total: number;
-  page: number;
-  isLoading: boolean;
-}) {
-  const { t } = useTranslation();
-  const numberFormatter = Intl.NumberFormat('en-US', {
-    notation: 'compact',
-    compactDisplay: 'short',
-  });
-  const emptyState = (
-    <Empty
-      image={<SimpleEmptyImage />}
-      description={
-        <div className="flex flex-col items-center gap-2 pt-2">
-          <div className="text-base font-medium">{t('No properties')}</div>
-          <div className="text-disabled-text max-w-md">
-            {t('Properties are captured automatically from your events.')}
-          </div>
-        </div>
-      }
-    />
-  );
-  const columns = [
-    {
-      title: 'Property',
-      dataIndex: 'name',
-      key: 'name',
-      sorter: (a: any, b: any) => a.name.localeCompare(b.name),
-      showSorterTooltip: false,
-      className: 'cursor-pointer!',
-      render: (text: string, record: any) => (
-        <div className="flex items-center gap-2">
-          <div>{text}</div>
-          {record.status === 'hidden' && <HiddenItem />}
-        </div>
-      ),
-    },
-    {
-      title: 'Display Name',
-      dataIndex: 'displayName',
-      key: 'displayName',
-      sorter: (a: any, b: any) => a.displayName.localeCompare(b.displayName),
-      render: (text: string) => (
-        <TextEllipsis className="link" maxWidth={'185px'} text={text} />
-      ),
-      showSorterTooltip: false,
-      className: 'cursor-pointer!',
-    },
-    {
-      title: 'Description',
-      dataIndex: 'description',
-      key: 'description',
-    },
-    {
-      title: '30-Day Volume',
-      dataIndex: 'count',
-      key: 'count',
-      sorter: (a: any, b: any) => a.count - b.count,
-      render: (text: string) => (
-        <span>{numberFormatter.format(Number(text))}</span>
-      ),
-      showSorterTooltip: false,
-      className: 'cursor-pointer!',
-    },
-  ];
-  return (
-    <div>
-      <Table
-        columns={columns}
-        dataSource={list}
-        pagination={false}
-        scroll={{ x: 'max-content' }}
-        onRow={(record) => ({
-          onClick: () => toEventProp(record.name),
-        })}
-        rowHoverable
-        rowClassName={'cursor-pointer'}
-        loading={isLoading}
-        locale={{ emptyText: isLoading ? null : emptyState }}
-      />
-      <FullPagination
-        page={page}
-        limit={limit}
-        total={total}
-        listLen={list.length}
-        onPageChange={onPageChange}
-        entity={'event properties'}
-      />
-    </div>
-  );
-}
-
-function UserPropsList({
-  toUserProp,
-  list,
-  limit,
-  total,
-  page,
-  isLoading,
-  onPageChange,
-}: {
-  toUserProp: (name: string) => void;
-  onPageChange: (page: number) => void;
-  list: any[];
-  limit: number;
-  total: number;
-  page: number;
-  isLoading: boolean;
-}) {
-  const { t } = useTranslation();
-  const numberFormatter = Intl.NumberFormat('en-US', {
-    notation: 'compact',
-    compactDisplay: 'short',
-  });
-  const emptyState = (
-    <Empty
-      image={<SimpleEmptyImage />}
-      description={
-        <div className="flex flex-col items-center gap-2 pt-2">
-          <div className="text-base font-medium">{t('No properties')}</div>
-          <div className="text-disabled-text max-w-md">
-            {t(
-              'User properties are captured from tracked sessions via OpenReplay SDK.',
-            )}
-          </div>
-        </div>
-      }
-    />
-  );
-  const columns = [
-    {
-      title: 'Name',
-      dataIndex: 'name',
-      key: 'name',
-      sorter: (a, b) => a.name.localeCompare(b.name),
-      showSorterTooltip: false,
-      className: 'cursor-pointer!',
-      render: (text: string, record: any) => (
-        <div className="flex items-center gap-2">
-          <div>{text}</div>
-          {record.status === 'hidden' && <HiddenItem />}
-        </div>
-      ),
-    },
-    {
-      title: 'Display Name',
-      dataIndex: 'displayName',
-      key: 'displayName',
-      sorter: (a, b) => a.displayName.localeCompare(b.displayName),
-      render: (text: string) => (
-        <TextEllipsis className="link" maxWidth={'185px'} text={text} />
-      ),
-      showSorterTooltip: false,
-      className: 'cursor-pointer!',
-    },
-    {
-      title: 'Description',
-      dataIndex: 'description',
-      key: 'description',
-    },
-    {
-      title: '# Users',
-      dataIndex: 'usersCount',
-      key: 'usersCount',
-      sorter: (a, b) => a.usersCount - b.usersCount,
-      render: (text: string) => (
-        <span>{numberFormatter.format(Number(text))}</span>
-      ),
-      showSorterTooltip: false,
-      className: 'cursor-pointer!',
-    },
-  ];
-
-  return (
-    <div className="flex flex-col">
-      <div className={'relative'}>
-        <Table
-          onRow={(record) => ({
-            onClick: () => toUserProp(record.name),
-          })}
-          rowHoverable
-          rowClassName={'cursor-pointer'}
-          pagination={false}
-          scroll={{ x: 'max-content' }}
-          dataSource={list}
-          columns={columns}
-          loading={isLoading}
-          locale={{ emptyText: isLoading ? null : emptyState }}
-        />
-      </div>
-      <FullPagination
-        page={page}
-        limit={limit}
-        total={total}
-        listLen={list.length}
-        onPageChange={onPageChange}
-        entity={'user properties'}
-      />
-    </div>
+    </PageCard>
   );
 }
 

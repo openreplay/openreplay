@@ -1,468 +1,380 @@
 import withPageTitle from '@/components/hocs/withPageTitle';
-import Event, { getSortingKey } from '@/mstore/types/Analytics/Event';
-import { Filter } from '@/mstore/types/filterConstants';
-import { MoreOutlined } from '@ant-design/icons';
+import { getSortingKey } from '@/mstore/types/Analytics/Event';
+import type Event from '@/mstore/types/Analytics/Event';
+import { IconButton } from '@/ui/actions/IconButton';
+import { Button } from '@/ui/actions/button';
+import { RelativeTime } from '@/ui/data/RelativeTime';
+import { type Column, DataTable, type TableSort } from '@/ui/data/table';
+import { EmptyState } from '@/ui/feedback/EmptyState';
+import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
+import { DisplayShell, SortControl } from '@/ui/filters/DisplayMenu';
+import { DateRange } from '@/ui/inputs/DateRange';
+import { ListFooter } from '@/ui/layout/ListFooter';
+import { PageCard, PagePanel } from '@/ui/layout/PageCard';
+import { Tooltip } from '@/ui/overlays/tooltip';
 import withPermissions from 'HOCs/withPermissions';
-import { Button, Divider, Dropdown, TableProps, Tooltip } from 'antd';
-import { Plus } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useModal } from 'App/components/Modal';
-import { formatTimeOrDate } from 'App/date';
 import { useStore } from 'App/mstore';
 import { dataManagement, withSiteId } from 'App/routes';
-import { Link, useHistory } from 'App/routing';
-import ColumnsModal from 'Components/DataManagement/Activity/ColumnsModal';
-import { Icon } from 'UI';
+import { useHistory, useLocation } from 'App/routing';
+import { numberWithCommas } from 'App/utils';
 
-import AnimatedSVG from 'Shared/AnimatedSVG';
-import { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
-import DndTable from 'Shared/DNDTable';
-import FilterListHeader from 'Shared/Filters/FilterList/FilterListHeader';
-import UnifiedFilterList from 'Shared/Filters/FilterList/UnifiedFilterList';
-import FilterSelection from 'Shared/Filters/FilterSelection';
-import FullPagination from 'Shared/FullPagination';
-import SelectDateRange from 'Shared/SelectDateRange/SelectDateRange';
+import {
+  EntryField,
+  FilterBar,
+  activityTarget,
+  buildFilterEditor,
+  useCatalogue,
+} from 'Shared/FilterEditor';
 
-import EventDetailsModal from './EventDetailsModal';
-import NewEventsBadge from './NewEventsBadge';
+import '../data-management.css';
+import EventDetailsDrawer from './EventDetailsDrawer';
 import { getEventIcon } from './getEventIcon';
 
-const columnOrderKey = '$__activity_columns_order__$';
+const ORDER_KEY = '$__activity_columns_order__$';
+const HIDDEN_KEY = '$__activity_columns_hidden__$';
+const COLUMNS = [
+  'event_name',
+  'created_at',
+  'distinct_id',
+  'city',
+  'environment',
+] as const;
+type ColumnKey = (typeof COLUMNS)[number];
+
+const sortKeyOf = (col: ColumnKey) =>
+  getSortingKey(col === 'environment' ? '$os' : col);
+
+const readList = (key: string): string[] => {
+  try {
+    return localStorage.getItem(key)?.split(',').filter(Boolean) ?? [];
+  } catch {
+    return [];
+  }
+};
+const writeList = (key: string, list: string[]) => {
+  try {
+    if (list.length) localStorage.setItem(key, list.join(','));
+    else localStorage.removeItem(key);
+  } catch {}
+};
 
 function ActivityPage() {
   const { t } = useTranslation();
   const history = useHistory();
-  const searchParams = new URLSearchParams(window.location.search);
-  const eventId = searchParams.get('event_id');
+  const location = useLocation();
+  const eventId = new URLSearchParams(location.search).get('event_id');
   const { projectsStore, filterStore, analyticsStore, settingsStore } =
     useStore();
-  const { timezone } = settingsStore.sessionSettings;
-  const prevSiteId = React.useRef(projectsStore.activeSiteId);
-
+  const timezone = settingsStore.sessionSettings.timezone?.value;
   const siteId = projectsStore.activeSiteId;
-  const allFilterOptions = filterStore.getScopedCurrentProjectFilters([
-    'events',
-  ]);
-  const eventOptions = allFilterOptions.filter((i) => i.isEvent);
-  const propertyOptions = allFilterOptions.filter((i) => !i.isEvent);
-  const dropdownItems = [
-    {
-      label: 'Show/Hide Columns',
-      key: 'edit-columns',
-      onClick: () => setTimeout(() => setEditCols(true), 1),
-    },
-  ];
+  const prevSiteId = React.useRef(siteId);
+  const entries = useCatalogue(['events']);
+  const editor = buildFilterEditor(activityTarget(analyticsStore));
+  const noRules = editor.events.length + editor.properties.length === 0;
+  const [order, setOrder] = React.useState<string[]>(() => {
+    const saved = readList(ORDER_KEY);
+    return [...COLUMNS].sort((a, b) => saved.indexOf(a) - saved.indexOf(b));
+  });
+  const [hidden, setHidden] = React.useState<string[]>(() =>
+    readList(HIDDEN_KEY),
+  );
 
-  const columns: TableProps<Event>['columns'] = [
-    {
-      title: t('Event Name'),
-      dataIndex: 'event_name',
-      key: 'event_name',
-      sorter: true,
-      showSorterTooltip: false,
-      className: 'cursor-pointer!',
-      render: (_: string, row) => (
-        <div
-          className={'flex items-center gap-2 code-font fill-black color-black'}
-        >
-          {getEventIcon(row.isAutoCapture, row.event_name)}
-          <span>{filterStore.getFilterDisplayName(row.event_name)}</span>
-        </div>
-      ),
-    },
-    {
-      title: t('Time'),
-      dataIndex: 'created_at',
-      key: 'created_at',
-      sorter: true,
-      showSorterTooltip: false,
-      className: 'cursor-pointer!',
-      render: (text) => formatTimeOrDate(text, timezone),
-    },
-    {
-      title: t('Distinct ID'),
-      dataIndex: 'distinct_id',
-      key: 'distinct_id',
-      sorter: true,
-      showSorterTooltip: false,
-      className: 'cursor-pointer!',
-      render: (text: string, r) => {
-        const clickable = r.user_id;
-        if (clickable) {
-          return (
-            <Link
-              to={withSiteId(dataManagement.userPage(text), siteId)}
-              className={'link'}
-              onClick={(e) => {
-                e.stopPropagation();
-              }}
-            >
-              {text}
-            </Link>
-          );
-        } else {
-          return (
-            <Tooltip title="This user was not identified yet">
-              <span>{text}</span>
-            </Tooltip>
-          );
-        }
-      },
-    },
-    {
-      title: t('City'),
-      dataIndex: 'city',
-      key: 'city',
-      sorter: true,
-      showSorterTooltip: false,
-      className: 'cursor-pointer!',
-    },
-    {
-      title: t('Environment'),
-      dataIndex: 'environment',
-      key: 'environment',
-      sorter: true,
-      showSorterTooltip: false,
-      className: 'cursor-pointer!',
-    },
-    {
-      title: (
-        <Dropdown
-          menu={{ items: dropdownItems }}
-          trigger={['click']}
-          placement={'bottomRight'}
-        >
-          <div className={'cursor-pointer'}>
-            <MoreOutlined />
-          </div>
-        </Dropdown>
-      ),
-      dataIndex: '$__opts__$',
-      key: '$__opts__$',
-      width: 50,
-    },
-  ];
-
-  const page = analyticsStore.payloadFilters.page;
+  const { page, limit, sortBy, sortOrder } = analyticsStore.payloadFilters;
   const list = analyticsStore.events.events;
   const total = analyticsStore.events.total;
-  const limit = analyticsStore.payloadFilters.limit;
-  const isPending = analyticsStore.loading;
-  const [cols, setCols] = React.useState(columns);
-  const [hiddenCols, setHiddenCols] = React.useState([]);
-
-  const appliedFilter = analyticsStore.payloadFilters;
-  const appliedEvents = appliedFilter.filters.filter((f) => f.isEvent);
-  const activeFilters = appliedFilter.filters.map((f) => f.name);
-
-  const eventFiltersWithIndices = appliedFilter.filters
-    .map((filter, originalIndex) => ({ filter, originalIndex }))
-    .filter(({ filter }) => filter.isEvent);
-
-  const attributeFiltersWithIndices = appliedFilter.filters
-    .map((filter, originalIndex) => ({ filter, originalIndex }))
-    .filter(({ filter }) => !filter.isEvent);
-  const getOriginalEventIndex = (filteredIndex: number) => {
-    return eventFiltersWithIndices[filteredIndex]?.originalIndex ?? -1;
-  };
-
-  const getOriginalAttributeIndex = (filteredIndex: number) => {
-    return attributeFiltersWithIndices[filteredIndex]?.originalIndex ?? -1;
-  };
-  const onAddFilter = (filter: Filter) => {
-    analyticsStore.addFilter(filter);
-  };
-  const onUpdateFilter = (
-    filterIndex: number,
-    filter: Filter,
-    isEvent: boolean,
-  ) => {
-    const index = isEvent
-      ? getOriginalEventIndex(filterIndex)
-      : getOriginalAttributeIndex(filterIndex);
-    if (index === -1) return;
-    analyticsStore.updateFilter(index, filter);
-    analyticsStore.fetchEvents();
-  };
-  const onRemoveFilter = (filterIndex: number, isEvent: boolean) => {
-    const index = isEvent
-      ? getOriginalEventIndex(filterIndex)
-      : getOriginalAttributeIndex(filterIndex);
-    if (index === -1) return;
-    analyticsStore.removeFilter(index);
-  };
-
-  const [editCols, setEditCols] = React.useState(false);
-  const { showModal, hideModal } = useModal();
+  const loading = analyticsStore.loading;
 
   React.useEffect(() => {
-    if (hiddenCols.length) {
-      setCols((cols) =>
-        cols.map((col) => ({
-          ...col,
-          hidden: hiddenCols.includes(col.key),
-        })),
-      );
-    }
-  }, [hiddenCols]);
-
-  React.useEffect(() => {
-    const savedColumnOrder = localStorage.getItem(columnOrderKey);
-    if (savedColumnOrder) {
-      const keys = savedColumnOrder.split(',');
-      setCols((cols) => {
-        return cols.sort((a, b) => {
-          return keys.indexOf(a.key) - keys.indexOf(b.key);
-        });
-      });
-    }
-    const int = setInterval(() => {
-      analyticsStore.checkLatest();
+    const id = setInterval(() => {
+      if (!document.hidden) void analyticsStore.checkLatest();
     }, 30000);
-    return () => clearInterval(int);
+    return () => clearInterval(id);
   }, []);
 
   React.useEffect(() => {
-    analyticsStore.fetchEvents();
+    void analyticsStore.fetchEvents();
   }, [analyticsStore.payloadFilters, analyticsStore.payloadFilters.filters]);
 
   React.useEffect(() => {
-    if (prevSiteId.current !== projectsStore.activeSiteId) {
-      prevSiteId.current = projectsStore.activeSiteId;
-      console.log('resetting filters');
+    if (prevSiteId.current !== siteId) {
+      prevSiteId.current = siteId;
       analyticsStore.reset();
     }
-  }, [projectsStore.activeSiteId]);
+  }, [siteId]);
 
-  React.useEffect(() => {
-    const onModalClose = () => {
-      hideModal();
-      history.replace({ search: '' });
-    };
-    if (eventId) {
-      showModal(
-        <EventDetailsModal
-          siteId={siteId!}
-          event_id={eventId}
-          onClose={onModalClose}
-        />,
-        {
-          width: 620,
-          right: true,
-        },
-        () => history.replace({ search: '' }),
-      );
-    } else {
-      hideModal();
-    }
-  }, [eventId]);
+  const isDefaultSort = sortBy === 'created_at' && sortOrder === 'desc';
+  const sortColumn = COLUMNS.find((c) => sortKeyOf(c) === sortBy);
+  const tableSort: TableSort | null =
+    isDefaultSort || !sortColumn
+      ? null
+      : { key: sortColumn, desc: sortOrder === 'desc' };
 
-  const onOrderChange = (newCols) => {
-    const order = newCols.map((col) => col.key).join(',');
-    localStorage.setItem(columnOrderKey, order);
+  const onSort = (key: string | null, desc: boolean) =>
+    analyticsStore.editPayload(
+      key
+        ? {
+            sortBy: sortKeyOf(key as ColumnKey),
+            sortOrder: desc ? 'desc' : 'asc',
+          }
+        : { sortBy: 'created_at', sortOrder: 'desc' },
+    );
 
-    setCols(newCols);
+  const openEvent = (ev: Event) =>
+    history.replace({ search: `?event_id=${ev.event_id}` });
+  const closeEvent = () => history.replace({ search: '' });
+  const openPerson = (id: string, e: React.MouseEvent) => {
+    const path = withSiteId(dataManagement.userPage(id), siteId!);
+    if (e.metaKey || e.ctrlKey || e.shiftKey) window.open(path, '_blank');
+    else history.push(path);
   };
 
-  const onPageChange = (page: number) => {
-    analyticsStore.editPayload({ page });
+  const moveColumn = (from: string, to: string) => {
+    const next = order.filter((k) => k !== from);
+    next.splice(
+      next.indexOf(to) + (order.indexOf(from) < order.indexOf(to) ? 1 : 0),
+      0,
+      from,
+    );
+    setOrder(next);
+    writeList(ORDER_KEY, next);
+  };
+  const toggleColumn = (key: string) => {
+    const next = hidden.includes(key)
+      ? hidden.filter((k) => k !== key)
+      : [...hidden, key];
+    if (next.length === COLUMNS.length) return;
+    setHidden(next);
+    writeList(HIDDEN_KEY, next);
+  };
+  const resetDisplay = () => {
+    setOrder([...COLUMNS]);
+    setHidden([]);
+    writeList(ORDER_KEY, []);
+    writeList(HIDDEN_KEY, []);
+    onSort(null, false);
   };
 
-  const onItemClick = (ev: { event_id: string }) => {
-    if (!siteId) return;
-    if (!eventId) {
-      history.replace({ search: `?event_id=${ev.event_id}` });
-    }
+  const all: Record<ColumnKey, Column<Event>> = {
+    event_name: {
+      title: t('Event name'),
+      key: 'event_name',
+      width: '26%',
+      sortable: true,
+      render: (e) => (
+        <span className="m-dmg__identity-cell">
+          <Tooltip
+            title={e.isAutoCapture ? t('Autocaptured') : t('Custom event')}
+            delay={300}
+          >
+            <span className="m-dmg__hidden-icon inline-flex">
+              {getEventIcon(e.isAutoCapture, e.event_name)}
+            </span>
+          </Tooltip>
+          <span className="m-truncate m-dmg__mono">
+            {filterStore.getFilterDisplayName(e.event_name)}
+          </span>
+        </span>
+      ),
+    },
+    created_at: {
+      title: t('Time'),
+      key: 'created_at',
+      width: '16%',
+      sortable: true,
+      render: (e) => <RelativeTime at={e.created_at} timezone={timezone} />,
+    },
+    distinct_id: {
+      title: t('Distinct ID'),
+      key: 'distinct_id',
+      width: '24%',
+      sortable: true,
+      render: (e) =>
+        e.user_id ? (
+          <Tooltip title={t('Open this person')} delay={400}>
+            <button
+              type="button"
+              className="m-truncate m-dmg__mono m-dmg__link block max-w-full"
+              onClick={(ev) => openPerson(e.distinct_id, ev)}
+            >
+              {e.distinct_id}
+            </button>
+          </Tooltip>
+        ) : (
+          <Tooltip title={t('This user was not identified yet')} delay={300}>
+            <span className="m-truncate m-dmg__mono block text-content-disabled">
+              {e.distinct_id}
+            </span>
+          </Tooltip>
+        ),
+    },
+    city: {
+      title: t('City'),
+      key: 'city',
+      width: '17%',
+      sortable: true,
+      render: (e) => <span className="m-truncate block">{e.city}</span>,
+    },
+    environment: {
+      title: t('Environment'),
+      key: 'environment',
+      width: '17%',
+      sortable: true,
+      render: (e) => <span className="m-truncate block">{e.environment}</span>,
+    },
   };
+  const columns = order
+    .filter((k) => !hidden.includes(k))
+    .map((k) => all[k as ColumnKey]);
 
-  const onUpdateVisibleCols = (cols: string[]) => {
-    setHiddenCols((_) => {
-      return columns
-        .map((col) =>
-          cols.includes(col.key) || col.key === '$__opts__$' ? null : col.key,
-        )
-        .filter(Boolean);
-    });
-    setEditCols(false);
-  };
+  const displayChanges =
+    (isDefaultSort ? 0 : 1) +
+    (hidden.length ? 1 : 0) +
+    (order.join() !== COLUMNS.join() ? 1 : 0);
 
-  const onColumnSort = (sorter: {
-    field: string;
-    order: 'ascend' | 'descend';
-  }) => {
-    if (!sorter.field) {
-      analyticsStore.editPayload({
-        sortOrder: 'desc',
-        sortBy: 'created_at',
-      });
-    } else {
-      const fieldName = sorter.field === 'environment' ? '$os' : sorter.field;
-      analyticsStore.editPayload({
-        sortBy: getSortingKey(fieldName),
-        sortOrder: sorter.order === 'ascend' ? 'asc' : 'desc',
-      });
-    }
-  };
+  const empty = noRules ? (
+    <EmptyState
+      art="activity"
+      title={t('Nothing in this window')}
+      hint={t('Widen the date window, or refresh to pull the latest events.')}
+      action={
+        <Button onClick={() => void analyticsStore.fetchEvents()}>
+          {t('Refresh')}
+        </Button>
+      }
+    />
+  ) : (
+    <EmptyState
+      art="search"
+      title={t('No events match these filters')}
+      hint={t('Loosen a rule, or clear them to see the full log.')}
+      action={
+        <Button onClick={() => analyticsStore.reset()}>
+          {t('Clear filters')}
+        </Button>
+      }
+    />
+  );
 
   return (
-    <div
-      className={'flex flex-col gap-2'}
-      style={{ maxWidth: '1360px', margin: 'auto' }}
+    <PageCard
+      title={t('Activity')}
+      subtitle={t(
+        'Every event in order, with the user and the page it came from.',
+      )}
+      split
     >
-      <div className={'flex justify-between items-center'}>
-        <h2 className="text-2xl capitalize mr-4">Activity</h2>
-        <Button
-          type={'text'}
-          onClick={analyticsStore.reset}
-          disabled={!analyticsStore.payloadFilters.filters.length}
-        >
-          {t('Clear')}
-        </Button>
-      </div>
-      <div className={'shadow-sm rounded-lg bg-white p-4 border'}>
-        <FilterListHeader
-          title={t('Events')}
-          orderProps={appliedFilter}
-          filterSelection={
-            <FilterSelection
-              filters={eventOptions}
-              activeFilters={activeFilters}
-              onFilterClick={onAddFilter}
-            >
-              <Button type="default" size="small">
-                <div className="flex items-center gap-1">
-                  <Plus size={16} strokeWidth={1} />
-                  <span>Add</span>
-                </div>
-              </Button>
-            </FilterSelection>
-          }
-        />
-
-        <UnifiedFilterList
-          title={t('Events')}
-          filters={appliedEvents}
-          isDraggable={true}
-          showIndices={true}
-          className="mt-2"
-          handleRemove={(i) => onRemoveFilter(i, true)}
-          handleUpdate={(i, filter) => onUpdateFilter(i, filter, true)}
-          handleAdd={onAddFilter}
-          scope={'events'}
-        />
-
-        <Divider className="my-3!" />
-
-        <FilterListHeader
-          title={t('Filters')}
-          filterSelection={
-            <FilterSelection
-              filters={propertyOptions}
-              activeFilters={activeFilters}
-              onFilterClick={onAddFilter}
-            >
-              <Button type="default" size="small">
-                <div className="flex items-center gap-1">
-                  <Plus size={16} strokeWidth={1} />
-                  <span>Add</span>
-                </div>
-              </Button>
-            </FilterSelection>
-          }
-        />
-
-        <UnifiedFilterList
-          title={t('Filters')}
-          filters={appliedFilter.filters.filter((f) => !f.isEvent)}
-          className="mt-2"
-          isDraggable={false}
-          showIndices={false}
-          handleRemove={(i) => onRemoveFilter(i, false)}
-          handleUpdate={(i, filter) => onUpdateFilter(i, filter, false)}
-          handleAdd={onAddFilter}
-          scope="events"
-        />
-      </div>
-      <div className={'relative'}>
-        {editCols ? (
-          <ColumnsModal
-            columns={cols.filter((col) => col.key !== '$__opts__$')}
-            onSelect={onUpdateVisibleCols}
-            hiddenCols={hiddenCols}
-            onClose={() => setEditCols(false)}
+      <EntryField
+        entries={entries}
+        taken={editor.properties.map((f) => f.entry.id)}
+        onPick={editor.onAdd}
+        hasRules={!noRules}
+        placeholder={t('Filter the activity')}
+      />
+      {!noRules && (
+        <PagePanel spills>
+          <FilterBar
+            editor={editor}
+            entries={entries}
+            lead={t('Filter the activity')}
+            orderLocked
           />
-        ) : null}
-
-        <div
-          className={
-            'bg-white rounded-lg shadow-sm border flex flex-col overflow-hidden'
-          }
-        >
-          <div className={'px-4 py-2 flex items-center gap-2'}>
-            <div className={'font-semibold text-lg'}>All Events</div>
-            <div className={'ml-auto'} />
-            <SelectDateRange
-              period={analyticsStore.period}
-              onChange={analyticsStore.updateTimestamps}
-              right
-              isAnt
+        </PagePanel>
+      )}
+      <PagePanel
+        head={
+          <>
+            <span className="m-dmg__count">
+              {t('{{n}} events', { n: numberWithCommas(total) })}
+            </span>
+            <span className="m-page__controls">
+              <DateRange
+                field={t('Occurred')}
+                period={analyticsStore.period}
+                onChange={analyticsStore.updateTimestamps}
+              />
+              <DisplayShell
+                changeCount={displayChanges}
+                onReset={resetDisplay}
+                rows={[
+                  {
+                    id: 'act-sort',
+                    label: t('Order'),
+                    control: (
+                      <SortControl<ColumnKey>
+                        id="act-sort"
+                        value={sortColumn ?? 'created_at'}
+                        desc={sortOrder === 'desc'}
+                        choices={COLUMNS.map((c) => ({
+                          value: c,
+                          label: String(all[c].title),
+                        }))}
+                        onValue={(c) => onSort(c, sortOrder === 'desc')}
+                        onDesc={(d) => onSort(sortColumn ?? 'created_at', d)}
+                      />
+                    ),
+                  },
+                ]}
+                fields={order.map((k) => ({
+                  value: k,
+                  label: String(all[k as ColumnKey].title),
+                  on: !hidden.includes(k),
+                }))}
+                onToggleField={toggleColumn}
+              />
+              <IconButton
+                icon={<RefreshCw size={14} />}
+                label={t('Refresh')}
+                variant="ghost"
+                onClick={() => void analyticsStore.fetchEvents()}
+              />
+            </span>
+          </>
+        }
+      >
+        {analyticsStore.newEvents > 0 && (
+          <button
+            type="button"
+            className="m-dmg__latest"
+            onClick={() => void analyticsStore.fetchEvents()}
+          >
+            {t('Show {{n}} new events', {
+              n: numberWithCommas(analyticsStore.newEvents),
+            })}
+          </button>
+        )}
+        {loading && list.length === 0 ? (
+          <SkeletonRows rows={6} columns={[26, 16, 24, 17, 17]} />
+        ) : total === 0 ? (
+          empty
+        ) : (
+          <>
+            <DataTable<Event>
+              rowKey={(e) => e.event_id}
+              columns={columns}
+              rows={list}
+              sort={tableSort}
+              onSort={onSort}
+              onColumnMove={moveColumn}
+              onRowClick={openEvent}
+              ariaLabel={t('Activity log')}
             />
-          </div>
-          {total === 0 && !analyticsStore.loading ? (
-            <div
-              className={'flex items-center justify-center flex-col gap-4 py-8'}
-            >
-              <AnimatedSVG name={ICONS.NO_RESULTS} size={60} />
-              <div className={'flex items-center gap-2'}>
-                <div className={'text-lg font-semibold'}>No results in the</div>
-                <SelectDateRange
-                  period={analyticsStore.period}
-                  onChange={analyticsStore.updateTimestamps}
-                  right
-                  isAnt
-                />
-              </div>
-              <Button
-                onClick={analyticsStore.fetchEvents}
-                icon={<Icon name={'arrow-repeat'} size={20} />}
-              >
-                {t('Refresh')}
-              </Button>
-            </div>
-          ) : (
-            <>
-              <NewEventsBadge />
-              <DndTable
-                loading={isPending}
-                onRow={(record) => ({
-                  onClick: () => onItemClick(record),
-                })}
-                rowClassName={'cursor-pointer'}
-                dataSource={list}
-                pagination={false}
-                scroll={{ x: 'max-content' }}
-                columns={cols}
-                onOrderChange={onOrderChange}
-                onChange={(a1, a2, sorter) => {
-                  onColumnSort(sorter);
-                }}
-              />
-              <FullPagination
-                page={page}
-                limit={limit}
-                total={total}
-                listLen={list.length}
-                onPageChange={onPageChange}
-                entity={'events'}
-              />
-            </>
-          )}
-        </div>
-      </div>
-    </div>
+            <ListFooter
+              page={page}
+              pageSize={limit}
+              total={total}
+              noun={[t('event'), t('events')]}
+              onPage={(p) => analyticsStore.editPayload({ page: p })}
+            />
+          </>
+        )}
+      </PagePanel>
+      <EventDetailsDrawer eventId={eventId} onClose={closeEvent} />
+    </PageCard>
   );
 }
 

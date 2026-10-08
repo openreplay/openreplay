@@ -1,0 +1,55 @@
+.m-segs__cell {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding-block: var(--m-space-3);
+}
+
+.m-segs__name {
+  color: var(--m-content-primary);
+  font-weight: var(--m-weight-medium);
+  line-height: var(--m-leading-tight);
+}
+
+.m-segs__rules {
+  color: var(--m-content-muted);
+  font-size: var(--m-text-xs);
+  line-height: var(--m-leading-tight);
+}
+
+.m-segs__n {
+  font-family: var(--m-font-num);
+  font-size: var(--m-text-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--m-content-secondary);
+}
+.m-segs__n.is-zero {
+  color: var(--m-content-disabled);
+}
+
+.m-segs__owner {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  min-width: 0;
+  font-size: var(--m-text-sm);
+  color: var(--m-content-secondary);
+}
+
+.m-segs__shared {
+  flex: none;
+  color: var(--m-content-decorative);
+}
+
+.m-segs__use {
+  opacity: 0;
+  transition: opacity var(--m-duration-instant) var(--m-ease-out);
+}
+.m-segs__row:hover .m-segs__use,
+.m-segs__use:focus-visible {
+  opacity: 1;
+}
+
+.m-segs__row {
+  cursor: pointer;
+}

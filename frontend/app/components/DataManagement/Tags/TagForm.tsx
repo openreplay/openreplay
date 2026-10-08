@@ -1,141 +1,173 @@
-import { useStore } from '@/mstore';
-import { Button, Form, Input, Segmented, Space } from 'antd';
+import { IconButton } from '@/ui/actions/IconButton';
+import { Button } from '@/ui/actions/button';
+import { StatTile } from '@/ui/data/StatTile';
+import { Input } from '@/ui/inputs/input';
+import { Segmented } from '@/ui/inputs/toggle-group';
+import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
+import {
+  DrawerFooter,
+  EntityDrawer,
+  Field,
+  Section,
+} from '@/ui/overlays/EntityDrawer';
+import { useToast } from '@/ui/overlays/toast';
+import { Trash2 } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useModal } from 'Components/ModalContext';
-import { confirm } from 'UI';
-import Trash from 'UI/Icons/trash';
+import { useStore } from 'App/mstore';
+import {
+  TAG_NAME_MAX,
+  type Tag,
+  isValidTagName,
+} from 'App/services/TagWatchService';
+
+type Scope = 'entire' | 'location';
 
 interface Props {
-  tag: any;
+  tag: Tag;
+  open: boolean;
+  onClose: () => void;
   projectId: number;
 }
 
-function TagForm(props: Props) {
+/** Edit one tagged element; keyed by tag id, so the draft is per tag. */
+function TagForm({ tag, open, onClose, projectId }: Props) {
   const { t } = useTranslation();
-  const { tag, projectId } = props;
   const { tagWatchStore } = useStore();
   const [name, setName] = React.useState(tag.name);
-  const [scope, setScope] = React.useState<'entire' | 'location'>(
-    tag.location ? 'location' : 'entire',
-  );
-  const [location, setLocation] = React.useState(tag.location || '');
-  const [loading, setLoading] = React.useState(false);
-  const { closeModal } = useModal();
+  const toast = useToast();
+  // the API updates a tag's name only; scope and page are shown, not edited
+  const scope: Scope = tag.location ? 'location' : 'entire';
+  const [saving, setSaving] = React.useState(false);
+  const [removing, setRemoving] = React.useState(false);
 
-  const effectiveLocation = scope === 'location' ? location : '';
-  const hasChanges =
-    (name !== tag.name || effectiveLocation !== (tag.location || '')) &&
-    name.length > 0;
+  const dirty = name.trim() !== tag.name;
+  const valid = isValidTagName(name.trim());
 
-  const onDelete = async () => {
-    if (
-      await confirm({
-        header: t('Remove Feature'),
-        confirmButton: t('Remove'),
-        confirmation: t('Are you sure you want to remove this feature?'),
-      })
-    ) {
-      await tagWatchStore.deleteTag(tag.tagId, projectId);
-      closeModal();
-    }
-  };
-
-  const onSave = async () => {
-    setLoading(true);
+  const save = () => {
+    setSaving(true);
     tagWatchStore
-      .updateTag(
-        tag.tagId,
-        { name, location: effectiveLocation || undefined },
-        projectId,
-      )
-      .then(() => {
-        closeModal();
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+      .updateTag(tag.tagId, { name: name.trim() }, projectId)
+      .then(onClose)
+      .catch(() => toast.error(t('Could not rename the feature')))
+      .finally(() => setSaving(false));
   };
 
   return (
-    <Form layout="vertical">
-      <Form.Item label={t('Name')} className="font-medium!">
-        <Input
-          autoFocus
-          name="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder={t('Name')}
-          maxLength={50}
-          className="font-normal rounded-lg"
-        />
-      </Form.Item>
-      <Form.Item label={t('Selector')} className="font-medium!">
-        <Input value={tag.selector} disabled name={'selector'} />
-      </Form.Item>
-      <Form.Item label={t('Scope')} className="font-medium!">
-        <Segmented
-          size="small"
-          value={scope}
-          onChange={(val) => setScope(val as 'entire' | 'location')}
-          options={[
-            { label: t('Entire app'), value: 'entire' },
-            { label: t('Specific page'), value: 'location' },
-          ]}
-        />
-        {scope === 'location' && (
-          <Input
-            className="mt-2!"
-            name="location"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            placeholder={t('E.g. /checkout')}
+    <>
+      <EntityDrawer
+        open={open}
+        onClose={onClose}
+        eyebrow={t('Feature')}
+        title={tag.name}
+        footer={
+          <DrawerFooter
+            left={
+              <IconButton
+                icon={<Trash2 size={14} />}
+                label={t('Remove feature')}
+                variant="ghost"
+                onClick={() => setRemoving(true)}
+              />
+            }
+            right={
+              <>
+                <Button variant="subtle" onClick={onClose}>
+                  {t('Cancel')}
+                </Button>
+                <Button
+                  variant="primary"
+                  disabled={!dirty || !valid || saving}
+                  onClick={save}
+                >
+                  {t('Update')}
+                </Button>
+              </>
+            }
           />
-        )}
-      </Form.Item>
-      {tag.tagId && (
-        <div>
-          <div className="flex items-center justify-between">
-            <div className="font-semibold">{t('Metrics')}</div>
-            <div>{t('Last 24h')}</div>
-          </div>
-          <div className="flex gap-4 items-center mt-2 mb-4 w-full">
-            <div className="flex-1 flex flex-col items-center justify-center p-4 rounded-xl bg-gray-light">
-              <div className="text-gray-medium font-semibold text-xl">
-                {tag.users ?? 0}
-              </div>
-              <div className="text-gray-dark">{t('Unique users')}</div>
-            </div>
-            <div className="flex-1 flex flex-col items-center justify-center p-4 rounded-xl bg-teal-light">
-              <div className="text-teal font-semibold text-xl">
-                {tag.volume ?? 0}
-              </div>
-              <div className="text-gray-dark">{t('Total interactions')}</div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="flex justify-between">
-        <Space>
-          <Button
-            onClick={onSave}
-            disabled={!hasChanges || loading}
-            loading={loading}
-            type="primary"
-            className="float-left mr-1"
+        }
+      >
+        <Section title={t('Tagged element')}>
+          <Field
+            label={t('Name')}
+            error={
+              name.trim() && !valid
+                ? t('Letters, digits, spaces, hyphens and quotes only.')
+                : undefined
+            }
           >
-            {t('Update')}
-          </Button>
-          <Button type="text" onClick={closeModal}>
-            {t('Cancel')}
-          </Button>
-        </Space>
-
-        <Button type="text" icon={<Trash />} onClick={onDelete} />
-      </div>
-    </Form>
+            <Input
+              value={name}
+              maxLength={TAG_NAME_MAX}
+              autoFocus
+              onChange={(e) => setName(e.target.value)}
+            />
+          </Field>
+          <Field label={t('Selector')}>
+            <Input
+              value={tag.selector}
+              disabled
+              readOnly
+              className="m-dmg__mono"
+            />
+          </Field>
+          <Field label={t('Scope')}>
+            <Segmented
+              block
+              value={scope}
+              onChange={() => {}}
+              ariaLabel={t('Scope')}
+              options={[
+                { value: 'entire', label: t('Entire app'), disabled: true },
+                {
+                  value: 'location',
+                  label: t('Specific page'),
+                  disabled: true,
+                },
+              ]}
+            />
+          </Field>
+          {scope === 'location' && (
+            <Field label={t('Page')}>
+              <Input value={tag.location ?? ''} disabled readOnly />
+            </Field>
+          )}
+        </Section>
+        <Section title={t('Metrics')} hint={t('Last 24 hours')}>
+          <div className="m-fdrawer__tiles">
+            <StatTile
+              value={(tag.users ?? 0).toLocaleString()}
+              label={t('Unique users')}
+            />
+            <StatTile
+              value={(tag.volume ?? 0).toLocaleString()}
+              label={t('Total interactions')}
+              tone="accent"
+            />
+          </div>
+        </Section>
+      </EntityDrawer>
+      <ConfirmDialog
+        open={removing}
+        title={t('Remove this feature?')}
+        okText={t('Remove')}
+        danger
+        onCancel={() => setRemoving(false)}
+        onOk={() => {
+          setRemoving(false);
+          tagWatchStore
+            .deleteTag(tag.tagId, projectId)
+            .then(onClose)
+            .catch(() => toast.error(t('Could not remove the feature')));
+        }}
+      >
+        {t(
+          '{{name}} stops being watched. The element itself is untouched; you can tag it again from any recording.',
+          { name: tag.name },
+        )}
+      </ConfirmDialog>
+    </>
   );
 }
 

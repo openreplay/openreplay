@@ -235,7 +235,11 @@ export default class AnalyticsStore {
     }
   };
 
+  private usersSeq = 0;
+
+  /** Typing outruns the API: only the latest query's answer is applied. */
   fetchUsers = async (query: string, propName?: string) => {
+    const seq = ++this.usersSeq;
     this.setLoading(true);
     try {
       const fullFilters = { ...this.usersPayloadFilters, query };
@@ -249,17 +253,20 @@ export default class AnalyticsStore {
         }
       }
       const data: UsersResponse = await analyticsService.getUsers(fullFilters);
-      this.users = {
-        total: data.total,
-        users: data.users.map((user) => new User(user)),
-      };
+      if (seq !== this.usersSeq) return data;
+      runInAction(() => {
+        this.users = {
+          total: data.total,
+          users: data.users.map((user) => new User(user)),
+        };
+      });
 
       return data;
     } catch (e) {
       console.error('AnalyticsStore.fetchUsers', e);
       return { users: [], total: 0 };
     } finally {
-      this.setLoading(false);
+      if (seq === this.usersSeq) this.setLoading(false);
     }
   };
 
