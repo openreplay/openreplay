@@ -20,6 +20,8 @@ import './sessions-dock.css';
 /** The bar the dock rests as, in px. */
 const BAR_W = 134;
 const BAR_H = 5;
+/** Over a replay without a panel strip: the foot's gap above the recording. */
+const STAGE_GAP = 24;
 /** How long the dock stays up after the pointer leaves. */
 const LINGER = 380;
 /** How long a switch protects the dock from a leave it did not earn. */
@@ -107,8 +109,8 @@ export function SessionsDock({
   const open = hover;
   const peeking = !open && peek != null;
 
-  /* ── over a replay it rides just above the recording, measured: the
-     player's foot changes height with the panel that is open ── */
+  /* ── over a replay: on the panel tab strip, which moves with the open
+     panel; without one (fullscreen) just above the recording ── */
   const zone = useRef<HTMLDivElement>(null);
   const [lift, setLift] = useState(0);
   useLayoutEffect(() => {
@@ -117,14 +119,15 @@ export function SessionsDock({
       const stage = document.querySelector('[data-replay-stage]');
       const host = zone.current?.offsetParent as HTMLElement | null;
       if (!stage || !host) return;
+      const line = document.querySelector('[data-replay-dockline]');
+      const row = line?.getBoundingClientRect();
+      // 2px: the pill is the row's height less 2px each side
+      const foot =
+        row && row.height
+          ? row.bottom - 2
+          : stage.getBoundingClientRect().bottom - STAGE_GAP;
       setLift(
-        Math.max(
-          0,
-          Math.round(
-            host.getBoundingClientRect().bottom -
-              stage.getBoundingClientRect().bottom,
-          ),
-        ),
+        Math.max(0, Math.round(host.getBoundingClientRect().bottom - foot)),
       );
     };
     const ro = new ResizeObserver(measure);
@@ -138,6 +141,8 @@ export function SessionsDock({
       tries += 1;
       if (stage) {
         ro.observe(stage);
+        const line = document.querySelector('[data-replay-dockline]');
+        if (line) ro.observe(line);
         measure();
       }
       if (stage || tries > 120) window.clearInterval(poll);

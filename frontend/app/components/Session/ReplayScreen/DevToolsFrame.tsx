@@ -86,6 +86,7 @@ export function DevToolsFrame<K extends string | number>({
       ) : null}
       <div
         className="m-dt__strip"
+        data-replay-dockline
         role="tablist"
         aria-label={t('Developer tools')}
       >
