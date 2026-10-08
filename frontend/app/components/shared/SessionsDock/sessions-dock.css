@@ -33,8 +33,26 @@
   padding-bottom: var(--m-space-3);
   width: auto;
 }
+/* Over a replay the foot sits on the panel tab strip (measured into
+   --m-sdock-lift). No reach below it: that would swallow clicks on the
+   timeline. The pill fits the strip, and the resting bar rises to its middle. */
 .m-sdock-anchor > .m-sdock-zone.is-over-replay {
-  padding-bottom: calc(var(--m-sdock-lift, 0px) + var(--m-space-4));
+  --m-sdock-row: calc(var(--m-control-height-md) - 4px);
+  padding-bottom: var(--m-sdock-lift, 0px);
+}
+.m-sdock-zone.is-over-replay .m-sdock-reach {
+  padding-bottom: 0;
+}
+.m-sdock-zone.is-over-replay .m-sdock__pill {
+  height: var(--m-sdock-row);
+}
+.m-sdock-zone.is-over-replay .m-sdock {
+  transition-property:
+    width, height, border-radius, background-color, border-color, box-shadow,
+    opacity, translate;
+}
+.m-sdock-zone.is-over-replay .m-sdock:not(.is-open):not(.is-peek) {
+  translate: 0 calc((var(--m-sdock-row) - 5px) / -2);
 }
 
 .m-sdock {
