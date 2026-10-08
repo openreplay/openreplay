@@ -1,0 +1,200 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--m-font-sans);
+  font-size: var(--m-text-sm);
+  line-height: var(--m-leading-normal);
+  letter-spacing: var(--m-tracking-tight);
+  color: var(--m-content-primary);
+
+  background: var(--m-surface-canvas);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-variant-numeric: tabular-nums;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-size: inherit;
+  font-weight: var(--m-weight-semibold);
+  line-height: var(--m-leading-tight);
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+}
+
+button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+ul,
+ol {
+  list-style: none;
+  padding: 0;
+}
+
+a {
+  color: var(--m-content-accent);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+svg {
+  display: block;
+  flex: none;
+}
+
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--m-focus-ring);
+  outline-offset: 1px;
+  border-radius: var(--m-radius-control);
+}
+
+::selection {
+  background: var(--m-status-info-bg);
+  color: var(--m-status-info-fg);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--m-border-strong) transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.m-mono {
+  font-family: var(--m-font-mono);
+  font-size: var(--m-text-xs);
+  letter-spacing: var(--m-tracking-normal);
+}
+
+.m-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.m-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Set by useViewportFit: slides an overlay back inside the viewport along its own side. */
+.m-pop {
+  translate: 0 var(--m-pop-fit, 0px);
+}
+
+.m-dot {
+  flex: none;
+  width: 5px;
+  height: 5px;
+  border-radius: var(--m-radius-full);
+  background: var(--m-content-accent);
+  pointer-events: none;
+}
+
+.m-dot.is-slot {
+  margin-inline: -2px;
+}
+.m-dot.is-off {
+  visibility: hidden;
+}
+
+@keyframes m-shimmer {
+  from {
+    background-position: -180% 0;
+  }
+  to {
+    background-position: 180% 0;
+  }
+}
+
+.m-skeleton {
+  border-radius: var(--m-radius-chip);
+  background-image: linear-gradient(
+    90deg,
+    var(--m-surface-hover) 0%,
+    var(--m-surface-active) 45%,
+    var(--m-surface-hover) 90%
+  );
+  background-size: 220% 100%;
+  animation: m-shimmer 1.5s var(--m-ease-in-out) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m-skeleton {
+    animation: none;
+    background: var(--m-surface-hover);
+  }
+}
+
+@keyframes m-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.m-spin {
+  animation: m-spin 1.1s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m-spin {
+    animation: none;
+  }
+}

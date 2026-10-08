@@ -1,12 +1,8 @@
+import { ConfirmMountPoint } from '@/ui/overlays/confirm';
+import { ToastProvider } from '@/ui/overlays/toast';
+import { TooltipProvider } from '@/ui/overlays/tooltip';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { configurePlayer } from 'Player/config';
-import {
-  App,
-  ConfigProvider,
-  Empty,
-  ThemeConfig,
-  theme as antdTheme,
-} from 'antd';
 import React from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -14,17 +10,14 @@ import { createRoot } from 'react-dom/client';
 
 import logger from 'App/logger';
 import { BrowserRouter, LocationSync } from 'App/routing';
-import { MountPoint, Notification } from 'UI';
 
 import ENV from '../env';
-import { queryClient } from './queryClient';
 import Router from './Router';
-import { ThemeProvider, useTheme } from './ThemeContext';
-import AnimatedSVG from './components/shared/AnimatedSVG';
-import { ICONS } from './components/shared/AnimatedSVG/AnimatedSVG';
+import { ThemeProvider } from './ThemeContext';
 import { i18nReady } from './i18n';
 import './init';
 import { RootStore, StoreProvider, client, userStore } from './mstore';
+import { queryClient } from './queryClient';
 import './styles/global.css';
 import './styles/index.css';
 
@@ -41,193 +34,21 @@ configurePlayer({
 window.getCommitHash = () =>
   console.log(`Version: ${ENV.VERSION}, Commit: ${ENV.COMMIT_HASH}`);
 
-const cssVar = (name: string) => `var(--color-${name})`;
-
-const ThemedApp: React.FC = () => {
-  const { theme } = useTheme();
-
-  // Create theme based on current theme setting
-  const customTheme: ThemeConfig = {
-    algorithm:
-      theme === 'dark' ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
-    components: {
-      Layout: {
-        headerBg: cssVar('gray-lightest'),
-        siderBg: cssVar('gray-lightest'),
-      },
-      Segmented: {
-        itemSelectedBg: cssVar('control-selected-bg'),
-        itemSelectedColor: cssVar('main'),
-      },
-      Form: {
-        labelColor: cssVar('gray-darkest'),
-        colorText: cssVar('gray-darkest'),
-        colorTextPlaceholder: cssVar('gray-medium'),
-      },
-      Menu: {
-        colorPrimary: cssVar('teal'),
-        colorBgContainer: cssVar('gray-lightest'),
-        colorFillTertiary: cssVar('gray-lightest'),
-        colorBgLayout: cssVar('gray-lightest'),
-        subMenuItemBg: cssVar('gray-lightest'),
-        itemHoverBg: cssVar('active-blue'),
-        itemHoverColor: cssVar('teal'),
-        itemActiveBg: cssVar('tealx-light'),
-        itemSelectedBg: cssVar('tealx-light'),
-        itemSelectedColor: cssVar('teal'),
-        itemColor: cssVar('gray-darkest'),
-        itemMarginBlock: 0,
-        collapsedWidth: 180,
-      },
-      Button: {
-        colorPrimary: cssVar('main'),
-        textTextColor: cssVar('black'),
-        defaultColor: cssVar('black'),
-      },
-      Select: {
-        colorBgContainer: cssVar('white'),
-        colorBgElevated: cssVar('white'),
-        colorBorder: cssVar('gray-light'),
-        colorPrimaryHover: cssVar('main'),
-        colorPrimary: cssVar('main'),
-        colorText: cssVar('gray-darkest'),
-        colorTextPlaceholder: cssVar('gray-medium'),
-        colorTextQuaternary: cssVar('gray-medium'),
-        controlItemBgActive: cssVar('active-blue'),
-        controlItemBgHover: cssVar('active-blue'),
-      },
-      Radio: {
-        colorPrimary: cssVar('main'),
-        colorBorder: cssVar('gray-medium'),
-        colorBgContainer: cssVar('white'),
-      },
-      Switch: {
-        colorPrimary: cssVar('main'),
-        colorPrimaryHover: cssVar('teal-dark'),
-        colorTextQuaternary: cssVar('gray-light'),
-        colorTextTertiary: cssVar('gray-medium'),
-        colorBgContainer: cssVar('white'),
-      },
-      Input: {
-        colorBgContainer: cssVar('white'),
-        colorBorder: cssVar('gray-light'),
-        colorText: cssVar('gray-darkest'),
-        colorTextPlaceholder: cssVar('gray-medium'),
-        activeBorderColor: cssVar('main'),
-        hoverBorderColor: cssVar('main'),
-        addonBg: cssVar('gray-lightest'),
-      },
-      Checkbox: {
-        colorPrimary: cssVar('main'),
-        colorBgContainer: cssVar('white'),
-        colorBorder: cssVar('gray-medium'),
-      },
-      Table: {
-        colorBgContainer: cssVar('white'),
-        colorText: cssVar('gray-darkest'),
-        colorTextHeading: cssVar('gray-darkest'),
-        colorBorderSecondary: cssVar('gray-light'),
-        headerBg: cssVar('gray-lightest'),
-        rowHoverBg: cssVar('gray-lightest'),
-        headerSortHoverBg: cssVar('gray-light'),
-        headerSortActiveBg: cssVar('gray-light'),
-        fixedHeaderSortActiveBg: cssVar('gray-light'),
-        bodySortBg: cssVar('gray-lightest'),
-      },
-      Modal: {
-        colorBgElevated: cssVar('white'),
-        colorText: cssVar('gray-darkest'),
-      },
-      Card: {
-        colorBgContainer: cssVar('white'),
-        colorBorderSecondary: cssVar('gray-light'),
-      },
-      Tooltip: {
-        colorBgSpotlight: cssVar('white'),
-        colorTextLightSolid: cssVar('gray-darkest'),
-      },
-      Tabs: {
-        itemActiveColor: cssVar('main'),
-        inkBarColor: cssVar('main'),
-        itemSelectedColor: cssVar('main'),
-      },
-      Tag: {
-        defaultBg: cssVar('gray-lightest'),
-        defaultColor: cssVar('gray-darkest'),
-      },
-      Spin: {
-        dotSize: 36,
-        dotSizeLG: 56,
-        dotSizeSM: 24,
-      },
-    },
-    token: {
-      colorPrimary: cssVar('main'),
-      colorPrimaryActive: cssVar('teal-dark'),
-      colorPrimaryHover: cssVar('main'),
-      colorPrimaryBorder: cssVar('main'),
-      colorBorder: cssVar('gray-light'),
-      colorBgLayout: cssVar('gray-lightest'),
-      colorBgContainer: cssVar('white'),
-      controlItemBgActive: cssVar('active-blue'),
-      controlItemBgActiveHover: cssVar('active-blue'),
-      controlItemBgHover: cssVar('active-blue'),
-      colorLink: cssVar('teal'),
-      colorLinkHover: cssVar('teal-dark'),
-      colorText: cssVar('gray-darkest'),
-      colorTextSecondary: cssVar('gray-dark'),
-      colorTextDisabled: cssVar('disabled-text'),
-      borderRadius: 4,
-      fontSize: 14,
-      fontFamily: "'Roboto', 'ArialMT', 'Arial'",
-      fontWeightStrong: 400,
-      colorSplit: cssVar('gray-light'),
-    },
-  };
-
-  const emptyImg = <AnimatedSVG name={ICONS.NO_RESULTS} size={60} />;
-
-  const renderEmpty = () => <Empty image={emptyImg} />;
-  return (
-    <ConfigProvider
-      theme={customTheme}
-      renderEmpty={renderEmpty}
-      modal={{
-        mask: {
-          blur: false,
-        },
-      }}
-      spin={{
-        indicator: <AnimatedSVG size={null} name={ICONS.LOADER} />,
-      }}
-      drawer={{
-        mask: {
-          blur: false,
-        },
-      }}
-      tag={{
-        styles: {
-          root: {
-            marginInlineEnd: 8,
-          },
-        },
-      }}
-    >
-      <App>
-        <StoreProvider store={new RootStore()}>
-          <DndProvider backend={HTML5Backend}>
-            <BrowserRouter>
-              <LocationSync />
-              <Notification />
-              <Router />
-            </BrowserRouter>
-          </DndProvider>
-          <MountPoint />
-        </StoreProvider>
-      </App>
-    </ConfigProvider>
-  );
-};
+const ThemedApp: React.FC = () => (
+  <TooltipProvider delayDuration={200} skipDelayDuration={300}>
+    <ToastProvider>
+      <StoreProvider store={new RootStore()}>
+        <DndProvider backend={HTML5Backend}>
+          <BrowserRouter>
+            <LocationSync />
+            <Router />
+          </BrowserRouter>
+        </DndProvider>
+        <ConfirmMountPoint />
+      </StoreProvider>
+    </ToastProvider>
+  </TooltipProvider>
+);
 
 document.addEventListener('DOMContentLoaded', () => {
   const container = document.getElementById('app');

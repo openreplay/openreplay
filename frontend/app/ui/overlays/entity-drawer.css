@@ -1,0 +1,222 @@
+.m-drawer__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--m-space-4);
+  flex: none;
+  padding: var(--m-space-6) var(--m-space-6) var(--m-space-5);
+  border-bottom: 1px solid var(--m-border-subtle);
+}
+
+.m-drawer__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.m-drawer__foot {
+  flex: none;
+
+  padding: var(--m-space-5) var(--m-space-6);
+  border-top: 1px solid var(--m-border-subtle);
+}
+
+.m-drawer__actions {
+  display: flex;
+  align-items: center;
+  flex: none;
+  gap: var(--m-space-4);
+}
+
+.m-drawer__sep {
+  width: 1px;
+  height: 1rem;
+  background: var(--m-border-default);
+}
+
+.m-drawer__actions .m-iconbtn {
+  margin-top: -3px;
+}
+
+.m-drawer__lead {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.m-drawer__eyebrow {
+  font-size: var(--m-text-2xs);
+  font-weight: var(--m-weight-medium);
+  letter-spacing: var(--m-tracking-wider);
+  text-transform: uppercase;
+  color: var(--m-content-muted);
+}
+
+.m-drawer__title {
+  font-size: var(--m-text-lg);
+  font-weight: var(--m-title-weight);
+  line-height: var(--m-leading-snug);
+  color: var(--m-content-primary);
+  overflow-wrap: anywhere;
+}
+
+.m-drawer__title-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-3);
+
+  align-self: flex-start;
+  max-width: 100%;
+  min-width: 0;
+  margin-inline: calc(var(--m-space-3) * -1);
+  padding: 1px var(--m-space-3);
+  border-radius: var(--m-radius-control);
+  text-align: left;
+  color: var(--m-content-decorative);
+  transition: background-color var(--m-duration-instant) var(--m-ease-out);
+}
+.m-drawer__title-btn:hover {
+  background: var(--m-surface-hover);
+}
+.m-drawer__title-btn svg {
+  flex: none;
+  opacity: 0;
+  transition: opacity var(--m-duration-instant) var(--m-ease-out);
+}
+.m-drawer__title-btn:hover svg {
+  opacity: 1;
+}
+
+.m-drawer__rename {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-3);
+  min-width: 0;
+  margin-right: var(--m-space-5);
+}
+.m-drawer__rename input {
+  flex: 1;
+  min-width: 0;
+}
+
+.m-drawer__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--m-space-3) var(--m-space-5);
+  margin-top: var(--m-space-3);
+  font-size: var(--m-text-sm);
+  font-weight: var(--m-weight-regular);
+  color: var(--m-content-secondary);
+}
+.m-drawer__meta > span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-3);
+}
+.m-drawer__meta svg {
+  color: var(--m-content-decorative);
+  flex: none;
+}
+
+.m-dsec {
+  padding: var(--m-space-5) var(--m-space-6);
+  border-bottom: 1px solid var(--m-border-subtle);
+}
+.m-dsec:last-child {
+  border-bottom: none;
+}
+.m-dsec.is-flush {
+  padding-bottom: 0;
+}
+
+.m-dsec__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--m-space-4);
+  min-height: 1.5rem;
+  margin-bottom: var(--m-space-4);
+}
+
+.m-dsec__title {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-3);
+  font-size: var(--m-text-md);
+  font-weight: var(--m-title-weight);
+  color: var(--m-content-primary);
+}
+.m-dsec__title .m-dsec__count {
+  color: var(--m-content-muted);
+  font-weight: var(--m-weight-regular);
+}
+
+.m-dsec__hint {
+  margin-top: calc(var(--m-space-3) * -1);
+  margin-bottom: var(--m-space-4);
+  font-size: var(--m-text-sm);
+  color: var(--m-content-muted);
+}
+
+.m-dfield {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-space-2);
+  min-width: 0;
+}
+
+.m-dsec > .m-dfield + .m-dfield {
+  margin-top: var(--m-space-5);
+}
+.m-dfield__label {
+  font-size: var(--m-text-xs);
+  color: var(--m-content-muted);
+}
+.m-dfield__error {
+  font-size: var(--m-text-2xs);
+  color: var(--m-content-danger);
+}
+
+.m-dgrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--m-space-4) var(--m-space-5);
+}
+.m-dgrid__cell {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.m-dgrid dt {
+  font-size: var(--m-text-xs);
+  color: var(--m-content-muted);
+}
+.m-dgrid dd {
+  font-size: var(--m-text-sm);
+  color: var(--m-content-primary);
+}
+
+.m-dfoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--m-space-4);
+}
+.m-dfoot__left,
+.m-dfoot__right {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-3);
+}
+
+/* content that brings its own head into a bare drawer: head stays, body scrolls */
+.m-drawer__pane {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}

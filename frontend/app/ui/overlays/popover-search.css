@@ -1,0 +1,13 @@
+.m-psearch {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  padding: var(--m-space-2) var(--m-space-3);
+  border-bottom: var(--m-border-width) solid var(--m-border-subtle);
+}
+
+.m-psearch:focus-within {
+  outline: 2px solid var(--m-focus-ring);
+  outline-offset: -3px;
+  border-radius: var(--m-radius-control);
+}

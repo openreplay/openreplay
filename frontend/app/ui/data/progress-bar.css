@@ -1,0 +1,17 @@
+.m-bar {
+  display: block;
+  width: 100%;
+  max-width: 8rem;
+  height: 4px;
+  border-radius: var(--m-radius-full);
+  background: var(--m-impact-track);
+  overflow: hidden;
+}
+
+.m-bar__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--m-content-accent);
+  transition: width var(--m-duration-slow) var(--m-ease-out);
+}

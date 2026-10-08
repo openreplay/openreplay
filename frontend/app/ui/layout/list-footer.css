@@ -1,0 +1,26 @@
+.m-listfoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--m-space-4);
+
+  margin-top: auto;
+
+  flex-wrap: wrap;
+  padding: var(--m-space-4) var(--m-space-7);
+  border-top: 1px solid var(--m-border-subtle);
+}
+
+.m-listfoot__range {
+  white-space: nowrap;
+  font-family: var(--m-font-num);
+  font-size: var(--m-text-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--m-content-muted);
+}
+
+[data-slot='drawer-foot'] > .m-listfoot {
+  margin: 0;
+  padding: 0;
+  border-top: 0;
+}

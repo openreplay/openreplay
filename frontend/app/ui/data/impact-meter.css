@@ -1,0 +1,23 @@
+.m-impact {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-4);
+}
+
+.m-impact__bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 11px;
+}
+
+.m-impact__bar {
+  width: 3px;
+  border-radius: 1px;
+}
+
+.m-impact__label {
+  font-size: var(--m-text-xs);
+  color: var(--m-content-muted);
+  letter-spacing: var(--m-tracking-normal);
+}

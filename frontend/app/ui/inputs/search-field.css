@@ -1,0 +1,9 @@
+.m-search {
+  width: 13rem;
+}
+
+@media (max-width: 900px) {
+  .m-search {
+    width: 9rem;
+  }
+}

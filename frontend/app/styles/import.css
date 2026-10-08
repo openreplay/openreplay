@@ -1,11 +1,11 @@
-@import 'react-toastify/dist/ReactToastify.css' layer(base);
-@import 'rc-time-picker/assets/index.css' layer(base);
-@import './react-daterange-picker.css' layer(base);
-@import './rc-time-picker.css' layer(base);
-/*@import 'antd/dist/reset.css';*/
 @import './tailwind-preflight.css' layer(base);
 
 @import 'tailwindcss';
+@import '../ui/styles/tokens.css';
+@import '../ui/styles/base.css' layer(base);
+@import '../ui/styles/theme.css';
+@import '../ui/styles/light.css';
+@import '../ui/styles/motion.css';
 
 @config '../../tailwind.config.js';
 
@@ -20,6 +20,6 @@
   ::before,
   ::backdrop,
   ::file-selector-button {
-    border-color: var(--color-gray-200, currentcolor);
+    border-color: var(--m-border-default);
   }
 }

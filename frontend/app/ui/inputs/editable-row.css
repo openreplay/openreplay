@@ -1,0 +1,81 @@
+.m-erow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--m-space-5);
+  min-height: 2.25rem;
+  padding: var(--m-space-3) 0;
+  border-bottom: 1px solid var(--m-border-subtle);
+}
+.m-erow:last-child {
+  border-bottom: none;
+}
+
+.m-erow__label {
+  flex: none;
+  width: 11rem;
+  padding-top: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-size: var(--m-text-sm);
+  color: var(--m-content-muted);
+}
+.m-erow__hint {
+  font-size: var(--m-text-2xs);
+  color: var(--m-content-placeholder);
+}
+
+.m-erow__value {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--m-space-3);
+  padding-top: 2px;
+  font-size: var(--m-text-sm);
+  color: var(--m-content-primary);
+}
+.m-erow__text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.m-erow__text.is-empty {
+  color: var(--m-content-placeholder);
+}
+
+.m-erow__pencil {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-top: -3px;
+  border-radius: var(--m-radius-control);
+  color: var(--m-content-decorative);
+  opacity: 0;
+  transition:
+    opacity var(--m-duration-fast) var(--m-ease-out),
+    background-color var(--m-duration-fast) var(--m-ease-out);
+}
+.m-erow.is-editable:hover .m-erow__pencil,
+.m-erow__pencil:focus-visible {
+  opacity: 1;
+}
+.m-erow__pencil:hover {
+  background: var(--m-surface-hover);
+  color: var(--m-content-primary);
+}
+
+.m-erow__editor {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-space-3);
+}
+.m-erow__buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--m-space-2);
+}

@@ -1,3 +1,7 @@
+import logger from '@/logger';
+import AnalyticsStore from '@/mstore/AnalyticsStore';
+import BillingStore from '@/mstore/billingStore';
+import ClipStore from '@/mstore/clipStore';
 import React from 'react';
 
 import { apiClient } from 'App/api_client';
@@ -15,9 +19,9 @@ import FilterStore from './filterStore';
 import FunnelStore from './funnelStore';
 import { IntegrationsStore } from './integrationsStore';
 import IssueReportingStore from './issueReportingStore';
+import IssuesStore from './issuesStore';
 import LoginStore from './loginStore';
 import MetricStore from './metricStore';
-import NotesStore from './notesStore';
 import NotificationStore from './notificationStore';
 import ProjectsStore from './projectsStore';
 import RecordingsStore from './recordingsStore';
@@ -31,11 +35,6 @@ import TagWatchStore from './tagWatchStore';
 import UiPlayerStore from './uiPlayerStore';
 import userStore from './userStore';
 import WeeklyReportStore from './weeklyReportConfigStore';
-import logger from '@/logger';
-import BillingStore from '@/mstore/billingStore';
-import ClipStore from '@/mstore/clipStore';
-import AnalyticsStore from '@/mstore/AnalyticsStore';
-import IssuesStore from './issuesStore';
 
 const projectStore = new ProjectsStore();
 const sessionStore = new SessionStore();
@@ -93,7 +92,6 @@ export class RootStore {
   errorStore: ErrorStore;
   notificationStore: NotificationStore;
   sessionStore: SessionStore;
-  notesStore: NotesStore;
   recordingsStore: RecordingsStore;
   assistMultiviewStore: AssistMultiviewStore;
   weeklyReportStore: WeeklyReportStore;
@@ -127,7 +125,6 @@ export class RootStore {
     this.errorStore = new ErrorStore();
     this.notificationStore = new NotificationStore();
     this.sessionStore = sessionStore;
-    this.notesStore = new NotesStore();
     this.recordingsStore = new RecordingsStore();
     this.assistMultiviewStore = new AssistMultiviewStore();
     this.weeklyReportStore = new WeeklyReportStore();

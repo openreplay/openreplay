@@ -95,57 +95,22 @@ module.exports = {
   },
   plugins: [
     plugin(function ({ addBase }) {
-      const lightModeVars = {};
+      const vars = {};
 
       Object.entries(colors).forEach(([key, value]) => {
-        if (typeof value !== 'object' || value === null || key === 'dark') {
-          lightModeVars[`--color-${key}`] = value;
+        if (typeof value !== 'object' || value === null) {
+          vars[`--color-${key}`] = value;
         }
       });
       Object.entries(colors).forEach(([key, value]) => {
-        if (typeof value === 'object' && value !== null && key !== 'dark') {
+        if (typeof value === 'object' && value !== null) {
           Object.entries(value).forEach(([nestedKey, nestedValue]) => {
-            lightModeVars[`--color-${key}-${nestedKey}`] = nestedValue;
+            vars[`--color-${key}-${nestedKey}`] = nestedValue;
           });
         }
       });
 
-      const darkModeVars = {};
-
-      if (colors.dark) {
-        // Process flat dark colors
-        Object.entries(colors.dark).forEach(([key, value]) => {
-          if (typeof value !== 'object') {
-            // Only a `dark-` PREFIX names a light-mode key; a plain replace also
-            // ate the one inside `active-dark-blue` and aliased it to
-            // `active-blue`, leaving --color-active-dark-blue light in dark mode
-            const lightKey = key.startsWith('dark-') ? key.slice(5) : key;
-            darkModeVars[`--color-${lightKey}`] = value;
-          }
-        });
-
-        Object.entries(colors.dark).forEach(([key, value]) => {
-          if (typeof value === 'object' && value !== null) {
-            Object.entries(value).forEach(([nestedKey, nestedValue]) => {
-              darkModeVars[`--color-${key}-${nestedKey}`] = nestedValue;
-            });
-          }
-        });
-
-        if (colors['gray-light'] && colors.dark['gray-light']) {
-          darkModeVars['--color-gray-light'] = colors.dark['gray-light'];
-        }
-        if (colors['gray-dark'] && colors.dark['gray-dark']) {
-          darkModeVars['--color-gray-dark'] = colors.dark['gray-dark'];
-        }
-        darkModeVars['--color-disabled-text'] =
-          colors.dark['text-disabled'] || 'rgba(255, 255, 255, 0.38)';
-      }
-
-      addBase({
-        ':root': lightModeVars,
-        '.dark': darkModeVars,
-      });
+      addBase({ ':root': vars });
     }),
   ],
   corePlugins: {

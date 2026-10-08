@@ -7,7 +7,7 @@ const path = require('path');
 
 const svgRE = /\.svg$/;
 const ICONS_DIRNAME = path.join(__dirname, '../app/svg/icons');
-const UI_DIRNAME = path.join(__dirname, '../app/components/ui');
+const UI_DIRNAME = path.join(__dirname, '../app/ui/icons');
 const icons = collectFilenames(ICONS_DIRNAME, (n) => svgRE.test(n));
 
 const getDirectories = (source) =>
@@ -113,7 +113,7 @@ function ${titleCase(fileName)}(props: Props) {
         // hack to keep fill rule for some icons like stop recording square
         .replaceAll(
           /clipRule="evenoddCustomFill"/g,
-          'clipRule="evenodd" fillRule="evenodd"'
+          'clipRule="evenodd" fillRule="evenodd"',
         )
         .replaceAll(`stroke="no-fill"`, 'fill="none"')
         .replaceAll(/fill-rule/g, 'fillRule')
@@ -128,13 +128,13 @@ function ${titleCase(fileName)}(props: Props) {
         .replaceAll(/stop-opacity/g, 'stopOpacity')
         .replaceAll(
           /color-interpolation-filters/g,
-          'colorInterpolationFilters'
+          'colorInterpolationFilters',
         )}
   );
 }
 
 export default ${titleCase(fileName)};
-`
+`,
   );
 });
 
@@ -147,10 +147,10 @@ ${iconPaths
     (icon) =>
       `export { default as ${titleCase(icon.fileName)} } from './${
         icon.fileName
-      }';`
+      }';`,
   )
   .join('\n')}
-`
+`,
 );
 
 // MAIN FILE
@@ -229,5 +229,5 @@ const SVG = (props: Props) => {
 }
 SVG.displayName = 'SVG';
 export default SVG;
-`
+`,
 );

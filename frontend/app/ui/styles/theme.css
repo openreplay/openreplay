@@ -1,0 +1,154 @@
+@theme inline {
+  --color-background: var(--m-surface-default);
+  --color-foreground: var(--m-content-primary);
+  --color-card: var(--m-surface-default);
+  --color-card-foreground: var(--m-content-primary);
+  --color-popover: var(--m-surface-raised);
+  --color-popover-foreground: var(--m-content-primary);
+  --color-primary: var(--m-action-primary-bg);
+  --color-primary-foreground: var(--m-action-primary-fg);
+  --color-secondary: var(--m-action-secondary-bg);
+  --color-secondary-foreground: var(--m-action-secondary-fg);
+  --color-muted: var(--m-surface-sunken);
+  --color-muted-foreground: var(--m-content-muted);
+  --color-accent: var(--m-surface-hover);
+  --color-accent-foreground: var(--m-content-primary);
+  --color-destructive: var(--m-action-danger-bg);
+  --color-destructive-foreground: var(--m-action-danger-fg);
+  --color-border: var(--m-border-default);
+  --color-input: var(--m-border-default);
+  --color-ring: var(--m-focus-ring);
+
+  --color-surface-default: var(--m-surface-default);
+  --color-surface-canvas: var(--m-surface-canvas);
+  --color-surface-sunken: var(--m-surface-sunken);
+  --color-surface-raised: var(--m-surface-raised);
+  --color-surface-hover: var(--m-surface-hover);
+  --color-surface-active: var(--m-surface-active);
+  --color-surface-selected: var(--m-surface-selected);
+  --color-surface-inverse: var(--m-surface-inverse);
+  --color-surface-nav: var(--m-surface-nav);
+  --color-surface-disabled: var(--m-surface-disabled);
+
+  --color-content-primary: var(--m-content-primary);
+  --color-content-secondary: var(--m-content-secondary);
+  --color-content-muted: var(--m-content-muted);
+  --color-content-placeholder: var(--m-content-placeholder);
+  --color-content-decorative: var(--m-content-decorative);
+  --color-content-disabled: var(--m-content-disabled);
+  --color-content-inverse: var(--m-content-inverse);
+  --color-content-accent: var(--m-content-accent);
+  --color-content-danger: var(--m-content-danger);
+  --color-content-success: var(--m-content-success);
+  --color-content-warning: var(--m-content-warning);
+
+  --color-border-subtle: var(--m-border-subtle);
+  --color-border-default: var(--m-border-default);
+  --color-border-strong: var(--m-border-strong);
+  --color-border-accent: var(--m-border-accent);
+
+  --color-impact-high: var(--m-impact-high);
+  --color-impact-medium: var(--m-impact-medium);
+  --color-impact-low: var(--m-impact-low);
+  --color-impact-track: var(--m-impact-track);
+
+  --color-status-neutral-bg: var(--m-status-neutral-bg);
+  --color-status-neutral-fg: var(--m-status-neutral-fg);
+  --color-status-neutral-border: var(--m-status-neutral-border);
+  --color-status-danger-bg: var(--m-status-danger-bg);
+  --color-status-danger-fg: var(--m-status-danger-fg);
+  --color-status-success-bg: var(--m-status-success-bg);
+  --color-status-success-fg: var(--m-status-success-fg);
+  --color-status-warning-bg: var(--m-status-warning-bg);
+  --color-status-warning-fg: var(--m-status-warning-fg);
+  --color-status-info-bg: var(--m-status-info-bg);
+  --color-status-info-fg: var(--m-status-info-fg);
+
+  --radius-chip: var(--m-radius-chip);
+  --radius-control: var(--m-radius-control);
+  --radius-surface: var(--m-radius-surface);
+  --radius-track: var(--m-radius-track);
+  --radius-check: var(--m-radius-check);
+  --radius-full: var(--m-radius-full);
+  --radius-sm: var(--m-radius-chip);
+  --radius-md: var(--m-radius-control);
+  --radius-lg: var(--m-radius-surface);
+  --radius-xl: var(--m-radius-surface);
+
+  --spacing-0: var(--m-space-0);
+  --spacing-px: var(--m-space-px);
+  --spacing-1: var(--m-space-1);
+  --spacing-2: var(--m-space-2);
+  --spacing-3: var(--m-space-3);
+  --spacing-4: var(--m-space-4);
+  --spacing-5: var(--m-space-5);
+  --spacing-6: var(--m-space-6);
+  --spacing-7: var(--m-space-7);
+  --spacing-8: var(--m-space-8);
+  --spacing-9: var(--m-space-9);
+  --spacing-10: var(--m-space-10);
+  --spacing-11: var(--m-space-11);
+
+  --height-control-sm: var(--m-control-height-sm);
+  --height-control-md: var(--m-control-height-md);
+  --height-control-lg: var(--m-control-height-lg);
+  --width-control-sm: var(--m-control-height-sm);
+  --width-control-md: var(--m-control-height-md);
+  --width-control-lg: var(--m-control-height-lg);
+  --min-width-control-sm: var(--m-control-height-sm);
+  --min-width-control-md: var(--m-control-height-md);
+  --min-width-control-lg: var(--m-control-height-lg);
+  --height-row: var(--m-row-height);
+  --height-nav-row: var(--m-nav-row-height);
+  --height-header: var(--m-header-height);
+
+  --font-sans: var(--m-font-sans);
+  --font-mono: var(--m-font-mono);
+  --font-display: var(--m-font-display);
+  --font-num: var(--m-font-num);
+  --text-2xs: var(--m-text-2xs);
+  --text-xs: var(--m-text-xs);
+  --text-sm: var(--m-text-sm);
+  --text-md: var(--m-text-md);
+  --text-base: var(--m-text-md);
+  --text-lg: var(--m-text-lg);
+  --text-xl: var(--m-text-xl);
+  --text-2xl: var(--m-text-2xl);
+  --font-weight-regular: var(--m-weight-regular);
+  --font-weight-medium: var(--m-weight-medium);
+  --font-weight-semibold: var(--m-weight-semibold);
+  --leading-tight: var(--m-leading-tight);
+  --leading-snug: var(--m-leading-snug);
+  --leading-normal: var(--m-leading-normal);
+  --leading-relaxed: var(--m-leading-relaxed);
+  --tracking-tight: var(--m-tracking-tight);
+  --tracking-normal: var(--m-tracking-normal);
+  --tracking-wide: var(--m-tracking-wide);
+
+  --shadow-popover: var(--m-shadow-popover);
+  --shadow-modal: var(--m-shadow-modal);
+  --ease-out: var(--m-ease-out);
+  --ease-in-out: var(--m-ease-in-out);
+
+  --z-index-sticky: var(--m-z-sticky);
+  --z-index-dropdown: var(--m-z-dropdown);
+  --z-index-overlay: var(--m-z-overlay);
+  --z-index-modal: var(--m-z-modal);
+  --z-index-tooltip: var(--m-z-tooltip);
+}
+
+@layer components {
+  .m-elevated {
+    box-shadow: var(--m-shadow-popover);
+  }
+  .m-elevated-modal {
+    box-shadow: var(--m-shadow-modal);
+  }
+}
+
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--m-focus-ring);
+    outline-offset: var(--m-focus-ring-offset);
+  }
+}

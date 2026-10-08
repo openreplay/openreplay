@@ -1,0 +1,6 @@
+.m-cgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--m-space-5);
+  padding: var(--m-space-5) var(--m-space-7);
+}
