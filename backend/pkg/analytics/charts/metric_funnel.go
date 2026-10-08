@@ -186,10 +186,13 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, map[string]any, err
 		DefinedColumns: mainColumns,
 		MainTableAlias: "e",
 	}, qp)
-	_, _, namelessEventConditions := BuildEventConditions(namelessEventFilters, BuildConditionsOptions{
+	// Global property filters (no event name, e.g. a custom user property) are
+	// returned as event conditions by BuildEventConditions, not as "other" conditions.
+	namelessEventConditions, _, namelessOtherConditions := BuildEventConditions(namelessEventFilters, BuildConditionsOptions{
 		DefinedColumns: mainColumns,
 		MainTableAlias: "e",
 	}, qp)
+	namelessEventConditions = append(namelessEventConditions, namelessOtherConditions...)
 
 	var sessionConditions []string = make([]string, 0)
 	if len(sessionFilters) > 0 {
