@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/go-playground/validator/v10"
@@ -123,7 +124,9 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		return nil, err
 	}
 
-	sessionService, err := session.NewService(log, pgconn, viewService, files)
+	sessionService, err := session.NewService(log, pgconn, viewService, files,
+		time.Duration(cfg.SessionExistsCacheTTL)*time.Second,
+		time.Duration(cfg.SessionWindowCacheTTL)*time.Second)
 	if err != nil {
 		return nil, fmt.Errorf("can't init session service: %s", err)
 	}
@@ -151,7 +154,7 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		return nil, err
 	}
 
-	searchService, err := search.New(log, chconn, pgconn, segmentsService, projects)
+	searchService, err := search.New(log, chconn, pgconn, segmentsService, time.Duration(cfg.MetadataCacheTTL)*time.Second)
 	if err != nil {
 		return nil, err
 	}

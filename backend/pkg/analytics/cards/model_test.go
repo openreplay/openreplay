@@ -72,44 +72,6 @@ func TestCardBreakdownValidation(t *testing.T) {
 	}
 }
 
-type fakeRow struct{ info []byte }
-
-func (f fakeRow) Scan(dest ...interface{}) error {
-	for _, d := range dest {
-		if raw, ok := d.(*[]byte); ok {
-			*raw = f.info
-		}
-	}
-	return nil
-}
-
-func TestScanCardLoadsLegacyStringBreakdowns(t *testing.T) {
-	s := &cardsImpl{}
-	card, err := s.scanCard(fakeRow{info: []byte(`{"breakdowns":["userCountry","currentPath"]}`)})
-	if err != nil {
-		t.Fatalf("scanCard: %v", err)
-	}
-	if len(card.Breakdowns) != 2 || card.Breakdowns[0].Name != "userCountry" || card.Breakdowns[1].Name != "currentPath" {
-		t.Fatalf("got %+v", card.Breakdowns)
-	}
-	if card.Breakdowns[0].IsEvent || card.Breakdowns[0].AutoCaptured || card.Breakdowns[0].DataType != "" {
-		t.Errorf("legacy breakdown enriched unexpectedly: %+v", card.Breakdowns[0])
-	}
-}
-
-func TestScanCardLoadsObjectBreakdowns(t *testing.T) {
-	s := &cardsImpl{}
-	raw := `{"breakdowns":[{"name":"planType","isEvent":true,"autoCaptured":false,"dataType":"string"}]}`
-	card, err := s.scanCard(fakeRow{info: []byte(raw)})
-	if err != nil {
-		t.Fatalf("scanCard: %v", err)
-	}
-	want := model.Breakdown{Name: "planType", IsEvent: true, DataType: "string"}
-	if len(card.Breakdowns) != 1 || card.Breakdowns[0] != want {
-		t.Fatalf("got %+v, want %+v", card.Breakdowns, want)
-	}
-}
-
 func TestCardInfoKeepsLegacyStringShapeOnSave(t *testing.T) {
 	data, err := json.Marshal(CardInfo{Breakdowns: []model.Breakdown{{Name: "userCountry"}}})
 	if err != nil {

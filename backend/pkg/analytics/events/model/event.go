@@ -5,7 +5,6 @@ import (
 	"openreplay/backend/pkg/analytics/sanitizer"
 )
 
-
 type EventEntry struct {
 	ProjectId              uint16                  `json:"-"`
 	EventId                string                  `json:"event_id"`
@@ -87,14 +86,14 @@ func (e *EventEntry) SanitizeForHTML() {
 }
 
 type EventsSearchRequest struct {
-	Filters   []filters.Filter        `json:"filters" validate:"omitempty,dive"`
-	StartDate int64                   `json:"startTimestamp" validate:"required,min=946684800000"`
-	EndDate   int64                   `json:"endTimestamp" validate:"required,min=946684800000,gtfield=StartDate"`
-	SortBy    filters.EventColumn     `json:"sortBy" validate:"omitempty,validEventColumn"`
-	SortOrder filters.SortOrderType   `json:"sortOrder" validate:"omitempty,oneof=asc desc"`
-	Limit     int                     `json:"limit" validate:"required,min=1,max=200"`
-	Page      int                     `json:"page" validate:"required,min=1"`
-	Columns   []filters.EventColumn   `json:"columns" validate:"omitempty,dive,validEventColumn"`
+	Filters   []filters.Filter      `json:"filters" validate:"omitempty,dive"`
+	StartDate int64                 `json:"startTimestamp" validate:"required,min=946684800000"`
+	EndDate   int64                 `json:"endTimestamp" validate:"required,min=946684800000,gtfield=StartDate"`
+	SortBy    filters.EventColumn   `json:"sortBy" validate:"omitempty,validEventColumn"`
+	SortOrder filters.SortOrderType `json:"sortOrder" validate:"omitempty,oneof=asc desc"`
+	Limit     int                   `json:"limit" validate:"required,min=1,max=200"`
+	Page      int                   `json:"page" validate:"required,min=1"`
+	Columns   []filters.EventColumn `json:"columns" validate:"omitempty,dive,validEventColumn"`
 }
 
 type EventsSearchResponse struct {
@@ -238,5 +237,3 @@ func GetFieldPointer(entry *EventEntry, column string) interface{} {
 		return nil
 	}
 }
-
-
