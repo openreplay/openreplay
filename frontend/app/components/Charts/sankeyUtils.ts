@@ -27,23 +27,23 @@ export function sankeyTooltip(
       const safeSourceName = shortenString(sourceName);
       const safeTargetName = shortenString(targetName);
       return `
-      <div class="flex gap-2 w-fit px-2 bg-white items-center rounded-xl">
+      <div class="flex gap-2 w-fit px-2 items-center">
         <div class="flex flex-col">
           <div class="flex flex-col text-sm">
             <div class="font-semibold">
-            <span class="text-base" style="color:#394eff">&#8592;</span> ${safeSourceName}
+            <span class="text-base" style="color:var(--m-chart-1)">&#8592;</span> ${safeSourceName}
             </div>
-            <div class="text-black">
-              ${sourceValue} <span class="text-disabled-text">Sessions</span>
+            <div style="color:var(--m-content-primary)">
+              ${sourceValue} <span style="color:var(--m-content-muted)">Sessions</span>
             </div>
             <div class="font-semibold mt-2">
-              <span class="text-base" style="color:#394eff">&#8594;</span> ${safeTargetName}
+              <span class="text-base" style="color:var(--m-chart-1)">&#8594;</span> ${safeTargetName}
             </div>
-            <div class="flex items-baseline gap-2 text-black">
+            <div class="flex items-baseline gap-2" style="color:var(--m-content-primary)">
               <span>${params.data.value} (${params.data.percentage.toFixed(
                 2,
               )}%)</span>
-              <span class="text-disabled-text">Sessions</span>
+              <span style="color:var(--m-content-muted)">Sessions</span>
             </div>
           </div>
         </div>
@@ -53,8 +53,8 @@ export function sankeyTooltip(
     if ('name' in params.data) {
       return `
       <div class="flex flex-col">
-        <div class="font-semibold text-sm flex gap-1 items-center"><span class="text-base" style="color:#394eff; font-family: sans-serif;">&#9632;&#xFE0E;</span> ${params.data.name}</div>
-        <div class="text-black text-sm">${params.value} <span class="text-disabled-text">Sessions</span></div>
+        <div class="font-semibold text-sm flex gap-1 items-center"><span class="text-base" style="color:var(--m-chart-1); font-family: sans-serif;">&#9632;&#xFE0E;</span> ${params.data.name}</div>
+        <div class="text-sm" style="color:var(--m-content-primary)">${params.value} <span style="color:var(--m-content-muted)">Sessions</span></div>
       </div>
       `;
     }

@@ -1,8 +1,8 @@
 /* eslint-disable i18next/no-literal-string */
-import { Button, Checkbox, Divider, Table } from 'antd';
-import type { TableProps } from 'antd';
-import cn from 'classnames';
+import { Button } from '@/ui/actions/button';
+import { Checkbox } from '@/ui/inputs/checkbox';
 import { Download, Eye, EyeOff } from 'lucide-react';
+import { DateTime } from 'luxon';
 import { observer } from 'mobx-react-lite';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -17,6 +17,7 @@ import {
   getDepth,
   sumAll,
 } from 'App/utils/breakdownTree';
+import { getLocalHourFormat } from 'App/utils/intlUtils';
 
 import BreakdownSelectionPanel from '../BreakdownFilter/BreakdownSelectionPanel';
 import {
@@ -244,204 +245,133 @@ function BreakdownDatatable(props: Props) {
     [levelTree, metricStore],
   );
 
-  const { rows, columns } = useMemo(() => {
-    // Always build from full unfiltered data
-    const { rows, timestamps, depth } = buildTableData(props.data);
-
-    const cols: NonNullable<TableProps['columns']> = [
-      {
-        title: <span className="font-medium">Series</span>,
-        dataIndex: 'seriesName',
-        key: 'seriesName',
-        fixed: 'left' as const,
-        // @ts-ignore
-        _pureTitle: 'Series',
-        onCell: (record: FlatRow) => ({
-          rowSpan: record.seriesRowSpan,
-        }),
-      },
-    ];
-
-    const labels = breakdownLabels;
-    for (let lvl = 0; lvl < depth; lvl++) {
-      const levelLabel = labels[lvl] ?? `Level ${lvl + 1}`;
-      cols.push({
-        title: <span className="font-medium">{levelLabel}</span>,
-        dataIndex: `level_${lvl}`,
-        key: `level_${lvl}`,
-        fixed: 'left' as const,
-        // @ts-ignore
-        _pureTitle: levelLabel,
-        render: (_: any, record: FlatRow) => {
-          const level = record.levels[lvl];
-          if (!level || level.rowSpan === 0) return null;
-
-          if (!level.label || !hasBreakdowns) {
-            return (
-              <div>
-                <div>{level.label}</div>
-                <div className="text-xs text-gray-500">
-                  {level.total > 0
-                    ? `${level.total.toLocaleString()} (${level.pct})`
-                    : ''}
-                </div>
-              </div>
-            );
-          }
-
-          const parentPath = record.levels
-            .slice(0, lvl)
-            .map((l) => l.label)
-            .filter(Boolean)
-            .join(' / ');
-
-          const value = level.label;
-          const sel = metricStore.breakdownSelection[parentPath];
-          const isSelected =
-            sel === undefined || sel === null || sel.includes(value);
-
-          // Check if every ancestor is selected (for dimming and disabling)
-          let isParentSelected = true;
-          for (let i = 0; i < lvl; i++) {
-            const ancestorParentPath = record.levels
-              .slice(0, i)
-              .map((l) => l.label)
-              .filter(Boolean)
-              .join(' / ');
-            const ancestorSel =
-              metricStore.breakdownSelection[ancestorParentPath];
-            if (
-              ancestorSel !== undefined &&
-              ancestorSel !== null &&
-              !ancestorSel.includes(record.levels[i].label)
-            ) {
-              isParentSelected = false;
-              break;
-            }
-          }
-
-          // Indeterminate: selected but some children are deselected
-          const childPath = parentPath ? `${parentPath} / ${value}` : value;
-          const childSel = metricStore.breakdownSelection[childPath];
-          const childKeys = levelTree.get(childPath)?.map((c) => c.key) ?? [];
-          const isIndeterminate =
-            isSelected &&
-            isParentSelected &&
-            childKeys.length > 0 &&
-            childSel !== null &&
-            childSel !== undefined &&
-            childSel.length < childKeys.length;
-
-          const effectiveChecked = isSelected && isParentSelected;
-
-          return (
-            <div
-              className={cn(
-                'flex items-start gap-2',
-                !isParentSelected && 'opacity-40',
-              )}
-            >
-              <Checkbox
-                checked={effectiveChecked}
-                indeterminate={isIndeterminate}
-                disabled={!isParentSelected}
-                onChange={() => handleToggle(parentPath, value, lvl)}
-                className="mt-0.5 shrink-0"
-              />
-              <div>
-                <div>{value}</div>
-                <div className="text-xs text-gray-500">
-                  {level.total.toLocaleString()} ({level.pct})
-                </div>
-              </div>
-            </div>
-          );
-        },
-        onCell: (record: FlatRow) => ({
-          rowSpan: record.levels[lvl]?.rowSpan ?? 1,
-        }),
-      });
-    }
-
-    timestamps.forEach((ts) => {
+  const { rows, timestamps, depth } = useMemo(
+    () => buildTableData(props.data),
+    [props.data],
+  );
+  const tsLabels = useMemo(() => {
+    const subDay =
+      timestamps.length > 1 &&
+      Number(timestamps[1]) - Number(timestamps[0]) < 86_400_000;
+    return timestamps.map((ts) => {
       const label = formatIsoForColumn(Number(ts));
-      cols.push({
-        title: <span className="font-medium">{label}</span>,
-        dataIndex: `ts_${ts}`,
-        key: `ts_${ts}`,
-        // @ts-ignore
-        _pureTitle: label,
-      });
+      const at = DateTime.fromMillis(Number(ts));
+      // past days print only the date; hourly buckets need the hour too
+      return subDay && !at.hasSame(DateTime.now(), 'day')
+        ? `${label}, ${at.toFormat(getLocalHourFormat(false)).toLowerCase()}`
+        : label;
     });
-
-    return { rows, timestamps, depth, columns: cols };
-  }, [
-    props.data,
-    breakdownLabels,
-    hasBreakdowns,
-    levelTree,
-    metricStore.breakdownSelection,
-    handleToggle,
-  ]);
-
-  // Dim rows where any breakdown level is deselected in the chart
-  const rowClassName = useCallback(
-    (record: FlatRow) => {
-      if (!hasBreakdowns) return '';
-      for (let i = 0; i < record.levels.length; i++) {
-        const lvl = record.levels[i];
-        if (!lvl.label) continue;
-        const parentPath = record.levels
-          .slice(0, i)
-          .map((l) => l.label)
-          .filter(Boolean)
-          .join(' / ');
-        if (!metricStore.isBreakdownValueSelected(parentPath, lvl.label)) {
-          return 'opacity-50';
-        }
-      }
-      return '';
-    },
-    [hasBreakdowns, metricStore],
+  }, [timestamps]);
+  // export reads `_pureTitle`/`dataIndex`, the shape exportAntCsv expects
+  const exportColumns = useMemo(
+    () => [
+      { _pureTitle: 'Series', dataIndex: 'seriesName' },
+      ...Array.from({ length: depth }, (_, lvl) => ({
+        _pureTitle: breakdownLabels[lvl] ?? `Level ${lvl + 1}`,
+        dataIndex: `level_${lvl}`,
+      })),
+      ...timestamps.map((ts, i) => ({
+        _pureTitle: tsLabels[i],
+        dataIndex: `ts_${ts}`,
+      })),
+    ],
+    [depth, timestamps, tsLabels, breakdownLabels],
   );
 
+  const pathOf = (record: FlatRow, upTo: number) =>
+    record.levels
+      .slice(0, upTo)
+      .map((l) => l.label)
+      .filter(Boolean)
+      .join(' / ');
+
+  const dimmed = (record: FlatRow) => {
+    if (!hasBreakdowns) return false;
+    return record.levels.some(
+      (lvl, i) =>
+        !!lvl.label &&
+        !metricStore.isBreakdownValueSelected(pathOf(record, i), lvl.label),
+    );
+  };
+
+  const levelCell = (record: FlatRow, lvl: number) => {
+    const level = record.levels[lvl];
+    const meta =
+      level.total > 0 ? `${level.total.toLocaleString()} (${level.pct})` : '';
+    if (!level.label || !hasBreakdowns) {
+      return (
+        <span className="m-ttable__level">
+          <span>{level.label}</span>
+          <span className="m-ttable__meta">{meta}</span>
+        </span>
+      );
+    }
+    const parentPath = pathOf(record, lvl);
+    const value = level.label;
+    const sel = metricStore.breakdownSelection[parentPath];
+    const isSelected = sel == null || sel.includes(value);
+    let parentOn = true;
+    for (let i = 0; i < lvl; i++) {
+      const s = metricStore.breakdownSelection[pathOf(record, i)];
+      if (s != null && !s.includes(record.levels[i].label)) {
+        parentOn = false;
+        break;
+      }
+    }
+    const childPath = parentPath ? `${parentPath} / ${value}` : value;
+    const childSel = metricStore.breakdownSelection[childPath];
+    const childCount = levelTree.get(childPath)?.length ?? 0;
+    const partial =
+      isSelected &&
+      parentOn &&
+      childCount > 0 &&
+      childSel != null &&
+      childSel.length < childCount;
+    return (
+      <span className={`m-ttable__level${parentOn ? '' : ' is-off'}`}>
+        <Checkbox
+          checked={partial ? 'indeterminate' : isSelected && parentOn}
+          disabled={!parentOn}
+          onCheckedChange={() => handleToggle(parentPath, value, lvl)}
+          aria-label={value}
+        />
+        <span className="flex flex-col">
+          <span>{value}</span>
+          <span className="m-ttable__meta">{meta}</span>
+        </span>
+      </span>
+    );
+  };
+
   const isTableOnlyMode = props.metric.viewType === 'table';
-  // In the dashboard grid (not the card builder/preview) the table height is
-  // capped and the controls row (level selection + export) is hidden.
   const inGrid = !props.inBuilder;
 
   if (!props.data || Object.keys(props.data).length === 0) {
     return null;
   }
+  const open = showTable || isTableOnlyMode;
 
   return (
-    <div className={cn('relative -mx-4 px-2')}>
+    <div className="m-ttable">
       {!isTableOnlyMode && (
-        <div className="flex gap-2">
-          <Divider
-            style={{
-              borderColor: showTable ? '#efefef' : 'transparent',
-              borderStyle: 'dashed',
+        <div className="m-ttable__divider">
+          <Button
+            variant="subtle"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowTable(!showTable);
             }}
-            variant="dashed"
+            aria-expanded={open}
           >
-            <Button
-              icon={showTable ? <EyeOff size={16} /> : <Eye size={16} />}
-              size="small"
-              type="default"
-              onClick={() => setShowTable(!showTable)}
-              className="btn-show-hide-table"
-            >
-              {showTable ? t('Hide Table') : t('Show Table')}
-            </Button>
-          </Divider>
+            {open ? <EyeOff size={13} /> : <Eye size={13} />}
+            {open ? t('Hide table') : t('Show table')}
+          </Button>
         </div>
       )}
-
-      {showTable || isTableOnlyMode ? (
-        <div className="relative">
+      {open ? (
+        <>
           {!inGrid && (
-            <div className="flex items-center mb-2 gap-2">
+            <div className="m-ttable__tools">
               {hasBreakdowns && (
                 <BreakdownSelectionPanel
                   data={props.data}
@@ -449,45 +379,63 @@ function BreakdownDatatable(props: Props) {
                 />
               )}
               <Button
-                icon={<Download size={14} />}
-                size="small"
-                type="default"
-                className="ml-auto"
-                onClick={() => exportAntCsv(columns, rows, props.metric.name)}
+                variant="subtle"
+                size="sm"
+                onClick={() =>
+                  exportAntCsv(exportColumns, rows, props.metric.name)
+                }
               >
+                <Download size={13} />
                 {t('Export as CSV')}
               </Button>
             </div>
           )}
           <div
-            className="relative"
-            style={
-              inGrid
-                ? { maxHeight: 240, overflow: 'hidden' }
-                : undefined
-            }
+            className="m-ttable__scroll"
+            style={inGrid ? { maxHeight: 240 } : undefined}
           >
-            <Table
-              columns={columns}
-              dataSource={rows}
-              pagination={false}
-              size="small"
-              scroll={{ x: 'max-content' }}
-              bordered
-              rowClassName={rowClassName}
-            />
+            <table className="m-ttable__table">
+              <thead>
+                <tr>
+                  <th className="is-pinned">{t('Series')}</th>
+                  {Array.from({ length: depth }, (_, lvl) => (
+                    <th key={lvl}>
+                      {breakdownLabels[lvl] ?? `Level ${lvl + 1}`}
+                    </th>
+                  ))}
+                  {tsLabels.map((label, i) => (
+                    <th key={timestamps[i]} className="is-num">
+                      {label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r) => (
+                  <tr key={r.key} className={dimmed(r) ? 'is-dim' : undefined}>
+                    {r.seriesRowSpan > 0 ? (
+                      <td className="is-pinned" rowSpan={r.seriesRowSpan}>
+                        {r.seriesName}
+                      </td>
+                    ) : null}
+                    {r.levels.map((lvl, i) =>
+                      lvl.rowSpan > 0 ? (
+                        <td key={i} rowSpan={lvl.rowSpan}>
+                          {levelCell(r, i)}
+                        </td>
+                      ) : null,
+                    )}
+                    {timestamps.map((ts) => (
+                      <td key={ts} className="is-num">
+                        {(r[`ts_${ts}`] ?? 0).toLocaleString()}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-          {inGrid && (
-            <div
-              className="pointer-events-none absolute bottom-0 left-0 right-0"
-              style={{
-                height: 40,
-                background:
-                  'linear-gradient(to bottom, transparent, var(--color-white))',
-              }}
-            />
-          )}
-        </div>
+        </>
       ) : null}
     </div>
   );

@@ -73,7 +73,7 @@ const defaultOptions = {
       },
     },
   },
-  backgroundColor: 'var(--color-white)',
+  backgroundColor: 'transparent',
 };
 
 export function initWindowStorages(

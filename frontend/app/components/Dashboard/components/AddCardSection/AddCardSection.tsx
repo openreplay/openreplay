@@ -1,14 +1,17 @@
-import { FolderOutlined } from '@ant-design/icons';
+import { Button } from '@/ui/actions/button';
+import { Segmented } from '@/ui/inputs/toggle-group';
+import { PopoverSearch } from '@/ui/overlays/PopoverSearch';
 import { FilterKey } from 'Types/filter/filterType';
-import { Button, Segmented } from 'antd';
 import { TFunction } from 'i18next';
 import {
   Activity,
   AppWindow,
   ArrowUpDown,
+  CircleAlert,
   Combine,
   FileStack,
   Filter,
+  FolderOpen,
   Globe,
   LineChart,
   MonitorSmartphone,
@@ -20,7 +23,6 @@ import {
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'App/routing';
 
 import { useModal } from 'App/components/Modal';
 import {
@@ -33,8 +35,10 @@ import {
 } from 'App/constants/card';
 import { useStore } from 'App/mstore';
 import { metricCreate, withSiteId } from 'App/routes';
-import { Icon } from 'UI';
+import { useNavigate } from 'App/routing';
 
+import { Heatmap, UserJourney } from '../../cardIcons';
+import '../../product-analytics.css';
 import MetricsLibraryModal from '../MetricsLibraryModal/MetricsLibraryModal';
 
 interface TabItem {
@@ -59,13 +63,13 @@ export const tabItems: (t: TFunction) => Record<string, TabItem[]> = (t) => ({
       description: t('Visualize user progression through critical steps.'),
     },
     {
-      icon: <Icon name="dashboards/user-journey" color="inherit" size={16} />,
+      icon: <UserJourney width={16} />,
       title: t('Journeys'),
       type: USER_PATH,
       description: t('Understand the paths users take through your product.'),
     },
     {
-      icon: <Icon name="dashboards/heatmap-2" color="inherit" size={16} />,
+      icon: <Heatmap width={16} />,
       title: t('Heatmaps'),
       type: HEATMAP,
       description: t('Visualize user interaction patterns on your pages.'),
@@ -73,7 +77,7 @@ export const tabItems: (t: TFunction) => Record<string, TabItem[]> = (t) => ({
   ],
   [CATEGORIES.monitors]: [
     {
-      icon: <Icon name="dashboards/circle-alert" color="inherit" size={16} />,
+      icon: <CircleAlert width={16} />,
       title: t('JS Errors'),
       type: FilterKey.ERRORS,
       description: t('Monitor JS errors affecting user experience.'),
@@ -97,7 +101,7 @@ export const tabItems: (t: TFunction) => Record<string, TabItem[]> = (t) => ({
       description: t('Pinpoint the slowest network requests causing delays.'),
     },
     {
-      icon: <Icon name="pulse" color="inherit" size={16} />,
+      icon: <Activity width={16} />,
       title: t('Web Vitals'),
       type: WEBVITALS,
       description: t('Monitor key web performance metrics.'),
@@ -190,80 +194,61 @@ export const mobileTabItems: (t: TFunction) => Record<string, TabItem[]> = (
   ],
 });
 
-function CategoryTab({
-  tab,
-  inCards,
-  isMobile,
-}: {
-  tab: string;
-  isMobile?: boolean;
-  inCards?: boolean;
-}) {
-  const { t } = useTranslation();
-  const items = isMobile ? mobileTabItems(t)[tab] : tabItems(t)[tab];
-  const { projectsStore, dashboardStore } = useStore();
-  const navigate = useNavigate();
-
-  const handleCardSelection = (card: string) => {
-    if (!projectsStore.activeSiteId) return;
-    const dbId = dashboardStore.selectedDashboard?.dashboardId;
-    const search =
-      dbId && !inCards ? `?mk=${card}&dashboardId=${dbId}` : `?mk=${card}`;
-    navigate(
-      {
-        pathname: withSiteId(metricCreate(), projectsStore.activeSiteId),
-        search,
-      },
-      { relative: 'route' },
-    );
-  };
-  return (
-    <div className="flex flex-col gap-3">
-      {items.map((item, index) => (
-        <div
-          onClick={() => handleCardSelection(item.type)}
-          key={index}
-          className="flex items-start gap-2 p-2 hover:bg-active-blue rounded-xl hover:text-teal group cursor-pointer"
-        >
-          {item.icon}
-          <div className="leading-none">
-            <div>{item.title}</div>
-            <div className="text-disabled-text group-hover:text-teal/60 text-sm">
-              {item.description}
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 const AddCardSection = observer(
   ({
     inCards,
+    hideExisting,
     handleOpenChange,
   }: {
     inCards?: boolean;
+    hideExisting?: boolean;
     handleOpenChange?: (isOpen: boolean) => void;
   }) => {
     const { t } = useTranslation();
     const { showModal } = useModal();
     const { metricStore, dashboardStore, projectsStore } = useStore();
+    const navigate = useNavigate();
     const { isMobile } = projectsStore;
     const [tab, setTab] = React.useState(
       isMobile ? 'web_analytics' : 'product_analytics',
     );
+    const [query, setQuery] = React.useState('');
 
-    const options = isMobile
-      ? [
-          // { label: 'Product Analytics', value: 'product_analytics' },
-          { label: t('Mobile Analytics'), value: 'web_analytics' },
-        ]
-      : [
-          { label: t('Product Analytics'), value: 'product_analytics' },
-          { label: t('Monitors'), value: 'monitors' },
-          { label: t('Web Analytics'), value: 'web_analytics' },
-        ];
+    const labels: Record<string, string> = isMobile
+      ? { web_analytics: t('Mobile Analytics') }
+      : {
+          product_analytics: t('Product Analytics'),
+          monitors: t('Monitors'),
+          web_analytics: t('Web Analytics'),
+        };
+    const groups = isMobile ? mobileTabItems(t) : tabItems(t);
+    const q = query.trim().toLowerCase();
+    const shown = q
+      ? Object.entries(groups).flatMap(([cat, items]) =>
+          items
+            .filter(
+              (i) =>
+                i.title.toLowerCase().includes(q) ||
+                i.description.toLowerCase().includes(q),
+            )
+            .map((i) => ({ ...i, hint: labels[cat] })),
+        )
+      : (groups[tab] ?? []).map((i) => ({ ...i, hint: i.description }));
+
+    const pick = (card: string) => {
+      if (!projectsStore.activeSiteId) return;
+      handleOpenChange?.(false);
+      const dbId = dashboardStore.selectedDashboard?.dashboardId;
+      const search =
+        dbId && !inCards ? `?mk=${card}&dashboardId=${dbId}` : `?mk=${card}`;
+      navigate(
+        {
+          pathname: withSiteId(metricCreate(), projectsStore.activeSiteId),
+          search,
+        },
+        { relative: 'route' },
+      );
+    };
 
     const onExistingClick = () => {
       const dashboardId = dashboardStore.selectedDashboard?.dashboardId;
@@ -280,36 +265,60 @@ const AddCardSection = observer(
       );
       handleOpenChange?.(false);
     };
-    return (
-      <div className="pt-4 pb-6 px-6 rounded-xl bg-white border border-gray-lighter flex flex-col gap-2 shadow-xs">
-        <div className="flex justify-between p-2">
-          <div className="text-xl font-medium mb-1">
-            {t('What do you want to visualize?')}
-          </div>
-        </div>
-        <div>
-          {options.length > 1 ? (
-            <Segmented
-              options={options}
-              value={tab}
-              onChange={(value) => setTab(value)}
-            />
-          ) : null}
-        </div>
 
-        <div className="py-2">
-          <CategoryTab isMobile={isMobile} tab={tab} inCards={inCards} />
-        </div>
-        {inCards ? null : (
-          <div className="w-full flex items-center justify-center border-t mt-auto border-t-gray-lighter gap-2 pt-2 cursor-pointer">
+    return (
+      <div className="m-addcard" data-slot="add-card">
+        <p className="m-addcard__title">
+          {t('What do you want to visualize?')}
+        </p>
+        <PopoverSearch
+          placeholder={t('Search kinds')}
+          value={query}
+          onChange={setQuery}
+        />
+        {!q && Object.keys(labels).length > 1 ? (
+          <Segmented
+            block
+            value={tab}
+            onChange={setTab}
+            ariaLabel={t('Card category')}
+            options={Object.entries(labels).map(([value, label]) => ({
+              value,
+              label,
+            }))}
+          />
+        ) : null}
+        {q && shown.length === 0 ? (
+          <p className="m-addcard__none">{t('No kind matches that.')}</p>
+        ) : null}
+        <ul className="m-addcard__list">
+          {shown.map((item) => (
+            <li key={item.type}>
+              <button
+                type="button"
+                className="m-addcard__row"
+                onClick={() => pick(item.type)}
+              >
+                <span className="m-addcard__icon" aria-hidden="true">
+                  {item.icon}
+                </span>
+                <span className="m-addcard__text">
+                  <span className="m-addcard__name">{item.title}</span>
+                  <span className="m-addcard__desc">{item.hint}</span>
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+        {inCards || hideExisting ? null : (
+          <div className="m-addcard__foot">
             <Button
-              className="w-full mt-4 hover:bg-active-blue hover:text-teal"
-              type="text"
-              variant="text"
+              variant="subtle"
+              className="w-full"
               onClick={onExistingClick}
             >
-              <FolderOutlined />
-              &nbsp;{t('Add existing card')}
+              <FolderOpen size={14} />
+              {t('Add existing card')}
             </Button>
           </div>
         )}

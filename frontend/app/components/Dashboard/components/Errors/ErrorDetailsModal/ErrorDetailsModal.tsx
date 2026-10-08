@@ -1,18 +1,15 @@
 import React from 'react';
-import ErrorInfo from '../../../../Errors/Error/ErrorInfo';
 
-interface Props {
-  errorId: any;
-}
-function ErrorDetailsModal(props: Props) {
+// the drawer's trend chart pulls echarts: load it when an error is opened,
+// not with every console / exceptions panel that can open one
+const ErrorDrawer = React.lazy(() => import('Components/Errors/ErrorDrawer'));
+
+export default function ErrorDetailsModal(
+  props: React.ComponentProps<typeof ErrorDrawer>,
+) {
   return (
-    <div
-      // style={{ width: '85vw', maxWidth: '1200px' }}
-      className="bg-white h-screen p-4 overflow-y-auto"
-    >
-      <ErrorInfo errorId={props.errorId} />
-    </div>
+    <React.Suspense fallback={null}>
+      <ErrorDrawer {...props} />
+    </React.Suspense>
   );
 }
-
-export default ErrorDetailsModal;

@@ -1,6 +1,7 @@
 import React from 'react';
-import styles from './CohortCard.module.css';
 import { useTranslation } from 'react-i18next';
+
+import './cohort.css';
 
 interface Props {
   data: any;
@@ -99,75 +100,45 @@ function CohortCard(props: Props) {
     // ... more rows
   ];
 
-  const getCellColor = (value: number) => {
-    const maxValue = 100; // Adjust this based on the maximum value in your data
-    const maxOpacity = 0.5;
-    const opacity = (value / maxValue) * maxOpacity;
-    return `rgba(62, 170, 175, ${opacity})`;
-  };
-
   return (
-    <div className={styles.cohortTableContainer}>
-      <div className={styles.fixedTableWrapper}>
-        <table className={styles.cohortTable}>
-          <thead>
-            <tr>
-              <th className={`${styles.cell} text-left`}>{t('Date')}</th>
-              <th className={`${styles.cell} text-left`}>{t('Users')}</th>
-            </tr>
-            <tr>
-              <th className={`${styles.cell} ${styles.header}`} />
-              <th className={`${styles.cell} ${styles.header}`} />
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((row, rowIndex) => (
-              <tr key={`row-fixed-${rowIndex}`}>
-                <td className={styles.cell}>{row.cohort}</td>
-                <td className={styles.cell}>{row.users}</td>
-              </tr>
+    <div className="m-cohort">
+      <table className="m-cohort__table">
+        <thead>
+          <tr>
+            <th className="is-fixed">{t('Date')}</th>
+            <th className="is-fixed">{t('Users')}</th>
+            <th colSpan={data[0].data.length} className="m-cohort__span">
+              {t('Weeks later users retained')}
+            </th>
+          </tr>
+          <tr>
+            <th className="is-fixed" />
+            <th className="is-fixed" />
+            {data[0].data.map((_, index) => (
+              <th key={`header-${index}`}>{index + 1}</th>
             ))}
-          </tbody>
-        </table>
-      </div>
-      <div className={styles.scrollableTableWrapper}>
-        <table className={styles.cohortTable}>
-          <thead>
-            <tr>
-              <th
-                className={`${styles.cell}`}
-                style={{ textAlign: 'left' }}
-                colSpan={10}
-              >
-                {t('Weeks later users retained')}
-              </th>
-            </tr>
-            <tr>
-              {data[0].data.map((_, index) => (
-                <th
-                  key={`header-${index}`}
-                  className={`${styles.cell} ${styles.header}`}
-                >{`${index + 1}`}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((row, rowIndex) => (
+            <tr key={`row-${rowIndex}`}>
+              <td className="is-fixed">{row.cohort}</td>
+              <td className="is-fixed tabular-nums">{row.users}</td>
+              {row.data.map((cell, cellIndex) => (
+                <td
+                  key={`cell-${rowIndex}-${cellIndex}`}
+                  className="m-cohort__cell"
+                  style={{
+                    background: `color-mix(in srgb, var(--m-chart-1) ${Math.round(cell / 2)}%, transparent)`,
+                  }}
+                >
+                  {cell}%
+                </td>
               ))}
             </tr>
-          </thead>
-          <tbody>
-            {data.map((row, rowIndex) => (
-              <tr key={`row-scrollable-${rowIndex}`}>
-                {row.data.map((cell, cellIndex) => (
-                  <td
-                    key={`cell-${rowIndex}-${cellIndex} text-center`}
-                    className={styles.cell}
-                    style={{ backgroundColor: getCellColor(cell) }}
-                  >
-                    {cell}%
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

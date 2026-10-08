@@ -1,7 +1,7 @@
+import { Loader } from '@/ui/feedback/Loader';
 import React, { Suspense, lazy } from 'react';
 
 import { useHistory, useLocation, useParams } from 'App/routing';
-import { Loader } from 'UI';
 
 import DashboardsView from '../DashboardList';
 import DashboardView from '../DashboardView';

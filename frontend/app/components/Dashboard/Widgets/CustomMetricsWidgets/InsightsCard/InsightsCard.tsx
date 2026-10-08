@@ -1,17 +1,19 @@
-import { NoContent, Icon } from 'UI';
-import { useStore } from 'App/mstore';
+import { filtersMap } from 'Types/filter/newFilter';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { InsightIssue } from 'App/mstore/types/widget';
+import { useTranslation } from 'react-i18next';
+
+import 'App/components/Dashboard/charts.css';
+import { useStore } from 'App/mstore';
 import FilterItem from 'App/mstore/types/filterItem';
+import { InsightIssue } from 'App/mstore/types/widget';
 import {
   FilterKey,
   IssueCategory,
   IssueType,
 } from 'App/types/filter/filterType';
-import { filtersMap } from 'Types/filter/newFilter';
+
 import InsightItem from './InsightItem';
-import { useTranslation } from 'react-i18next';
 
 function InsightsCard({ data }: any) {
   const { dashboardStore } = useStore();
@@ -66,28 +68,24 @@ function InsightsCard({ data }: any) {
     });
   };
 
+  if (!data.issues || data.issues.length === 0) {
+    return (
+      <p className="m-funnel__empty">
+        {t('No data available for the selected period.')}
+      </p>
+    );
+  }
+
   return (
-    <NoContent
-      style={{ minHeight: 220 }}
-      title={
-        <div className="flex items-center text-lg">
-          <Icon name="info-circle" className="mr-2" size="14" />
-          {t('No data available for the selected period.')}
-        </div>
-      }
-      show={data.issues && data.issues.length === 0}
-    >
-      <div className="overflow-y-auto" style={{ maxHeight: '240px' }}>
-        {data.issues &&
-          data.issues.map((item: any) => (
-            <InsightItem
-              key={item.name}
-              item={item}
-              onClick={(e) => clickHanddler(e, item)}
-            />
-          ))}
-      </div>
-    </NoContent>
+    <div className="m-insights overflow-y-auto" style={{ maxHeight: 240 }}>
+      {data.issues.map((item: any) => (
+        <InsightItem
+          key={item.name}
+          item={item}
+          onClick={(e) => clickHanddler(e, item)}
+        />
+      ))}
+    </div>
   );
 }
 

@@ -1,11 +1,12 @@
+import { Truncated } from '@/ui/data/truncated';
 import React from 'react';
-import { TextEllipsis } from 'UI';
+
 import styles from './imageInfo.module.css';
 
 function ImageInfo({ data }) {
   return (
     <div className={styles.name}>
-      <TextEllipsis text={data.urlHostpath} />
+      <Truncated text={data.urlHostpath} />
     </div>
   );
 }

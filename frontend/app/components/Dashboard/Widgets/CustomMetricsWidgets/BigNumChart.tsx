@@ -1,11 +1,10 @@
 import React from 'react';
-import { Tooltip } from 'antd';
-import cn from 'classnames';
-import { CompareTag } from './CustomChartTooltip';
+
+import { CompareTag } from 'App/components/Charts/CompareTag';
+import 'App/components/Dashboard/charts.css';
 
 interface Props {
-  colors: any;
-  yaxis?: any;
+  colors?: any;
   label?: string;
   hideLegend?: boolean;
   height?: number;
@@ -19,115 +18,76 @@ interface Props {
   }[];
   onSeriesFocus?: (name: string) => void;
 }
-function BigNumChart(props: Props) {
-  const {
-    colors,
-    label = 'Number of Sessions',
-    values,
-    onSeriesFocus,
-    hideLegend,
-    height,
-  } = props;
-  const count = values.length;
-  const columnCount = Math.min(count, 5);
-  return (
-    <div className="pb-3 relative">
-      <div
-        className="grid gap-2"
-        style={{
-          height: height ?? 240,
-          gridTemplateColumns: `repeat(${columnCount}, 1fr)`,
-          overflowY: props.inGrid ? 'hidden' : 'auto',
-        }}
-      >
-        {values.map((val, i) => (
-          <BigNum
-            key={i}
-            hideLegend={hideLegend}
-            color={colors[i % colors.length]}
-            series={val.series}
-            value={val.value}
-            label={label}
-            compData={val.compData}
-            valueLabel={val.valueLabel}
-            onSeriesFocus={onSeriesFocus}
-          />
-        ))}
-      </div>
-      {props.inGrid && (
-        <div
-          className="pointer-events-none absolute bottom-0 left-0 right-0"
-          style={{
-            height: 40,
-            background:
-              'linear-gradient(to bottom, transparent, var(--color-white))',
-          }}
-        />
-      )}
-    </div>
-  );
-}
 
-function BigNum({
-  color,
-  series,
-  value,
-  label,
-  compData,
-  valueLabel,
+const fmt = (n: number) =>
+  n >= 1_000_000
+    ? `${(n / 1_000_000).toFixed(1)}M`
+    : n >= 10_000
+      ? `${(n / 1000).toFixed(1)}k`
+      : n.toLocaleString();
+
+/** One tile per series: the total, and its change against the compared period. */
+function BigNumChart({
+  label = 'Number of Sessions',
+  values,
   onSeriesFocus,
   hideLegend,
-}: {
-  color: string;
-  series: string;
-  value: number;
-  label: string;
-  compData?: number;
-  valueLabel?: string;
-  onSeriesFocus?: (name: string) => void;
-  hideLegend?: boolean;
-}) {
-  const formattedNumber = (num: number) => Intl.NumberFormat().format(num);
-
-  const changePercent = React.useMemo(() => {
-    if (!compData || compData === 0) return '0';
-    return `${(((value - compData) / compData) * 100).toFixed(2)}`;
-  }, [value, compData]);
-  const change = React.useMemo(() => {
-    if (!compData) return 0;
-    return value - compData;
-  }, [value, compData]);
+}: Props) {
+  const legend = !hideLegend && values.length > 1;
   return (
     <div
-      onClick={() => onSeriesFocus?.(series)}
-      className={cn(
-        'flex flex-col flex-auto justify-center items-center rounded-lg transition-all min-w-0 px-2',
-        'hover:transition-all ease-in-out hover:ease-in-out hover:bg-teal/5 hover:cursor-pointer',
-      )}
+      className={`m-bignum${onSeriesFocus ? '' : ' is-inert'}`}
+      style={{
+        gridTemplateColumns: `repeat(${Math.min(5, Math.max(1, values.length))}, minmax(0, 1fr))`,
+      }}
     >
-      {hideLegend ? null : (
-        <Tooltip title={series}>
-          <div className="flex items-center gap-2 font-medium text-gray-darkest max-w-full">
-            <div
-              className="rounded-sm w-4 h-4 shrink-0"
-              style={{ background: color }}
-            />
-            <div className="truncate">{series}</div>
+      {values.map((v, i) => {
+        const delta = v.compData
+          ? Math.round(((v.value - v.compData) / v.compData) * 1000) / 10
+          : null;
+        const body = (
+          <>
+            {legend ? (
+              <span className="m-bignum__series">
+                <i
+                  className="m-bignum__swatch"
+                  style={{ background: `var(--m-chart-${(i % 8) + 1})` }}
+                  aria-hidden="true"
+                />
+                <span className="m-truncate">{v.series}</span>
+              </span>
+            ) : null}
+            <span className="m-bignum__value">
+              {fmt(v.value ?? 0)}
+              {v.valueLabel ? (
+                <span className="m-bignum__unit">{v.valueLabel}</span>
+              ) : null}
+            </span>
+            <span className="m-bignum__foot">
+              {label}
+              {delta != null ? <CompareTag delta={delta} /> : null}
+            </span>
+          </>
+        );
+        return onSeriesFocus ? (
+          <button
+            key={v.series}
+            type="button"
+            className="m-bignum__tile"
+            aria-label={`${v.series}: ${(v.value ?? 0).toLocaleString()}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onSeriesFocus(v.series);
+            }}
+          >
+            {body}
+          </button>
+        ) : (
+          <div key={v.series} className="m-bignum__tile">
+            {body}
           </div>
-        </Tooltip>
-      )}
-      <div className="font-bold leading-none" style={{ fontSize: 56 }}>
-        {formattedNumber(value)}
-        {valueLabel ? `${valueLabel}` : null}
-      </div>
-      <div className="text-disabled-text text-xs">{label}</div>
-      {compData ? (
-        <CompareTag
-          isHigher={value > compData}
-          absDelta={change}
-          delta={changePercent}
-        />
-      ) : null}
+        );
+      })}
     </div>
   );
 }

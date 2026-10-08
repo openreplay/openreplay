@@ -1,7 +1,8 @@
-import { IconNames } from 'App/components/ui/SVG';
+import { IconNames } from '@/ui/icons/SVG';
 import { FilterKey } from 'Types/filter/filterType';
-import { MetricType } from 'App/components/Dashboard/components/MetricTypeItem/MetricTypeItem';
 import { TFunction } from 'i18next';
+
+import { MetricType } from 'App/components/Dashboard/components/MetricTypeItem/MetricTypeItem';
 
 export interface CardType {
   title: string;
