@@ -99,6 +99,16 @@ func guardedDialer(allowPrivate bool) dialFunc {
 	}
 }
 
+func (c *cacher) checkRedirect(req *http.Request, via []*http.Request) error {
+	if len(via) >= 10 {
+		return errors.New("stopped after 10 redirects")
+	}
+	if !c.origins.allows(req.URL) {
+		return &originNotAllowedError{origin: originKey(req.URL)}
+	}
+	return c.checkProxiedDestination(req)
+}
+
 func (c *cacher) checkProxiedDestination(req *http.Request) error {
 	if c.allowPrivate {
 		return nil

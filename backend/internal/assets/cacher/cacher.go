@@ -54,6 +54,7 @@ type cacher struct {
 	resolver       *resolver.Resolver
 	gzipAssets     bool
 	allowPrivate   bool
+	origins        originSet
 	proxy          func(*url.URL) (*url.URL, error)
 	samplerDone    chan struct{}
 }
@@ -108,6 +109,11 @@ func NewCacher(log logger.Logger, cfg *config.Config, store objectstorage.Object
 
 	}
 
+	origins, err := parseOrigins(cfg.AssetsAllowedOrigins)
+	if err != nil {
+		return nil, errors.Wrap(err, "ASSETS_ALLOWED_GLOBAL_ORIGINS")
+	}
+
 	c := &cacher{
 		log:        log,
 		timeoutMap: newTimeoutMap(),
@@ -139,14 +145,10 @@ func NewCacher(log logger.Logger, cfg *config.Config, store objectstorage.Object
 		resolver:       urlResolver,
 		gzipAssets:     cfg.AssetsCompression == config.CompressionGzip,
 		allowPrivate:   cfg.AssetsAllowPrivate,
+		origins:        origins,
 		proxy:          httpproxy.FromEnvironment().ProxyFunc(),
 	}
-	c.httpClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
-		if len(via) >= 10 {
-			return errors.New("stopped after 10 redirects")
-		}
-		return c.checkProxiedDestination(req)
-	}
+	c.httpClient.CheckRedirect = c.checkRedirect
 	c.workers = NewPool(cfg.AssetsWorkerCount, cfg.AssetsQueueSize, c.CacheFile)
 	c.scheduler = newScheduler(cfg.AssetsRetryHeapLimit, c.workers.tryAddTask, func(n int) {
 		c.metrics.RecordRetryQueueSize(float64(n))
@@ -198,6 +200,10 @@ func (c *cacher) cacheURL(t *Task) {
 		c.permanent(ctx, t, "bad_url", err)
 		return
 	}
+	if !c.origins.allows(req.URL) {
+		c.permanent(ctx, t, "origin_not_allowed", &originNotAllowedError{origin: originKey(req.URL)})
+		return
+	}
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36")
 	for k, v := range c.requestHeaders {
 		req.Header.Set(k, v)
@@ -209,11 +215,15 @@ func (c *cacher) cacheURL(t *Task) {
 	res, err := c.httpClient.Do(req)
 	if err != nil {
 		var blocked *blockedAddrError
-		if errors.As(err, &blocked) {
+		var origin *originNotAllowedError
+		switch {
+		case errors.As(err, &blocked):
 			c.permanent(ctx, t, "blocked_address", err)
-			return
+		case errors.As(err, &origin):
+			c.permanent(ctx, t, "origin_not_allowed", err)
+		default:
+			c.retry(ctx, t, 0, "network", err)
 		}
-		c.retry(ctx, t, 0, "network", err)
 		return
 	}
 	c.metrics.RecordDownloadDuration(float64(time.Now().Sub(start).Milliseconds()), res.StatusCode)
