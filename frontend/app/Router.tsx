@@ -1,3 +1,4 @@
+import { Loader } from '@/ui/feedback/Loader';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useRef } from 'react';
 
@@ -13,12 +14,12 @@ import {
   SPOT_ONBOARDING,
 } from 'App/constants/storageKeys';
 import Layout from 'App/layout/Layout';
+import { prefetchPath } from 'App/layout/nav/prefetchRoutes';
 import { useStore } from 'App/mstore';
 import { useLocation, useNavigate } from 'App/routing';
 import { checkParam, handleSpotJWT, isTokenExpired } from 'App/utils';
 import { ModalProvider } from 'Components/Modal';
 import { ModalProvider as NewModalProvider } from 'Components/ModalContext';
-import { Loader } from 'UI';
 
 import * as routes from './routes';
 
@@ -140,6 +141,8 @@ const Router: React.FC = () => {
   useEffect(() => {
     checkParams();
     handleJwtFromUrl();
+    // the page's own chunk downloads while /account and /projects load
+    if (isLoggedIn) prefetchPath(location.pathname);
     mstore.initClient();
 
     const vmodeParam = new URLSearchParams(location.search).get('vmode');
@@ -206,13 +209,15 @@ const Router: React.FC = () => {
   const prevIsLoggedIn = usePrevious(isLoggedIn);
   const previousLocation = usePrevious(location);
 
-  const hideHeader =
-    (location.pathname && location.pathname.includes('/session/')) ||
-    location.pathname.includes('/assist/') ||
-    location.pathname.includes('multiview') ||
-    location.pathname.includes('/view-spot/') ||
-    location.pathname.includes('/spots/') ||
-    location.pathname.includes('/mcp/authorize');
+  const { pathname } = location;
+  const immersive =
+    pathname.includes('/session/') ||
+    pathname.includes('/assist/') ||
+    pathname.includes('multiview') ||
+    pathname.includes('/view-spot/') ||
+    pathname.includes('/spots/');
+  const bare =
+    pathname.includes('/mcp/authorize') || pathname.includes('/onboarding/');
   if (isIframe) {
     return (
       <IFrameRoutes isJwt={isJwt} isLoggedIn={isLoggedIn} loading={loading} />
@@ -224,7 +229,7 @@ const Router: React.FC = () => {
       <ModalProvider>
         <Loader loading={loading} className="flex-1">
           <Tracker />
-          <Layout hideHeader={hideHeader}>
+          <Layout immersive={immersive} bare={bare}>
             <PrivateRoutes />
           </Layout>
         </Loader>

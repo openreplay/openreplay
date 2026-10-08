@@ -1,6 +1,6 @@
-import React from 'react';
-import { Icon } from 'UI';
+import { Icon } from '@/ui/icons/Icon';
 import cn from 'classnames';
+import React from 'react';
 
 interface Props {
   title: string;
@@ -14,11 +14,11 @@ function DocCard(props: Props) {
   const {
     className = '',
     iconColor = 'tealx',
-    iconBgColor = 'bg-tealx-light',
+    iconBgColor = 'bg-surface-selected',
   } = props;
 
   return (
-    <div className={cn('p-5 bg-gray-lightest mb-4 rounded-lg', className)}>
+    <div className={cn('p-5 bg-surface-sunken mb-4 rounded-lg', className)}>
       <div className="font-medium mb-2 flex items-center">
         {props.icon && (
           <div

@@ -1,3 +1,4 @@
+import { Loader } from '@/ui/feedback/Loader';
 import { debounceCall } from '@/utils';
 import withSiteIdUpdater from 'HOCs/withSiteIdUpdater';
 import { observer } from 'mobx-react-lite';
@@ -14,7 +15,6 @@ import {
   useParams,
 } from 'App/routing';
 import { CLIENT_TABS } from 'App/utils/routeUtils';
-import { Loader } from 'UI';
 
 import { apiClient } from './api_client';
 import { useStore } from './mstore';
@@ -32,7 +32,6 @@ const components: any = {
   MultiviewPure: lazy(() => import('Components/Session_/Multiview/Multiview')),
   SpotsListPure: lazy(() => import('Components/Spots/SpotsList')),
   SpotPure: lazy(() => import('Components/Spots/SpotPlayer')),
-  HighlightsPure: lazy(() => import('Components/Highlights/HighlightsList')),
   ActivityPure: lazy(
     () => import('Components/DataManagement/Activity/ActivityPage'),
   ),
@@ -65,7 +64,6 @@ const enhancedComponents: any = {
   Multiview: withSiteIdUpdater(components.MultiviewPure),
   SpotsList: withSiteIdUpdater(components.SpotsListPure),
   Spot: components.SpotPure,
-  Highlights: withSiteIdUpdater(components.HighlightsPure),
   ScopeSetup: components.ScopeSetup,
   Activity: withSiteIdUpdater(components.ActivityPure),
   UserPage: withSiteIdUpdater(components.UserPage),
@@ -93,7 +91,6 @@ const DASHBOARD_METRIC_CREATE_PATH = routes.dashboardMetricCreate();
 const DASHBOARD_METRIC_DETAILS_PATH = routes.dashboardMetricDetails();
 
 const SESSIONS_PATH = routes.sessions();
-const NOTES_PATH = routes.notes();
 const BOOKMARKS_PATH = routes.bookmarks();
 const RECORDINGS_PATH = routes.recordings();
 const SESSION_PATH = routes.session();
@@ -108,8 +105,6 @@ const MULTIVIEW_INDEX_PATH = routes.multiviewIndex();
 
 const SPOTS_LIST_PATH = routes.spotsList();
 const SPOT_PATH = routes.spot();
-
-const HIGHLIGHTS_PATH = routes.highlights();
 
 const SAAS_ROUTES = saasRoutes.map((route) => ({
   path: route.path,
@@ -388,17 +383,9 @@ function PrivateRoutes() {
           path={withSiteId(RECORDINGS_PATH, siteIdList)}
           element={<enhancedComponents.Assist />}
         />
-        <Route
-          path={withSiteId(HIGHLIGHTS_PATH, siteIdList)}
-          element={<enhancedComponents.Highlights />}
-        />
 
         <Route
           path={withSiteId(`${SESSIONS_PATH}/*`, siteIdList)}
-          element={<enhancedComponents.SessionsOverview />}
-        />
-        <Route
-          path={withSiteId(NOTES_PATH, siteIdList)}
           element={<enhancedComponents.SessionsOverview />}
         />
         <Route

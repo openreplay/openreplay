@@ -1,6 +1,6 @@
+import { Button } from '@/ui/actions/button';
+import { Icon } from '@/ui/icons/Icon';
 import React from 'react';
-import { Icon } from 'UI';
-import { Button } from 'antd';
 
 export default function DocLink({ className = '', url, label }) {
   const openLink = () => {
@@ -10,7 +10,7 @@ export default function DocLink({ className = '', url, label }) {
   return (
     <div className={className}>
       <Button
-        type="text"
+        variant="subtle"
         onClick={openLink}
         className="flex items-center gap-2"
       >

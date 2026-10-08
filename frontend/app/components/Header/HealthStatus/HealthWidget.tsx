@@ -1,11 +1,16 @@
+import { IconButton } from '@/ui/actions/IconButton';
+import { Button } from '@/ui/actions/button';
+import { OpenReplayMark } from '@/ui/brand/OpenReplayMark';
+import { StatTile } from '@/ui/data/StatTile';
+import { CircleAlert, CircleCheck, RefreshCcw } from 'lucide-react';
+import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { Icon } from 'UI';
-import ServiceCategory from 'Components/Header/HealthStatus/ServiceCategory';
-import cn from 'classnames';
-import { Divider, Space } from 'antd';
-import VersionTag from 'Components/Header/VersionTag';
-import { IServiceStats } from './HealthStatus';
 import { useTranslation } from 'react-i18next';
+
+import { useStore } from 'App/mstore';
+
+import type { HealthResponse } from './HealthReport';
+import './health.css';
 
 function HealthWidget({
   healthResponse,
@@ -15,122 +20,84 @@ function HealthWidget({
   setShowModal,
   isError,
 }: {
-  healthResponse: {
-    overallHealth: boolean;
-    healthMap: Record<string, IServiceStats>;
-    details: Record<string, any>;
-  };
-  getHealth: Function;
+  healthResponse: HealthResponse;
+  getHealth: () => void;
   isLoading: boolean;
   lastAsked: string | null;
   setShowModal: (visible: boolean) => void;
   isError?: boolean;
 }) {
   const { t } = useTranslation();
-  const [lastAskedDiff, setLastAskedDiff] = React.useState(0);
-  const healthOk = healthResponse?.overallHealth;
-
-  React.useEffect(() => {
-    const now = new Date();
-    const lastAskedDate = lastAsked ? new Date(parseInt(lastAsked, 10)) : null;
-    const diff = lastAskedDate ? now.getTime() - lastAskedDate.getTime() : 0;
-    const diffInMinutes = Math.round(diff / 1000 / 60);
-    setLastAskedDiff(diffInMinutes);
-  }, [lastAsked]);
-
-  const title =
-    !isError && healthOk
-      ? t('All Systems Operational')
-      : t('Service disruption');
-  const icon =
-    !isError && healthOk
-      ? ('check-circle-fill' as const)
-      : ('ic-errors' as const);
-
-  const problematicServices = Object.values(
-    healthResponse?.healthMap || {},
-  ).filter((service: Record<string, any>) => !service.healthOk);
+  const { userStore } = useStore();
+  const ok = !isError && healthResponse?.overallHealth;
+  // the popover mounts this on open, so "now" is the moment it was opened
+  const [openedAt] = React.useState(Date.now);
+  const minutes = lastAsked
+    ? Math.max(0, Math.round((openedAt - parseInt(lastAsked, 10)) / 60000))
+    : 0;
+  const failing = Object.values(healthResponse?.healthMap ?? {}).filter(
+    (s) => !s.healthOk,
+  );
+  const details = healthResponse?.details;
 
   return (
-    <div
-      className="w-full flex flex-col gap-2 items-center"
-      style={{ minWidth: '200px' }}
-    >
-      <div className="self-start mb-2">
-        <VersionTag />
-      </div>
-      <div
-        className={cn(
-          'gap-2 w-full font-medium flex items-center rounded-sm',
-          !isError && healthOk ? 'color-green' : 'color-red',
-        )}
-      >
-        <Icon
-          name={icon}
-          size={16}
-          color={!isError && healthOk ? 'green' : 'red'}
-        />
-        <span>{title}</span>
-      </div>
-      <div className="text-secondary flex w-full justify-between items-center text-sm">
-        <span className="color-gray-medium">
-          {t('Checked')}&nbsp;
-          {lastAskedDiff}&nbsp;
-          {t('min ago.')}
+    <div className="m-health__widget">
+      <div className="m-health__widget-head">
+        <span className={`m-health__title ${ok ? 'is-ok' : 'is-bad'}`}>
+          <span className="inline-flex items-center gap-2">
+            {ok ? <CircleCheck size={14} /> : <CircleAlert size={14} />}
+            {ok ? t('All systems operational') : t('Service disruption')}
+          </span>
         </span>
-        <div
-          className={cn('cursor-pointer', isLoading ? 'animate-spin' : '')}
-          onClick={() => getHealth()}
-        >
-          <Icon name="arrow-repeat" size={16} color="main" />
-        </div>
+        <IconButton
+          icon={
+            <RefreshCcw size={13} className={isLoading ? 'animate-spin' : ''} />
+          }
+          label={t('Recheck')}
+          variant="ghost"
+          disabled={isLoading}
+          onClick={getHealth}
+        />
+      </div>
+      <div className="flex items-center gap-2 text-xs text-content-muted">
+        <OpenReplayMark variant="plain" size={12} />
+        <span className="m-mono">{userStore.account.versionNumber}</span>
+        <span className="ml-auto">
+          {t('Checked {{n}} min ago', { n: minutes })}
+        </span>
       </div>
       {isError && (
-        <div className="text-secondary text-sm">
+        <p className="text-xs text-content-danger">
           {t('Error getting service health status')}
+        </p>
+      )}
+      {details && (
+        <div className="m-health__stats">
+          <StatTile
+            value={(details.numberOfSessionsCaptured ?? 0).toLocaleString()}
+            label={t('Sessions captured')}
+          />
+          <StatTile
+            value={(details.numberOfEventCaptured ?? 0).toLocaleString()}
+            label={t('Events captured')}
+          />
         </div>
       )}
-      <Divider style={{ margin: '4px 0px' }} />
-      <div className="w-full">
-        <div className="font-medium mb-2">{t('Captured')}</div>
-        <div className="grid grid-cols-2">
-          <div className="flex flex-col">
-            <div className="">
-              {healthResponse.details?.numberOfSessionsCaptured.toLocaleString()}
-            </div>
-            <div className="color-gray-medium">{t('Sessions')}</div>
-          </div>
-          <div className="flex flex-col">
-            <div className="">
-              {healthResponse.details?.numberOfEventCaptured.toLocaleString()}
-            </div>
-            <div className="color-gray-medium">{t('Events')}</div>
-          </div>
+      {!isError && failing.length > 0 && (
+        <div className="flex flex-col gap-2 text-xs">
+          <span className="text-content-muted">
+            {t('Issues found with:')}{' '}
+            <span className="text-content-primary">
+              {failing.map((s) => s.name).join(', ')}
+            </span>
+          </span>
         </div>
-      </div>
-      <div className="w-full">
-        {!isError && !healthOk ? (
-          <>
-            <div className="divider w-full border border-b-light-gray my-2" />
-            <div className="text-secondary pb-2">
-              {t('Observed installation Issue with the following')}
-            </div>
-            {problematicServices.map((service) => (
-              <React.Fragment key={service.serviceName}>
-                <ServiceCategory
-                  onClick={() => setShowModal(true)}
-                  healthOk={false}
-                  name={service.name}
-                  isSelectable
-                  noBorder={problematicServices.length === 1}
-                />
-              </React.Fragment>
-            ))}
-          </>
-        ) : null}
-      </div>
+      )}
+      <Button onClick={() => setShowModal(true)}>
+        {t('Installation status')}
+      </Button>
     </div>
   );
 }
 
-export default HealthWidget;
+export default observer(HealthWidget);

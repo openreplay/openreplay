@@ -1,5 +1,5 @@
+import { changeAvailable, queried, routeIdRequired } from './extraRoutes';
 import { CLIENT_TABS } from './utils/routeUtils';
-import { routeIdRequired, changeAvailable, queried } from './extraRoutes';
 
 export * from './extraRoutes';
 export * from './utils/routeUtils';
@@ -77,6 +77,7 @@ export const OB_TABS = {
   IDENTIFY_USERS: 'identify-users',
   MANAGE_USERS: 'team',
   INTEGRATIONS: 'integrations',
+  DONE: 'done',
 };
 export const OB_DEFAULT_TAB = OB_TABS.INSTALLING;
 const routerOBTabString = ':activeTab';
@@ -87,8 +88,6 @@ export const onboarding = (tab = routerOBTabString): string =>
 export const sessions = (params?: Record<string, any>): string =>
   queried('/sessions', params);
 
-export const notes = (params?: Record<string, any>): string =>
-  queried('/notes', params);
 export const bookmarks = (params?: Record<string, any>): string =>
   queried('/bookmarks', params);
 export const assist = (params?: Record<string, any>): string =>
@@ -156,8 +155,6 @@ export const spotsList = (): string => '/spots';
 export const spot = (id = ':spotId', hash?: string | number): string =>
   hashed(`/view-spot/${id}`, hash);
 
-export const highlights = (): string => '/highlights';
-
 export const mcpAuthorize = (): string => '/mcp/authorize';
 export const dataManagement = {
   activity: () => '/data-management/activity',
@@ -179,7 +176,6 @@ const REQUIRED_SITE_ID_ROUTES = [
   liveSession(''),
   session(''),
   sessions(),
-  notes(),
   bookmarks(),
 
   assist(),
@@ -205,8 +201,6 @@ const REQUIRED_SITE_ID_ROUTES = [
   error(''),
   errors(),
   onboarding(''),
-
-  highlights(),
 
   dataManagement.activity(),
   dataManagement.userPage(''),
@@ -258,7 +252,6 @@ export function isRoute(route: string, path: string): boolean {
 const SITE_CHANGE_AVAILABLE_ROUTES = [
   ...changeAvailable,
   sessions(),
-  notes(),
   bookmarks(),
   assist(),
   recordings(),

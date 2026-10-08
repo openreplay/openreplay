@@ -1,9 +1,9 @@
+import { toast } from '@/ui/overlays/toast';
+import { Tooltip } from '@/ui/overlays/tooltip';
 import React, { useState } from 'react';
-import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 
 import { useStore } from 'App/mstore';
-import { Tooltip } from 'UI';
-import { useTranslation } from 'react-i18next';
 
 function EmailVerificationMessage(props) {
   const { t } = useTranslation();

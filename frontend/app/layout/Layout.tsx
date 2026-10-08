@@ -1,109 +1,105 @@
-import { Layout as AntLayout } from 'antd';
+import { Drawer } from '@/ui/overlays/drawer';
+import { Menu, X } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
-import { INDEXES } from 'App/constants/zindex';
-
+import Survey from 'App/components/Survey';
 import HeaderBanners from 'App/layout/HeaderBanners';
-import SideMenu from 'App/layout/SideMenu';
-import TopHeader from 'App/layout/TopHeader';
 import { useStore } from 'App/mstore';
 import { mobileScreen } from 'App/utils/isMobile';
 
-const { Sider, Content } = AntLayout;
+import SessionsDockHost from 'Shared/SessionsDock/SessionsDockHost';
+
+import './app-shell.css';
+import SideNav from './nav/SideNav';
+import { useNavCollapse } from './nav/useNavCollapse';
+
+const NOTIFICATIONS_REFRESH = 5 * 60 * 1000;
 
 interface Props {
   children: React.ReactNode;
-  hideHeader?: boolean;
+  /** Replay-like routes: the menu folds to its rail and the page gets the full plane. */
+  immersive?: boolean;
+  /** No menu at all (iframe embeds, MCP authorize). */
+  bare?: boolean;
 }
 
-function Layout(props: Props) {
-  const { hideHeader } = props;
-  const isPlayer = /\/(session|assist|view-spot)\//.test(
-    window.location.pathname,
-  );
-  const { settingsStore } = useStore();
-  const [collapsed, setCollapsed] = React.useState(false);
-  const mobileDevice = mobileScreen;
+function Layout({ children, immersive = false, bare = false }: Props) {
+  const { userStore, notificationStore } = useStore();
+  const { account, initialDataFetched } = userStore;
+  const { collapsed, toggle } = useNavCollapse(immersive, !bare);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
-    const handleResize = () => {
-      if (mobileDevice) {
-        setCollapsed(true);
-      } else {
-        setCollapsed(false);
-      }
-    };
+    if (!account.id || initialDataFetched) return;
+    const handle = setTimeout(() => {
+      notificationStore
+        .fetchNotificationsCount()
+        .catch(() => {})
+        .then(() => userStore.updateKey('initialDataFetched', true));
+    }, 0);
+    return () => clearTimeout(handle);
+  }, [account]);
 
-    handleResize(); // Initial check
-    window.addEventListener('resize', handleResize);
+  useEffect(() => {
+    if (bare) return;
+    const interval = setInterval(() => {
+      notificationStore.fetchNotificationsCount().catch(() => {});
+    }, NOTIFICATIONS_REFRESH);
+    return () => clearInterval(interval);
+  }, [bare]);
 
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
-
-  // onboarding keeps the sider and swaps only the menu body inside it (SideMenu)
-  const showMenu = !hideHeader;
-  // the sider carries the logo, except on mobile where it collapses into a
-  // drawer — there the header takes it over
-  const logoInHeader = mobileDevice;
+  if (bare) {
+    return (
+      <div className="m-shell is-bare">
+        <main className="m-shell__main" data-route-scroll>
+          {children}
+        </main>
+      </div>
+    );
+  }
 
   return (
-    <AntLayout style={{ height: mobileDevice ? '100dvh' : undefined }}>
-      {hideHeader ? null : <HeaderBanners />}
-      {/* sider is its own column so the logo/collapse row at its top stays
-          pinned together with the menu instead of with the scrolling header */}
-      <AntLayout>
-        {showMenu ? (
-          mobileDevice ? (
-            <SideMenu
-              isCollapsed={settingsStore.menuCollapsed || collapsed}
+    <div className="m-shell">
+      {mobileScreen ? null : (
+        <SideNav collapsed={collapsed} onToggleCollapsed={toggle} />
+      )}
+      <main
+        data-route-scroll
+        className={`m-shell__main${immersive ? ' is-immersive' : ''}`}
+        data-scroll-root
+      >
+        <HeaderBanners />
+        {children}
+        <SessionsDockHost />
+        <Survey />
+      </main>
+      {mobileScreen ? (
+        <>
+          <Drawer
+            side="left"
+            label="Navigation"
+            className="m-mobile-nav w-[280px]!"
+            onClose={() => setMobileOpen(false)}
+            open={mobileOpen}
+          >
+            <SideNav
+              collapsed={false}
+              onToggleCollapsed={() => setMobileOpen(false)}
+              onNavigated={() => setMobileOpen(false)}
             />
-          ) : (
-            <Sider
-              style={{
-                position: 'sticky',
-                top: 0,
-                alignSelf: 'flex-start',
-              }}
-              collapsed={settingsStore.menuCollapsed || collapsed}
-              width={250}
-            >
-              <SideMenu
-                isCollapsed={settingsStore.menuCollapsed || collapsed}
-              />
-            </Sider>
-          )
-        ) : null}
-        {/* hasSider is pinned: a Sider registers with the nearest Layout through
-            context, so a page rendering its own Sider inside Content (onboarding)
-            would otherwise flip this column to a row and put the header beside it */}
-        <AntLayout hasSider={false}>
-          {/* sticky lives on the wrapper, not on antd's Header: a sticky box
-              cannot travel outside its own parent, so a 60px-tall wrapper
-              would leave it no room to stick at all */}
-          <div
-            className={hideHeader ? 'hidden' : 'block'}
-            style={{ position: 'sticky', top: 0, zIndex: INDEXES.HEADER }}
+          </Drawer>
+          <button
+            type="button"
+            className="m-mobile-nav__fab"
+            aria-label={mobileOpen ? 'Close navigation' : 'Open navigation'}
+            onClick={() => setMobileOpen(!mobileOpen)}
           >
-            <TopHeader showLogo={logoInHeader} />
-          </div>
-          <Content
-            style={{
-              padding: isPlayer
-                ? '0'
-                : mobileDevice
-                  ? '8px 8px 60px 8px'
-                  : '20px',
-              minHeight: 'calc(100dvh - 60px)',
-            }}
-          >
-            {props.children}
-          </Content>
-        </AntLayout>
-      </AntLayout>
-    </AntLayout>
+            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        </>
+      ) : null}
+    </div>
   );
 }
 
