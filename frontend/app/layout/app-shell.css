@@ -1,0 +1,99 @@
+.m-shell {
+  --m-plane-max: 100rem;
+  display: flex;
+  align-items: stretch;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--m-surface-canvas);
+}
+
+.m-shell__main {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  padding: var(--m-space-5) var(--m-space-5) var(--m-space-5) 0;
+  overflow: auto;
+}
+
+.m-shell__main > * {
+  width: 100%;
+  max-width: var(--m-plane-max);
+  margin-inline: auto;
+}
+
+.m-shell.is-bare .m-shell__main {
+  padding: 0;
+}
+
+.m-shell__main.is-immersive > * {
+  max-width: none;
+}
+
+@media (max-width: 700px) {
+  .m-shell__main {
+    padding: var(--m-space-4);
+  }
+}
+
+/* Phones: the side nav lives in a left sheet behind a floating button. */
+.m-mobile-nav .m-drawer__body {
+  padding: 0;
+}
+.m-mobile-nav__fab {
+  position: fixed;
+  right: var(--m-space-7);
+  bottom: var(--m-space-7);
+  z-index: calc(var(--m-z-modal) + 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--m-radius-full);
+  background: var(--m-action-primary-bg);
+  color: var(--m-action-primary-fg);
+  box-shadow: var(--m-shadow-popover);
+}
+
+/* A route change waiting on its chunk: the old page stays, this line says so.
+   Shown after a beat, so a cached chunk never flashes it. */
+.m-route-pending {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: var(--m-z-toast);
+  height: 2px;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+  animation: m-route-pending-in 0s linear 150ms forwards;
+}
+.m-route-pending::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: var(--m-action-accent-bg);
+  animation: m-route-pending-run 1.1s var(--m-ease-out) infinite;
+}
+@keyframes m-route-pending-in {
+  to {
+    opacity: 1;
+  }
+}
+@keyframes m-route-pending-run {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .m-route-pending::before {
+    animation: none;
+    width: 100%;
+  }
+}

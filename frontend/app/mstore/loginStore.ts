@@ -1,7 +1,8 @@
-import { makeAutoObservable } from 'mobx';
 import { loginService } from '@/services';
+import { toast } from '@/ui/overlays/toast';
+import { makeAutoObservable } from 'mobx';
+
 import { handleSpotJWT, isTokenExpired } from 'App/utils';
-import { toast } from 'react-toastify';
 
 const spotTokenKey = '___$or_spotToken$___';
 

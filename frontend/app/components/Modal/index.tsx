@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { Component, createContext } from 'react';
+
 import Modal from './Modal';
-import { className } from '@medv/finder';
 
 const ModalContext = createContext({
   component: null,
@@ -20,27 +20,13 @@ const ModalContext = createContext({
 export class ModalProvider extends Component {
   onCloseCb = () => null;
 
-  handleKeyDown = (e: any) => {
-    if (e.keyCode === 27) {
-      this.hideModal();
-    }
-  };
-
   showModal = (component, props = { right: true }, onClose?: () => void) => {
-    this.setState({
-      component,
-      props,
-      className: props.className || undefined,
-    });
-    document.addEventListener('keydown', this.handleKeyDown);
-    document.querySelector('body').style.overflow = 'hidden';
+    this.setState({ component, props });
     this.onCloseCb = onClose || this.onCloseCb;
   };
 
   hideModal = () => {
     if (!this.state.component) return;
-    document.removeEventListener('keydown', this.handleKeyDown);
-    document.querySelector('body').style.overflow = 'visible';
     const { props } = this.state;
     if (this.onCloseCb) {
       this.onCloseCb();

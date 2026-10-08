@@ -1,14 +1,15 @@
+import { toast } from '@/ui/overlays/toast';
 import React, {
-  useState,
-  useRef,
   ComponentType,
   ReactNode,
   useCallback,
   useEffect,
   useLayoutEffect,
+  useRef,
+  useState,
 } from 'react';
 import ReCAPTCHA from 'react-google-recaptcha';
-import { toast } from 'react-toastify';
+
 import ENV from '../env';
 
 // Define a more specific type for submission data
@@ -68,6 +69,8 @@ const withCaptcha = <P extends object>(
       useState<boolean>(false);
     const [tokenExpired, setTokenExpired] = useState<boolean>(false);
     const recaptchaRef = useRef<ReCAPTCHA>(null);
+    const verifyTimer = useRef<number | undefined>(undefined);
+    useEffect(() => () => window.clearTimeout(verifyTimer.current), []);
 
     // Reset token when expired
     useEffect(() => {
@@ -88,8 +91,7 @@ const withCaptcha = <P extends object>(
     }, [CAPTCHA_ENABLED]);
 
     // Handle token change
-    let onCaptchaChange = (token: string | null) => {
-      console.log('Standard captcha callback received token:', !!token);
+    const onCaptchaChange = (token: string | null) => {
       setCaptchaToken(token);
       setTokenExpired(false);
     };
@@ -112,61 +114,35 @@ const withCaptcha = <P extends object>(
 
           setIsVerifyingCaptcha(true);
 
-          // Special handling for invisible reCAPTCHA
           if (size === 'invisible') {
-            // Create a direct token handler function
-            const handleToken = (receivedToken: string | null) => {
-              console.log('reCAPTCHA token received:', !!receivedToken);
-
-              if (receivedToken) {
-                // We have a token, resolve the promise
-                const dataWithCaptcha = {
-                  ...data,
-                  'g-recaptcha-response': receivedToken,
-                };
-
-                resolve(dataWithCaptcha);
-
-                // Reset for next use
-                setTimeout(() => {
-                  recaptchaRef.current?.reset();
-                  setIsVerifyingCaptcha(false);
-                }, 100);
-              }
-            };
-
-            // Set up a callback directly on the reCAPTCHA ref
-            if (recaptchaRef.current) {
-              console.log('Executing invisible reCAPTCHA');
-
-              // Execute the reCAPTCHA challenge
-              recaptchaRef.current
-                .executeAsync()
-                .then((token: string | null) => {
-                  handleToken(token);
-                })
-                .catch((error: any) => {
-                  console.error('reCAPTCHA execution failed:', error);
-                  setIsVerifyingCaptcha(false);
-                  reject(new Error('CAPTCHA verification failed'));
-                });
-
-              // Set a timeout in case the promise doesn't resolve
-              setTimeout(() => {
-                if (isVerifyingCaptcha) {
-                  console.log('reCAPTCHA verification timed out');
-                  setIsVerifyingCaptcha(false);
-                  toast.error(
-                    errorMessage || 'Verification timed out. Please try again.',
-                  );
-                  reject(new Error('CAPTCHA verification timeout'));
-                }
-              }, 5000);
-            } else {
-              console.error('reCAPTCHA ref not available');
+            if (!recaptchaRef.current) {
               setIsVerifyingCaptcha(false);
               reject(new Error('CAPTCHA component not initialized'));
+              return;
             }
+            // settles exactly once: token, failure, null token or timeout
+            let settled = false;
+            const settle = (token: string | null, error?: string) => {
+              if (settled) return;
+              settled = true;
+              window.clearTimeout(timer);
+              setIsVerifyingCaptcha(false);
+              recaptchaRef.current?.reset();
+              if (token) resolve({ ...data, 'g-recaptcha-response': token });
+              else {
+                if (error) toast.error(error);
+                reject(new Error('CAPTCHA verification failed'));
+              }
+            };
+            const timer = window.setTimeout(
+              () => settle(null, 'Verification timed out. Please try again.'),
+              60000,
+            );
+            verifyTimer.current = timer;
+            recaptchaRef.current
+              .executeAsync()
+              .then((token: string | null) => settle(token, errorMessage))
+              .catch(() => settle(null, errorMessage));
           } else if (captchaToken) {
             // Standard reCAPTCHA with token already available
             const dataWithCaptcha = {
@@ -188,7 +164,7 @@ const withCaptcha = <P extends object>(
           }
         });
       },
-      [CAPTCHA_ENABLED, captchaToken, errorMessage, size, isVerifyingCaptcha],
+      [CAPTCHA_ENABLED, captchaToken, errorMessage, size],
     );
 
     const hasCaptchaError = !captchaToken && CAPTCHA_ENABLED === true;

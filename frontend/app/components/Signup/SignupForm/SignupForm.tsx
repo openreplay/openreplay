@@ -1,263 +1,194 @@
-import { Alert, Button } from 'antd';
+import { Button } from '@/ui/actions/button';
+import { Notice } from '@/ui/feedback/Notice';
+import { Field } from '@/ui/inputs/Field';
+import { PasswordRules } from '@/ui/inputs/PasswordRules';
+import { Input } from '@/ui/inputs/input';
+import { PasswordInput } from '@/ui/inputs/password-input';
+import { SimpleSelect } from '@/ui/inputs/select';
+import { Building2, Mail, UserRound } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
-import React, {
-  ChangeEvent,
-  FormEvent,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import React, { type FormEvent, useRef, useState } from 'react';
 import ReCAPTCHA from 'react-google-recaptcha';
-import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 
-import { PASSWORD_POLICY } from 'App/constants';
 import { SITE_ID_STORAGE_KEY } from 'App/constants/storageKeys';
 import { useStore } from 'App/mstore';
-import { login } from 'App/routes';
-import { validatePassword } from 'App/validate';
-import { Form, Input, Link } from 'UI';
+import { validateEmail, validatePassword } from 'App/validate';
+import { LEGAL } from 'Components/Auth/AuthScreen';
 
-import Select from 'Shared/Select';
-import { useTranslation } from 'react-i18next';
 import ENV from '../../../../env';
 
-const LOGIN_ROUTE = login();
-const logo = new URL('../../../assets/logo.svg', import.meta.url);
+const CAPTCHA_ENABLED = ENV.CAPTCHA_ENABLED === 'true';
 
+/** The first account of a self-hosted install. */
 function SignupForm() {
   const { t } = useTranslation();
   const { userStore } = useStore();
   const { tenants } = userStore;
-  const { signup } = userStore;
-  const { errors } = userStore.signUpRequest;
-  const { loading } = userStore.signUpRequest;
-  const [state, setState] = useState({
+  const { errors, loading } = userStore.signUpRequest;
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
+  const [f, setF] = useState({
     tenantId: '',
     fullname: '',
     password: '',
     email: '',
-    projectName: '',
     organizationName: '',
-    reload: false,
-    CAPTCHA_ENABLED: ENV.CAPTCHA_ENABLED === 'true',
   });
-  const recaptchaRef = useRef<ReCAPTCHA>(null);
-  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const set = (k: keyof typeof f) => (e: { target: { value: string } }) =>
+    setF((p) => ({ ...p, [k]: e.target.value }));
+  const emailBad = f.email.length > 0 && !validateEmail(f.email);
+  const ready =
+    validateEmail(f.email) &&
+    validatePassword(f.password) &&
+    f.fullname.trim().length > 0 &&
+    f.organizationName.trim().length > 0;
 
-  const handleSubmit = (token: string) => {
-    const {
-      tenantId,
-      fullname,
-      password,
-      email,
-      projectName,
-      organizationName,
-      auth,
-    } = state;
-    if (!validatePassword(password)) return;
+  const send = (token: string) => {
+    if (!validatePassword(f.password)) return;
     localStorage.removeItem(SITE_ID_STORAGE_KEY);
-    signup({
-      tenantId,
-      fullname,
-      password,
-      email,
-      projectName,
-      organizationName,
-      auth,
+    void userStore.signup({
+      ...f,
+      fullname: f.fullname.trim(),
+      organizationName: f.organizationName.trim(),
+      projectName: '',
       'g-recaptcha-response': token,
-    }).then((resp: any) => {
-      if (
-        resp &&
-        resp.errors &&
-        Array.isArray(resp.errors) &&
-        resp.errors.length > 0
-      ) {
-        if ((resp.errors[0] as string).includes('in use')) {
-          toast.error(
-            t(
-              "This email is already linked to an account or team on OpenReplay and can't be used again.",
-            ),
-          );
-        } else {
-          resp.errors[0]
-            ? toast.error(resp.errors[0])
-            : toast.error('Something went wrong');
-        }
-      }
     });
-    setState({ ...state, reload: true });
   };
 
-  const write = ({ target: { value, name } }: ChangeEvent<HTMLInputElement>) =>
-    setState({ ...state, [name]: value });
-
-  const writeOption = ({
-    name,
-    value,
-  }: {
-    name: string;
-    value: { value: string };
-  }) => setState({ ...state, [name]: value.value });
-
-  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const submit = (e: FormEvent) => {
     e.preventDefault();
-    const { CAPTCHA_ENABLED } = state;
-    if (CAPTCHA_ENABLED && recaptchaRef.current) {
-      recaptchaRef.current.execute();
-    } else if (!CAPTCHA_ENABLED) {
-      handleSubmit('');
-    }
+    if (!ready) return;
+    if (CAPTCHA_ENABLED) recaptchaRef.current?.execute();
+    else send('');
   };
-
-  useEffect(() => {
-    if (state.password && !validatePassword(state.password)) {
-      setPasswordError(t('Password must be at least 8 characters long'));
-    } else {
-      setPasswordError(null);
-    }
-  }, [state.password]);
 
   return (
-    <div className="flex flex-col items-center">
-      <div className="m-10 ">
-        <img src={logo} width={200} alt="Logo" />
-      </div>
-      <Form
-        onSubmit={onSubmit}
-        className="bg-white border rounded-lg shadow-xs"
-        style={{ maxWidth: '420px' }}
-      >
-        <div className="mb-8">
-          <h2 className="text-center text-2xl font-medium mb-6 border-b p-5 w-full">
-            {t('Create Account')}
-          </h2>
-        </div>
-        <>
-          {state.CAPTCHA_ENABLED && (
-            <ReCAPTCHA
-              ref={recaptchaRef}
-              size="invisible"
-              sitekey={ENV.CAPTCHA_SITE_KEY}
-              onChange={(token) => handleSubmit(token || '')}
-            />
+    <form className="m-auth__form" onSubmit={submit} noValidate>
+      {CAPTCHA_ENABLED && (
+        <ReCAPTCHA
+          ref={recaptchaRef}
+          size="invisible"
+          sitekey={ENV.CAPTCHA_SITE_KEY}
+          onChange={(token) => send(token || '')}
+        />
+      )}
+      <header className="m-auth__head">
+        <h1 className="m-auth__title" id="m-auth-title">
+          {t('Create your account')}
+        </h1>
+        <p className="m-auth__lede">
+          {t(
+            'The first account of your organization. Everyone else joins by invitation.',
           )}
-          <div className="px-8">
-            {tenants.length > 0 && (
-              <Form.Field>
-                <label>{t('Existing Accounts')}</label>
-                <Select
-                  className="w-full"
-                  placeholder={t('Select account')}
-                  selection
-                  options={tenants}
-                  name="tenantId"
-                  // value={ instance.currentPeriod }
-                  onChange={writeOption}
-                />
-              </Form.Field>
-            )}
-            <Form.Field>
-              <label>{t('Email Address')}</label>
-              <Input
-                autoFocus
-                autoComplete="username"
-                type="email"
-                placeholder={t('E.g. email@yourcompany.com')}
-                name="email"
-                onChange={write}
-                required
-                icon="envelope"
-                className="rounded-lg"
-              />
-            </Form.Field>
-            <Form.Field>
-              <label className="mb-2">{t('Password')}</label>
-              <Input
-                type="password"
-                placeholder="Min 8 Characters"
-                minLength={8}
-                name="password"
-                onChange={write}
-                required
-                icon="key"
-                className="rounded-lg"
-              />
-            </Form.Field>
-            <Form.Field>
-              <label>{t('Name')}</label>
-              <Input
-                type="text"
-                placeholder={t('E.g John Doe')}
-                name="fullname"
-                onChange={write}
-                required
-                icon="user-alt"
-                className="rounded-lg"
-              />
-            </Form.Field>
-            <Form.Field>
-              <label>{t('Organization')}</label>
-              <Input
-                type="text"
-                placeholder={t('E.g Uber')}
-                name="organizationName"
-                onChange={write}
-                required
-                icon="buildings"
-                className="rounded-lg"
-              />
-            </Form.Field>
-
-            {passwordError && (
-              // <Alert type='error' message={PASSWORD_POLICY} banner icon={null} />
-              <Alert
-                className="my-3 rounded-lg"
-                // message="Error Text"
-                description={PASSWORD_POLICY(t)}
-                type="error"
-              />
-            )}
-            {errors && errors.length > 0 ? (
-              <Alert
-                className="my-3 rounded-lg"
-                // message="Error Text"
-                description={errors[0]}
-                type="error"
-              />
-            ) : null}
-
-            <Button
-              htmlType="submit"
-              type="primary"
-              loading={loading}
-              className="w-full rounded-lg"
-            >
-              {t('Create Account')}
-            </Button>
-            <div className="my-6">
-              <div className="text-sm">
-                {t('By signing up, you agree to our')}{' '}
-                <a href="https://openreplay.com/legal/terms" className="link">
-                  {t('terms of service')}
-                </a>{' '}
-                {t('and')}{' '}
-                <a href="https://openreplay.com/legal/privacy" className="link">
-                  {t('privacy policy')}
-                </a>
-                .
-              </div>
-            </div>
-          </div>
-        </>
-      </Form>
-
-      <div className="text-center py-6">
-        {t('Already having an account?')}{' '}
-        <span className="link">
-          <Link to={LOGIN_ROUTE}>{t('Login')}</Link>
-        </span>
+        </p>
+      </header>
+      <div className="m-auth__fields">
+        {tenants.length > 0 && (
+          <Field label={t('Existing accounts')}>
+            <SimpleSelect<string>
+              ariaLabel={t('Existing accounts')}
+              placeholder={t('Select account')}
+              value={f.tenantId || undefined}
+              onChange={(v) => setF((p) => ({ ...p, tenantId: v ?? '' }))}
+              options={tenants.map((x: any) => ({
+                value: String(x.value),
+                label: x.label,
+              }))}
+            />
+          </Field>
+        )}
+        <Field
+          label={t('Email')}
+          htmlFor="auth-su-email"
+          error={emailBad ? t('Enter a valid email address.') : undefined}
+        >
+          <Input
+            id="auth-su-email"
+            type="email"
+            size="md"
+            prefix={<Mail />}
+            inputMode="email"
+            autoCapitalize="none"
+            spellCheck={false}
+            autoComplete="username"
+            autoFocus
+            placeholder={t('e.g. email@yourcompany.com')}
+            value={f.email}
+            disabled={loading}
+            onChange={set('email')}
+          />
+        </Field>
+        <Field label={t('Password')} htmlFor="auth-su-password">
+          <PasswordInput
+            id="auth-su-password"
+            mark
+            size="md"
+            autoComplete="new-password"
+            placeholder={t('Min 8 characters')}
+            value={f.password}
+            disabled={loading}
+            onChange={set('password')}
+          />
+          <PasswordRules password={f.password} />
+        </Field>
+        <Field label={t('Name')} htmlFor="auth-su-name">
+          <Input
+            id="auth-su-name"
+            size="md"
+            prefix={<UserRound />}
+            autoComplete="name"
+            placeholder={t('e.g. John Doe')}
+            value={f.fullname}
+            disabled={loading}
+            onChange={set('fullname')}
+          />
+        </Field>
+        <Field label={t('Organization')} htmlFor="auth-su-org">
+          <Input
+            id="auth-su-org"
+            size="md"
+            prefix={<Building2 />}
+            autoComplete="organization"
+            placeholder={t('e.g. Uber')}
+            value={f.organizationName}
+            disabled={loading}
+            onChange={set('organizationName')}
+          />
+        </Field>
+        {errors?.length ? <Notice kind="danger">{errors[0]}</Notice> : null}
+        <Button
+          type="submit"
+          variant="primary"
+          size="md"
+          className="m-auth__submit"
+          loading={loading}
+          disabled={!ready}
+        >
+          {loading ? t('Creating account…') : t('Create account')}
+        </Button>
+        <p className="m-auth__aside">
+          {t('By signing up, you agree to our')}{' '}
+          <a
+            className="m-auth__link"
+            href={LEGAL.terms}
+            target="_blank"
+            rel="noreferrer"
+          >
+            {t('terms of service')}
+          </a>{' '}
+          {t('and')}{' '}
+          <a
+            className="m-auth__link"
+            href={LEGAL.privacy}
+            target="_blank"
+            rel="noreferrer"
+          >
+            {t('privacy policy')}
+          </a>
+          .
+        </p>
       </div>
-    </div>
+    </form>
   );
 }
 

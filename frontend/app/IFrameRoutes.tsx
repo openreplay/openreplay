@@ -1,16 +1,18 @@
-import React, { lazy, Suspense } from 'react';
-import { Route, StableRoutes } from 'App/routing';
-import { Loader } from 'UI';
+import { Loader } from '@/ui/feedback/Loader';
 import withSiteIdUpdater from 'HOCs/withSiteIdUpdater';
+import { observer } from 'mobx-react-lite';
+import React, { Suspense, lazy } from 'react';
+
+import PublicRoutes from 'App/PublicRoutes';
+import Tracker from 'App/Tracker';
+import Layout from 'App/layout/Layout';
+import { useStore } from 'App/mstore';
+import { Route, StableRoutes } from 'App/routing';
+import { ModalProvider } from 'Components/Modal';
 
 import NotFoundPage from 'Shared/NotFoundPage';
-import { ModalProvider } from 'Components/Modal';
-import Layout from 'App/layout/Layout';
-import PublicRoutes from 'App/PublicRoutes';
-import { useStore } from 'App/mstore';
-import { observer } from 'mobx-react-lite';
+
 import * as routes from './routes';
-import Tracker from 'App/Tracker';
 
 const components: any = {
   SessionPure: lazy(() => import('Components/Session/Session')),
@@ -42,7 +44,7 @@ function IFrameRoutes(props: Props) {
   if (isLoggedIn) {
     return (
       <ModalProvider>
-        <Layout hideHeader>
+        <Layout bare>
           <Loader loading={!!loading} className="flex-1">
             <Tracker />
             <Suspense fallback={<Loader loading className="flex-1" />}>
