@@ -1,10 +1,12 @@
-import React from 'react';
+import { Tooltip } from '@/ui/overlays/tooltip';
 import type { MarkedTarget } from 'Player';
 import cn from 'classnames';
-import { Tooltip } from 'UI';
-import { PlayerContext } from 'App/components/Session/playerContext';
-import stl from './Marker.module.css';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { PlayerContext } from 'App/components/Session/playerContext';
+
+import stl from './Marker.module.css';
 
 interface Props {
   target: MarkedTarget;

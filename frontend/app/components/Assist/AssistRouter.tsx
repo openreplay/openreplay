@@ -1,12 +1,9 @@
 import React from 'react';
-import AssistView from './AssistView';
+
+import CoBrowsePage from './CoBrowsePage';
 
 function AssistRouter() {
-  return (
-    <div className="w-full">
-      <AssistView />
-    </div>
-  );
+  return <CoBrowsePage />;
 }
 
 export default AssistRouter;

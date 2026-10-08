@@ -4,35 +4,29 @@ import React from 'react';
 import CustomDragLayer from 'App/components/Session_/Player/Controls/components/CustomDragLayer';
 import stl from 'App/components/Session_/Player/Controls/timeline.module.css';
 import { debounce } from 'App/utils';
-import cn from 'classnames';
+
 import spotPlayerStore from '../spotPlayerStore';
 import SpotTimeTracker from './SpotTimeTracker';
 
 function SpotTimeline() {
   const progressRef = React.useRef<HTMLDivElement>(null);
   const wasPlaying = React.useRef(false);
-  const [maxWidth, setMaxWidth] = React.useState(0);
 
   const debounceSetTime = React.useMemo(
     () => debounce(spotPlayerStore.setTime, 100),
     [],
   );
-  React.useEffect(() => {
-    if (progressRef.current) {
-      setMaxWidth(progressRef.current.clientWidth);
-    }
-  }, []);
-  const getOffset = (offsX: number) =>
-    offsX / (progressRef.current?.clientWidth || 1);
+  const getOffset = (x: number) => {
+    const rect = progressRef.current?.getBoundingClientRect();
+    return rect ? Math.min(1, Math.max(0, x / rect.width)) : 0;
+  };
 
   const onDrag = (offset: { x: number }) => {
     if (spotPlayerStore.isPlaying) {
       wasPlaying.current = true;
       spotPlayerStore.setIsPlaying(false);
     }
-    const offs = getOffset(offset.x);
-    const time = spotPlayerStore.duration * offs;
-    debounceSetTime(time);
+    debounceSetTime(spotPlayerStore.duration * getOffset(offset.x));
   };
 
   const onDrop = () => {
@@ -43,21 +37,24 @@ function SpotTimeline() {
   };
 
   const jump = (e: React.MouseEvent<HTMLDivElement>) => {
-    const offs = getOffset(e.nativeEvent.offsetX);
-    const time = spotPlayerStore.duration * offs;
-    spotPlayerStore.setTime(time);
+    const rect = e.currentTarget.getBoundingClientRect();
+    spotPlayerStore.setTime(
+      spotPlayerStore.duration * getOffset(e.clientX - rect.left),
+    );
   };
 
   return (
-    <div
-      ref={progressRef}
-      role="button"
-      className={cn(stl.progress, '-mb-1')}
-      onClick={jump}
-    >
-      <SpotTimeTracker onDrop={onDrop} />
-      <CustomDragLayer minX={0} onDrag={onDrag} maxX={maxWidth} />
-      <div className={stl.timeline} />
+    <div className="relative flex flex-1 min-w-0 items-center">
+      <div
+        ref={progressRef}
+        role="button"
+        className={stl.progress}
+        onClick={jump}
+      >
+        <SpotTimeTracker onDrop={onDrop} />
+        <CustomDragLayer onDrag={onDrag} containerRef={progressRef} />
+        <div className={stl.timeline} />
+      </div>
     </div>
   );
 }

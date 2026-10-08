@@ -1,12 +1,14 @@
-import React from 'react';
-import { INDEXES } from 'App/constants/zindex';
-import { Loader, Icon } from 'UI';
-import { Button } from 'antd';
-import { PlayerContext } from 'App/components/Session/playerContext';
-import { useStore } from 'App/mstore';
-import { observer } from 'mobx-react-lite';
-import { useTranslation } from 'react-i18next';
+import { Button } from '@/ui/actions/button';
+import { BrandMark } from '@/ui/brand/BrandMark';
+import { Icon } from '@/ui/icons/Icon';
 import { TFunction } from 'i18next';
+import { observer } from 'mobx-react-lite';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { PlayerContext } from 'App/components/Session/playerContext';
+import { INDEXES } from 'App/constants/zindex';
+import { useStore } from 'App/mstore';
 
 interface Props {
   getWindowType: () => WindowType | null;
@@ -76,26 +78,25 @@ function RequestingWindow({ getWindowType }: Props) {
     <div
       className="w-full h-full absolute top-0 left-0 flex items-center justify-center"
       style={{
-        background: 'rgba(0,0,0, 0.30)',
+        background: 'var(--m-scrim)',
         zIndex: INDEXES.PLAYER_REQUEST_WINDOW,
       }}
     >
-      <div className="rounded-sm bg-white pt-4 pb-2 px-8 flex flex-col text-lg items-center max-w-lg text-center">
+      <div className="m-elevated flex max-w-md flex-col items-center gap-3 rounded-surface border border-border-subtle bg-surface-raised px-8 py-6 text-center">
         <Icon
-          size={40}
+          size={32}
           color={WIN_VARIANTS(t)[windowType].iconColor}
           name={WIN_VARIANTS(t)[windowType].icon}
-          className="mb-4"
         />
-        <div>
+        <p className="text-md text-content-primary">
           {t('Waiting for')}{' '}
-          <span className="font-semibold">{userDisplayName}</span>
-        </div>
-        <span>{WIN_VARIANTS(t)[windowType].text}</span>
-        <Loader size={30} style={{ minHeight: 60 }} />
+          <span className="font-medium">{userDisplayName}</span>{' '}
+          {WIN_VARIANTS(t)[windowType].text}
+        </p>
+        <BrandMark loop size={28} />
         {actions[WIN_VARIANTS(t)[windowType].action] ? (
           <Button
-            variant="text"
+            variant="subtle"
             onClick={actions[WIN_VARIANTS(t)[windowType].action]}
           >
             {t('Cancel')}

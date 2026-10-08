@@ -1,0 +1,35 @@
+.m-savatar {
+  --m-avatar-hue: var(--m-row-hue, calc(var(--m-avatar-i, 0) * 30deg));
+
+  --m-avatar-l: 0.975;
+  --m-avatar-c: 0.028;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  overflow: hidden;
+  border-radius: var(--m-radius-control);
+  background: oklch(var(--m-avatar-l) var(--m-avatar-c) var(--m-avatar-hue));
+}
+
+:root.dark .m-savatar {
+  --m-avatar-l: 0.3;
+  --m-avatar-c: 0.05;
+}
+
+.m-savatar__glyph {
+  display: inline-flex;
+  color: oklch(0.45 0.09 var(--m-avatar-hue));
+}
+/* the generated glyph hard-codes its fill */
+.m-savatar__glyph svg {
+  fill: currentColor;
+}
+
+:root.dark .m-savatar__glyph {
+  color: oklch(0.82 0.08 var(--m-avatar-hue));
+}
+
+.m-ss__row.is-viewed .m-savatar {
+  opacity: 0.82;
+}

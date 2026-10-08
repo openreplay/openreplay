@@ -1,130 +1,154 @@
+import { IconButton } from '@/ui/actions/IconButton';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/ui/actions/dropdown-menu';
 import { SPEED_OPTIONS } from 'Player/player/Player';
+import {
+  Check,
+  Maximize2,
+  Minimize2,
+  Pause,
+  Play,
+  RotateCcw,
+  RotateCw,
+  Settings2,
+} from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
-import {
-  IntervalSelector,
-  JumpBack,
-  JumpForward,
-  SpeedOptions,
-} from 'App/components/Session_/Player/Controls/components/ControlsComponents';
-import {
-  FullScreenButton,
-  PlayButton,
-  PlayTime,
-  PlayingState,
-} from 'App/player-ui';
-import ControlButton from 'Components/Session_/Player/Controls/ControlButton';
-import { SKIP_INTERVALS } from 'Components/Session_/Player/Controls/Controls';
+import { PlayingState } from 'App/player-ui';
+import { SKIP_INTERVALS } from 'App/player-ui/clock';
+import { formatClock } from 'App/player-ui/clock';
+import 'Components/Session/ReplayScreen/replay-timeline.css';
 
-import spotPlayerStore, { PANELS, PanelType } from '../spotPlayerStore';
+import spotPlayerStore from '../spotPlayerStore';
+import SpotTimeline from './SpotTimeline';
 
 function SpotPlayerControls() {
-  const toggleFullScreen = () => {
-    spotPlayerStore.setIsFullScreen(true);
-  };
+  const { t } = useTranslation();
+  const store = spotPlayerStore;
+  const completed = store.state === PlayingState.Completed;
+
   const togglePlay = () => {
-    if (spotPlayerStore.state === PlayingState.Completed) {
-      spotPlayerStore.setTime(0);
-      spotPlayerStore.setIsPlaying(true);
-    }
-    spotPlayerStore.setIsPlaying(!spotPlayerStore.isPlaying);
+    if (completed) store.setTime(0);
+    store.setIsPlaying(completed ? true : !store.isPlaying);
   };
-
-  const changeSpeed = (speed: number) => {
-    spotPlayerStore.setPlaybackRate(SPEED_OPTIONS[speed]);
-  };
-  const playState = spotPlayerStore.state;
-
-  const togglePanel = (panel: PanelType) => {
-    spotPlayerStore.setActivePanel(
-      panel === spotPlayerStore.activePanel ? null : panel,
+  const skip = (dir: 1 | -1) =>
+    store.setTime(
+      Math.min(
+        store.duration,
+        Math.max(0, store.time + dir * store.skipInterval),
+      ),
     );
-  };
-
-  const back = () => {
-    spotPlayerStore.setTime(
-      spotPlayerStore.time - spotPlayerStore.skipInterval,
-    );
-  };
-  const forth = () => {
-    spotPlayerStore.setTime(
-      spotPlayerStore.time + spotPlayerStore.skipInterval,
-    );
-  };
 
   return (
-    <>
-      <div className="absolute block bottom-4 left-1 lg:hidden">
-        <div className="px-1 bg-white rounded-sm font-semibold flex items-center gap-1 text-sm">
-          <PlayTime
-            isCustom
-            time={spotPlayerStore.time * 1000}
-            format="mm:ss"
-          />
-          <span>/</span>
-          <div>{spotPlayerStore.durationString}</div>
-        </div>
-      </div>
-      <div className="hidden lg:flex w-full p-4 items-center gap-4 bg-white">
-        <PlayButton togglePlay={togglePlay} state={playState} iconSize={36} />
-
-        <div className="px-2 py-1 bg-white rounded-sm font-semibold flex items-center gap-2">
-          <PlayTime
-            isCustom
-            time={spotPlayerStore.time * 1000}
-            format="mm:ss"
-          />
-          <span>/</span>
-          <div>{spotPlayerStore.durationString}</div>
-        </div>
-
-        <div
-          className="rounded-sm ml-1 bg-white border-gray-lighter flex items-center"
-          style={{ gap: 1 }}
-        >
-          <JumpBack
-            backTenSeconds={back}
-            currentInterval={spotPlayerStore.skipInterval}
-          />
-          <IntervalSelector
-            skipIntervals={SKIP_INTERVALS}
-            setSkipInterval={spotPlayerStore.setSkipInterval}
-            currentInterval={spotPlayerStore.skipInterval}
-          />
-          <JumpForward
-            forthTenSeconds={forth}
-            currentInterval={spotPlayerStore.skipInterval}
-          />
-        </div>
-
-        <SpeedOptions
-          toggleSpeed={changeSpeed}
-          disabled={false}
-          speed={spotPlayerStore.playbackRate}
+    <div className="m-tl">
+      <IconButton
+        icon={
+          store.isPlaying ? (
+            <Pause size={15} />
+          ) : completed ? (
+            <RotateCcw size={15} />
+          ) : (
+            <Play size={15} />
+          )
+        }
+        label={store.isPlaying ? t('Pause (Space)') : t('Play (Space)')}
+        variant="ghost"
+        onClick={togglePlay}
+      />
+      <span className="m-tl__clock m-mono">
+        {formatClock(store.time * 1000)}
+        <span className="m-tl__clock--total">
+          {' / '}
+          {formatClock(store.duration * 1000)}
+        </span>
+      </span>
+      <SpotTimeline />
+      <span className="m-rs__controls">
+        <IconButton
+          icon={<RotateCcw size={14} />}
+          label={t('Back {{n}} seconds', { n: store.skipInterval })}
+          variant="ghost"
+          onClick={() => skip(-1)}
         />
-
-        <div className="ml-auto" />
-
-        <ControlButton
-          label="X-Ray"
-          onClick={() => togglePanel(PANELS.OVERVIEW)}
-          active={spotPlayerStore.activePanel === PANELS.OVERVIEW}
+        <IconButton
+          icon={<RotateCw size={14} />}
+          label={t('Forward {{n}} seconds', { n: store.skipInterval })}
+          variant="ghost"
+          onClick={() => skip(1)}
         />
-        <ControlButton
-          label="Console"
-          onClick={() => togglePanel(PANELS.CONSOLE)}
-          active={spotPlayerStore.activePanel === PANELS.CONSOLE}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <span className="inline-flex">
+              <IconButton
+                icon={<Settings2 size={14} />}
+                label={
+                  store.playbackRate !== 1
+                    ? t('Playback settings · {{list}}', {
+                        list: `${store.playbackRate}×`,
+                      })
+                    : t('Playback settings')
+                }
+                variant="ghost"
+              />
+            </span>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="m-tl__menu">
+            <p className="m-tl__menu-head">{t('Speed')}</p>
+            {SPEED_OPTIONS.map((s) => (
+              <DropdownMenuItem
+                key={s}
+                role="menuitemradio"
+                aria-checked={store.playbackRate === s}
+                onSelect={(e) => {
+                  e.preventDefault();
+                  store.setPlaybackRate(s);
+                }}
+              >
+                <span className="m-tl__menu-check">
+                  {store.playbackRate === s && (
+                    <Check size={12} aria-hidden="true" />
+                  )}
+                </span>
+                <span className="m-mono">{s}×</span>
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator />
+            <p className="m-tl__menu-head">{t('Jump by')}</p>
+            <div className="m-tl__menu-row">
+              {Object.keys(SKIP_INTERVALS).map((k) => (
+                <button
+                  key={k}
+                  type="button"
+                  className={`m-tl__chip${Number(k) === store.skipInterval ? ' is-on' : ''}`}
+                  onClick={() => store.setSkipInterval(Number(k))}
+                >
+                  {k}s
+                </button>
+              ))}
+            </div>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <IconButton
+          icon={
+            store.isFullScreen ? (
+              <Minimize2 size={14} />
+            ) : (
+              <Maximize2 size={14} />
+            )
+          }
+          label={store.isFullScreen ? t('Exit full screen') : t('Full screen')}
+          variant="ghost"
+          onClick={() => store.setIsFullScreen(!store.isFullScreen)}
         />
-        <ControlButton
-          label="Network"
-          onClick={() => togglePanel(PANELS.NETWORK)}
-          active={spotPlayerStore.activePanel === PANELS.NETWORK}
-        />
-
-        <FullScreenButton size={18} onClick={toggleFullScreen} />
-      </div>
-    </>
+      </span>
+    </div>
   );
 }
 

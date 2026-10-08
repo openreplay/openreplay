@@ -1,118 +1,78 @@
-import { CloseOutlined } from '@ant-design/icons';
 import { TYPES } from 'Types/session/event';
-import { Button } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-
-import Event from 'Components/Session_/EventsBlock/Event';
-
-import spotPlayerStore from '../spotPlayerStore';
 import { useTranslation } from 'react-i18next';
 
-function SpotActivity({ onClose }: { onClose: () => void }) {
-  const { t } = useTranslation();
-  const mixedEvents = React.useMemo(() => {
-    const result = [...spotPlayerStore.locations, ...spotPlayerStore.clicks];
-    return result.sort((a, b) => a.time - b.time);
-  }, [spotPlayerStore.locations, spotPlayerStore.clicks]);
+import { PanelBar } from 'Components/Session/ReplayScreen/PanelBar';
+import 'Components/Session/ReplayScreen/activity-panel.css';
+import ActivityRow from 'Components/Session_/EventsBlock/ActivityRow';
 
+import spotPlayerStore from '../spotPlayerStore';
+
+function SpotActivity() {
+  const { t } = useTranslation();
+  const [q, setQ] = React.useState('');
+  const events = React.useMemo(
+    () =>
+      [
+        ...spotPlayerStore.locations.map((l) => ({
+          ...l,
+          type: TYPES.LOCATION,
+          url: l.location,
+        })),
+        ...spotPlayerStore.clicks.map((c) => ({ ...c, type: TYPES.CLICK })),
+      ].sort((a, b) => a.time - b.time),
+    [spotPlayerStore.locations, spotPlayerStore.clicks],
+  );
+  const now = spotPlayerStore.time * 1000;
   const { index } = spotPlayerStore.getHighlightedEvent(
     spotPlayerStore.time,
-    mixedEvents,
+    events,
   );
-  const jump = (time: number) => {
-    spotPlayerStore.setTime(time / 1000);
-  };
+  const seek = React.useCallback(
+    (time: number) => spotPlayerStore.setTime(time / 1000),
+    [],
+  );
 
-  const getShadowColor = (ind: number) => {
-    if (ind < index) return '#A7BFFF';
-    if (ind === index) return '#394EFF';
-    return 'transparent';
-  };
+  if (events.length === 0) {
+    return <p className="m-spanel__none">{t('Nothing recorded yet.')}</p>;
+  }
+  const needle = q.trim().toLowerCase();
+  const shown = needle
+    ? events.filter((e: any) =>
+        [e.label, e.url, e.selector].some((v) =>
+          String(v ?? '')
+            .toLowerCase()
+            .includes(needle),
+        ),
+      )
+    : events;
   return (
-    <div
-      className="h-full bg-white border-l"
-      style={{ minWidth: 320, width: 320 }}
-    >
-      <div className="flex items-center justify-between p-4">
-        <div className="font-medium text-lg">{t('Activity')}</div>
-        <Button type="text" size="small" onClick={onClose}>
-          <CloseOutlined />
-        </Button>
-      </div>
-      <div
-        className="overflow-y-auto"
-        style={{ maxHeight: 'calc(100dvh - 128px)' }}
-      >
-        {mixedEvents.map((event, i) => (
-          <div
-            key={event.time}
-            onClick={() => jump(event.time)}
-            className="relative"
-          >
-            <div
-              style={{
-                position: 'absolute',
-                left: 0,
-                top: 0,
-                width: 1.5,
-                height: '100%',
-                backgroundColor: getShadowColor(i),
-                zIndex: 98,
-              }}
+    <div className="m-act">
+      <PanelBar
+        find={{ value: q, onChange: setQ, placeholder: t('Find in activity') }}
+      />
+      {shown.length === 0 ? (
+        <p className="m-spanel__none">
+          {t('Nothing in the activity matches that.')}
+        </p>
+      ) : null}
+      <div className="m-act__scroll">
+        <div className="m-act__list overflow-y-auto" role="list">
+          {shown.map((event, i) => (
+            <ActivityRow
+              key={`${event.time}-${i}`}
+              event={event}
+              now={event === events[index]}
+              ahead={event.time > now}
+              isFirst={i === 0}
+              onSeek={seek}
             />
-            {i === index ? (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: -10,
-                  width: 10,
-                  height: 10,
-                  transform: 'rotate(45deg) translate(0, -50%)',
-                  background: '#394EFF',
-                  zIndex: 99,
-                  borderRadius: '.15rem',
-                }}
-              />
-            ) : null}
-            {'label' in event ? (
-              // @ts-ignore
-              <ClickEv event={event} isCurrent={i === index} />
-            ) : (
-              <LocationEv event={event} isCurrent={i === index} />
-            )}
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
-}
-
-function LocationEv({
-  event,
-  isCurrent,
-}: {
-  event: { time: number; location: string };
-  isCurrent?: boolean;
-}) {
-  const locEvent = { ...event, type: TYPES.LOCATION, url: event.location };
-  return <Event showLoadInfo whiteBg event={locEvent} isCurrent={isCurrent} />;
-}
-
-function ClickEv({
-  event,
-  isCurrent,
-}: {
-  event: { time: number; label: string };
-  isCurrent?: boolean;
-}) {
-  const clickEvent = {
-    type: TYPES.CLICK,
-    label: event.label,
-    count: 1,
-  };
-  return <Event whiteBg event={clickEvent} isCurrent={isCurrent} />;
 }
 
 export default observer(SpotActivity);

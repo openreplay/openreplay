@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
-import cn from 'classnames';
-import { Icon } from 'UI';
-import { Button } from 'antd';
+import { Button } from '@/ui/actions/button';
 import type { LocalStream } from 'Player';
-import stl from './ChatControls.module.css';
+import { Mic, MicOff, PhoneOff, Video, VideoOff } from 'lucide-react';
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   stream: LocalStream | null;
@@ -12,6 +11,8 @@ interface Props {
   isPrestart?: boolean;
   setVideoEnabled: (isEnabled: boolean) => void;
 }
+
+/** The agent's side of a call: mic, camera, hang up. */
 function ChatControls({
   stream,
   endCall,
@@ -19,81 +20,38 @@ function ChatControls({
   setVideoEnabled,
   isPrestart,
 }: Props) {
+  const { t } = useTranslation();
   const [audioEnabled, setAudioEnabled] = useState(true);
 
   const toggleAudio = () => {
-    if (!stream) {
-      return;
-    }
+    if (!stream) return;
     setAudioEnabled(stream.toggleAudio());
   };
 
   const toggleVideo = () => {
-    if (!stream) {
-      return;
-    }
-    stream.toggleVideo().then((v) => setVideoEnabled(v));
+    if (!stream) return;
+    void stream.toggleVideo().then((v) => setVideoEnabled(v));
   };
 
-  /** muting user if he is auto connected to the call */
+  // an auto-connected agent joins muted
   React.useEffect(() => {
-    if (isPrestart) {
-      audioEnabled && toggleAudio();
-    }
+    if (isPrestart && audioEnabled) toggleAudio();
   }, []);
 
   return (
-    <div
-      className={cn(
-        stl.controls,
-        'flex items-center w-full justify-start bottom-0 px-2',
-      )}
-    >
-      <div className="flex items-center gap-2">
-        <div className={cn(stl.btnWrapper, { [stl.disabled]: audioEnabled })}>
-          <Button
-            size="small"
-            variant="text"
-            onClick={toggleAudio}
-            icon={<Icon name={audioEnabled ? 'mic' : 'mic-mute'} size="16" />}
-          >
-            <span
-              className={cn('ml-1 color-gray-medium text-sm', {
-                'color-red': audioEnabled,
-              })}
-            >
-              {audioEnabled ? 'Mute' : 'Unmute'}
-            </span>
-          </Button>
-        </div>
-
-        <div className={cn(stl.btnWrapper, { [stl.disabled]: videoEnabled })}>
-          <Button
-            size="small"
-            variant="text"
-            onClick={toggleVideo}
-            icon={
-              <Icon
-                name={videoEnabled ? 'camera-video' : 'camera-video-off'}
-                size="16"
-              />
-            }
-          >
-            <span
-              className={cn('ml-1 color-gray-medium text-sm', {
-                'color-red': videoEnabled,
-              })}
-            >
-              {videoEnabled ? 'Stop Video' : 'Start Video'}
-            </span>
-          </Button>
-        </div>
-      </div>
-      <div className="ml-auto">
-        <button className={stl.endButton} onClick={endCall}>
-          END
-        </button>
-      </div>
+    <div className="m-call__controls">
+      <Button variant="subtle" onClick={toggleAudio}>
+        {audioEnabled ? <Mic size={14} /> : <MicOff size={14} />}
+        {audioEnabled ? t('Mute') : t('Unmute')}
+      </Button>
+      <Button variant="subtle" onClick={toggleVideo}>
+        {videoEnabled ? <Video size={14} /> : <VideoOff size={14} />}
+        {videoEnabled ? t('Stop video') : t('Start video')}
+      </Button>
+      <Button variant="danger" className="ml-auto" onClick={endCall}>
+        <PhoneOff size={14} />
+        {t('End')}
+      </Button>
     </div>
   );
 }

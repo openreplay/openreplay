@@ -1,300 +1,185 @@
-/* eslint-disable i18next/no-literal-string */
+import { IconButton } from '@/ui/actions/IconButton';
+import { Button } from '@/ui/actions/button';
 import {
-  ArrowLeftOutlined,
-  CommentOutlined,
-  CopyOutlined,
-  DeleteOutlined,
-  DownloadOutlined,
-  MoreOutlined,
-  SettingOutlined,
-  UserSwitchOutlined,
-} from '@ant-design/icons';
-import {
-  Badge,
-  Button,
-  Dropdown,
-  MenuProps,
-  Popover,
-  Tooltip,
-  message,
-} from 'antd';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItems,
+  DropdownMenuTrigger,
+} from '@/ui/actions/dropdown-menu';
+import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
+import { PopoverPanel } from '@/ui/overlays/popover';
+import { useToast } from '@/ui/overlays/toast';
 import copy from 'copy-to-clipboard';
+import {
+  Copy,
+  Download,
+  MoreHorizontal,
+  Settings2,
+  Trash2,
+} from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
-import { useHistory } from 'App/routing';
+import { useTranslation } from 'react-i18next';
 
-import Tabs from 'App/components/Session/Tabs';
 import { useStore } from 'App/mstore';
 import { spotsList } from 'App/routes';
+import { useHistory } from 'App/routing';
 import { hashString } from 'App/types/session/session';
-import { Avatar, Icon, confirm } from 'UI';
-
-import { TABS, Tab } from '../consts';
-import AccessModal from './AccessModal';
-import { useTranslation } from 'react-i18next';
-import { toast } from 'react-toastify';
 import { mobileScreen } from 'App/utils/isMobile';
 
-const spotLink = spotsList();
+import { SessionAvatar } from 'Shared/SessionAvatar/SessionAvatar';
 
-function SpotPlayerHeader({
-  activeTab,
-  setActiveTab,
-  title,
-  user,
-  date,
-  browserVersion,
-  resolution,
-  platform,
-}: {
-  activeTab: Tab | null;
-  setActiveTab: (tab: Tab | null) => void;
-  title: string;
-  user: string;
-  date: string;
-  browserVersion: string | null;
-  resolution: string | null;
-  platform: string | null;
-}) {
+import AccessModal from './AccessModal';
+
+/** Who made the spot and what it was recorded on. */
+export const SpotLead = observer(
+  ({
+    title,
+    user,
+    date,
+    browserVersion,
+    resolution,
+    platform,
+  }: {
+    title: string;
+    user: string;
+    date: string;
+    browserVersion: string | null;
+    resolution: string | null;
+    platform: string | null;
+  }) => {
+    const meta = [
+      user,
+      date,
+      browserVersion ? `Chromium v${browserVersion}` : null,
+      resolution,
+      platform,
+    ].filter(Boolean);
+    return (
+      <div className="m-rs__who">
+        <SessionAvatar seed={hashString(user)} size={28} />
+        <div className="m-rs__names">
+          <span className="m-rs__name m-truncate" title={title}>
+            {title}
+          </span>
+          <span className="m-rs__meta m-truncate">{meta.join(' · ')}</span>
+        </div>
+      </div>
+    );
+  },
+);
+
+/** Copy, access and the overflow menu; members only. */
+export const SpotActions = observer(() => {
   const { t } = useTranslation();
+  const toast = useToast();
+  const history = useHistory();
   const { spotStore, userStore } = useStore();
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const isLoggedIn = !!userStore.jwt;
   const hasShareAccess = userStore.isEnterprise
     ? userStore.account.permissions.includes('SPOT_PUBLIC')
     : true;
-  const comments = spotStore.currentSpot?.comments ?? [];
-
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const history = useHistory();
+  if (!isLoggedIn || mobileScreen) return null;
+  const spot = spotStore.currentSpot!;
 
   const onCopy = () => {
     copy(window.location.href);
-    message.success(t('Internal sharing link copied to clipboard'));
+    toast.success(t('Internal sharing link copied to clipboard'));
   };
-
-  const navigateToSpotsList = () => {
-    history.push(spotLink);
+  const download = async () => {
+    toast.info(t('Retrieving Spot video...'));
+    const { url } = await spotStore.getVideo(spot.spotId);
+    await downloadFile(url, `${spot.title}.webm`, () =>
+      toast.error(t('Error downloading file.')),
+    );
   };
-
-  const items: MenuProps['items'] = [
-    {
-      key: '1',
-      icon: <DownloadOutlined />,
-      label: t('Download Video'),
-    },
-    {
-      key: '2',
-      icon: <DeleteOutlined />,
-      label: t('Delete'),
-    },
-  ];
-
-  const onMenuClick = async ({ key }: { key: string }) => {
-    if (key === '1') {
-      const loader = toast.loading('Retrieving Spot video...');
-      const { url } = await spotStore.getVideo(spotStore.currentSpot!.spotId);
-      await downloadFile(url, `${spotStore.currentSpot!.title}.webm`);
-      setTimeout(() => {
-        toast.dismiss(loader);
-      }, 0);
-    } else if (key === '2') {
-      if (
-        await confirm({
-          header: t('Delete Spot'),
-          confirmButton: t('Delete'),
-          confirmation: t(
-            'Are you sure you want to delete this Spot? This action is permanent and cannot be undone.',
-          ),
-        })
-      ) {
-        spotStore
-          .deleteSpot([spotStore.currentSpot!.spotId])
-          .then(() => {
-            history.push(spotsList());
-            message.success(t('Spot successfully deleted'));
-          })
-          .catch(() => {
-            message.error(t('Failed to delete Spot'));
-          });
-      }
-    }
+  const remove = () => {
+    setConfirmDelete(false);
+    spotStore
+      .deleteSpot([spot.spotId])
+      .then(() => {
+        history.push(spotsList());
+        toast.success(t('Spot successfully deleted'));
+      })
+      .catch(() => toast.error(t('Failed to delete Spot')));
   };
 
   return (
-    <div className="flex items-center gap-1 p-2 py-1 w-full bg-white border-b">
-      <div>
-        {isLoggedIn ? (
-          <Button
-            type="text"
-            onClick={navigateToSpotsList}
-            icon={<ArrowLeftOutlined />}
-            className="px-2"
-          >
-            {t('All Spots')}
-          </Button>
-        ) : (
-          <a
-            href="https://openreplay.com/platform/spot/"
-            target="_blank"
-            rel="noreferrer"
-          >
-            <Button
-              type="text"
-              className="orSpotBranding flex gap-1 items-center py-2"
-            >
-              <Icon name="orSpot" size={28} />
-              <div className="flex flex-col justify-start text-start">
-                <div className="text-lg font-semibold">{t('Spot')}</div>
-                <div className="text-disabled-text text-xs -mt-1">
-                  {t('by OpenReplay')}
-                </div>
-              </div>
-            </Button>
-          </a>
-        )}
-      </div>
-      <div className="h-full rounded-xl border-l mr-2" style={{ width: 1 }} />
-      <div className="flex items-center gap-2">
-        <Avatar seed={hashString(user)} />
-        <div>
-          <Tooltip title={title}>
-            <div className="w-9/12 text-ellipsis truncate cursor-normal">
-              {title}
-            </div>
-          </Tooltip>
-          <div className="flex items-center gap-1 lg:gap-2 text-black/50 text-sm">
-            <div>{user}</div>
-            <div>·</div>
-            <div className="capitalize whitespace-nowrap">{date}</div>
-            {browserVersion && (
-              <>
-                <div>·</div>
-                <div className="whitespace-nowrap">
-                  Chromium v{browserVersion}
-                </div>
-              </>
-            )}
-            {resolution && (
-              <>
-                <div>·</div>
-                <div>{resolution}</div>
-              </>
-            )}
-            {platform && (
-              <>
-                <div>·</div>
-                <div className="capitalize whitespace-nowrap">{platform}</div>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-      <div className="ml-auto" />
-      {!mobileScreen && isLoggedIn ? (
-        <>
-          <Button
-            size="small"
-            onClick={onCopy}
-            type="default"
-            icon={<CopyOutlined />}
-          >
-            {t('Copy')}
-          </Button>
-          {hasShareAccess ? (
-            <Popover trigger="click" content={<AccessModal />}>
-              <Button
-                size="small"
-                icon={<SettingOutlined />}
-                onClick={() => setDropdownOpen(!dropdownOpen)}
-              >
-                {t('Manage Access')}
-              </Button>
-            </Popover>
-          ) : null}
-          <Dropdown
-            menu={{ items, onClick: onMenuClick }}
-            placement="bottomRight"
-          >
-            <Button icon={<MoreOutlined />} size="small" />
-          </Dropdown>
-          <div
-            className="h-full rounded-xl border-l mx-2"
-            style={{ width: 1 }}
-          />
-        </>
-      ) : null}
-      {mobileScreen ? (
-        <Button
-          size="small"
-          onClick={() =>
-            setActiveTab(activeTab === TABS.COMMENTS ? null : TABS.COMMENTS)
-          }
+    <>
+      <Button onClick={onCopy}>
+        <Copy size={13} />
+        {t('Copy')}
+      </Button>
+      {hasShareAccess ? (
+        <PopoverPanel
+          placement="bottomRight"
+          className="p-5"
+          content={<AccessModal />}
         >
-          {t('Comments')}{' '}
-          {comments.length > 0 && (
-            <Badge
-              count={comments.length}
-              className="mr-2"
-              style={{ fontSize: '10px' }}
-              size="small"
-              color="#454545"
+          <Button>
+            <Settings2 size={13} />
+            {t('Manage access')}
+          </Button>
+        </PopoverPanel>
+      ) : null}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <span>
+            <IconButton
+              icon={<MoreHorizontal size={15} />}
+              label={t('More')}
+              variant="ghost"
             />
-          )}
-        </Button>
-      ) : (
-        <Tabs
-          className="w-fit! border-b-0!"
-          tabs={[
-            {
-              key: TABS.ACTIVITY,
-              text: t('Activity'),
-              iconComp: (
-                <div className="mr-1">
-                  <UserSwitchOutlined />
-                </div>
-              ),
-            },
-            {
-              key: TABS.COMMENTS,
-              iconComp: (
-                <div className="mr-1">
-                  <CommentOutlined />
-                </div>
-              ),
-              text: (
-                <div>
-                  {t('Comments')}{' '}
-                  {comments.length > 0 && (
-                    <Badge
-                      count={comments.length}
-                      className="mr-2"
-                      style={{ fontSize: '10px' }}
-                      size="small"
-                      color="#454545"
-                    />
-                  )}
-                </div>
-              ),
-            },
-          ]}
-          active={activeTab}
-          onClick={(k) =>
-            k === activeTab ? setActiveTab(null) : setActiveTab(k)
-          }
-        />
-      )}
-    </div>
+          </span>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItems
+            items={[
+              {
+                key: 'download',
+                icon: <Download size={13} />,
+                label: t('Download video'),
+                onClick: () => void download(),
+              },
+              {
+                key: 'delete',
+                icon: <Trash2 size={13} />,
+                label: t('Delete'),
+                danger: true,
+                onClick: () => setConfirmDelete(true),
+              },
+            ]}
+          />
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <span className="m-rs__sep" aria-hidden="true" />
+      <ConfirmDialog
+        open={confirmDelete}
+        title={t('Delete this spot?')}
+        okText={t('Delete')}
+        danger
+        onCancel={() => setConfirmDelete(false)}
+        onOk={remove}
+      >
+        {t(
+          'Are you sure you want to delete this Spot? This action is permanent and cannot be undone.',
+        )}
+      </ConfirmDialog>
+    </>
   );
-}
+});
 
-async function downloadFile(url: string, fileName: string) {
+async function downloadFile(
+  url: string,
+  fileName: string,
+  onError: () => void,
+) {
   try {
     const response = await fetch(url);
-
     if (!response.ok) {
       throw new Error('Network response was not ok');
     }
-
     const blob = await response.blob();
     const blobUrl = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -303,11 +188,10 @@ async function downloadFile(url: string, fileName: string) {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(blobUrl);
+    // revoking right after click() can cancel the download in Firefox / Safari
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
   } catch (error) {
-    toast.error('Error downloading file.');
+    onError();
     console.error('Error downloading file:', error);
   }
 }
-
-export default observer(SpotPlayerHeader);

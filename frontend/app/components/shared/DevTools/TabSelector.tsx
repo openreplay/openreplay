@@ -1,26 +1,22 @@
-import React from 'react';
-import { Segmented } from 'antd';
-import { useStore } from 'App/mstore';
+import { FilterStrip } from '@/ui/filters/FilterStrip';
 import { observer } from 'mobx-react-lite';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { useStore } from 'App/mstore';
 
 function TabSelector() {
+  const { t } = useTranslation();
   const { uiPlayerStore } = useStore();
-  const currentValue = uiPlayerStore.dataSource;
-  const options = [
-    { label: 'All Tabs', value: 'all' },
-    { label: 'Current Tab', value: 'current' },
-  ];
-
-  const onChange = (value: 'all' | 'current') => {
-    uiPlayerStore.changeDataSource(value);
-  };
   return (
-    <Segmented
-      options={options}
-      value={currentValue}
-      onChange={onChange}
-      className="font-medium rounded-lg"
-      size="small"
+    <FilterStrip
+      label={t('Tabs shown')}
+      selected={[uiPlayerStore.dataSource]}
+      onSelect={(v) => uiPlayerStore.changeDataSource(v as 'all' | 'current')}
+      items={[
+        { key: 'all', label: t('All tabs') },
+        { key: 'current', label: t('Current tab') },
+      ]}
     />
   );
 }

@@ -1,0 +1,43 @@
+.m-work {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--m-surface-default);
+  border: 1px solid var(--m-border-subtle);
+  border-radius: var(--m-radius-surface);
+}
+
+.m-work__body {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.m-work__main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.m-work__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.m-work__scroll > .m-wu {
+  flex: none;
+}
+.m-work__scroll > .m-strip--cards {
+  flex: 1;
+}

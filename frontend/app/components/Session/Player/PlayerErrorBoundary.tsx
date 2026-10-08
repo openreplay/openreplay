@@ -1,7 +1,7 @@
+import { Button } from '@/ui/actions/button';
+import { Icon } from '@/ui/icons/Icon';
 /* eslint-disable i18next/no-literal-string */
 import React, { ErrorInfo } from 'react';
-import { Button } from 'antd';
-import { Icon } from 'UI';
 
 class PlayerErrorBoundary extends React.Component<any> {
   state = { hasError: false, error: '' };
@@ -24,11 +24,11 @@ class PlayerErrorBoundary extends React.Component<any> {
           <h4>Something went wrong during player rendering.</h4>
           <p>{this.state.error}</p>
           <Button
+            variant="primary"
             onClick={() => window.location.reload()}
-            icon={<Icon name="spinner" size={16} />}
-            type="primary"
             style={{ width: 'fit-content' }}
           >
+            <Icon name="spinner" size={16} />
             Reload
           </Button>
         </div>

@@ -1,7 +1,8 @@
-import { makeAutoObservable } from 'mobx';
-import { sessionService } from 'App/services';
 import Filter from 'Types/filter';
 import Session from 'Types/session';
+import { makeAutoObservable } from 'mobx';
+
+import { sessionService } from 'App/services';
 
 type MultiSessions = [
   LiveSessionListItem?,

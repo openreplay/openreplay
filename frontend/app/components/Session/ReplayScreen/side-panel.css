@@ -1,0 +1,176 @@
+/* One head, row and empty state for every side-panel tab (Activity, Features,
+   Comments, Journey, Click map); a tab keeps only its particular parts. */
+
+/* the bar is as tall as the tallest thing it holds (one md control), so
+   switching tabs never moves the list under it */
+.m-spanel__bar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  flex: none;
+  min-height: calc(var(--m-control-height-md) + var(--m-space-2) * 2 + 1px);
+  padding: var(--m-space-2) var(--m-space-3);
+  background: var(--m-surface-default);
+  border-bottom: 1px solid var(--m-border-subtle);
+}
+.m-spanel__bar.m-psearch {
+  padding: var(--m-space-2) var(--m-space-3);
+}
+
+.m-spanel__note {
+  flex: 1;
+  min-width: 0;
+  /* level with the find field's text and the rows below */
+  padding-inline-start: var(--m-space-3);
+  font-size: var(--m-text-2xs);
+  color: var(--m-content-muted);
+}
+
+.m-spanel__acts {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-1);
+  flex: none;
+}
+
+.m-spanel__list {
+  margin: 0;
+  padding: var(--m-space-3);
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-space-1);
+}
+
+.m-spanel__row {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  border-radius: var(--m-radius-control);
+  transition: background-color var(--m-duration-instant) var(--m-ease-out);
+}
+.m-spanel__row:hover {
+  background: var(--m-surface-hover);
+}
+.m-spanel__row.is-now {
+  background: var(--m-surface-active);
+}
+.m-spanel__row.is-ahead .m-spanel__label,
+.m-spanel__row.is-ahead .m-spanel__time {
+  color: var(--m-content-muted);
+}
+
+/* a row that seeks is a button and one that doesn't is a span; both wear this */
+.m-spanel__cell {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--m-space-3);
+  padding: var(--m-space-4) var(--m-space-3);
+  text-align: left;
+  color: var(--m-content-primary);
+  font-size: var(--m-text-xs);
+  line-height: 1.35;
+}
+
+/* the clock is always the first column */
+.m-spanel__time {
+  flex: none;
+  width: 2.5rem;
+  padding-top: 2px;
+  color: var(--m-content-muted);
+  font-size: var(--m-text-2xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.m-spanel__glyph {
+  flex: none;
+  display: inline-flex;
+  width: 0.75rem;
+  justify-content: center;
+  padding-top: 2px;
+  color: var(--m-content-decorative);
+}
+/* only the loud kinds carry colour, and only on the glyph */
+.m-spanel__glyph.is-error {
+  color: var(--m-content-danger);
+}
+.m-spanel__glyph.is-rage {
+  color: var(--m-content-warning);
+}
+
+.m-spanel__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-space-1);
+}
+.m-spanel__line {
+  display: flex;
+  align-items: baseline;
+  gap: var(--m-space-2);
+  min-width: 0;
+}
+.m-spanel__label {
+  min-width: 0;
+  flex: 0 1 auto;
+}
+.m-spanel__sub {
+  color: var(--m-content-muted);
+  font-size: var(--m-text-2xs);
+}
+.m-spanel__tail {
+  flex: none;
+  margin-inline-start: auto;
+  color: var(--m-content-decorative);
+  font-size: var(--m-text-2xs);
+  font-variant-numeric: tabular-nums;
+}
+/* a reading of the moment ("Hesitation") is a chip under the row, never a loose coloured word */
+.m-spanel__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--m-space-2);
+  margin-top: var(--m-space-2);
+}
+.m-spanel__tags .m-chip svg {
+  color: var(--m-content-muted);
+  flex: none;
+}
+
+/* the row's verb shows on hover / focus, so a list about this session isn't studded with verbs */
+.m-spanel__verb {
+  flex: none;
+  display: flex;
+  align-items: center;
+  padding-inline-end: var(--m-space-1);
+  opacity: 0;
+  transition: opacity var(--m-duration-instant) var(--m-ease-out);
+}
+.m-spanel__row:hover .m-spanel__verb,
+.m-spanel__row:focus-within .m-spanel__verb {
+  opacity: 1;
+}
+@media (hover: none) {
+  .m-spanel__verb {
+    opacity: 1;
+  }
+}
+
+.m-spanel__none {
+  padding: var(--m-space-5) var(--m-space-4);
+  color: var(--m-content-muted);
+  font-size: var(--m-text-xs);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m-spanel__row,
+  .m-spanel__verb {
+    transition: none;
+  }
+}

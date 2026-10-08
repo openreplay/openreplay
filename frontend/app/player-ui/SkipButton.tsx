@@ -1,7 +1,6 @@
-import React from 'react';
-import { Icon } from 'UI';
 import cn from 'classnames';
-import { ForwardOutlined } from '@ant-design/icons';
+import { FastForward, Rewind } from 'lucide-react';
+import React from 'react';
 
 interface IProps {
   size: number;
@@ -12,11 +11,16 @@ interface IProps {
 
 export function SkipButton({ onClick, isBackwards, customClasses }: IProps) {
   return (
-    <div
+    <button
+      type="button"
       onClick={onClick}
-      className={cn('py-1 px-2 cursor-pointer', customClasses)}
+      aria-label={isBackwards ? 'Skip back' : 'Skip forward'}
+      className={cn(
+        'm-hover inline-flex items-center py-1 px-2',
+        customClasses,
+      )}
     >
-      <ForwardOutlined rotate={isBackwards ? 180 : 0} />
-    </div>
+      {isBackwards ? <Rewind size={14} /> : <FastForward size={14} />}
+    </button>
   );
 }

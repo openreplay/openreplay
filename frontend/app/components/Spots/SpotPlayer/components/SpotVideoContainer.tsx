@@ -1,6 +1,7 @@
-import { InfoCircleOutlined, PlayCircleOutlined } from '@ant-design/icons';
-import { Alert, Button } from 'antd';
-import { MediaPlayer, type MediaPlayerClass } from 'dashjs';
+import { Button } from '@/ui/actions/button';
+import type { MediaPlayerClass } from 'dashjs';
+import { CheckCircle2, Info, Loader2, PlayCircle } from 'lucide-react';
+import { reaction } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -63,6 +64,8 @@ function SpotVideoContainer({
     let checkInterval: ReturnType<typeof setInterval> | undefined;
     let checkTimeout: ReturnType<typeof setTimeout> | undefined;
     let checkAmount = 0;
+    // async steps below must not start a player or a poll after unmount
+    let cancelled = false;
 
     const onLoadedData = () => setLoaded(true);
     const onEnded = () => spotPlayerStore.onComplete();
@@ -70,7 +73,10 @@ function SpotVideoContainer({
     video.addEventListener('loadeddata', onLoadedData);
     video.addEventListener('ended', onEnded);
 
-    const initDash = (url: string) => {
+    // dashjs (~236KB gz) only for MPD streams
+    const initDash = async (url: string) => {
+      const { MediaPlayer } = await import('dashjs');
+      if (cancelled) return;
       const dash = MediaPlayer().create();
       dash.updateSettings({
         streaming: {
@@ -86,13 +92,18 @@ function SpotVideoContainer({
       if (streamFile && isMpdFormat(streamFile)) {
         const url = URL.createObjectURL(base64ToBlob(streamFile));
         blobUrlRef.current = url;
-        initDash(url);
+        initDash(url).catch((e) => {
+          // the player chunk failed to load: the original WebM still plays
+          console.error('Failed to load the MPD player', e);
+          if (!cancelled) video.src = videoURL;
+        });
       } else if (streamFile) {
         // Old HLS format - fall back to original videoURL (WebM)
         video.src = videoURL;
       } else {
         const pollVideo = () => {
           fetch(videoURL).then((r) => {
+            if (cancelled) return;
             if (r.ok && r.status === 200) {
               video.src = videoURL;
             } else {
@@ -109,6 +120,7 @@ function SpotVideoContainer({
     };
 
     checkReady().then((isReady) => {
+      if (cancelled) return;
       if (!isReady) {
         setProcessingState(ProcessingState.Processing);
         setPrevIsProcessing(true);
@@ -120,7 +132,7 @@ function SpotVideoContainer({
             return;
           }
           checkReady().then((r) => {
-            if (r) {
+            if (r && !cancelled) {
               setProcessingState(ProcessingState.Ready);
               clearInterval(checkInterval);
             }
@@ -133,6 +145,7 @@ function SpotVideoContainer({
     });
 
     return () => {
+      cancelled = true;
       video.removeEventListener('loadeddata', onLoadedData);
       video.removeEventListener('ended', onEnded);
       dashRef.current?.destroy();
@@ -144,17 +157,27 @@ function SpotVideoContainer({
     };
   }, []);
 
-  // Sync play/pause state
-  React.useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    if (spotPlayerStore.isPlaying) {
-      video.play().catch(console.error);
-    } else {
-      video.pause();
-    }
-  }, [spotPlayerStore.isPlaying]);
+  // play/pause and seeks follow the store through reactions: reading the
+  // store's time during render re-rendered this whole container ~10x a second
+  React.useEffect(
+    () =>
+      reaction(
+        () => spotPlayerStore.isPlaying,
+        (playing) => {
+          const video = videoRef.current;
+          if (!video) return;
+          if (playing)
+            video.play().catch((e: DOMException) => {
+              // autoplay blocked (a link opened in a new tab): show it paused
+              if (e.name === 'NotAllowedError')
+                spotPlayerStore.setIsPlaying(false);
+            });
+          else video.pause();
+        },
+        { fireImmediately: true },
+      ),
+    [],
+  );
 
   // Sync video time to store
   React.useEffect(() => {
@@ -172,16 +195,21 @@ function SpotVideoContainer({
     return () => clearInterval(interval);
   }, []);
 
-  // Handle user-initiated seeks from store
-  React.useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    const timeDiff = Math.abs(playbackTime.current - spotPlayerStore.time);
-    if (timeDiff > 0.5) {
-      video.currentTime = spotPlayerStore.time;
-    }
-  }, [spotPlayerStore.time]);
+  // user-initiated seeks: a store time far from the video's own position
+  React.useEffect(
+    () =>
+      reaction(
+        () => spotPlayerStore.time,
+        (time) => {
+          const video = videoRef.current;
+          if (!video) return;
+          if (Math.abs(playbackTime.current - time) > 0.5) {
+            video.currentTime = time;
+          }
+        },
+      ),
+    [],
+  );
 
   // Sync playback rate
   React.useEffect(() => {
@@ -193,48 +221,28 @@ function SpotVideoContainer({
 
   return (
     <>
-      <div
-        className="absolute z-20 left-2/4 -top-6"
-        style={{ transform: 'translate(-50%, 0)' }}
-      >
-        {processingState === ProcessingState.Processing ? (
-          <Alert
-            className="trimIsProcessing rounded-lg shadow-sm border-indigo-500 bg-indigo-lightest"
-            title="You're viewing the original recording. Processed Spot will be available here shortly."
-            showIcon
-            type="info"
-            icon={<InfoCircleOutlined style={{ color: '#394dfe' }} />}
-          />
-        ) : prevIsProcessing ? (
-          <Alert
-            className="trimIsReady rounded-lg shadow-xs border-0"
-            title="Your processed Spot is ready!"
-            showIcon
-            type="success"
-            action={
-              <Button
-                size="small"
-                type="default"
-                icon={<PlayCircleOutlined />}
-                onClick={() => window.location.reload()}
-                className="ml-2"
-              >
-                {t('Play Now')}
-              </Button>
-            }
-          />
-        ) : null}
-      </div>
+      {processingState === ProcessingState.Processing ? (
+        <div className="m-spotp__notice" role="status">
+          <Info size={13} aria-hidden="true" />
+          {t(
+            "You're viewing the original recording. Processed Spot will be available here shortly.",
+          )}
+        </div>
+      ) : prevIsProcessing ? (
+        <div className="m-spotp__notice is-ready" role="status">
+          <CheckCircle2 size={13} aria-hidden="true" />
+          {t('Your processed Spot is ready!')}
+          <Button onClick={() => window.location.reload()}>
+            <PlayCircle size={13} />
+            {t('Play now')}
+          </Button>
+        </div>
+      ) : null}
 
       {!isLoaded && (
-        <div className="relative w-full h-full flex flex-col items-center justify-center bg-white/50">
-          <img
-            src="/assets/img/videoProcessing.svg"
-            alt="Processing video.."
-            width={75}
-            className="mb-5"
-          />
-          <div className="text-2xl font-bold">Loading Spot Recording...</div>
+        <div className="m-spotp__loading">
+          <Loader2 size={20} className="animate-spin" aria-hidden="true" />
+          {t('Loading the recording…')}
         </div>
       )}
       <video
@@ -242,7 +250,7 @@ function SpotVideoContainer({
         poster={thumbnail}
         autoPlay
         playsInline
-        className="object-contain absolute top-0 left-0 w-full h-full bg-gray-lightest cursor-pointer"
+        className="object-contain absolute top-0 left-0 w-full h-full bg-surface-canvas cursor-pointer"
         onClick={() => spotPlayerStore.setIsPlaying(!spotPlayerStore.isPlaying)}
         style={{ display: isLoaded ? 'block' : 'none' }}
       />

@@ -1,0 +1,173 @@
+.m-fbar__filter {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-3);
+  color: var(--m-content-muted);
+
+  background: var(--m-surface-canvas);
+  border: var(--m-border-width) solid var(--m-border-default);
+  border-radius: var(--m-radius-control);
+  cursor: pointer;
+  transition:
+    color var(--m-duration-fast) var(--m-ease-out),
+    background var(--m-duration-fast) var(--m-ease-out),
+    border-color var(--m-duration-fast) var(--m-ease-out);
+}
+
+.m-fbar__filter:hover {
+  color: var(--m-content-secondary);
+  background: var(--m-surface-default);
+  border-color: var(--m-border-strong);
+}
+
+.m-fbar__filter:active {
+  transform: translateY(0.5px);
+}
+
+.m-fbar__filter-glyph {
+  flex: none;
+  color: var(--m-content-decorative);
+  transition: color var(--m-duration-fast) var(--m-ease-out);
+}
+.m-fbar__filter:hover .m-fbar__filter-glyph {
+  color: var(--m-content-secondary);
+}
+
+.m-fbar__key {
+  flex: none;
+  padding: 1px var(--m-space-2);
+  font-family: var(--m-font-num);
+  font-size: var(--m-text-2xs);
+  line-height: 1.5;
+  color: var(--m-content-placeholder);
+  background: var(--m-surface-default);
+  border: var(--m-border-width) solid var(--m-border-subtle);
+  border-radius: var(--m-radius-chip);
+  pointer-events: none;
+}
+
+[data-trigger='button'] .m-fbar__filter {
+  height: var(--m-control-height-sm);
+  padding-inline: var(--m-space-3) var(--m-space-2);
+  font-size: var(--m-text-xs);
+}
+
+[data-trigger='bar'] .m-fbar__triggerwrap {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 32rem;
+}
+[data-trigger='bar'] .m-fbar__filter {
+  width: 100%;
+  height: var(--m-control-height-sm);
+  padding-inline: var(--m-space-3) var(--m-space-2);
+  font-size: var(--m-text-xs);
+  cursor: text;
+}
+[data-trigger='bar'] .m-fbar__key {
+  margin-inline-start: auto;
+}
+
+.m-fbar__input {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--m-content-primary);
+  font: inherit;
+  line-height: 1;
+}
+.m-fbar__input::placeholder {
+  color: var(--m-content-placeholder);
+  opacity: 1;
+}
+.m-fbar__filter:hover .m-fbar__input::placeholder {
+  color: var(--m-content-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m-fbar__filter:active {
+    transform: none;
+  }
+}
+
+.m-fbar__ring {
+  position: absolute;
+
+  inset: calc(var(--m-border-width) * -0.5);
+  border-radius: inherit;
+  pointer-events: none;
+
+  --m-torch-x: 50%;
+  --m-torch-y: 50%;
+  --m-torch-r: 0px;
+  -webkit-mask: radial-gradient(
+    circle at var(--m-torch-x) var(--m-torch-y),
+    #000 0,
+    #000 calc(var(--m-torch-r) * 0.35),
+    transparent calc(var(--m-torch-r) * 1.9)
+  );
+  mask: radial-gradient(
+    circle at var(--m-torch-x) var(--m-torch-y),
+    #000 0,
+    #000 calc(var(--m-torch-r) * 0.35),
+    transparent calc(var(--m-torch-r) * 1.9)
+  );
+}
+
+.m-fbar__ring svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.m-fbar__ring rect {
+  fill: none;
+  stroke: var(--m-content-accent);
+  stroke-linecap: round;
+  rx: var(--m-radius-control);
+}
+
+.m-fbar__arc {
+  stroke-width: 1.25;
+  opacity: 0.62;
+  filter: blur(0.7px);
+}
+
+.m-fbar__glow {
+  stroke-width: 4;
+  opacity: 0.24;
+  filter: blur(3.5px);
+}
+
+.m-fbar__filter:is(:focus-visible, :focus-within) {
+  outline: none;
+}
+.m-fbar__filter:is(:focus-visible, :focus-within) .m-fbar__ring {
+  -webkit-mask: none;
+  mask: none;
+}
+.m-fbar__filter:is(:focus-visible, :focus-within) .m-fbar__ring .m-fbar__arc {
+  stroke: var(--m-focus-ring);
+  stroke-width: 2;
+  opacity: 1;
+  filter: none;
+}
+.m-fbar__filter:is(:focus-visible, :focus-within) .m-fbar__ring .m-fbar__glow {
+  display: none;
+}
+
+.m-fbar__triggerwrap {
+  position: relative;
+  flex: none;
+  display: flex;
+}
+
+.m-fbar__triggerwrap.is-docked {
+  display: none;
+}

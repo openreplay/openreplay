@@ -1,0 +1,102 @@
+.m-e2e__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-space-5);
+  padding: var(--m-space-5);
+
+  overflow: hidden;
+}
+
+.m-e2e__body .m-code {
+  flex: 1;
+  min-height: 12rem;
+}
+.m-e2e__body .m-code__pre {
+  flex: 1;
+  min-height: 0;
+}
+
+.m-e2e__k6 {
+  font-size: var(--m-text-2xs);
+  font-weight: var(--m-weight-medium);
+  color: var(--m-content-decorative);
+  letter-spacing: var(--m-tracking-normal);
+}
+[data-state='on'] .m-e2e__k6 {
+  color: var(--m-content-muted);
+}
+
+/* the side-panel variant: the sheet's body, in the panel's column */
+.m-e2e-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.m-e2e-panel .m-e2e__body {
+  flex: 1;
+  min-height: 0;
+}
+.m-e2e__row {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-3);
+  font-size: var(--m-text-sm);
+  color: var(--m-content-secondary);
+}
+label.m-e2e__row {
+  cursor: pointer;
+}
+.m-e2e__inputs {
+  flex: none;
+  font-size: var(--m-text-xs);
+}
+.m-e2e__inputs > summary {
+  cursor: pointer;
+  font-weight: var(--m-weight-medium);
+  color: var(--m-content-secondary);
+}
+.m-e2e__inputs-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-space-3);
+  max-height: 10rem;
+  margin-top: var(--m-space-2);
+  padding: var(--m-space-3);
+  overflow-y: auto;
+  border: 1px solid var(--m-border-subtle);
+  border-radius: var(--m-radius-control);
+}
+.m-e2e__input-sel {
+  color: var(--m-content-muted);
+  text-align: left;
+}
+.m-e2e__input-sel span {
+  color: var(--m-content-disabled);
+}
+.m-e2e__input-el {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  width: 100%;
+  padding: 2px var(--m-space-2);
+  border-radius: var(--m-radius-control);
+  text-align: left;
+  color: var(--m-content-secondary);
+}
+.m-e2e__input-el:hover {
+  background: var(--m-surface-hover);
+}
+.m-e2e__input-el.is-on {
+  background: var(--m-surface-selected);
+  color: var(--m-content-primary);
+}
+.m-e2e__input-idx {
+  flex: none;
+  color: var(--m-content-disabled);
+}
+.m-e2e__input-val {
+  margin-left: auto;
+  max-width: 8rem;
+  color: var(--m-content-success);
+}

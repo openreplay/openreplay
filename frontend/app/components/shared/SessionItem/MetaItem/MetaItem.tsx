@@ -1,6 +1,7 @@
-import React from 'react';
 import cn from 'classnames';
-import { TextEllipsis } from 'UI';
+import React from 'react';
+
+import TextEllipsis from '../TextEllipsis';
 
 interface Props {
   className?: string;

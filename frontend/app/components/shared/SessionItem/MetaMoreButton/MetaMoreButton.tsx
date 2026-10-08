@@ -1,8 +1,10 @@
+import { Button } from '@/ui/actions/button';
+import { Icon } from '@/ui/icons/Icon';
+import { PopoverPanel } from '@/ui/overlays/popover';
 import React from 'react';
-import { Button, Popover } from 'antd';
-import MetaItem from '../MetaItem';
-import { Icon } from 'UI';
 import { useTranslation } from 'react-i18next';
+
+import MetaItem from '../MetaItem';
 
 interface Props {
   list: any[];
@@ -12,10 +14,11 @@ export default function MetaMoreButton(props: Props) {
   const { list, maxLength } = props;
   const { t } = useTranslation();
   return (
-    <Popover
-      content={() => (
+    <PopoverPanel
+      className="p-3"
+      content={
         <div
-          className="text-sm grid grid-col gap-3 bg-white"
+          className="text-sm grid grid-col gap-3"
           style={{ maxHeight: '200px', overflowY: 'auto' }}
         >
           <span className="text-base">
@@ -28,15 +31,11 @@ export default function MetaMoreButton(props: Props) {
             <MetaItem key={index} label={label} value={value} />
           ))}
         </div>
-      )}
+      }
       placement="bottom"
     >
       <div className="flex items-center">
-        <Button
-          type="text"
-          size="small"
-          className="text-sm text-neutral-400 px-0"
-        >
+        <Button variant="subtle" className="text-sm text-neutral-400 px-0">
           <Icon
             name="metadata-more"
             className="w-4 h-4"
@@ -45,6 +44,6 @@ export default function MetaMoreButton(props: Props) {
           />
         </Button>
       </div>
-    </Popover>
+    </PopoverPanel>
   );
 }

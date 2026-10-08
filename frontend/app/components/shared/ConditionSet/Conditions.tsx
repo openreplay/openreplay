@@ -1,7 +1,8 @@
-import React from 'react';
 import { observer } from 'mobx-react-lite';
+import React from 'react';
+
 import { Conditions } from 'App/mstore/types/FeatureFlag';
-import { toast } from 'react-toastify';
+
 import ConditionSetComponent from './ConditionSet';
 
 interface Props {
@@ -29,31 +30,6 @@ function ConditionSet({
   excludeFilterKeys,
   isMobile,
 }: Props) {
-  const [forceRender, forceRerender] = React.useState(false);
-
-  const onAddFilter = (filter: Record<string, any> = {}) => {
-    setChanged?.(true);
-    conditions.filter.addFilter(filter);
-    forceRerender(!forceRender);
-  };
-  const onUpdateFilter = (filterIndex: number, filter: any) => {
-    setChanged?.(true);
-    conditions.filter.updateFilter(filterIndex, filter);
-    forceRerender(!forceRender);
-  };
-
-  const onChangeEventsOrder = (_: any, { name, value }: any) => {
-    setChanged?.(true);
-    conditions.filter.updateKey(name, value);
-    forceRerender(!forceRender);
-  };
-
-  const onRemoveFilter = (filterIndex: number) => {
-    setChanged?.(true);
-    conditions.filter.removeFilter(filterIndex);
-    forceRerender(!forceRender);
-  };
-
   const onPercentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setChanged?.(true);
     const value = e.target.value || '0';
@@ -64,7 +40,7 @@ function ConditionSet({
 
   const changeName = (name: string) => {
     setChanged?.(true);
-    conditions.name = name;
+    conditions.setName(name);
   };
 
   return (
@@ -74,14 +50,11 @@ function ConditionSet({
       removeCondition={removeCondition}
       index={index}
       readonly={readonly}
-      onAddFilter={onAddFilter}
+      onChanged={() => setChanged?.(true)}
       bottomLine1={bottomLine1}
       bottomLine2={bottomLine2}
       onPercentChange={onPercentChange}
       conditions={conditions}
-      onUpdateFilter={onUpdateFilter}
-      onRemoveFilter={onRemoveFilter}
-      onChangeEventsOrder={onChangeEventsOrder}
       isMobile={isMobile}
     />
   );

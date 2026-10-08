@@ -1,14 +1,16 @@
-import React, { useEffect } from 'react';
-import usePageTitle from 'App/hooks/usePageTitle';
-import { Loader } from 'UI';
+import { Loader } from '@/ui/feedback/Loader';
+import { toast } from '@/ui/overlays/toast';
 import withPermissions from 'HOCs/withPermissions';
-import { clearLogs } from 'App/dev/console';
-import { toast } from 'react-toastify';
-import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import LivePlayer from './LivePlayer';
-import { useHistory } from 'App/routing';
+import React, { useEffect } from 'react';
+
+import { clearLogs } from 'App/dev/console';
+import usePageTitle from 'App/hooks/usePageTitle';
+import { useStore } from 'App/mstore';
 import { liveSession, withSiteId } from 'App/routes';
+import { useHistory } from 'App/routing';
+
+import LivePlayer from './LivePlayer';
 
 function LiveSession({
   match: {

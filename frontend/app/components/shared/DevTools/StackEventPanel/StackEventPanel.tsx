@@ -1,24 +1,26 @@
 import { Timed } from 'Player';
-import React, { useEffect, useMemo, useState } from 'react';
-import { observer } from 'mobx-react-lite';
-import { Tabs, NoContent, Icon } from 'UI';
-import { Input, Segmented, Tooltip } from 'antd';
-import { SearchOutlined, InfoCircleOutlined } from '@ant-design/icons';
-import {
-  PlayerContext,
-  MobilePlayerContext,
-} from 'App/components/Session/playerContext';
-import { useModal } from 'App/components/Modal';
-import { useStore } from 'App/mstore';
 import { typeList } from 'Types/session/stackEvent';
+import { observer } from 'mobx-react-lite';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { VList, VListHandle } from 'virtua';
+
+import { useModal } from 'App/components/Modal';
+import {
+  MobilePlayerContext,
+  PlayerContext,
+} from 'App/components/Session/playerContext';
+import { useStore } from 'App/mstore';
+import { capitalize } from 'App/utils';
+
 import StackEventRow from 'Shared/DevTools/StackEventRow';
 
-import { VList, VListHandle } from 'virtua';
-import StackEventModal from '../StackEventModal';
-import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
 import BottomBlock from '../BottomBlock';
+import { Keyword, NoData, PanelTabs } from '../PanelKit';
+import StackEventModal from '../StackEventModal';
+import TabSelector from '../TabSelector';
+import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
 import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter';
-import { useTranslation } from 'react-i18next';
 
 const mapNames = (type: string) => {
   if (type === 'openreplay') return 'OpenReplay';
@@ -42,8 +44,8 @@ interface Event extends Timed {
 type EventsList = Array<Event>;
 
 const WebStackEventPanelComp = observer(() => {
-  const [source, setSource] = useState<'current' | 'all'>('all');
   const { uiPlayerStore } = useStore();
+  const source = uiPlayerStore.dataSource;
   const zoomEnabled = uiPlayerStore.timelineZoom.enabled;
   const zoomStartTs = uiPlayerStore.timelineZoom.startTs;
   const zoomEndTs = uiPlayerStore.timelineZoom.endTs;
@@ -51,7 +53,8 @@ const WebStackEventPanelComp = observer(() => {
   const jump = (t: number) => player.jump(t);
   const { currentTab, tabStates, tabNames } = store.get();
   const tabsArr = Object.keys(tabStates);
-  const getTabNum = (tab: string) => tabsArr.findIndex((t) => t === tab) + 1;
+  const getTabNum = (tab: string) =>
+    tabsArr.length > 1 ? tabsArr.findIndex((t) => t === tab) + 1 : undefined;
 
   const { stackList: list = [], stackListNow: listNow = [] } =
     tabStates[currentTab] ?? {};
@@ -94,8 +97,7 @@ const WebStackEventPanelComp = observer(() => {
       zoomEnabled={zoomEnabled}
       zoomStartTs={zoomStartTs}
       zoomEndTs={zoomEndTs}
-      source={source}
-      setSource={setSource}
+      showTabScope
     />
   );
 });
@@ -134,9 +136,7 @@ const EventsPanel = observer(
     zoomEnabled,
     zoomStartTs,
     zoomEndTs,
-    isMobile,
-    source,
-    setSource,
+    showTabScope,
   }: {
     list: EventsList;
     listNow: EventsList;
@@ -145,8 +145,7 @@ const EventsPanel = observer(
     zoomStartTs: number;
     zoomEndTs: number;
     isMobile?: boolean;
-    source?: 'current' | 'all';
-    setSource?: (v: 'current' | 'all') => void;
+    showTabScope?: boolean;
   }) => {
     const { t } = useTranslation();
     const {
@@ -188,9 +187,7 @@ const EventsPanel = observer(
 
     const onTabClick = (activeTab: (typeof TAB_KEYS)[number]) =>
       devTools.update(INDEX_KEY, { activeTab });
-    const onFilterChange = ({
-      target: { value },
-    }: React.ChangeEvent<HTMLInputElement>) =>
+    const onFilterChange = (value: string) =>
       devTools.update(INDEX_KEY, { filter: value });
     const tabs = useMemo(
       () =>
@@ -219,7 +216,6 @@ const EventsPanel = observer(
       setIsDetailsModalActive(true);
       showModal(<StackEventModal event={item} />, {
         right: true,
-        width: 500,
         onClose: () => {
           setIsDetailsModalActive(false);
           timeoutStartAutoscroll();
@@ -243,71 +239,36 @@ const EventsPanel = observer(
         onMouseLeave={onMouseLeave}
       >
         <BottomBlock.Header>
-          <div className="flex items-center">
-            <span className="font-semibold color-gray-medium mr-4">
-              {t('Stack Events')}
-            </span>
-            <Tabs
-              renameTab={mapNames}
-              tabs={tabs}
-              active={activeTab}
-              onClick={onTabClick}
-              border={false}
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            {isMobile ? null : (
-              <Segmented
-                options={[
-                  { label: 'All Tabs', value: 'all' },
-                  {
-                    label: (
-                      <Tooltip
-                        title={
-                          setSource
-                            ? undefined
-                            : t(
-                                'Stack Events overview is available only for all tabs combined.',
-                              )
-                        }
-                      >
-                        <span>{t('Current Tab')}</span>
-                      </Tooltip>
-                    ),
-                    value: 'current',
-                    disabled: setSource ? false : true,
-                  },
-                ]}
-                onChange={(val: 'current' | 'all') => setSource?.(val)}
-                value={source}
-                defaultValue="all"
-                size="small"
-                className="rounded-full font-medium"
-              />
-            )}
-            <Input
-              className="rounded-lg"
-              placeholder="Filter by keyword"
-              name="filter"
-              height={28}
-              onChange={onFilterChange}
-              value={filter}
-              size="small"
-              prefix={<SearchOutlined className="text-neutral-400" />}
-            />
+          <PanelTabs
+            label={t('Event source')}
+            active={activeTab}
+            onSelect={onTabClick as (k: string) => void}
+            items={tabs.map(({ key }) => ({
+              key,
+              label: key === ALL ? t('All') : capitalize(mapNames(key)),
+              count:
+                key === ALL
+                  ? inZoomRangeList.length
+                  : inZoomRangeList.filter((e) => e.source === key).length,
+            }))}
+          />
+          <div className="m-dt__bar-right">
+            {showTabScope ? <TabSelector /> : null}
+            <Keyword value={filter} onChange={onFilterChange} />
           </div>
         </BottomBlock.Header>
-        <BottomBlock.Content className="overflow-y-auto">
-          <NoContent
-            title={
-              <div className="capitalize flex items-center mt-16 gap-2">
-                <InfoCircleOutlined size={18} />
-                {t('No Data')}
-              </div>
-            }
-            size="small"
-            show={filteredList.length === 0}
-          >
+        <BottomBlock.Content>
+          {filteredList.length === 0 ? (
+            <NoData
+              hint={
+                filter
+                  ? t('No event matches that.')
+                  : t(
+                      'Nothing was sent with tracker.event() and no integration reported here.',
+                    )
+              }
+            />
+          ) : (
             <VList ref={_list} data={filteredList}>
               {(item, index) => (
                 <StackEventRow
@@ -325,7 +286,7 @@ const EventsPanel = observer(
                 />
               )}
             </VList>
-          </NoContent>
+          )}
         </BottomBlock.Content>
       </BottomBlock>
     );

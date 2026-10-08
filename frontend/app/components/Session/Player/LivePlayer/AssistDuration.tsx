@@ -1,11 +1,12 @@
-import React from 'react';
 import { Duration } from 'luxon';
-import {
-  PlayerContext,
-  ILivePlayerContext,
-} from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+
+import {
+  ILivePlayerContext,
+  PlayerContext,
+} from 'App/components/Session/playerContext';
 
 function AssistDurationCont() {
   // @ts-ignore ??? TODO

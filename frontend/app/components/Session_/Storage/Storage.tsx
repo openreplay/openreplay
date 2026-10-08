@@ -1,10 +1,5 @@
-import React from 'react';
-import { useStore } from 'App/mstore';
-import { PlayerContext } from 'App/components/Session/playerContext';
-import { observer } from 'mobx-react-lite';
-import { JSONTree, NoContent, Tooltip } from 'UI';
-import { formatMs } from 'App/date';
-import diff from 'microdiff';
+import { JSONTree } from '@/ui/data/JSONTree';
+import { Tooltip } from '@/ui/overlays/tooltip';
 import {
   STORAGE_TYPES,
   selectStorageList,
@@ -12,14 +7,23 @@ import {
   selectStorageType,
 } from 'Player';
 import cn from 'classnames';
+import diff from 'microdiff';
+import { observer } from 'mobx-react-lite';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { PlayerContext } from 'App/components/Session/playerContext';
+import { formatMs } from 'App/date';
 import logger from 'App/logger';
-import { Segmented } from 'antd';
+import { useStore } from 'App/mstore';
+
+import { NoData } from 'Shared/DevTools/PanelKit';
+
 import Autoscroll from '../Autoscroll';
 import BottomBlock from '../BottomBlock/index';
 import DiffRow from './DiffRow';
-import stl from './storage.module.css';
 import ReduxViewer from './ReduxViewer';
-import { useTranslation } from 'react-i18next';
+import stl from './storage.module.css';
 
 function getActionsName(type: string) {
   switch (type) {
@@ -124,7 +128,7 @@ function Storage() {
       return (
         <div
           style={{ flex: 3 }}
-          className="flex flex-col p-2 pr-0 font-mono text-disabled-text"
+          className="flex flex-col p-2 pr-0 font-mono text-content-disabled"
         >
           {t('No diff')}
         </div>
@@ -226,7 +230,7 @@ function Storage() {
           className="flex-1 flex gap-2 pt-2 items-center justify-end self-start"
         >
           {typeof item?.duration === 'number' && (
-            <div className="font-size-12 color-gray-medium">
+            <div className="text-xs text-content-muted">
               {formatMs(itemD.duration)}
             </div>
           )}
@@ -258,125 +262,114 @@ function Storage() {
       {/* @ts-ignore */}
       <>
         <BottomBlock.Header>
-          <div className="flex w-full items-center">
-            <div
-              style={{ width: '25%', marginRight: 20 }}
-              className="font-semibold flex items-center gap-2"
-            >
-              <h3>{t('STATE')}</h3>
-            </div>
+          <div className="m-dt__colheads">
+            <span style={{ width: '25%' }}>{t('State')}</span>
             {showDiffs ? (
-              <h3 style={{ width: '39%' }} className="font-semibold">
-                {t('DIFFS')}
-              </h3>
+              <span style={{ width: '39%' }}>{t('Diffs')}</span>
             ) : null}
-            <h3 style={{ width: '30%' }} className="font-semibold">
-              {getActionsName(type)}
-            </h3>
-            <h3
-              style={{ paddingRight: 30, marginLeft: 'auto' }}
-              className="font-semibold"
-            >
+            <span style={{ width: '30%' }}>{getActionsName(type)}</span>
+            <span className="ml-auto">
               <Tooltip title={t('Time to execute')}>{t('TTE')}</Tooltip>
-            </h3>
-            <Segmented options={[{ label: 'Current Tab', value: 'all' }]} />
+            </span>
           </div>
+          <span className="m-dt__figrow-note">{t('Current tab')}</span>
         </BottomBlock.Header>
         <BottomBlock.Content className="flex">
-          <NoContent
-            title={t('Nothing to display yet')}
-            subtext={
-              !hintIsHidden ? (
-                <>
-                  {t(
-                    'Inspect your application state while you’re replaying your users sessions. OpenReplay supports',
-                  )}
-                  &nbsp;
-                  <a
-                    className="underline color-teal"
-                    href="https://docs.openreplay.com/plugins/redux"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    {t('Redux')}
-                  </a>
-                  {', '}
-                  <a
-                    className="underline color-teal"
-                    href="https://docs.openreplay.com/plugins/vuex"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    {t('VueX')}
-                  </a>
-                  {', '}
-                  <a
-                    className="underline color-teal"
-                    href="https://docs.openreplay.com/plugins/pinia"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    {t('Pinia')}
-                  </a>
-                  {', '}
-                  <a
-                    className="underline color-teal"
-                    href="https://docs.openreplay.com/plugins/zustand"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    {t('Zustand')}
-                  </a>
-                  {', '}
-                  <a
-                    className="underline color-teal"
-                    href="https://docs.openreplay.com/plugins/mobx"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    {t('MobX')}
-                  </a>
-                  {' and '}
-                  <a
-                    className="underline color-teal"
-                    href="https://docs.openreplay.com/plugins/ngrx"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    {t('NgRx')}
-                  </a>
-                  .
-                  <br />
-                  <br />
-                  <button
-                    className="color-teal"
-                    onClick={() => hideHint('storage')}
-                  >
-                    {t('Got It!')}
-                  </button>
-                </>
-              ) : null
-            }
-            size="small"
-            show={list.length === 0}
-          >
-            <div className="ph-10 scroll-y" style={{ width: '25%' }}>
-              {list.length === 0 ? (
-                <div className="color-gray-light font-size-16 mt-20 text-center">
-                  {t('Empty state.')}
-                </div>
-              ) : (
-                <JSONTree collapsed={2} src={stateObject} />
-              )}
-            </div>
-            <div className="flex" style={{ width: '75%' }}>
-              <Autoscroll className="ph-10">
-                {decodedList.map((item: Record<string, any>, i: number) =>
-                  renderItem(item, i, i > 0 ? decodedList[i - 1] : undefined),
+          {list.length === 0 ? (
+            <NoData
+              title={t('Nothing to display yet')}
+              hint={
+                !hintIsHidden ? (
+                  <>
+                    {t(
+                      'Inspect your application state while you’re replaying your users sessions. OpenReplay supports',
+                    )}
+                    &nbsp;
+                    <a
+                      className="m-dt__loglink"
+                      href="https://docs.openreplay.com/plugins/redux"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {t('Redux')}
+                    </a>
+                    {', '}
+                    <a
+                      className="m-dt__loglink"
+                      href="https://docs.openreplay.com/plugins/vuex"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {t('VueX')}
+                    </a>
+                    {', '}
+                    <a
+                      className="m-dt__loglink"
+                      href="https://docs.openreplay.com/plugins/pinia"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {t('Pinia')}
+                    </a>
+                    {', '}
+                    <a
+                      className="m-dt__loglink"
+                      href="https://docs.openreplay.com/plugins/zustand"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {t('Zustand')}
+                    </a>
+                    {', '}
+                    <a
+                      className="m-dt__loglink"
+                      href="https://docs.openreplay.com/plugins/mobx"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {t('MobX')}
+                    </a>
+                    {' and '}
+                    <a
+                      className="m-dt__loglink"
+                      href="https://docs.openreplay.com/plugins/ngrx"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {t('NgRx')}
+                    </a>
+                    .
+                    <br />
+                    <br />
+                    <button
+                      type="button"
+                      className="m-dt__loglink"
+                      onClick={() => hideHint('storage')}
+                    >
+                      {t('Got It!')}
+                    </button>
+                  </>
+                ) : null
+              }
+            />
+          ) : (
+            <>
+              <div className="ph-10 scroll-y" style={{ width: '25%' }}>
+                {list.length === 0 ? (
+                  <NoData title={t('Empty state.')} />
+                ) : (
+                  <JSONTree collapsed={2} src={stateObject} />
                 )}
-              </Autoscroll>
-            </div>
-          </NoContent>
+              </div>
+              <div className="flex" style={{ width: '75%' }}>
+                <Autoscroll className="ph-10">
+                  {decodedList.map((item: Record<string, any>, i: number) =>
+                    renderItem(item, i, i > 0 ? decodedList[i - 1] : undefined),
+                  )}
+                </Autoscroll>
+              </div>
+            </>
+          )}
         </BottomBlock.Content>
       </>
     </BottomBlock>

@@ -1,7 +1,8 @@
-import { useEffect, useState, useMemo } from 'react';
 import { Timed } from 'Player';
-import useLatestRef from 'App/hooks/useLatestRef';
+import { useEffect, useMemo, useState } from 'react';
+
 import useCancelableTimeout from 'App/hooks/useCancelableTimeout';
+import useLatestRef from 'App/hooks/useLatestRef';
 
 const TIMEOUT_DURATION = 5000;
 

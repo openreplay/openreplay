@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import { Icon } from '@/ui/icons/Icon';
 import cn from 'classnames';
-import { Icon } from 'UI';
+import { FastForward } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
+import React, { useState } from 'react';
+
+import { debounceCall } from 'App/utils';
 import cls from 'Components/Session_/Player/Overlay/PlayIconLayer.module.css';
 import clsOv from 'Components/Session_/Player/Overlay/overlay.module.css';
-import { FastForward } from 'lucide-react';
-import { debounceCall } from 'App/utils';
 
 interface Props {
   isPlaying: boolean;
@@ -73,7 +74,7 @@ function PlayIconLayer({
       <div
         className={cn(
           'flex items-center pl-10 lg:hidden absolute left-0 top-0',
-          'h-full w-1/4 text-gray-medium',
+          'h-full w-1/4 text-content-muted',
         )}
         onClick={(e) => {
           e.stopPropagation();
@@ -85,7 +86,7 @@ function PlayIconLayer({
       <div
         className={cn(
           'flex items-center justify-end pr-10 lg:hidden absolute right-0 top-0',
-          'h-full w-1/4 text-gray-medium',
+          'h-full w-1/4 text-content-muted',
         )}
         onClick={(e) => {
           e.stopPropagation();

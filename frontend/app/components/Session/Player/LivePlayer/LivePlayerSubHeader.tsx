@@ -1,44 +1,38 @@
-import React from 'react';
-import { Icon, Tooltip } from 'UI';
-import { Link2 } from 'lucide-react';
-import { PlayerContext } from 'App/components/Session/playerContext';
+import { Tooltip } from '@/ui/overlays/tooltip';
+import { Lock } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
-import SessionTabs from 'Components/Session/Player/SharedComponents/SessionTabs';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { PlayerContext } from 'App/components/Session/playerContext';
+import SessionTabs from 'Components/Session/Player/SharedComponents/SessionTabs';
 
 function SubHeader() {
   const { t } = useTranslation();
   const { store } = React.useContext(PlayerContext);
-  const { location: currentLocation = 'loading...' } = store.get();
-
-  const location =
-    currentLocation.length > 70
-      ? `${currentLocation.slice(0, 70)}...`
-      : currentLocation;
-
+  const { location = '', tabs = [] } = store.get() as any;
+  const multiTab = tabs.length > 1;
   return (
-    <>
-      <div className="w-full px-4 pt-2 flex items-center border-b min-h-3">
-        <SessionTabs isLive />
-      </div>
-      {location && (
-        <div className="w-full bg-white border-b border-gray-lighter">
-          <div className="flex w-fit items-center cursor-pointer color-gray-medium text-sm p-1">
-            <Link2 className="mx-2" size={16} />
-            <Tooltip title={t('Open in new tab')} delay={0} placement="bottom">
-              <a
-                href={location}
-                target="_blank"
-                className="link"
-                rel="noreferrer"
-              >
-                {location}
-              </a>
-            </Tooltip>
-          </div>
-        </div>
-      )}
-    </>
+    <div className={`m-player__urlbar${multiTab ? ' has-tabs' : ''}`}>
+      {multiTab && <SessionTabs isLive />}
+      <span className="m-player__address">
+        <Lock size={10} aria-hidden="true" />
+        {location ? (
+          <Tooltip title={t('Open in new tab')} side="bottom">
+            <a
+              href={location}
+              target="_blank"
+              rel="noreferrer"
+              className="m-player__url m-mono m-truncate"
+            >
+              {location}
+            </a>
+          </Tooltip>
+        ) : (
+          <span className="m-player__url m-mono">{t('Loading…')}</span>
+        )}
+      </span>
+    </div>
   );
 }
 

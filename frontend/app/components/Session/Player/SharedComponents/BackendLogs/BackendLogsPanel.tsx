@@ -1,22 +1,24 @@
+import { Icon } from '@/ui/icons/Icon';
 import { useQuery } from '@tanstack/react-query';
-import React from 'react';
-import { VList, VListHandle } from 'virtua';
-import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
-import { useStore, client } from 'App/mstore';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { VList, VListHandle } from 'virtua';
+
 import {
   ServiceName,
   serviceNames,
 } from 'App/components/Client/Integrations/apiMethods';
+import { PlayerContext } from 'App/components/Session/playerContext';
 import BottomBlock from 'App/components/shared/DevTools/BottomBlock';
+import { client, useStore } from 'App/mstore';
 import { capitalize } from 'App/utils';
-import { Icon } from 'UI';
-import { Segmented, Input, Tooltip } from 'antd';
-import { SearchOutlined } from '@ant-design/icons';
-import { processLog, UnifiedLog } from './utils';
+
+import { Keyword, PanelTabs } from 'Shared/DevTools/PanelKit';
+
 import { FailedFetch, LoadingFetch } from './StatusMessages';
-import { TableHeader, LogRow } from './Table';
-import { useTranslation } from 'react-i18next';
+import { LogRow, TableHeader } from './Table';
+import { UnifiedLog, processLog } from './utils';
 
 async function fetchLogs(
   tab: string,
@@ -61,74 +63,31 @@ function BackendLogsPanel() {
   });
   const [filter, setFilter] = React.useState('');
 
-  const onFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFilter(e.target.value);
-  };
-
   const tabs = Object.entries(serviceNames)
     .filter(
       ([slug]) => integratedServices.findIndex((i) => i.name === slug) !== -1,
     )
-    .map(([slug, name]) => ({
-      label: (
-        <div className="flex items-center gap-2">
-          <Icon size={14} name={`integrations/${slug}`} /> <div>{name}</div>
-        </div>
-      ),
-      value: slug,
-    }));
+    .map(([slug, name]) => ({ name, value: slug }));
 
   return (
     <BottomBlock style={{ height: '100%' }}>
       <BottomBlock.Header>
-        <div className="flex items-center justify-between w-full">
-          <div className="flex gap-2 items-center">
-            <div className="font-semibold">{t('Traces')}</div>
-            {tabs.length && tab ? (
-              <div>
-                <Segmented
-                  options={tabs}
-                  value={tab}
-                  onChange={setTab}
-                  size="small"
-                />
-              </div>
-            ) : null}
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Segmented
-              options={[
-                { label: t('All Tabs'), value: 'all' },
-                {
-                  label: (
-                    <Tooltip
-                      title={t(
-                        'Backend logs are fetched for all tabs combined.',
-                      )}
-                    >
-                      <span>{t('Current Tab')}</span>
-                    </Tooltip>
-                  ),
-                  value: 'current',
-                  disabled: true,
-                },
-              ]}
-              defaultValue="all"
-              size="small"
-              className="rounded-full font-medium"
-            />
-
-            <Input
-              className="rounded-lg"
-              placeholder={t('Filter by keyword')}
-              name="filter"
-              onChange={onFilterChange}
-              value={filter}
-              size="small"
-              prefix={<SearchOutlined className="text-neutral-400" />}
-            />
-          </div>
+        {tabs.length && tab ? (
+          <PanelTabs
+            label={t('Trace source')}
+            active={tab}
+            onSelect={(v) => setTab(v as ServiceName)}
+            items={tabs.map((x) => ({
+              key: x.value,
+              label: x.name,
+              icon: <Icon size={13} name={`integrations/${x.value}`} />,
+            }))}
+          />
+        ) : (
+          <span />
+        )}
+        <div className="m-dt__bar-right">
+          <Keyword value={filter} onChange={setFilter} />
         </div>
       </BottomBlock.Header>
 

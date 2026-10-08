@@ -1,34 +1,31 @@
-import React from 'react';
-import { Icon } from 'UI';
-import { CopyOutlined } from '@ant-design/icons';
-import { Button } from 'antd';
 import cn from 'classnames';
-import copy from 'copy-to-clipboard';
-import { getDateFromString } from 'App/date';
-import JumpButton from 'App/components/shared/DevTools/JumpButton';
+import { ChevronRight, CircleAlert, Info, TriangleAlert } from 'lucide-react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+
+import JumpButton, {
+  RowCopy,
+} from 'App/components/shared/DevTools/JumpButton/JumpButton';
+import { getDateFromString } from 'App/date';
 
 export function TableHeader({ size }: { size: number }) {
   const { t } = useTranslation();
   return (
-    <div
-      className="grid items-center py-2 px-4 bg-gray-lighter"
-      style={{
-        gridTemplateColumns: 'repeat(14, minmax(0, 1fr))',
-      }}
-    >
-      <div className="col-span-2">{t('timestamp')}</div>
-      <div className="col-span-1 pl-2">{t('status')}</div>
-      <div className="col-span-11 flex items-center justify-between">
-        <div>{t('content')}</div>
-        <div>
-          <span className="font-semibold">{size}</span>&nbsp;{t('Records')}
-        </div>
-      </div>
+    <div className="m-dt__row m-dt__blhead is-inert">
+      <span className="m-dt__rowopen is-empty" aria-hidden="true" />
+      <span className="m-dt__blts">{t('Time')}</span>
+      <span className="flex-1">{t('Message')}</span>
+      <span>{t('{{count}} records', { count: size })}</span>
     </div>
   );
 }
 
+const LEVEL = {
+  ERROR: { cls: 'error', Icon: CircleAlert },
+  WARN: { cls: 'warn', Icon: TriangleAlert },
+} as const;
+
+/** One backend log line, on the console row's look; multi-line messages expand. */
 export function LogRow({
   log,
   onJump,
@@ -38,83 +35,58 @@ export function LogRow({
   onJump: (ts: number) => void;
   isActive?: boolean;
 }) {
-  const [isExpanded, setIsExpanded] = React.useState(false);
-  const bg = (status: string) => {
-    // types: warn error info none
-    if (status === 'WARN') {
-      return 'bg-yellow';
-    }
-    if (status === 'ERROR') {
-      return 'bg-red-lightest';
-    }
-    return 'bg-white';
-  };
+  const { t } = useTranslation();
+  const [open, setOpen] = React.useState(false);
+  // providers report levels in their own casing (Elastic "warning", Sentry "error", Datadog "ERROR")
+  const status = String(log.status ?? '').toUpperCase();
+  const level =
+    status === 'ERROR' || status === 'CRITICAL' || status === 'FATAL'
+      ? LEVEL.ERROR
+      : status.startsWith('WARN')
+        ? LEVEL.WARN
+        : undefined;
+  const Icon = level?.Icon ?? Info;
+  const lines = log.content.split('\n');
+  const canExpand = lines.length > 1 || log.content.length > 160;
 
-  const border = (status: string) => {
-    // types: warn error info none
-    if (status === 'WARN') {
-      return 'border-l border-l-4 border-l-amber-500';
-    }
-    if (status === 'ERROR') {
-      return 'border-l border-l-4 border-l-red';
-    }
-    return 'border-l border-l-4 border-gray-lighter';
-  };
   return (
-    <div className="code-font relative group">
-      {log.timestamp === 'N/A' ? null : (
-        <JumpButton onClick={() => onJump(new Date(log.timestamp).getTime())} />
-      )}
-      <div
-        className={cn(
-          'text-sm grid items-center py-2 px-4',
-          'cursor-pointer border-b border-b-gray-light last:border-b-0',
-          border(log.status),
-          isActive ? 'bg-active-blue' : bg(log.status),
-        )}
-        style={{
-          gridTemplateColumns: 'repeat(14, minmax(0, 1fr))',
-        }}
-        onClick={() => setIsExpanded((prev) => !prev)}
+    <div
+      className={cn('m-dt__row m-dt__log has-tail group', {
+        'is-error': level?.cls === 'error',
+        'is-warn': level?.cls === 'warn',
+        'is-open': open,
+        'is-now': isActive,
+        'is-inert': !canExpand,
+      })}
+      onClick={canExpand ? () => setOpen((o) => !o) : undefined}
+    >
+      <span
+        className={cn('m-dt__rowopen', { 'is-empty': !canExpand })}
+        aria-expanded={canExpand ? open : undefined}
+        aria-label={
+          canExpand ? (open ? t('Collapse') : t('Expand')) : undefined
+        }
       >
-        <div className="col-span-2">
-          <div className="flex items-center gap-2">
-            <Icon
-              name="chevron-right"
-              className={
-                isExpanded ? 'rotate-90 transition' : 'rotate-0 transition'
-              }
-            />
-            <div className="whitespace-nowrap">
-              {getDateFromString(log.timestamp)}
-            </div>
-          </div>
-        </div>
-        <div className="col-span-1 pl-2">{log.status}</div>
-        <div className="col-span-11 whitespace-nowrap overflow-hidden text-ellipsis">
-          {log.content}
-        </div>
-      </div>
-      {isExpanded ? (
-        <div className="rounded-sm bg-gray-lightest px-4 py-2 relative mx-4 my-2">
-          {log.content.split('\n').map((line, index) => (
-            <div key={index} className="flex items-start gap-2">
-              <div className="border-r border-r-gray-light pr-2 select-none">
-                {index}
-              </div>
-              <div className="whitespace-pre-wrap">{line}</div>
-            </div>
-          ))}
-
-          <div className="absolute top-1 right-1">
-            <Button
-              size="small"
-              icon={<CopyOutlined />}
-              onClick={() => copy(log.content)}
-            />
-          </div>
-        </div>
-      ) : null}
+        {canExpand && <ChevronRight size={11} />}
+      </span>
+      <Icon
+        size={12}
+        className={`m-dt__level is-${level?.cls ?? 'info'}`}
+        aria-hidden="true"
+      />
+      <span className="m-dt__blts m-mono">
+        {getDateFromString(log.timestamp)}
+      </span>
+      <span className="m-dt__logtext m-mono">{lines[0]}</span>
+      {open && <pre className="m-dt__logbody m-mono">{log.content}</pre>}
+      <JumpButton
+        extra={<RowCopy text={log.content} />}
+        onClick={
+          log.timestamp === 'N/A'
+            ? undefined
+            : () => onJump(new Date(log.timestamp).getTime())
+        }
+      />
     </div>
   );
 }

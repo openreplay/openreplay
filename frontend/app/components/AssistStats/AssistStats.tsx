@@ -1,7 +1,8 @@
-import { ArrowUpOutlined, FilePdfOutlined } from '@ant-design/icons';
+import { IconButton } from '@/ui/actions/IconButton';
+import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
 import Period, { LAST_24_HOURS } from 'Types/app/period';
-import { Button, Tooltip, Typography } from 'antd';
 import { TFunction } from 'i18next';
+import { ArrowDown, ArrowUp, FileText } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -18,10 +19,10 @@ import {
 import { exportCSVFile } from 'App/utils';
 import TeamMembers from 'Components/AssistStats/components/TeamMembers';
 import { getPdf2 } from 'Components/AssistStats/pdfGenerator';
-import { Loader } from 'UI';
 
 import SelectDateRange from 'Shared/SelectDateRange/SelectDateRange';
 
+import './assist-stats.css';
 import Chart from './components/Charts';
 import StatsTable from './components/Table';
 import UserSearch from './components/UserSearch';
@@ -63,90 +64,80 @@ function AssistStats() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [page, setPage] = React.useState(1);
 
-  React.useEffect(() => {
-    void updateData();
-  }, []);
-
-  const onChangePeriod = async (period: any) => {
-    setPeriod(period);
-    void updateData(period);
-  };
-
-  const updateData = async (customPeriod?: any) => {
-    const usedP = customPeriod || period;
-    setIsLoading(true);
-    const topMembersPr = assistStatsService.getTopMembers({
-      startTimestamp: usedP.start,
-      endTimestamp: usedP.end,
-      userId: selectedUser || undefined,
-      sort: membersSort,
-      order: 'desc',
-    });
-
-    const graphsPr = assistStatsService.getGraphs(usedP);
-    const sessionsPr = assistStatsService.getSessions({
-      startTimestamp: usedP.start,
-      endTimestamp: usedP.end,
-      sort: tableSort,
-      order: 'desc',
-      userId: selectedUser || undefined,
-      page: 1,
-      limit: 10,
-    });
-    Promise.allSettled([topMembersPr, graphsPr, sessionsPr]).then(
-      ([topMembers, graphs, sessions]) => {
-        topMembers.status === 'fulfilled' && setTopMembers(topMembers.value);
-        graphs.status === 'fulfilled' && setGraphs(graphs.value);
-        sessions.status === 'fulfilled' && setSessions(sessions.value);
-      },
-    );
-    setIsLoading(false);
-  };
-
-  const onPageChange = (page: number) => {
-    setPage(page);
-    assistStatsService
-      .getSessions({
-        startTimestamp: period.start,
-        endTimestamp: period.end,
-        sort: tableSort,
+  /* one loader per data kind; the newest request of each kind wins, and every
+     request carries the period, user and sort in effect */
+  const latest = React.useRef({ members: 0, graphs: 0, sessions: 0, all: 0 });
+  const loadMembers = (p: any, user: any, sort: string) => {
+    const id = ++latest.current.members;
+    return assistStatsService
+      .getTopMembers({
+        startTimestamp: p.start,
+        endTimestamp: p.end,
+        userId: user || undefined,
+        sort,
         order: 'desc',
-        page,
+      })
+      .then((r) => {
+        if (id === latest.current.members) setTopMembers(r);
+      });
+  };
+  const loadGraphs = (p: any, user: any) => {
+    const id = ++latest.current.graphs;
+    return assistStatsService.getGraphs(p, user || undefined).then((r) => {
+      if (id === latest.current.graphs) setGraphs(r);
+    });
+  };
+  const loadSessions = (p: any, user: any, sort: string, pg: number) => {
+    const id = ++latest.current.sessions;
+    return assistStatsService
+      .getSessions({
+        startTimestamp: p.start,
+        endTimestamp: p.end,
+        sort,
+        order: 'desc',
+        userId: user || undefined,
+        page: pg,
         limit: 10,
       })
-      .then((sessions) => {
-        setSessions(sessions);
+      .then((r) => {
+        if (id === latest.current.sessions) setSessions(r);
       });
+  };
+  const loadAll = async (p = period, user = selectedUser) => {
+    const id = ++latest.current.all;
+    setIsLoading(true);
+    setPage(1);
+    await Promise.allSettled([
+      loadMembers(p, user, membersSort),
+      loadGraphs(p, user),
+      loadSessions(p, user, tableSort, 1),
+    ]);
+    if (id === latest.current.all) setIsLoading(false);
+  };
+
+  React.useEffect(() => {
+    void loadAll();
+  }, []);
+
+  const onChangePeriod = (p: any) => {
+    setPeriod(p);
+    void loadAll(p);
+  };
+
+  const onPageChange = (pg: number) => {
+    setPage(pg);
+    void loadSessions(period, selectedUser, tableSort, pg);
   };
 
   const onMembersSort = (sortBy: string) => {
     setMembersSort(sortBy);
-    assistStatsService
-      .getTopMembers({
-        startTimestamp: period.start,
-        endTimestamp: period.end,
-        sort: sortBy,
-        order: 'desc',
-      })
-      .then((topMembers) => {
-        setTopMembers(topMembers);
-      });
+    void loadMembers(period, selectedUser, sortBy);
   };
 
   const onTableSort = (sortBy: string) => {
     setTableSort(sortBy);
-    assistStatsService
-      .getSessions({
-        startTimestamp: period.start,
-        endTimestamp: period.end,
-        sort: sortBy,
-        order: 'desc',
-        page: 1,
-        limit: 10,
-      })
-      .then((sessions) => {
-        setSessions(sessions);
-      });
+    setPage(1);
+    void loadSessions(period, selectedUser, sortBy, 1);
   };
 
   const exportCSV = () => {
@@ -156,6 +147,7 @@ function AssistStats() {
         endTimestamp: period.end,
         sort: tableSort,
         order: 'desc',
+        userId: selectedUser || undefined,
         page: 1,
         limit: 10000,
       })
@@ -187,139 +179,72 @@ function AssistStats() {
 
   const onUserSelect = (id: any) => {
     setSelectedUser(id);
-    setIsLoading(true);
-    const topMembersPr = assistStatsService.getTopMembers({
-      startTimestamp: period.start,
-      endTimestamp: period.end,
-      sort: membersSort,
-      userId: id,
-      order: 'desc',
-    });
-
-    const graphsPr = assistStatsService.getGraphs(period, id);
-    const sessionsPr = assistStatsService.getSessions({
-      startTimestamp: period.start,
-      endTimestamp: period.end,
-      sort: tableSort,
-      userId: id,
-      order: 'desc',
-      page: 1,
-      limit: 10,
-    });
-
-    Promise.allSettled([topMembersPr, graphsPr, sessionsPr]).then(
-      ([topMembers, graphs, sessions]) => {
-        topMembers.status === 'fulfilled' && setTopMembers(topMembers.value);
-        graphs.status === 'fulfilled' && setGraphs(graphs.value);
-        sessions.status === 'fulfilled' && setSessions(sessions.value);
-      },
-    );
-    setIsLoading(false);
+    void loadAll(period, id);
   };
 
   return (
-    <div className="p-4 bg-white overflow-scroll h-screen" id="pdf-anchor">
-      <div id="pdf-ignore" className="w-full flex items-center mb-2">
-        <Typography.Title style={{ marginBottom: 0 }} level={4}>
-          {t('Co-browsing Reports')}
-        </Typography.Title>
-        <div className="ml-auto flex items-center gap-2">
-          <UserSearch onUserSelect={onUserSelect} />
-
-          <SelectDateRange
-            period={period}
-            onChange={onChangePeriod}
-            right
-            isAnt
-            small
-          />
-          <Tooltip
-            title={
-              !sessions || sessions.total === 0
-                ? t('No data at the moment to export.')
-                : t('Export PDF')
-            }
-          >
-            <Button
-              onClick={getPdf2}
-              shape="default"
-              size="small"
-              disabled={!sessions || sessions.total === 0}
-              icon={<FilePdfOutlined rev={undefined} />}
-            />
-          </Tooltip>
-        </div>
+    <div className="m-astats" id="pdf-anchor">
+      <div id="pdf-ignore" className="m-astats__head">
+        <h2 className="m-astats__title">{t('Co-browsing reports')}</h2>
+        <UserSearch onUserSelect={onUserSelect} />
+        <SelectDateRange period={period} onChange={onChangePeriod} isAnt />
+        <IconButton
+          icon={<FileText size={14} />}
+          label={
+            !sessions || sessions.total === 0
+              ? t('No data at the moment to export.')
+              : t('Export PDF')
+          }
+          variant="ghost"
+          disabled={!sessions || sessions.total === 0}
+          onClick={getPdf2}
+        />
       </div>
-      <div className="w-full grid grid-cols-3 gap-2 flex-2 col-span-2">
-        {Object.keys(graphs.currentPeriod).map((i: PeriodKeys) => (
-          <div className="bg-white rounded-sm border">
-            <div className="pt-2 px-2">
-              <Typography.Text strong style={{ marginBottom: 0 }}>
-                {chartNames(t)[i]}
-              </Typography.Text>
-              <div className="flex gap-1 items-center">
-                <Typography.Title style={{ marginBottom: 0 }} level={5}>
-                  {graphs.currentPeriod[i]
-                    ? durationFromMsFormatted(graphs.currentPeriod[i])
-                    : null}
-                </Typography.Title>
-                {graphs.previousPeriod[i] ? (
-                  <div
-                    className={
-                      graphs.currentPeriod[i] > graphs.previousPeriod[i]
-                        ? 'flex items-center gap-1 text-green'
-                        : 'flex items-center gap-2 text-red'
-                    }
+      <div className="m-astats__tiles">
+        {Object.keys(graphs.currentPeriod).map((i: PeriodKeys) => {
+          const cur = graphs.currentPeriod[i];
+          const prev = graphs.previousPeriod[i];
+          const up = cur > prev;
+          return (
+            <section key={i} className="m-astats__tile">
+              <span className="m-astats__tile-label">{chartNames(t)[i]}</span>
+              <span className="m-astats__tile-value">
+                {cur ? durationFromMsFormatted(cur) : '—'}
+                {prev ? (
+                  <span
+                    className={`m-astats__delta ${up ? 'is-up' : 'is-down'}`}
                   >
-                    <ArrowUpOutlined
-                      rev={undefined}
-                      rotate={
-                        graphs.currentPeriod[i] > graphs.previousPeriod[i]
-                          ? 0
-                          : 180
-                      }
-                    />
-                    {`${Math.round(
-                      calculatePercentageDelta(
-                        graphs.currentPeriod[i],
-                        graphs.previousPeriod[i],
-                      ),
-                    )}%`}
-                  </div>
+                    {up ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
+                    {`${Math.round(calculatePercentageDelta(cur, prev))}%`}
+                  </span>
                 ) : null}
-              </div>
-            </div>
-            <Loader
-              loading={isLoading}
-              style={{ minHeight: 90, height: 90 }}
-              size={36}
-            >
-              <Chart
-                data={generateListData(graphs.list, i)}
-                label={chartNames(t)[i]}
-              />
-            </Loader>
-          </div>
-        ))}
+              </span>
+              {isLoading ? (
+                <SkeletonRows rows={2} columns={[100]} />
+              ) : (
+                <Chart
+                  data={generateListData(graphs.list, i)}
+                  label={chartNames(t)[i]}
+                />
+              )}
+            </section>
+          );
+        })}
       </div>
-      <div className="w-full mt-2">
-        <TeamMembers
-          isLoading={isLoading}
-          topMembers={topMembers}
-          onMembersSort={onMembersSort}
-          membersSort={membersSort}
-        />
-      </div>
-      <div className="w-full mt-2">
-        <StatsTable
-          exportCSV={exportCSV}
-          sessions={sessions}
-          isLoading={isLoading}
-          onSort={onTableSort}
-          onPageChange={onPageChange}
-          page={page}
-        />
-      </div>
+      <TeamMembers
+        isLoading={isLoading}
+        topMembers={topMembers}
+        onMembersSort={onMembersSort}
+        membersSort={membersSort}
+      />
+      <StatsTable
+        exportCSV={exportCSV}
+        sessions={sessions}
+        isLoading={isLoading}
+        onSort={onTableSort}
+        onPageChange={onPageChange}
+        page={page}
+      />
     </div>
   );
 }

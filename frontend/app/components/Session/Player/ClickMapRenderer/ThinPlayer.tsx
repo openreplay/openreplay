@@ -1,17 +1,19 @@
-import React, { useEffect, useState } from 'react';
-import { createClickMapPlayer } from 'Player';
-import { wrapPlayerStore } from 'Components/Session/playerStore';
+import { FilterKey } from '@/types/filter/filterType';
+import { toast } from '@/ui/overlays/toast';
 import withLocationHandlers from 'HOCs/withLocationHandlers';
+import { createClickMapPlayer } from 'Player';
 import { observer } from 'mobx-react-lite';
-import { toast } from 'react-toastify';
+import React, { useEffect, useState } from 'react';
+
 import { useStore } from 'App/mstore';
+import { wrapPlayerStore } from 'Components/Session/playerStore';
+
 import {
   IPlayerContext,
   PlayerContext,
   defaultContextValue,
 } from '../../playerContext';
 import PlayerContent from './ThinPlayerContent';
-import { FilterKey } from '@/types/filter/filterType';
 
 function WebPlayer(props: any) {
   const { sessionStore, filterStore, dashboardStore } = useStore();

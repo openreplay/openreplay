@@ -1,8 +1,9 @@
-import React from 'react';
-import ovStl from 'Components/Session_/Player/Overlay/overlay.module.css';
+import { Loader } from '@/ui/feedback/Loader';
 import { ConnectionStatus } from 'Player';
-import { Loader } from 'UI';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+
+import ovStl from 'Components/Session_/Player/Overlay/overlay.module.css';
 
 interface Props {
   connectionStatus: ConnectionStatus;
@@ -15,8 +16,10 @@ export default function LiveStatusText({ connectionStatus }: Props) {
       case ConnectionStatus.Closed:
         return (
           <div className="flex flex-col items-center text-center">
-            <div className="text-lg -mt-8">{t('Session not found')}</div>
-            <div className="text-sm">
+            <div className="text-md font-medium text-content-primary -mt-8">
+              {t('Session not found')}
+            </div>
+            <div className="text-sm text-content-muted mt-1">
               {t('The remote session doesn’t exist anymore.')}
               <br />{' '}
               {t(
@@ -30,8 +33,10 @@ export default function LiveStatusText({ connectionStatus }: Props) {
         return (
           <div className="flex flex-col items-center">
             <Loader loading />
-            <div className="text-lg -mt-8">{t('Connecting...')}</div>
-            <div className="text-sm">
+            <div className="text-md font-medium text-content-primary -mt-8">
+              {t('Connecting...')}
+            </div>
+            <div className="text-sm text-content-muted mt-1">
               {t('Establishing a connection with the remote session.')}
             </div>
           </div>
@@ -40,10 +45,10 @@ export default function LiveStatusText({ connectionStatus }: Props) {
         return (
           <div className="flex flex-col items-center">
             <Loader loading />
-            <div className="text-lg -mt-8">
+            <div className="text-md font-medium text-content-primary -mt-8">
               {t('Waiting for the session to become active...')}
             </div>
-            <div className="text-sm">
+            <div className="text-sm text-content-muted mt-1">
               {t(
                 "If it's taking too much time, it could mean the user is simply inactive.",
               )}
@@ -53,17 +58,19 @@ export default function LiveStatusText({ connectionStatus }: Props) {
       case ConnectionStatus.Connected:
         return (
           <div className="flex flex-col items-center">
-            <div className="text-lg -mt-8">{t('Connected')}</div>
+            <div className="text-md font-medium text-content-primary -mt-8">
+              {t('Connected')}
+            </div>
           </div>
         );
       case ConnectionStatus.Inactive:
         return (
           <div className="flex flex-col items-center">
             <Loader loading />
-            <div className="text-lg -mt-8">
+            <div className="text-md font-medium text-content-primary -mt-8">
               {t('Waiting for the session to become active...')}
             </div>
-            <div className="text-sm">
+            <div className="text-sm text-content-muted mt-1">
               {t(
                 "If it's taking too much time, it could mean the user is simply inactive.",
               )}
@@ -73,8 +80,10 @@ export default function LiveStatusText({ connectionStatus }: Props) {
       case ConnectionStatus.Disconnected:
         return (
           <div className="flex flex-col items-center">
-            <div className="text-lg -mt-8">{t('Disconnected')}</div>
-            <div className="text-sm">
+            <div className="text-md font-medium text-content-primary -mt-8">
+              {t('Disconnected')}
+            </div>
+            <div className="text-sm text-content-muted mt-1">
               {t(
                 'The connection was lost with the remote session. The user may have simply closed the tab/browser.',
               )}
@@ -84,8 +93,10 @@ export default function LiveStatusText({ connectionStatus }: Props) {
       case ConnectionStatus.Error:
         return (
           <div className="flex flex-col items-center">
-            <div className="text-lg -mt-8">{t('Error')}</div>
-            <div className="text-sm">
+            <div className="text-md font-medium text-content-primary -mt-8">
+              {t('Error')}
+            </div>
+            <div className="text-sm text-content-muted mt-1">
               {t('Something wrong just happened. Try refreshing the page.')}
             </div>
           </div>

@@ -1,18 +1,19 @@
-import React from 'react';
-import { VList, VListHandle } from 'virtua';
+import { Button } from '@/ui/actions/button';
+import { NoContent } from '@/ui/feedback/NoContent';
+import { Icon } from '@/ui/icons/Icon';
 import cn from 'classnames';
 import { Duration } from 'luxon';
-import { NoContent, Icon } from 'UI';
-import { Button } from 'antd';
+import { observer } from 'mobx-react-lite';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { VList, VListHandle } from 'virtua';
+
 import { percentOf } from 'App/utils';
 
-import { observer } from 'mobx-react-lite';
+import JumpButton from '../JumpButton';
+import autoscrollStl from '../autoscroll.module.css';
 import BarRow from './BarRow';
 import stl from './timeTable.module.css';
-
-import autoscrollStl from '../autoscroll.module.css';
-import JumpButton from '../JumpButton';
-import { useTranslation } from 'react-i18next';
 
 type Timed = {
   time: number;
@@ -33,7 +34,8 @@ interface Row extends Timed, Durationed, CanBeRed {
 }
 
 type Line = {
-  color: string; // Maybe use typescript?
+  /** a background utility class for the line */
+  color: string;
   hint?: string;
   onClick?: any;
 } & Timed;
@@ -216,19 +218,15 @@ function TimeTable(props: Props) {
   const columnsSumWidth = columns.reduce((sum, { width }) => sum + width, 0);
 
   return (
-    <div className={cn(className, 'relative')}>
+    <div className={cn(className, 'relative flex flex-col h-full min-h-0')}>
       {navigation && (
         <div className={cn(autoscrollStl.navButtons, 'flex items-center')}>
-          <Button
-            type="text"
-            icon={<Icon name="chevron-up" />}
-            onClick={onPrevClick}
-          />
-          <Button
-            type="text"
-            icon={<Icon name="chevron-down" />}
-            onClick={onNextClick}
-          />
+          <Button variant="subtle" onClick={onPrevClick} size="icon">
+            <Icon name="chevron-up" />
+          </Button>
+          <Button variant="subtle" onClick={onNextClick} size="icon">
+            <Icon name="chevron-down" />
+          </Button>
         </div>
       )}
       <div className={stl.headers}>
@@ -255,7 +253,7 @@ function TimeTable(props: Props) {
       </div>
 
       <NoContent size="small" show={rows.length === 0}>
-        <div className="relative" style={{ height: tableHeight }}>
+        <div className="relative flex-1 min-h-0">
           <div
             className={stl.timePart}
             style={{ left: `${columnsSumWidth}px` }}
@@ -266,7 +264,7 @@ function TimeTable(props: Props) {
             {visibleRefLines.map(({ time, color, onClick }) => (
               <div
                 key={time}
-                className={cn(stl.refLine, `bg-${color}`)}
+                className={cn(stl.refLine, color)}
                 style={{
                   left: `${percentOf(time - timestart, timewidth)}%`,
                   cursor: typeof onClick === 'function' ? 'click' : 'auto',
@@ -277,6 +275,7 @@ function TimeTable(props: Props) {
           </div>
           <VList
             className={stl.list}
+            style={{ height: '100%' }}
             ref={scroller}
             itemSize={ROW_HEIGHT}
             data={rows}
@@ -326,17 +325,13 @@ function RowRenderer({
   if (!row) return;
   return (
     <div
-      className={cn(
-        'dev-row border-b border-neutral-950/5 group items-center text-sm',
-        stl.row,
-        {
-          [stl.hoverable]: hoverable,
-          'error color-red': row.isRed,
-          'cursor-pointer': typeof onRowClick === 'function',
-          [stl.activeRow]: activeIndex === index,
-          [stl.inactiveRow]: !activeIndex || index > activeIndex,
-        },
-      )}
+      className={cn('dev-row group', stl.row, {
+        [stl.hoverable]: hoverable,
+        'error text-content-danger': row.isRed,
+        'cursor-pointer': typeof onRowClick === 'function',
+        [stl.activeRow]: activeIndex === index,
+        [stl.inactiveRow]: !activeIndex || index > activeIndex,
+      })}
       onClick={
         typeof onRowClick === 'function'
           ? () => onRowClick(row, index)
@@ -376,7 +371,7 @@ const RowColumns = ({ columns, row }: any) => {
       {render
         ? render(row)
         : row[dataKey || ''] || (
-            <i className="color-gray-light">{t('empty')}</i>
+            <i className="text-content-disabled">{t('empty')}</i>
           )}
     </div>
   ));

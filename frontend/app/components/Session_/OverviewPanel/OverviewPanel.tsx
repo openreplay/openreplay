@@ -1,8 +1,7 @@
-import { Segmented } from 'antd';
-import { InfoCircleOutlined } from '@ant-design/icons';
-import cn from 'classnames';
+import { Segmented } from '@/ui/inputs/toggle-group';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   MobilePlayerContext,
@@ -12,9 +11,8 @@ import { useStore } from 'App/mstore';
 import SummaryBlock from 'Components/Session/Player/ReplayPlayer/SummaryBlock';
 import SummaryButton from 'Components/Session_/Player/Controls/SummaryButton';
 import TimelineZoomButton from 'Components/Session_/Player/Controls/components/TimelineZoomButton';
-import { NoContent } from 'UI';
-import TabSelector from '../../shared/DevTools/TabSelector';
 
+import TabSelector from '../../shared/DevTools/TabSelector';
 import BottomBlock from '../BottomBlock';
 import EventRow from './components/EventRow';
 import FeatureSelection, {
@@ -26,7 +24,6 @@ import TimelineScale from './components/TimelineScale';
 import VerticalPointerLine, {
   VerticalPointerLineComp,
 } from './components/VerticalPointerLine';
-import { useTranslation } from 'react-i18next';
 
 function MobileOverviewPanelCont() {
   const { aiSummaryStore, uiPlayerStore, sessionStore } = useStore();
@@ -292,11 +289,51 @@ function PanelComponent({
   jump,
 }: any) {
   const { t } = useTranslation();
+  const counts = Object.fromEntries(
+    Object.entries(resources).map(([k, v]: [string, any]) => [
+      k,
+      k === 'PERFORMANCE' ? 0 : (v?.length ?? 0),
+    ]),
+  );
+  const lane = (
+    feature: any,
+    marks?: { marks: any[]; renderMark: (p: any) => React.ReactNode },
+  ) => (
+    <EventRow
+      key={feature}
+      {...marks}
+      isGraph={feature === 'PERFORMANCE'}
+      title={feature}
+      disabled={!isMobile && !showSingleTab}
+      list={resources[feature]}
+      renderElement={(pointer: any[], isGrouped: boolean) => (
+        <TimelinePointer
+          pointer={pointer}
+          type={feature}
+          isGrouped={isGrouped}
+          fetchPresented={fetchPresented}
+          jump={jump}
+          isSpot={isSpot}
+        />
+      )}
+      endTime={isSpot ? spotEndTime : endTime}
+      message={HELP_MESSAGE(t)[feature]}
+    />
+  );
   return (
-    <BottomBlock style={{ height: '100%' }}>
+    <BottomBlock>
       <BottomBlock.Header customClose={onClose}>
-        <div className="mr-4 flex items-center gap-2">
-          <span className="font-semibold text-black">{t('X-Ray')}</span>
+        <div className="m-dt__bar-left">
+          {isSpot ? (
+            <span className="m-dt__title">{t('X-Ray')}</span>
+          ) : (
+            <FeatureSelection
+              list={selectedFeatures}
+              updateList={setSelectedFeatures}
+              sessionId={sessionId}
+              counts={counts}
+            />
+          )}
           {showSummary ? (
             <>
               <SummaryButton
@@ -306,26 +343,14 @@ function PanelComponent({
               />
               {summaryChecked ? (
                 <Segmented
-                  size="small"
+                  ariaLabel={t('Zoom view')}
                   value={zoomTab}
-                  onChange={(val) => setZoomTab(val)}
+                  onChange={(val) => setZoomTab(val as any)}
                   options={[
-                    {
-                      label: t('Overview'),
-                      value: 'overview',
-                    },
-                    {
-                      label: t('User journey'),
-                      value: 'journey',
-                    },
-                    {
-                      label: t('Issues'),
-                      value: 'issues',
-                    },
-                    {
-                      label: t('Suggestions'),
-                      value: 'errors',
-                    },
+                    { label: t('Overview'), value: 'overview' },
+                    { label: t('User journey'), value: 'journey' },
+                    { label: t('Issues'), value: 'issues' },
+                    { label: t('Suggestions'), value: 'errors' },
                   ]}
                 />
               ) : null}
@@ -333,91 +358,44 @@ function PanelComponent({
           ) : null}
         </div>
         {isSpot ? null : (
-          <div className="flex items-center h-20 mr-4 gap-3">
-            <FeatureSelection
-              list={selectedFeatures}
-              updateList={setSelectedFeatures}
-            />
+          <div className="m-dt__bar-right">
             {!isMobile ? <TabSelector /> : null}
             <TimelineZoomButton />
           </div>
         )}
       </BottomBlock.Header>
-      <BottomBlock.Content className="overflow-y-auto">
-        {summaryChecked ? <SummaryBlock sessionId={sessionId} /> : null}
-        <OverviewPanelContainer endTime={endTime}>
-          <TimelineScale endTime={endTime} />
-          <div
-            style={{ width: 'calc(100% - 1rem)', margin: '0 auto' }}
-            className="transition relative"
-          >
-            <NoContent
-              show={selectedFeatures.length === 0}
-              style={{ height: '60px', minHeight: 'unset', padding: 0 }}
-              title={
-                <div className="flex items-center">
-                  <InfoCircleOutlined size={18} />
-                  {t('Select a debug option to visualize on timeline.')}
-                </div>
-              }
-            >
-              {isSpot ? (
-                <VerticalPointerLineComp
-                  time={spotTime}
-                  endTime={spotEndTime}
-                />
-              ) : (
-                <VerticalPointerLine />
-              )}
-              {selectedFeatures.map((feature: any, index: number) => (
-                <div
-                  key={feature}
-                  className={cn('border-b last:border-none relative', {
-                    'bg-white': index % 2,
-                  })}
-                >
-                  <EventRow
-                    isGraph={feature === 'PERFORMANCE'}
-                    title={feature}
-                    disabled={!isMobile && !showSingleTab}
-                    list={resources[feature]}
-                    renderElement={(pointer: any[], isGrouped: boolean) => (
+      <BottomBlock.Content>
+        <div className="flex flex-col min-h-0">
+          {summaryChecked ? <SummaryBlock sessionId={sessionId} /> : null}
+          <OverviewPanelContainer endTime={endTime}>
+            <TimelineScale endTime={endTime} />
+            {selectedFeatures.length === 0 ? (
+              <p className="m-dt__nodata-hint m-dt__xray-empty">
+                {t('Select a lane to visualize on the timeline.')}
+              </p>
+            ) : null}
+            {selectedFeatures.map((feature: string) =>
+              isMobile && feature === 'PERFORMANCE'
+                ? lane(feature, {
+                    marks: performanceList,
+                    renderMark: (pointer: any) => (
                       <TimelinePointer
                         pointer={pointer}
-                        type={feature}
-                        isGrouped={isGrouped}
+                        type="FRUSTRATIONS"
                         fetchPresented={fetchPresented}
-                        jump={jump}
                         isSpot={isSpot}
                       />
-                    )}
-                    endTime={isSpot ? spotEndTime : endTime}
-                    message={HELP_MESSAGE(t)[feature]}
-                  />
-                  {isMobile && feature === 'PERFORMANCE' ? (
-                    <div className="absolute top-0 left-0 flex items-center py-4 w-full">
-                      <EventRow
-                        isGraph={false}
-                        title=""
-                        list={performanceList}
-                        renderElement={(pointer: any) => (
-                          <div className="rounded-sm bg-white p-1 border">
-                            <TimelinePointer
-                              pointer={pointer}
-                              type="FRUSTRATIONS"
-                              fetchPresented={fetchPresented}
-                            />
-                          </div>
-                        )}
-                        endTime={endTime}
-                      />
-                    </div>
-                  ) : null}
-                </div>
-              ))}
-            </NoContent>
-          </div>
-        </OverviewPanelContainer>
+                    ),
+                  })
+                : lane(feature),
+            )}
+            {isSpot ? (
+              <VerticalPointerLineComp time={spotTime} endTime={spotEndTime} />
+            ) : (
+              <VerticalPointerLine />
+            )}
+          </OverviewPanelContainer>
+        </div>
       </BottomBlock.Content>
     </BottomBlock>
   );

@@ -1,9 +1,9 @@
-import { Tooltip } from 'antd';
+import { Tooltip } from '@/ui/overlays/tooltip';
 import { observer } from 'mobx-react-lite';
 import React, { useContext } from 'react';
 
-import { PlayerContext } from 'Components/Session/playerContext';
 import { useStore } from 'App/mstore';
+import { PlayerContext } from 'Components/Session/playerContext';
 
 import { getTimelinePosition } from './getTimelinePosition';
 
@@ -62,7 +62,7 @@ function IssueMarkersList({ scale }: { scale: number }) {
                     width: 3,
                     height: '10px',
                     borderRadius: 1,
-                    background: 'var(--color-red)',
+                    background: 'var(--m-content-danger)',
                     boxShadow: '0 0 0 1.5px rgba(255,255,255,0.85)',
                   }}
                 />
@@ -75,7 +75,7 @@ function IssueMarkersList({ scale }: { scale: number }) {
                     width: 9,
                     height: 9,
                     borderRadius: 9999,
-                    background: 'var(--color-red)',
+                    background: 'var(--m-content-danger)',
                     border: '2px solid white',
                     boxShadow: '0 1px 3px rgba(0,0,0,0.35)',
                   }}
