@@ -1,13 +1,13 @@
-import { Input, Modal } from 'antd';
+import { Textarea } from '@/ui/inputs/textarea';
+import '@/ui/overlays/dialogs.css';
+import { Modal } from '@/ui/overlays/modal';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import ReasonChip from './ReasonChip';
 import { HIDE_REASONS, humanizeReason } from './model';
 
-/* Shared hide-with-reason modal (list + detail). Reason vocabulary comes from
-   the server (GET …/reasons), falling back to the built-in list until it
-   loads; state is reset on close. */
+/* Hide-with-reason (list + detail); reasons come from the server when loaded. */
 export default function HideIssueModal({
   open,
   head,
@@ -24,35 +24,33 @@ export default function HideIssueModal({
   const { t } = useTranslation();
   const [note, setNote] = React.useState('');
   const [reasons, setReasons] = React.useState<string[]>([]);
-
   const reset = () => {
     setNote('');
     setReasons([]);
   };
-  const cancel = () => {
-    reset();
-    onCancel();
-  };
-  const confirm = () => {
-    onConfirm(reasons, note.trim());
-    reset();
-  };
 
   return (
     <Modal
+      width={440}
       title={t('Hide this issue?')}
       open={open}
-      onCancel={cancel}
-      onOk={confirm}
+      onCancel={() => {
+        reset();
+        onCancel();
+      }}
+      onOk={() => {
+        onConfirm(reasons, note.trim());
+        reset();
+      }}
       okText={t('Hide issue')}
     >
-      <p className="mb-3 color-gray-dark">
+      <p className="m-dlg__lede">
+        <span className="m-dlg__subject">{head}</span>{' '}
         {t(
-          '“{{head}}” will be removed from the list. Tell us why so the agent can learn.',
-          { head },
+          'leaves the list. Telling the agent why is what stops it finding this again.',
         )}
       </p>
-      <div className="flex flex-wrap gap-2 mb-3">
+      <div className="m-dlg__chips">
         {options.map((r) => (
           <ReasonChip
             key={r}
@@ -66,9 +64,10 @@ export default function HideIssueModal({
           />
         ))}
       </div>
-      <Input.TextArea
+      <Textarea
         rows={3}
-        placeholder={t('Add a note (optional)…')}
+        maxLength={280}
+        placeholder={t('Anything else worth knowing (optional)')}
         value={note}
         onChange={(e) => setNote(e.target.value)}
       />

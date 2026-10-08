@@ -1,0 +1,27 @@
+.m-issues__title-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-4);
+  min-width: 0;
+}
+
+.m-issues__title {
+  font-size: var(--m-text-md);
+  font-weight: var(--m-title-weight);
+  color: var(--m-content-primary);
+}
+
+.m-issues__tags { display: flex; align-items: center; gap: var(--m-space-3); overflow: hidden; }
+
+.m-issues__table .is-hidden-row > td { opacity: 0.55; }
+
+.m-issues__table .is-group-row > td {
+    height: auto !important;
+  padding: var(--m-space-3) var(--m-space-5) !important;
+  background: var(--m-surface-sunken);
+  border-bottom: 1px solid var(--m-border-subtle);
+  vertical-align: middle;
+  cursor: default;
+  line-height: 1;
+}
+.m-issues__table .is-group-row:hover > td { background: var(--m-surface-sunken) !important; }

@@ -1,0 +1,368 @@
+/* ── THE STEPS LIST ──────────────────────────────────────────────────────────
+   Every gesture on a row is hidden until the cursor is on it. A list of thirty
+   steps with a grip, a clock and a trash icon on every line is a list nobody
+   can read, and reading is what it is mostly for. */
+
+.m-steps {
+  display: flex;
+  flex-direction: column;
+  overscroll-behavior: contain;
+  /* The gaps overhang the rows by 6px at each end (their negative margins are
+     what keeps the list's rhythm). Without room for it, the LAST gap's plus is
+     drawn past the scroll container's edge and comes out cut in half - which is
+     exactly what it did, on the last one only. */
+  padding: 6px var(--m-space-2) 6px 0;
+}
+
+/* WITH NOTHING IN IT, the list has to offer the first step rather than describe
+   the absence of one: a hairline and a plus that only appear on hover are
+   invisible when there is nothing to hover over. This is a real button, and it
+   is the only place in the component where the affordance is always on. */
+.m-steps__first {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--m-space-3);
+  width: 100%;
+  padding: var(--m-space-5);
+  border: 1px dashed var(--m-border-default);
+  border-radius: var(--m-radius-control);
+  color: var(--m-content-muted);
+  font-size: var(--m-text-sm);
+  transition:
+    border-color var(--m-duration-instant) var(--m-ease-out),
+    color var(--m-duration-instant) var(--m-ease-out),
+    background-color var(--m-duration-instant) var(--m-ease-out);
+}
+.m-steps__first:hover {
+  border-color: var(--m-border-accent);
+  background: var(--m-surface-hover);
+  color: var(--m-content-primary);
+}
+
+/* ── the gap between two steps ───────────────────────────────────────────────
+   Same height at rest and while dragging, so beginning a drag never reflows the
+   list. The line is the same mark for "insert here" and "drop here": one
+   vocabulary for one outcome, a step arriving at this position. */
+.m-steps__gap {
+  position: relative;
+  /* Tall enough to hold the glyph. At 8px the plus was drawn into a box smaller
+     than itself and came out clipped along the bottom; the negative margins keep
+     the LIST's rhythm while the hit area stays a comfortable target. */
+  height: 16px;
+  margin: -6px 0;
+}
+
+.m-steps__insert {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--m-space-2);
+  width: 100%;
+  height: 100%;
+  color: var(--m-content-accent);
+  opacity: 0;
+  transition: opacity var(--m-duration-instant) var(--m-ease-out);
+}
+.m-steps__gap:hover .m-steps__insert,
+.m-steps__gap.is-target .m-steps__insert {
+  opacity: 1;
+}
+/* While something is being dragged the plus would be a second offer on a
+   surface that already has one. */
+.m-steps__gap.is-dragging .m-steps__insert svg {
+  display: none;
+}
+
+.m-steps__line {
+  flex: 1;
+  height: 1px;
+  background: var(--m-content-accent);
+  opacity: 0.55;
+}
+.m-steps__gap.is-target .m-steps__line {
+  opacity: 1;
+  height: 2px;
+}
+
+/* ── one step ─────────────────────────────────────────────────────────────── */
+.m-step {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--m-space-3);
+  padding: var(--m-space-3) var(--m-space-3) var(--m-space-3) 0;
+  border-radius: var(--m-radius-control);
+  transition: background-color var(--m-duration-instant) var(--m-ease-out);
+}
+.m-step:hover {
+  background: var(--m-surface-hover);
+}
+.m-step.is-editing {
+  background: var(--m-surface-hover);
+}
+.m-step.is-dragging {
+  opacity: 0.4;
+}
+
+/* The number and the grip share one slot. */
+.m-step__lead {
+  position: relative;
+  flex: none;
+  width: 1.5rem;
+  height: 1.375rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.m-step__num {
+  font-family: var(--m-font-num);
+  font-size: var(--m-text-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--m-content-disabled);
+}
+.m-step__grip {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--m-content-decorative);
+  background: inherit;
+  opacity: 0;
+  cursor: grab;
+}
+.m-step:hover .m-step__grip {
+  opacity: 1;
+}
+.m-step:hover .m-step__num {
+  opacity: 0;
+}
+
+.m-step__mark {
+  flex: none;
+  width: 0.75rem;
+  font-family: var(--m-font-num);
+  font-size: var(--m-text-md);
+  line-height: 1.375rem;
+  text-align: center;
+}
+
+.m-step__text {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  font-size: var(--m-text-md);
+  line-height: 1.375rem;
+  color: var(--m-content-primary);
+  overflow-wrap: anywhere;
+  cursor: text;
+}
+.m-step__text:disabled {
+  cursor: default;
+}
+
+/* The editor is the row, at the row's own metrics: a field that changes the
+   text's size or position on click reads as the line jumping away from you. */
+.m-step__input {
+  flex: 1;
+  caret-color: var(--m-content-primary);
+  min-width: 0;
+  padding: 0;
+  border: none;
+  outline: none;
+  resize: none;
+  field-sizing: content;
+  background: transparent;
+  font: inherit;
+  font-size: var(--m-text-md);
+  line-height: 1.375rem;
+  color: var(--m-content-primary);
+}
+
+.m-step__input::placeholder {
+  color: var(--m-content-disabled);
+}
+
+.m-step__actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+  min-height: 1.375rem;
+}
+
+/* All three row controls sit on the page's own surface rather than on the
+   row's tint. On a diff row the tint is the row's message - added or removed -
+   and a control that takes the tint reads as part of it; a white plate says
+   these are things you press, not things the row is telling you. */
+.m-step__act {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.375rem;
+  height: 1.375rem;
+  border: 1px solid transparent;
+  border-radius: var(--m-radius-control);
+  background: var(--m-surface-default);
+  color: var(--m-content-decorative);
+  transition:
+    background-color var(--m-duration-instant) var(--m-ease-out),
+    color var(--m-duration-instant) var(--m-ease-out),
+    opacity var(--m-duration-instant) var(--m-ease-out);
+}
+/* THE DECISION PAIR CARRIES ITS PLATE AT REST, hairline included. A white fill
+   alone is nearly invisible on a tinted diff row - the tint is soft, and at 22px
+   the fill reads as a lighter patch of the row rather than as a control - so
+   the pair only looked like buttons once the cursor was on them. The edge is
+   what makes them objects. The quiet pair (history, delete) stays plateless
+   until the row is hovered, because those two are not being asked about. */
+.m-step__act.is-yes,
+.m-step__act.is-no {
+  border-color: var(--m-border-subtle);
+}
+
+.m-step__act:hover {
+  border-color: var(--m-border-default);
+  color: var(--m-content-primary);
+}
+/* Quiet actions appear on hover; a decision is always visible, because an
+   undecided proposal is the thing the row is asking about. */
+.m-step__act.is-quiet {
+  opacity: 0;
+}
+.m-step:hover .m-step__act.is-quiet {
+  opacity: 1;
+}
+/* A DECISION IS THE ONLY COLOUR ON THE ROW. Undecided, both sides are the same
+   muted glyph - the row is asking a question and neither answer is suggested.
+   Hovering colours the side you are about to take, and taking it lifts that
+   side onto the page's own surface with the colour kept: green for the change
+   that stands, red for the one that does not. The grey pressed chip that was
+   here first said "pressed" and nothing about WHICH way. */
+.m-step__act.is-yes:hover {
+  color: var(--m-content-success);
+}
+.m-step__act.is-no:hover {
+  color: var(--m-content-danger);
+}
+
+.m-step__act.is-on {
+  border-color: var(--m-border-default);
+}
+.m-step__act.is-yes.is-on {
+  color: var(--m-content-success);
+  border-color: var(--m-status-success-border);
+}
+.m-step__act.is-no.is-on {
+  color: var(--m-content-danger);
+  border-color: var(--m-status-danger-border);
+}
+
+/* ── the diff dress ──────────────────────────────────────────────────────────
+   Two colours on one surface, which the rest of the app never does, and the
+   exception is earned: an addition and a removal are opposites, and a diff that
+   distinguishes them by position alone is not a diff. Both are the softest tint
+   of their status colour, and both also carry a glyph. */
+.m-step.is-added {
+  background: var(--m-status-success-bg);
+}
+.m-step.is-added .m-step__mark {
+  color: var(--m-content-success);
+}
+.m-step.is-removed {
+  background: var(--m-status-danger-bg);
+}
+.m-step.is-removed .m-step__mark {
+  color: var(--m-content-danger);
+}
+.m-step.is-added:hover,
+.m-step.is-removed:hover {
+  filter: brightness(0.985);
+}
+
+.m-step.is-struck .m-step__text {
+  text-decoration: line-through;
+  color: var(--m-content-muted);
+}
+
+/* A merge's group label: the name of the test a block of steps came from. Not
+   numbered and not a step - it is scaffolding for the decision, and it is
+   dropped when the merge is accepted. */
+.m-step.is-group {
+  padding-top: var(--m-space-4);
+}
+.m-step.is-group .m-step__text {
+  font-size: var(--m-text-xs);
+  font-weight: var(--m-weight-medium);
+  letter-spacing: var(--m-tracking-wide);
+  text-transform: uppercase;
+  color: var(--m-content-muted);
+  cursor: default;
+}
+
+/* ── the history popover ──────────────────────────────────────────────────── */
+
+/* ── ours on top of the prototype's list ──────────────────────────────────── */
+
+/* Collapsed merge-group rows stay mounted at 0 height so indices and drop math
+   never notice. */
+.m-steps__slot {
+  display: grid;
+  transition: grid-template-rows 0.18s ease;
+}
+.m-steps__clip {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.m-step__chev {
+  color: var(--m-content-muted);
+  transition: transform var(--m-duration-instant) var(--m-ease-out);
+}
+.m-step.is-group {
+  cursor: pointer;
+  user-select: none;
+}
+.m-step__meta {
+  font-weight: var(--m-weight-regular);
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--m-content-disabled);
+}
+.m-step__empty {
+  font-style: italic;
+  color: var(--m-content-disabled);
+}
+.m-step.is-readonly:hover {
+  background: transparent;
+}
+
+/* The trailing "Add step…" row reads as a hint until clicked. */
+.m-step.is-add {
+  width: 100%;
+  text-align: left;
+  color: var(--m-content-disabled);
+}
+.m-step.is-add .m-step__lead {
+  color: var(--m-content-disabled);
+}
+.m-step.is-add .m-step__text {
+  color: var(--m-content-disabled);
+  cursor: pointer;
+}
+
+/* Up / down stand in for dragging on touch screens only. */
+.m-step__act.is-touch {
+  display: none;
+}
+.m-step__act:disabled {
+  opacity: 0.3;
+}
+@media (pointer: coarse) {
+  .m-step__act.is-touch {
+    display: inline-flex;
+  }
+  .m-step__act.is-quiet {
+    opacity: 1;
+  }
+}

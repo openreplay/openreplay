@@ -1,24 +1,32 @@
+import { IconButton } from '@/ui/actions/IconButton';
+import { Button } from '@/ui/actions/button';
+import { RelativeTime } from '@/ui/data/RelativeTime';
+import { type Column, DataTable, type TableSort } from '@/ui/data/table';
+import { EmptyState } from '@/ui/feedback/EmptyState';
+import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
+import { ActiveFilters } from '@/ui/filters/ActiveFilters';
+import { type FilterDimension, FilterMenu } from '@/ui/filters/FilterMenu';
+import { FilterStrip } from '@/ui/filters/FilterStrip';
+import { DateRange } from '@/ui/inputs/DateRange';
+import { SearchField } from '@/ui/inputs/SearchField';
+import { ListFooter } from '@/ui/layout/ListFooter';
+import { useToast } from '@/ui/overlays/toast';
+import { Tooltip } from '@/ui/overlays/tooltip';
+import Period, {
+  CUSTOM_RANGE,
+  LAST_7_DAYS,
+  LAST_24_HOURS,
+  LAST_30_DAYS,
+} from 'Types/app/period';
 import {
-  Button,
-  Grid,
-  Input,
-  Popover,
-  Segmented,
-  Select,
-  Skeleton,
-  Table,
-  Tooltip,
-} from 'antd';
-import type { TableColumnsType } from 'antd';
-import { RotateCw, SlidersHorizontal } from 'lucide-react';
+  Globe,
+  MonitorSmartphone,
+  RotateCw,
+  Server,
+  Tag as TagIcon,
+} from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'react-toastify';
-
-import { formatDateTimeDefault } from 'App/date';
-
-import CountSuffix from 'Shared/CountSuffix';
-import FullPagination from 'Shared/FullPagination';
 
 import {
   RUNS_LIST_POLL_MS,
@@ -29,8 +37,8 @@ import {
   useRunCounts,
   useTriggerRun,
 } from '../queries';
+import { SyntheticsFrame } from './SyntheticsFrame';
 import RunDrawer from './drawers/RunDrawer';
-import './kai-table.css';
 import { apiRunDetailToVM, apiRunToVM } from './shared/adapters';
 import {
   ListAllRunsParams,
@@ -42,24 +50,26 @@ import { kaiUi, useKaiUi } from './shared/uiStore';
 import { useQueryParam } from './shared/useUrlState';
 import {
   LOOKUP_LIMIT,
-  PERIOD_OPTIONS,
   REGION_OPTIONS,
   RESOLUTION_OPTIONS,
   RowTags,
   VersionLabel,
   formatDuration,
   getRunResult,
-  periodFrom,
-  relativeTime,
+  regionLabel,
+  resolutionLabel,
 } from './shared/utils';
+import './tests-page.css';
 
 type StatusTab = 'all' | UiRunStatus;
+type FilterKey = 'viewport' | 'tags' | 'env' | 'region';
 const PAGE_SIZE = 20;
-// antd column dataIndex → API sortField (only these two are server-sortable).
+// column key → API sortField (only these two are server-sortable).
 const SORT_FIELD: Record<string, ListAllRunsParams['sortField']> = {
   duration: 'duration_ms',
-  date: 'started_at',
+  when: 'started_at',
 };
+const NEWEST: TableSort = { key: 'when', desc: true };
 // The 3 coarse UI buckets over the 6 API run statuses. Counts collapse all of them, and
 // the status filter sends the bucket as a comma list (any-of), so the filter and the
 // badges agree with what the rows render.
@@ -74,6 +84,14 @@ const TRIGGER_HOLD_MS = 12000;
 // A trigger's row counts as landed when it's in flight, or when any run of that test
 // started at/after the trigger (a very short run can finish before we ever poll).
 const LANDED_SLACK_MS = 5000;
+const ALL_TIME = 'ALL_TIME';
+const PERIODS = [
+  { value: ALL_TIME, label: 'All time' },
+  { value: LAST_24_HOURS, label: 'Past 24 Hours' },
+  { value: LAST_7_DAYS, label: 'Past 7 Days' },
+  { value: LAST_30_DAYS, label: 'Past 30 Days' },
+  { value: CUSTOM_RANGE, label: 'Custom Range' },
+];
 
 /** Live elapsed counter for an in-flight run. */
 function LiveDuration({ start }: { start: number }) {
@@ -90,21 +108,18 @@ function LiveDuration({ start }: { start: number }) {
     h > 0
       ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
       : `${m}:${String(s).padStart(2, '0')}`;
-  return <span className="text-indigo tabular-nums">{label}</span>;
+  return <span className="m-runs__dur is-live">{label}</span>;
 }
 
 function RunsTab() {
   const { t } = useTranslation();
+  const toast = useToast();
   const triggerMut = useTriggerRun();
   const { data: envData } = useEnvironments({ limit: LOOKUP_LIMIT });
   const envNameById = useMemo(
     () => new Map((envData?.items ?? []).map((e) => [e.environmentId, e.name])),
     [envData],
   );
-  const envOptions = (envData?.items ?? []).map((e) => ({
-    value: e.environmentId,
-    label: e.name,
-  }));
 
   // A test drawer's "View all runs" / "View" shortcut sets a handoff (fresh handoffId)
   // and switches here.
@@ -120,16 +135,11 @@ function RunsTab() {
   const [tagFilter, setTagFilter] = useState('all');
   const [envFilter, setEnvFilter] = useState('all');
   const [regionFilter, setRegionFilter] = useState('all');
-  const [periodFilter, setPeriodFilter] = useState('7');
-  const [sortBy, setSortBy] = useState<{
-    field?: string;
-    order?: 'ascend' | 'descend';
-  }>({ field: 'date', order: 'descend' });
+  const [period, setPeriod] = useState<any>(() =>
+    Period({ rangeName: LAST_7_DAYS }),
+  );
+  const [sortBy, setSortBy] = useState<TableSort>(NEWEST);
   const [page, setPage] = useState(1);
-  // below md: secondary columns drop, the table scrolls sideways and the
-  // filter selects fold into a popover
-  const narrow = Grid.useBreakpoint().md === false;
-  const selectWidth = (px: number) => (narrow ? '100%' : px);
 
   // adopt a cross-tab handoff exactly once when handoffId bumps — this pane stays
   // mounted between visits, so a fresh id is the signal
@@ -150,9 +160,11 @@ function RunsTab() {
     return () => window.clearTimeout(id);
   }, [query]);
 
-  // Memoize `from` per period — periodFrom() is Date.now()-based, so recomputing it
-  // every render produced a new value → new query key → refetch → re-render loop (429).
-  const from = useMemo(() => periodFrom(periodFilter), [periodFilter]);
+  // the window is fixed when picked, so the query key stays stable between renders
+  const allTime = period.rangeName === ALL_TIME;
+  const custom = period.rangeName === CUSTOM_RANGE;
+  const from = allTime ? undefined : new Date(period.start).toISOString();
+  const to = custom ? new Date(period.end).toISOString() : undefined;
   const filters = {
     name: search || undefined,
     screenType: resFilter !== 'all' ? resFilter : undefined,
@@ -160,17 +172,18 @@ function RunsTab() {
     environmentId: envFilter !== 'all' ? envFilter : undefined,
     region: regionFilter !== 'all' ? regionFilter : undefined,
     from,
+    to,
   };
 
-  const sortField = sortBy.field ? SORT_FIELD[sortBy.field] : undefined;
+  const sortField = SORT_FIELD[sortBy.key];
   const listParams: ListAllRunsParams = {
     page,
     limit: PAGE_SIZE,
     ...filters,
     status:
       statusTab !== 'all' ? BUCKET_STATUSES[statusTab].join(',') : undefined,
-    ...(sortField && sortBy.order
-      ? { sortField, sortOrder: sortBy.order === 'ascend' ? 'asc' : 'desc' }
+    ...(sortField
+      ? { sortField, sortOrder: sortBy.desc ? 'desc' : 'asc' }
       : {}),
   };
 
@@ -192,13 +205,14 @@ function RunsTab() {
   const { data: tagCounts } = useRunCounts('tags', {
     name: filters.name,
     from,
+    to,
   });
   const tagOptions = (tagCounts?.buckets ?? [])
     .map((b) => b.value)
     .filter(Boolean);
 
-  // reset to page 1 whenever a filter changes (sort resets page in onChange)
-  const filterKey = `${search}|${statusTab}|${resFilter}|${periodFilter}|${tagFilter}|${envFilter}|${regionFilter}`;
+  // reset to page 1 whenever a filter changes (sort resets page in onSort)
+  const filterKey = `${search}|${statusTab}|${resFilter}|${from}|${to}|${tagFilter}|${envFilter}|${regionFilter}`;
   const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
   if (prevFilterKey !== filterKey) {
     setPrevFilterKey(filterKey);
@@ -241,7 +255,8 @@ function RunsTab() {
     waitingForTrigger &&
     page === 1 &&
     (statusTab === 'all' || statusTab === 'running') &&
-    !(sortBy.field === 'duration' || sortBy.order === 'ascend');
+    sortBy.key === 'when' &&
+    sortBy.desc;
 
   const { data: detail } = useRun(openKey ?? undefined);
   const openRun: RunData | null = openKey
@@ -270,291 +285,272 @@ function RunsTab() {
     });
   };
 
-  const faded = (n: number) => <CountSuffix n={n} />;
-  const statusOptions = [
-    {
-      value: 'all',
-      label: (
-        <span>
-          {t('All')}
-          {faded(allCount)}
-        </span>
-      ),
-    },
-    {
-      value: 'running',
-      label: (
-        <span>
-          {t('Running')}
-          {faded(runningCount)}
-        </span>
-      ),
-    },
-    {
-      value: 'failed',
-      label: (
-        <span>
-          {t('Failed')}
-          {faded(failedCount)}
-        </span>
-      ),
-    },
-    {
-      value: 'passed',
-      label: (
-        <span>
-          {t('Passed')}
-          {faded(passedCount)}
-        </span>
-      ),
-    },
-  ];
-
-  const columns: TableColumnsType<RunData> = [
+  const columns: Column<RunData>[] = [
     {
       title: t('Result'),
-      dataIndex: 'status',
-      width: 130,
-      showSorterTooltip: false,
-      render: (status: UiRunStatus) => getRunResult(status, t),
+      key: 'result',
+      width: 116,
+      render: (run) => getRunResult(run.status, t),
     },
     {
       title: t('Test'),
-      dataIndex: 'testName',
-      showSorterTooltip: false,
-      render: (name: string, run) => (
-        <span className="flex items-center gap-2 min-w-0">
-          <span className="font-medium truncate">{name}</span>
+      key: 'test',
+      render: (run) => (
+        <div className="m-runs__title-cell">
+          <span className="m-runs__title m-truncate">{run.testName}</span>
           <VersionLabel version={run.version ?? undefined} />
-        </span>
+          {run.error && (
+            <span className="m-runs__error m-truncate" title={run.error}>
+              {run.error}
+            </span>
+          )}
+        </div>
       ),
     },
     {
       title: t('Tags'),
-      dataIndex: 'tags',
+      key: 'tags',
       width: 160,
-      responsive: ['md'],
-      render: (tags: string[]) => <RowTags tags={tags} />,
+      render: (run) => <RowTags tags={run.tags} />,
     },
     {
       title: t('Environment'),
-      dataIndex: 'envName',
+      key: 'env',
       width: 140,
-      responsive: ['md'],
-      render: (envName?: string) =>
-        envName ? (
-          <span className="text-gray-dark truncate">{envName}</span>
+      // viewport and region ride on the hover; they are filters for the log anyway
+      render: (run) =>
+        run.envName ? (
+          <Tooltip
+            title={`${resolutionLabel(t, run.resolution)} · ${regionLabel(run.region)}`}
+          >
+            <span className="m-runs__where m-truncate">{run.envName}</span>
+          </Tooltip>
         ) : (
-          <span className="text-disabled-text italic">{t('Not set')}</span>
+          <span className="m-tests__unset">{t('Not set')}</span>
         ),
     },
     {
       title: t('Duration'),
-      dataIndex: 'duration',
-      width: 120,
-      responsive: ['md'],
-      sorter: true,
-      showSorterTooltip: false,
-      render: (_: unknown, run) =>
+      key: 'duration',
+      width: 100,
+      sortable: true,
+      render: (run) =>
         run.status === 'running' ? (
           <LiveDuration start={run.date} />
         ) : (
-          <span className="text-disabled-text">
+          <span className="m-runs__dur">
             {run.duration ? formatDuration(run.duration) : '—'}
           </span>
         ),
     },
     {
       title: t('When'),
-      dataIndex: 'date',
-      width: 150,
-      defaultSortOrder: 'descend',
-      sorter: true,
-      showSorterTooltip: false,
-      render: (date: number) => (
-        <Tooltip title={formatDateTimeDefault(date)}>
-          <span className="text-disabled-text">{relativeTime(t, date)}</span>
-        </Tooltip>
-      ),
+      key: 'when',
+      width: 104,
+      sortable: true,
+      render: (run) => <RelativeTime at={run.date} />,
     },
     {
       title: '',
-      dataIndex: 'actions',
-      width: 64,
+      key: 'actions',
+      width: 48,
       align: 'right',
-      render: (_: unknown, run) =>
+      render: (run) =>
         run.status === 'running' ? null : (
-          <Tooltip title={t('Rerun')}>
-            <Button
-              type="text"
-              icon={<RotateCw size={16} />}
-              aria-label={t('Rerun')}
-              onClick={(e) => {
-                e.stopPropagation();
-                rerun(run);
-              }}
-            />
-          </Tooltip>
+          <IconButton
+            icon={<RotateCw size={14} />}
+            label={t('Rerun')}
+            variant="ghost"
+            onClick={() => rerun(run)}
+          />
         ),
     },
   ];
 
-  const activeFilters =
-    [resFilter, tagFilter, envFilter, regionFilter].filter((f) => f !== 'all')
-      .length + (periodFilter !== '7' ? 1 : 0);
-  const filterSelects = (
-    <>
-      <Select
-        size="small"
-        value={resFilter}
-        onChange={setResFilter}
-        style={{ width: selectWidth(140) }}
-        options={[
-          { value: 'all', label: t('All viewports') },
-          ...RESOLUTION_OPTIONS.map((o) => ({
-            value: o.value,
-            label: t(o.label),
-          })),
-        ]}
-      />
-      <Select
-        size="small"
-        value={tagFilter}
-        onChange={setTagFilter}
-        style={{ width: selectWidth(130) }}
-        options={[
-          { value: 'all', label: t('All tags') },
-          ...tagOptions.map((tag) => ({ value: tag, label: tag })),
-        ]}
-      />
-      <Select
-        size="small"
-        value={envFilter}
-        onChange={setEnvFilter}
-        style={{ width: selectWidth(150) }}
-        options={[
-          { value: 'all', label: t('All environments') },
-          ...envOptions,
-        ]}
-      />
-      <Select
-        size="small"
-        value={regionFilter}
-        onChange={setRegionFilter}
-        style={{ width: selectWidth(140) }}
-        options={[
-          { value: 'all', label: t('All regions') },
-          ...REGION_OPTIONS.map((o) => ({
-            value: o.value,
-            label: o.label,
-          })),
-        ]}
-      />
-      <Select
-        size="small"
-        value={periodFilter}
-        onChange={setPeriodFilter}
-        style={{ width: selectWidth(130) }}
-        options={PERIOD_OPTIONS.map((o) => ({
-          value: o.value,
-          label: t(o.label),
-        }))}
-      />
-    </>
-  );
+  /* ── filters ── */
+  const dimensions: FilterDimension<FilterKey>[] = [
+    {
+      key: 'env',
+      label: t('Environment'),
+      icon: <Server size={14} />,
+      single: true,
+      options: (envData?.items ?? []).map((e) => ({
+        value: e.environmentId,
+        label: e.name,
+      })),
+    },
+    {
+      key: 'tags',
+      label: t('Tags'),
+      icon: <TagIcon size={14} />,
+      single: true,
+      options: tagOptions.map((tag) => ({ value: tag, label: tag })),
+    },
+    {
+      key: 'viewport',
+      label: t('Viewport'),
+      icon: <MonitorSmartphone size={14} />,
+      single: true,
+      options: RESOLUTION_OPTIONS.map((o) => ({
+        value: o.value,
+        label: t(o.label),
+      })),
+    },
+    {
+      key: 'region',
+      label: t('Region'),
+      icon: <Globe size={14} />,
+      single: true,
+      options: REGION_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
+    },
+  ];
+  const state: Record<FilterKey, [string, (v: string) => void]> = {
+    env: [envFilter, setEnvFilter],
+    tags: [tagFilter, setTagFilter],
+    viewport: [resFilter, setResFilter],
+    region: [regionFilter, setRegionFilter],
+  };
+  const isActive = (key: FilterKey, value: string) => state[key][0] === value;
+  const onToggle = (key: FilterKey, value: string) => {
+    const [cur, set] = state[key];
+    set(cur === value ? 'all' : value);
+  };
+  const dimLabel: Record<FilterKey, string> = {
+    env: t('Environment'),
+    tags: t('Tag'),
+    viewport: t('Viewport'),
+    region: t('Region'),
+  };
+  const chips = (Object.keys(state) as FilterKey[])
+    .filter((k) => state[k][0] !== 'all')
+    .map((k) => ({
+      key: k,
+      value: state[k][0],
+      dimension: dimLabel[k],
+      label:
+        dimensions
+          .find((d) => d.key === k)
+          ?.options.find((o) => o.value === state[k][0])?.label ?? state[k][0],
+    }));
+  const clearFilters = () => {
+    (Object.keys(state) as FilterKey[]).forEach((k) => state[k][1]('all'));
+    setQuery('');
+    setPeriod(Period({ rangeName: LAST_7_DAYS }));
+  };
+  const filtered =
+    chips.length > 0 || !!search || period.rangeName !== LAST_7_DAYS;
 
-  if (isPending || holdingForTrigger) {
-    return (
-      <div className="p-4">
-        <Skeleton active paragraph={{ rows: 5 }} />
-      </div>
-    );
-  }
+  const emptyTab: Record<StatusTab, string> = {
+    all: t('No runs in this period'),
+    running: t('Nothing is running right now'),
+    failed: t('No failures in this period'),
+    passed: t('No passes in this period'),
+  };
 
   return (
-    <div className="flex flex-col">
-      {/* controls bar — status tabs (left) + search & filters (right) */}
-      <div className="flex items-center justify-between gap-2 px-4 py-3 border-b flex-wrap">
-        {narrow ? (
-          <Select
-            size="small"
-            value={statusTab}
-            onChange={(v) => setStatusTab(v as StatusTab)}
-            options={statusOptions}
-            popupMatchSelectWidth={false}
-            style={{ minWidth: 150 }}
+    <SyntheticsFrame
+      actions={
+        <SearchField
+          placeholder={t('Search runs')}
+          value={query}
+          onChange={setQuery}
+        />
+      }
+      toolbar={
+        <>
+          <FilterStrip
+            label={t('Filter by result')}
+            items={[
+              { key: 'all', label: t('All'), count: allCount },
+              { key: 'running', label: t('Running'), count: runningCount },
+              { key: 'failed', label: t('Failed'), count: failedCount },
+              { key: 'passed', label: t('Passed'), count: passedCount },
+            ]}
+            selected={[statusTab]}
+            onSelect={(key) => setStatusTab(key as StatusTab)}
+          />
+          <div className="m-page__controls">
+            <DateRange
+              field={t('Started')}
+              period={period}
+              options={PERIODS}
+              resting={LAST_7_DAYS}
+              onChange={setPeriod}
+            />
+            <FilterMenu<FilterKey>
+              dimensions={dimensions}
+              isActive={isActive}
+              onToggle={onToggle}
+              activeCount={chips.length}
+              label={t('Filter runs')}
+            />
+          </div>
+        </>
+      }
+    >
+      <ActiveFilters<FilterKey>
+        chips={chips}
+        onRemove={onToggle}
+        onClearAll={() =>
+          (Object.keys(state) as FilterKey[]).forEach((k) => state[k][1]('all'))
+        }
+        resultCount={total}
+        noun={[t('run'), t('runs')]}
+      />
+      {isPending || holdingForTrigger ? (
+        <SkeletonRows rows={7} columns={[12, 40, 14, 16, 8, 8]} />
+      ) : runs.length === 0 ? (
+        allCount === 0 && !filtered ? (
+          <EmptyState
+            art="tests"
+            title={t('Nothing has run yet')}
+            hint={t(
+              'Approve a test and give it a schedule, and its runs land here — one row per environment, viewport and region it runs against.',
+            )}
+          />
+        ) : filtered ? (
+          <EmptyState
+            art="search"
+            title={t('No runs match these filters')}
+            hint={t(
+              'The period counts as a filter here — clear them to see the whole log.',
+            )}
+            action={
+              <Button onClick={clearFilters}>{t('Clear filters')}</Button>
+            }
           />
         ) : (
-          <Segmented
-            size="small"
-            value={statusTab}
-            onChange={(v) => setStatusTab(v as StatusTab)}
-            options={statusOptions}
+          <EmptyState
+            title={emptyTab[statusTab]}
+            hint={t(
+              'Runs appear here as scheduled tests execute, and stay for as long as you keep them.',
+            )}
           />
-        )}
-        <div className="flex items-center gap-2 flex-wrap">
-          <Input.Search
-            size="small"
-            allowClear
-            placeholder={t('Search runs')}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            style={{ width: 170 }}
+        )
+      ) : (
+        <>
+          <DataTable<RunData>
+            className="m-runs__table"
+            ariaLabel={t('Runs')}
+            columns={columns}
+            rows={runs}
+            rowKey={(r) => r.key}
+            rowClassName={() => 'm-tests__row'}
+            sort={sortBy}
+            onSort={(key, desc) => {
+              setSortBy(key ? { key, desc } : NEWEST);
+              setPage(1);
+            }}
+            onRowClick={(run) => setOpenKey(run.key, true)}
           />
-          {narrow ? (
-            <Popover
-              trigger="click"
-              placement="bottomRight"
-              content={
-                <div className="flex flex-col gap-2" style={{ width: 220 }}>
-                  {filterSelects}
-                </div>
-              }
-            >
-              <Button size="small" icon={<SlidersHorizontal size={14} />}>
-                {t('Filters')}
-                {activeFilters ? ` (${activeFilters})` : ''}
-              </Button>
-            </Popover>
-          ) : (
-            filterSelects
-          )}
-        </div>
-      </div>
-
-      <Table<RunData>
-        className="kai-table"
-        rowKey="key"
-        columns={columns}
-        tableLayout={narrow ? 'fixed' : undefined}
-        scroll={narrow ? { x: 520 } : undefined}
-        dataSource={runs}
-        pagination={false}
-        rowClassName="cursor-pointer"
-        onChange={(_p, _f, sorter) => {
-          const s = Array.isArray(sorter) ? sorter[0] : sorter;
-          setSortBy({ field: s.field as string, order: s.order ?? undefined });
-          setPage(1);
-        }}
-        onRow={(run) => ({
-          onClick: (e) => {
-            const el = e.target as HTMLElement;
-            if (el.closest('button')) return;
-            setOpenKey(run.key, true);
-          },
-        })}
-        locale={{ emptyText: t('No runs match these filters.') }}
-      />
-
-      {total > 0 && (
-        <FullPagination
-          page={page}
-          limit={PAGE_SIZE}
-          total={total}
-          listLen={runs.length}
-          onPageChange={setPage}
-          entity="runs"
-        />
+          <ListFooter
+            page={page}
+            pageSize={PAGE_SIZE}
+            total={total}
+            noun={[t('run'), t('runs')]}
+            onPage={setPage}
+          />
+        </>
       )}
 
       <RunDrawer
@@ -562,7 +558,7 @@ function RunsTab() {
         open={!!openKey}
         onClose={() => setOpenKey(null)}
       />
-    </div>
+    </SyntheticsFrame>
   );
 }
 

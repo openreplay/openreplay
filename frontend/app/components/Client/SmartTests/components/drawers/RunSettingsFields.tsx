@@ -1,4 +1,4 @@
-import { Select } from 'antd';
+import { MultiSelect } from '@/ui/inputs/multi-select';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -12,10 +12,9 @@ import {
   REGION_OPTIONS,
   RESOLUTION_ICON,
   RESOLUTION_OPTIONS,
-  regionLabel,
-  resolutionLabel,
 } from '../shared/utils';
 import { Field } from './EntityDrawer';
+import './run-settings.css';
 
 // All persist: environments as ids, resolutions/regions into the test's `config`.
 export interface RunSettings {
@@ -35,76 +34,44 @@ interface Props {
 }
 
 /** Shared environment / viewport / region / schedule editor used by Draft + Test. The
- *  three are multi-select (a test runs across the matrix) and share one row. */
+ *  three are multi-select (a test runs across the matrix) and share one row; each
+ *  summarises rather than showing chips, so the drawer's height never changes. */
 function RunSettingsFields({ value, onChange, defaults, defaultHints }: Props) {
   const { t } = useTranslation();
   const { data } = useEnvironments({ limit: LOOKUP_LIMIT });
-  const envOptions = (data?.items ?? []).map((env) => ({
-    value: env.environmentId,
-    label: env.name,
-  }));
-
-  // narrow cells can't show chips nicely → collapse the box to a summary.
-  // `omitted` is antd's DisplayValueType[], whose `value` is untyped.
-  const summarize =
-    (toLabel: (v: any) => string, defaultValue?: string) =>
-    (omitted: { label?: React.ReactNode; value?: any }[]) => {
-      if (omitted.length === 1) {
-        const v = omitted[0].value;
-        const isDefault =
-          defaultHints && defaultValue != null && v === defaultValue;
-        return `${toLabel(v)}${isDefault ? ` ${t('(default)')}` : ''}`;
-      }
-      return `${omitted.length} ${t('selected')}`;
-    };
-  const envName = (id: unknown) =>
-    envOptions.find((o) => o.value === id)?.label ?? String(id);
-  const envSummary = summarize(envName, defaults?.envId);
-  const viewportSummary = summarize(
-    (v) => resolutionLabel(t, v as Resolution),
-    defaults?.resolution,
-  );
-  const regionSummary = summarize(
-    (v) => regionLabel(v as string),
-    defaults?.region,
-  );
+  const suffix = (v: string, def?: string) =>
+    defaultHints && def != null && v === def ? ` ${t('(default)')}` : '';
 
   return (
-    <div className="flex flex-col gap-4 kai-run-settings">
-      <div className="grid grid-cols-3 gap-3 max-sm:grid-cols-1">
+    <div className="m-runset">
+      <div className="m-runset__row">
         <Field label={t('Environments')}>
-          <Select
-            mode="multiple"
-            size="small"
-            showSearch={false}
-            value={value.environments}
-            options={envOptions}
-            style={{ width: '100%' }}
+          <MultiSelect
+            ariaLabel={t('Environments')}
+            value={value.environments ?? []}
             placeholder={t('Any')}
-            maxTagCount={0}
-            maxTagPlaceholder={envSummary}
             onChange={(environments) => onChange({ environments })}
+            options={(data?.items ?? []).map((env) => ({
+              value: env.environmentId,
+              label: env.name,
+              text: `${env.name}${suffix(env.environmentId, defaults?.envId)}`,
+            }))}
           />
         </Field>
-
         <Field label={t('Viewports')}>
-          <Select
-            mode="multiple"
-            size="small"
-            showSearch={false}
-            value={value.resolutions}
-            style={{ width: '100%' }}
+          <MultiSelect<Resolution>
+            ariaLabel={t('Viewports')}
+            value={value.resolutions ?? []}
             placeholder={t('Any')}
-            maxTagCount={0}
-            maxTagPlaceholder={viewportSummary}
-            onChange={(v) => onChange({ resolutions: v as Resolution[] })}
+            onChange={(resolutions) => onChange({ resolutions })}
             options={RESOLUTION_OPTIONS.map((o) => {
               const Icon = RESOLUTION_ICON[o.value];
               return {
                 value: o.value,
+                text: `${t(o.label)}${suffix(o.value, defaults?.resolution)}`,
                 label: (
-                  <span className="flex items-center gap-1.5">
-                    <Icon size={15} />
+                  <span className="m-runset__opt">
+                    <Icon size={13} aria-hidden="true" />
                     {t(o.label)}
                   </span>
                 ),
@@ -112,22 +79,17 @@ function RunSettingsFields({ value, onChange, defaults, defaultHints }: Props) {
             })}
           />
         </Field>
-
         <Field label={t('Regions')}>
-          <Select
-            mode="multiple"
-            size="small"
-            showSearch={false}
-            value={value.regions}
-            style={{ width: '100%' }}
+          <MultiSelect
+            ariaLabel={t('Regions')}
+            value={value.regions ?? []}
             placeholder={t('Any')}
-            maxTagCount={0}
-            maxTagPlaceholder={regionSummary}
             onChange={(regions) => onChange({ regions })}
             options={REGION_OPTIONS.map((o) => ({
               value: o.value,
+              text: `${o.label}${suffix(o.value, defaults?.region)}`,
               label: (
-                <span className="flex items-center gap-1.5">
+                <span className="m-runset__opt">
                   <CountryFlagIcon
                     countryCode={o.country}
                     style={{ width: 16, borderRadius: 2 }}

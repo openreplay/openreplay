@@ -1,14 +1,9 @@
-import { App } from 'antd';
-import React from 'react';
+import { confirm } from '@/ui/overlays/confirm';
 import { useTranslation } from 'react-i18next';
 
-/* Confirm-dialog hook. Rendered through App.useApp()'s modal, NOT the static
-   Modal.confirm, so it inherits the app theme.
-
-   A local Issues-side subset (delete only); kai-testing-ui carries a richer
-   `confirms` for the Tests surface. On merge, repoint imports if consolidated. */
+/* Confirm-dialog hook over the shared (kit-modal) confirm. A local Issues-side
+   subset (delete only). */
 export function useConfirms() {
-  const { modal } = App.useApp();
   const { t } = useTranslation();
 
   const confirmDelete = ({
@@ -25,19 +20,14 @@ export function useConfirms() {
     consequence: string;
     onOk: () => void;
   }) =>
-    modal.confirm({
-      icon: null,
-      width: 520,
-      title: t('Delete this {{what}}?', { what }),
-      content: (
-        <p className="mb-0" style={{ color: 'var(--color-gray-dark)' }}>
-          {t('“{{name}}” will be removed.', { name })} {consequence}
-        </p>
-      ),
-      okText: t('Delete'),
-      okButtonProps: { danger: true },
-      cancelText: t('Cancel'),
-      onOk,
+    void confirm({
+      header: t('Delete this {{what}}?', { what }),
+      confirmation: `${t('“{{name}}” will be removed.', { name })} ${consequence}`,
+      confirmButton: t('Delete'),
+      cancelButton: t('Cancel'),
+      danger: true,
+    }).then((ok: boolean) => {
+      if (ok) onOk();
     });
 
   return { confirmDelete };
