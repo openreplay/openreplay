@@ -54,6 +54,7 @@ type cacher struct {
 	resolver       *resolver.Resolver
 	gzipAssets     bool
 	allowPrivate   bool
+	httpTimeout    time.Duration
 	origins        originSet
 	proxy          func(*url.URL) (*url.URL, error)
 	samplerDone    chan struct{}
@@ -145,6 +146,7 @@ func NewCacher(log logger.Logger, cfg *config.Config, store objectstorage.Object
 		resolver:       urlResolver,
 		gzipAssets:     cfg.AssetsCompression == config.CompressionGzip,
 		allowPrivate:   cfg.AssetsAllowPrivate,
+		httpTimeout:    time.Duration(cfg.AssetsHTTPTimeout) * time.Second,
 		origins:        origins,
 		proxy:          httpproxy.FromEnvironment().ProxyFunc(),
 	}
@@ -192,7 +194,9 @@ func (c *cacher) cacheURL(t *Task) {
 		return
 	}
 	start := time.Now()
-	req, err := http.NewRequest("GET", t.requestURL, nil)
+	reqCtx, cancel := context.WithTimeout(ctx, c.httpTimeout)
+	defer cancel()
+	req, err := http.NewRequestWithContext(reqCtx, "GET", t.requestURL, nil)
 	if err != nil || (req.URL.Scheme != "http" && req.URL.Scheme != "https") {
 		if err == nil {
 			err = fmt.Errorf("unsupported scheme %q", req.URL.Scheme)
@@ -209,7 +213,12 @@ func (c *cacher) cacheURL(t *Task) {
 		req.Header.Set(k, v)
 	}
 	if err := c.checkProxiedDestination(req); err != nil {
-		c.permanent(ctx, t, "blocked_address", err)
+		var blocked *blockedAddrError
+		if errors.As(err, &blocked) {
+			c.permanent(ctx, t, "blocked_address", err)
+		} else {
+			c.retry(ctx, t, 0, "network", err)
+		}
 		return
 	}
 	res, err := c.httpClient.Do(req)

@@ -2,6 +2,7 @@ package cacher
 
 import (
 	"fmt"
+	"net"
 	"net/url"
 	"strings"
 )
@@ -30,6 +31,9 @@ func parseOrigins(raw string) (originSet, error) {
 		}
 		set[originKey(u)] = struct{}{}
 	}
+	if len(set) == 0 && strings.TrimSpace(raw) != "" {
+		return nil, fmt.Errorf("no valid origins in %q", raw)
+	}
 	return set, nil
 }
 
@@ -42,7 +46,7 @@ func originKey(u *url.URL) string {
 			port = "80"
 		}
 	}
-	return strings.ToLower(u.Scheme) + "://" + strings.ToLower(u.Hostname()) + ":" + port
+	return u.Scheme + "://" + net.JoinHostPort(strings.ToLower(u.Hostname()), port)
 }
 
 func (s originSet) allows(u *url.URL) bool {
