@@ -32,17 +32,26 @@ func New(log logger.Logger, conn pool.Pool) Cards {
 	return &cardsImpl{log: log, pgconn: conn}
 }
 
-// scanCard collects exactly one card row. Columns are mapped to
-// CardGetResponse fields by name via the db tags; the card_info JSON column
-// decodes directly into the embedded CardInfo.
+// cardRow is one card query row. pgx flattens embedded structs regardless of
+// tags, so the card_info JSON column is decoded into a dedicated field and
+// copied into the embedded CardInfo afterwards.
+type cardRow struct {
+	CardGetResponse
+	Info CardInfo `db:"card_info"`
+}
+
+// scanCard collects exactly one card row; columns are mapped to fields by
+// name via the db tags.
 func (s *cardsImpl) scanCard(rows pgx.Rows, err error) (*CardGetResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	card, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByNameLax[CardGetResponse])
+	row, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByNameLax[cardRow])
 	if err != nil {
 		return nil, err
 	}
+	card := row.CardGetResponse
+	card.CardInfo = row.Info
 	return &card, nil
 }
 
@@ -217,7 +226,49 @@ func (s *cardsImpl) GetAllPaginated(projectID int, filters CardListFilter, sort 
 	params["limit"] = limit
 	params["offset"] = offset
 
-	query := fmt.Sprintf(
+	rows, err := s.pgconn.Query(buildListQuery(joinClause, where, order), params)
+	if err != nil {
+		return nil, fmt.Errorf("get paginated: %w", err)
+	}
+	// Columns are mapped by name via the db tags; the window total_count
+	// rides along on every row.
+	listRows, err := pgx.CollectRows(rows, pgx.RowToStructByName[cardListRow])
+	if err != nil {
+		return nil, fmt.Errorf("scan paginated cards: %w", err)
+	}
+
+	cards := make([]CardListItem, len(listRows))
+	var total int
+	for i, r := range listRows {
+		cards[i] = r.CardListItem
+		total = r.TotalCount
+	}
+
+	// An empty page past the end carries no window total; only then run the
+	// separate count. NamedArgs only binds the placeholders present in the
+	// query, so the unused limit/offset entries are simply ignored.
+	if len(cards) == 0 && offset > 0 {
+		countQuery := fmt.Sprintf("SELECT COUNT(*) FROM public.metrics m %s %s", joinClause, where)
+		if err := s.pgconn.QueryRow(countQuery, params).Scan(&total); err != nil {
+			return nil, fmt.Errorf("count cards: %w", err)
+		}
+	}
+	return &GetCardsResponsePaginated{Cards: cards, Total: total}, nil
+}
+
+// cardListRow is one row of buildListQuery: a CardListItem plus the window
+// total shared by all rows of the page.
+type cardListRow struct {
+	CardListItem
+	TotalCount int `db:"total_count"`
+}
+
+func buildNamePattern(name string) string {
+	return "%" + postgres.EscapeILIKE(name) + "%"
+}
+
+func buildListQuery(joinClause, where, order string) string {
+	return fmt.Sprintf(
 		`SELECT
 			m.metric_id,
 			m.project_id,
@@ -233,7 +284,8 @@ func (s *cardsImpl) GetAllPaginated(projectID int, filters CardListFilter, sort 
 			m.is_public,
 			m.created_at,
 			m.edited_at,
-			m.deleted_at
+			m.deleted_at,
+			COUNT(*) OVER() AS total_count
 		 FROM public.metrics m
 		 %s
 		 %s
@@ -242,28 +294,6 @@ func (s *cardsImpl) GetAllPaginated(projectID int, filters CardListFilter, sort 
 		 OFFSET @offset`,
 		joinClause, where, order,
 	)
-	rows, err := s.pgconn.Query(query, params)
-	if err != nil {
-		return nil, fmt.Errorf("get paginated: %w", err)
-	}
-	// Columns are mapped to Card fields by name via the db tags.
-	cards, err := pgx.CollectRows(rows, pgx.RowToStructByNameLax[CardListItem])
-	if err != nil {
-		return nil, fmt.Errorf("scan paginated cards: %w", err)
-	}
-
-	// NamedArgs only binds the placeholders present in the query, so the
-	// unused limit/offset entries are simply ignored here.
-	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM public.metrics m %s %s", joinClause, where)
-	var total int
-	if err := s.pgconn.QueryRow(countQuery, params).Scan(&total); err != nil {
-		return nil, fmt.Errorf("count cards: %w", err)
-	}
-	return &GetCardsResponsePaginated{Cards: cards, Total: total}, nil
-}
-
-func buildNamePattern(name string) string {
-	return "%" + postgres.EscapeILIKE(name) + "%"
 }
 
 func (s *cardsImpl) Update(projectID int, cardID int64, userID uint64, req *CardUpdateRequest) (*CardGetResponse, error) {

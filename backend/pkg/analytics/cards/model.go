@@ -26,9 +26,9 @@ type CardBase struct {
 	ViewType      string         `json:"viewType" validate:"required,oneof=lineChart areaChart barChart progressChart pieChart metric tableView table chart sunburst" db:"view_type"`
 	MetricValue   []string       `json:"metricValue" validate:"omitempty" db:"metric_value"`
 	Series        []model.Series `json:"series" validate:"required,dive" db:"-"`
-	// The db tag makes pgx treat the embedded struct as a single field, so
-	// the card_info JSON column decodes directly into it.
-	CardInfo `db:"card_info"`
+	// pgx flattens embedded structs when scanning (a db tag here would be
+	// ignored); the card_info JSON column is received through cardRow.Info.
+	CardInfo
 }
 
 type CardInfo struct {
@@ -81,22 +81,23 @@ type CardUpdateRequest struct {
 	CardBase
 }
 
+// The db tags map the list query's column names for pgx struct scanning.
 type CardListItem struct {
-	CardID       int64      `json:"metricId"`
-	ProjectID    int64      `json:"projectId"`
-	UserID       int64      `json:"userId"`
-	OwnerEmail   *string    `json:"ownerEmail,omitempty"`
-	OwnerName    *string    `json:"ownerName,omitempty"`
-	Name         string     `json:"name"`
-	MetricType   string     `json:"metricType"`
-	ViewType     string     `json:"viewType"`
-	MetricOf     string     `json:"metricOf"`
-	MetricValue  []string   `json:"metricValue"`
-	MetricFormat string     `json:"metricFormat"`
-	IsPublic     bool       `json:"isPublic"`
-	CreatedAt    time.Time  `json:"createdAt"`
-	EditedAt     *time.Time `json:"updatedAt,omitempty"`
-	DeletedAt    *time.Time `json:"deletedAt,omitempty"`
+	CardID       int64      `json:"metricId" db:"metric_id"`
+	ProjectID    int64      `json:"projectId" db:"project_id"`
+	UserID       int64      `json:"userId" db:"user_id"`
+	OwnerEmail   *string    `json:"ownerEmail,omitempty" db:"email"`
+	OwnerName    *string    `json:"ownerName,omitempty" db:"user_name"`
+	Name         string     `json:"name" db:"name"`
+	MetricType   string     `json:"metricType" db:"metric_type"`
+	ViewType     string     `json:"viewType" db:"view_type"`
+	MetricOf     string     `json:"metricOf" db:"metric_of"`
+	MetricValue  []string   `json:"metricValue" db:"metric_value"`
+	MetricFormat string     `json:"metricFormat" db:"metric_format"`
+	IsPublic     bool       `json:"isPublic" db:"is_public"`
+	CreatedAt    time.Time  `json:"createdAt" db:"created_at"`
+	EditedAt     *time.Time `json:"updatedAt,omitempty" db:"edited_at"`
+	DeletedAt    *time.Time `json:"deletedAt,omitempty" db:"deleted_at"`
 }
 
 type GetCardsResponsePaginated struct {
