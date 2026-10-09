@@ -384,6 +384,23 @@ function install() {
     return
 }
 
+# Resolve the S3 client image for the cleanup Pod. The RustFS server image
+# (.minio.image) ships no bash and no `mc`, so cleanup must run the MinIO client
+# image instead. .minio.migrationImage is that image (ghcr.io/openreplay/minio),
+# already staged by airgap bundles and run by the minio.sh migration job.
+function resolve_minio_client_image() {
+    local vars_file="$1"
+    local reg repo tag
+    reg=$(yq 'explode(.) | .minio.migrationImage.registry // ""' "$vars_file" 2>/dev/null || echo "")
+    repo=$(yq 'explode(.) | .minio.migrationImage.repository // ""' "$vars_file" 2>/dev/null || echo "")
+    tag=$(yq 'explode(.) | .minio.migrationImage.tag // ""' "$vars_file" 2>/dev/null || echo "")
+    if [[ -n "$reg" && "$reg" != "null" && -n "$repo" && "$repo" != "null" ]]; then
+        echo "${reg}/${repo}${tag:+:${tag}}"
+    else
+        echo "ghcr.io/openreplay/minio:2025"
+    fi
+}
+
 function cleanup() {
     # Confirmation for deletion. Do you want to delete Postgres/Minio(session) data before $date ?
     delete_from_number_days=$1
@@ -436,18 +453,9 @@ function cleanup() {
     MINIO_ACCESS_KEY=$(yq 'explode(.) | .global.s3.accessKey' ${OR_DIR}/vars.yaml)
     MINIO_SECRET_KEY=$(yq 'explode(.) | .global.s3.secretKey' ${OR_DIR}/vars.yaml)
     MINIO_HOST=$(yq 'explode(.) | .global.s3.endpoint' ${OR_DIR}/vars.yaml)
-    # Read minio image from vars.yaml so airgap containerd resolves digest-pinned image.
-    local minio_reg minio_repo minio_tag minio_image
-    minio_reg=$(yq 'explode(.) | .minio.image.registry // ""' "${OR_DIR}/vars.yaml" 2>/dev/null || echo "")
-    minio_repo=$(yq 'explode(.) | .minio.image.repository // "minio"' "${OR_DIR}/vars.yaml" 2>/dev/null || echo "minio")
-    minio_tag=$(yq 'explode(.) | .minio.image.tag // ""' "${OR_DIR}/vars.yaml" 2>/dev/null || echo "")
-    if [[ -n "$minio_reg" && "$minio_reg" != "null" ]]; then
-        minio_image="${minio_reg}/${minio_repo}${minio_tag:+:${minio_tag}}"
-    elif [[ -n "$minio_tag" && "$minio_tag" != "null" ]]; then
-        minio_image="${minio_repo}:${minio_tag}"
-    else
-        minio_image="ghcr.io/openreplay/minio"
-    fi
+    # Cleanup runs `mc` in bash; resolve the client image (NOT the RustFS server).
+    local minio_image
+    minio_image=$(resolve_minio_client_image "${OR_DIR}/vars.yaml")
     kubectl delete po -n "${APP_NS}" minio-cleanup &>/dev/null || true
     cat <<EOF | kubectl apply -f -
 apiVersion: v1
