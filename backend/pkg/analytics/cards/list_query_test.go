@@ -35,8 +35,8 @@ func TestBuildNamePattern(t *testing.T) {
 }
 
 func TestBuildListQuery(t *testing.T) {
-	q := buildListQuery("JOIN x", "WHERE y", "ORDER BY z", 3, 4)
-	for _, want := range []string{"COUNT(*) OVER() AS total_count", "LIMIT $3", "OFFSET $4", "JOIN x", "WHERE y", "ORDER BY z"} {
+	q := buildListQuery("JOIN x", "WHERE y", "ORDER BY z")
+	for _, want := range []string{"COUNT(*) OVER() AS total_count", "LIMIT @limit", "OFFSET @offset", "JOIN x", "WHERE y", "ORDER BY z"} {
 		if !strings.Contains(q, want) {
 			t.Errorf("query missing %q", want)
 		}
