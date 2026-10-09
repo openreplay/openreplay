@@ -83,7 +83,68 @@ test_compose_v2() {
 	if grep -Eq 'docker-compose up' "$SCRIPT"; then fail "no legacy 'docker-compose up'"; else pass "no legacy 'docker-compose up'"; fi
 }
 
+# Release-owned version pins must come from the target template; user settings
+# still come from the existing installation.
+test_merge_release_versions() {
+	local root; root="$(make_sandbox)"
+	cat >"$root/work/old.env" <<'EOF'
+COMMON_VERSION=v1.27.0
+API_VERSION=v1.27.6
+FRONTEND_VERSION=v1.27.17
+CHALICE_VERSION=v1.27.14
+DB_VERSION=v1.27.3
+POSTGRES_VERSION=16
+REDIS_VERSION=7
+MINIO_VERSION=old-minio
+CLICKHOUSE_VERSION=old-clickhouse
+RETIRED_SERVICE_VERSION=old-retired
+COMMON_PG_PASSWORD=existing-password
+COMMON_DOMAIN_NAME=replay.example.test
+COMMON_JWT_SECRET=existing-secret
+CUSTOM_SETTING=preserved
+EOF
+	cat >"$root/work/common.env" <<'EOF'
+COMMON_VERSION=v1.28.0
+API_VERSION=v1.28.0
+FRONTEND_VERSION=v1.28.0
+CHALICE_VERSION=v1.28.0
+DB_VERSION=v1.28.0
+POSTGRES_VERSION=17
+REDIS_VERSION=8
+MINIO_VERSION=new-minio
+CLICKHOUSE_VERSION=new-clickhouse
+NEW_SERVICE_VERSION=new-service
+COMMON_PG_PASSWORD=change_me
+COMMON_DOMAIN_NAME=change_me
+COMMON_JWT_SECRET=change_me
+EOF
+	cp "$root/work/common.env" "$root/target.env"
+	(
+		cd "$root/work" || exit 1
+		export PATH="$root/bin:$PATH"
+		source ./upgrade.sh "old.env" >/dev/null 2>&1
+		printf '%s\n' "$original_version" >"$root/original-version"
+		printf '%s\n' "$pgpassword" >"$root/pg-password"
+	)
+	local merged="$root/work/common.env" expected
+	while IFS= read -r expected; do
+		grep -Fxq "$expected" "$merged" && pass "target $expected retained" || fail "target $expected retained"
+	done < <(grep '_VERSION=' "$root/target.env")
+	if grep -q '^RETIRED_SERVICE_VERSION=' "$merged"; then
+		fail "retired service pin is not reintroduced"
+	else
+		pass "retired service pin is not reintroduced"
+	fi
+	for expected in COMMON_PG_PASSWORD=existing-password COMMON_DOMAIN_NAME=replay.example.test COMMON_JWT_SECRET=existing-secret CUSTOM_SETTING=preserved; do
+		grep -Fxq "$expected" "$merged" && pass "$expected carried forward" || fail "$expected carried forward"
+	done
+	grep -Fxq 'v1.27.0' "$root/original-version" && pass "migration uses original release" || fail "migration uses original release"
+	grep -Fxq 'existing-password' "$root/pg-password" && pass "migration uses existing password" || fail "migration uses existing password"
+	rm -rf "$root"
+}
+
 test_merge_sourceable
+test_merge_release_versions
 test_network_name
 test_compose_v2
 
