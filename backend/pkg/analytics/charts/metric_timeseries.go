@@ -179,11 +179,18 @@ func (t *TimeSeriesQueryBuilder) buildEventsBasedSubQuery(p *Payload, s model.Se
 		qp,
 	)
 
-	staticEvt := buildStaticEventWhere(p)
+	// Session filters with an events-table equivalent run on the events
+	// table; only session-only ones require experimental.sessions.
+	sessionFiltersOnEvents, sessionOnlyFilters := SplitSessionFilters(sessionFilters)
+
+	staticEvt := buildStaticEventWhere(p, qp)
 
 	whereParts := []string{staticEvt}
 	if len(otherConds) > 0 {
 		whereParts = append(whereParts, strings.Join(otherConds, " AND "))
+	}
+	if conds := BuildSessionConditionsOnEvents(sessionFiltersOnEvents, "main", qp); len(conds) > 0 {
+		whereParts = append(whereParts, strings.Join(conds, " AND "))
 	}
 
 	joinClause, extraWhereParts, err := BuildEventsJoinClause(s.Filter.EventsOrder, eventConds, "main")
@@ -199,10 +206,20 @@ func (t *TimeSeriesQueryBuilder) buildEventsBasedSubQuery(p *Payload, s model.Se
 	}
 	var mainEventsTable = getMainEventsTable(p.StartTimestamp)
 
+	// The sessions table is only needed when a value has to come from it:
+	// a session-only filter or a session-level breakdown column.
+	sessionBreakdowns, _ := SplitBreakdowns(p.Breakdowns)
+	needsSessions := len(sessionOnlyFilters) > 0 || len(sessionBreakdowns) > 0
+
 	evtSelectCols := []string{
 		"main.session_id",
 		"MIN(main.created_at) AS first_event_ts",
 		"MAX(main.created_at) AS last_event_ts",
+	}
+	if !needsSessions && metric == MetricUserCount {
+		// '' marks an anonymous user (sessions.user_id would be NULL);
+		// nullIf keeps COUNT(DISTINCT user_id) skipping them.
+		evtSelectCols = append(evtSelectCols, `any(nullIf(main."$user_id", '')) AS user_id`)
 	}
 	eventOnlyBdProj := GetEventOnlyBreakdownNamedProjection(p.Breakdowns, "main")
 	evtSelectCols = append(evtSelectCols, eventOnlyBdProj...)
@@ -227,8 +244,20 @@ func (t *TimeSeriesQueryBuilder) buildEventsBasedSubQuery(p *Payload, s model.Se
 	}
 
 	subQuery := sb.String()
-	sessionsQuery := BuildSessionsSubQuery(sessionFilters, p.StartTimestamp, p.Breakdowns, qp)
-	projection, joinEvents := t.getProjectionAndJoin(metric, p)
+	projection, joinEvents := t.getProjectionAndJoin(metric, p, needsSessions, qp)
+
+	if !needsSessions {
+		for _, ref := range GetBreakdownJoinRefs(p.Breakdowns, "evt", "evt") {
+			projection += ", " + ref
+		}
+		return fmt.Sprintf(
+			`SELECT %s
+		   FROM (%s) AS evt%s`,
+			projection, subQuery, joinEvents,
+		), nil
+	}
+
+	sessionsQuery := BuildSessionsSubQuery(sessionOnlyFilters, p.StartTimestamp, p.Breakdowns, qp)
 
 	for _, ref := range GetBreakdownJoinRefs(p.Breakdowns, "evt", "s") {
 		projection += ", " + ref
@@ -264,23 +293,42 @@ func (t *TimeSeriesQueryBuilder) getSessionsOnlyProjection(metric string) string
 	}
 }
 
-func (t *TimeSeriesQueryBuilder) getProjectionAndJoin(metric string, p *Payload) (string, string) {
+// getProjectionAndJoin returns the outer projection and an optional extra
+// join. When the sessions table is not part of the query (withSessions ==
+// false), the equivalent events-table columns are used instead: the first
+// matching event timestamp stands in for the session start and "$user_id"
+// for sessions.user_id.
+func (t *TimeSeriesQueryBuilder) getProjectionAndJoin(metric string, p *Payload, withSessions bool, qp *Params) (string, string) {
+	datetime := "evt.first_event_ts AS datetime"
+	if withSessions {
+		datetime = "s.datetime AS datetime"
+	}
+
 	switch metric {
 	case MetricUserCount:
-		return "s.user_id AS user_id, s.datetime AS datetime", ""
+		if withSessions {
+			return "s.user_id AS user_id, " + datetime, ""
+		}
+		return "evt.user_id AS user_id, " + datetime, ""
 
 	case MetricEventCount:
-		projection := "e.event_id AS event_id, s.datetime AS datetime"
+		projection := "e.event_id AS event_id, "
+		if withSessions {
+			projection += datetime
+		} else {
+			projection += "e.created_at AS datetime"
+		}
 		joinEvents := `
 		LEFT JOIN product_analytics.events AS e
 		  ON e.session_id = evt.session_id
 		 AND e.project_id = @projectId`
 		if p.SampleRate > 0 && p.SampleRate < 100 {
-			joinEvents += fmt.Sprintf(" AND e.sample_key < %d", p.SampleRate)
+			qp.Set("sampleRate", p.SampleRate)
+			joinEvents += " AND e.sample_key < @sampleRate"
 		}
 		return projection, joinEvents
 
 	default:
-		return "evt.session_id AS session_id, s.datetime AS datetime", ""
+		return "evt.session_id AS session_id, " + datetime, ""
 	}
 }

@@ -26,9 +26,9 @@ func TestBuildCountsQueryNoFilters(t *testing.T) {
 		"uniq(s.session_id) AS sessions_count",
 		"uniqIf(s.user_id, ifNull(s.user_id, '') != '') AS users_count",
 		"FROM experimental.sessions AS s",
-		"s.project_id = 42",
-		"s.datetime >= toDateTime(1700000000)",
-		"s.datetime < toDateTime(1700604800)",
+		"s.project_id = @projectId",
+		"s.datetime >= toDateTime(@startSec)",
+		"s.datetime < toDateTime(@endSec)",
 		"SETTINGS " + countsQuerySettings,
 	} {
 		if !strings.Contains(q, want) {
@@ -62,13 +62,13 @@ func TestBuildCountsQueryUsesSemiJoinNotJoin(t *testing.T) {
 }
 
 func TestEventSessionsSubqueryNone(t *testing.T) {
-	if got := eventSessionsSubquery(1, 100, 200, nil, nil, "and"); got != "" {
+	if got := eventSessionsSubquery(nil, nil, "and"); got != "" {
 		t.Errorf("no event filters should yield no subquery, got:\n%s", got)
 	}
 }
 
 func TestEventSessionsSubquerySingleEventPushedDown(t *testing.T) {
-	got := eventSessionsSubquery(1, 100, 200, []string{`e."$event_name" = 'CLICK'`}, nil, "and")
+	got := eventSessionsSubquery([]string{`e."$event_name" = 'CLICK'`}, nil, "and")
 
 	if !strings.Contains(got, `e."$event_name" = 'CLICK'`) {
 		t.Errorf("single event condition not pushed into WHERE:\n%s", got)
@@ -82,7 +82,7 @@ func TestEventSessionsSubqueryMultiEventGetsOrPrefilter(t *testing.T) {
 	evs := []string{`e."$event_name" = 'CLICK'`, `e."$event_name" = 'LOCATION'`}
 
 	for _, order := range []string{"and", "or", "then"} {
-		got := eventSessionsSubquery(1, 100, 200, evs, nil, order)
+		got := eventSessionsSubquery(evs, nil, order)
 
 		want := `(e."$event_name" = 'CLICK' OR e."$event_name" = 'LOCATION')`
 		if !strings.Contains(got, want) {
@@ -99,7 +99,7 @@ func TestEventSessionsSubqueryMultiEventGetsOrPrefilter(t *testing.T) {
 
 func TestEventSessionsSubqueryUnknownOrderKeepsOldBehaviour(t *testing.T) {
 	evs := []string{`e."$event_name" = 'CLICK'`, `e."$event_name" = 'LOCATION'`}
-	got := eventSessionsSubquery(1, 100, 200, evs, nil, "somethingelse")
+	got := eventSessionsSubquery(evs, nil, "somethingelse")
 
 	if strings.Contains(got, " OR ") {
 		t.Errorf("unknown order must not gain a prefilter:\n%s", got)
@@ -110,7 +110,7 @@ func TestEventSessionsSubqueryUnknownOrderKeepsOldBehaviour(t *testing.T) {
 }
 
 func TestEventSessionsSubqueryGlobalPropertyFiltersOnly(t *testing.T) {
-	got := eventSessionsSubquery(1, 100, 200, nil, []string{`e."$browser" = 'Chrome'`}, "and")
+	got := eventSessionsSubquery(nil, []string{`e."$browser" = 'Chrome'`}, "and")
 
 	if got == "" {
 		t.Fatal("global property filters must still produce a subquery")

@@ -192,6 +192,9 @@ func (h *UserJourneyQueryBuilder) Execute(ctx context.Context, p *Payload, _ dri
 
 func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, map[string]any, error) {
 	qp := NewParams()
+	qp.Set("projectId", p.ProjectId)
+	qp.Set("startTimestamp", p.StartTimestamp)
+	qp.Set("endTimestamp", p.EndTimestamp)
 	//Remove useless starting point
 	i := 0
 	for i < len(p.StartPoint) {
@@ -288,11 +291,12 @@ func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, map[string]a
 	step0Conditions, _, _ = BuildEventConditions(p.StartPoint, BuildConditionsOptions{DefinedColumns: map[string][]string{"e_value": {"e_value", "singleColumn"}}, MainTableAlias: "pre_ranked_events"}, qp)
 	if len(startPointsConditions) > 0 {
 		startPointsConditions = []string{fmt.Sprintf("(%s)", strings.Join(startPointsConditions, " OR "))}
-		startPointsConditions = append(startPointsConditions, fmt.Sprintf("events.project_id = toUInt16(%d)", p.ProjectId))
-		startPointsConditions = append(startPointsConditions, fmt.Sprintf("events.created_at >= toDateTime(%d / 1000)", p.StartTimestamp))
-		startPointsConditions = append(startPointsConditions, fmt.Sprintf("events.created_at < toDateTime(%d / 1000)", p.EndTimestamp))
+		startPointsConditions = append(startPointsConditions, "events.project_id = toUInt16(@projectId)")
+		startPointsConditions = append(startPointsConditions, "events.created_at >= toDateTime(@startTimestamp / 1000)")
+		startPointsConditions = append(startPointsConditions, "events.created_at < toDateTime(@endTimestamp / 1000)")
 		if p.SampleRate > 0 && p.SampleRate < 100 {
-			startPointsConditions = append(startPointsConditions, fmt.Sprintf("events.sample_key < %d", p.SampleRate))
+			qp.Set("sampleRate", p.SampleRate)
+			startPointsConditions = append(startPointsConditions, "events.sample_key < @sampleRate")
 		}
 		step0Conditions = []string{fmt.Sprintf("(%s)", strings.Join(step0Conditions, " OR "))}
 		step0Conditions = append(step0Conditions, "pre_ranked_events.event_number_in_session = 1")
@@ -315,12 +319,21 @@ func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, map[string]a
 			}
 		}
 	}
-	_, _, sessionsConditions := BuildEventConditions(p.Series[0].Filter.Filters, BuildConditionsOptions{DefinedColumns: mainSessionsColumns, MainTableAlias: "sessions"}, qp)
-	chSubQuery := []string{fmt.Sprintf("events.project_id = toUInt16(%d)", p.ProjectId),
-		fmt.Sprintf("events.created_at >= toDateTime(%d / 1000)", p.StartTimestamp),
-		fmt.Sprintf("events.created_at < toDateTime(%d / 1000)", p.EndTimestamp)}
+	// Session filters with an events-table equivalent are applied on the
+	// events scan; only session-only filters require the sub_sessions CTE on
+	// experimental.sessions.
+	sessionFiltersOnEvents, sessionOnlyFilters := SplitSessionFilters(extractSessionFilters(p.Series[0].Filter.Filters))
+	var sessionsConditions []string
+	if len(sessionOnlyFilters) > 0 {
+		_, _, sessionsConditions = BuildEventConditions(sessionOnlyFilters, BuildConditionsOptions{DefinedColumns: mainSessionsColumns, MainTableAlias: "sessions"}, qp)
+	}
+	chSubQuery := []string{"events.project_id = toUInt16(@projectId)",
+		"events.created_at >= toDateTime(@startTimestamp / 1000)",
+		"events.created_at < toDateTime(@endTimestamp / 1000)"}
+	chSubQuery = append(chSubQuery, BuildSessionConditionsOnEvents(sessionFiltersOnEvents, "events", qp)...)
 	if p.SampleRate > 0 && p.SampleRate < 100 {
-		chSubQuery = append(chSubQuery, fmt.Sprintf("events.sample_key < %d", p.SampleRate))
+		qp.Set("sampleRate", p.SampleRate)
+		chSubQuery = append(chSubQuery, "events.sample_key < @sampleRate")
 	}
 	selectedEventTypeSubQuery := make([]string, 0)
 	for _, s := range p.MetricValue {
@@ -336,9 +349,9 @@ func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, map[string]a
 	mainEventsTable := getMainEventsTable(p.StartTimestamp) + " AS events"
 	initialSessionsCte := ""
 	if len(sessionsConditions) > 0 {
-		sessionsConditions = append(sessionsConditions, fmt.Sprintf("sessions.project_id = toUInt16(%d)", p.ProjectId))
-		sessionsConditions = append(sessionsConditions, fmt.Sprintf("sessions.datetime >= toDateTime(%d / 1000)", p.StartTimestamp))
-		sessionsConditions = append(sessionsConditions, fmt.Sprintf("sessions.datetime < toDateTime(%d / 1000)", p.EndTimestamp))
+		sessionsConditions = append(sessionsConditions, "sessions.project_id = toUInt16(@projectId)")
+		sessionsConditions = append(sessionsConditions, "sessions.datetime >= toDateTime(@startTimestamp / 1000)")
+		sessionsConditions = append(sessionsConditions, "sessions.datetime < toDateTime(@endTimestamp / 1000)")
 		sessionsConditions = append(sessionsConditions, "sessions.events_count > 1")
 		sessionsConditions = append(sessionsConditions, "sessions.duration > 0")
 		initialSessionsCte = fmt.Sprintf("sub_sessions AS (SELECT DISTINCT session_id FROM %s WHERE %s),",

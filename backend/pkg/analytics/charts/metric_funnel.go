@@ -194,9 +194,15 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, map[string]any, err
 	}, qp)
 	namelessEventConditions = append(namelessEventConditions, namelessOtherConditions...)
 
+	// Session filters with an events-table equivalent run on the events
+	// table; only session-only filters (duration, platform, ...) force a
+	// join with experimental.sessions.
+	sessionFiltersOnEvents, sessionOnlyFilters := SplitSessionFilters(sessionFilters)
+	sessionConditionsOnEvents := BuildSessionConditionsOnEvents(sessionFiltersOnEvents, "e", qp)
+
 	var sessionConditions []string = make([]string, 0)
-	if len(sessionFilters) > 0 {
-		_, _, sessionConditions = BuildEventConditions(sessionFilters, BuildConditionsOptions{
+	if len(sessionOnlyFilters) > 0 {
+		_, _, sessionConditions = BuildEventConditions(sessionOnlyFilters, BuildConditionsOptions{
 			DefinedColumns: SessionColumns,
 			MainTableAlias: "s",
 		}, qp)
@@ -214,7 +220,7 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, map[string]any, err
 	var innerParts []string
 	if numBreakdowns > 0 {
 		if p.MetricFormat == MetricFormatUserCount {
-			innerParts = append(innerParts, "s.user_id")
+			innerParts = append(innerParts, `e."$user_id" AS user_id`)
 		} else {
 			innerParts = append(innerParts, "e.session_id")
 		}
@@ -240,11 +246,13 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, map[string]any, err
 	}
 
 	if p.SampleRate > 0 && p.SampleRate < 100 {
-		baseWhere = append(baseWhere, fmt.Sprintf("e.sample_key < %d", p.SampleRate)) // safe: validated integer from struct
+		qp.Set("sampleRate", p.SampleRate)
+		baseWhere = append(baseWhere, "e.sample_key < @sampleRate")
 	}
 
 	if p.MetricFormat == MetricFormatUserCount {
-		baseWhere = append(baseWhere, "isNotNull(s.user_id)")
+		// events."$user_id" is '' when sessions.user_id would be NULL
+		baseWhere = append(baseWhere, `e."$user_id" != ''`)
 	}
 
 	if len(otherConditions) > 0 {
@@ -253,9 +261,12 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, map[string]any, err
 	if len(namelessEventConditions) > 0 {
 		baseWhere = append(baseWhere, strings.Join(namelessEventConditions, " AND "))
 	}
+	if len(sessionConditionsOnEvents) > 0 {
+		baseWhere = append(baseWhere, strings.Join(sessionConditionsOnEvents, " AND "))
+	}
 
 	var mainTables string = fmt.Sprintf("%s AS e", getMainEventsTable(p.StartTimestamp))
-	needsSessionsJoin := len(sessionConditions) > 0 || p.MetricFormat == MetricFormatUserCount ||
+	needsSessionsJoin := len(sessionConditions) > 0 ||
 		(numBreakdowns > 0 && FunnelBreakdownNeedsSessions(p.Breakdowns))
 	if needsSessionsJoin {
 		mainTables = fmt.Sprintf("%s AS s INNER JOIN %s USING(session_id)", getMainSessionsTable(p.StartTimestamp), mainTables)
@@ -271,7 +282,7 @@ func (f *FunnelQueryBuilder) buildQuery(p *Payload) (string, map[string]any, err
 	groupColumn := "GROUP BY e.session_id"
 	querySettings := "SETTINGS optimize_aggregation_in_order = 1"
 	if p.MetricFormat == MetricFormatUserCount {
-		groupColumn = "GROUP BY s.user_id"
+		groupColumn = `GROUP BY e."$user_id"`
 		querySettings = ""
 	}
 	if numBreakdowns > 0 {

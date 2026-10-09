@@ -6,7 +6,6 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/go-playground/validator/v10"
-	"go.uber.org/zap"
 
 	"openreplay/backend/pkg/analytics/lexicon"
 	"openreplay/backend/pkg/analytics/model"
@@ -54,12 +53,12 @@ func (s *chartsImpl) GetData(ctx context.Context, projectId int, userID uint64, 
 	}
 	var err error
 	if err = validate.Struct(payload); err != nil {
-		s.Logger.Error(ctx, "Error validating payload", zap.Error(err))
+		s.Logger.Error(ctx, "Error validating payload: %v", err)
 		return nil, fmt.Errorf("error validating payload: %v", err)
 	}
 	qb, err := NewQueryBuilder(s.Logger, payload, s.chSessionConn)
 	if err != nil {
-		s.Logger.Error(ctx, "Error creating query builder", zap.Error(err))
+		s.Logger.Error(ctx, "Error creating query builder: %v", err)
 		return nil, fmt.Errorf("error creating query builder: %v", err)
 	}
 
@@ -69,7 +68,7 @@ func (s *chartsImpl) GetData(ctx context.Context, projectId int, userID uint64, 
 	}
 	resp, err := qb.Execute(ctx, payload, s.chConn)
 	if err != nil {
-		s.Logger.Error(ctx, "Error executing query", zap.Error(err))
+		s.Logger.Error(ctx, "Error executing query: %v", err)
 		return nil, fmt.Errorf("error executing query: %v", err)
 	}
 	s.Logger.Info(ctx, "Query executed successfully")

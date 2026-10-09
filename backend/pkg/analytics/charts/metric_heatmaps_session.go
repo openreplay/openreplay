@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
-	"go.uber.org/zap"
 
 	"openreplay/backend/pkg/logger"
 )
@@ -28,7 +27,7 @@ type HeatmapSessionQueryBuilder struct {
 func (h *HeatmapSessionQueryBuilder) Execute(ctx context.Context, p *Payload, conn driver.Conn) (interface{}, error) {
 	shortestQ, params, err := h.buildQuery(p)
 	if err != nil {
-		h.Logger.Error(ctx, "Failed to build query", err)
+		h.Logger.Error(ctx, "Failed to build query: %v", err)
 		return nil, err
 	}
 
@@ -39,7 +38,7 @@ func (h *HeatmapSessionQueryBuilder) Execute(ctx context.Context, p *Payload, co
 		h.Logger.Warn(ctx, "Heatmap query execution took longer than 2s: %s", shortestQ)
 	}
 	if err = row.Err(); err != nil {
-		h.Logger.Error(ctx, "QueryRow error", err)
+		h.Logger.Error(ctx, "QueryRow error: %v", err)
 		return nil, err
 	}
 
@@ -51,7 +50,7 @@ func (h *HeatmapSessionQueryBuilder) Execute(ctx context.Context, p *Payload, co
 		urlPath  string
 	)
 	if err = row.Scan(&sid, &startTs, &duration, &eventTs, &urlPath); err != nil {
-		h.Logger.Error(ctx, "Row scan error", err)
+		h.Logger.Error(ctx, "Row scan error: %v", err)
 		return HeatmapSessionResponse{}, nil
 	}
 
@@ -166,27 +165,36 @@ func (h *HeatmapSessionQueryBuilder) buildQuery(p *Payload) (string, map[string]
 		filters = append(filters, filter)
 	}
 
-	// Common session WHERE clauses
+	qp.Set("projectId", projectId)
+	qp.Set("startSec", startSec)
+	qp.Set("endSec", endSec)
+	if p.SampleRate > 0 && p.SampleRate < 100 {
+		qp.Set("sampleRate", p.SampleRate)
+	}
+
+	// Common session WHERE clauses. The sessions table is the main table of
+	// this query, so session filters stay on its own columns (4th return
+	// value of BuildWhere).
 	sessionsWhere := []string{
-		fmt.Sprintf("s.project_id = %d", projectId),
-		fmt.Sprintf("s.datetime BETWEEN toDateTime(%d) AND toDateTime(%d)", startSec, endSec),
+		"s.project_id = @projectId",
+		"s.datetime BETWEEN toDateTime(@startSec) AND toDateTime(@endSec)",
 		"s.duration > 500",
 	}
-	_, filtersWhere, _, extraSessions := BuildWhere(filters, string(series.Filter.EventsOrder), "e", "s", qp, true)
+	_, filtersWhere, _, extraSessions := BuildWhere(filters, string(series.Filter.EventsOrder), "e", "s", qp)
 	sessionsWhere = append(sessionsWhere, extraSessions...)
 
 	var query string
 	if hasLocationFilter {
 		eventsWhere := []string{
-			fmt.Sprintf("e.project_id = %d", projectId),
-			fmt.Sprintf("e.created_at BETWEEN toDateTime(%d) AND toDateTime(%d)", startSec, endSec),
+			"e.project_id = @projectId",
+			"e.created_at BETWEEN toDateTime(@startSec) AND toDateTime(@endSec)",
 			"e.`$event_name` = 'CLICK'",
 		}
 		if cond := buildCond(`e."$current_path"`, locationFilter.Value, locationFilter.Operator, false, "singleColumn", qp); cond != "" {
 			eventsWhere = append(eventsWhere, cond)
 		}
 		if p.SampleRate > 0 && p.SampleRate < 100 {
-			eventsWhere = append(eventsWhere, fmt.Sprintf("e.sample_key < %d", p.SampleRate))
+			eventsWhere = append(eventsWhere, "e.sample_key < @sampleRate")
 		}
 		eventsWhere = append(eventsWhere, filtersWhere...)
 
@@ -198,24 +206,24 @@ func (h *HeatmapSessionQueryBuilder) buildQuery(p *Payload) (string, map[string]
 	} else {
 		// Use CTE to find top URL path
 		eventsWhere := []string{
-			fmt.Sprintf("e.project_id = %d", projectId),
-			fmt.Sprintf("e.created_at BETWEEN toDateTime(%d) AND toDateTime(%d)", startSec, endSec),
+			"e.project_id = @projectId",
+			"e.created_at BETWEEN toDateTime(@startSec) AND toDateTime(@endSec)",
 			"e.`$event_name` = 'CLICK'",
 		}
 		if p.SampleRate > 0 && p.SampleRate < 100 {
-			eventsWhere = append(eventsWhere, fmt.Sprintf("e.sample_key < %d", p.SampleRate))
+			eventsWhere = append(eventsWhere, "e.sample_key < @sampleRate")
 		}
 		eventsWhere = append(eventsWhere, filtersWhere...)
 		cteWhere := strings.Join(eventsWhere, " AND ")
 
 		subWhereConditions := []string{
-			fmt.Sprintf("created_at BETWEEN toDateTime(%d) AND toDateTime(%d)", startSec, endSec),
-			fmt.Sprintf("project_id = %d", projectId),
+			"created_at BETWEEN toDateTime(@startSec) AND toDateTime(@endSec)",
+			"project_id = @projectId",
 			"`$event_name` = 'CLICK'",
 			"`$current_path` = (SELECT url_path FROM top_url_path)",
 		}
 		if p.SampleRate > 0 && p.SampleRate < 100 {
-			subWhereConditions = append(subWhereConditions, fmt.Sprintf("sample_key < %d", p.SampleRate))
+			subWhereConditions = append(subWhereConditions, "sample_key < @sampleRate")
 		}
 		subWhere := strings.Join(subWhereConditions, " AND ")
 
@@ -227,6 +235,6 @@ func (h *HeatmapSessionQueryBuilder) buildQuery(p *Payload) (string, map[string]
 		)
 	}
 
-	h.Logger.Debug(context.Background(), "Built query", zap.String("query", query))
+	h.Logger.Debug(context.Background(), "Built query: %s", query)
 	return query, qp.Values(), nil
 }
