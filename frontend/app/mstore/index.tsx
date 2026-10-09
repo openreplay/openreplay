@@ -34,7 +34,6 @@ import SpotStore from './spotStore';
 import TagWatchStore from './tagWatchStore';
 import UiPlayerStore from './uiPlayerStore';
 import userStore from './userStore';
-import WeeklyReportStore from './weeklyReportConfigStore';
 
 const projectStore = new ProjectsStore();
 const sessionStore = new SessionStore();
@@ -94,7 +93,6 @@ export class RootStore {
   sessionStore: SessionStore;
   recordingsStore: RecordingsStore;
   assistMultiviewStore: AssistMultiviewStore;
-  weeklyReportStore: WeeklyReportStore;
   alertsStore: AlertStore;
   tagWatchStore: TagWatchStore;
   aiSummaryStore: AiSummaryStore;
@@ -127,7 +125,6 @@ export class RootStore {
     this.sessionStore = sessionStore;
     this.recordingsStore = new RecordingsStore();
     this.assistMultiviewStore = new AssistMultiviewStore();
-    this.weeklyReportStore = new WeeklyReportStore();
     this.alertsStore = new AlertStore();
     this.tagWatchStore = new TagWatchStore();
     this.aiSummaryStore = new AiSummaryStore();

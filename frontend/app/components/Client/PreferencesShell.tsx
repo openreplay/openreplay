@@ -21,7 +21,6 @@ const GROUPS: { label: (t: TFunction) => string; keys: string[] }[] = [
       PREFERENCES_MENU.ACCOUNT,
       PREFERENCES_MENU.SESSION_SETTINGS,
       PREFERENCES_MENU.PROJECTS,
-      PREFERENCES_MENU.NOTIFICATIONS,
     ],
   },
   {
@@ -31,7 +30,6 @@ const GROUPS: { label: (t: TFunction) => string; keys: string[] }[] = [
       PREFERENCES_MENU.ROLES_ACCESS,
       PREFERENCES_MENU.BILLING,
       PREFERENCES_MENU.AUDIT,
-      PREFERENCES_MENU.MODULES,
     ],
   },
   {
@@ -69,10 +67,6 @@ const LEDES = (
       'One project per app you record. Its key, how much it captures, and the metadata it sends.',
     ),
   },
-  [PREFERENCES_MENU.NOTIFICATIONS]: {
-    title: t('Weekly report'),
-    lede: t('A summary of last week in your inbox.'),
-  },
   [PREFERENCES_MENU.TEAM]: {
     title: t('Team'),
     lede: t('Who is in this workspace, and what each of them may do.'),
@@ -88,10 +82,6 @@ const LEDES = (
   [PREFERENCES_MENU.AUDIT]: {
     title: t('Audit trail'),
     lede: t('Every administrative call made in this workspace.'),
-  },
-  [PREFERENCES_MENU.MODULES]: {
-    title: t('Modules'),
-    lede: t('Product features this workspace shows in the menu.'),
   },
   [PREFERENCES_MENU.INTEGRATIONS]: {
     title: t('Integrations'),

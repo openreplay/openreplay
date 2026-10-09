@@ -1,6 +1,32 @@
 .m-pick-host {
   padding: var(--m-space-2);
 }
+/* The popover's size eases between lists; both panes stop at 21rem and at the
+   room below the trigger (the popover doesn't flip), then scroll inside. */
+.m-pick-ease {
+  overflow: hidden;
+  transition: height var(--m-duration-fast) var(--m-ease-out);
+}
+.m-pick-ease__in {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(
+    var(--radix-popper-available-height, 100vh) - 2 * var(--m-space-2) -
+      var(--m-space-4)
+  );
+}
+.m-pick-ease__in > .m-pick2 {
+  flex: 1;
+}
+.m-pick-host .m-pick2__rail,
+.m-pick-host .m-pick2__list {
+  max-height: 21rem;
+}
+@media (prefers-reduced-motion: reduce) {
+  .m-pick-ease {
+    transition: none;
+  }
+}
 
 .m-pick__none {
   padding: var(--m-space-6) var(--m-space-3);

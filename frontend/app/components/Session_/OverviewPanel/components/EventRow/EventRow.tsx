@@ -36,49 +36,28 @@ const EventRow = React.memo((props: Props) => {
   } = props;
   const { t } = useTranslation();
   const scale = 100 / endTime;
-  const _list = isGraph
-    ? []
-    : React.useMemo(() => {
-        const tolerance = 2; // within what %s to group items
-        const groupedItems = [];
-        let currentGroup = [];
-        let currentLeft = 0;
+  const _list = React.useMemo<
+    { isGrouped: boolean; items: any[]; left: number }[]
+  >(() => {
+    if (isGraph) return [];
+    const tolerance = 2; // within what %s to group items
+    const groupedItems: { isGrouped: boolean; items: any[]; left: number }[] =
+      [];
+    let currentGroup: any[] = [];
+    let currentLeft = 0;
 
-        for (let i = 0; i < list.length; i++) {
-          const item = list[i];
-          const spread = item.toJS ? { ...item.toJS() } : item;
-          const left: number = getTimelinePosition(item.time, scale);
-          const itemWithLeft = { ...spread, left };
+    for (let i = 0; i < list.length; i++) {
+      const item = list[i];
+      const spread = item.toJS ? { ...item.toJS() } : item;
+      const left: number = getTimelinePosition(item.time, scale);
+      const itemWithLeft = { ...spread, left };
 
-          if (currentGroup.length === 0) {
-            currentGroup.push(itemWithLeft);
-            currentLeft = left;
-          } else if (Math.abs(left - currentLeft) <= tolerance) {
-            currentGroup.push(itemWithLeft);
-          } else {
-            if (currentGroup.length > 1) {
-              const leftValues = currentGroup.map((item) => item.left);
-              const minLeft = Math.min(...leftValues);
-              const maxLeft = Math.max(...leftValues);
-              const middleLeft = (minLeft + maxLeft) / 2;
-
-              groupedItems.push({
-                isGrouped: true,
-                items: currentGroup,
-                left: middleLeft,
-              });
-            } else {
-              groupedItems.push({
-                isGrouped: false,
-                items: [currentGroup[0]],
-                left: currentGroup[0].left,
-              });
-            }
-            currentGroup = [itemWithLeft];
-            currentLeft = left;
-          }
-        }
-
+      if (currentGroup.length === 0) {
+        currentGroup.push(itemWithLeft);
+        currentLeft = left;
+      } else if (Math.abs(left - currentLeft) <= tolerance) {
+        currentGroup.push(itemWithLeft);
+      } else {
         if (currentGroup.length > 1) {
           const leftValues = currentGroup.map((item) => item.left);
           const minLeft = Math.min(...leftValues);
@@ -90,16 +69,39 @@ const EventRow = React.memo((props: Props) => {
             items: currentGroup,
             left: middleLeft,
           });
-        } else if (currentGroup.length === 1) {
+        } else {
           groupedItems.push({
             isGrouped: false,
             items: [currentGroup[0]],
             left: currentGroup[0].left,
           });
         }
+        currentGroup = [itemWithLeft];
+        currentLeft = left;
+      }
+    }
 
-        return groupedItems;
-      }, [list.length]);
+    if (currentGroup.length > 1) {
+      const leftValues = currentGroup.map((item) => item.left);
+      const minLeft = Math.min(...leftValues);
+      const maxLeft = Math.max(...leftValues);
+      const middleLeft = (minLeft + maxLeft) / 2;
+
+      groupedItems.push({
+        isGrouped: true,
+        items: currentGroup,
+        left: middleLeft,
+      });
+    } else if (currentGroup.length === 1) {
+      groupedItems.push({
+        isGrouped: false,
+        items: [currentGroup[0]],
+        left: currentGroup[0].left,
+      });
+    }
+
+    return groupedItems;
+  }, [isGraph, list, scale]);
 
   return (
     <div className={cn('m-dt__lane', `is-${title.toLowerCase()}`, className)}>

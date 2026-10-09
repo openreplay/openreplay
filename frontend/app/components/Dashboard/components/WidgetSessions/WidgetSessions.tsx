@@ -1,5 +1,6 @@
 import { MenuButton } from '@/ui/actions/menu-button';
 import { Chip } from '@/ui/data/Chip';
+import { EmptyState } from '@/ui/feedback/EmptyState';
 import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
 import { ListFooter } from '@/ui/layout/ListFooter';
 import { PagePanel } from '@/ui/layout/PageCard';
@@ -21,6 +22,7 @@ import useIsMounted from 'App/hooks/useIsMounted';
 import { useStore } from 'App/mstore';
 import Session from 'App/types/session/session';
 import { debounce } from 'App/utils';
+import { windowPhrase } from 'App/utils/windowPhrase';
 
 import {
   type SessionField,
@@ -398,9 +400,15 @@ function WidgetSessions() {
         {loading && filteredSessions.sessions.length === 0 ? (
           <SkeletonRows rows={4} columns={[24, 16, 16, 28, 16]} />
         ) : filteredSessions.sessions.length === 0 ? (
-          <p className="m-cardp__none">
-            {t('No relevant sessions found for the selected time period.')}
-          </p>
+          <EmptyState
+            className="m-cardp__none"
+            title={t('No sessions {{window}}', {
+              window: windowPhrase(t, dashboardStore.drillDownPeriod),
+            })}
+            hint={t(
+              'Sessions that match the definition are listed here as they are recorded.',
+            )}
+          />
         ) : (
           <>
             <SessionsTable

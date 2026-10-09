@@ -26,3 +26,12 @@
 .m-recs__latest:hover {
   text-decoration: underline;
 }
+
+/* the strip's second level: the picked group's kinds, after a hairline */
+.m-recs__kinds {
+  display: inline-flex;
+  align-items: center;
+  margin-inline-start: var(--m-space-2);
+  padding-inline-start: var(--m-space-3);
+  border-inline-start: 1px solid var(--m-border-subtle);
+}

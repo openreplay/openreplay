@@ -43,7 +43,7 @@ const TimelinePointer = React.memo((props: Props) => {
   const { player } = isSpot
     ? { player: { jump } }
     : React.useContext(PlayerContext);
-  const item = isGrouped ? pointer : pointer[0];
+  const item = isGrouped ? pointer : pointer?.[0];
 
   const { showModal } = useModal();
   const { uiPlayerStore } = useStore();
@@ -86,6 +86,8 @@ const TimelinePointer = React.memo((props: Props) => {
       }
     }
   };
+
+  if (!item || (isGrouped && !item.length)) return null;
 
   if (isGrouped) {
     const onClick = createEventClickHandler(item[0], type);

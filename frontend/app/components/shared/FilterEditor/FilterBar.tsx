@@ -9,7 +9,6 @@ import {
   SelectItem,
   SelectTrigger,
 } from '@/ui/inputs/select';
-import { PopoverPanel } from '@/ui/overlays/popover';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import {
   ChevronsDownUp,
@@ -36,7 +35,12 @@ import {
 import { useTranslation } from 'react-i18next';
 
 import { FilterPanel } from './FilterPanel';
-import { FilterPicker, PickerBody, entryIcon } from './FilterPicker';
+import {
+  FilterPicker,
+  PickerBody,
+  PickerPopover,
+  entryIcon,
+} from './FilterPicker';
 import ValuePicker from './ValuePicker';
 import {
   categoryLabel,
@@ -709,12 +713,9 @@ function PropertyPicker({
   const [open, setOpen] = useState(false);
   const { entries, loading } = useEventProperties(event, open);
   return (
-    <PopoverPanel
+    <PickerPopover
       open={open}
       onOpenChange={setOpen}
-      placement="bottomLeft"
-      sideOffset={5}
-      className="m-pick-host"
       content={
         <PickerBody
           entries={entries}
@@ -726,7 +727,7 @@ function PropertyPicker({
       }
     >
       {children}
-    </PopoverPanel>
+    </PickerPopover>
   );
 }
 

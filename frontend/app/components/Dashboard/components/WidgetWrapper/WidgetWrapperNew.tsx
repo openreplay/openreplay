@@ -21,12 +21,13 @@ import React, { Suspense, lazy, useRef } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import { useTranslation } from 'react-i18next';
 
-import { TIMESERIES, USER_PATH } from 'App/constants/card';
+import { FUNNEL, TIMESERIES, USER_PATH } from 'App/constants/card';
 import { useStore } from 'App/mstore';
 import { dashboardMetricDetails, withSiteId } from 'App/routes';
 import { useHistory } from 'App/routing';
 import { dashboardService } from 'App/services';
 import AlertFormModal from 'Components/Alerts/AlertFormModal/AlertFormModal';
+import { isFullWidget } from 'Components/Dashboard/components/DashboardWidgetGrid/placement';
 import { useModal } from 'Components/ModalContext';
 
 import { cardTypeLabel } from '../../cardIcons';
@@ -41,6 +42,8 @@ interface Props {
   moveListItem: (from: number, to: number) => void;
   siteId: string;
   grid?: string;
+  /** spans both columns: a full widget, or a half alone in its row */
+  drawnFull?: boolean;
 }
 
 /** One card on a dashboard: title, type, menu, and the chart as the drilldown. */
@@ -50,6 +53,7 @@ function WidgetWrapperDashboard({
   moveListItem,
   siteId,
   grid = 'other',
+  drawnFull = true,
 }: Props) {
   const { t } = useTranslation();
   const history = useHistory();
@@ -60,7 +64,9 @@ function WidgetWrapperDashboard({
   const seriesId = widget.series[0]?.seriesId;
   const canAlert =
     !isPredefined && widget.metricType === TIMESERIES && !!seriesId;
-  const full = widget.config.col === 4;
+  const full = isFullWidget(widget);
+  const natural =
+    widget.metricType === USER_PATH || (widget.metricType === FUNNEL && full);
 
   const [{ isDragging }, dragRef] = useDrag({
     type: 'item',
@@ -121,7 +127,7 @@ function WidgetWrapperDashboard({
     <section
       ref={ref}
       id={`widget-${widget.metricId}`}
-      className={`m-dash__widget m-dash__widget--c${widget.config.col ?? 4}${isDragging ? ' is-dragging' : ''}${canDrop && isOver ? ' is-drop' : ''}`}
+      className={`m-dash__widget${drawnFull ? ' is-full' : ''}${natural ? ' is-natural' : ''}${isDragging ? ' is-dragging' : ''}${canDrop && isOver ? ' is-drop' : ''}`}
       style={widget.metricType === USER_PATH ? { minHeight: 600 } : undefined}
     >
       <header className="m-dash__widget-head">

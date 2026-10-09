@@ -12,6 +12,7 @@ import { useModal } from 'App/components/Modal';
 import type Funnel from 'App/mstore/types/funnel';
 import type FunnelStage from 'App/mstore/types/funnelStage';
 import type Widget from 'App/mstore/types/widget';
+import NoDataInWindow from 'Components/Dashboard/components/NoDataInWindow';
 
 interface Props {
   metric?: Widget;
@@ -110,12 +111,12 @@ function FunnelWidget({ metric, isWidget = false, data, compData }: Props) {
   }, [comparisonPeriod]);
 
   if (stages.length === 0) {
-    return (
+    return noEvents ? (
       <p className="m-funnel__empty">
-        {noEvents
-          ? t('Select an event to start seeing the funnel.')
-          : t('No data available for the selected period.')}
+        {t('Select an event to start seeing the funnel.')}
       </p>
+    ) : (
+      <NoDataInWindow inGrid={isWidget} />
     );
   }
 

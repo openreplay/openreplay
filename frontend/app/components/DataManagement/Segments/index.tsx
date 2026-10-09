@@ -244,7 +244,7 @@ function SegmentsListPage() {
                     else if (issuesStore.toggleSegment(seg.id, false))
                       toast.info(
                         t(
-                          'No active segments left — capture switched to full traffic.',
+                          'No active segments left. Capture switched to full traffic.',
                         ),
                       );
                   }}
@@ -255,7 +255,7 @@ function SegmentsListPage() {
               ) : (
                 <Tooltip
                   title={t(
-                    'Private segments can’t enable the agent — only team-visible ones are eligible.',
+                    'Private segments can’t enable the agent. Only team-visible ones are eligible.',
                   )}
                 >
                   <span>{control}</span>
@@ -375,7 +375,7 @@ function SegmentsListPage() {
             art="search"
             title={t('No saved segments')}
             hint={t(
-              'Build a filter on the sessions list and save it. A segment is that search, kept — so you can come back to it, share it, or drop it into another search.',
+              'Build a filter on the sessions list and save it. A segment is that search, kept. Come back to it, share it, or drop it into another search.',
             )}
             action={
               <Button onClick={create}>

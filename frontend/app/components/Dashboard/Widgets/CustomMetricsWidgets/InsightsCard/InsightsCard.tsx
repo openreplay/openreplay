@@ -12,10 +12,11 @@ import {
   IssueCategory,
   IssueType,
 } from 'App/types/filter/filterType';
+import NoDataInWindow from 'Components/Dashboard/components/NoDataInWindow';
 
 import InsightItem from './InsightItem';
 
-function InsightsCard({ data }: any) {
+function InsightsCard({ data, inGrid }: any) {
   const { dashboardStore } = useStore();
   const { drillDownFilter } = dashboardStore;
   const { t } = useTranslation();
@@ -69,11 +70,7 @@ function InsightsCard({ data }: any) {
   };
 
   if (!data.issues || data.issues.length === 0) {
-    return (
-      <p className="m-funnel__empty">
-        {t('No data available for the selected period.')}
-      </p>
-    );
+    return <NoDataInWindow inGrid={inGrid} />;
   }
 
   return (

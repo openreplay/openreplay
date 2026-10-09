@@ -96,7 +96,6 @@ function Overlay({ nextId, isClickmap }: Props) {
     autoplay,
     inspectorMode,
     markedTargets,
-    activeTargetIndex,
     tabStates,
   } = store.get();
   const cssLoading = Object.values(tabStates).some(
@@ -185,7 +184,7 @@ function Overlay({ nextId, isClickmap }: Props) {
       {markedTargets && (
         <ElementsMarker
           targets={markedTargets}
-          activeIndex={activeTargetIndex}
+          hot={uiPlayerStore.clickMapHot}
         />
       )}
     </>

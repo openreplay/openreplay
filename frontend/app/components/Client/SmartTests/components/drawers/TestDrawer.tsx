@@ -273,7 +273,7 @@ function TestDrawer({
   const runNow = () =>
     triggerMut.mutate(test.key, {
       onSuccess: () =>
-        toast.success(`${test.title} — ${t('run started, see Runs')}`),
+        toast.success(`${test.title}: ${t('run started, see Runs')}`),
       onError: () => toast.error(t('Failed to start run')),
     });
   // A header action, not an edit: it commits the status on its own and leaves whatever
@@ -692,7 +692,7 @@ function TestDrawer({
                           type="button"
                           className={failed ? 'is-failed' : undefined}
                           onClick={() => onViewRun?.(r)}
-                          aria-label={`${info} — ${t('View run')}`}
+                          aria-label={`${info}. ${t('View run')}`}
                         >
                           <Icon size={14} />
                         </button>

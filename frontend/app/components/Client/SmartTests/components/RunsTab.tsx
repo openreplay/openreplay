@@ -280,7 +280,7 @@ function RunsTab() {
     if (!run.testId) return;
     triggerMut.mutate(run.testId, {
       onSuccess: () =>
-        toast.success(`${run.testName} — ${t('rerun started, see Runs')}`),
+        toast.success(`${run.testName}: ${t('rerun started, see Runs')}`),
       onError: () => toast.error(t('Failed to start run')),
     });
   };
@@ -505,7 +505,7 @@ function RunsTab() {
             art="tests"
             title={t('Nothing has run yet')}
             hint={t(
-              'Approve a test and give it a schedule, and its runs land here — one row per environment, viewport and region it runs against.',
+              'Approve a test and give it a schedule, and its runs land here: one row per environment, viewport and region it runs against.',
             )}
           />
         ) : filtered ? (
@@ -513,7 +513,7 @@ function RunsTab() {
             art="search"
             title={t('No runs match these filters')}
             hint={t(
-              'The period counts as a filter here — clear them to see the whole log.',
+              'The period counts as a filter here. Clear them to see the whole log.',
             )}
             action={
               <Button onClick={clearFilters}>{t('Clear filters')}</Button>

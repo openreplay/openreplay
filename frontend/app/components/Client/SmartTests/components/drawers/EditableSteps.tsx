@@ -58,7 +58,7 @@ function DecisionButtons({
       <Tooltip
         title={
           decision === 'accepted'
-            ? t('Accepted — undo')
+            ? t('Accepted. Click to undo')
             : t('Accept suggestion')
         }
       >
@@ -75,7 +75,7 @@ function DecisionButtons({
       <Tooltip
         title={
           decision === 'rejected'
-            ? t('Rejected — undo')
+            ? t('Rejected. Click to undo')
             : t('Reject suggestion')
         }
       >
@@ -302,7 +302,7 @@ function StepRow({
           className="m-step__text"
         >
           {step || (
-            <span className="m-step__empty">{t('Empty — click to edit')}</span>
+            <span className="m-step__empty">{t('Empty. Click to edit')}</span>
           )}
         </button>
       )}
@@ -333,7 +333,7 @@ function StepRow({
               >
                 <ArrowDown size={13} />
               </button>
-              <Tooltip title={t('Confirm — Enter')}>
+              <Tooltip title={t('Confirm (Enter)')}>
                 <button
                   type="button"
                   aria-label={t('Confirm step')}
@@ -365,7 +365,7 @@ function StepRow({
             <Tooltip
               title={
                 isGroup
-                  ? t('Remove label — its steps join the group above')
+                  ? t('Remove label. Its steps join the group above')
                   : t('Delete step')
               }
             >

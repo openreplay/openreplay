@@ -484,7 +484,7 @@ function TestsTab() {
     if (reviewBlocked(tc)) return;
     triggerMut.mutate(tc.key, {
       onSuccess: () =>
-        toast.success(`${tc.title} — ${t('run started, see Runs')}`),
+        toast.success(`${tc.title}: ${t('run started, see Runs')}`),
       onError: () => toast.error(t('Failed to start run')),
     });
   };
@@ -602,9 +602,9 @@ function TestsTab() {
       render: (tc) => {
         // a pending revision (or an unopened new draft) waits for the user
         const dot = needsReview(tc)
-          ? t('New version — not reviewed yet')
+          ? t('New version, not reviewed yet')
           : tc.status === 'draft' && tc.isNew
-            ? t('New — not reviewed yet')
+            ? t('New, not reviewed yet')
             : null;
         return (
           <div className="m-tests__title-cell">
@@ -939,7 +939,7 @@ function TestsTab() {
                     title={
                       mergeBlocked
                         ? t(
-                            'A selected test has a review pending — resolve it first.',
+                            'A selected test has a review pending. Resolve it first.',
                           )
                         : undefined
                     }

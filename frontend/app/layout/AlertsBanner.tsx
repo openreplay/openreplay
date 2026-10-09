@@ -1,13 +1,10 @@
-import { Button } from '@/ui/actions/button';
-import { TriangleAlert } from 'lucide-react';
+import { Notice, type NoticeKind } from '@/ui/feedback/Notice';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 
 import { useStore } from 'App/mstore';
 
-import './banners.css';
-
-const levelTone: Record<string, string> = {
+const levelKind: Record<string, NoticeKind> = {
   alert: 'danger',
   error: 'danger',
   warning: 'warning',
@@ -24,26 +21,19 @@ function AlertsBanner() {
   return (
     <>
       {alerts.map((alert, idx) => (
-        <div
+        <Notice
           key={idx}
-          className={`m-banner m-banner--${levelTone[alert.level?.toLowerCase() ?? ''] ?? 'info'}`}
-          role="status"
-        >
-          <TriangleAlert size={15} aria-hidden="true" />
-          <span className="m-banner__text font-medium">{alert.text}</span>
-          {alert.button && alert.url ? (
-            <span className="m-banner__actions">
-              <Button
-                variant="primary"
-                onClick={() =>
-                  window.open(alert.url, '_blank', 'noopener,noreferrer')
-                }
-              >
+          kind={levelKind[alert.level?.toLowerCase() ?? ''] ?? 'info'}
+          action={
+            alert.button && alert.url ? (
+              <a href={alert.url} target="_blank" rel="noopener noreferrer">
                 {alert.button}
-              </Button>
-            </span>
-          ) : null}
-        </div>
+              </a>
+            ) : undefined
+          }
+        >
+          {alert.text}
+        </Notice>
       ))}
     </>
   );

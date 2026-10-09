@@ -67,6 +67,19 @@
   position: relative;
 }
 
+/* notices about the recording sit in the main column on the stage's inset,
+   and the stage starts under them */
+.m-rs__notice {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-space-2);
+  flex: none;
+  padding: var(--m-space-4) var(--m-space-6) 0;
+}
+.m-rs__notice:empty {
+  display: none;
+}
+
 .m-work.is-fullscreen .m-ihdr {
   display: none;
 }

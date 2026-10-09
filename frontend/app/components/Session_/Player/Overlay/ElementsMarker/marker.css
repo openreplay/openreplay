@@ -1,0 +1,43 @@
+/* The click map's dots, on the page's own elements: one per element at its
+   top-right corner, a little bigger the more it was clicked; the row under
+   the pointer in the panel rings its dot. */
+.m-wf__heat-box {
+  position: absolute;
+  z-index: 100;
+  pointer-events: none;
+}
+.m-wf__heat {
+  position: absolute;
+  top: 0;
+  right: 0;
+  translate: 40% -40%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: calc(14px + var(--n) * 0.8px);
+  height: calc(14px + var(--n) * 0.8px);
+  padding-inline: 3px;
+  border-radius: var(--m-radius-full);
+  background: var(--m-content-accent);
+  color: var(--m-action-primary-fg);
+  font: var(--m-weight-medium) 9px / 1 var(--m-font-mono);
+  box-shadow: 0 0 0 2px var(--m-surface-default);
+  animation: m-wf-heat-pop 320ms var(--m-ease-out) both;
+  transition: box-shadow var(--m-duration-fast) var(--m-ease-out);
+}
+.m-wf__heat.is-hot {
+  box-shadow:
+    0 0 0 2px var(--m-surface-default),
+    0 0 0 6px color-mix(in oklab, var(--m-content-accent) 28%, transparent);
+}
+@keyframes m-wf-heat-pop {
+  from {
+    opacity: 0;
+    scale: 0.4;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .m-wf__heat {
+    animation: none;
+  }
+}

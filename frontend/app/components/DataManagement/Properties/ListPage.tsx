@@ -5,11 +5,12 @@ import { Button } from '@/ui/actions/button';
 import { type Column, DataTable } from '@/ui/data/table';
 import { EmptyState } from '@/ui/feedback/EmptyState';
 import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
+import { DisplayShell } from '@/ui/filters/DisplayMenu';
+import { FilterStrip } from '@/ui/filters/FilterStrip';
 import { SearchField } from '@/ui/inputs/SearchField';
 import { Switch } from '@/ui/inputs/switch';
 import { ListFooter } from '@/ui/layout/ListFooter';
 import { PageCard } from '@/ui/layout/PageCard';
-import { Tabs, TabsList, TabsTrigger } from '@/ui/layout/tabs';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import { useQuery } from '@tanstack/react-query';
 import withPermissions from 'HOCs/withPermissions';
@@ -53,6 +54,13 @@ function ListPage() {
   const [query, setQuery] = React.useState('');
   const [page, setPage] = React.useState(1);
   const [showHidden, setShowHidden] = React.useState(readShowHidden);
+  const toggleHidden = (v: boolean) => {
+    setShowHidden(v);
+    setPage(1);
+    try {
+      localStorage.setItem(SHOW_HIDDEN_KEY, String(v));
+    } catch {}
+  };
   const {
     data = { properties: [], total: 0 },
     isPending,
@@ -179,36 +187,8 @@ function ListPage() {
     <PageCard
       title={t('Properties')}
       subtitle={t('Attributes captured on users and events.')}
-      tabs={
-        <Tabs
-          value={view}
-          onValueChange={(v) => {
-            setPage(1);
-            go({ view: v, property: null });
-          }}
-        >
-          <TabsList aria-label={t('Which properties')} className="border-b-0">
-            <TabsTrigger value="users">{t('User properties')}</TabsTrigger>
-            <TabsTrigger value="events">{t('Event properties')}</TabsTrigger>
-          </TabsList>
-        </Tabs>
-      }
       actions={
         <>
-          <label className="inline-flex items-center gap-3 text-sm text-content-secondary">
-            <Switch
-              checked={showHidden}
-              onCheckedChange={(v) => {
-                setShowHidden(v);
-                setPage(1);
-                try {
-                  localStorage.setItem(SHOW_HIDDEN_KEY, String(v));
-                } catch {}
-              }}
-              aria-label={t('Show hidden properties')}
-            />
-            <span>{showHidden ? t('All') : t('Visible only')}</span>
-          </label>
           <SearchField
             placeholder={
               view === 'users'
@@ -227,6 +207,41 @@ function ListPage() {
             variant="ghost"
             onClick={() => window.open(DM_DOCS, '_blank')}
           />
+        </>
+      }
+      toolbar={
+        <>
+          <FilterStrip
+            label={t('Which properties')}
+            items={[
+              { key: 'users', label: t('User properties') },
+              { key: 'events', label: t('Event properties') },
+            ]}
+            selected={[view]}
+            onSelect={(v) => {
+              setPage(1);
+              go({ view: v, property: null });
+            }}
+          />
+          <div className="m-page__controls">
+            <DisplayShell
+              changeCount={showHidden ? 0 : 1}
+              onReset={() => toggleHidden(true)}
+              rows={[
+                {
+                  id: 'hidden',
+                  label: t('Show hidden properties'),
+                  control: (
+                    <Switch
+                      checked={showHidden}
+                      onCheckedChange={toggleHidden}
+                      aria-label={t('Show hidden properties')}
+                    />
+                  ),
+                },
+              ]}
+            />
+          </div>
         </>
       }
     >

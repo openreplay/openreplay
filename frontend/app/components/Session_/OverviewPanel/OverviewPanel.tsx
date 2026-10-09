@@ -59,15 +59,27 @@ function MobileOverviewPanelCont() {
       zoomEnabled ? i.time >= zoomStartTs && i.time <= zoomEndTs : true,
     );
 
-  const resources = {
-    NETWORK: checkInZoomRange(
-      fetchList.filter((r: any) => r.status >= 400 || r.isRed || r.isYellow),
-    ),
-    ERRORS: checkInZoomRange(exceptionsList),
-    EVENTS: checkInZoomRange(eventsList),
-    PERFORMANCE: checkInZoomRange(performanceChartData),
-    FRUSTRATIONS: checkInZoomRange(frustrationsList),
-  };
+  const resources = React.useMemo(
+    () => ({
+      NETWORK: checkInZoomRange(
+        fetchList.filter((r: any) => r.status >= 400 || r.isRed || r.isYellow),
+      ),
+      ERRORS: checkInZoomRange(exceptionsList),
+      EVENTS: checkInZoomRange(eventsList),
+      PERFORMANCE: checkInZoomRange(performanceChartData),
+      FRUSTRATIONS: checkInZoomRange(frustrationsList),
+    }),
+    [
+      fetchList,
+      exceptionsList,
+      eventsList,
+      performanceChartData,
+      frustrationsList,
+      zoomEnabled,
+      zoomStartTs,
+      zoomEndTs,
+    ],
+  );
 
   useEffect(() => {
     if (dataLoaded) {
@@ -380,7 +392,7 @@ function PanelComponent({
                     marks: performanceList,
                     renderMark: (pointer: any) => (
                       <TimelinePointer
-                        pointer={pointer}
+                        pointer={[pointer]}
                         type="FRUSTRATIONS"
                         fetchPresented={fetchPresented}
                         isSpot={isSpot}
