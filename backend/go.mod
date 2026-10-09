@@ -11,7 +11,7 @@ require (
 	github.com/aws/aws-sdk-go v1.55.8
 	github.com/btcsuite/btcutil v1.0.2
 	github.com/cespare/xxhash/v2 v2.3.0
-	github.com/confluentinc/confluent-kafka-go/v2 v2.16.0
+	github.com/confluentinc/confluent-kafka-go/v2 v2.15.0
 	github.com/docker/distribution v2.8.3+incompatible
 	github.com/elastic/go-elasticsearch/v9 v9.5.2
 	github.com/getsentry/sentry-go v0.50.0
