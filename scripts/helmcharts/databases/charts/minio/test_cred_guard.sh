@@ -14,9 +14,9 @@ check() { # name expect(pass|fail) args...
 }
 MINIO_EP=http://minio.db.svc.cluster.local:9000
 
-check "accessKey mismatch -> fail" fail \
-  --set global.minio.accessKey=S_KEY --set global.minio.secretKey=S_SEC \
-  --set global.s3.endpoint=$MINIO_EP --set global.s3.accessKey=C_KEY --set global.s3.secretKey=C_SEC
+check "accessKey-only mismatch -> fail" fail \
+  --set global.minio.accessKey=S_KEY --set global.minio.secretKey=SAME_SEC \
+  --set global.s3.endpoint=$MINIO_EP --set global.s3.accessKey=C_KEY --set global.s3.secretKey=SAME_SEC
 check "secretKey mismatch -> fail" fail \
   --set global.minio.accessKey=AAA --set global.minio.secretKey=S_SEC \
   --set global.s3.endpoint=$MINIO_EP --set global.s3.accessKey=AAA --set global.s3.secretKey=C_SEC
