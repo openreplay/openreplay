@@ -650,7 +650,7 @@
   "Cannot save funnel metric without at least 2 events": "Impossible d'enregistrer la métrique d'entonnoir sans au moins 2 évènements",
   "Create & Add to Dashboard": "Créer & ajouter au tableau de bord",
   "Undo": "Annuler",
-  "Maximum of 3 series reached.": "Maximum de 3 séries atteint.",
+  "Maximum of {{limit}} series reached.": "Maximum de {{limit}} séries atteint.",
   "Add Series": "Ajouter une série",
   "Expand": "Développer",
   "Collapse": "Réduire",

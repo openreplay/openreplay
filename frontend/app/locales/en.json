@@ -650,7 +650,7 @@
   "Cannot save funnel metric without at least 2 events": "Cannot save funnel metric without at least 2 events",
   "Create & Add to Dashboard": "Create & Add to Dashboard",
   "Undo": "Undo",
-  "Maximum of 3 series reached.": "Maximum of 3 series reached.",
+  "Maximum of {{limit}} series reached.": "Maximum of {{limit}} series reached.",
   "Add Series": "Add Series",
   "Expand": "Expand",
   "Collapse": "Collapse",

@@ -650,7 +650,7 @@
   "Cannot save funnel metric without at least 2 events": "이벤트가 최소 2개 이상 있어야 퍼널 지표를 저장할 수 있습니다",
   "Create & Add to Dashboard": "생성 후 대시보드에 추가",
   "Undo": "실행 취소",
-  "Maximum of 3 series reached.": "최대 3개의 시리즈에 도달했습니다.",
+  "Maximum of {{limit}} series reached.": "최대 {{limit}}개의 시리즈에 도달했습니다.",
   "Add Series": "시리즈 추가",
   "Expand": "펼치기",
   "Collapse": "접기",
