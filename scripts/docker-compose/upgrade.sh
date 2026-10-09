@@ -27,8 +27,8 @@ function merge_envs() {
 		COMMON_PG_PASSWORD)
 			pgpassword=$(echo $value | xargs)
 			;;
-		POSTGRES_VERSION | REDIS_VERSION | MINIO_VERSION)
-			# Don't update db versions automatically.
+		*_VERSION)
+			# Keep release-owned image versions from the new template.
 			continue
 			;;
 		esac
