@@ -29,6 +29,9 @@ check "matching creds -> render" pass \
 check "external s3 endpoint -> render" pass \
   --set global.minio.accessKey=AAA --set global.minio.secretKey=BBB \
   --set global.s3.endpoint=https://s3.amazonaws.com --set global.s3.accessKey=C_KEY --set global.s3.secretKey=C_SEC
+check "external host containing 'minio' but no .svc -> render" pass \
+  --set global.minio.accessKey=AAA --set global.minio.secretKey=BBB \
+  --set global.s3.endpoint=https://minio.example.com --set global.s3.accessKey=C_KEY --set global.s3.secretKey=C_SEC
 check "no s3 override -> render" pass \
   --set global.minio.accessKey=AAA --set global.minio.secretKey=BBB
 
