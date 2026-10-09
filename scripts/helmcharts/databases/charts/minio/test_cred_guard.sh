@@ -5,12 +5,14 @@
 # Run: bash test_cred_guard.sh   (needs helm on PATH)
 set -u
 CHART="$(cd "$(dirname "$0")" && pwd)"
+ERR="$(mktemp)"
+trap 'rm -f "$ERR"' EXIT
 fails=0
 check() { # name expect(pass|fail) args...
   local name=$1 expect=$2; shift 2
-  if helm template "$CHART" "$@" >/dev/null 2>/tmp/_mg_err; then got=pass; else got=fail; fi
+  if helm template "$CHART" "$@" >/dev/null 2>"$ERR"; then got=pass; else got=fail; fi
   if [ "$got" = "$expect" ]; then echo "PASS: $name"; else
-    echo "FAIL: $name (expected $expect got $got)"; cat /tmp/_mg_err; fails=$((fails+1)); fi
+    echo "FAIL: $name (expected $expect got $got)"; cat "$ERR"; fails=$((fails+1)); fi
 }
 MINIO_EP=http://minio.db.svc.cluster.local:9000
 
