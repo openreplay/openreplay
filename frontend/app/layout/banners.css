@@ -1,41 +1,8 @@
-/* Account-wide notices across the top of the main column. */
-.m-banner {
+/* account-wide notices sit inside the page, on the page's own inset */
+.m-shell__notices {
   display: flex;
-  align-items: center;
-  gap: var(--m-space-4);
-  width: 100%;
-  padding: var(--m-space-3) var(--m-space-6);
-  border-bottom: 1px solid var(--m-banner-border, var(--m-status-info-border));
-  background: var(--m-banner-bg, var(--m-status-info-bg));
-  color: var(--m-content-primary);
-  font-size: var(--m-text-sm);
-}
-.m-banner svg {
-  flex: none;
-  color: var(--m-banner-fg, var(--m-content-accent));
-}
-.m-banner--danger {
-  --m-banner-bg: var(--m-status-danger-bg);
-  --m-banner-border: var(--m-status-danger-border);
-  --m-banner-fg: var(--m-content-danger);
-}
-.m-banner--warning {
-  --m-banner-bg: var(--m-status-warning-bg);
-  --m-banner-border: var(--m-status-warning-border);
-  --m-banner-fg: var(--m-content-warning);
-}
-.m-banner--success {
-  --m-banner-bg: var(--m-status-success-bg);
-  --m-banner-border: var(--m-status-success-border);
-  --m-banner-fg: var(--m-content-success);
-}
-.m-banner__text {
-  flex: 1;
-  min-width: 0;
-}
-.m-banner__actions {
-  display: inline-flex;
-  align-items: center;
+  flex-direction: column;
   gap: var(--m-space-3);
   flex: none;
+  padding: var(--m-space-5) var(--m-space-7) 0;
 }

@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next';
 
 import 'App/components/Dashboard/charts.css';
 import { hashString } from 'App/mstore/types/session';
+import NoDataInWindow from 'Components/Dashboard/components/NoDataInWindow';
 
 import { SessionAvatar } from 'Shared/SessionAvatar/SessionAvatar';
 
@@ -30,10 +31,18 @@ interface Props {
   data: any;
   onClick?: (filters: any) => void;
   isTemplate?: boolean;
+  /** on a dashboard: four rows fit the widget */
+  inGrid?: boolean;
 }
 
 function SessionsBy(props: Props) {
-  const { metric = {}, data = { values: [] }, onClick = () => null } = props;
+  const {
+    metric = {},
+    data = { values: [] },
+    onClick = () => null,
+    inGrid = false,
+  } = props;
+  const rows = inGrid ? 4 : 3;
   const { t } = useTranslation();
   const { filterStore } = useStore();
   const [selected, setSelected] = React.useState<any>(null);
@@ -166,20 +175,16 @@ function SessionsBy(props: Props) {
   const [page, setPage] = React.useState(1);
   const values: any[] = data.values ?? [];
   if (values.length === 0) {
-    return (
-      <p className="m-top__empty">
-        {t('No data available for the selected period.')}
-      </p>
-    );
+    return <NoDataInWindow inGrid={inGrid} list />;
   }
-  const more = Math.max(0, (total ?? values.length) - 3);
+  const more = Math.max(0, (total ?? values.length) - rows);
   const sum = values.reduce((a, r) => a + rowCount(r), 0);
   const pageRows = values.slice((page - 1) * DRAWER_PAGE, page * DRAWER_PAGE);
 
   return (
     <div className="m-top is-compact">
       <ol className="m-top__list">
-        {values.slice(0, 3).map((r) => (
+        {values.slice(0, rows).map((r) => (
           <TopRow
             key={r.name}
             row={r}

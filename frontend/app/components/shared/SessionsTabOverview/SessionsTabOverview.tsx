@@ -19,11 +19,19 @@ import { Tooltip } from '@/ui/overlays/tooltip';
 import withPermissions from 'HOCs/withPermissions';
 import Period from 'Types/app/period';
 import { FilterKey } from 'Types/filter/filterType';
-import { issues_types, types } from 'Types/session/issue';
+import { types } from 'Types/session/issue';
+import {
+  ISSUE_GROUPS,
+  ISSUE_KINDS,
+  groupOfTag,
+} from 'Types/session/issueGroups';
 import {
   Angry,
   BookOpen,
+  Bug,
   CircleAlert,
+  Flag,
+  Frown,
   MessageCircleWarning,
   MoreHorizontal,
   Settings2,
@@ -31,6 +39,7 @@ import {
   Skull,
   WifiOff,
 } from 'lucide-react';
+import { DateTime } from 'luxon';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -38,6 +47,7 @@ import { useTranslation } from 'react-i18next';
 import { useStore } from 'App/mstore';
 import { CLIENT_TABS, client } from 'App/routes';
 import { useLocation, useNavigate } from 'App/routing';
+import { presetReaching, windowPhrase } from 'App/utils/windowPhrase';
 
 import {
   EntryField,
@@ -61,6 +71,12 @@ import './sessions-page.css';
 
 const AUTO_REFRESH_INTERVAL = 5 * 60 * 1000;
 const FIELDS_KEY = '__or_sessions_fields';
+
+const GROUP_ICONS: Record<string, React.ReactNode> = {
+  frustrated: <Frown size={13} aria-hidden="true" />,
+  broken: <Bug size={13} aria-hidden="true" />,
+  reported: <Flag size={13} aria-hidden="true" />,
+};
 
 const ISSUE_ICONS: Record<string, React.ReactNode> = {
   [types.JS_EXCEPTION]: <CircleAlert size={13} aria-hidden="true" />,
@@ -245,34 +261,66 @@ function SessionsTabOverview() {
     }
   };
 
+  // an empty window: when the newest matching session was, to widen to it
+  const windowEmpty = !loading && list.length === 0 && noRules;
+  const [lastSessionAt, setLastSessionAt] = useState<number | null>(null);
+  const tagKey = searchStore.activeTags.join();
+  useEffect(() => {
+    setLastSessionAt(null);
+    if (!windowEmpty) return undefined;
+    let alive = true;
+    void searchStore.fetchLastSessionAt().then((at) => {
+      if (alive) setLastSessionAt(at);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [windowEmpty, startDate, endDate, rangeValue, tagKey]);
+
   const period = Period({
     start: startDate,
     end: endDate,
     rangeName: rangeValue,
   });
 
-  const issueTabs = issues_types.filter(
-    (tag) =>
-      tag.type !== 'mouse_thrashing' &&
-      (platform === 'web'
-        ? tag.type !== types.TAP_RAGE
-        : tag.type !== types.CLICK_RAGE),
-  );
+  // the strip's second level: the picked group's kinds on this platform
+  const tag: string = activeTags[0] ?? 'all';
+  const group = ISSUE_GROUPS.find((g) => g.key === groupOfTag(tag)) ?? null;
+  const kinds = group
+    ? ISSUE_KINDS.filter(
+        (k) =>
+          group.types.includes(k.type) &&
+          (platform === 'web'
+            ? k.type !== types.TAP_RAGE
+            : k.type !== types.CLICK_RAGE),
+      )
+    : [];
 
+  const widen = lastSessionAt != null ? presetReaching(lastSessionAt) : null;
   const empty = noRules ? (
     <EmptyState
-      art="range"
-      title={t('Nothing in this window')}
-      hint={t('Widen the date window and the sessions come back.')}
+      art="window"
+      title={t('Nothing {{window}}', { window: windowPhrase(t, period) })}
+      hint={
+        lastSessionAt != null
+          ? t('The last session was {{when}}.', {
+              when: DateTime.fromMillis(lastSessionAt).toRelative(),
+            })
+          : t('Widen the date window and the sessions come back.')
+      }
       action={
-        <Button
-          onClick={() => {
-            searchStore.updateCurrentPage(1);
-            void searchStore.fetchSessions(true);
-          }}
-        >
-          {t('Refresh')}
-        </Button>
+        widen && widen.value !== rangeValue ? (
+          <Button
+            onClick={() => {
+              searchStore.edit(Period({ rangeName: widen.value }).toJSON());
+              void searchStore.fetchSessions(true);
+            }}
+          >
+            {t('Show the {{window}}', {
+              window: t(widen.label).toLowerCase(),
+            })}
+          </Button>
+        ) : undefined
       }
     />
   ) : (
@@ -380,15 +428,39 @@ function SessionsTabOverview() {
         head={
           <>
             <FilterStrip
-              label={t('Filter by issue type')}
-              items={issueTabs.map((tag) => ({
-                key: tag.type,
-                label: t(tag.name),
-                icon: ISSUE_ICONS[tag.type],
-              }))}
-              selected={[activeTags[0] ?? 'all']}
-              onSelect={(key) => searchStore.toggleTag(key as any)}
+              label={t('Filter by what went wrong')}
+              items={[
+                { key: 'all', label: t('All') },
+                ...ISSUE_GROUPS.map((g) => ({
+                  key: g.key,
+                  label: t(g.label),
+                  icon: GROUP_ICONS[g.key],
+                })),
+              ]}
+              selected={[groupOfTag(tag) ?? 'all']}
+              onSelect={(key) =>
+                searchStore.toggleTag(key === 'all' ? undefined : key)
+              }
             />
+            {group && kinds.length > 1 ? (
+              <span className="m-recs__kinds">
+                <FilterStrip
+                  label={t('Narrow {{group}} to a kind', {
+                    group: t(group.label).toLowerCase(),
+                  })}
+                  items={kinds.map((k) => ({
+                    key: k.type,
+                    label: t(k.label),
+                    icon: ISSUE_ICONS[k.type],
+                  }))}
+                  selected={tag === group.key ? [] : [tag]}
+                  // the kind already picked returns to its group, not to All
+                  onSelect={(key) =>
+                    searchStore.toggleTag(key === tag ? group.key : key)
+                  }
+                />
+              </span>
+            ) : null}
             <span className="m-recs__display">
               <DateRange
                 field={t('Started')}

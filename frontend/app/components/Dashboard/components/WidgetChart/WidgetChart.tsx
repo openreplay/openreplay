@@ -36,6 +36,7 @@ import { hasSampling } from 'App/utils/split-utils';
 import TrendChart from 'Components/Charts/TrendChart';
 import SessionsBy from 'Components/Dashboard/Widgets/CustomMetricsWidgets/SessionsBy';
 import SessionsByWithBreakdown from 'Components/Dashboard/Widgets/CustomMetricsWidgets/SessionsByWithBreakdown';
+import NoDataInWindow from 'Components/Dashboard/components/NoDataInWindow';
 
 import BugNumChart from '../../Widgets/CustomMetricsWidgets/BigNumChart';
 import { breakdownName } from '../BreakdownFilter/breakdownDimensions';
@@ -618,6 +619,7 @@ function WidgetChart(props: Props) {
             data={data}
             onClick={onChartClick}
             isTemplate={isTemplate}
+            inGrid={!props.isPreview}
           />
         );
       }
@@ -629,16 +631,16 @@ function WidgetChart(props: Props) {
             <img src={_metric.thumbnail} alt={t('Click map thumbnail')} />
           </div>
         ) : (
-          <p className="m-funnel__empty">
-            {t('No data available for the selected period.')}
-          </p>
+          <NoDataInWindow inGrid />
         );
       }
       return <ClickMapCard />;
     }
 
     if (metricType === INSIGHTS) {
-      return <InsightsCard height={height} data={data} />;
+      return (
+        <InsightsCard height={height} data={data} inGrid={!props.isPreview} />
+      );
     }
 
     if (metricType === USER_PATH && data) {
@@ -797,7 +799,7 @@ function WidgetChart(props: Props) {
           <Loader loading={loading} style={{ height: '240px' }} />
         )
       ) : (
-        <div style={{ minHeight: props.isPreview ? undefined : 240 }}>
+        <div>
           <Suspense fallback={<Loader loading style={{ height: '240px' }} />}>
             {renderChart()}
             {showTable &&
@@ -807,7 +809,6 @@ function WidgetChart(props: Props) {
                 data={mergedBreakdownData}
                 breakdownLabels={_metric.breakdowns}
                 inBuilder={props.isPreview}
-                defaultOpen
                 metric={_metric}
               />
             ) : null}

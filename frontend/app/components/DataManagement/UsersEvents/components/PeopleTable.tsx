@@ -162,7 +162,7 @@ export function NoPeople({ filtered }: { filtered: boolean }) {
     <EmptyState
       art="search"
       title={t('No people match')}
-      hint={t('Loosen a rule or clear the search to see everyone.')}
+      hint={t('Loosen or remove a rule to see everyone.')}
     />
   ) : (
     <EmptyState

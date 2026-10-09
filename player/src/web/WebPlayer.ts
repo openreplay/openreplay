@@ -265,7 +265,8 @@ export default class WebPlayer extends Player {
   };
 
   markTargets = (...args: Parameters<TargetMarker['markTargets']>) => {
-    this.pause();
+    // marking needs a still page; clearing the marks must not stop playback
+    if (args[0]) this.pause();
     this.targetMarker.markTargets(...args);
   };
 

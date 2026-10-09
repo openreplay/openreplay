@@ -6,6 +6,7 @@ import {
   generateFilterOptions,
   liveFiltersMap,
 } from 'Types/filter/newFilter';
+import { typesOfTag } from 'Types/session/issueGroups';
 import { makeAutoObservable, runInAction } from 'mobx';
 
 import {
@@ -740,6 +741,29 @@ class SearchStore {
     }
   }
 
+  /** When the newest session these filters match in the past 30 days was
+      recorded: what an empty window can be widened to. */
+  async fetchLastSessionAt(): Promise<number | null> {
+    let filter = this.instance.toSearch();
+    filter = this.applyTagFilter(filter, this.activeTags);
+    filter = this.applyDurationFilter(filter);
+    const now = Date.now();
+    try {
+      const data = await sessionService.getSessions({
+        ...pickSearchRequestFields(filter),
+        startTimestamp: now - 30 * 86400_000,
+        endTimestamp: now,
+        sort: 'startTs',
+        order: 'desc',
+        page: 1,
+        limit: 1,
+      });
+      return data?.sessions?.[0]?.startTs ?? null;
+    } catch {
+      return null;
+    }
+  }
+
   private applyTagFilter(filter: any, activeTags: string[]): any {
     if (!activeTags?.length || activeTags[0] === 'all') {
       return filter;
@@ -756,7 +780,8 @@ class SearchStore {
       return filter;
     }
 
-    tagFilter.value = [activeTags[0]];
+    // a group (Broken, Frustrated...) stands for any of its kinds
+    tagFilter.value = [...(typesOfTag(activeTags[0]) ?? [activeTags[0]])];
 
     return {
       ...filter,

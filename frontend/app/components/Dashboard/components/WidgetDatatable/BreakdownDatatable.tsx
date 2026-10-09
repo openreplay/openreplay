@@ -1,10 +1,8 @@
 /* eslint-disable i18next/no-literal-string */
-import { Button } from '@/ui/actions/button';
 import { Checkbox } from '@/ui/inputs/checkbox';
-import { Download, Eye, EyeOff } from 'lucide-react';
 import { DateTime } from 'luxon';
 import { observer } from 'mobx-react-lite';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { formatIsoForColumn } from 'App/date';
@@ -25,11 +23,11 @@ import {
   breakdownName,
   getBreakdownDisplayName,
 } from '../BreakdownFilter/breakdownDimensions';
+import { usePreviewTable } from '../WidgetPreview/previewTable';
 
 interface Props {
   data: Record<string, NestedData>;
   breakdownLabels?: StoredBreakdown[];
-  defaultOpen?: boolean;
   metric: { name: string; viewType: string };
   inBuilder?: boolean;
 }
@@ -179,7 +177,8 @@ function buildTableData(data: Record<string, NestedData>): {
 function BreakdownDatatable(props: Props) {
   const { t } = useTranslation();
   const { metricStore, filterStore } = useStore();
-  const [showTable, setShowTable] = useState(props.defaultOpen);
+  // in the card builder the preview's toolbar shows / hides and exports it
+  const preview = usePreviewTable();
 
   // props.breakdownLabels are API dimension keys; show the catalog label instead.
   // Keyed on the joined names because getCurrentProjectFilters() returns a fresh array.
@@ -277,6 +276,15 @@ function BreakdownDatatable(props: Props) {
     ],
     [depth, timestamps, tsLabels, breakdownLabels],
   );
+  const exportNow = useRef(() => {});
+  exportNow.current = () =>
+    exportAntCsv(exportColumns, rows, props.metric.name);
+  const setExport = preview?.setExport;
+  useEffect(() => {
+    if (!setExport) return undefined;
+    setExport(() => exportNow.current());
+    return () => setExport(null);
+  }, [setExport]);
 
   const pathOf = (record: FlatRow, upTo: number) =>
     record.levels
@@ -349,94 +357,61 @@ function BreakdownDatatable(props: Props) {
   if (!props.data || Object.keys(props.data).length === 0) {
     return null;
   }
-  const open = showTable || isTableOnlyMode;
+  if (!isTableOnlyMode && preview && !preview.shown) return null;
 
   return (
     <div className="m-ttable">
-      {!isTableOnlyMode && (
-        <div className="m-ttable__divider">
-          <Button
-            variant="subtle"
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowTable(!showTable);
-            }}
-            aria-expanded={open}
-          >
-            {open ? <EyeOff size={13} /> : <Eye size={13} />}
-            {open ? t('Hide table') : t('Show table')}
-          </Button>
+      {!inGrid && hasBreakdowns && (
+        <div className="m-ttable__tools">
+          <BreakdownSelectionPanel
+            data={props.data}
+            breakdownLabels={breakdownLabels}
+          />
         </div>
       )}
-      {open ? (
-        <>
-          {!inGrid && (
-            <div className="m-ttable__tools">
-              {hasBreakdowns && (
-                <BreakdownSelectionPanel
-                  data={props.data}
-                  breakdownLabels={breakdownLabels}
-                />
-              )}
-              <Button
-                variant="subtle"
-                size="sm"
-                onClick={() =>
-                  exportAntCsv(exportColumns, rows, props.metric.name)
-                }
-              >
-                <Download size={13} />
-                {t('Export as CSV')}
-              </Button>
-            </div>
-          )}
-          <div
-            className="m-ttable__scroll"
-            style={inGrid ? { maxHeight: 240 } : undefined}
-          >
-            <table className="m-ttable__table">
-              <thead>
-                <tr>
-                  <th className="is-pinned">{t('Series')}</th>
-                  {Array.from({ length: depth }, (_, lvl) => (
-                    <th key={lvl}>
-                      {breakdownLabels[lvl] ?? `Level ${lvl + 1}`}
-                    </th>
-                  ))}
-                  {tsLabels.map((label, i) => (
-                    <th key={timestamps[i]} className="is-num">
-                      {label}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((r) => (
-                  <tr key={r.key} className={dimmed(r) ? 'is-dim' : undefined}>
-                    {r.seriesRowSpan > 0 ? (
-                      <td className="is-pinned" rowSpan={r.seriesRowSpan}>
-                        {r.seriesName}
-                      </td>
-                    ) : null}
-                    {r.levels.map((lvl, i) =>
-                      lvl.rowSpan > 0 ? (
-                        <td key={i} rowSpan={lvl.rowSpan}>
-                          {levelCell(r, i)}
-                        </td>
-                      ) : null,
-                    )}
-                    {timestamps.map((ts) => (
-                      <td key={ts} className="is-num">
-                        {(r[`ts_${ts}`] ?? 0).toLocaleString()}
-                      </td>
-                    ))}
-                  </tr>
+      <div
+        className="m-ttable__scroll"
+        style={inGrid ? { maxHeight: 240 } : undefined}
+      >
+        <table className="m-ttable__table">
+          <thead>
+            <tr>
+              <th className="is-pinned">{t('Series')}</th>
+              {Array.from({ length: depth }, (_, lvl) => (
+                <th key={lvl}>{breakdownLabels[lvl] ?? `Level ${lvl + 1}`}</th>
+              ))}
+              {tsLabels.map((label, i) => (
+                <th key={timestamps[i]} className="is-num">
+                  {label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.key} className={dimmed(r) ? 'is-dim' : undefined}>
+                {r.seriesRowSpan > 0 ? (
+                  <td className="is-pinned" rowSpan={r.seriesRowSpan}>
+                    {r.seriesName}
+                  </td>
+                ) : null}
+                {r.levels.map((lvl, i) =>
+                  lvl.rowSpan > 0 ? (
+                    <td key={i} rowSpan={lvl.rowSpan}>
+                      {levelCell(r, i)}
+                    </td>
+                  ) : null,
+                )}
+                {timestamps.map((ts) => (
+                  <td key={ts} className="is-num">
+                    {(r[`ts_${ts}`] ?? 0).toLocaleString()}
+                  </td>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        </>
-      ) : null}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

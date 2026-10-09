@@ -80,15 +80,10 @@
   border-top: 1px solid var(--m-border-subtle);
   padding-bottom: var(--m-space-3);
 }
-.m-ttable__divider {
-  display: flex;
-  justify-content: center;
-  padding: var(--m-space-2) 0;
-}
 .m-ttable__tools {
   display: flex;
   justify-content: flex-end;
-  padding: 0 var(--m-space-5) var(--m-space-2);
+  padding: var(--m-space-2) var(--m-space-5);
 }
 .m-ttable__scroll {
   overflow: auto;

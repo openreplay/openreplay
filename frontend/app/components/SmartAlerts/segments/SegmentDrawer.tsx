@@ -93,7 +93,7 @@ function SegmentDrawer({ open, segment, source, onClose, onSaved }: Props) {
     }
     if (fellBack)
       toast.info(
-        t('No active segments left — capture switched to full traffic.'),
+        t('No active segments left. Capture switched to full traffic.'),
       );
     onSaved?.();
     onClose();
@@ -176,9 +176,7 @@ function SegmentDrawer({ open, segment, source, onClose, onSaved }: Props) {
         {fromIssues ? (
           <Section
             title={t('Sharing')}
-            hint={t(
-              'Team-visible — anyone on the team can manage its capture.',
-            )}
+            hint={t('Team-visible: anyone on the team can manage its capture.')}
           />
         ) : (
           <Section
@@ -215,13 +213,13 @@ function SegmentDrawer({ open, segment, source, onClose, onSaved }: Props) {
             </label>
             {!publicNow && (
               <p className="m-sd__note">
-                {t('Private — make it team-visible to enable the agent.')}
+                {t('Private. Make it team-visible to enable the agent.')}
               </p>
             )}
             {captureNow && !hasRules && (
               <p className="m-sd__note">
                 {t(
-                  'Add events or filters to narrow the segment — right now it matches all traffic.',
+                  'Add events or filters to narrow the segment. Right now it matches all traffic.',
                 )}
               </p>
             )}
@@ -230,7 +228,7 @@ function SegmentDrawer({ open, segment, source, onClose, onSaved }: Props) {
               maxLength={500}
               disabled={readOnly}
               placeholder={t(
-                'Extra context for the agent — e.g. "pay special attention to coupon and card-validation errors"',
+                'Extra context for the agent, e.g. "pay special attention to coupon and card-validation errors"',
               )}
               value={instructions}
               onChange={(e) => setInstructions(e.target.value)}

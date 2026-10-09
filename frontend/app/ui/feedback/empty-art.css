@@ -305,6 +305,22 @@
   animation: m-eart-pop 320ms var(--m-ease-spring) 1850ms both;
 }
 
+/* the window: the left bracket draws in, waits a beat, then slides left over
+   the ticks; `translate` leaves `transform` to the draw */
+.m-eart__win-l {
+  animation:
+    m-eart-draw 500ms var(--m-ease-out) 800ms both,
+    m-eart-widen 700ms var(--m-ease-in-out) 1600ms both;
+}
+@keyframes m-eart-widen {
+  to {
+    translate: -62px 0;
+  }
+}
+.m-eart__cross--now {
+  animation-delay: 1250ms;
+}
+
 @keyframes m-eart-draw {
   to {
     stroke-dashoffset: 0;
@@ -360,6 +376,9 @@
     animation: none;
     opacity: 1;
     transform: none;
+  }
+  .m-eart__win-l {
+    translate: -62px 0;
   }
   .m-eart__runner,
   .m-eart__runner .m-lt__core,

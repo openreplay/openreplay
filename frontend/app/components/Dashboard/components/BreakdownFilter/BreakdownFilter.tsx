@@ -12,7 +12,9 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
+  BREAKDOWN_GROUPS,
   MAX_BREAKDOWNS,
+  breakdownGroup,
   breakdownName,
   buildBreakdownOptions,
 } from './breakdownDimensions';
@@ -47,6 +49,10 @@ function BreakdownFilter({ metric, observeChanges = () => {} }: Props) {
       (f.displayName || f.name).toLowerCase().includes(q) ||
       f.name.toLowerCase().includes(q),
   );
+  const groups = BREAKDOWN_GROUPS.map((g) => ({
+    ...g,
+    rows: shown.filter((f) => breakdownGroup(f) === g.key),
+  })).filter((g) => g.rows.length > 0);
 
   const toggle = (f: Filter) => {
     const at = names.indexOf(f.name);
@@ -74,15 +80,24 @@ function BreakdownFilter({ metric, observeChanges = () => {} }: Props) {
             autoFocus
           />
           <div className="m-brk__list">
-            {shown.map((f) => (
-              <CheckRow
-                key={f.name}
-                on={names.includes(f.name)}
-                disabled={full && !names.includes(f.name)}
-                onToggle={() => toggle(f)}
+            {groups.map((g) => (
+              <section
+                key={g.key}
+                className="m-brk__group"
+                aria-label={t(g.label)}
               >
-                {f.displayName || f.name}
-              </CheckRow>
+                <h4 className="m-brk__group-head">{t(g.label)}</h4>
+                {g.rows.map((f) => (
+                  <CheckRow
+                    key={f.name}
+                    on={names.includes(f.name)}
+                    disabled={full && !names.includes(f.name)}
+                    onToggle={() => toggle(f)}
+                  >
+                    {f.displayName || f.name}
+                  </CheckRow>
+                ))}
+              </section>
             ))}
             {shown.length === 0 && (
               <p className="m-brk__none">{t('No dimension matches that.')}</p>

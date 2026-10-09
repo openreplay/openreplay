@@ -98,7 +98,7 @@ function Player(props: IProps) {
   if (!playerContext.player) return null;
 
   const isInspMode = playerContext.store.get().inspectorMode;
-  const { messagesLoading, markedTargets } = playerContext.store.get();
+  const { messagesLoading } = playerContext.store.get();
   const permissions = userStore.account.permissions || [];
   const devtoolsDisabled =
     (userStore.isEnterprise &&
@@ -107,8 +107,7 @@ function Player(props: IProps) {
         permissions.includes('SERVICE_DEV_TOOLS')
       )) ||
     messagesLoading ||
-    isInspMode ||
-    !!markedTargets;
+    isInspMode;
 
   return (
     <div

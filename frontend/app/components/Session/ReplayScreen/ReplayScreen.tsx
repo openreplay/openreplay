@@ -32,6 +32,8 @@ export interface ReplayScreenProps {
   panel?: string | null;
   onPanel?: (key: string | null) => void;
   renderPanel?: (key: string) => ReactNode;
+  /** Notices about this recording, above the stage in the main column. */
+  notice?: ReactNode;
   panelWidth?: number;
   fullscreen?: boolean;
   className?: string;
@@ -47,6 +49,7 @@ export function ReplayScreen({
   panel = null,
   onPanel,
   renderPanel,
+  notice,
   panelWidth,
   fullscreen,
   className,
@@ -107,7 +110,10 @@ export function ReplayScreen({
         )}
       </header>
       <div className="m-work__body">
-        <div className="m-work__main">{children}</div>
+        <div className="m-work__main">
+          {notice ? <div className="m-rs__notice">{notice}</div> : null}
+          {children}
+        </div>
         {open && (
           <aside
             className="m-jrn"

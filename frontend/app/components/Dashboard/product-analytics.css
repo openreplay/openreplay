@@ -31,11 +31,21 @@
   color: var(--m-content-primary);
 }
 .m-dash__grid {
+  --m-widget-h: 240px;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-auto-flow: dense;
   gap: var(--m-space-4);
-  align-items: stretch;
+  align-items: start;
+}
+/* every card draws in a trend chart's height, so widgets line up; what is
+   longer scrolls inside. Paths and full-width funnels (is-natural) keep their own. */
+.m-dash__widget:not(.is-natural) .m-dash__widget-body > * {
+  height: var(--m-widget-h);
+  overflow: hidden auto;
+}
+.m-dash__widget .m-cmap__thumb {
+  height: var(--m-widget-h);
 }
 
 .m-dash__widget {
@@ -599,6 +609,20 @@
   overflow-y: auto;
   padding: var(--m-space-2);
 }
+.m-brk__group + .m-brk__group {
+  margin-top: var(--m-space-2);
+}
+.m-brk__group-head {
+  position: sticky;
+  top: calc(-1 * var(--m-space-2));
+  z-index: 1;
+  margin: 0;
+  padding: var(--m-space-2) var(--m-space-3) var(--m-space-1);
+  background: var(--m-surface-raised);
+  font-size: var(--m-text-2xs);
+  font-weight: var(--m-weight-medium);
+  color: var(--m-content-muted);
+}
 .m-brk__none {
   margin: 0;
   padding: var(--m-space-3) var(--m-space-4);
@@ -735,7 +759,15 @@
 }
 
 .m-dash__widget {
-  grid-column: span 4;
+  grid-column: span 1;
+}
+.m-dash__widget.is-full {
+  grid-column: span 2;
+}
+@media (max-width: 1100px) {
+  .m-dash__widget {
+    grid-column: span 2;
+  }
 }
 .m-dash__widget.is-dragging {
   opacity: 0.5;
