@@ -10,7 +10,6 @@ import (
 	"io"
 	"math/rand"
 	"mime"
-	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -27,6 +26,7 @@ import (
 	"openreplay/backend/pkg/url/assets"
 
 	"github.com/pkg/errors"
+	"golang.org/x/net/http/httpproxy"
 )
 
 const MAX_CACHE_DEPTH = 5
@@ -53,6 +53,10 @@ type cacher struct {
 	hashKeys       bool
 	resolver       *resolver.Resolver
 	gzipAssets     bool
+	allowPrivate   bool
+	httpTimeout    time.Duration
+	origins        originSet
+	proxy          func(*url.URL) (*url.URL, error)
 	samplerDone    chan struct{}
 }
 
@@ -106,6 +110,12 @@ func NewCacher(log logger.Logger, cfg *config.Config, store objectstorage.Object
 
 	}
 
+	origins, err := parseOrigins(cfg.AssetsAllowedOrigins)
+	if err != nil {
+		return nil, errors.Wrap(err, "ASSETS_ALLOWED_GLOBAL_ORIGINS")
+	}
+	proxyCfg := httpproxy.FromEnvironment()
+
 	c := &cacher{
 		log:        log,
 		timeoutMap: newTimeoutMap(),
@@ -113,12 +123,9 @@ func NewCacher(log logger.Logger, cfg *config.Config, store objectstorage.Object
 		httpClient: &http.Client{
 			Timeout: time.Duration(cfg.AssetsHTTPTimeout) * time.Second,
 			Transport: &http.Transport{
-				Proxy:           http.ProxyFromEnvironment,
-				TLSClientConfig: tlsConfig,
-				DialContext: (&net.Dialer{
-					Timeout:   5 * time.Second,
-					KeepAlive: 30 * time.Second,
-				}).DialContext,
+				Proxy:               http.ProxyFromEnvironment,
+				TLSClientConfig:     tlsConfig,
+				DialContext:         guardedDialer(cfg.AssetsAllowPrivate, proxyAddrs(proxyCfg)),
 				TLSHandshakeTimeout: 5 * time.Second,
 				MaxConnsPerHost:     8,
 				MaxIdleConns:        100,
@@ -139,7 +146,12 @@ func NewCacher(log logger.Logger, cfg *config.Config, store objectstorage.Object
 		hashKeys:       cfg.KeyScheme == assets.KeySchemeHash,
 		resolver:       urlResolver,
 		gzipAssets:     cfg.AssetsCompression == config.CompressionGzip,
+		allowPrivate:   cfg.AssetsAllowPrivate,
+		httpTimeout:    time.Duration(cfg.AssetsHTTPTimeout) * time.Second,
+		origins:        origins,
+		proxy:          proxyCfg.ProxyFunc(),
 	}
+	c.httpClient.CheckRedirect = c.checkRedirect
 	c.workers = NewPool(cfg.AssetsWorkerCount, cfg.AssetsQueueSize, c.CacheFile)
 	c.scheduler = newScheduler(cfg.AssetsRetryHeapLimit, c.workers.tryAddTask, func(n int) {
 		c.metrics.RecordRetryQueueSize(float64(n))
@@ -183,14 +195,45 @@ func (c *cacher) cacheURL(t *Task) {
 		return
 	}
 	start := time.Now()
-	req, _ := http.NewRequest("GET", t.requestURL, nil)
+	reqCtx, cancel := context.WithTimeout(ctx, c.httpTimeout)
+	defer cancel()
+	req, err := http.NewRequestWithContext(reqCtx, "GET", t.requestURL, nil)
+	if err != nil || (req.URL.Scheme != "http" && req.URL.Scheme != "https") {
+		if err == nil {
+			err = fmt.Errorf("unsupported scheme %q", req.URL.Scheme)
+		}
+		c.permanent(ctx, t, "bad_url", err)
+		return
+	}
+	if !c.origins.allows(req.URL) {
+		c.permanent(ctx, t, "origin_not_allowed", &originNotAllowedError{origin: originKey(req.URL)})
+		return
+	}
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36")
 	for k, v := range c.requestHeaders {
 		req.Header.Set(k, v)
 	}
+	if err := c.checkProxiedDestination(req); err != nil {
+		var blocked *blockedAddrError
+		if errors.As(err, &blocked) {
+			c.permanent(ctx, t, "blocked_address", err)
+		} else {
+			c.retry(ctx, t, 0, "network", err)
+		}
+		return
+	}
 	res, err := c.httpClient.Do(req)
 	if err != nil {
-		c.retry(ctx, t, 0, "network", err)
+		var blocked *blockedAddrError
+		var origin *originNotAllowedError
+		switch {
+		case errors.As(err, &blocked):
+			c.permanent(ctx, t, "blocked_address", err)
+		case errors.As(err, &origin):
+			c.permanent(ctx, t, "origin_not_allowed", err)
+		default:
+			c.retry(ctx, t, 0, "network", err)
+		}
 		return
 	}
 	c.metrics.RecordDownloadDuration(float64(time.Now().Sub(start).Milliseconds()), res.StatusCode)

@@ -41,6 +41,8 @@ type Config struct {
 	AssetsPerHostLimit   int               `env:"ASSETS_PER_HOST_LIMIT,default=8"`
 	AssetsWorkerCount    int               `env:"ASSETS_WORKER_COUNT,default=64"`
 	AssetsHTTPTimeout    int               `env:"ASSETS_HTTP_TIMEOUT,default=6"` // seconds
+	AssetsAllowPrivate   bool              `env:"ASSETS_ALLOW_PRIVATE_NETWORKS,default=false"`
+	AssetsAllowedOrigins string            `env:"ASSETS_ALLOWED_GLOBAL_ORIGINS,default="` // comma-separated scheme://host[:port]; empty = any origin
 	AssetsQueueSize      int               `env:"ASSETS_QUEUE_SIZE,default=128"`
 	InsecureSkipVerify   bool              `env:"INSECURE_SKIP_VERIFY,default=true"`
 	ProducerCloseTimeout int               `env:"PRODUCER_CLOSE_TIMEOUT,default=15000"`
@@ -62,6 +64,9 @@ func New(log logger.Logger) *Config {
 	if cfg.AssetsCompression != CompressionNone && cfg.AssetsCompression != CompressionGzip {
 		log.Fatal(context.Background(), "invalid ASSETS_COMPRESSION %q (expected %q or %q)",
 			cfg.AssetsCompression, CompressionNone, CompressionGzip)
+	}
+	if cfg.AssetsHTTPTimeout <= 0 {
+		log.Fatal(context.Background(), "ASSETS_HTTP_TIMEOUT must be positive, got %d", cfg.AssetsHTTPTimeout)
 	}
 	return cfg
 }
