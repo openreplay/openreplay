@@ -128,7 +128,7 @@ function UserForm({ open, onClose }: { open: boolean; onClose: () => void }) {
               checked={!!user.isAdmin || !!user.isSuperAdmin}
               disabled={user.isSuperAdmin}
               onChange={(v) => user.updateKey('isAdmin', v)}
-              label={t('Admin — can manage projects and team members')}
+              label={t('Admin: can manage projects and team members')}
             />
             {isEnterprise ? (
               <Field label={t('Role')}>

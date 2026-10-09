@@ -228,7 +228,7 @@ function WebVitals({
               onRemove={() => onMetricClick(null, 'good')}
               removeLabel="Clear drilldown"
             >
-              {selected.description} — {searchedBy}
+              {selected.description} · {searchedBy}
             </Chip>
           ) : null}
           <span className="ml-auto">

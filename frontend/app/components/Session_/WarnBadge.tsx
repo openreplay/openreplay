@@ -1,6 +1,5 @@
 import { Notice } from '@/ui/feedback/Notice';
 import ENV from 'env';
-import { ArrowUpRight, X } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -32,16 +31,6 @@ function compareVersions(
   return VersionComparison.Same;
 }
 
-// New optional override props added in WarnBadgeExtraProps
-interface WarnBadgeExtraProps {
-  containerStyle?: React.CSSProperties;
-  containerClassName?: string;
-  localhostWarnStyle?: React.CSSProperties;
-  localhostWarnClassName?: string;
-  trackerWarnStyle?: React.CSSProperties;
-  trackerWarnClassName?: string;
-}
-
 const WARNINGS = {
   LOCALHOST: 0,
   TRACKER_VERSION: 1,
@@ -54,17 +43,17 @@ type Warns = [
   virtualElsFailWarn: boolean,
 ];
 
+const DOCS_LOCALHOST =
+  'https://docs.openreplay.com/en/troubleshooting/session-recordings/#testing-in-localhost';
+const DOCS_TRACKER =
+  'https://docs.openreplay.com/en/deployment/upgrade/#tracker-compatibility';
+
+/** Facts about this recording that change how to read it, inside the replay. */
 const WarnBadge = React.memo(
   ({
     currentLocation,
     version,
     siteId,
-    containerStyle,
-    containerClassName,
-    localhostWarnStyle,
-    localhostWarnClassName,
-    trackerWarnStyle,
-    trackerWarnClassName,
     virtualElsFailed,
     onVMode,
   }: {
@@ -73,7 +62,7 @@ const WarnBadge = React.memo(
     siteId: string;
     virtualElsFailed: boolean;
     onVMode: () => void;
-  } & WarnBadgeExtraProps) => {
+  }) => {
     const { t } = useTranslation();
     const localhostWarnSiteKey = localhostWarn(siteId);
     const vModeWarnSiteKey = vModeWarn(siteId);
@@ -91,8 +80,9 @@ const WarnBadge = React.memo(
     const trackerVerDiff = compareVersions(version, trackerVersion);
     const defaultTrackerVerWarn =
       localStorage.getItem(trackerVerWarnSiteKey) !== '1';
+    // a player reads older recordings; a newer tracker may write what it can't
     const trackerWarnActive =
-      defaultTrackerVerWarn && trackerVerDiff !== VersionComparison.Same;
+      defaultTrackerVerWarn && trackerVerDiff === VersionComparison.Higher;
 
     const [warnings, setWarnings] = React.useState<Warns>([
       localhostWarnActive,
@@ -123,117 +113,55 @@ const WarnBadge = React.memo(
 
     if (!warnings.some((el) => el === true)) return null;
 
-    const defaultContainerStyle: React.CSSProperties = {
-      zIndex: 999,
-      position: 'absolute',
-      left: '50%',
-      bottom: '0',
-      transform: 'translate(-50%, 80%)',
-      fontWeight: 500,
-    };
-    const defaultContainerClass = 'lg:flex flex-col hidden';
-    const defaultWarnClass =
-      'px-3 py-.5 border border-border-subtle shadow-xs rounded-sm bg-surface-selected flex items-center justify-between';
-
-    const mergedContainerStyle = {
-      ...defaultContainerStyle,
-      ...containerStyle,
-    };
-    const mergedContainerClassName = containerClassName
-      ? defaultContainerClass + ' ' + containerClassName
-      : defaultContainerClass;
-    const mergedLocalhostWarnClassName = localhostWarnClassName
-      ? defaultWarnClass + ' ' + localhostWarnClassName
-      : defaultWarnClass;
-    const mergedTrackerWarnClassName = trackerWarnClassName
-      ? defaultWarnClass + ' ' + trackerWarnClassName
-      : defaultWarnClass;
+    const learnMore = (href: string) => (
+      <a href={href} target="_blank" rel="noreferrer">
+        {t('Learn more')}
+      </a>
+    );
 
     return (
-      <div className={mergedContainerClassName} style={mergedContainerStyle}>
+      <>
         {warnings[WARNINGS.LOCALHOST] ? (
-          <div
-            className={mergedLocalhostWarnClassName}
-            style={localhostWarnStyle}
+          <Notice
+            kind="info"
+            action={learnMore(DOCS_LOCALHOST)}
+            onDismiss={() => closeWarning(WARNINGS.LOCALHOST)}
           >
-            <div>
-              <span>{t('Some assets may load incorrectly on localhost.')}</span>
-              <a
-                href="https://docs.openreplay.com/en/troubleshooting/session-recordings/#testing-in-localhost"
-                target="_blank"
-                rel="noreferrer"
-                className="link ml-1"
-              >
-                {t('Learn More')}
-              </a>
-            </div>
-
-            <div
-              className="py-1 ml-3 cursor-pointer"
-              onClick={() => closeWarning(WARNINGS.LOCALHOST)}
-            >
-              <X size={16} aria-hidden="true" />
-            </div>
-          </div>
+            {t('Recorded on localhost: some assets may not load.')}
+          </Notice>
         ) : null}
         {warnings[WARNINGS.TRACKER_VERSION] ? (
-          <div className={mergedTrackerWarnClassName} style={trackerWarnStyle}>
-            <div className="flex gap-x-2 flex-wrap">
-              <div className="font-normal">
-                {t('Tracker version')}
-                {''}
-                <span className="mx-1 font-semibold">{version}</span>
-                {t('for this recording is')}{' '}
-                {trackerVerDiff === VersionComparison.Lower
-                  ? 'lower than '
-                  : 'ahead of '}
-                {t('the current')}
-                <span className="mx-1 font-semibold">{trackerVersion}</span>
-                {t('version')}.
-              </div>
-              <div className="flex gap-1 items-center font-normal">
-                <span>{t('Some recording might display incorrectly.')}</span>
-                <a
-                  href="https://docs.openreplay.com/en/deployment/upgrade/#tracker-compatibility"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="link ml-1 flex gap-1 items-center"
-                >
-                  {t('Learn More')} <ArrowUpRight size={12} />
-                </a>
-              </div>
-            </div>
-
-            <div
-              className="py-1 ml-3 cursor-pointer"
-              onClick={() => closeWarning(WARNINGS.TRACKER_VERSION)}
-            >
-              <X size={16} aria-hidden="true" />
-            </div>
-          </div>
+          <Notice
+            kind="warning"
+            action={learnMore(DOCS_TRACKER)}
+            onDismiss={() => closeWarning(WARNINGS.TRACKER_VERSION)}
+          >
+            {t(
+              'Recorded with tracker {{version}}, newer than the {{current}} this app plays. Parts of it may not play back right.',
+              { version, current: trackerVersion },
+            )}
+          </Notice>
         ) : null}
         {warnings[WARNINGS.VIRTUAL_ELS_FAIL] ? (
-          <div className="px-3 py-1 border border-border-subtle drop-shadow-md rounded-sm bg-surface-selected flex items-center justify-between">
-            <div className="flex flex-col">
-              <div>
-                {t(
-                  'If you have issues displaying custom HTML elements (i.e when using LWC), consider turning on Virtual Mode.',
-                )}
-              </div>
-              <div className="link" onClick={onVMode}>
-                {t('Enable')}
-              </div>
-            </div>
-
-            <div
-              className="py-1 ml-3 cursor-pointer"
-              onClick={() => closeWarning(WARNINGS.VIRTUAL_ELS_FAIL)}
-            >
-              <X size={18} strokeWidth={1.5} />
-            </div>
-          </div>
+          <Notice
+            kind="info"
+            action={
+              <button
+                type="button"
+                className="m-notice__link"
+                onClick={onVMode}
+              >
+                {t('Turn on Virtual Mode')}
+              </button>
+            }
+            onDismiss={() => closeWarning(WARNINGS.VIRTUAL_ELS_FAIL)}
+          >
+            {t(
+              'Custom HTML elements (e.g. Lightning Web Components) may not display.',
+            )}
+          </Notice>
         ) : null}
-      </div>
+      </>
     );
   },
 );

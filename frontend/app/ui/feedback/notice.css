@@ -38,3 +38,39 @@
   border-color: var(--m-status-info-border, var(--m-border-subtle));
   color: var(--m-status-info-fg, var(--m-content-primary));
 }
+.m-notice--warning {
+  background: var(--m-status-warning-bg);
+  border-color: var(--m-status-warning-border);
+  color: var(--m-status-warning-fg);
+}
+
+.m-notice__text {
+  flex: 1;
+}
+.m-notice__action {
+  margin-inline-start: var(--m-space-3);
+  white-space: nowrap;
+}
+.m-notice__action a,
+.m-notice__action button {
+  color: inherit;
+  font-weight: var(--m-weight-medium);
+}
+.m-notice__dismiss {
+  flex: none;
+  display: flex;
+  align-items: center;
+  margin: -3px calc(var(--m-space-2) * -1) -3px 0;
+  color: inherit;
+}
+.m-notice__dismiss button {
+  color: inherit;
+}
+.m-notice__link {
+  padding: 0;
+  border: 0;
+  background: none;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}

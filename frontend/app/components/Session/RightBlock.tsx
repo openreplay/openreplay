@@ -35,7 +35,7 @@ function RightBlock({
     case 'CLICKMAP':
       return (
         <div className={panel()}>
-          <PageInsightsPanel setActiveTab={setActiveTab} />
+          <PageInsightsPanel />
         </div>
       );
     case 'INSPECTOR':

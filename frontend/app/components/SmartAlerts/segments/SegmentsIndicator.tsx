@@ -64,7 +64,7 @@ const SegmentRow = observer(function SegmentRow({
       <Conditions segment={segment} />
       <Switch
         checked={segment.active}
-        aria-label={`${segment.name} — ${segment.active ? t('on') : t('off')}`}
+        aria-label={`${segment.name}: ${segment.active ? t('on') : t('off')}`}
         onCheckedChange={(on) => {
           if (issuesStore.toggleSegment(segment.id, on))
             toast.info(

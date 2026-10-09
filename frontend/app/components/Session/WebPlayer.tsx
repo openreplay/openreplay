@@ -12,6 +12,7 @@ import { sessions as sessionsRoute, withSiteId } from 'App/routes';
 import { useNavigate, useParams } from 'App/routing';
 import { signalService } from 'App/services';
 import { wrapPlayerStore } from 'Components/Session/playerStore';
+import RecordingNotices from 'Components/Session_/RecordingNotices';
 
 import PlayerContent from './Player/ReplayPlayer/PlayerContent';
 import ReplayActions from './ReplayScreen/ReplayActions';
@@ -212,7 +213,7 @@ function WebPlayer(props: any) {
   }, [cssLoading, ready]);
 
   React.useEffect(() => {
-    if (activeTab === 'Click map') {
+    if (activeTab === 'CLICKMAP') {
       contextValue.player?.pause();
     }
   }, [activeTab]);
@@ -264,9 +265,17 @@ function WebPlayer(props: any) {
     showEvents = false,
   } = contextValue.store?.get() || {};
   const panels = [
-    { key: 'EVENTS', label: t('Activity') },
-    { key: 'CLICKMAP', label: t('Click map') },
-    { key: 'INSPECTOR', label: t('Features') },
+    { key: 'EVENTS', label: t('Activity'), hint: t('What happened, in order') },
+    {
+      key: 'CLICKMAP',
+      label: t('Click map'),
+      hint: t('Where on each page this person clicked, and how often'),
+    },
+    {
+      key: 'INSPECTOR',
+      label: t('Features'),
+      hint: t('Elements someone named, on the pages this session was on'),
+    },
   ];
   const onPanel = (key: string | null) => {
     const next = key ?? '';
@@ -307,6 +316,7 @@ function WebPlayer(props: any) {
           renderPanel={(key) => (
             <RightBlock activeTab={key} setActiveTab={onPanel} embedded />
           )}
+          notice={<RecordingNotices />}
           fullscreen={fullscreen}
         >
           {player}

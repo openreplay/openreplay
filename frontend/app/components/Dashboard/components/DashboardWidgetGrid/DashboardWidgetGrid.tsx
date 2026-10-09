@@ -7,6 +7,8 @@ import { useTranslation } from 'react-i18next';
 import { useStore } from 'App/mstore';
 import WidgetWrapperNew from 'Components/Dashboard/components/WidgetWrapper/WidgetWrapperNew';
 
+import { isFullWidget, loneHalves } from './placement';
+
 interface Props {
   siteId: string;
   id?: string;
@@ -18,6 +20,7 @@ function DashboardWidgetGrid({ siteId, id, addCard }: Props) {
   const { dashboardStore } = useStore();
   const dashboard = dashboardStore.selectedDashboard;
   const list = dashboard?.widgets ?? [];
+  const lone = loneHalves(list);
 
   return (
     <Loader loading={dashboardStore.isLoading}>
@@ -39,6 +42,7 @@ function DashboardWidgetGrid({ siteId, id, addCard }: Props) {
               key={item.widgetId}
               index={index}
               widget={item}
+              drawnFull={isFullWidget(item) || lone.has(item)}
               siteId={siteId}
               moveListItem={(from, to) =>
                 dashboard?.swapWidgetPosition(from, to)

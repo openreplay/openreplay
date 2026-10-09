@@ -10,6 +10,7 @@ import 'App/components/Dashboard/charts.css';
 import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorDetailsModal';
 import { useModal } from 'App/components/Modal';
 import { RouteComponentProps, withRouter } from 'App/routing';
+import NoDataInWindow from 'Components/Dashboard/components/NoDataInWindow';
 
 interface Props {
   metric: any;
@@ -60,11 +61,7 @@ function CustomMetricTableErrors(props: RouteComponentProps & Props) {
   const rest = (data.total ?? errors.length) - shown.length;
 
   if (errors.length === 0) {
-    return (
-      <p className="m-top__empty">
-        {t('No data available for the selected period.')}
-      </p>
-    );
+    return <NoDataInWindow inGrid={compact} list />;
   }
 
   const columns: Column<any>[] = [

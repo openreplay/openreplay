@@ -10,6 +10,7 @@ export type EmptyArtVariant =
   | 'search'
   | 'bookmark'
   | 'range'
+  | 'window'
   | 'dashboard'
   | 'cards'
   | 'alert'
@@ -450,6 +451,35 @@ export function EmptyArt({ variant = 'frame' }: { variant?: EmptyArtVariant }) {
               d="M98 39a15 15 0 1 1-13 22.5"
               className="m-eart__spark"
               pathLength={100}
+            />
+          </>
+        )}
+
+        {variant === 'window' && (
+          /* the sessions as ticks on a timeline, the window an empty bracket
+             to their right that widens until it takes them in */
+          <>
+            <line x1="14" y1="56" x2="118" y2="56" className="m-eart__slot" />
+            <line x1="24" y1="49" x2="24" y2="63" className="m-eart__row" />
+            <line x1="33" y1="49" x2="33" y2="63" className="m-eart__row" />
+            <line x1="46" y1="49" x2="46" y2="63" className="m-eart__row" />
+            <line x1="53" y1="49" x2="53" y2="63" className="m-eart__row" />
+            <line x1="64" y1="49" x2="64" y2="63" className="m-eart__row" />
+            <path
+              d="M118 42h-5v28h5"
+              className="m-eart__spark"
+              pathLength={100}
+            />
+            <path
+              d="M80 42h-5v28h5"
+              className="m-eart__spark m-eart__win-l"
+              pathLength={100}
+            />
+            <circle
+              cx="118"
+              cy="56"
+              r="2.5"
+              className="m-eart__cross m-eart__cross--now"
             />
           </>
         )}

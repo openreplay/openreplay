@@ -35,12 +35,10 @@ export const enum PREFERENCES_MENU {
   SESSION_SETTINGS = 'sessions-settings',
   INTEGRATIONS = 'integrations',
   WEBHOOKS = 'webhooks',
-  MODULES = 'modules',
   PROJECTS = 'projects',
   ROLES_ACCESS = 'roles-access',
   AUDIT = 'audit',
   TEAM = 'team',
-  NOTIFICATIONS = 'notifications',
   BILLING = 'billing',
   EXPORTED_VIDEOS = 'exported-videos',
   TEST_AGENTS = 'test-agents',
@@ -223,7 +221,6 @@ export const preferences: (t: TFunction) => Category[] = (t) => [
         key: PREFERENCES_MENU.WEBHOOKS,
         icon: 'link-45deg',
       },
-      { label: t('Modules'), key: PREFERENCES_MENU.MODULES, icon: 'puzzle' },
       { label: t('Projects'), key: PREFERENCES_MENU.PROJECTS, icon: 'folder2' },
       {
         label: t('Roles & Access'),
@@ -244,12 +241,6 @@ export const preferences: (t: TFunction) => Category[] = (t) => [
         key: PREFERENCES_MENU.TEAM,
         icon: 'people',
         isAdmin: true,
-      },
-      {
-        label: t('Weekly Report'),
-        key: PREFERENCES_MENU.NOTIFICATIONS,
-        icon: 'envelope-paper',
-        hidden: false,
       },
       {
         label: t('Billing'),

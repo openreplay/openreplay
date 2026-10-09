@@ -241,7 +241,7 @@ function DraftDrawer({
               {scheduled
                 ? t('It will run automatically on this schedule.')
                 : t(
-                    'No schedule yet — the test will be Approved and you can run it manually or schedule it later.',
+                    'No schedule yet. The test will be Approved, and you can run it manually or schedule it later.',
                   )}
             </span>
           }

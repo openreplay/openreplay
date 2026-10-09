@@ -58,21 +58,14 @@ function Controls({ setActiveTab, fullView, mobile }: any) {
   const { skipInterval } = uiPlayerStore;
   const history = useHistory();
   const { siteId } = projectsStore;
-  const {
-    playing,
-    completed,
-    speed,
-    messagesLoading,
-    markedTargets,
-    inspectorMode,
-  } = store.get();
+  const { playing, completed, speed, messagesLoading, inspectorMode } =
+    store.get();
 
   const session = sessionStore.current;
   const previousSessionId = sessionStore.previousId;
   const nextSessionId = sessionStore.nextId;
 
-  const disabled =
-    disableDevtools || messagesLoading || inspectorMode || markedTargets;
+  const disabled = disableDevtools || messagesLoading || inspectorMode;
   const sessionTz = session?.timezone;
   const sessionId = session?.sessionId;
 

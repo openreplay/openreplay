@@ -5,18 +5,17 @@ import Marker from './ElementsMarker/Marker';
 
 export default function ElementsMarker({
   targets,
-  activeIndex,
+  hot,
 }: {
   targets: MarkedTarget[];
-  activeIndex: number;
+  /** the selector whose row is under the pointer in the click map */
+  hot: string | null;
 }) {
-  return targets ? (
+  return (
     <>
       {targets.map((t) => (
-        <React.Fragment key={t.index}>
-          <Marker target={t} active={activeIndex === t.index} />
-        </React.Fragment>
+        <Marker key={t.index} target={t} hot={hot === t.selector} />
       ))}
     </>
-  ) : null;
+  );
 }

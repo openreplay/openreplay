@@ -197,6 +197,23 @@ handoff `context/handoff-2026-10-05.md`. The prototype runs on mock data (`src/s
   for our font: -0.6px, not the prototype's -1.6px). Kit: `CheckRow boxed` (form variant, role checkbox).
   Editing a feature from the panel renames or removes only: the tags API's PUT updates `name` alone
 
+- melonade #4 "The real build reviewed: four designs it asked for" (2026-10-09), all four ported and checked
+  with the PR's own `tools/foss-review-check.mjs`, ported to our harness (30/30; the version-faked mock needs
+  the notice and the map in separate passes):
+  - OR-3742 nothing in the window: `EmptyArt` `window`, `utils/windowPhrase.ts` (years in the app's zone),
+    the sessions page names the window, says when the last matching session was (one limit-1 lookup over 30
+    days, only while empty) and offers the smallest preset that reaches it; card previews (`NoDataInWindow`)
+    and the card's sessions block in the same family
+  - OR-3746 a banner is a notice: kit `Notice` gained `warning`, `action`, `onDismiss`; the recording's
+    notices sit in `ReplayScreen`'s `notice` slot (`.m-rs__notice`); the tracker one only when the recording's
+    tracker is NEWER than the app; the language banner and account alerts are notices inside the page
+  - OR-3747 the click map as a tab: rows from the session's own clicks (one per element, ranked), the page
+    follows the playhead (resolved from location events) until one is picked, count dots on the page's
+    elements (`.m-wf__heat`) while paused there, the hovered row's ringed; the player's `markTargets(null)` no
+    longer pauses
+  - OR-3748 the strip in groups, then kinds: `Types/session/issueGroups.ts`; a group filters by all its kinds;
+    kinds in sentence case beside the picked group (`.m-recs__kinds`); no per-group counts (the API has none)
+
 ## Review pass (2026-10-08)
 
 A full review of the branch diff, fixed in four commits (each re-reviewed after the fix):

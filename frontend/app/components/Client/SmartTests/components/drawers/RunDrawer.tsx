@@ -142,7 +142,7 @@ function ScreenshotsView({
   if (run.status === 'running')
     return (
       <DevEmpty
-        text={t('Run in progress — screenshots appear as it finishes.')}
+        text={t('Run in progress. Screenshots appear as it finishes.')}
       />
     );
   if (shotSteps.length === 0)
@@ -334,7 +334,7 @@ function RunDrawer({ run, open, onClose }: Props) {
     if (!run.testId) return;
     triggerMut.mutate(run.testId, {
       onSuccess: () =>
-        toast.success(`${run.testName} — ${t('rerun started, see Runs')}`),
+        toast.success(`${run.testName}: ${t('rerun started, see Runs')}`),
       onError: () => toast.error(t('Failed to start run')),
     });
   };

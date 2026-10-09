@@ -11,7 +11,6 @@ import PreferencesShell from './PreferencesShell';
 /* One chunk per tab: the shell no longer ships Synthetics, audit, billing and
    the rest to someone opening Account. Same module paths, so the saas overlay
    still replaces them. */
-const Modules = React.lazy(() => import('Components/Client/Modules'));
 const SessionsListingSettings = React.lazy(
   () => import('Components/Client/SessionsListingSettings'),
 );
@@ -23,7 +22,6 @@ const ExportedVideosList = React.lazy(
   () => import('./ExportedVideos/ExportedVideosList'),
 );
 const Integrations = React.lazy(() => import('./Integrations'));
-const Notifications = React.lazy(() => import('./Notifications'));
 const ProfileSettings = React.lazy(() => import('./ProfileSettings'));
 const Projects = React.lazy(() => import('./Projects'));
 const Roles = React.lazy(() => import('./Roles'));
@@ -60,12 +58,13 @@ class Client extends React.PureComponent<any> {
             replace
           />
         );
+      case CLIENT_TABS.MODULES:
+      case CLIENT_TABS.NOTIFICATIONS:
+        return <Navigate to={clientRoute(CLIENT_TABS.PROFILE)} replace />;
       case CLIENT_TABS.BILLING:
         return <Billing />;
       case CLIENT_TABS.WEBHOOKS:
         return <Webhooks />;
-      case CLIENT_TABS.NOTIFICATIONS:
-        return <Notifications />;
       case CLIENT_TABS.MANAGE_ROLES:
         return <Roles />;
       case CLIENT_TABS.AUDIT:
@@ -76,8 +75,6 @@ class Client extends React.PureComponent<any> {
         ) : (
           <Navigate to={clientRoute(CLIENT_TABS.PROFILE)} replace />
         );
-      case CLIENT_TABS.MODULES:
-        return <Modules />;
       case CLIENT_TABS.VIDEOS:
         return <ExportedVideosList />;
       case CLIENT_TABS.TEST_AGENTS:
