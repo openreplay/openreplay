@@ -222,12 +222,22 @@ func (s *cardsImpl) GetAllPaginated(projectID int, filters CardListFilter, sort 
 	if err != nil {
 		return nil, fmt.Errorf("get paginated: %w", err)
 	}
-	// Columns are mapped to Card fields by name via the db tags.
-	cards, err := pgx.CollectRows(rows, pgx.RowToStructByNameLax[Card])
+	// Columns are mapped to struct fields by name via the db tags.
+	scanned, err := pgx.CollectRows(rows, pgx.RowToStructByName[cardListRow])
 	if err != nil {
 		return nil, fmt.Errorf("scan paginated cards: %w", err)
 	}
+	cards := make([]CardListItem, 0, len(scanned))
+	var total int
+	for _, r := range scanned {
+		cards = append(cards, r.CardListItem)
+		total = r.TotalCount
+	}
 
+	// The window count is only present when at least one row matched; when
+	// paging past the end, fall back to a plain COUNT so total stays correct.
+	// NamedArgs only binds the placeholders present in the query, so the
+	// unused limit/offset entries are simply ignored here.
 	if len(cards) == 0 && offset > 0 {
 		countQuery := fmt.Sprintf("SELECT COUNT(*) FROM public.metrics m %s %s", joinClause, where)
 		if err := s.pgconn.QueryRow(countQuery, params).Scan(&total); err != nil {
