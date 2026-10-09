@@ -80,6 +80,19 @@ var sessionsPorpertySelectorMap = map[string]string{
 	string(MetricOfTableResolution): "if(screen_width = 0 AND screen_height = 0, 'Unknown', concat(toString(screen_width), 'x', toString(screen_height)))",
 }
 
+// eventsEquivalentSelectorMap maps session-level table metrics to the
+// equivalent selector on product_analytics.events. When the events table is
+// already scanned (event filters present) and nothing else requires
+// experimental.sessions, the metric value is read from the events table
+// instead of joining sessions. userDevice has no events equivalent on
+// purpose.
+var eventsEquivalentSelectorMap = map[string]string{
+	string(MetricOfTableUserId):   "`$user_id`",
+	string(MetricOfTableBrowser):  "`$browser`",
+	string(MetricOfTableCountry):  "toString(`$country`)",
+	string(MetricOfTableReferrer): "`$referrer`",
+}
+
 func (t *TableQueryBuilder) Execute(ctx context.Context, p *Payload, conn driver.Conn) (interface{}, error) {
 	if p.MetricOf == "" {
 		return nil, fmt.Errorf("MetricOf is empty")
@@ -220,7 +233,7 @@ func (t *TableQueryBuilder) buildQuery(r *Payload) (string, map[string]any, erro
 
 	// Build event filter conditions with error handling
 	qp := NewParams()
-	durConds, _ := BuildDurationWhere(s.Filter.Filters, qp)
+	durConds, _ := BuildDurationWhere(s.Filter.Filters, qp, "s")
 
 	eventConditions, nameConditions, _ := BuildEventConditions(s.Filter.Filters, BuildConditionsOptions{
 		DefinedColumns: mainColumns,
@@ -234,8 +247,25 @@ func (t *TableQueryBuilder) buildQuery(r *Payload) (string, map[string]any, erro
 		string(MetricOfTableReferrer),
 	}, r.MetricOf) && len(eventConditions) == 0 && !HasEventOnlyBreakdowns(r.Breakdowns)
 
+	// Whether the events table is part of the query at all (mirrors the
+	// fromEvents condition below).
+	usesEventsTable := !skipEventsTable || hasExtraCondition
+
+	// Session-level filters: when the events table is in the query, the ones
+	// with an events-table equivalent are evaluated there; only session-only
+	// filters (duration, platform, user_device, ...) require
+	// experimental.sessions.
+	sessionFilters := extractSessionFilters(s.Filter.Filters)
+	var sessionFiltersOnEvents, sessionOnlyFilters []model.Filter
+	if usesEventsTable {
+		sessionFiltersOnEvents, sessionOnlyFilters = SplitSessionFilters(sessionFilters)
+	} else {
+		sessionOnlyFilters = sessionFilters
+	}
+
 	eventsConditions := t.buildPrewhereConditions(r, s.Filter.EventsOrder, eventConditions, []string{})
-	sessionConditions := t.buildSessionConditions(r, r.MetricFormat, durConds, qp)
+	eventsConditions = append(eventsConditions, BuildSessionConditionsOnEvents(sessionFiltersOnEvents, "main", qp)...)
+	sessionConditions := t.buildSessionConditions(sessionOnlyFilters, durConds, qp)
 	eventsHaving, whereClause, err := t.buildJoinClause(s.Filter.EventsOrder, eventConditions)
 	if err != nil {
 		return "", nil, err
@@ -254,11 +284,19 @@ func (t *TableQueryBuilder) buildQuery(r *Payload) (string, map[string]any, erro
 		}
 	}
 
-	// Determine aggregation column
-	distinctColumn := "session_id"
-	if r.MetricFormat == MetricFormatUserCount {
-		distinctColumn = "user_id"
-	}
+	sessionBreakdowns, _ := SplitBreakdowns(r.Breakdowns)
+	eventsMetricSel, metricOnEvents := eventsEquivalentSelectorMap[r.MetricOf]
+
+	// experimental.sessions is only needed when a value has to come from it:
+	// the metric itself, a session-only filter, a session-level breakdown,
+	// the per-session events_count (eventCount format) or the whole query
+	// when there is no events-table scan to begin with.
+	needSessions := !usesEventsTable ||
+		len(sessionOnlyFilters) > 0 || len(durConds) > 0 ||
+		len(sessionBreakdowns) > 0 ||
+		(r.MetricFormat == MetricFormatEventCount && !isFromEvents) ||
+		(!isFromEvents && !metricOnEvents)
+
 	pagination := t.calculatePagination(r.Page, r.Limit)
 
 	// Build the final query with proper string formatting
@@ -283,7 +321,6 @@ func (t *TableQueryBuilder) buildQuery(r *Payload) (string, map[string]any, erro
 
 	var fromExtra string
 	if isFromEvents {
-		distinctColumn = "e." + distinctColumn
 		eventsSelect = append(eventsSelect, fmt.Sprintf("%s AS metric_value", propSel))
 		eventsConditions = append(eventsConditions, "notEmpty(metric_value)", "isNotNull(metric_value)")
 		//Property from events table
@@ -316,10 +353,19 @@ WHERE %s) AS extra`,
 				}
 			}
 		}
-	} else {
-		distinctColumn = "s." + distinctColumn
+	} else if needSessions {
 		sessionsSelect = append(sessionsSelect, fmt.Sprintf("%s AS metric_value", propSel))
 		//	No need to think about extra conditions here as they are all relater to events
+	} else {
+		// The metric value has an events-table equivalent, so the whole query
+		// can run on the events table.
+		eventsSelect = append(eventsSelect, fmt.Sprintf("%s AS metric_value", eventsMetricSel))
+	}
+
+	if r.MetricFormat == MetricFormatUserCount && !needSessions {
+		// '' marks an anonymous user (sessions.user_id would be NULL);
+		// nullIf keeps count(DISTINCT user_id) skipping them.
+		eventsSelect = append(eventsSelect, `any(nullIf(main."$user_id", '')) AS user_id`)
 	}
 
 	var fromEvents string
@@ -345,7 +391,7 @@ WHERE %s) AS extra`,
 	}
 
 	var fromSessions string
-	if !isFromEvents || len(sessionConditions) > 4 || r.MetricFormat == MetricFormatUserCount || numBreakdowns > 0 {
+	if needSessions {
 		var limitBy []string = []string{"session_id"}
 		if !isFromEvents {
 			limitBy = append(limitBy, "metric_value")
@@ -363,10 +409,28 @@ WHERE %s) AS extra`,
 			strings.Join(limitBy, ","),
 		)
 	}
-	if r.MetricFormat == MetricFormatUserCount {
-		distinctColumn = "s.user_id"
-	} else if r.MetricFormat == MetricFormatEventCount && !isFromEvents {
-		distinctColumn = "s.events_count"
+
+	// Aggregation column: prefer the table the value already lives in.
+	var distinctColumn string
+	switch {
+	case r.MetricFormat == MetricFormatUserCount:
+		if needSessions {
+			distinctColumn = "s.user_id"
+		} else {
+			distinctColumn = "e.user_id"
+		}
+	case r.MetricFormat == MetricFormatEventCount:
+		if isFromEvents {
+			distinctColumn = "e.session_id"
+		} else {
+			distinctColumn = "s.events_count"
+		}
+	default:
+		if needSessions && !isFromEvents {
+			distinctColumn = "s.session_id"
+		} else {
+			distinctColumn = "e.session_id"
+		}
 	}
 
 	if fromSessions != "" {
@@ -398,15 +462,13 @@ SELECT metric_value AS metric_name,
 FROM %s %s %s
 GROUP BY ALL
 ORDER BY metric_count DESC
-LIMIT %d OFFSET %d;`,
+LIMIT @limit OFFSET @offset;`,
 			breakdownOuterCols,
 			countFunction,
 			distinctColumn,
 			fromSessions,
 			fromEvents,
 			fromExtra,
-			pagination.Limit,
-			pagination.Offset,
 		)
 	} else {
 		query = fmt.Sprintf(`
@@ -417,20 +479,20 @@ SELECT metric_value AS metric_name,
 FROM %s %s %s
 GROUP BY metric_value
 ORDER BY metric_count DESC
-LIMIT %d OFFSET %d;`,
+LIMIT @limit OFFSET @offset;`,
 			countFunction,
 			distinctColumn,
 			fromSessions,
 			fromEvents,
 			fromExtra,
-			pagination.Limit,
-			pagination.Offset,
 		)
 	}
 
 	qp.Set("projectId", r.ProjectId)
 	qp.Set("startTimestamp", r.StartTimestamp)
 	qp.Set("endTimestamp", r.EndTimestamp)
+	qp.Set("limit", pagination.Limit)
+	qp.Set("offset", pagination.Offset)
 	return query, qp.Values(), nil
 }
 
@@ -438,7 +500,7 @@ func (t *TableQueryBuilder) buildTableOfResolutionsQuery(r *Payload) ([]string, 
 	s := r.Series[0]
 	// Build event filter conditions with error handling
 	qp := NewParams()
-	durConds, _ := BuildDurationWhere(s.Filter.Filters, qp)
+	durConds, _ := BuildDurationWhere(s.Filter.Filters, qp, "s")
 	sessFilters, _ := FilterOutTypes(s.Filter.Filters, []string{string(FilterDuration), string(FilterUserAnonymousId)})
 	eventConditions, _, otherConds := BuildEventConditions(sessFilters, BuildConditionsOptions{
 		DefinedColumns: mainColumns,
@@ -446,7 +508,9 @@ func (t *TableQueryBuilder) buildTableOfResolutionsQuery(r *Payload) ([]string, 
 		EventsOrder:    string(s.Filter.EventsOrder),
 	}, qp)
 	prewhereParts := t.buildPrewhereConditions(r, s.Filter.EventsOrder, eventConditions, otherConds)
-	queryConditions := t.buildSessionConditions(r, r.MetricFormat, durConds, qp)
+	// The main table here is experimental.sessions, so session filters are
+	// applied on its own columns.
+	queryConditions := t.buildSessionConditions(extractSessionFilters(s.Filter.Filters), durConds, qp)
 	joinClause, extraWhere, err := t.buildJoinClause(s.Filter.EventsOrder, eventConditions)
 	if err != nil {
 		return []string{}, nil, err
@@ -642,43 +706,46 @@ var sessionProperties = map[string]string{
 	"rev_id_ios":            "rev_id",
 }
 
-// buildSessionConditions constructs the session conditions for the sessions query
-func (t *TableQueryBuilder) buildSessionConditions(r *Payload, metricFormat string, durConds []string, qp *Params) []string {
-	var sessionConditions []string = make([]string, 0)
+// extractSessionFilters returns the non-event filters that target a
+// session-level attribute (a column of experimental.sessions or a metadata
+// column).
+func extractSessionFilters(filters []model.Filter) []model.Filter {
+	var sessionFilters []model.Filter
+	for _, f := range filters {
+		if f.IsEvent {
+			continue
+		}
+		name := sessionFilterName(f)
+		if _, ok := SessionColumns[name]; ok || IsMetadataColumn(name) {
+			sessionFilters = append(sessionFilters, f)
+		}
+	}
+	return sessionFilters
+}
 
-	// Add core session conditions
-	sessionConditions = append(sessionConditions, t.buildTimeRangeConditions("s")...)
+// buildSessionConditions constructs the WHERE conditions of the sessions
+// subquery: the base project/time range plus the given session-level filters
+// and duration conditions, rendered on alias "s". Parameter values accumulate
+// in qp.
+func (t *TableQueryBuilder) buildSessionConditions(sessionFilters []model.Filter, durConds []string, qp *Params) []string {
+	sessionConditions := t.buildTimeRangeConditions("s")
 
-	// Add duration conditions
+	// Add duration conditions (already rendered on alias "s")
 	for _, durCond := range durConds {
 		if durCond != "" { // Avoid empty conditions
-			sessionDurCond := strings.ReplaceAll(durCond, "main.duration", "s.duration")
-			sessionConditions = append(sessionConditions, sessionDurCond)
+			sessionConditions = append(sessionConditions, durCond)
 		}
 	}
 
-	//// Handle user count specific conditions
-	//if metricFormat == MetricFormatUserCount {
-	//	sessionConditions = append(sessionConditions,
-	//		fmt.Sprintf("NOT (empty(s.user_id) AND (s.user_uuid IS NULL OR s.user_uuid = '%s'))", nilUUIDString))
-	//}
-
-	// To add session's specific filters (like user_os, user_browser, etc...)
-	for _, f := range r.Series[0].Filter.Filters {
-		if !f.IsEvent {
-			if f.AutoCaptured {
-				f.Name = CamelToSnake(f.Name)
-			}
-			var subCondition []string
-			if column, ok := sessionProperties[f.Name]; ok {
-				subCondition = append(subCondition, buildCond(column, f.Value, f.Operator, false, "singleColumn", qp))
-			} else if IsMetadataColumn(f.Name) {
-				subCondition = append(subCondition, buildCond(f.Name, f.Value, f.Operator, false, "singleColumn", qp))
-			}
-			if len(subCondition) > 0 {
-				sessionConditions = append(sessionConditions, fmt.Sprintf("(%s)", strings.Join(subCondition, " OR ")))
-			}
-		}
+	if len(sessionFilters) > 0 {
+		// Session filters normally land in the third return value; metadata
+		// filters without the autoCaptured flag are routed to the first one.
+		misrouted, _, conds := BuildEventConditions(sessionFilters, BuildConditionsOptions{
+			DefinedColumns: SessionColumns,
+			MainTableAlias: "s",
+		}, qp)
+		sessionConditions = append(sessionConditions, conds...)
+		sessionConditions = append(sessionConditions, misrouted...)
 	}
 	return sessionConditions
 }

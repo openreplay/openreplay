@@ -154,22 +154,16 @@ func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) ([]string, map[string]a
 		}
 	}
 
-	// Check if we need to join with sessions table
-	sessionColumns := GetSessionColumns()
-	needsSessionJoin := false
-	for _, filter := range regularFilters {
-		if filter.AutoCaptured && !filter.IsEvent {
-			filter.Name = CamelToSnake(filter.Name)
-		}
-		if _, exists := sessionColumns[filter.Name]; exists {
-			needsSessionJoin = true
-			break
-		}
-	}
-
-	// Use BuildWhere for proper separation of events, session and duration filters
+	// Use BuildWhere for proper separation of events, session and duration
+	// filters. Session filters with an events-table equivalent are rendered
+	// on the events alias (filtersWhere); the sessions table is only joined
+	// when a session-only filter remains in sessionsWhere.
 	qp := NewParams()
-	eventsWhere, filtersWhere, _, sessionsWhere := BuildWhere(regularFilters, string(p.Series[0].Filter.EventsOrder), "e", "s", qp, needsSessionJoin)
+	qp.Set("projectId", p.ProjectId)
+	qp.Set("startMs", startMs)
+	qp.Set("endMs", endMs)
+	eventsWhere, filtersWhere, _, sessionsWhere := BuildWhere(regularFilters, string(p.Series[0].Filter.EventsOrder), "e", "s", qp, true)
+	needsSessionJoin := len(sessionsWhere) > 0
 
 	// Build ERROR event conditions
 	var errorEventConds []string
@@ -191,12 +185,13 @@ func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) ([]string, map[string]a
 		)
 		if len(sessionEventFilterConds) > 0 {
 			subqueryConds := []string{
-				fmt.Sprintf("se.project_id = %d", p.ProjectId),
-				fmt.Sprintf("se.created_at >= toDateTime(%d/1000)", (p.StartTimestamp/1000)*1000),
-				fmt.Sprintf("se.created_at <= toDateTime(%d/1000)", (p.EndTimestamp/1000)*1000),
+				"se.project_id = @projectId",
+				"se.created_at >= toDateTime(@startMs/1000)",
+				"se.created_at <= toDateTime(@endMs/1000)",
 			}
 			if p.SampleRate > 0 && p.SampleRate < 100 {
-				subqueryConds = append(subqueryConds, fmt.Sprintf("se.sample_key < %d", p.SampleRate))
+				qp.Set("sampleRate", p.SampleRate)
+				subqueryConds = append(subqueryConds, "se.sample_key < @sampleRate")
 			}
 			subqueryConds = append(subqueryConds, sessionEventFilterConds...)
 			sessionEventConds = []string{fmt.Sprintf(`e.session_id IN (
@@ -209,12 +204,13 @@ func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) ([]string, map[string]a
 
 	// Base conditions that always apply
 	conds := []string{
-		fmt.Sprintf("e.project_id = %d", p.ProjectId),
-		fmt.Sprintf("e.created_at >= toDateTime(%d/1000)", startMs),
-		fmt.Sprintf("e.created_at <= toDateTime(%d/1000)", endMs),
+		"e.project_id = @projectId",
+		"e.created_at >= toDateTime(@startMs/1000)",
+		"e.created_at <= toDateTime(@endMs/1000)",
 	}
 	if p.SampleRate > 0 && p.SampleRate < 100 {
-		conds = append(conds, fmt.Sprintf("e.sample_key < %d", p.SampleRate))
+		qp.Set("sampleRate", p.SampleRate)
+		conds = append(conds, "e.sample_key < @sampleRate")
 	}
 
 	// If no specific ERROR event filter is provided, add the default ERROR event conditions
@@ -264,14 +260,18 @@ func (t *TableErrorsQueryBuilder) buildQuery(p *Payload) ([]string, map[string]a
 	}
 
 	eventsTable := fmt.Sprintf("errors_events_%s", strings.ReplaceAll(uuid.NewString(), "-", ""))
+	// "$user_id" is carried into the temporary table so error_meta can count
+	// users without joining experimental.sessions ('' marks an anonymous
+	// user, where sessions.user_id would be NULL).
 	createSQL := fmt.Sprintf(`
 CREATE TEMPORARY TABLE %s ENGINE = MergeTree ORDER BY (error_id,session_id,created_at) AS (
     SELECT
-        error_id,
-        COALESCE("$properties".'name', 'ERROR') AS name,
-        COALESCE("$properties".'message', 'Unknown error') AS message,
-        session_id,
-        created_at
+        e.error_id AS error_id,
+        COALESCE(e."$properties".'name', 'ERROR') AS name,
+        COALESCE(e."$properties".'message', 'Unknown error') AS message,
+        e.session_id AS session_id,
+        e."$user_id" AS user_id,
+        e.created_at AS created_at
     FROM %s
     WHERE %s
 );`,
@@ -280,12 +280,15 @@ CREATE TEMPORARY TABLE %s ENGINE = MergeTree ORDER BY (error_id,session_id,creat
 		whereClause,
 	)
 
+	qp.Set("stepMs", stepMs)
+	qp.Set("limit", limit)
+	qp.Set("offset", offset)
 	mainSQL := fmt.Sprintf(`
 WITH
     sessions_per_interval AS (
         SELECT
             error_id,
-            toUInt64(%d + (toUInt64((toUnixTimestamp64Milli(created_at) - %d) / %d) * %d)) AS bucket_ts,
+            toUInt64(@startMs + (toUInt64((toUnixTimestamp64Milli(created_at) - @startMs) / @stepMs) * @stepMs)) AS bucket_ts,
             countDistinct(session_id) AS session_count
         FROM %s
         GROUP BY error_id, bucket_ts
@@ -293,21 +296,19 @@ WITH
     buckets AS (
         SELECT
             toUInt64(generate_series) AS bucket_ts
-        FROM generate_series(%d,%d,%d)
+        FROM generate_series(@startMs,@endMs,@stepMs)
     ),
     error_meta AS (
         SELECT
             error_id,
             any(name) AS name,
             any(message) AS message,
-            countDistinct(CASE WHEN s.user_id IS NOT NULL AND s.user_id != '' THEN s.user_id END) AS users,
+            countDistinct(nullIf(e.user_id, '')) AS users,
             count() AS total,
             countDistinct(e.session_id) AS sessions,
             min(e.created_at) AS first_occurrence,
             max(e.created_at) AS last_occurrence
         FROM %s e
-        	LEFT JOIN experimental.sessions s 
-				ON e.session_id = s.session_id AND s.project_id = %d
         WHERE e.error_id != ''
         GROUP BY e.error_id
     ),
@@ -346,15 +347,11 @@ LEFT JOIN error_chart AS ec
 CROSS JOIN total_count AS tc
 WHERE m.sessions > 0
 ORDER BY %s %s
-LIMIT %d OFFSET %d;`,
-		startMs, startMs, stepMs, stepMs, // New formula parameters
+LIMIT @limit OFFSET @offset;`,
 		eventsTable,
-		startMs, endMs, stepMs,
 		eventsTable,
-		p.ProjectId,
 		eventsTable,
 		orderColumn, orderDirection,
-		limit, offset,
 	)
 
 	return []string{createSQL, mainSQL}, qp.Values(), nil

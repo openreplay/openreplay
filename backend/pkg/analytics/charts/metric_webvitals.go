@@ -204,15 +204,22 @@ func buildMetric(min, avg, max, p50, p75, p90 float64, r struct{ good, medium, b
 
 func (h WebVitalsQueryBuilder) buildQuery(p *Payload) (string, map[string]any, error) {
 	qp := NewParams()
-	innerEventsWhere, _, _, sessionsWhere := BuildWhere(p.MetricPayload.Series[0].Filter.Filters, string(p.MetricPayload.Series[0].Filter.EventsOrder), "main", "s", qp, true)
+	qp.Set("projectId", p.ProjectId)
+	qp.Set("startTimestamp", p.MetricPayload.StartTimestamp)
+	qp.Set("endTimestamp", p.MetricPayload.EndTimestamp)
+
+	// Session filters with an events-table equivalent are rendered on the
+	// events aliases (2nd return value); sessionsWhere only keeps the
+	// session-only ones.
+	innerEventsWhere, innerFiltersWhere, _, sessionsWhere := BuildWhere(p.MetricPayload.Series[0].Filter.Filters, string(p.MetricPayload.Series[0].Filter.EventsOrder), "main", "s", qp, true)
 	_, outerFiltersWhere, _, _ := BuildWhere(p.MetricPayload.Series[0].Filter.Filters, string(p.MetricPayload.Series[0].Filter.EventsOrder), "events", "s", qp, true)
 
 	innerEventsWhereStr := ""
 	if len(innerEventsWhere) > 0 {
 		innerEventsWhereStr = " AND " + strings.Join(innerEventsWhere, " AND ")
 	}
-	if p.SampleRate > 0 && p.SampleRate < 100 {
-		innerEventsWhereStr += fmt.Sprintf(" AND main.sample_key < %d", p.SampleRate)
+	if len(innerFiltersWhere) > 0 {
+		innerEventsWhereStr += " AND " + strings.Join(innerFiltersWhere, " AND ")
 	}
 
 	outerFiltersWhereStr := ""
@@ -220,22 +227,25 @@ func (h WebVitalsQueryBuilder) buildQuery(p *Payload) (string, map[string]any, e
 		outerFiltersWhereStr = " AND " + strings.Join(outerFiltersWhere, " AND ")
 	}
 	if p.SampleRate > 0 && p.SampleRate < 100 {
-		outerFiltersWhereStr += fmt.Sprintf(" AND events.sample_key < %d", p.SampleRate)
+		qp.Set("sampleRate", p.SampleRate)
+		innerEventsWhereStr += " AND main.sample_key < @sampleRate"
+		outerFiltersWhereStr += " AND events.sample_key < @sampleRate"
 	}
 
-	// Join with experimental.sessions only when the card actually filters on
-	// session attributes; otherwise the events subquery alone is enough.
+	// Join with experimental.sessions only when the card filters on a
+	// session-only attribute; filters available on the events table are
+	// already applied on the events scans above.
 	sessionsJoinStr := ""
-	if len(sessionsWhere) > 4 {
+	if len(sessionsWhere) > 0 {
 		sessionsWhereStr := " AND " + strings.Join(sessionsWhere, " AND ")
 		sessionsJoinStr = fmt.Sprintf(`
             INNER JOIN (SELECT DISTINCT session_id
                     FROM experimental.sessions AS s
-                    WHERE s.project_id = %d
+                    WHERE s.project_id = @projectId
 						%s
-						AND s.datetime >= toDateTime(%d/1000)
-						AND s.datetime <= toDateTime(%d/1000)) AS s ON(s.session_id=f.session_id)`,
-			p.ProjectId, sessionsWhereStr, p.MetricPayload.StartTimestamp, p.MetricPayload.EndTimestamp)
+						AND s.datetime >= toDateTime(@startTimestamp/1000)
+						AND s.datetime <= toDateTime(@endTimestamp/1000)) AS s ON(s.session_id=f.session_id)`,
+			sessionsWhereStr)
 	}
 
 	query := fmt.Sprintf(`
@@ -279,15 +289,15 @@ FROM product_analytics.events
 	 INNER JOIN (SELECT session_id
 				 FROM ( SELECT DISTINCT main.session_id
 						FROM product_analytics.events AS main
-						WHERE main.project_id = %d 
-							AND main.created_at >= toDateTime(%d/1000) 
-							AND main.created_at <= toDateTime(%d/1000)
+						WHERE main.project_id = @projectId
+							AND main.created_at >= toDateTime(@startTimestamp/1000)
+							AND main.created_at <= toDateTime(@endTimestamp/1000)
 							%s) AS f
 						%s
 				  ) AS raw USING (session_id)
-WHERE events.project_id = %d
-  AND events.created_at >= toDateTime(%d / 1000)
-  AND events.created_at <= toDateTime(%d / 1000)
+WHERE events.project_id = @projectId
+  AND events.created_at >= toDateTime(@startTimestamp / 1000)
+  AND events.created_at <= toDateTime(@endTimestamp / 1000)
   AND events."$event_name" = 'LOCATION'
   AND events."$auto_captured" %s
   AND (
@@ -298,9 +308,9 @@ WHERE events.project_id = %d
         OR isNotNull(events."$properties".lcp)
         OR isNotNull(events."$properties".cls)
     )`,
-		p.ProjectId, p.MetricPayload.StartTimestamp, p.MetricPayload.EndTimestamp, innerEventsWhereStr,
+		innerEventsWhereStr,
 		sessionsJoinStr,
-		p.ProjectId, p.MetricPayload.StartTimestamp, p.MetricPayload.EndTimestamp, outerFiltersWhereStr)
+		outerFiltersWhereStr)
 
 	return query, qp.Values(), nil
 }
