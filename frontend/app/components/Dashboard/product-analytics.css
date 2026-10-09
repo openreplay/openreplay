@@ -609,6 +609,20 @@
   overflow-y: auto;
   padding: var(--m-space-2);
 }
+.m-brk__group + .m-brk__group {
+  margin-top: var(--m-space-2);
+}
+.m-brk__group-head {
+  position: sticky;
+  top: calc(-1 * var(--m-space-2));
+  z-index: 1;
+  margin: 0;
+  padding: var(--m-space-2) var(--m-space-3) var(--m-space-1);
+  background: var(--m-surface-raised);
+  font-size: var(--m-text-2xs);
+  font-weight: var(--m-weight-medium);
+  color: var(--m-content-muted);
+}
 .m-brk__none {
   margin: 0;
   padding: var(--m-space-3) var(--m-space-4);

@@ -167,6 +167,21 @@ export function buildBreakdownOptions(allFilters: Filter[]): Filter[] {
   }, []);
 }
 
+/** The picker's sections, in the order they are listed. */
+export const BREAKDOWN_GROUPS = [
+  { key: 'filters', label: 'Filters' },
+  { key: 'custom', label: 'Custom events' },
+  { key: 'event', label: 'Event properties' },
+] as const;
+
+export type BreakdownGroup = (typeof BREAKDOWN_GROUPS)[number]['key'];
+
+/** An event property comes from a custom event unless it was autocaptured. */
+export const breakdownGroup = (filter: Filter): BreakdownGroup => {
+  if (filter.category !== EVENT_PROPERTY_CATEGORY) return 'filters';
+  return filter.autoCaptured ? 'event' : 'custom';
+};
+
 /**
  * Picker option -> API breakdown. `isEvent` is what tells the API to look the
  * name up in the event properties; without it a custom property that shares a
