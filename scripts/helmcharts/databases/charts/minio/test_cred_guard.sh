@@ -20,6 +20,9 @@ check "accessKey mismatch -> fail" fail \
 check "secretKey mismatch -> fail" fail \
   --set global.minio.accessKey=AAA --set global.minio.secretKey=S_SEC \
   --set global.s3.endpoint=$MINIO_EP --set global.s3.accessKey=AAA --set global.s3.secretKey=C_SEC
+check "secretKey-only mismatch (accessKey unset) -> fail" fail \
+  --set global.minio.accessKey=AAA --set global.minio.secretKey=S_SEC \
+  --set global.s3.endpoint=$MINIO_EP --set global.s3.secretKey=C_SEC
 check "matching creds -> render" pass \
   --set global.minio.accessKey=AAA --set global.minio.secretKey=BBB \
   --set global.s3.endpoint=$MINIO_EP --set global.s3.accessKey=AAA --set global.s3.secretKey=BBB
