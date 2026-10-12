@@ -10,6 +10,12 @@
                     linear-gradient(45deg, #00d 25%, #fff 25%, #fff 75%, #00d 75%, #00d);
   background-size: 5px 5px;
 }
+.outline {
+  box-sizing: border-box;
+  border: 2px solid var(--m-content-accent, #0e7490);
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--m-content-accent, #0e7490) 10%, transparent);
+}
 .markerL {
   left: -1px;
   top: -100vh;

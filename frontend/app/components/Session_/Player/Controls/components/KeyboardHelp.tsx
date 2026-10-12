@@ -84,6 +84,7 @@ export function ShortcutGrid() {
       <Cell shortcut="⇧ + R" text="Launch State" />
       <Cell shortcut="⇧ + E" text="Launch Events" />
       <Cell shortcut="⇧ + F" text="Play Session in Fullscreen" />
+      <Cell shortcut="Esc" text="Leave Fullscreen" />
       <Cell shortcut="Space" text="Play/Pause Session" />
       <Cell shortcut="⇧ + X" text="Launch X-Ray" />
       <Cell shortcut="⇧ + A" text="Launch User Actions" />

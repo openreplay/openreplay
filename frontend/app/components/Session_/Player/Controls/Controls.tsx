@@ -53,8 +53,7 @@ function Controls({ setActiveTab, fullView, mobile }: any) {
     );
   const { fullscreen } = uiPlayerStore;
   const { toggleBottomBlock } = uiPlayerStore;
-  const { fullscreenOn } = uiPlayerStore;
-  const { fullscreenOff } = uiPlayerStore;
+  const { fullscreenOff, toggleFullscreen } = uiPlayerStore;
   const { skipInterval } = uiPlayerStore;
   const history = useHistory();
   const { siteId } = projectsStore;
@@ -79,7 +78,7 @@ function Controls({ setActiveTab, fullView, mobile }: any) {
 
   useShortcuts({
     skipInterval,
-    fullScreenOn: fullscreenOn,
+    fullScreenToggle: () => toggleFullscreen(),
     fullScreenOff: fullscreenOff,
     toggleBottomBlock,
     openNextSession: nextHandler,
@@ -191,9 +190,12 @@ function Controls({ setActiveTab, fullView, mobile }: any) {
       )}
       <IconButton
         icon={fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
-        label={fullscreen ? t('Exit full screen') : t('Full screen')}
+        label={
+          fullscreen ? t('Leave full screen (Esc)') : t('Full screen (⇧F)')
+        }
         variant="ghost"
-        onClick={fullscreen ? fullscreenOff : fullscreenOn}
+        pressed={fullscreen}
+        onClick={() => toggleFullscreen()}
       />
     </div>
   );

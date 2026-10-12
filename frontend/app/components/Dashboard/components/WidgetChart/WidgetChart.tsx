@@ -32,6 +32,7 @@ import {
   getDepth,
   remapTimestamps,
 } from 'App/utils/breakdownTree';
+import { hasRuleValue } from 'App/utils/hasRuleValue';
 import { hasSampling } from 'App/utils/split-utils';
 import TrendChart from 'Components/Charts/TrendChart';
 import SessionsBy from 'Components/Dashboard/Widgets/CustomMetricsWidgets/SessionsBy';
@@ -68,6 +69,43 @@ const WidgetPredefinedChart = lazy(() => import('../WidgetPredefinedChart'));
 const BreakdownDatatable = lazy(
   () => import('../WidgetDatatable/BreakdownDatatable'),
 );
+
+const TREND_VIEWS = new Set([
+  'lineChart',
+  'areaChart',
+  'barChart',
+  'progressChart',
+  'pieChart',
+]);
+const VITALS = [
+  'domBuildingTime',
+  'ttfb',
+  'speedIndex',
+  'firstContentfulPaintTime',
+  'lcp',
+  'cls',
+];
+
+/** Nothing came back for the window; the list kinds tell it themselves. */
+function nothingInWindow(metric: any, data: any): boolean {
+  if (!data) return false;
+  if (metric.metricType === TIMESERIES && TREND_VIEWS.has(metric.viewType)) {
+    const points: Record<string, unknown>[] = data.chart ?? [];
+    return points.every((p) =>
+      Object.entries(p).every(
+        ([k, v]) => k === 'time' || k === 'timestamp' || !Number(v),
+      ),
+    );
+  }
+  if (metric.metricType === WEBVITALS) {
+    return VITALS.every((k) => !Number(data[k]?.Avg));
+  }
+  // a journey from a set start point that went nowhere in the window
+  if (metric.metricType === USER_PATH && Array.isArray(data.nodes)) {
+    return data.nodes.length === 0 && hasRuleValue(metric.startPoint);
+  }
+  return false;
+}
 
 interface Props {
   metric: any;
@@ -588,6 +626,7 @@ function WidgetChart(props: Props) {
             height={height}
             isTemplate={isTemplate}
             isEdit={!isSaved && !isTemplate}
+            inGrid={!props.isPreview}
           />
         );
       }
@@ -801,7 +840,11 @@ function WidgetChart(props: Props) {
       ) : (
         <div>
           <Suspense fallback={<Loader loading style={{ height: '240px' }} />}>
-            {renderChart()}
+            {nothingInWindow(_metric, data) ? (
+              <NoDataInWindow inGrid={!props.isPreview} />
+            ) : (
+              renderChart()
+            )}
             {showTable &&
             mergedBreakdownData &&
             Object.keys(mergedBreakdownData).length > 0 ? (

@@ -22,6 +22,8 @@ const BAR_W = 134;
 const BAR_H = 5;
 /** Over a replay without a panel strip: the foot's gap above the recording. */
 const STAGE_GAP = 24;
+/** Over a replay: the foot's gap above the panel tab strip. */
+const STRIP_GAP = 8;
 /** How long the dock stays up after the pointer leaves. */
 const LINGER = 380;
 /** How long a switch protects the dock from a leave it did not earn. */
@@ -109,8 +111,8 @@ export function SessionsDock({
   const open = hover;
   const peeking = !open && peek != null;
 
-  /* ── over a replay: on the panel tab strip, which moves with the open
-     panel; without one (fullscreen) just above the recording ── */
+  /* ── over a replay: just above the panel tab strip, which moves with the
+     open panel; without one (fullscreen) just above the recording's foot ── */
   const zone = useRef<HTMLDivElement>(null);
   const [lift, setLift] = useState(0);
   useLayoutEffect(() => {
@@ -121,10 +123,9 @@ export function SessionsDock({
       if (!stage || !host) return;
       const line = document.querySelector('[data-replay-dockline]');
       const row = line?.getBoundingClientRect();
-      // 2px: the pill is the row's height less 2px each side
       const foot =
         row && row.height
-          ? row.bottom - 2
+          ? row.top - STRIP_GAP
           : stage.getBoundingClientRect().bottom - STAGE_GAP;
       setLift(
         Math.max(0, Math.round(host.getBoundingClientRect().bottom - foot)),

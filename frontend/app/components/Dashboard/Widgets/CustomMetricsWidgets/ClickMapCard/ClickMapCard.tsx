@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next';
 import 'App/components/Dashboard/charts.css';
 import ClickMapRenderer from 'App/components/Session/Player/ClickMapRenderer';
 import { useStore } from 'App/mstore';
+import { hasRuleValue } from 'App/utils/hasRuleValue';
+import NoDataInWindow from 'Components/Dashboard/components/NoDataInWindow';
 
 function ClickMapCard() {
   const { t } = useTranslation();
@@ -57,6 +59,13 @@ function ClickMapCard() {
     metricStore.includeClickRage,
   ]);
 
+  // a page was asked for and the window holds no recording of it
+  const asked = metricStore.instance.series.some((s: any) =>
+    (s.filter?.filters ?? []).some(hasRuleValue),
+  );
+  if (!metricStore.instance.data.domURL && asked) {
+    return <NoDataInWindow />;
+  }
   if (!metricStore.instance.data.domURL || insights.length === 0) {
     return (
       <p className="m-funnel__empty">

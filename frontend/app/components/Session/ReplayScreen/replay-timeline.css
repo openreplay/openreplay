@@ -25,6 +25,8 @@
   position: relative;
   display: inline-flex;
   flex: none;
+  /* the head overhangs the track's end by its radius; keep it clear of the tags */
+  margin-inline-start: var(--m-space-3);
 }
 
 .m-tl__settings-hit {

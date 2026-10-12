@@ -16,7 +16,6 @@ import {
   Keyboard,
   MoreHorizontal,
   Radio,
-  Search,
   Share2,
   Vault,
 } from 'lucide-react';
@@ -54,7 +53,6 @@ function ReplayActions({
     integrationsStore,
     issueReportingStore,
     recordingsStore,
-    uiPlayerStore,
     projectsStore,
   } = useStore();
   const { isEnterprise, account } = userStore;
@@ -173,21 +171,6 @@ function ReplayActions({
         <DropdownMenuContent align="end">
           <DropdownMenuItems
             items={[
-              ...(uiPlayerStore.showSearchEventsSwitchButton
-                ? [
-                    {
-                      key: 'searched',
-                      icon: <Search size={13} />,
-                      label: uiPlayerStore.showOnlySearchEvents
-                        ? t('Show every event')
-                        : t('Show searched events only'),
-                      onClick: () =>
-                        uiPlayerStore.setShowOnlySearchEvents(
-                          !uiPlayerStore.showOnlySearchEvents,
-                        ),
-                    },
-                  ]
-                : []),
               ...(session.isMobileNative
                 ? []
                 : [

@@ -21,12 +21,13 @@ import React, { Suspense, lazy, useRef } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import { useTranslation } from 'react-i18next';
 
-import { FUNNEL, TIMESERIES, USER_PATH } from 'App/constants/card';
+import { TIMESERIES, USER_PATH } from 'App/constants/card';
 import { useStore } from 'App/mstore';
 import { dashboardMetricDetails, withSiteId } from 'App/routes';
 import { useHistory } from 'App/routing';
 import { dashboardService } from 'App/services';
 import AlertFormModal from 'Components/Alerts/AlertFormModal/AlertFormModal';
+import { useMasonrySpan } from 'Components/Dashboard/components/DashboardWidgetGrid/masonry';
 import { isFullWidget } from 'Components/Dashboard/components/DashboardWidgetGrid/placement';
 import { useModal } from 'Components/ModalContext';
 
@@ -65,8 +66,6 @@ function WidgetWrapperDashboard({
   const canAlert =
     !isPredefined && widget.metricType === TIMESERIES && !!seriesId;
   const full = isFullWidget(widget);
-  const natural =
-    widget.metricType === USER_PATH || (widget.metricType === FUNNEL && full);
 
   const [{ isDragging }, dragRef] = useDrag({
     type: 'item',
@@ -87,6 +86,7 @@ function WidgetWrapperDashboard({
   });
   const ref = useRef<HTMLElement>(null);
   dragRef(dropRef(ref));
+  useMasonrySpan(ref);
 
   const open = () => {
     if (isPredefined || !dashboard) return;
@@ -127,7 +127,7 @@ function WidgetWrapperDashboard({
     <section
       ref={ref}
       id={`widget-${widget.metricId}`}
-      className={`m-dash__widget${drawnFull ? ' is-full' : ''}${natural ? ' is-natural' : ''}${isDragging ? ' is-dragging' : ''}${canDrop && isOver ? ' is-drop' : ''}`}
+      className={`m-dash__widget${drawnFull ? ' is-full' : ''}${isDragging ? ' is-dragging' : ''}${canDrop && isOver ? ' is-drop' : ''}`}
       style={widget.metricType === USER_PATH ? { minHeight: 600 } : undefined}
     >
       <header className="m-dash__widget-head">

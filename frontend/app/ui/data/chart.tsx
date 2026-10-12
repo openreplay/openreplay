@@ -199,6 +199,8 @@ export function baseOption(t: ChartTheme): EChartsCoreOption {
     animationEasing: t.ease,
     animationEasingUpdate: t.ease,
     tooltip: {
+      // a card clips its body; a long breakdown tooltip must not be
+      appendTo: 'body',
       backgroundColor: t.raised,
       borderColor: t.border,
       borderWidth: 1,

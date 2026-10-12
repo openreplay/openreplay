@@ -13,7 +13,6 @@ import {
   PERFORMANCE,
   STACKEVENTS,
 } from 'App/mstore/uiPlayerStore';
-import EscapeButton from 'App/player-ui/EscapeButton';
 import PerfWarnings from 'Components/Session/Player/MobilePlayer/PerfWarnings';
 import ReplayWindow from 'Components/Session/Player/MobilePlayer/ReplayWindow';
 import {
@@ -56,7 +55,7 @@ function Player({ activeTab, fullView, setActiveTab }: IProps) {
     screenWidth,
     screenHeight,
   } = sessionStore.current;
-  const { fullscreen, fullscreenOff, bottomBlock } = uiPlayerStore;
+  const { fullscreen, bottomBlock } = uiPlayerStore;
   const playerContext = React.useContext(MobilePlayerContext);
   const { ready, messagesLoading } = playerContext.store.get();
   const screenWrapper = React.useRef<HTMLDivElement>(null);
@@ -112,7 +111,6 @@ function Player({ activeTab, fullView, setActiveTab }: IProps) {
       )}
       data-bottom-block={!fullscreen && !!bottomBlock}
     >
-      {fullscreen && <EscapeButton onClose={fullscreenOff} />}
       <div
         className="relative flex-1 min-h-0 overflow-hidden p-4 bg-[var(--m-surface-canvas)]"
         data-replay-stage
