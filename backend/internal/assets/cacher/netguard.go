@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"golang.org/x/net/http/httpproxy"
+	"golang.org/x/net/idna"
 )
 
 type blockedAddrError struct {
@@ -25,21 +26,22 @@ func (e *blockedAddrError) Error() string {
 
 var blockedNets = func() []*net.IPNet {
 	cidrs := []string{
-		"0.0.0.0/8",       // "this" network
-		"100.64.0.0/10",   // carrier-grade NAT
-		"192.0.0.0/24",    // IETF protocol assignments
-		"192.0.2.0/24",    // documentation
-		"198.18.0.0/15",   // benchmarking
-		"198.51.100.0/24", // documentation
-		"203.0.113.0/24",  // documentation
-		"240.0.0.0/4",     // reserved + broadcast
-		"::/96",           // IPv4-compatible (deprecated)
-		"64:ff9b::/96",    // NAT64
-		"64:ff9b:1::/48",  // local-use NAT64
-		"2001::/32",       // Teredo (embeds IPv4)
-		"2001:db8::/32",   // documentation
-		"2002::/16",       // 6to4 (embeds IPv4)
-		"fec0::/10",       // deprecated site-local
+		"0.0.0.0/8",        // "this" network
+		"100.64.0.0/10",    // carrier-grade NAT
+		"192.0.0.0/24",     // IETF protocol assignments
+		"192.0.2.0/24",     // documentation
+		"198.18.0.0/15",    // benchmarking
+		"198.51.100.0/24",  // documentation
+		"203.0.113.0/24",   // documentation
+		"240.0.0.0/4",      // reserved + broadcast
+		"168.63.129.16/32", // Azure wireserver
+		"::/96",            // IPv4-compatible (deprecated)
+		"64:ff9b::/96",     // NAT64
+		"64:ff9b:1::/48",   // local-use NAT64
+		"2001::/32",        // Teredo (embeds IPv4)
+		"2001:db8::/32",    // documentation
+		"2002::/16",        // 6to4 (embeds IPv4)
+		"fec0::/10",        // deprecated site-local
 	}
 	nets := make([]*net.IPNet, 0, len(cidrs))
 	for _, c := range cidrs {
@@ -68,6 +70,29 @@ func isBlockedIP(ip net.IP) bool {
 
 type dialFunc func(ctx context.Context, network, addr string) (net.Conn, error)
 
+func schemePort(scheme string) string {
+	switch scheme {
+	case "https":
+		return "443"
+	case "socks5", "socks5h":
+		return "1080"
+	default:
+		return "80"
+	}
+}
+
+func canonicalAddr(u *url.URL) string {
+	host := strings.ToLower(u.Hostname())
+	if ascii, err := idna.Lookup.ToASCII(host); err == nil {
+		host = ascii
+	}
+	port := u.Port()
+	if port == "" {
+		port = schemePort(u.Scheme)
+	}
+	return net.JoinHostPort(host, port)
+}
+
 func proxyAddrs(cfg *httpproxy.Config) map[string]struct{} {
 	addrs := map[string]struct{}{}
 	for _, raw := range []string{cfg.HTTPProxy, cfg.HTTPSProxy} {
@@ -80,18 +105,7 @@ func proxyAddrs(cfg *httpproxy.Config) map[string]struct{} {
 				continue
 			}
 		}
-		port := u.Port()
-		if port == "" {
-			switch u.Scheme {
-			case "https":
-				port = "443"
-			case "socks5":
-				port = "1080"
-			default:
-				port = "80"
-			}
-		}
-		addrs[net.JoinHostPort(strings.ToLower(u.Hostname()), port)] = struct{}{}
+		addrs[canonicalAddr(u)] = struct{}{}
 	}
 	return addrs
 }
@@ -143,7 +157,23 @@ func (c *cacher) checkRedirect(req *http.Request, via []*http.Request) error {
 	if (req.URL.Scheme != "http" && req.URL.Scheme != "https") || !c.origins.allows(req.URL) {
 		return &originNotAllowedError{origin: originKey(req.URL)}
 	}
+	if err := c.checkProxyTarget(req.URL); err != nil {
+		return err
+	}
+	if len(via) > 0 && originKey(req.URL) != originKey(via[0].URL) {
+		for k := range c.requestHeaders {
+			req.Header.Del(k)
+		}
+	}
 	return c.checkProxiedDestination(req)
+}
+
+func (c *cacher) checkProxyTarget(u *url.URL) error {
+	addr := canonicalAddr(u)
+	if _, ok := c.proxyAddrs[addr]; ok {
+		return &blockedAddrError{addr: addr}
+	}
+	return nil
 }
 
 func (c *cacher) checkProxiedDestination(req *http.Request) error {

@@ -2,6 +2,7 @@ package assets
 
 import (
 	"context"
+	"strings"
 
 	"openreplay/backend/internal/config/common"
 	"openreplay/backend/internal/config/configurator"
@@ -67,6 +68,9 @@ func New(log logger.Logger) *Config {
 	}
 	if cfg.AssetsHTTPTimeout <= 0 {
 		log.Fatal(context.Background(), "ASSETS_HTTP_TIMEOUT must be positive, got %d", cfg.AssetsHTTPTimeout)
+	}
+	if len(cfg.AssetsRequestHeaders) > 0 && strings.TrimSpace(cfg.AssetsAllowedOrigins) == "" {
+		log.Fatal(context.Background(), "ASSETS_REQUEST_HEADERS requires ASSETS_ALLOWED_GLOBAL_ORIGINS, otherwise the headers go to every origin")
 	}
 	return cfg
 }

@@ -57,6 +57,7 @@ type cacher struct {
 	httpTimeout    time.Duration
 	origins        originSet
 	proxy          func(*url.URL) (*url.URL, error)
+	proxyAddrs     map[string]struct{}
 	samplerDone    chan struct{}
 }
 
@@ -115,6 +116,10 @@ func NewCacher(log logger.Logger, cfg *config.Config, store objectstorage.Object
 		return nil, errors.Wrap(err, "ASSETS_ALLOWED_GLOBAL_ORIGINS")
 	}
 	proxyCfg := httpproxy.FromEnvironment()
+	var exempt map[string]struct{}
+	if !cfg.AssetsAllowPrivate {
+		exempt = proxyAddrs(proxyCfg)
+	}
 
 	c := &cacher{
 		log:        log,
@@ -125,7 +130,7 @@ func NewCacher(log logger.Logger, cfg *config.Config, store objectstorage.Object
 			Transport: &http.Transport{
 				Proxy:               http.ProxyFromEnvironment,
 				TLSClientConfig:     tlsConfig,
-				DialContext:         guardedDialer(cfg.AssetsAllowPrivate, proxyAddrs(proxyCfg)),
+				DialContext:         guardedDialer(cfg.AssetsAllowPrivate, exempt),
 				TLSHandshakeTimeout: 5 * time.Second,
 				MaxConnsPerHost:     8,
 				MaxIdleConns:        100,
@@ -150,6 +155,7 @@ func NewCacher(log logger.Logger, cfg *config.Config, store objectstorage.Object
 		httpTimeout:    time.Duration(cfg.AssetsHTTPTimeout) * time.Second,
 		origins:        origins,
 		proxy:          proxyCfg.ProxyFunc(),
+		proxyAddrs:     exempt,
 	}
 	c.httpClient.CheckRedirect = c.checkRedirect
 	c.workers = NewPool(cfg.AssetsWorkerCount, cfg.AssetsQueueSize, c.CacheFile)
@@ -207,6 +213,10 @@ func (c *cacher) cacheURL(t *Task) {
 	}
 	if !c.origins.allows(req.URL) {
 		c.permanent(ctx, t, "origin_not_allowed", &originNotAllowedError{origin: originKey(req.URL)})
+		return
+	}
+	if err := c.checkProxyTarget(req.URL); err != nil {
+		c.permanent(ctx, t, "blocked_address", err)
 		return
 	}
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36")

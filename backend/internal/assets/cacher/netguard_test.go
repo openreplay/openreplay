@@ -17,7 +17,7 @@ func TestIsBlockedIP(t *testing.T) {
 		"127.0.0.1", "10.1.2.3", "172.16.0.1", "172.31.255.255", "192.168.1.1",
 		"169.254.169.254", "0.0.0.0", "0.1.2.3", "100.64.0.1", "192.0.0.1",
 		"192.0.2.1", "198.18.0.1", "198.51.100.1", "203.0.113.1",
-		"224.0.0.1", "240.0.0.1", "255.255.255.255",
+		"224.0.0.1", "240.0.0.1", "255.255.255.255", "168.63.129.16",
 		"::1", "::", "fc00::1", "fd12::1", "fe80::1", "fec0::1", "ff02::1",
 		"::ffff:10.0.0.1", "::ffff:127.0.0.1", "64:ff9b::a00:1",
 		"2001::1", "2001:db8::1", "2002:a00:1::1",
@@ -91,13 +91,17 @@ func TestGuardedDialerBlocksRedirectTarget(t *testing.T) {
 }
 
 func TestProxyAddrs(t *testing.T) {
-	got := proxyAddrs(&httpproxy.Config{
-		HTTPProxy:  "http://Proxy.Corp:3128",
-		HTTPSProxy: "10.0.0.5", // no scheme, no port
-	})
-	for _, want := range []string{"proxy.corp:3128", "10.0.0.5:80"} {
-		if _, ok := got[want]; !ok {
-			t.Errorf("missing %s in %v", want, got)
+	cases := map[string]string{
+		"http://Proxy.Corp:3128": "proxy.corp:3128",
+		"10.0.0.5":               "10.0.0.5:80", // no scheme, no port
+		"socks5h://10.0.0.5":     "10.0.0.5:1080",
+		"https://proxy.corp":     "proxy.corp:443",
+		"http://пример.рф":       "xn--e1afmkfd.xn--p1ai:80",
+	}
+	for raw, want := range cases {
+		got := proxyAddrs(&httpproxy.Config{HTTPProxy: raw})
+		if _, ok := got[want]; !ok || len(got) != 1 {
+			t.Errorf("%s: want {%s}, got %v", raw, want, got)
 		}
 	}
 	if len(proxyAddrs(&httpproxy.Config{})) != 0 {
@@ -149,5 +153,68 @@ func TestCheckProxiedDestination(t *testing.T) {
 	allowed := &cacher{allowPrivate: true, proxy: proxied.proxy}
 	if err := allowed.checkProxiedDestination(req); err != nil {
 		t.Fatalf("allowPrivate should skip the check, got %v", err)
+	}
+}
+
+func TestCheckRedirectRejectsProxyAddress(t *testing.T) {
+	c := &cacher{
+		origins:    originSet{},
+		proxy:      (&httpproxy.Config{HTTPSProxy: "http://proxy.internal:3128"}).ProxyFunc(),
+		proxyAddrs: proxyAddrs(&httpproxy.Config{HTTPSProxy: "http://proxy.internal:3128"}),
+	}
+	first, _ := http.NewRequest("GET", "https://cdn.example/a.css", nil)
+	toProxy, _ := http.NewRequest("GET", "http://PROXY.internal:3128/squid-internal-mgr/info", nil)
+	assertBlocked(t, c.checkRedirect(toProxy, []*http.Request{first}))
+	assertBlocked(t, c.checkProxyTarget(toProxy.URL))
+	if err := c.checkProxyTarget(first.URL); err != nil {
+		t.Fatalf("non-proxy target should pass, got %v", err)
+	}
+}
+
+func TestCheckRedirectDropsRequestHeadersCrossOrigin(t *testing.T) {
+	var seen []string
+	internal := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		seen = append(seen, r.Header.Get("X-Api-Key"))
+	}))
+	defer internal.Close()
+	edge := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		seen = append(seen, r.Header.Get("X-Api-Key"))
+		if r.URL.Path == "/same" {
+			http.Redirect(w, r, "/done", http.StatusFound)
+			return
+		}
+		if r.URL.Path == "/done" {
+			return
+		}
+		http.Redirect(w, r, internal.URL, http.StatusFound)
+	}))
+	defer edge.Close()
+
+	c := &cacher{
+		origins:        originSet{},
+		requestHeaders: map[string]string{"X-Api-Key": "secret"},
+		allowPrivate:   true,
+		proxy:          (&httpproxy.Config{}).ProxyFunc(),
+	}
+	client := &http.Client{CheckRedirect: c.checkRedirect}
+	for _, path := range []string{"/cross", "/same"} {
+		req, _ := http.NewRequest("GET", edge.URL+path, nil)
+		for k, v := range c.requestHeaders {
+			req.Header.Set(k, v)
+		}
+		res, err := client.Do(req)
+		if err != nil {
+			t.Fatalf("%s: %v", path, err)
+		}
+		res.Body.Close()
+	}
+	want := []string{"secret", "", "secret", "secret"}
+	if len(seen) != len(want) {
+		t.Fatalf("want %v, got %v", want, seen)
+	}
+	for i := range want {
+		if seen[i] != want[i] {
+			t.Fatalf("hop %d: want %q, got %q (all: %v)", i, want[i], seen[i], seen)
+		}
 	}
 }
