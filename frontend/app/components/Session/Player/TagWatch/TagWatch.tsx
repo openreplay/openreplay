@@ -370,7 +370,11 @@ const TagForm = observer(
                       type="button"
                       className="m-feat__picked-act"
                       aria-label={t('Pick another element')}
-                      onClick={() => setSelector('')}
+                      onClick={() => {
+                        setSelector('');
+                        // so picking the same element again still lands
+                        store.update({ tagSelector: '' });
+                      }}
                     >
                       <X size={12} aria-hidden="true" />
                     </button>

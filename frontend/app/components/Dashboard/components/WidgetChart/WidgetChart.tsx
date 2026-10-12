@@ -32,6 +32,7 @@ import {
   getDepth,
   remapTimestamps,
 } from 'App/utils/breakdownTree';
+import { hasRuleValue } from 'App/utils/hasRuleValue';
 import { hasSampling } from 'App/utils/split-utils';
 import TrendChart from 'Components/Charts/TrendChart';
 import SessionsBy from 'Components/Dashboard/Widgets/CustomMetricsWidgets/SessionsBy';
@@ -98,6 +99,10 @@ function nothingInWindow(metric: any, data: any): boolean {
   }
   if (metric.metricType === WEBVITALS) {
     return VITALS.every((k) => !Number(data[k]?.Avg));
+  }
+  // a journey from a set start point that went nowhere in the window
+  if (metric.metricType === USER_PATH && Array.isArray(data.nodes)) {
+    return data.nodes.length === 0 && hasRuleValue(metric.startPoint);
   }
   return false;
 }

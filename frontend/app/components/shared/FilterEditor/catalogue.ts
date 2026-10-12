@@ -269,8 +269,16 @@ export function summariseRules(
 ): string {
   const parts: string[] = [];
   if (events.length)
-    parts.push(t('{{count}} events', { count: events.length }));
+    parts.push(
+      events.length === 1
+        ? t('1 event')
+        : t('{{count}} events', { count: events.length }),
+    );
   if (properties.length)
-    parts.push(t('{{count}} group filters', { count: properties.length }));
+    parts.push(
+      properties.length === 1
+        ? t('1 group filter')
+        : t('{{count}} group filters', { count: properties.length }),
+    );
   return parts.join(' · ');
 }

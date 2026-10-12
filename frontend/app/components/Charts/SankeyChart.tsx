@@ -20,6 +20,27 @@ import {
 
 echarts.use([SankeyChart]);
 
+const NODE_W = 40;
+const ICON_W = 16;
+let measurer: CanvasRenderingContext2D | null = null;
+/** Fits `text` into `px` at `font`, cutting the middle so a URL keeps its end. */
+function fitMiddle(text: string, px: number, font: string) {
+  measurer ??= document.createElement('canvas').getContext('2d');
+  if (!measurer) return text;
+  measurer.font = font;
+  const fits = (s: string) => measurer!.measureText(s).width <= px;
+  if (fits(text)) return text;
+  let lo = 0;
+  let hi = text.length;
+  while (lo < hi) {
+    const keep = Math.ceil((lo + hi) / 2);
+    const cut = `${text.slice(0, Math.ceil(keep / 2))}…${text.slice(text.length - Math.floor(keep / 2))}`;
+    if (fits(cut)) lo = keep;
+    else hi = keep - 1;
+  }
+  return `${text.slice(0, Math.ceil(lo / 2))}…${text.slice(text.length - Math.floor(lo / 2))}`;
+}
+
 export interface Data {
   nodes: SankeyNode[];
   links: SankeyLink[];
@@ -101,6 +122,17 @@ const EChartsSankey = (props: Props) => {
       1,
       ...filteredNodes.map((n) => (n.depth ?? 0) + 1),
     );
+    // a label sits over its node and runs right to the next column: every
+    // column gets the same lane, the last one's taken from the right margin
+    const layoutOf = (w: number) => {
+      const lane = Math.max(
+        48,
+        Math.min(240, Math.floor((w - 4) / columns) - 12),
+      );
+      return { lane, right: Math.max(8, lane - NODE_W + 8) };
+    };
+    let { lane, right } = layoutOf(chart.getWidth());
+    const labelFont = `600 12px ${theme.font || 'sans-serif'}`;
     const nodeValues: Record<string, number> = {};
     const echartNodes = filteredNodes
       .map((n, i) => {
@@ -182,6 +214,7 @@ const EChartsSankey = (props: Props) => {
       yAxis: undefined,
       tooltip: {
         trigger: 'item',
+        appendTo: 'body',
       },
       toolbox: {
         feature: {
@@ -202,14 +235,17 @@ const EChartsSankey = (props: Props) => {
             },
           },
           top: 40,
+          left: 8,
+          right,
           label: {
             show: true,
             position: 'top',
             textShadowColor: 'transparent',
             textBorderColor: 'transparent',
             align: 'left',
+            fontFamily: theme.font || undefined,
+            width: lane,
             overflow: 'truncate',
-            maxWidth: 30,
             distance: 3,
             offset: [-20, 0],
             formatter(params: any) {
@@ -218,22 +254,11 @@ const EChartsSankey = (props: Props) => {
                 ? `${((nodeVal / startNodeValue) * 100).toFixed(1)}%`
                 : '0%';
 
-              // a label gets its column's pitch, so half a dashboard
-              // truncates sooner than the builder
-              const pitch =
-                columns > 1
-                  ? (chart.getWidth() - 40) / (columns - 1)
-                  : chart.getWidth();
-              const maxLen = Math.max(
-                6,
-                Math.min(20, Math.floor((pitch - 36) / 7)),
+              const safeName = fitMiddle(
+                params.name,
+                lane - ICON_W - 4,
+                labelFont,
               );
-              const head = Math.ceil((maxLen - 1) / 2);
-              const tail = Math.floor((maxLen - 1) / 2);
-              const safeName =
-                params.name.length > maxLen
-                  ? `${params.name.slice(0, head)}…${params.name.slice(-tail)}`
-                  : params.name;
               const nodeType = params.data.type;
 
               const icon = getIcon(nodeType);
@@ -260,7 +285,7 @@ const EChartsSankey = (props: Props) => {
             textStyle: { color: theme.text },
           },
           nodeAlign: 'left',
-          nodeWidth: 40,
+          nodeWidth: NODE_W,
           nodeGap: 40,
           lineStyle: {
             color: 'source',
@@ -337,7 +362,13 @@ const EChartsSankey = (props: Props) => {
       }
     });
 
-    const ro = new ResizeObserver(() => chart.resize());
+    const ro = new ResizeObserver(() => {
+      chart.resize();
+      const next = layoutOf(chart.getWidth());
+      if (next.lane === lane) return;
+      ({ lane, right } = next);
+      chart.setOption({ series: [{ right, label: { width: lane } }] });
+    });
     ro.observe(chartRef.current);
 
     return () => {

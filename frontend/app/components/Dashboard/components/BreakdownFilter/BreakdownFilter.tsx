@@ -109,16 +109,12 @@ function BreakdownFilter({ metric, observeChanges = () => {} }: Props) {
       <span>
         <Tooltip
           title={
-            full
-              ? t('At most {{n}} breakdowns', { n: MAX_BREAKDOWNS })
-              : names.length
-                ? t('Add a breakdown')
-                : t('Add a property to break down results by')
+            full ? t('At most {{n}} breakdowns', { n: MAX_BREAKDOWNS }) : null
           }
         >
           <span>
             <Button
-              variant={names.length ? 'secondary' : 'subtle'}
+              variant="subtle"
               className="m-cardp__addseries"
               disabled={full}
               aria-label={t('Add breakdown')}
