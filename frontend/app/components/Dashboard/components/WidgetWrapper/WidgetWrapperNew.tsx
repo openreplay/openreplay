@@ -27,6 +27,7 @@ import { dashboardMetricDetails, withSiteId } from 'App/routes';
 import { useHistory } from 'App/routing';
 import { dashboardService } from 'App/services';
 import AlertFormModal from 'Components/Alerts/AlertFormModal/AlertFormModal';
+import { useMasonrySpan } from 'Components/Dashboard/components/DashboardWidgetGrid/masonry';
 import { isFullWidget } from 'Components/Dashboard/components/DashboardWidgetGrid/placement';
 import { useModal } from 'Components/ModalContext';
 
@@ -85,6 +86,7 @@ function WidgetWrapperDashboard({
   });
   const ref = useRef<HTMLElement>(null);
   dragRef(dropRef(ref));
+  useMasonrySpan(ref);
 
   const open = () => {
     if (isPredefined || !dashboard) return;
