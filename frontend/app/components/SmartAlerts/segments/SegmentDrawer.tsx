@@ -163,7 +163,9 @@ function SegmentDrawer({ open, segment, source, onClose, onSaved }: Props) {
             'A segment is a saved search. These are the same rows the sessions filter uses, and they behave the same way.',
           )}
         >
-          <div className={readOnly ? 'pointer-events-none opacity-60' : ''}>
+          <div
+            className={`m-sd__rules${readOnly ? ' pointer-events-none opacity-60' : ''}`}
+          >
             <FilterBar
               variant="panel"
               editor={editor}

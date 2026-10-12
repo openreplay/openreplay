@@ -25,3 +25,10 @@
   font-size: var(--m-text-xs);
   color: var(--m-content-muted);
 }
+
+/* every rule the same width, whatever its event is called; the room on the
+   right is the hover actions' */
+.m-sd__rules .m-fchips--panel .m-fchips__stack > .m-fchip {
+  width: 37.5rem;
+  max-width: calc(100% - 3.5rem);
+}
