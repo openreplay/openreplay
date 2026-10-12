@@ -6,9 +6,12 @@ import { useTranslation } from 'react-i18next';
 import { useStore } from 'App/mstore';
 import { windowPhrase } from 'App/utils/windowPhrase';
 
+import '../charts.css';
+
 /**
- * A card with nothing in its window. In the builder the preview is the page,
- * so it gets the page's empty state; in a dashboard widget the words alone.
+ * A card with nothing in its window, the same on every kind. In the builder
+ * the preview is the page, so it gets the page's empty state; a widget gets
+ * two lines and is as tall as they are.
  */
 function NoDataInWindow({
   inGrid = false,
@@ -25,7 +28,11 @@ function NoDataInWindow({
     : dashboardStore.drillDownPeriod;
   const title = t('Nothing {{window}}', { window: windowPhrase(t, period) });
   return inGrid ? (
-    <EmptyState title={title} />
+    <EmptyState
+      className="m-nodata is-compact"
+      title={title}
+      hint={t('Widen the window above.')}
+    />
   ) : (
     <EmptyState
       art="window"

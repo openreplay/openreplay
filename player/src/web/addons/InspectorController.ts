@@ -34,6 +34,7 @@ export default class InspectorController {
   }
 
   enableInspector(): Document | null {
+    this.marker?.clean();
     this.marker = new Marker(this.screen.overlay, this.screen);
     this.inspector = new Inspector(this.screen, this.marker);
     this.inspector.addClickListener(() => {
@@ -45,7 +46,11 @@ export default class InspectorController {
     return this.screen.document;
   }
 
+  /** Outlines an element, picking or not (a feature row points at its own). */
   markBySelector(selector: string) {
+    if (!this.marker && selector) {
+      this.marker = new Marker(this.screen.overlay, this.screen, false);
+    }
     this.marker?.markBySelector(selector);
   }
 

@@ -118,7 +118,7 @@ function BreakdownFilter({ metric, observeChanges = () => {} }: Props) {
         >
           <span>
             <Button
-              variant="subtle"
+              variant={names.length ? 'secondary' : 'subtle'}
               className="m-cardp__addseries"
               disabled={full}
               aria-label={t('Add breakdown')}

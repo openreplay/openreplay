@@ -118,7 +118,7 @@ function SpotPlayer() {
         spotPlayerStore.setIsFullScreen(false);
       }
       if (e.key === 'F') {
-        spotPlayerStore.setIsFullScreen(true);
+        spotPlayerStore.setIsFullScreen(!spotPlayerStore.isFullScreen);
       }
       if (e.key === ' ') {
         spotPlayerStore.setIsPlaying(!spotPlayerStore.isPlaying);

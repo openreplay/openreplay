@@ -97,6 +97,10 @@ const EChartsSankey = (props: Props) => {
     });
 
     setFinalNodeCount(filteredNodes.length);
+    const columns = Math.max(
+      1,
+      ...filteredNodes.map((n) => (n.depth ?? 0) + 1),
+    );
     const nodeValues: Record<string, number> = {};
     const echartNodes = filteredNodes
       .map((n, i) => {
@@ -214,13 +218,21 @@ const EChartsSankey = (props: Props) => {
                 ? `${((nodeVal / startNodeValue) * 100).toFixed(1)}%`
                 : '0%';
 
-              const maxLen = 20;
+              // a label gets its column's pitch, so half a dashboard
+              // truncates sooner than the builder
+              const pitch =
+                columns > 1
+                  ? (chart.getWidth() - 40) / (columns - 1)
+                  : chart.getWidth();
+              const maxLen = Math.max(
+                6,
+                Math.min(20, Math.floor((pitch - 36) / 7)),
+              );
+              const head = Math.ceil((maxLen - 1) / 2);
+              const tail = Math.floor((maxLen - 1) / 2);
               const safeName =
                 params.name.length > maxLen
-                  ? `${params.name.slice(
-                      0,
-                      maxLen / 2 - 2,
-                    )}...${params.name.slice(-(maxLen / 2 - 2))}`
+                  ? `${params.name.slice(0, head)}…${params.name.slice(-tail)}`
                   : params.name;
               const nodeType = params.data.type;
 

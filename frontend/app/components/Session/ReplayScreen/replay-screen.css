@@ -80,7 +80,16 @@
   display: none;
 }
 
-.m-work.is-fullscreen .m-ihdr {
+/* full screen: the main column takes the viewport over the shell; the way
+   back is the timeline's own button (and Esc) */
+.m-work.is-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: var(--m-z-sticky);
+  background: var(--m-surface-default);
+}
+.m-work.is-fullscreen .m-ihdr,
+.m-work.is-fullscreen .m-jrn {
   display: none;
 }
 

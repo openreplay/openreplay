@@ -19,7 +19,6 @@ import {
   STACKEVENTS,
   STORAGE,
 } from 'App/mstore/uiPlayerStore';
-import EscapeButton from 'App/player-ui/EscapeButton';
 import { debounce } from 'App/utils';
 import { Exceptions } from 'Components/Session_/Exceptions/Exceptions';
 import GraphQL from 'Components/Session_/GraphQL';
@@ -68,7 +67,6 @@ function Player(props: IProps) {
   const { nextId } = sessionStore;
   const { sessionId } = sessionStore.current;
   const { updateLastPlayedSession } = sessionStore;
-  const { fullscreenOff } = uiPlayerStore;
   const { bottomBlock } = uiPlayerStore;
   const { fullscreen } = uiPlayerStore;
   const defaultHeight = getDefaultPanelHeight();
@@ -119,7 +117,6 @@ function Player(props: IProps) {
       data-bottom-block={bottomBlockIsActive}
       data-testid="player-inst"
     >
-      {fullscreen && <EscapeButton onClose={fullscreenOff} />}
       <div
         className={cn('relative flex-1', 'overflow-hidden')}
         id="player-container"

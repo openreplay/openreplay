@@ -143,8 +143,13 @@ function SpotPlayerControls() {
               <Maximize2 size={14} />
             )
           }
-          label={store.isFullScreen ? t('Exit full screen') : t('Full screen')}
+          label={
+            store.isFullScreen
+              ? t('Leave full screen (Esc)')
+              : t('Full screen (⇧F)')
+          }
           variant="ghost"
+          pressed={store.isFullScreen}
           onClick={() => store.setIsFullScreen(!store.isFullScreen)}
         />
       </span>

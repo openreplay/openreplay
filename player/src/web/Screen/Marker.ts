@@ -20,6 +20,7 @@ export default class Marker {
   constructor(
     private readonly overlay: HTMLElement,
     private readonly screen: Screen,
+    picking = true,
   ) {
     this.tooltip = document.createElement('div');
     this.tooltip.className = styles.tooltip;
@@ -44,7 +45,8 @@ export default class Marker {
     marker.appendChild(markerT);
     marker.appendChild(markerB);
 
-    marker.appendChild(this.tooltip);
+    // pointing at a known element needs the outline, not the picker's label
+    if (picking) marker.appendChild(this.tooltip);
 
     overlay.appendChild(marker);
     this.marker = marker;
@@ -83,6 +85,7 @@ export default class Marker {
   markBySelector(selector: string) {
     this.selector = selector;
     this.lastSelector = selector;
+    if (!selector) this._target = null;
     this.redraw();
   }
 

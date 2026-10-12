@@ -214,6 +214,28 @@ handoff `context/handoff-2026-10-05.md`. The prototype runs on mock data (`src/s
   - OR-3748 the strip in groups, then kinds: `Types/session/issueGroups.ts`; a group filters by all its kinds;
     kinds in sentence case beside the picked group (`.m-recs__kinds`); no per-group counts (the API has none)
 
+- melonade #5 "Round two on the real build: widget heights, full screen, one target" (2026-10-09), plus the
+  review's other tickets (BACKLOG §29f):
+  - a widget is as tall as what it holds: the blanket 240px body height is gone (and `is-natural` with it);
+    charts keep their own 240 floor, lists / funnel / vitals end with their content, rows can be ragged; the
+    sessions-table widget shows 3 rows like the other lists
+  - nothing in the window is one state: `WidgetChart` shows `NoDataInWindow` before an all-zero trend view or
+    empty vitals draw (the list kinds already did); in a widget it is two lines ("Widen the window above.",
+    `.m-nodata.is-compact`), the builder keeps the window drawing
+  - full screen: the timeline's last button enters and, pressed with the collapse glyph, leaves; ⇧F toggles,
+    Esc leaves; the ESC bubble (`player-ui/EscapeButton`) is gone; `.m-work.is-fullscreen` is fixed over the
+    viewport with the header and side panel hidden; Spot's button got the same labels and toggle
+  - the collapsed filter bar is one target: the summary is a button stretched over the section
+    (`.m-fchips__expand::after`), the section takes the hover ground, Clear / Save / expand sit above it
+  - a feature row lights its element: the player's `markBySelector` only worked in inspector mode (the marker
+    was created by `enableInspector`); it now makes an outline-only marker on demand, and an empty selector
+    clears the target
+  - tickets: journey labels truncate to their column's pitch; chart tooltips go to `<body>` (`appendTo`) so a
+    card never clips a breakdown's; "Add breakdown" is `secondary` like "Add series" once one exists; the
+    queue dock rests 8px above the panel tab strip; "Show searched events only" left the ⋯ menu (the
+    Activity bar has it). The track-under-the-chips ticket did not reproduce: the track ends before them
+  - prototype-only, not ported: the pinned first dashboard and `windowHasData` (mock data)
+
 ## Review pass (2026-10-08)
 
 A full review of the branch diff, fixed in four commits (each re-reviewed after the fix):

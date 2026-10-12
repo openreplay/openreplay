@@ -205,9 +205,18 @@ function FilterBar({
               side="bottom"
               delay={400}
             >
-              <span className="m-fchips__summary">
-                {summariseRules(t, events, properties)}
-              </span>
+              <button
+                type="button"
+                className="m-fchips__expand"
+                onClick={collapse.toggle}
+                aria-label={t('Expand the filter: {{rules}}', {
+                  rules: summariseRules(t, events, properties),
+                })}
+              >
+                <span className="m-fchips__summary">
+                  {summariseRules(t, events, properties)}
+                </span>
+              </button>
             </Tooltip>
             {trailing}
           </div>

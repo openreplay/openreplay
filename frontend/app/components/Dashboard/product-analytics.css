@@ -38,12 +38,8 @@
   gap: var(--m-space-4);
   align-items: start;
 }
-/* every card draws in a trend chart's height, so widgets line up; what is
-   longer scrolls inside. Paths and full-width funnels (is-natural) keep their own. */
-.m-dash__widget:not(.is-natural) .m-dash__widget-body > * {
-  height: var(--m-widget-h);
-  overflow: hidden auto;
-}
+/* a widget is as tall as what it holds: a chart keeps this floor, a list,
+   a funnel or the vitals end where their content ends, a row can be ragged */
 .m-dash__widget .m-cmap__thumb {
   height: var(--m-widget-h);
 }
@@ -608,6 +604,9 @@
   max-height: 16rem;
   overflow-y: auto;
   padding: var(--m-space-2);
+}
+.m-brk__body > .m-cardp__form-foot {
+  padding: 0;
 }
 .m-brk__group + .m-brk__group {
   margin-top: var(--m-space-2);

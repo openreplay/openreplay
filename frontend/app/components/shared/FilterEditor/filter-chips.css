@@ -888,6 +888,47 @@ span.m-fchip__said {
 .m-fchips__head--collapsed {
   padding-block: 0;
 }
+/* collapsed, the whole bar expands it: the summary's hit area stretches over
+   the section and the verbs sit above it with their own clicks */
+.m-fchips.is-collapsed {
+  position: relative;
+  transition: background var(--m-duration-fast) var(--m-ease-out);
+}
+.m-fchips.is-collapsed:hover {
+  background: var(--m-surface-hover);
+}
+.m-fchips__expand {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--m-fchip-h);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.m-fchips__expand::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+.m-fchips__expand:focus-visible {
+  outline: none;
+}
+.m-fchips__expand:focus-visible::after {
+  outline: 2px solid var(--m-focus-ring);
+  outline-offset: -2px;
+}
+.m-fchips.is-collapsed .m-fchips__trailing {
+  position: relative;
+  z-index: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .m-fchips.is-collapsed {
+    transition: none;
+  }
+}
 
 .m-fchips__doors {
   display: inline-flex;
