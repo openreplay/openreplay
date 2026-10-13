@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"sync/atomic"
-	"syscall"
 	"time"
 
 	"golang.org/x/net/http/httpproxy"
@@ -22,6 +20,21 @@ type blockedAddrError struct {
 
 func (e *blockedAddrError) Error() string {
 	return fmt.Sprintf("blocked address %s", e.addr)
+}
+
+type unsupportedSchemeError struct {
+	scheme string
+}
+
+func (e *unsupportedSchemeError) Error() string {
+	return fmt.Sprintf("unsupported scheme %q", e.scheme)
+}
+
+func checkScheme(u *url.URL) error {
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return &unsupportedSchemeError{scheme: u.Scheme}
+	}
+	return nil
 }
 
 var blockedNets = func() []*net.IPNet {
@@ -110,43 +123,40 @@ func proxyAddrs(cfg *httpproxy.Config) map[string]struct{} {
 	return addrs
 }
 
+var lookupIPAddr = net.DefaultResolver.LookupIPAddr
+
 func guardedDialer(allowPrivate bool, exempt map[string]struct{}) dialFunc {
-	plain := &net.Dialer{
+	dialer := &net.Dialer{
 		Timeout:   5 * time.Second,
 		KeepAlive: 30 * time.Second,
 	}
 	if allowPrivate {
-		return plain.DialContext
+		return dialer.DialContext
 	}
 	return func(ctx context.Context, network, addr string) (net.Conn, error) {
 		if _, ok := exempt[strings.ToLower(addr)]; ok {
-			return plain.DialContext(ctx, network, addr)
+			return dialer.DialContext(ctx, network, addr)
 		}
-		var attempted atomic.Int32
-		dialer := &net.Dialer{
-			Timeout:   5 * time.Second,
-			KeepAlive: 30 * time.Second,
-			ControlContext: func(_ context.Context, _, address string, _ syscall.RawConn) error {
-				host, _, err := net.SplitHostPort(address)
-				if err != nil {
-					return err
-				}
-				ip := net.ParseIP(host)
-				if ip == nil || isBlockedIP(ip) {
-					return &blockedAddrError{addr: address}
-				}
-				attempted.Add(1)
-				return nil
-			},
+		host, port, err := net.SplitHostPort(addr)
+		if err != nil {
+			return nil, err
 		}
-		conn, err := dialer.DialContext(ctx, network, addr)
-		if err != nil && attempted.Load() > 0 {
-			var blocked *blockedAddrError
-			if errors.As(err, &blocked) {
-				return nil, fmt.Errorf("dial %s: allowed addresses unreachable", addr)
+		ips, err := lookupIPAddr(ctx, host)
+		if err != nil {
+			return nil, err
+		}
+		var lastErr error = &blockedAddrError{addr: addr}
+		for _, ip := range ips {
+			if isBlockedIP(ip.IP) {
+				continue
 			}
+			conn, err := dialer.DialContext(ctx, network, net.JoinHostPort(ip.IP.String(), port))
+			if err == nil {
+				return conn, nil
+			}
+			lastErr = err
 		}
-		return conn, err
+		return nil, lastErr
 	}
 }
 
@@ -154,7 +164,10 @@ func (c *cacher) checkRedirect(req *http.Request, via []*http.Request) error {
 	if len(via) >= 10 {
 		return errors.New("stopped after 10 redirects")
 	}
-	if (req.URL.Scheme != "http" && req.URL.Scheme != "https") || !c.origins.allows(req.URL) {
+	if err := checkScheme(req.URL); err != nil {
+		return err
+	}
+	if !c.origins.allows(req.URL) {
 		return &originNotAllowedError{origin: originKey(req.URL)}
 	}
 	if err := c.checkProxyTarget(req.URL); err != nil {

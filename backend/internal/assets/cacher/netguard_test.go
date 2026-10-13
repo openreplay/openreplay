@@ -218,3 +218,34 @@ func TestCheckRedirectDropsRequestHeadersCrossOrigin(t *testing.T) {
 		}
 	}
 }
+
+func TestCheckRedirectRejectsUnsupportedScheme(t *testing.T) {
+	c := &cacher{origins: originSet{}, proxy: (&httpproxy.Config{}).ProxyFunc()}
+	first, _ := http.NewRequest("GET", "https://cdn.example/a.css", nil)
+	ftp, _ := http.NewRequest("GET", "ftp://cdn.example/a.css", nil)
+	var scheme *unsupportedSchemeError
+	if err := c.checkRedirect(ftp, []*http.Request{first}); !errors.As(err, &scheme) {
+		t.Fatalf("expected unsupportedSchemeError, got %v", err)
+	}
+}
+
+func TestGuardedDialerKeepsRealErrorForMixedAddresses(t *testing.T) {
+	saved := lookupIPAddr
+	defer func() { lookupIPAddr = saved }()
+	lookupIPAddr = func(_ context.Context, _ string) ([]net.IPAddr, error) {
+		return []net.IPAddr{{IP: net.ParseIP("10.0.0.1")}, {IP: net.ParseIP("8.8.8.8")}}, nil
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	_, err := guardedDialer(false, nil)(ctx, "tcp", "mixed.example:80")
+	var blocked *blockedAddrError
+	if err == nil || errors.As(err, &blocked) {
+		t.Fatalf("dial error of the allowed address must surface, got %v", err)
+	}
+
+	lookupIPAddr = func(_ context.Context, _ string) ([]net.IPAddr, error) {
+		return []net.IPAddr{{IP: net.ParseIP("10.0.0.1")}, {IP: net.ParseIP("127.0.0.1")}}, nil
+	}
+	_, err = guardedDialer(false, nil)(ctx, "tcp", "internal.example:80")
+	assertBlocked(t, err)
+}

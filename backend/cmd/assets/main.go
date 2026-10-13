@@ -140,7 +140,8 @@ func main() {
 			}
 		case *messages.AssetCache:
 			if b := m.Meta().Batch(); b == nil || b.Topic() != cfg.TopicCache {
-				log.Warn(ctx, "AssetCache from untrusted topic dropped, session: %d, url: %s", m.SessionID(), m.URL)
+				assetMetrics.IncreaseTasks(assetsMetrics.TaskUntrusted)
+				log.Debug(ctx, "AssetCache from untrusted topic dropped, session: %d, url: %s", m.SessionID(), m.URL)
 				return
 			}
 			cacher.CacheURL(m.SessionID(), m.URL)

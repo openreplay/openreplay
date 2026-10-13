@@ -116,6 +116,7 @@ func NewCacher(log logger.Logger, cfg *config.Config, store objectstorage.Object
 		return nil, errors.Wrap(err, "ASSETS_ALLOWED_GLOBAL_ORIGINS")
 	}
 	proxyCfg := httpproxy.FromEnvironment()
+	proxyFn := proxyCfg.ProxyFunc()
 	var exempt map[string]struct{}
 	if !cfg.AssetsAllowPrivate {
 		exempt = proxyAddrs(proxyCfg)
@@ -126,9 +127,8 @@ func NewCacher(log logger.Logger, cfg *config.Config, store objectstorage.Object
 		timeoutMap: newTimeoutMap(),
 		objStorage: store,
 		httpClient: &http.Client{
-			Timeout: time.Duration(cfg.AssetsHTTPTimeout) * time.Second,
 			Transport: &http.Transport{
-				Proxy:               http.ProxyFromEnvironment,
+				Proxy:               func(r *http.Request) (*url.URL, error) { return proxyFn(r.URL) },
 				TLSClientConfig:     tlsConfig,
 				DialContext:         guardedDialer(cfg.AssetsAllowPrivate, exempt),
 				TLSHandshakeTimeout: 5 * time.Second,
@@ -154,7 +154,7 @@ func NewCacher(log logger.Logger, cfg *config.Config, store objectstorage.Object
 		allowPrivate:   cfg.AssetsAllowPrivate,
 		httpTimeout:    time.Duration(cfg.AssetsHTTPTimeout) * time.Second,
 		origins:        origins,
-		proxy:          proxyCfg.ProxyFunc(),
+		proxy:          proxyFn,
 		proxyAddrs:     exempt,
 	}
 	c.httpClient.CheckRedirect = c.checkRedirect
@@ -204,10 +204,11 @@ func (c *cacher) cacheURL(t *Task) {
 	reqCtx, cancel := context.WithTimeout(ctx, c.httpTimeout)
 	defer cancel()
 	req, err := http.NewRequestWithContext(reqCtx, "GET", t.requestURL, nil)
-	if err != nil || (req.URL.Scheme != "http" && req.URL.Scheme != "https") {
-		if err == nil {
-			err = fmt.Errorf("unsupported scheme %q", req.URL.Scheme)
-		}
+	if err != nil {
+		c.permanent(ctx, t, "bad_url", err)
+		return
+	}
+	if err := checkScheme(req.URL); err != nil {
 		c.permanent(ctx, t, "bad_url", err)
 		return
 	}
@@ -236,11 +237,14 @@ func (c *cacher) cacheURL(t *Task) {
 	if err != nil {
 		var blocked *blockedAddrError
 		var origin *originNotAllowedError
+		var scheme *unsupportedSchemeError
 		switch {
 		case errors.As(err, &blocked):
 			c.permanent(ctx, t, "blocked_address", err)
 		case errors.As(err, &origin):
 			c.permanent(ctx, t, "origin_not_allowed", err)
+		case errors.As(err, &scheme):
+			c.permanent(ctx, t, "bad_url", err)
 		default:
 			c.retry(ctx, t, 0, "network", err)
 		}
