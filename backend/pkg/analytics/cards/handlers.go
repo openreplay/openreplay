@@ -86,7 +86,7 @@ func (e *handlersImpl) createCard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = e.validateBreakdowns(req.Breakdowns); err != nil {
+	if err = e.validateBreakdowns(req.CardInfo.Breakdowns); err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
@@ -251,7 +251,7 @@ func (e *handlersImpl) updateCard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = e.validateBreakdowns(req.Breakdowns); err != nil {
+	if err = e.validateBreakdowns(req.CardInfo.Breakdowns); err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}

@@ -28,7 +28,7 @@ type CardBase struct {
 	Series        []model.Series `json:"series" validate:"required,dive" db:"-"`
 	// The db tag makes pgx treat the embedded struct as a single field, so
 	// the card_info JSON column decodes directly into it.
-	CardInfo `db:"card_info"`
+	CardInfo CardInfo `json:"card_info" db:"card_info"`
 }
 
 type CardInfo struct {
