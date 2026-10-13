@@ -14,7 +14,11 @@ import {
   SquareTerminal,
   Tablet,
 } from 'lucide-react';
-import type { CSSProperties, MouseEvent } from 'react';
+import {
+  type CSSProperties,
+  type MouseEvent,
+  useSyncExternalStore,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { countries } from 'App/constants/countries';
@@ -63,6 +67,32 @@ export function formatDuration(sec: number): string {
   if (h) return `${h}h ${String(m).padStart(2, '0')}m`;
   if (m) return `${m}m ${String(s).padStart(2, '0')}s`;
   return `${s}s`;
+}
+
+/* one clock for every live row, running only while one is on screen */
+const ticks = new Set<() => void>();
+let ticker: ReturnType<typeof setInterval> | undefined;
+const subscribeNow = (onTick: () => void) => {
+  ticks.add(onTick);
+  ticker ??= setInterval(() => ticks.forEach((f) => f()), 1000);
+  return () => {
+    ticks.delete(onTick);
+    if (!ticks.size) {
+      clearInterval(ticker);
+      ticker = undefined;
+    }
+  };
+};
+const nowSeconds = () => Math.floor(Date.now() / 1000);
+
+/** A live session has no duration yet: how long it has been going. */
+function LiveElapsed({ since }: { since: number }) {
+  const now = useSyncExternalStore(subscribeNow, nowSeconds);
+  return (
+    <span className="m-ss__fig">
+      {formatDuration(Math.max(0, now - Math.floor(since / 1000)))}
+    </span>
+  );
 }
 
 export interface SessionsTableProps {
@@ -130,11 +160,14 @@ export function SessionsTable({
       }
     />
   );
-  const durationOf = (s: Session) => (
-    <span className="m-ss__fig">
-      {formatDuration(Math.round(s.duration.as('seconds')))}
-    </span>
-  );
+  const durationOf = (s: Session) =>
+    s.live && !s.durationMs && s.startedAt ? (
+      <LiveElapsed since={s.startedAt} />
+    ) : (
+      <span className="m-ss__fig">
+        {formatDuration(Math.round(s.duration.as('seconds')))}
+      </span>
+    );
   const deviceWord = (type: string) =>
     ({
       desktop: t('Desktop'),
