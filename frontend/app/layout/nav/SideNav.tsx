@@ -2,21 +2,18 @@ import { ArmadaMark } from '@/ui/brand/ArmadaMark';
 import { OpenReplayMark } from '@/ui/brand/OpenReplayMark';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import RecordingsMeter from 'Saas/nav/RecordingsMeter';
-import ENV from 'env';
 import {
   ArrowLeft,
   Bell,
   Bot,
   ChartColumn,
   ChevronsUpDown,
-  CircleHelp,
   CreditCard,
   Database,
   Film,
   FolderClosed,
   ListChecks,
   ListVideo,
-  MessageCircle,
   Network,
   PanelLeftClose,
   PanelLeftOpen,
@@ -34,7 +31,6 @@ import React, { type ComponentType, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useModal } from 'App/components/Modal';
-import SupportModal from 'App/layout/SupportModal';
 import { MENU, PREFERENCES_MENU } from 'App/layout/data';
 import { useStore } from 'App/mstore';
 import { hasSiteId, siteChangeAvailable } from 'App/routes';
@@ -51,12 +47,12 @@ import HealthStatus from 'Components/Header/HealthStatus';
 import SaasHeaderMenuItems from 'Components/Header/SaasHeaderMenuItems/SaasHeaderMenuItems';
 
 import GettingStartedProgress from 'Shared/GettingStarted/GettingStartedProgress';
-import { SupportMenu } from 'Shared/SupportMenu/SupportMenu';
 
 import AccountMenu from './AccountMenu';
 import { NavFlyout } from './NavFlyout';
 import { NavItem } from './NavItem';
 import { NavSections } from './NavSections';
+import NavSupport from './NavSupport';
 import { ThemeToggle } from './ThemeToggle';
 import UserMenu from './UserMenu';
 import { prefetchRoute } from './prefetchRoutes';
@@ -160,7 +156,6 @@ function SideNav({ collapsed, onToggleCollapsed, onNavigated }: SideNavProps) {
 
   const [accountOpen, setAccountOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
-  const [supportOpen, setSupportOpen] = useState(false);
 
   const go = (path: string) => {
     navigate(path);
@@ -339,42 +334,7 @@ function SideNav({ collapsed, onToggleCollapsed, onNavigated }: SideNavProps) {
               {unread && <span className="m-dot" />}
             </button>
           </Tooltip>
-          <SupportMenu
-            placement="topLeft"
-            extra={
-              ENV.CRISP_KEY
-                ? (close) => (
-                    <button
-                      type="button"
-                      className="m-support__row"
-                      onClick={() => {
-                        close();
-                        setSupportOpen(true);
-                      }}
-                    >
-                      <MessageCircle
-                        size={15}
-                        className="m-support__glyph"
-                        aria-hidden="true"
-                      />
-                      <span className="m-support__text">
-                        <span className="m-support__label">
-                          {t('Chat with us')}
-                        </span>
-                      </span>
-                    </button>
-                  )
-                : undefined
-            }
-          >
-            <button
-              type="button"
-              className="m-nav__tool"
-              aria-label={t('Support')}
-            >
-              <CircleHelp size={15} aria-hidden="true" />
-            </button>
-          </SupportMenu>
+          <NavSupport />
           {hasHealth && account.name ? <HealthStatus /> : null}
           <SaasHeaderMenuItems />
           <ThemeToggle className="m-nav__tool" />
@@ -396,7 +356,6 @@ function SideNav({ collapsed, onToggleCollapsed, onNavigated }: SideNavProps) {
         </div>
         {hasHealth ? null : <RecordingsMeter />}
       </div>
-      <SupportModal onClose={() => setSupportOpen(false)} open={supportOpen} />
     </nav>
   );
 }

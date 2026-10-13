@@ -364,6 +364,10 @@ Below is what to change on the saas side, roughly in the order the build will co
 - Placeholders and where they render now: `Survey` (shell), `Version` (user menu foot), `HealthStatus` and
   `SaasHeaderMenuItems` (nav), `ClientSaas` and `Billing` (preferences), `Dangerzone` (account page),
   `CrispIframe` (support drawer), `NoSessionsMessage` (empty sessions list), `SummaryButton` (devtools strip).
+- `app/layout/nav/NavSupport.tsx` (default export, no props) is the nav foot's help: the "?" in the tools
+  row and everything it opens (FOSS: the support popover, plus a "Chat with us" row opening `SupportModal`
+  with `CrispIframe` when `CRISP_KEY` is set). Saas can replace the file by path, e.g. with a modal; a
+  replacement renders one trigger with the `m-nav__tool` class.
 - `SessionsTable` takes a `queue` prop (`useSessionQueue` from `Shared/SessionsDock/openSessions`) for the
   sessions dock's "Add to queue"; any saas list of sessions can pass it.
 
