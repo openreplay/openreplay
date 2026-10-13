@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/jackc/pgx/v5"
 
 	spotConfig "openreplay/backend/internal/config/spot"
 	"openreplay/backend/pkg/logger"
@@ -469,6 +470,16 @@ func (e *handlersImpl) getSpotVideo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	user := r.Context().Value("userData").(*user.User)
+	if _, err := e.spots.GetByID(user, id); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, fmt.Errorf("spot not found"), startTime, r.URL.Path, bodySize)
+		} else {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		}
+		return
+	}
+
 	key := fmt.Sprintf("%d/video.webm", id)
 	videoURL, err := e.objStorage.GetPreSignedDownloadUrl(key)
 	if err != nil {
@@ -480,38 +491,6 @@ func (e *handlersImpl) getSpotVideo(w http.ResponseWriter, r *http.Request) {
 		"url": videoURL,
 	}
 	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
-}
-
-func (e *handlersImpl) getSpotStream(w http.ResponseWriter, r *http.Request) {
-	startTime := time.Now()
-	bodySize := 0
-
-	id, err := getSpotID(r)
-	if err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-		return
-	}
-
-	// Example data to serve as the file content
-	streamPlaylist, err := e.transcoder.GetSpotStreamPlaylist(id)
-	if err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
-		return
-	}
-
-	// Create a buffer with the file content
-	buffer := bytes.NewBuffer(streamPlaylist)
-
-	// Set the headers for the response
-	w.Header().Set("Content-Disposition", "attachment; filename=index.m3u8")
-	w.Header().Set("Content-Type", "application/vnd.apple.mpegurl") //"application/octet-stream")
-	w.Header().Set("Content-Length", string(len(streamPlaylist)))
-
-	// Write the content of the buffer to the response writer
-	if _, err := buffer.WriteTo(w); err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
-		return
-	}
 }
 
 func (e *handlersImpl) getPublicKey(w http.ResponseWriter, r *http.Request) {
@@ -566,7 +545,11 @@ func (e *handlersImpl) updatePublicKey(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value("userData").(*user.User)
 	key, err := e.keys.Set(id, req.Expiration, user)
 	if err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		if errors.Is(err, keys.ErrSpotNotFound) {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
+		} else {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		}
 		return
 	}
 	resp := map[string]interface{}{

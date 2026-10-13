@@ -2,10 +2,12 @@ package keys
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/rs/xid"
 
 	"openreplay/backend/pkg/db/postgres/pool"
@@ -21,6 +23,8 @@ type Key struct {
 	Expiration uint64    `json:"expiration"` // in seconds
 	ExpiredAt  time.Time `json:"-"`
 }
+
+var ErrSpotNotFound = errors.New("spot not found")
 
 type Keys interface {
 	Set(spotID, expiration uint64, user *user.User) (*Key, error)
@@ -45,8 +49,10 @@ func (k *keysImpl) Set(spotID, expiration uint64, user *user.User) (*Key, error)
 
 	now := time.Now().UTC()
 	if expiration == 0 {
-		sql := `UPDATE spots.keys SET expired_at = $1, expiration = 0 WHERE spot_id = $2`
-		if err := k.conn.Exec(sql, now, spotID); err != nil {
+		sql := `UPDATE spots.keys SET expired_at = $1, expiration = 0
+				WHERE spot_id = $2
+				AND EXISTS (SELECT 1 FROM spots.spots WHERE spot_id = $2 AND tenant_id = $3 AND deleted_at IS NULL)`
+		if err := k.conn.Exec(sql, now, spotID, user.TenantID); err != nil {
 			k.log.Error(context.Background(), "failed to set key: %v", err)
 			return nil, fmt.Errorf("key not updated")
 		}
@@ -55,7 +61,11 @@ func (k *keysImpl) Set(spotID, expiration uint64, user *user.User) (*Key, error)
 	newKey := xid.New().String()
 	expiredAt := now.Add(time.Duration(expiration) * time.Second)
 	sql := `
-	WITH updated AS (
+	WITH spot AS (
+		SELECT spot_id FROM spots.spots WHERE spot_id = $6 AND tenant_id = $7 AND deleted_at IS NULL
+	),
+
+	updated AS (
     	UPDATE spots.keys
 		SET
 			spot_key = CASE
@@ -66,13 +76,13 @@ func (k *keysImpl) Set(spotID, expiration uint64, user *user.User) (*Key, error)
 			expiration = $4,
 			expired_at = $5,
 			updated_at = $1
-		WHERE spot_id = $6
+		WHERE spot_id = (SELECT spot_id FROM spot)
   		RETURNING spot_key, expiration, expired_at
 	),
 	
 	inserted AS (
 		INSERT INTO spots.keys (spot_key, spot_id, user_id, expiration, created_at, expired_at)
-		SELECT $2, $6, $3, $4, $1, $5
+		SELECT $2, spot_id, $3, $4, $1, $5 FROM spot
 		WHERE NOT EXISTS (SELECT 1 FROM updated)
 		RETURNING spot_key, expiration, expired_at
 	)
@@ -82,8 +92,11 @@ func (k *keysImpl) Set(spotID, expiration uint64, user *user.User) (*Key, error)
 	SELECT spot_key, expiration, expired_at FROM inserted;
 	`
 	key := &Key{}
-	if err := k.conn.QueryRow(sql, now, newKey, user.ID, expiration, expiredAt, spotID).
+	if err := k.conn.QueryRow(sql, now, newKey, user.ID, expiration, expiredAt, spotID, user.TenantID).
 		Scan(&key.Value, &key.Expiration, &key.ExpiredAt); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrSpotNotFound
+		}
 		k.log.Error(context.Background(), "failed to set key: %v", err)
 		return nil, fmt.Errorf("key not updated")
 	}
