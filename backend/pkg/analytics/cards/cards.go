@@ -105,12 +105,12 @@ func (s *cardsImpl) Create(projectID int, userID uint64, req *CardCreateRequest)
 		req.MetricValue = []string{}
 	}
 	infoData, err := json.Marshal(CardInfo{
-		Rows:        req.Rows,
-		StepsBefore: req.StepsBefore,
-		StepsAfter:  req.StepsAfter,
-		StartPoint:  req.StartPoint,
-		Excludes:    req.Excludes,
-		Breakdowns:  req.Breakdowns,
+		Rows:        req.CardInfo.Rows,
+		StepsBefore: req.CardInfo.StepsBefore,
+		StepsAfter:  req.CardInfo.StepsAfter,
+		StartPoint:  req.CardInfo.StartPoint,
+		Excludes:    req.CardInfo.Excludes,
+		Breakdowns:  req.CardInfo.Breakdowns,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("marshal card info: %w", err)
@@ -285,12 +285,12 @@ func (s *cardsImpl) Update(projectID int, cardID int64, userID uint64, req *Card
 		req.MetricValue = []string{}
 	}
 	infoData, err := json.Marshal(CardInfo{
-		Rows:        req.Rows,
-		StepsBefore: req.StepsBefore,
-		StepsAfter:  req.StepsAfter,
-		StartPoint:  req.StartPoint,
-		Excludes:    req.Excludes,
-		Breakdowns:  req.Breakdowns,
+		Rows:        req.CardInfo.Rows,
+		StepsBefore: req.CardInfo.StepsBefore,
+		StepsAfter:  req.CardInfo.StepsAfter,
+		StartPoint:  req.CardInfo.StartPoint,
+		Excludes:    req.CardInfo.Excludes,
+		Breakdowns:  req.CardInfo.Breakdowns,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("marshal card info: %w", err)
