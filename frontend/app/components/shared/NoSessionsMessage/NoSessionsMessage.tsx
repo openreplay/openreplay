@@ -1,7 +1,7 @@
 import { trackerInstance } from '@/init/openreplay';
 import { Button } from '@/ui/actions/button';
 import { EmptyState } from '@/ui/feedback/EmptyState';
-import { SquareArrowOutUpRight } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -35,11 +35,8 @@ function NoSessionsMessage() {
       )}
       action={
         <span className="flex flex-wrap items-center justify-center gap-2">
-          <Button variant="subtle" onClick={troubleshoot}>
-            {t('Troubleshoot')}
-            <SquareArrowOutUpRight size={12} />
-          </Button>
           <Button
+            variant="primary"
             onClick={() =>
               navigate(
                 withSiteId(onboardingRoute('installing'), projectsStore.siteId),
@@ -47,6 +44,10 @@ function NoSessionsMessage() {
             }
           >
             {t('Complete project setup')}
+          </Button>
+          <Button variant="subtle" onClick={troubleshoot}>
+            {t('Troubleshoot')}
+            <ArrowUpRight size={13} strokeWidth={1.75} aria-hidden="true" />
           </Button>
         </span>
       }

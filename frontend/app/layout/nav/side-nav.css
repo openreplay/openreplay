@@ -282,6 +282,12 @@
 .m-nav.is-collapsed .m-nav__tools {
   padding-inline: 0;
 }
+/* expanded, the tools are one line spread over the column */
+.m-nav:not(.is-collapsed) .m-nav__tools {
+  display: flex;
+  justify-content: space-between;
+  padding-inline: 0;
+}
 
 .m-nav__tool {
   position: relative;
