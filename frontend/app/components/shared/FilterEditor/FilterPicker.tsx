@@ -399,9 +399,9 @@ function EasedHeight({ children }: { children: ReactNode }) {
 }
 
 /**
- * A picker in a popover. It shifts sideways to stay on screen; it does not
- * flip, because its height is capped to the room below, so the top edge stays
- * under the trigger while the list changes and the list scrolls inside.
+ * A picker in a popover. It never flips: the top edge stays under the trigger
+ * while the list changes, and the list scrolls inside the room below. Near the
+ * viewport's edge it slides back in sideways (useViewportFit).
  */
 export function PickerPopover({
   open,
@@ -420,7 +420,7 @@ export function PickerPopover({
       onOpenChange={onOpenChange}
       placement="bottomLeft"
       sideOffset={5}
-      collisionPadding={8}
+      avoidCollisions={false}
       className="m-pick-host"
       content={<EasedHeight>{content}</EasedHeight>}
     >

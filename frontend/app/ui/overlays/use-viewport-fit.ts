@@ -17,7 +17,8 @@ function assignRef<T>(ref: Ref<T> | undefined, node: T | null) {
  * Radix flips an overlay to the other side when that side has room, but never slides it
  * along its side, so one taller than the room on both sides runs off-screen. This nudges
  * the content back inside the viewport (over its trigger if it has to) through
- * `--m-pop-fit`, and caps it with a scroll when it is taller than the viewport itself.
+ * `--m-pop-fit` / `--m-pop-fit-x`, and caps it with a scroll when it is taller than the
+ * viewport itself.
  */
 export function useViewportFit<T extends HTMLElement>(
   forwarded?: Ref<T>,
@@ -37,8 +38,19 @@ export function useViewportFit<T extends HTMLElement>(
         const tall = el.scrollHeight > room;
         el.style.maxHeight = tall ? `${room}px` : '';
         el.style.overflowY = tall ? 'auto' : '';
-        const top = anchor.getBoundingClientRect().top;
+        const box = anchor.getBoundingClientRect();
+        const { top } = box;
         const bottom = top + el.offsetHeight;
+        // and sideways, for an overlay that does not shift itself
+        const right = box.left + el.offsetWidth;
+        const vw = window.innerWidth;
+        const shiftX =
+          right > vw - PAD
+            ? Math.max(vw - PAD - right, PAD - box.left)
+            : box.left < PAD
+              ? PAD - box.left
+              : 0;
+        el.style.setProperty('--m-pop-fit-x', `${Math.round(shiftX)}px`);
         const shift =
           bottom > vh - PAD
             ? Math.max(vh - PAD - bottom, PAD - top)
