@@ -171,7 +171,22 @@
   background: var(--m-surface-hover);
   color: var(--m-content-primary);
 }
+.m-tl__time-total {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
 .m-tl__time-sep {
   padding-inline: var(--m-space-1);
   color: var(--m-content-disabled);
+}
+
+/* phone: play, the clock, the track, the gear and full screen; the total
+   goes and the gaps close a step */
+:root[data-viewport='phone'] .m-tl {
+  gap: var(--m-space-2);
+  padding-inline: var(--m-space-3);
+}
+:root[data-viewport='phone'] .m-tl__time-total {
+  display: none;
 }

@@ -10,6 +10,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { columnTiersOf, useViewport } from '../layout/use-viewport';
 import { SortIcon, type SortOrder } from './sort-icon';
 
 export interface Column<T> {
@@ -25,6 +26,10 @@ export interface Column<T> {
   sortable?: boolean;
 
   className?: string;
+  /** Which bands keep the column: 1 always, 2 goes at phone, 3 goes at narrow
+   *  and phone. A table that declares none keeps its first and last columns at
+   *  phone and everything at narrow. */
+  priority?: 1 | 2 | 3;
 }
 
 export interface TableSort {
@@ -68,7 +73,7 @@ const CONTROL =
   'button, a, input, textarea, [role="checkbox"], [role="menu"], [role="menuitem"], [data-slot="select-trigger"]';
 
 export function DataTable<T>({
-  columns,
+  columns: given,
   rows,
   rowKey,
   onRowClick,
@@ -84,6 +89,18 @@ export function DataTable<T>({
   ariaLabel,
 }: DataTableProps<T>) {
   const { t } = useTranslation();
+  // a table never scrolls the page sideways: it drops its lower tiers, and
+  // the row still opens the detail where the dropped figures live
+  const tiers = columnTiersOf(useViewport());
+  const columns = useMemo(() => {
+    const declared = given.some((c) => c.priority != null);
+    return given.filter((c, i) => {
+      const p =
+        c.priority ??
+        (declared ? 1 : i === 0 || i === given.length - 1 ? 1 : 2);
+      return p <= tiers;
+    });
+  }, [given, tiers]);
   const [dragKey, setDragKey] = useState<string | null>(null);
   const [overKey, setOverKey] = useState<string | null>(null);
   const endDrag = () => {

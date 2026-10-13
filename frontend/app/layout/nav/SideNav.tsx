@@ -2,6 +2,7 @@ import { ArmadaMark } from '@/ui/brand/ArmadaMark';
 import { OpenReplayMark } from '@/ui/brand/OpenReplayMark';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import RecordingsMeter from 'Saas/nav/RecordingsMeter';
+import ENV from 'env';
 import {
   ArrowLeft,
   Bell,
@@ -15,6 +16,7 @@ import {
   FolderClosed,
   ListChecks,
   ListVideo,
+  MessageCircle,
   Network,
   PanelLeftClose,
   PanelLeftOpen,
@@ -49,6 +51,7 @@ import HealthStatus from 'Components/Header/HealthStatus';
 import SaasHeaderMenuItems from 'Components/Header/SaasHeaderMenuItems/SaasHeaderMenuItems';
 
 import GettingStartedProgress from 'Shared/GettingStarted/GettingStartedProgress';
+import { SupportMenu } from 'Shared/SupportMenu/SupportMenu';
 
 import AccountMenu from './AccountMenu';
 import { NavFlyout } from './NavFlyout';
@@ -215,7 +218,6 @@ function SideNav({ collapsed, onToggleCollapsed, onNavigated }: SideNavProps) {
             <span className="m-nav__account-name m-truncate">
               {projectLabel}
             </span>
-            <span className="m-nav__account-org m-truncate">{org}</span>
           </span>
           <ChevronsUpDown
             size={13}
@@ -337,16 +339,43 @@ function SideNav({ collapsed, onToggleCollapsed, onNavigated }: SideNavProps) {
               {unread && <span className="m-dot" />}
             </button>
           </Tooltip>
-          <Tooltip title={t('Support')} side="right">
+          <SupportMenu
+            placement="topLeft"
+            extra={
+              ENV.CRISP_KEY
+                ? (close) => (
+                    <button
+                      type="button"
+                      className="m-support__row"
+                      onClick={() => {
+                        close();
+                        setSupportOpen(true);
+                      }}
+                    >
+                      <MessageCircle
+                        size={15}
+                        className="m-support__glyph"
+                        aria-hidden="true"
+                      />
+                      <span className="m-support__text">
+                        <span className="m-support__label">
+                          {t('Chat with us')}
+                        </span>
+                      </span>
+                    </button>
+                  )
+                : undefined
+            }
+          >
             <button
               type="button"
               className="m-nav__tool"
               aria-label={t('Support')}
-              onClick={() => setSupportOpen(true)}
             >
               <CircleHelp size={15} aria-hidden="true" />
             </button>
-          </Tooltip>
+          </SupportMenu>
+          {hasHealth && account.name ? <HealthStatus /> : null}
           <SaasHeaderMenuItems />
           <ThemeToggle className="m-nav__tool" />
           <UserMenu
@@ -365,13 +394,7 @@ function SideNav({ collapsed, onToggleCollapsed, onNavigated }: SideNavProps) {
             </button>
           </UserMenu>
         </div>
-        {hasHealth ? (
-          account.name ? (
-            <HealthStatus variant="row" />
-          ) : null
-        ) : (
-          <RecordingsMeter />
-        )}
+        {hasHealth ? null : <RecordingsMeter />}
       </div>
       <SupportModal onClose={() => setSupportOpen(false)} open={supportOpen} />
     </nav>

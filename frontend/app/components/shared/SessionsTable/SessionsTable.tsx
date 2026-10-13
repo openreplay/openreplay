@@ -2,6 +2,7 @@ import { OpenReplayMark } from '@/ui/brand/OpenReplayMark';
 import { Chip } from '@/ui/data/Chip';
 import { RelativeTime } from '@/ui/data/RelativeTime';
 import { type Column, DataTable } from '@/ui/data/table';
+import { useViewport } from '@/ui/layout/use-viewport';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import type Session from 'Types/session';
 import {
@@ -111,6 +112,29 @@ export function SessionsTable({
 }: SessionsTableProps) {
   const { t } = useTranslation();
   const has = (f: SessionField) => fields.includes(f);
+  // phone: the subject cell is two lines and the other columns drop by tier;
+  // narrow: metadata gives the name its room back
+  const band = useViewport();
+  const phone = band === 'phone';
+  const narrow = band === 'narrow';
+  const startedAt = (s: Session) => (
+    <RelativeTime
+      at={s.startedAt ?? 0}
+      timezone={userTimezone && s.timezone ? s.timezone : timezone}
+      alsoIn={
+        s.timezone
+          ? userTimezone
+            ? { label: t('Your time'), timezone: timezone ?? 'local' }
+            : { label: t("User's time"), timezone: s.timezone }
+          : undefined
+      }
+    />
+  );
+  const durationOf = (s: Session) => (
+    <span className="m-ss__fig">
+      {formatDuration(Math.round(s.duration.as('seconds')))}
+    </span>
+  );
   const deviceWord = (type: string) =>
     ({
       desktop: t('Desktop'),
@@ -154,6 +178,20 @@ export function SessionsTable({
               {t('Last')}
             </Chip>
           )}
+          {phone && (
+            <span className="m-ss__line2">
+              {has('started') && startedAt(s)}
+              {has('duration') && durationOf(s)}
+              {has('metadata') && (
+                <MetaChips
+                  metadata={s.metadata}
+                  max={1}
+                  onPick={onMetaClick}
+                  empty={null}
+                />
+              )}
+            </span>
+          )}
         </div>
       ),
     },
@@ -162,10 +200,12 @@ export function SessionsTable({
           {
             title: t('Metadata'),
             key: 'metadata',
-            width: 176,
+            width: narrow ? 136 : 176,
+            priority: 2 as const,
             render: (s: Session) => (
               <MetaChips
                 metadata={s.metadata}
+                max={narrow ? 1 : 2}
                 onPick={onMetaClick}
                 empty={<span className="m-ss__fig is-zero">—</span>}
               />
@@ -179,20 +219,9 @@ export function SessionsTable({
             title: t('Started'),
             key: 'started',
             width: 112,
+            priority: 2 as const,
             sortable: sortable.includes('started'),
-            render: (s: Session) => (
-              <RelativeTime
-                at={s.startedAt ?? 0}
-                timezone={userTimezone && s.timezone ? s.timezone : timezone}
-                alsoIn={
-                  s.timezone
-                    ? userTimezone
-                      ? { label: t('Your time'), timezone: timezone ?? 'local' }
-                      : { label: t("User's time"), timezone: s.timezone }
-                    : undefined
-                }
-              />
-            ),
+            render: startedAt,
           },
         ]
       : []),
@@ -202,6 +231,7 @@ export function SessionsTable({
             title: t('Events'),
             key: 'events',
             width: 88,
+            priority: 2 as const,
             sortable: sortable.includes('events'),
             render: (s: Session) => (
               <span className="m-ss__fig">{s.eventsCount}</span>
@@ -215,6 +245,7 @@ export function SessionsTable({
             title: t('Pages'),
             key: 'pages',
             width: 88,
+            priority: 3 as const,
             render: (s: Session) => (
               <span className="m-ss__fig">{s.pagesCount}</span>
             ),
@@ -227,12 +258,9 @@ export function SessionsTable({
             title: t('Duration'),
             key: 'duration',
             width: 96,
+            priority: 2 as const,
             sortable: sortable.includes('duration'),
-            render: (s: Session) => (
-              <span className="m-ss__fig">
-                {formatDuration(Math.round(s.duration.as('seconds')))}
-              </span>
-            ),
+            render: durationOf,
           },
         ]
       : []),
@@ -242,6 +270,7 @@ export function SessionsTable({
             title: t('Location'),
             key: 'location',
             width: 144,
+            priority: 3 as const,
             render: (s: Session) => {
               const country =
                 (countries as Record<string, string>)[s.userCountry] ??
@@ -265,6 +294,7 @@ export function SessionsTable({
             title: t('Device'),
             key: 'device',
             width: 56,
+            priority: 3 as const,
             align: 'center' as const,
             render: (s: Session) => {
               const Glyph = DEVICE_ICONS[s.userDeviceType] ?? Monitor;

@@ -122,7 +122,6 @@
   width: 13rem;
 }
 
-
 .m-dt__figures {
   display: flex;
   gap: var(--m-space-6);
@@ -560,8 +559,7 @@
 }
 .m-dt__xray > .m-dt__xray-head {
   left: calc(
-    var(--m-space-5) + 7rem + (100% - 7rem - 2 * var(--m-space-5)) *
-      var(--p, 0)
+    var(--m-space-5) + 7rem + (100% - 7rem - 2 * var(--m-space-5)) * var(--p, 0)
   );
 }
 .m-dt__content.m-dt__charts {
@@ -661,4 +659,22 @@
   font-size: var(--m-text-2xs);
   font-weight: var(--m-weight-medium);
   color: var(--m-content-muted);
+}
+
+/* phone: the strip is one line that scrolls inside itself */
+:root[data-viewport='phone'] .m-dt__strip {
+  gap: var(--m-space-4);
+  padding-inline: var(--m-space-3);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+:root[data-viewport='phone'] .m-dt__strip::-webkit-scrollbar {
+  display: none;
+}
+:root[data-viewport='phone'] .m-dt__strip > * {
+  flex: none;
+}
+:root[data-viewport='phone'] .m-dt__bar {
+  padding-inline: var(--m-space-3);
+  gap: var(--m-space-3);
 }

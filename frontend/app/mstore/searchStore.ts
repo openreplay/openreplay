@@ -6,7 +6,6 @@ import {
   generateFilterOptions,
   liveFiltersMap,
 } from 'Types/filter/newFilter';
-import { typesOfTag } from 'Types/session/issueGroups';
 import { makeAutoObservable, runInAction } from 'mobx';
 
 import {
@@ -781,7 +780,7 @@ class SearchStore {
     }
 
     // a group (Broken, Frustrated...) stands for any of its kinds
-    tagFilter.value = [...(typesOfTag(activeTags[0]) ?? [activeTags[0]])];
+    tagFilter.value = [activeTags[0]];
 
     return {
       ...filter,

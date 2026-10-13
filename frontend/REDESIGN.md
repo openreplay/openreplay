@@ -236,6 +236,29 @@ handoff `context/handoff-2026-10-05.md`. The prototype runs on mock data (`src/s
     Activity bar has it). The track-under-the-chips ticket did not reproduce: the track ends before them
   - prototype-only, not ported: the pinned first dashboard and `windowHasData` (mock data)
 
+- melonade #6 + #8 "Responsive: three bands" (2026-10-12): `ui/layout/use-viewport.ts` (`wide` ≥ 1080,
+  `narrow` 640–1079, `phone` < 640), written on `<html>` as `data-viewport` by `Layout`; every band rule is a
+  `:root[data-viewport=…]` selector, wide is untouched. The shell at phone is a bar (menu button, mark) and the
+  rail opens as the left drawer (replaces the UA `mobileScreen` check and its floating button). Kit table:
+  `Column.priority` 1/2/3 (narrow drops 3, phone keeps 1; undeclared tables keep first and last at phone);
+  sessions table and Issues declare tiers, the sessions row at phone is two lines, metadata narrows to one chip
+  at narrow. `PageCard` meta rides the title's line (`.m-page__titlerow`); heads wrap at narrow, the detail
+  head is a nav bar at phone, the card page one column. Strip and dev-tools strip scroll on one line, the pager
+  drops "go to", the replay header is one line (back arrow only, no meta, no queue arrows), the side panel is a
+  bottom sheet at 62%, the timeline drops the total clock (clock and settings now show at every width).
+  Width menu items hide below wide (the grid is one column there). Support in the nav is the kit popover
+  (OR-3771) with a "Chat with us" row that opens the drawer (and its `CrispIframe`) when `CRISP_KEY` is set.
+  Add breakdown is `secondary`, like Add series. Not ported: the 1240px rule that hides the replay panel
+  between 640 and 1240 (tier 5 in the design too), the prototype panel.
+- melonade #7 "The strip, undone": the sessions strip is one level of kinds again, sentence case
+  (`Types/session/issueKinds.ts`); the groups and the kinds row are gone, a tag filters by itself.
+- melonade #9 "Four answers from the 10-12 call": the queue dock opens after a 220ms held hover; the project
+  picker is one line on the nav row height with no border; filter words are "Filters" / "Group properties"
+  ("Add filter", "Search group properties", "1 filter"), the catalogue's event-property category is "Event";
+  System health is an icon in the footer row (open source only) instead of its own line. Also from the call:
+  "Your sessions will appear here soon" is the list's own centered empty state with Troubleshoot and Complete
+  setup.
+
 ## Review pass (2026-10-08)
 
 A full review of the branch diff, fixed in four commits (each re-reviewed after the fix):

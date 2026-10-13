@@ -8,6 +8,16 @@
   background: var(--m-surface-sunken);
   flex-wrap: wrap;
 }
+/* phone: one line that scrolls inside itself, like a phone's tab row */
+:root[data-viewport='phone'] .m-seg {
+  flex-wrap: nowrap;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+:root[data-viewport='phone'] .m-seg::-webkit-scrollbar {
+  display: none;
+}
 
 .m-seg__thumb {
   position: absolute;

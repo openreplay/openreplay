@@ -38,24 +38,39 @@
   }
 }
 
-/* Phones: the side nav lives in a left sheet behind a floating button. */
+/* Phone: one column, a bar with the mark and the menu button over the plane;
+   the menu is a left sheet. */
 .m-mobile-nav .m-drawer__body {
   padding: 0;
 }
-.m-mobile-nav__fab {
-  position: fixed;
-  right: var(--m-space-7);
-  bottom: var(--m-space-7);
-  z-index: calc(var(--m-z-modal) + 1);
-  display: inline-flex;
+/* in the sheet the menu takes the sheet's width, labels and all */
+:root[data-viewport='phone'] .m-mobile-nav .m-nav {
+  width: 100%;
+}
+.m-shell__bar {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  width: 3rem;
-  height: 3rem;
-  border-radius: var(--m-radius-full);
-  background: var(--m-action-primary-bg);
-  color: var(--m-action-primary-fg);
-  box-shadow: var(--m-shadow-popover);
+  gap: var(--m-space-2);
+  flex: none;
+  height: 2.75rem;
+  padding-inline: var(--m-space-2) var(--m-space-4);
+}
+.m-shell__bar-mark {
+  height: 1rem;
+  width: auto;
+  margin-inline-start: var(--m-space-1);
+}
+.m-shell__bar-name {
+  font-size: var(--m-text-md);
+  font-weight: var(--m-weight-medium);
+  letter-spacing: var(--m-tracking-tight);
+  color: var(--m-content-primary);
+}
+:root[data-viewport='phone'] .m-shell {
+  flex-direction: column;
+}
+:root[data-viewport='phone'] .m-shell__main {
+  padding: 0 var(--m-space-3) var(--m-space-3);
 }
 
 /* A route change waiting on its chunk: the old page stays, this line says so.

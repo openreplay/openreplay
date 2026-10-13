@@ -76,7 +76,7 @@ function HealthStatus({ variant = 'tool' }: { variant?: 'tool' | 'row' }) {
       <PopoverPanel
         open={open}
         onOpenChange={setOpen}
-        placement="rightBottom"
+        placement={variant === 'row' ? 'rightBottom' : 'topLeft'}
         sideOffset={8}
         content={
           <HealthWidget

@@ -312,7 +312,7 @@ export function PickerBody({
               <Fragment key={r.key}>
                 {firstOfKind && bothKinds && (
                   <span className="m-pick2__rail-head" aria-hidden="true">
-                    {r.kind ? t('Events') : t('Group filters')}
+                    {r.kind ? t('Filters') : t('Group properties')}
                   </span>
                 )}
                 <button

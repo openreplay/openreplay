@@ -26,6 +26,9 @@ const STAGE_GAP = 24;
 const STRIP_GAP = 8;
 /** How long the dock stays up after the pointer leaves. */
 const LINGER = 380;
+/** How long a hover holds before the dock opens, so reaching for the
+ *  progress bar underneath does not open it. */
+const SETTLE = 220;
 /** How long a switch protects the dock from a leave it did not earn. */
 const HOLD = 900;
 /** How long the landing pill shows an arrival. */
@@ -63,15 +66,30 @@ export function SessionsDock({
   /* ── open / at rest ── */
   const [hover, setHover] = useState(false);
   const leaveTimer = useRef<number | null>(null);
+  const enterTimer = useRef<number | null>(null);
   const enter = useCallback(() => {
     if (leaveTimer.current) window.clearTimeout(leaveTimer.current);
     leaveTimer.current = null;
-    setHover(true);
-  }, []);
+    if (hover || enterTimer.current) return;
+    enterTimer.current = window.setTimeout(() => {
+      enterTimer.current = null;
+      setHover(true);
+    }, SETTLE);
+  }, [hover]);
+  useEffect(
+    () => () => {
+      if (enterTimer.current) window.clearTimeout(enterTimer.current);
+    },
+    [],
+  );
   // Switching tabs moves the dock out from under a still pointer and the browser
   // fires pointerleave; for a moment after a switch that is not a goodbye.
   const held = useRef(0);
   const leave = useCallback(() => {
+    if (enterTimer.current) {
+      window.clearTimeout(enterTimer.current);
+      enterTimer.current = null;
+    }
     if (performance.now() - held.current < HOLD) return;
     if (leaveTimer.current) window.clearTimeout(leaveTimer.current);
     leaveTimer.current = window.setTimeout(() => setHover(false), LINGER);

@@ -20,18 +20,11 @@ import withPermissions from 'HOCs/withPermissions';
 import Period from 'Types/app/period';
 import { FilterKey } from 'Types/filter/filterType';
 import { types } from 'Types/session/issue';
-import {
-  ISSUE_GROUPS,
-  ISSUE_KINDS,
-  groupOfTag,
-} from 'Types/session/issueGroups';
+import { ISSUE_KINDS } from 'Types/session/issueKinds';
 import {
   Angry,
   BookOpen,
-  Bug,
   CircleAlert,
-  Flag,
-  Frown,
   MessageCircleWarning,
   MoreHorizontal,
   Settings2,
@@ -71,12 +64,6 @@ import './sessions-page.css';
 
 const AUTO_REFRESH_INTERVAL = 5 * 60 * 1000;
 const FIELDS_KEY = '__or_sessions_fields';
-
-const GROUP_ICONS: Record<string, React.ReactNode> = {
-  frustrated: <Frown size={13} aria-hidden="true" />,
-  broken: <Bug size={13} aria-hidden="true" />,
-  reported: <Flag size={13} aria-hidden="true" />,
-};
 
 const ISSUE_ICONS: Record<string, React.ReactNode> = {
   [types.JS_EXCEPTION]: <CircleAlert size={13} aria-hidden="true" />,
@@ -283,18 +270,13 @@ function SessionsTabOverview() {
     rangeName: rangeValue,
   });
 
-  // the strip's second level: the picked group's kinds on this platform
+  // one level of kinds, the platform's own
   const tag: string = activeTags[0] ?? 'all';
-  const group = ISSUE_GROUPS.find((g) => g.key === groupOfTag(tag)) ?? null;
-  const kinds = group
-    ? ISSUE_KINDS.filter(
-        (k) =>
-          group.types.includes(k.type) &&
-          (platform === 'web'
-            ? k.type !== types.TAP_RAGE
-            : k.type !== types.CLICK_RAGE),
-      )
-    : [];
+  const kinds = ISSUE_KINDS.filter((k) =>
+    platform === 'web'
+      ? k.type !== types.TAP_RAGE
+      : k.type !== types.CLICK_RAGE,
+  );
 
   const widen = lastSessionAt != null ? presetReaching(lastSessionAt) : null;
   const empty = noRules ? (
@@ -386,7 +368,6 @@ function SessionsTabOverview() {
       }
       split
     >
-      <NoSessionsMessage />
       <EntryField
         entries={entries}
         taken={editor.properties.map((f) => f.entry.id)}
@@ -431,36 +412,17 @@ function SessionsTabOverview() {
               label={t('Filter by what went wrong')}
               items={[
                 { key: 'all', label: t('All') },
-                ...ISSUE_GROUPS.map((g) => ({
-                  key: g.key,
-                  label: t(g.label),
-                  icon: GROUP_ICONS[g.key],
+                ...kinds.map((k) => ({
+                  key: k.type,
+                  label: t(k.label),
+                  icon: ISSUE_ICONS[k.type],
                 })),
               ]}
-              selected={[groupOfTag(tag) ?? 'all']}
+              selected={[tag]}
               onSelect={(key) =>
                 searchStore.toggleTag(key === 'all' ? undefined : key)
               }
             />
-            {group && kinds.length > 1 ? (
-              <span className="m-recs__kinds">
-                <FilterStrip
-                  label={t('Narrow {{group}} to a kind', {
-                    group: t(group.label).toLowerCase(),
-                  })}
-                  items={kinds.map((k) => ({
-                    key: k.type,
-                    label: t(k.label),
-                    icon: ISSUE_ICONS[k.type],
-                  }))}
-                  selected={tag === group.key ? [] : [tag]}
-                  // the kind already picked returns to its group, not to All
-                  onSelect={(key) =>
-                    searchStore.toggleTag(key === tag ? group.key : key)
-                  }
-                />
-              </span>
-            ) : null}
             <span className="m-recs__display">
               <DateRange
                 field={t('Started')}
@@ -526,7 +488,11 @@ function SessionsTabOverview() {
         {loading && list.length === 0 ? (
           <SkeletonRows rows={8} />
         ) : list.length === 0 ? (
-          empty
+          noRules && projectsStore.active?.recorded === false ? (
+            <NoSessionsMessage />
+          ) : (
+            empty
+          )
         ) : (
           <>
             <SessionsTable

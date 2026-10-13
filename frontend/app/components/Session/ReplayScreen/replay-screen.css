@@ -226,3 +226,60 @@
   margin: 0;
   color: var(--m-content-primary);
 }
+
+/* phone: a one-line header (back, who, the verbs, the panel toggle), and the
+   side panel is a bottom sheet over the stage with the same tabs and close */
+:root[data-viewport='phone'] .m-ihdr {
+  height: auto;
+  min-height: var(--m-control-height-lg);
+  padding: var(--m-space-2) var(--m-space-3);
+  gap: var(--m-space-2);
+}
+:root[data-viewport='phone'] .m-rs__sep,
+:root[data-viewport='phone'] .m-rs__meta,
+:root[data-viewport='phone'] .m-rs__who > .m-ss__meta,
+:root[data-viewport='phone'] .m-rs__queue {
+  display: none;
+}
+/* the way back keeps its arrow; the name gets the room */
+:root[data-viewport='phone'] .m-rs__back {
+  gap: 0;
+  font-size: 0;
+}
+:root[data-viewport='phone'] .m-rs__names {
+  max-width: none;
+}
+:root[data-viewport='phone'] .m-ihdr__actions {
+  gap: 0;
+}
+:root[data-viewport='phone'] .m-ihdr__panels {
+  margin-left: 0;
+  padding-left: var(--m-space-2);
+}
+:root[data-viewport='phone'] .m-rs__notice {
+  padding: var(--m-space-3) var(--m-space-3) 0;
+}
+:root[data-viewport='phone'] .m-jrn {
+  display: flex;
+  position: fixed;
+  inset: auto 0 0 0;
+  width: auto !important;
+  height: 62dvh;
+  z-index: var(--m-z-overlay);
+  border-left: 0;
+  border-top: 1px solid var(--m-border-default);
+  border-radius: var(--m-radius-surface) var(--m-radius-surface) 0 0;
+  background: var(--m-surface-default);
+  box-shadow: var(--m-shadow-popover);
+  animation: m-sheet-up var(--m-duration-slow) var(--m-ease-out) both;
+}
+@keyframes m-sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root[data-viewport='phone'] .m-jrn {
+    animation: none;
+  }
+}

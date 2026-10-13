@@ -152,7 +152,7 @@ export function FilterPanel({
         onQueryChange={onQueryChange}
         hideSearch={hideSearch}
         commitRef={commitRef}
-        placeholder={placeholder ?? t('Search events and group filters')}
+        placeholder={placeholder ?? t('Search filters and group properties')}
       />
     </div>
   );

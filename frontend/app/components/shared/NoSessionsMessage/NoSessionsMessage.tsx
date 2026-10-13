@@ -1,6 +1,6 @@
 import { trackerInstance } from '@/init/openreplay';
 import { Button } from '@/ui/actions/button';
-import { Notice } from '@/ui/feedback/Notice';
+import { EmptyState } from '@/ui/feedback/EmptyState';
 import { SquareArrowOutUpRight } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
@@ -10,6 +10,7 @@ import { useStore } from 'App/mstore';
 import { onboarding as onboardingRoute, withSiteId } from 'App/routes';
 import { useNavigate } from 'App/routing';
 
+/** The list's own empty state while a project has recorded nothing yet. */
 function NoSessionsMessage() {
   const { t } = useTranslation();
   const { projectsStore } = useStore();
@@ -26,14 +27,14 @@ function NoSessionsMessage() {
   };
 
   return (
-    <Notice kind="info">
-      <span className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <span className="min-w-0 flex-1">
-          {t(
-            'Your sessions will appear here soon. It may take a few minutes as sessions are optimized for efficient playback.',
-          )}
-        </span>
-        <span className="flex items-center gap-2">
+    <EmptyState
+      art="listening"
+      title={t('Your sessions will appear here soon')}
+      hint={t(
+        'It may take a few minutes as sessions are optimized for efficient playback.',
+      )}
+      action={
+        <span className="flex flex-wrap items-center justify-center gap-2">
           <Button variant="subtle" onClick={troubleshoot}>
             {t('Troubleshoot')}
             <SquareArrowOutUpRight size={12} />
@@ -48,8 +49,8 @@ function NoSessionsMessage() {
             {t('Complete project setup')}
           </Button>
         </span>
-      </span>
-    </Notice>
+      }
+    />
   );
 }
 

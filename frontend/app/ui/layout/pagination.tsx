@@ -145,7 +145,7 @@ export function Pagination({
       </Button>
 
       {long && (
-        <span className="ml-2 flex items-center border-l border-border-subtle pl-3">
+        <span className="m-pager__goto ml-2 flex items-center border-l border-border-subtle pl-3">
           <Input
             value={draft}
             inputMode="numeric"
