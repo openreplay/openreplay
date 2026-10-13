@@ -14,6 +14,7 @@ const (
 	TaskFreshSkip = "fresh_skip"         // stored object is younger than MAX_STORAGE_TIME
 	TaskDropped   = "dropped_queue_full" // shed on a full worker pool / retry heap
 	TaskTerminal  = "terminal"           // download failed permanently (see terminal_failures_total{reason})
+	TaskUntrusted = "untrusted_source"   // AssetCache that did not come from the cache topic
 )
 
 const (
