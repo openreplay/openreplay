@@ -23,21 +23,21 @@ export function SupportMenu({
   const links = [
     {
       glyph: 'docs' as const,
-      label: t('Docs'),
+      label: t('Documentation'),
       hint: 'docs.openreplay.com',
       href: 'https://docs.openreplay.com',
     },
     {
-      glyph: 'github' as const,
-      label: t('Report issues'),
-      hint: 'GitHub',
-      href: 'https://github.com/openreplay/openreplay/issues/new/choose',
+      glyph: 'slack' as const,
+      label: t('Slack community'),
+      hint: 'slack.openreplay.com',
+      href: 'https://slack.openreplay.com',
     },
     {
-      glyph: 'slack' as const,
-      label: t('Community support'),
-      hint: 'Slack',
-      href: 'https://slack.openreplay.com',
+      glyph: 'github' as const,
+      label: t('GitHub repository'),
+      hint: 'github.com/openreplay',
+      href: 'https://github.com/openreplay/openreplay/issues/new/choose',
     },
   ];
   return (

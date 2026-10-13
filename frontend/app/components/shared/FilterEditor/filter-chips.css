@@ -1089,3 +1089,24 @@ span.m-fchip__said {
   background: transparent;
   border: 0;
 }
+
+/* one value style in every chip: a typed value and a picked value look the
+   same, in the chip's own face and size; set, accent at medium weight;
+   empty, the muted placeholder */
+.m-fchip .m-vp__trigger,
+.m-fchip .m-fchip__pair [data-slot='input'] {
+  font-family: inherit;
+  font-size: inherit;
+  letter-spacing: inherit;
+}
+.m-fchip .m-vp__trigger:not(.is-set) {
+  color: var(--m-content-placeholder);
+  font-weight: var(--m-weight-regular);
+  text-decoration: none;
+}
+.m-fchip input::placeholder {
+  color: var(--m-content-placeholder);
+  font-size: inherit;
+  font-weight: var(--m-weight-regular);
+  opacity: 1;
+}

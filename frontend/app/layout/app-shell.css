@@ -43,9 +43,22 @@
 .m-mobile-nav .m-drawer__body {
   padding: 0;
 }
-/* in the sheet the menu takes the sheet's width, labels and all */
+/* in the sheet the menu takes the sheet's width, labels and all; a close at
+   its head, and no collapse control (a rail in a sheet means nothing) */
 :root[data-viewport='phone'] .m-mobile-nav .m-nav {
   width: 100%;
+}
+.m-mobile-nav .m-drawer__body {
+  position: relative;
+}
+.m-mobile-nav__close {
+  position: absolute;
+  top: var(--m-space-4);
+  right: var(--m-space-3);
+  z-index: 1;
+}
+.m-mobile-nav .m-nav__collapse {
+  display: none;
 }
 .m-shell__bar {
   display: flex;

@@ -68,8 +68,9 @@ export function FilterPanel({
       if (!a) return;
       const r = a.getBoundingClientRect();
       const gap = 8;
-      const W = panelW(r.width);
-      const H = oneKind ? 384 : 480;
+      // the drawn size where there is one, so a wider panel never spills
+      const W = box.current?.offsetWidth || panelW(r.width);
+      const H = box.current?.offsetHeight || (oneKind ? 384 : 480);
       const m = 16;
       const vw = window.innerWidth;
       const vh = window.innerHeight;
