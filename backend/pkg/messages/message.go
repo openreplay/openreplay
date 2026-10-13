@@ -45,6 +45,10 @@ func (b *BatchInfo) ID() uint64 {
 	return b.id
 }
 
+func (b *BatchInfo) Topic() string {
+	return b.topic
+}
+
 func (b *BatchInfo) Timestamp() int64 {
 	return b.timestamp
 }
