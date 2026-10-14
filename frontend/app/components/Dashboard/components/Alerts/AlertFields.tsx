@@ -1,3 +1,4 @@
+import { ExternalLink } from '@/ui/actions/ExternalLink';
 import { Notice } from '@/ui/feedback/Notice';
 import { Checkbox } from '@/ui/inputs/checkbox';
 import { Input } from '@/ui/inputs/input';
@@ -258,14 +259,12 @@ function AlertFields({
         {instance.email && !userStore.account.smtp ? (
           <Notice kind="info">
             {t('SMTP is not configured, so email alerts are not sent.')}{' '}
-            <a
+            <ExternalLink
               className="link"
               href="https://docs.openreplay.com/configuration/configure-smtp"
-              target="_blank"
-              rel="noreferrer"
             >
               {t('How to configure it')}
-            </a>
+            </ExternalLink>
           </Notice>
         ) : null}
         {instance.webhook ? (

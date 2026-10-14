@@ -1,3 +1,4 @@
+import { ExternalArrow } from '@/ui/actions/ExternalLink';
 import { IconButton } from '@/ui/actions/IconButton';
 import { Button } from '@/ui/actions/button';
 import { EmptyState } from '@/ui/feedback/EmptyState';
@@ -13,15 +14,7 @@ import { RenameDialog } from '@/ui/overlays/RenameDialog';
 import { useToast } from '@/ui/overlays/toast';
 import withPageTitle from 'HOCs/withPageTitle';
 import copy from 'copy-to-clipboard';
-import {
-  Disc,
-  Download,
-  Link2,
-  Puzzle,
-  RotateCw,
-  SquareArrowOutUpRight,
-  Trash2,
-} from 'lucide-react';
+import { Disc, Download, Link2, Puzzle, RotateCw, Trash2 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -193,7 +186,7 @@ function SpotsList() {
         <Button asChild>
           <a href={STORE_URL} target="_blank" rel="noreferrer">
             {t('Get the extension')}
-            <SquareArrowOutUpRight size={13} aria-hidden="true" />
+            <ExternalArrow size={13} />
           </a>
         </Button>
       }

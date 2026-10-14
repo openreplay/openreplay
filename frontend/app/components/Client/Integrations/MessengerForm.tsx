@@ -1,3 +1,4 @@
+import { ExternalLink } from '@/ui/actions/ExternalLink';
 import { Button } from '@/ui/actions/button';
 import { EmptyState } from '@/ui/feedback/EmptyState';
 import { Notice } from '@/ui/feedback/Notice';
@@ -9,7 +10,7 @@ import {
   Section,
 } from '@/ui/overlays/EntityDrawer';
 import { confirm } from '@/ui/overlays/confirm';
-import { ExternalLink, Pencil, Plus } from 'lucide-react';
+import { Pencil, Plus } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -98,10 +99,7 @@ function MessengerForm({
           meta={
             <p className="m-msgr__lede">
               {description}{' '}
-              <a href={copy.docs} target="_blank" rel="noreferrer">
-                {t('Docs')}
-                <ExternalLink size={11} aria-hidden="true" />
-              </a>
+              <ExternalLink href={copy.docs}>{t('Docs')}</ExternalLink>
             </p>
           }
           actions={

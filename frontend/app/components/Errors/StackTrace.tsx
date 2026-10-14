@@ -1,3 +1,4 @@
+import { ExternalLink } from '@/ui/actions/ExternalLink';
 import { CodeBlock } from '@/ui/data/CodeBlock';
 import { Notice } from '@/ui/feedback/Notice';
 import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
@@ -68,9 +69,7 @@ function StackTrace({
       {!sourcemapUploaded && !loading && (
         <Notice className="m-errd__notice">
           {t('Upload source maps to see the original code in this trace.')}{' '}
-          <a href={DOCS} target="_blank" rel="noreferrer">
-            {t('Learn more')}
-          </a>
+          <ExternalLink href={DOCS}>{t('Learn more')}</ExternalLink>
         </Notice>
       )}
       {loading ? (

@@ -1,3 +1,4 @@
+import { ExternalLink } from '@/ui/actions/ExternalLink';
 import { Notice, type NoticeKind } from '@/ui/feedback/Notice';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
@@ -26,9 +27,7 @@ function AlertsBanner() {
           kind={levelKind[alert.level?.toLowerCase() ?? ''] ?? 'info'}
           action={
             alert.button && alert.url ? (
-              <a href={alert.url} target="_blank" rel="noopener noreferrer">
-                {alert.button}
-              </a>
+              <ExternalLink href={alert.url}>{alert.button}</ExternalLink>
             ) : undefined
           }
         >

@@ -1,3 +1,4 @@
+import { ExternalLink } from '@/ui/actions/ExternalLink';
 import { Button } from '@/ui/actions/button';
 import { Notice } from '@/ui/feedback/Notice';
 import { Input } from '@/ui/inputs/input';
@@ -108,14 +109,12 @@ function UserForm({ open, onClose }: { open: boolean; onClose: () => void }) {
               {t(
                 'SMTP is not configured, so no email is sent. Copy the invitation link and send it yourself.',
               )}{' '}
-              <a
+              <ExternalLink
                 className="link"
                 href="https://docs.openreplay.com/configuration/configure-smtp"
-                target="_blank"
-                rel="noreferrer"
               >
                 {t('How to set it up')}
-              </a>
+              </ExternalLink>
             </Notice>
           ) : null}
         </Section>

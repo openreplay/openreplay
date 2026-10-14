@@ -1,7 +1,7 @@
 import { trackerInstance } from '@/init/openreplay';
+import { ExternalArrow } from '@/ui/actions/ExternalLink';
 import { Button } from '@/ui/actions/button';
 import { EmptyState } from '@/ui/feedback/EmptyState';
-import { ArrowUpRight } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -47,7 +47,7 @@ function NoSessionsMessage() {
           </Button>
           <Button variant="subtle" onClick={troubleshoot}>
             {t('Troubleshoot')}
-            <ArrowUpRight size={13} strokeWidth={1.75} aria-hidden="true" />
+            <ExternalArrow size={13} />
           </Button>
         </span>
       }

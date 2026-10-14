@@ -1,3 +1,4 @@
+import { ExternalLink } from '@/ui/actions/ExternalLink';
 import { Notice } from '@/ui/feedback/Notice';
 import ENV from 'env';
 import React from 'react';
@@ -114,9 +115,7 @@ const WarnBadge = React.memo(
     if (!warnings.some((el) => el === true)) return null;
 
     const learnMore = (href: string) => (
-      <a href={href} target="_blank" rel="noreferrer">
-        {t('Learn more')}
-      </a>
+      <ExternalLink href={href}>{t('Learn more')}</ExternalLink>
     );
 
     return (

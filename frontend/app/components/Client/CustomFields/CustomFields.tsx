@@ -1,5 +1,6 @@
 import usePageTitle from '@/hooks/usePageTitle';
 import { CopyButton } from '@/ui/actions/CopyButton';
+import { ExternalLink } from '@/ui/actions/ExternalLink';
 import { IconButton } from '@/ui/actions/IconButton';
 import { Button } from '@/ui/actions/button';
 import { CodeBlock } from '@/ui/data/CodeBlock';
@@ -182,14 +183,12 @@ function CustomFields() {
             language={platform === 'web' ? 'JavaScript' : 'Swift'}
             caption={t('After the tracker starts')}
           />
-          <a
+          <ExternalLink
             href="https://docs.openreplay.com/en/session-replay/metadata"
             className="link self-start text-sm"
-            target="_blank"
-            rel="noreferrer"
           >
             {t('Learn more about metadata')}
-          </a>
+          </ExternalLink>
         </PrefBlock>
       ) : null}
 

@@ -1,3 +1,4 @@
+import { ExternalLink } from '@/ui/actions/ExternalLink';
 import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
 import { ChevronRight, CircleAlert, CircleCheck } from 'lucide-react';
 import React from 'react';
@@ -122,15 +123,9 @@ export function HealthLinks() {
   return (
     <div className="m-health__links">
       {LINKS.map((l) => (
-        <a
-          key={l.href}
-          className="m-health__link"
-          href={l.href}
-          target="_blank"
-          rel="noreferrer noopener"
-        >
+        <ExternalLink key={l.href} className="m-health__link" href={l.href}>
           {t(l.label)}
-        </a>
+        </ExternalLink>
       ))}
     </div>
   );

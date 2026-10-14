@@ -1,3 +1,4 @@
+import { ExternalLink } from '@/ui/actions/ExternalLink';
 import { JSONTree } from '@/ui/data/JSONTree';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import {
@@ -285,59 +286,47 @@ function Storage() {
                       'Inspect your application state while you’re replaying your users sessions. OpenReplay supports',
                     )}
                     &nbsp;
-                    <a
+                    <ExternalLink
                       className="m-dt__loglink"
                       href="https://docs.openreplay.com/plugins/redux"
-                      target="_blank"
-                      rel="noreferrer"
                     >
                       {t('Redux')}
-                    </a>
+                    </ExternalLink>
                     {', '}
-                    <a
+                    <ExternalLink
                       className="m-dt__loglink"
                       href="https://docs.openreplay.com/plugins/vuex"
-                      target="_blank"
-                      rel="noreferrer"
                     >
                       {t('VueX')}
-                    </a>
+                    </ExternalLink>
                     {', '}
-                    <a
+                    <ExternalLink
                       className="m-dt__loglink"
                       href="https://docs.openreplay.com/plugins/pinia"
-                      target="_blank"
-                      rel="noreferrer"
                     >
                       {t('Pinia')}
-                    </a>
+                    </ExternalLink>
                     {', '}
-                    <a
+                    <ExternalLink
                       className="m-dt__loglink"
                       href="https://docs.openreplay.com/plugins/zustand"
-                      target="_blank"
-                      rel="noreferrer"
                     >
                       {t('Zustand')}
-                    </a>
+                    </ExternalLink>
                     {', '}
-                    <a
+                    <ExternalLink
                       className="m-dt__loglink"
                       href="https://docs.openreplay.com/plugins/mobx"
-                      target="_blank"
-                      rel="noreferrer"
                     >
                       {t('MobX')}
-                    </a>
+                    </ExternalLink>
                     {' and '}
-                    <a
+                    <ExternalLink
                       className="m-dt__loglink"
                       href="https://docs.openreplay.com/plugins/ngrx"
-                      target="_blank"
-                      rel="noreferrer"
                     >
                       {t('NgRx')}
-                    </a>
+                    </ExternalLink>
                     .
                     <br />
                     <br />

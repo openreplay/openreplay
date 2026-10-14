@@ -1,3 +1,4 @@
+import { ExternalLink } from '@/ui/actions/ExternalLink';
 import { QuestionMarkHint } from '@/ui/overlays/QuestionMarkHint';
 import { CircleAlert } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
@@ -123,9 +124,7 @@ function ExceptionsCont() {
         <QuestionMarkHint
           content={
             <>
-              <a href={DOCS} target="_blank" rel="noreferrer">
-                {t('Upload source maps')}
-              </a>{' '}
+              <ExternalLink href={DOCS}>{t('Upload source maps')}</ExternalLink>{' '}
               {t('to see stack traces in their original form.')}
             </>
           }
