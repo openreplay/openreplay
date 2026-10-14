@@ -1,7 +1,7 @@
 import { Icon } from '@/ui/icons/Icon';
-import { SimpleSelect } from '@/ui/inputs/select';
 import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
 import { toast } from '@/ui/overlays/toast';
+import { useQuery } from '@tanstack/react-query';
 import withPageTitle from 'HOCs/withPageTitle';
 import { TFunction } from 'i18next';
 import { observer } from 'mobx-react-lite';
@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { useModal } from 'App/components/Modal';
 import { useStore } from 'App/mstore';
 import { namedStore } from 'App/mstore/integrationsStore';
+import { integrationsService } from 'App/services';
 
 import DocCard from 'Shared/DocCard/DocCard';
 
@@ -40,7 +41,7 @@ import ZustandDoc from './Tracker/ZustandDoc';
    connection to drop first. Slug -> display name. */
 const issueTrackers: Record<string, string> = {
   jira: 'Jira',
-  github: 'Github',
+  github: 'GitHub',
   linear: 'Linear',
 };
 
@@ -77,6 +78,34 @@ function Integrations(props: Props) {
     }
   }, [siteId]);
 
+  // a connection covers projects of its own choosing: a card is connected
+  // where any project has it, and a backend one says how many
+  const projectIds = projectsStore.list.map((p) => String(p.projectId));
+  const { data: byProject, refetch: refetchByProject } = useQuery({
+    queryKey: ['integrationsByProject', projectIds],
+    queryFn: async () =>
+      Object.fromEntries(
+        await Promise.all(
+          projectIds.map(async (id) => {
+            const { data } = await integrationsService
+              .fetchList(undefined, id)
+              .catch(() => ({ data: [] }));
+            const names = (Array.isArray(data) ? data : [])
+              .filter((i: any) => i.integrated)
+              .map((i: any) => i.name as string);
+            return [id, names] as const;
+          }),
+        ),
+      ) as Record<string, string[]>,
+    enabled: projectIds.length > 0,
+  });
+  const projectsWith = (slug: string) =>
+    byProject
+      ? projectIds.filter((id) => byProject[id]?.includes(slug)).length
+      : integratedList.includes(slug)
+        ? 1
+        : 0;
+
   const onClick = (integration: any) => {
     if (
       integration.slug &&
@@ -98,13 +127,17 @@ function Integrations(props: Props) {
       }
     }
 
+    const close = () => {
+      hideModal();
+      void refetchByProject();
+    };
     showModal(
       React.cloneElement(integration.component, {
         integrated: integratedList.includes(integration.slug),
         siteId,
-        onClose: hideModal,
+        onClose: close,
       }),
-      { right: true },
+      { right: true, onClose: () => void refetchByProject() },
     );
   };
 
@@ -117,6 +150,7 @@ function Integrations(props: Props) {
       toast.error(t('Failed to remove integration'));
     } finally {
       void fetchIntegrationList(siteId);
+      void refetchByProject();
     }
   };
 
@@ -132,27 +166,15 @@ function Integrations(props: Props) {
   };
 
   return (
-    <PreferencesPage
-      title={t('Integrations')}
-      flush
-      actions={
-        <SimpleSelect<string>
-          value={siteId ? String(siteId) : undefined}
-          ariaLabel={t('Project')}
-          onChange={(v) => v && integrationsStore.integrations.setSiteId(v)}
-          options={projectsStore.list.map((p) => ({
-            value: String(p.projectId),
-            label: p.name,
-          }))}
-          className="m-pref__w-md"
-        />
-      }
-    >
+    <PreferencesPage title={t('Integrations')} flush>
       {integrations(t).map((cat) => (
         <PrefBlock key={cat.key} title={cat.title} hint={cat.description}>
           <div className="m-pref__cards">
             {cat.integrations.map((integration: any) => {
-              const on = integratedList.includes(integration.slug);
+              const covered = integration.slug
+                ? projectsWith(integration.slug)
+                : 0;
+              const on = covered > 0;
               const blocked =
                 integration.slug in issueTrackers &&
                 activeTracker &&
@@ -183,7 +205,11 @@ function Integrations(props: Props) {
                     <span className="m-pref__card-title">
                       {integration.title}
                       {on ? (
-                        <span className="m-pref__on">{t('Connected')}</span>
+                        <span className="m-pref__on">
+                          {cat.isProject && covered > 1
+                            ? t('Connected · {{n}} projects', { n: covered })
+                            : t('Connected')}
+                        </span>
                       ) : null}
                     </span>
                     <span className="m-pref__card-sub">
@@ -226,29 +252,23 @@ export default withPageTitle('Integrations - OpenReplay Preferences')(
 
 const integrations = (t: TFunction) => [
   {
-    title: t('Issue Reporting'),
+    title: t('Issue reporting'),
     key: 'issue-reporting',
-    description: t(
-      'Seamlessly report issues or share issues with your team right from OpenReplay.',
-    ),
+    description: t('Open a ticket from a session, with the replay attached.'),
     isProject: false,
     icon: 'exclamation-triangle',
     integrations: [
       {
         title: t('Jira'),
-        subtitle: t(
-          'Integrate Jira with OpenReplay to enable the creation of a new ticket directly from a session.',
-        ),
+        subtitle: t('Tickets in Jira Cloud or Server, through an API token.'),
         slug: 'jira',
         category: 'Errors',
         icon: 'integrations/jira',
         component: <JiraForm />,
       },
       {
-        title: t('Github'),
-        subtitle: t(
-          'Integrate GitHub with OpenReplay to enable the direct creation of a new issue from a session.',
-        ),
+        title: t('GitHub'),
+        subtitle: t('Issues in any repository your token can reach.'),
         slug: 'github',
         category: 'Errors',
         icon: 'integrations/github',
@@ -256,9 +276,7 @@ const integrations = (t: TFunction) => [
       },
       {
         title: t('Linear'),
-        subtitle: t(
-          'Integrate Linear with OpenReplay to enable the direct creation of a new issue from a session.',
-        ),
+        subtitle: t('Issues in one of your Linear teams.'),
         slug: 'linear',
         category: 'Errors',
         icon: 'integrations/linear',
@@ -267,13 +285,11 @@ const integrations = (t: TFunction) => [
     ],
   },
   {
-    title: t('Backend Logging'),
+    title: t('Backend logging'),
     key: 'backend-logging',
     isProject: true,
     icon: 'terminal',
-    description: t(
-      'Sync your backend errors with sessions replays and see what happened front-to-back.',
-    ),
+    description: t('Put your server errors and logs on the session timeline.'),
     docs: () => (
       <DocCard
         title={t('Why use integrations?')}
@@ -289,36 +305,28 @@ const integrations = (t: TFunction) => [
     integrations: [
       {
         title: t('Sentry'),
-        subtitle: t(
-          'Integrate Sentry with session replays to seamlessly observe backend errors.',
-        ),
+        subtitle: t('Backend errors from Sentry, matched by a session tag.'),
         slug: 'sentry',
         icon: 'integrations/sentry',
         component: <SentryForm />,
       },
       {
         title: t('Elasticsearch'),
-        subtitle: t(
-          'Integrate Elasticsearch with session replays to seamlessly observe backend errors.',
-        ),
+        subtitle: t('Log lines from your own indexes.'),
         slug: 'elasticsearch',
         icon: 'integrations/elasticsearch',
         component: <ElasticsearchForm />,
       },
       {
         title: t('Datadog'),
-        subtitle: t(
-          'Incorporate DataDog to visualize backend errors alongside session replay, for easy troubleshooting.',
-        ),
+        subtitle: t('Datadog logs, matched by a session attribute.'),
         slug: 'datadog',
         icon: 'integrations/datadog',
         component: <DatadogForm />,
       },
       {
         title: t('Dynatrace'),
-        subtitle: t(
-          'Integrate Dynatrace with session replays to link backend logs with user sessions for faster issue resolution.',
-        ),
+        subtitle: t('Dynatrace log records, through an OAuth client.'),
         slug: 'dynatrace',
         icon: 'integrations/dynatrace',
         useIcon: true,
@@ -331,15 +339,11 @@ const integrations = (t: TFunction) => [
     key: 'collaboration',
     isProject: false,
     icon: 'file-code',
-    description: t(
-      'Share your sessions with your team and collaborate on issues.',
-    ),
+    description: t('Share sessions and alerts where your team already talks.'),
     integrations: [
       {
         title: t('Slack'),
-        subtitle: t(
-          'Integrate Slack to empower every user in your org with the ability to send sessions to any Slack channel.',
-        ),
+        subtitle: t('Any Slack channel with an incoming webhook.'),
         slug: 'slack',
         category: 'Errors',
         icon: 'integrations/slack',
@@ -347,10 +351,8 @@ const integrations = (t: TFunction) => [
         shared: true,
       },
       {
-        title: t('MS Teams'),
-        subtitle: t(
-          'Integrate MS Teams to empower every user in your org with the ability to send sessions to any MS Teams channel.',
-        ),
+        title: t('Microsoft Teams'),
+        subtitle: t('Any Teams channel with an incoming webhook.'),
         slug: 'msteams',
         category: 'Errors',
         icon: 'integrations/teams',
@@ -385,61 +387,51 @@ const integrations = (t: TFunction) => [
       </DocCard>
     ),
     description: t(
-      "Reproduce issues as if they happened in your own browser. Plugins help capture your application's store, HTTP requeets, GraphQL queries, and more.",
+      'Capture more of your app in each recording: state, queries, timings.',
     ),
     integrations: [
       {
         title: t('Redux'),
-        subtitle: t(
-          'Capture Redux actions/state and inspect them later on while replaying session recordings.',
-        ),
+        subtitle: t('Every dispatched action and the store after it.'),
         icon: 'integrations/redux',
         component: <ReduxDoc />,
       },
       {
         title: t('VueX'),
-        subtitle: t(
-          'Capture VueX mutations/state and inspect them later on while replaying session recordings.',
-        ),
+        subtitle: t('VueX mutations and the store after each one.'),
         icon: 'integrations/vuejs',
         component: <VueDoc />,
       },
       {
         title: t('Pinia'),
-        subtitle: t(
-          'Capture Pinia mutations/state and inspect them later on while replaying session recordings.',
-        ),
+        subtitle: t('Pinia store mutations, store by store.'),
         icon: 'integrations/pinia',
         component: <PiniaDoc />,
       },
       {
         title: t('GraphQL'),
         subtitle: t(
-          'Capture GraphQL requests and inspect them later on while replaying session recordings. This plugin is compatible with Apollo and Relay implementations.',
+          'Apollo or Relay operations with their variables and results.',
         ),
         icon: 'integrations/graphql',
         component: <GraphQLDoc />,
       },
       {
         title: t('NgRx'),
-        subtitle: t(
-          'Capture NgRx actions/state and inspect them later on while replaying session recordings.\n',
-        ),
+        subtitle: t('NgRx actions and the state they produce.'),
         icon: 'integrations/ngrx',
         component: <NgRxDoc />,
       },
       {
         title: t('MobX'),
-        subtitle: t(
-          'Capture MobX mutations and inspect them later on while replaying session recordings.',
-        ),
+        subtitle: t('MobX observable changes as they happen.'),
         icon: 'integrations/mobx',
         component: <MobxDoc />,
       },
       {
         title: t('Profiler'),
         subtitle: t(
-          'Plugin allows you to measure your JS functions performance and capture both arguments and result for each call.',
+          'Timings, arguments and results of the functions you wrap.',
         ),
         icon: 'integrations/openreplay',
         component: <ProfilerDoc />,
@@ -447,16 +439,14 @@ const integrations = (t: TFunction) => [
       {
         title: t('Assist'),
         subtitle: t(
-          'OpenReplay Assist allows you to support your users by seeing their live screen and instantly hopping on call (WebRTC) with them without requiring any 3rd-party screen sharing software.\n',
+          'See a user’s live screen and call them, no extra software.',
         ),
         icon: 'integrations/openreplay',
         component: <AssistDoc />,
       },
       {
         title: t('Zustand'),
-        subtitle: t(
-          'Capture Zustand mutations/state and inspect them later on while replaying session recordings.',
-        ),
+        subtitle: t('Zustand store changes, before and after.'),
         icon: 'integrations/zustand',
         // header: '🐻',
         component: <ZustandDoc />,

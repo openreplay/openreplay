@@ -1,21 +1,17 @@
 import { CodeBlock } from '@/ui/data/CodeBlock';
+import { Section } from '@/ui/overlays/EntityDrawer';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useStore } from 'App/mstore';
-
-import DocLink from 'Shared/DocLink/DocLink';
 import ToggleContent from 'Shared/ToggleContent';
 
-function MobxDoc() {
+import { PluginPane, usePluginProject } from '../../PluginPane';
+
+function MobxDoc({ onClose }: { onClose?: () => void }) {
   const { t } = useTranslation();
-  const { integrationsStore, projectsStore } = useStore();
-  const sites = projectsStore.list;
-  const { siteId } = integrationsStore.integrations;
-  const projectKey = siteId
-    ? sites.find((site) => site.id === siteId)?.projectKey
-    : sites[0]?.projectKey;
+  const scope = usePluginProject();
+  const { projectKey } = scope;
 
   const mobxUsage = `import { tracker } from '@openreplay/tracker';
 import trackerMobX from '@openreplay/tracker-mobx';
@@ -43,43 +39,35 @@ function SomeFunctionalComponent() {
 }`;
 
   return (
-    <div className="bg-surface-default h-screen overflow-y-auto w-full">
-      <h3 className="p-5 text-2xl">{t('MobX')}</h3>
-      <div className="p-5">
-        <div>
-          {t(
-            'This plugin allows you to capture MobX events and inspect them later on while replaying session recordings. This is very useful for understanding and fixing issues.',
-          )}
-        </div>
-
-        <div className="font-bold my-2">{t('Installation')}</div>
+    <PluginPane
+      title="MobX"
+      icon="integrations/mobx"
+      blurb={t(
+        'MobX observable changes as they happen, to read back inside a replay.',
+      )}
+      docs="https://docs.openreplay.com/plugins/mobx"
+      scope={scope}
+      onClose={onClose}
+    >
+      <Section title={t('Install')}>
         <CodeBlock
-          language="bash"
           code="npm i @openreplay/tracker-mobx --save"
+          language="bash"
         />
-
-        <div className="font-bold my-2">{t('Usage')}</div>
-        <p>
-          {t(
-            'Initialize the @openreplay/tracker package as usual and load the plugin into it. Then put the generated middleware into your Redux chain.',
-          )}
-        </p>
-        <div className="py-3" />
-
-        <div className="font-bold my-2">{t('Usage')}</div>
+      </Section>
+      <Section
+        title={t('Use')}
+        hint={t(
+          'Initialize the @openreplay/tracker package as usual and load the plugin into it.',
+        )}
+      >
         <ToggleContent
           label={t('Server-Side-Rendered (SSR)?')}
           first={<CodeBlock language="js" code={mobxUsage} />}
           second={<CodeBlock language="jsx" code={mobxUsageCjs} />}
         />
-
-        <DocLink
-          className="mt-4"
-          label={t('Integrate MobX')}
-          url="https://docs.openreplay.com/plugins/mobx"
-        />
-      </div>
-    </div>
+      </Section>
+    </PluginPane>
   );
 }
 

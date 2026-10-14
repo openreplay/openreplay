@@ -1,21 +1,17 @@
 import { CodeBlock } from '@/ui/data/CodeBlock';
+import { Section } from '@/ui/overlays/EntityDrawer';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useStore } from 'App/mstore';
 import ToggleContent from 'Components/shared/ToggleContent';
 
-import DocLink from 'Shared/DocLink/DocLink';
+import { PluginPane, usePluginProject } from '../../PluginPane';
 
-function ReduxDoc() {
+function ReduxDoc({ onClose }: { onClose?: () => void }) {
   const { t } = useTranslation();
-  const { integrationsStore, projectsStore } = useStore();
-  const sites = projectsStore.list;
-  const { siteId } = integrationsStore.integrations;
-  const projectKey = siteId
-    ? sites.find((site) => site.id === siteId)?.projectKey
-    : sites[0]?.projectKey;
+  const scope = usePluginProject();
+  const { projectKey } = scope;
 
   const usage = `import { applyMiddleware, createStore } from 'redux';
 import { tracker } from '@openreplay/tracker';
@@ -50,42 +46,35 @@ const store = createStore(
   );
 }`;
   return (
-    <div className="bg-surface-default h-screen overflow-y-auto w-full">
-      <h3 className="p-5 text-2xl">{t('Redux')}</h3>
-
-      <div className="p-5">
-        <div>
-          {t(
-            'This plugin allows you to capture Redux actions/state and inspect them later on while replaying session recordings. This is very useful for understanding and fixing issues.',
-          )}
-        </div>
-
-        <div className="font-bold my-2 text-lg">{t('Installation')}</div>
+    <PluginPane
+      title="Redux"
+      icon="integrations/redux"
+      blurb={t(
+        'Every dispatched action and the state after it, to read back inside a replay.',
+      )}
+      docs="https://docs.openreplay.com/plugins/redux"
+      scope={scope}
+      onClose={onClose}
+    >
+      <Section title={t('Install')}>
         <CodeBlock
           code="npm i @openreplay/tracker-redux --save"
           language="bash"
         />
-
-        <div className="font-bold my-2 text-lg">{t('Usage')}</div>
-        <p>
-          {t(
-            'Initialize the tracker then put the generated middleware into your Redux chain.',
-          )}
-        </p>
-        <div className="py-3" />
+      </Section>
+      <Section
+        title={t('Use')}
+        hint={t(
+          'Initialize the tracker then put the generated middleware into your Redux chain.',
+        )}
+      >
         <ToggleContent
           label={t('Server-Side-Rendered (SSR)?')}
           first={<CodeBlock language="js" code={usage} />}
           second={<CodeBlock language="jsx" code={usageCjs} />}
         />
-
-        <DocLink
-          className="mt-4"
-          label={t('Integrate Redux')}
-          url="https://docs.openreplay.com/plugins/redux"
-        />
-      </div>
-    </div>
+      </Section>
+    </PluginPane>
   );
 }
 
