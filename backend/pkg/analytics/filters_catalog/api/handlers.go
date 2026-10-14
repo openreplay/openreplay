@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"openreplay/backend/pkg/analytics/filters_catalog"
 	"openreplay/backend/pkg/assist"
@@ -16,6 +17,7 @@ var (
 	errAutocompleteFailed      = errors.New("failed to fetch autocomplete suggestions")
 	errEventPropertiesFailed   = errors.New("failed to fetch event properties")
 	errAutoCapturedParamNeeded = errors.New("ac query parameter is required and must be a boolean")
+	errInvalidMetadataProperty = errors.New("invalid metadata property name")
 )
 
 type handlersImpl struct {
@@ -125,6 +127,28 @@ func (h *handlersImpl) autocompleteProperties(r *api.RequestContext) (any, int, 
 	}
 
 	if qv.Get("live") == "true" {
+		if strings.HasPrefix(propertyName, "metadata_") {
+			index, err := strconv.Atoi(strings.TrimPrefix(propertyName, "metadata_"))
+			if err != nil || index < 1 || index > 10 || propertyName != "metadata_"+strconv.Itoa(index) {
+				return nil, http.StatusBadRequest, errInvalidMetadataProperty
+			}
+			project, err := h.projects.GetProject(projID)
+			if err != nil || project == nil {
+				h.log.Error(r.Request.Context(), "metadata autocomplete project lookup for %d: %v", projID, err)
+				return nil, http.StatusInternalServerError, errAutocompleteFailed
+			}
+			// Recorded autocomplete uses column names, but Assist matches the
+			// configured keys sent by the tracker in sessionInfo.metadata.
+			keys := []*string{
+				project.Metadata1, project.Metadata2, project.Metadata3, project.Metadata4, project.Metadata5,
+				project.Metadata6, project.Metadata7, project.Metadata8, project.Metadata9, project.Metadata10,
+			}
+			key := keys[index-1]
+			if key == nil || *key == "" {
+				return []map[string]interface{}{}, 0, nil
+			}
+			propertyName = *key
+		}
 		res, err := h.assist.Autocomplete(projID, qv.Get("q"), propertyName)
 		if err != nil {
 			h.log.Error(r.Request.Context(), "live properties autocomplete for project %d: %v", projID, err)
