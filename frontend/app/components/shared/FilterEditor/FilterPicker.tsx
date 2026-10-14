@@ -312,7 +312,7 @@ export function PickerBody({
               <Fragment key={r.key}>
                 {firstOfKind && bothKinds && (
                   <span className="m-pick2__rail-head" aria-hidden="true">
-                    {r.kind ? t('Events') : t('Group filters')}
+                    {r.kind ? t('Filters') : t('Group properties')}
                   </span>
                 )}
                 <button
@@ -400,7 +400,8 @@ function EasedHeight({ children }: { children: ReactNode }) {
 
 /**
  * A picker in a popover. It never flips: the top edge stays under the trigger
- * while the list changes, and the list scrolls inside the room below.
+ * while the list changes, and the list scrolls inside the room below. Near the
+ * viewport's edge it slides back in sideways (useViewportFit).
  */
 export function PickerPopover({
   open,

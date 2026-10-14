@@ -1,4 +1,5 @@
 import withPageTitle from '@/components/hocs/withPageTitle';
+import { ExternalLink } from '@/ui/actions/ExternalLink';
 import { Button } from '@/ui/actions/button';
 import { OpenReplayMark } from '@/ui/brand/OpenReplayMark';
 import { Input } from '@/ui/inputs/input';
@@ -288,15 +289,10 @@ function Onboarding() {
             ariaLabel={t('Setup steps')}
           />
           {docs && (
-            <a
-              className="m-ob__docs"
-              href={docs}
-              target="_blank"
-              rel="noreferrer"
-            >
+            <ExternalLink className="m-ob__docs" href={docs}>
               <BookOpen size={13} aria-hidden="true" />
               {t('Documentation for this step')}
-            </a>
+            </ExternalLink>
           )}
         </aside>
 

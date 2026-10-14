@@ -1,5 +1,5 @@
+import { ExternalArrow } from '@/ui/actions/ExternalLink';
 import { Button } from '@/ui/actions/button';
-import { Icon } from '@/ui/icons/Icon';
 import React from 'react';
 
 export default function DocLink({ className = '', url, label }) {
@@ -14,8 +14,8 @@ export default function DocLink({ className = '', url, label }) {
         onClick={openLink}
         className="flex items-center gap-2"
       >
-        <span className="mr-2">{label}</span>
-        <Icon name="external-link-alt" color="teal" />
+        {label}
+        <ExternalArrow size={13} />
       </Button>
     </div>
   );

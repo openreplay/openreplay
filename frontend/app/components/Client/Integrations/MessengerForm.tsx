@@ -1,3 +1,4 @@
+import { ExternalLink } from '@/ui/actions/ExternalLink';
 import { Button } from '@/ui/actions/button';
 import { EmptyState } from '@/ui/feedback/EmptyState';
 import { Notice } from '@/ui/feedback/Notice';
@@ -9,7 +10,7 @@ import {
   Section,
 } from '@/ui/overlays/EntityDrawer';
 import { confirm } from '@/ui/overlays/confirm';
-import { ExternalLink, Pencil, Plus } from 'lucide-react';
+import { Pencil, Plus } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -17,16 +18,19 @@ import { useTranslation } from 'react-i18next';
 import { useModal } from 'App/components/Modal';
 import { useStore } from 'App/mstore';
 
+import '../preferences.css';
 import './messenger-form.css';
 
 const COPY = {
   slack: {
     title: 'Slack',
+    icon: 'integrations/slack',
     docs: 'https://docs.openreplay.com/integrations/slack',
     placeholder: 'Slack webhook URL',
   },
   msteams: {
     title: 'Microsoft Teams',
+    icon: 'integrations/teams',
     docs: 'https://docs.openreplay.com/integrations/msteams',
     placeholder: 'Teams webhook URL',
   },
@@ -93,15 +97,18 @@ function MessengerForm({
   return (
     <div className="m-drawer__pane">
       <header className="m-drawer__head">
+        <span className="m-pref__card-mark m-int__mark" aria-hidden="true">
+          <img src={`/assets/${copy.icon}.svg`} alt="" width={20} height={20} />
+        </span>
         <DrawerHeader
+          eyebrow={t('Collaboration')}
           title={copy.title}
           meta={
             <p className="m-msgr__lede">
               {description}{' '}
-              <a href={copy.docs} target="_blank" rel="noreferrer">
+              <ExternalLink className="m-int__docs" href={copy.docs}>
                 {t('Docs')}
-                <ExternalLink size={11} aria-hidden="true" />
-              </a>
+              </ExternalLink>
             </p>
           }
           actions={

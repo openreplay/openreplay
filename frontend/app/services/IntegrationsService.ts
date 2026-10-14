@@ -27,11 +27,15 @@ export default class IntegrationsService extends BaseService {
       const r = await this.client.post(url, data);
       return await r.json();
     } catch (e: any) {
-      if (e.response) {
-        const errorData = await e.response.json();
-        return { errors: errorData.errors };
-      }
-      return { errors: ['An unexpected error occurred.'] };
+      // the API client throws with the Response as `cause`
+      const errorData = await (e?.response ?? e?.cause)
+        ?.json?.()
+        .catch(() => null);
+      return {
+        errors: Array.isArray(errorData?.errors)
+          ? errorData.errors
+          : ['An unexpected error occurred.'],
+      };
     }
   };
 

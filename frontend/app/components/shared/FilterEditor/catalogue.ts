@@ -101,7 +101,7 @@ export const CATEGORY_ORDER: readonly string[] = [
 const CATEGORY_LABELS: Record<string, string> = {
   auto_captured: 'Autocapture',
   user_events: 'Events',
-  event: 'Event properties',
+  event: 'Event',
 };
 
 export const categoryLabel = (key: string): string =>
@@ -271,14 +271,14 @@ export function summariseRules(
   if (events.length)
     parts.push(
       events.length === 1
-        ? t('1 event')
-        : t('{{count}} events', { count: events.length }),
+        ? t('1 filter')
+        : t('{{count}} filters', { count: events.length }),
     );
   if (properties.length)
     parts.push(
       properties.length === 1
-        ? t('1 group filter')
-        : t('{{count}} group filters', { count: properties.length }),
+        ? t('1 group property')
+        : t('{{count}} group properties', { count: properties.length }),
     );
   return parts.join(' · ');
 }

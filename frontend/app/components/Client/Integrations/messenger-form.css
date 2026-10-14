@@ -1,17 +1,6 @@
 .m-msgr__lede {
   margin: 0;
 }
-.m-msgr__lede a {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  color: var(--m-content-accent);
-}
-.m-msgr__lede a:hover {
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
 .m-msgr__fields {
   display: flex;
   flex-direction: column;

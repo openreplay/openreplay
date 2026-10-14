@@ -1,3 +1,4 @@
+import { ExternalLink } from '@/ui/actions/ExternalLink';
 import { Button } from '@/ui/actions/button';
 import { OpenReplayMark } from '@/ui/brand/OpenReplayMark';
 import { SimpleSelect } from '@/ui/inputs/select';
@@ -98,23 +99,13 @@ function AuthScreen({ other, step, children }: Props) {
       <footer className="m-auth__foot">
         <span>
           {t('© {{year}} OpenReplay. All rights reserved.', { year })}{' '}
-          <a
-            className="m-auth__ext"
-            href={LEGAL.privacy}
-            target="_blank"
-            rel="noreferrer"
-          >
+          <ExternalLink className="m-auth__ext" href={LEGAL.privacy}>
             {t('Privacy')}
-          </a>{' '}
+          </ExternalLink>{' '}
           {t('and')}{' '}
-          <a
-            className="m-auth__ext"
-            href={LEGAL.terms}
-            target="_blank"
-            rel="noreferrer"
-          >
+          <ExternalLink className="m-auth__ext" href={LEGAL.terms}>
             {t('Terms')}
-          </a>
+          </ExternalLink>
           .
         </span>
         <span className="m-auth__foot-right">

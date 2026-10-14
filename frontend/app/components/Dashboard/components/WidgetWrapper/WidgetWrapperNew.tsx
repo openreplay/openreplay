@@ -6,6 +6,7 @@ import {
   DropdownMenuTrigger,
 } from '@/ui/actions/dropdown-menu';
 import { Loader } from '@/ui/feedback/Loader';
+import { useViewport } from '@/ui/layout/use-viewport';
 import { toast } from '@/ui/overlays/toast';
 import {
   Bell,
@@ -66,6 +67,7 @@ function WidgetWrapperDashboard({
   const canAlert =
     !isPredefined && widget.metricType === TIMESERIES && !!seriesId;
   const full = isFullWidget(widget);
+  const wide = useViewport() === 'wide';
 
   const [{ isDragging }, dragRef] = useDrag({
     type: 'item',
@@ -169,19 +171,24 @@ function WidgetWrapperDashboard({
                     label: t('Edit'),
                     onClick: open,
                   },
-                  full
-                    ? {
-                        key: 'half',
-                        icon: <Minimize2 size={13} />,
-                        label: t('Half width'),
-                        onClick: () => setWidth(2),
-                      }
-                    : {
-                        key: 'full',
-                        icon: <Maximize2 size={13} />,
-                        label: t('Full width'),
-                        onClick: () => setWidth(4),
-                      },
+                  // below wide every widget is full width: nothing to pick
+                  ...(wide
+                    ? [
+                        full
+                          ? {
+                              key: 'half',
+                              icon: <Minimize2 size={13} />,
+                              label: t('Half width'),
+                              onClick: () => setWidth(2),
+                            }
+                          : {
+                              key: 'full',
+                              icon: <Maximize2 size={13} />,
+                              label: t('Full width'),
+                              onClick: () => setWidth(4),
+                            },
+                      ]
+                    : []),
                   { key: 'd1', type: 'divider' },
                   {
                     key: 'remove',

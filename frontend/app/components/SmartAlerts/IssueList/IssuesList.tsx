@@ -258,6 +258,7 @@ function IssuesList() {
       title: t('Impact'),
       key: 'impact',
       width: 96,
+      priority: 2,
       sortable: true,
       render: (r) => <ImpactGauge value={r.impact} label />,
     },
@@ -296,6 +297,7 @@ function IssuesList() {
       title: t('Tags'),
       key: 'tags',
       width: 240,
+      priority: 2,
       render: (r) => {
         const tags = r.journeyLabels ?? [];
         const names = r.segmentIds
@@ -330,6 +332,7 @@ function IssuesList() {
             title: t('Last seen'),
             key: 'seen',
             width: 120,
+            priority: 3 as const,
             sortable: true,
             render: (r: Issue) =>
               r.seenAgoMin == null ? null : (

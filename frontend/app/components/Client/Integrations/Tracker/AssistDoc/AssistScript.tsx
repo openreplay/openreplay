@@ -24,16 +24,14 @@ function AssistScript(props) {
 })(0, "${props.projectKey}", "${ENV.TRACKER_HOST || '//static.openreplay.com'}/${ENV.TRACKER_VERSION}/openreplay-assist.js", 1, 28);
 </script>`;
   return (
-    <div>
-      <p>
+    <>
+      <p className="m-int__blurb">
         {t(
           'If your OpenReplay tracker is set up using the JS snippet, then simply replace the .../openreplay.js occurrence with .../openreplay-assist.js. Below is an example of how the script should like after the change:',
         )}
       </p>
-      <div className="py-3" />
-
       <CodeBlock code={scriptCode} language="js" />
-    </div>
+    </>
   );
 }
 

@@ -1,8 +1,9 @@
+import { ExternalLink } from '@/ui/actions/ExternalLink';
 import { Button } from '@/ui/actions/button';
 import { Notice } from '@/ui/feedback/Notice';
 import { Field } from '@/ui/inputs/Field';
 import { Input } from '@/ui/inputs/input';
-import { Mail, MailCheck, SquareArrowOutUpRight } from 'lucide-react';
+import { Mail, MailCheck } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { type FormEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -120,20 +121,9 @@ function ResetPasswordRequest({
             {smtpError && (
               <>
                 {' '}
-                <a
-                  className="m-auth__link"
-                  href={SMTP_DOCS}
-                  target="_blank"
-                  rel="noreferrer"
-                >
+                <ExternalLink className="m-auth__link" href={SMTP_DOCS}>
                   {t('Learn more')}
-                  <SquareArrowOutUpRight
-                    size={11}
-                    strokeWidth={1.75}
-                    aria-hidden="true"
-                    className="ml-1 inline align-[-1px]"
-                  />
-                </a>
+                </ExternalLink>
               </>
             )}
           </Notice>

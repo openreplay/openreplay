@@ -1,12 +1,15 @@
+import { IconButton } from '@/ui/actions/IconButton';
+import { OpenReplayMark } from '@/ui/brand/OpenReplayMark';
+import { useViewportAttribute } from '@/ui/layout/use-viewport';
 import { Drawer } from '@/ui/overlays/drawer';
-import { Menu, X } from 'lucide-react';
+import { PanelLeftOpen, X } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import Survey from 'App/components/Survey';
 import HeaderBanners from 'App/layout/HeaderBanners';
 import { useStore } from 'App/mstore';
-import { mobileScreen } from 'App/utils/isMobile';
 
 import SessionsDockHost from 'Shared/SessionsDock/SessionsDockHost';
 
@@ -27,8 +30,14 @@ interface Props {
 function Layout({ children, immersive = false, bare = false }: Props) {
   const { userStore, notificationStore } = useStore();
   const { account, initialDataFetched } = userStore;
+  const { t } = useTranslation();
   const { collapsed, toggle } = useNavCollapse(immersive, !bare);
+  // at phone the rail is a sheet behind the bar's menu button
+  const phone = useViewportAttribute() === 'phone';
   const [mobileOpen, setMobileOpen] = useState(false);
+  useEffect(() => {
+    if (!phone) setMobileOpen(false);
+  }, [phone]);
 
   useEffect(() => {
     if (!account.id || initialDataFetched) return;
@@ -61,7 +70,18 @@ function Layout({ children, immersive = false, bare = false }: Props) {
 
   return (
     <div className="m-shell">
-      {mobileScreen ? null : (
+      {phone ? (
+        <div className="m-shell__bar">
+          <IconButton
+            icon={<PanelLeftOpen size={16} />}
+            label={t('Open the menu')}
+            variant="ghost"
+            onClick={() => setMobileOpen(true)}
+          />
+          <OpenReplayMark size={16} className="m-shell__bar-mark" />
+          <span className="m-shell__bar-name">OpenReplay</span>
+        </div>
+      ) : (
         <SideNav collapsed={collapsed} onToggleCollapsed={toggle} />
       )}
       <main
@@ -74,30 +94,28 @@ function Layout({ children, immersive = false, bare = false }: Props) {
         <SessionsDockHost />
         <Survey />
       </main>
-      {mobileScreen ? (
-        <>
-          <Drawer
-            side="left"
-            label="Navigation"
-            className="m-mobile-nav w-[280px]!"
-            onClose={() => setMobileOpen(false)}
-            open={mobileOpen}
-          >
-            <SideNav
-              collapsed={false}
-              onToggleCollapsed={() => setMobileOpen(false)}
-              onNavigated={() => setMobileOpen(false)}
+      {phone ? (
+        <Drawer
+          side="left"
+          label={t('Navigation')}
+          className="m-mobile-nav w-[280px]!"
+          onClose={() => setMobileOpen(false)}
+          open={mobileOpen}
+        >
+          <span className="m-mobile-nav__close">
+            <IconButton
+              icon={<X size={15} />}
+              label={t('Close the menu')}
+              variant="ghost"
+              onClick={() => setMobileOpen(false)}
             />
-          </Drawer>
-          <button
-            type="button"
-            className="m-mobile-nav__fab"
-            aria-label={mobileOpen ? 'Close navigation' : 'Open navigation'}
-            onClick={() => setMobileOpen(!mobileOpen)}
-          >
-            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
-        </>
+          </span>
+          <SideNav
+            collapsed={false}
+            onToggleCollapsed={() => setMobileOpen(false)}
+            onNavigated={() => setMobileOpen(false)}
+          />
+        </Drawer>
       ) : null}
     </div>
   );

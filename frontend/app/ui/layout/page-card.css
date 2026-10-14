@@ -43,8 +43,15 @@
   line-height: var(--m-leading-snug);
 }
 
+.m-page__titlerow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--m-space-2) var(--m-space-3);
+  min-width: 0;
+}
+
 .m-page__meta {
-  align-self: center;
   font-size: var(--m-text-sm);
   color: var(--m-content-muted);
   font-variant-numeric: tabular-nums;
@@ -128,4 +135,48 @@
   padding: var(--m-space-3) var(--m-space-5);
   background: var(--m-surface-default);
   border-bottom: 1px solid var(--m-border-subtle);
+}
+
+/* narrow: the head may wrap and the inset steps down a token. Phone: the
+   title takes the row and the verbs sit at its end while they fit, a wider
+   cluster drops under the title at the left; a thing that cannot shrink
+   scrolls inside its own panel, never the page */
+:root[data-viewport='narrow'] .m-page__head {
+  flex-wrap: wrap;
+  padding: var(--m-space-6) var(--m-space-6) var(--m-space-5);
+}
+:root[data-viewport='narrow'] .m-page__body {
+  padding-inline: var(--m-space-6);
+}
+:root[data-viewport='phone'] .m-page__head {
+  flex-wrap: wrap;
+  justify-content: space-between;
+  row-gap: var(--m-space-3);
+  padding: var(--m-space-5) var(--m-space-4) var(--m-space-4);
+}
+:root[data-viewport='phone'] .m-page__lead {
+  flex: 1 1 14rem;
+}
+:root[data-viewport='phone'] .m-page__title {
+  font-size: calc(var(--m-text-xl) * var(--m-display-scale));
+}
+:root[data-viewport='phone'] .m-page__actions {
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  margin-left: 0;
+}
+:root[data-viewport='phone'] .m-page__body {
+  padding-inline: var(--m-space-4);
+  gap: var(--m-space-4);
+}
+:root[data-viewport='phone'] .m-page__tabs,
+:root[data-viewport='phone'] .m-page__toolbar {
+  padding-inline: var(--m-space-4);
+}
+:root[data-viewport='phone'] .m-panel {
+  overflow: auto clip;
+}
+:root[data-viewport='phone'] .m-panel__head {
+  position: static;
+  padding-inline: var(--m-space-4);
 }

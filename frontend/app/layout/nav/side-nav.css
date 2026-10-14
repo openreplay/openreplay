@@ -66,34 +66,24 @@
   align-self: center;
   width: 100%;
 
-  --m-account-lines: calc(
-    var(--m-text-sm) * var(--m-leading-tight) + var(--m-space-px) +
-      var(--m-text-2xs) * var(--m-leading-tight)
-  );
-  height: calc(
-    var(--m-account-lines) + var(--m-space-3) * 2 + var(--m-border-width) * 2
-  );
+  /* one line on the rows' own height, no edge: a ghost hover says it opens */
+  height: var(--m-nav-row-height);
   margin-bottom: var(--m-space-7);
-  padding: var(--m-space-3);
-  border: var(--m-border-width) solid var(--m-border-default);
+  padding-inline: var(--m-space-3);
+  border: none;
   border-radius: var(--m-radius-control);
+  background: transparent;
   overflow: hidden;
   transition:
     background-color var(--m-duration-instant) var(--m-ease-out),
-    border-color var(--m-duration-instant) var(--m-ease-out),
     width var(--m-duration-normal) var(--m-ease-out),
     height var(--m-duration-normal) var(--m-ease-out),
     gap var(--m-duration-normal) var(--m-ease-out),
     padding var(--m-duration-normal) var(--m-ease-out);
 }
-.m-nav__account:hover {
-  background: var(--m-nav-row-hover);
-  border-color: var(--m-border-strong);
-}
-
+.m-nav__account:hover,
 .m-nav__account.is-open {
   background: var(--m-nav-row-hover);
-  border-color: var(--m-border-strong);
 }
 
 .m-nav__account-badge {
@@ -152,7 +142,6 @@
   height: 1.75rem;
   gap: 0;
   padding: 0;
-  border-color: transparent;
   background: transparent;
 }
 .m-nav.is-collapsed .m-nav__account:hover {
@@ -291,6 +280,12 @@
 }
 
 .m-nav.is-collapsed .m-nav__tools {
+  padding-inline: 0;
+}
+/* expanded, the tools are one line spread over the column */
+.m-nav:not(.is-collapsed) .m-nav__tools {
+  display: flex;
+  justify-content: space-between;
   padding-inline: 0;
 }
 

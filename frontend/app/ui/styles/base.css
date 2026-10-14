@@ -136,7 +136,7 @@ svg {
 
 /* Set by useViewportFit: slides an overlay back inside the viewport along its own side. */
 .m-pop {
-  translate: 0 var(--m-pop-fit, 0px);
+  translate: var(--m-pop-fit-x, 0px) var(--m-pop-fit, 0px);
 }
 
 .m-dot {

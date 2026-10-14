@@ -1,3 +1,4 @@
+import { ExternalLink } from '@/ui/actions/ExternalLink';
 import { CodeBlock } from '@/ui/data/CodeBlock';
 import { Checkbox } from '@/ui/inputs/checkbox';
 import { SimpleSelect } from '@/ui/inputs/select';
@@ -235,28 +236,18 @@ function InstallGuide({
         {full && isWeb && method === 'npm' && (
           <p className="m-ob__muted text-xs">
             {t('Learn more about available options')}{' '}
-            <a
-              className="m-ob__link"
-              href={DOCS.options}
-              target="_blank"
-              rel="noreferrer"
-            >
+            <ExternalLink className="m-ob__link" href={DOCS.options}>
               {t('in the docs')}
-            </a>
+            </ExternalLink>
             .
           </p>
         )}
         {full && isWeb && method === 'script' && (
           <p className="m-ob__muted text-xs">
             {t('Also available through')}{' '}
-            <a
-              className="m-ob__link"
-              href={DOCS.gtm}
-              target="_blank"
-              rel="noreferrer"
-            >
+            <ExternalLink className="m-ob__link" href={DOCS.gtm}>
               Google Tag Manager
-            </a>
+            </ExternalLink>
             .
           </p>
         )}
@@ -297,14 +288,9 @@ function InstallGuide({
                 caption={
                   <>
                     {t('Then enable it with your tracker.')}{' '}
-                    <a
-                      className="m-ob__link"
-                      href={DOCS.assist}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
+                    <ExternalLink className="m-ob__link" href={DOCS.assist}>
                       {t('Options')}
-                    </a>
+                    </ExternalLink>
                   </>
                 }
               />

@@ -102,11 +102,6 @@
   border: solid thin var(--color-gray-light)
 }
 
-::placeholder {
-  color: $gray-medium !important;
-  font-size: 14px;
-}
-
 .ui[class*="top fixed"].menu {
   background-color: white !important;
   border-bottom: solid thin #ddd !important;

@@ -1,4 +1,5 @@
 import { login } from '@/routes';
+import { ExternalLink } from '@/ui/actions/ExternalLink';
 import { Button } from '@/ui/actions/button';
 import { Icon } from '@/ui/icons/Icon';
 import React from 'react';
@@ -13,7 +14,7 @@ function AccessError() {
   return (
     <div className="w-full h-full block ">
       <div className="flex bg-white border-b text-center justify-center py-4">
-        <a href="https://openreplay.com/spot" target="_blank" rel="noreferrer">
+        <ExternalLink href="https://openreplay.com/spot">
           <Button
             variant="subtle"
             className="orSpotBranding flex gap-1 items-center"
@@ -26,7 +27,7 @@ function AccessError() {
               </div>
             </div>
           </Button>
-        </a>
+        </ExternalLink>
       </div>
       <div className="m-panel z-50 mx-auto flex min-h-60 w-1/2 flex-col items-center justify-center gap-3 p-8 text-center">
         <div className="text-lg font-medium text-content-primary">

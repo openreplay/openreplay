@@ -1,6 +1,6 @@
+import { ExternalArrow } from '@/ui/actions/ExternalLink';
 import { Button } from '@/ui/actions/button';
 import { Notice } from '@/ui/feedback/Notice';
-import { SquareArrowOutUpRight } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -64,7 +64,7 @@ function InstallCTA() {
       <Button asChild variant="secondary">
         <a href={STORE_URL} target="_blank" rel="noreferrer">
           {t('Get the extension')}
-          <SquareArrowOutUpRight size={13} aria-hidden="true" />
+          <ExternalArrow size={13} />
         </a>
       </Button>
     </Notice>

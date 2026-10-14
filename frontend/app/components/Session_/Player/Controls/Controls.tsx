@@ -19,7 +19,6 @@ import { PlayingState } from 'App/player-ui';
 import { session as sessionRoute, withSiteId } from 'App/routes';
 import { useHistory } from 'App/routing';
 import { signalService } from 'App/services';
-import { mobileScreen } from 'App/utils/isMobile';
 import useShortcuts from 'Components/Session/Player/ReplayPlayer/useShortcuts';
 import PlaybackSettings, {
   SKIP_INTERVALS,
@@ -174,20 +173,16 @@ function Controls({ setActiveTab, fullView, mobile }: any) {
         variant="ghost"
         onClick={() => player.jumpInterval(SKIP_INTERVALS[skipInterval])}
       />
-      {!mobileScreen && (
-        <span className="m-tl__clock m-mono">
-          <PlayingTime
-            timeMode={timeMode}
-            setTimeMode={saveTimeMode}
-            startedAt={session.startedAt}
-            sessionTz={sessionTz}
-          />
-        </span>
-      )}
+      <span className="m-tl__clock m-mono">
+        <PlayingTime
+          timeMode={timeMode}
+          setTimeMode={saveTimeMode}
+          startedAt={session.startedAt}
+          sessionTz={sessionTz}
+        />
+      </span>
       <Timeline inline isMobile={mobile} />
-      {!mobileScreen && (
-        <PlaybackSettings disabled={disabled} mobile={mobile} />
-      )}
+      <PlaybackSettings disabled={disabled} mobile={mobile} />
       <IconButton
         icon={fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
         label={

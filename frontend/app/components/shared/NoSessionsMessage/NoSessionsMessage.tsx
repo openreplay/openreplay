@@ -1,7 +1,7 @@
 import { trackerInstance } from '@/init/openreplay';
+import { ExternalArrow } from '@/ui/actions/ExternalLink';
 import { Button } from '@/ui/actions/button';
-import { Notice } from '@/ui/feedback/Notice';
-import { SquareArrowOutUpRight } from 'lucide-react';
+import { EmptyState } from '@/ui/feedback/EmptyState';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -10,6 +10,7 @@ import { useStore } from 'App/mstore';
 import { onboarding as onboardingRoute, withSiteId } from 'App/routes';
 import { useNavigate } from 'App/routing';
 
+/** The list's own empty state while a project has recorded nothing yet. */
 function NoSessionsMessage() {
   const { t } = useTranslation();
   const { projectsStore } = useStore();
@@ -26,19 +27,16 @@ function NoSessionsMessage() {
   };
 
   return (
-    <Notice kind="info">
-      <span className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <span className="min-w-0 flex-1">
-          {t(
-            'Your sessions will appear here soon. It may take a few minutes as sessions are optimized for efficient playback.',
-          )}
-        </span>
-        <span className="flex items-center gap-2">
-          <Button variant="subtle" onClick={troubleshoot}>
-            {t('Troubleshoot')}
-            <SquareArrowOutUpRight size={12} />
-          </Button>
+    <EmptyState
+      art="listening"
+      title={t('Your sessions will appear here soon')}
+      hint={t(
+        'It may take a few minutes as sessions are optimized for efficient playback.',
+      )}
+      action={
+        <span className="flex flex-wrap items-center justify-center gap-2">
           <Button
+            variant="primary"
             onClick={() =>
               navigate(
                 withSiteId(onboardingRoute('installing'), projectsStore.siteId),
@@ -47,9 +45,13 @@ function NoSessionsMessage() {
           >
             {t('Complete project setup')}
           </Button>
+          <Button variant="subtle" onClick={troubleshoot}>
+            {t('Troubleshoot')}
+            <ExternalArrow size={13} />
+          </Button>
         </span>
-      </span>
-    </Notice>
+      }
+    />
   );
 }
 

@@ -127,7 +127,11 @@ function ProjectForm({ project: initial, onClose }: Props) {
         {exists ? (
           <IconButton
             icon={<Trash2 size={14} />}
-            label={t('Delete project')}
+            label={
+              canDelete
+                ? t('Delete project')
+                : t('Can’t delete the only project')
+            }
             variant="ghost"
             disabled={!canDelete}
             onClick={() => setDeleting(true)}

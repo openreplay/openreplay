@@ -79,7 +79,7 @@ function WidgetPreview(props: Props) {
   const presetComparison = metric.compareTo;
   return (
     <div className={cn(className, 'm-cardp__preview')}>
-      <div className="m-cardp__toolbar">
+      <div className="m-cardp__toolbar" data-slot="card-toolbar">
         <div className="m-cardp__toolbar-left">
           <WidgetDateRange
             hasGranularSettings={hasGranularSettings}

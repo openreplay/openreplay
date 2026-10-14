@@ -28,8 +28,10 @@ function PlayingTime({ timeMode, setTimeMode, startedAt, sessionTz }: Props) {
   const elapsed = (
     <>
       <ReduxTime isCustom name="time" format="mm:ss" />
-      <span className="m-tl__time-sep">/</span>
-      <ReduxTime isCustom name="endTime" format="mm:ss" />
+      <span className="m-tl__time-total">
+        <span className="m-tl__time-sep">/</span>
+        <ReduxTime isCustom name="endTime" format="mm:ss" />
+      </span>
     </>
   );
   const modes: { mode: ITimeMode; label: string; value: React.ReactNode }[] = [

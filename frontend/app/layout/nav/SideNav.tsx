@@ -8,7 +8,6 @@ import {
   Bot,
   ChartColumn,
   ChevronsUpDown,
-  CircleHelp,
   CreditCard,
   Database,
   Film,
@@ -32,7 +31,6 @@ import React, { type ComponentType, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useModal } from 'App/components/Modal';
-import SupportModal from 'App/layout/SupportModal';
 import { MENU, PREFERENCES_MENU } from 'App/layout/data';
 import { useStore } from 'App/mstore';
 import { hasSiteId, siteChangeAvailable } from 'App/routes';
@@ -54,6 +52,7 @@ import AccountMenu from './AccountMenu';
 import { NavFlyout } from './NavFlyout';
 import { NavItem } from './NavItem';
 import { NavSections } from './NavSections';
+import NavSupport from './NavSupport';
 import { ThemeToggle } from './ThemeToggle';
 import UserMenu from './UserMenu';
 import { prefetchRoute } from './prefetchRoutes';
@@ -157,7 +156,6 @@ function SideNav({ collapsed, onToggleCollapsed, onNavigated }: SideNavProps) {
 
   const [accountOpen, setAccountOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
-  const [supportOpen, setSupportOpen] = useState(false);
 
   const go = (path: string) => {
     navigate(path);
@@ -215,7 +213,6 @@ function SideNav({ collapsed, onToggleCollapsed, onNavigated }: SideNavProps) {
             <span className="m-nav__account-name m-truncate">
               {projectLabel}
             </span>
-            <span className="m-nav__account-org m-truncate">{org}</span>
           </span>
           <ChevronsUpDown
             size={13}
@@ -337,16 +334,8 @@ function SideNav({ collapsed, onToggleCollapsed, onNavigated }: SideNavProps) {
               {unread && <span className="m-dot" />}
             </button>
           </Tooltip>
-          <Tooltip title={t('Support')} side="right">
-            <button
-              type="button"
-              className="m-nav__tool"
-              aria-label={t('Support')}
-              onClick={() => setSupportOpen(true)}
-            >
-              <CircleHelp size={15} aria-hidden="true" />
-            </button>
-          </Tooltip>
+          <NavSupport />
+          {hasHealth && account.name ? <HealthStatus /> : null}
           <SaasHeaderMenuItems />
           <ThemeToggle className="m-nav__tool" />
           <UserMenu
@@ -365,15 +354,8 @@ function SideNav({ collapsed, onToggleCollapsed, onNavigated }: SideNavProps) {
             </button>
           </UserMenu>
         </div>
-        {hasHealth ? (
-          account.name ? (
-            <HealthStatus variant="row" />
-          ) : null
-        ) : (
-          <RecordingsMeter />
-        )}
+        {hasHealth ? null : <RecordingsMeter />}
       </div>
-      <SupportModal onClose={() => setSupportOpen(false)} open={supportOpen} />
     </nav>
   );
 }

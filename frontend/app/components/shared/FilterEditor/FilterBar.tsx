@@ -225,7 +225,7 @@ function FilterBar({
         {any && !collapsed && (
           <>
             <div className="m-fchips__head">
-              <span className="m-fchips__head-name">{t('Events')}</span>
+              <span className="m-fchips__head-name">{t('Filters')}</span>
               {events.length > 0 && (
                 <OrderWord
                   value={eventsOrder}
@@ -261,7 +261,7 @@ function FilterBar({
                   ref={addEvents}
                 >
                   <AddControl
-                    label={t('Add event')}
+                    label={t('Add filter')}
                     plus
                     onOpen={(typed) => openPanel('event', typed)}
                     expanded={open === 'event'}
@@ -271,7 +271,9 @@ function FilterBar({
             )}
 
             <div className="m-fchips__head">
-              <span className="m-fchips__head-name">{t('Group filters')}</span>
+              <span className="m-fchips__head-name">
+                {t('Group properties')}
+              </span>
               {events.length > 0 && (
                 <Tooltip title={t('Applied to every event above')}>
                   <span
@@ -300,7 +302,7 @@ function FilterBar({
                 ref={addGroup}
               >
                 <AddControl
-                  label={t('Add group filter')}
+                  label={t('Add group property')}
                   plus
                   onOpen={(typed) => openPanel('group', typed)}
                   expanded={open === 'group'}
@@ -343,9 +345,9 @@ function FilterBar({
           anchorRef={anchorRef}
           placeholder={
             open === 'event'
-              ? t('Search events')
+              ? t('Search filters')
               : open === 'group'
-                ? t('Search group filters')
+                ? t('Search group properties')
                 : undefined
           }
         />

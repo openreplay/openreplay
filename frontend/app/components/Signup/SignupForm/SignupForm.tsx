@@ -1,3 +1,4 @@
+import { ExternalLink } from '@/ui/actions/ExternalLink';
 import { Button } from '@/ui/actions/button';
 import { Notice } from '@/ui/feedback/Notice';
 import { Field } from '@/ui/inputs/Field';
@@ -168,23 +169,13 @@ function SignupForm() {
         </Button>
         <p className="m-auth__aside">
           {t('By signing up, you agree to our')}{' '}
-          <a
-            className="m-auth__link"
-            href={LEGAL.terms}
-            target="_blank"
-            rel="noreferrer"
-          >
+          <ExternalLink className="m-auth__link" href={LEGAL.terms}>
             {t('terms of service')}
-          </a>{' '}
+          </ExternalLink>{' '}
           {t('and')}{' '}
-          <a
-            className="m-auth__link"
-            href={LEGAL.privacy}
-            target="_blank"
-            rel="noreferrer"
-          >
+          <ExternalLink className="m-auth__link" href={LEGAL.privacy}>
             {t('privacy policy')}
-          </a>
+          </ExternalLink>
           .
         </p>
       </div>

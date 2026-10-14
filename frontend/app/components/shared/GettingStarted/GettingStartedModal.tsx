@@ -1,3 +1,4 @@
+import { ExternalArrow } from '@/ui/actions/ExternalLink';
 import { Button } from '@/ui/actions/button';
 import { DrawerHeader, Section } from '@/ui/overlays/EntityDrawer';
 import {
@@ -126,6 +127,7 @@ function StepRow({
           >
             <BookOpen size={13} />
             {t('Docs')}
+            <ExternalArrow size={13} />
           </Button>
         )}
         {!isDone && (

@@ -260,3 +260,36 @@
   flex: none;
   height: 1.125rem;
 }
+
+/* phone: two lines in the subject cell, the avatar spanning both; the name on
+   the first, when, how long and the metadata on the second */
+:root[data-viewport='phone'] .m-ss__who {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: 'avatar name live' 'avatar line2 line2';
+  column-gap: var(--m-space-3);
+  row-gap: 2px;
+}
+:root[data-viewport='phone'] .m-ss__who > :first-child {
+  grid-area: avatar;
+}
+:root[data-viewport='phone'] .m-ss__who > .m-ss__name {
+  grid-area: name;
+}
+:root[data-viewport='phone'] .m-ss__who > .m-ss__live,
+:root[data-viewport='phone'] .m-ss__who > .m-chip {
+  grid-area: live;
+}
+.m-ss__line2 {
+  grid-area: line2;
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-3);
+  min-width: 0;
+  font-size: var(--m-text-2xs);
+  color: var(--m-content-muted);
+}
+.m-ss__line2 .m-ss__fig {
+  font-size: var(--m-text-2xs);
+  color: var(--m-content-muted);
+}

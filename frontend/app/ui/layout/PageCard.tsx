@@ -50,10 +50,13 @@ export function PageCard({
           </Button>
         )}
         <div className="m-page__lead">
-          <h1 className="m-page__title">{title}</h1>
+          {/* the meta is a fact about the title: it rides the title's line */}
+          <div className="m-page__titlerow">
+            <h1 className="m-page__title">{title}</h1>
+            {meta != null && <span className="m-page__meta">{meta}</span>}
+          </div>
           {subtitle && <p className="m-page__sub">{subtitle}</p>}
         </div>
-        {meta != null && <span className="m-page__meta">{meta}</span>}
         {lede}
         {actions && <div className="m-page__actions">{actions}</div>}
       </header>

@@ -78,6 +78,13 @@ function Projects() {
       ? t('You have reached site limit.')
       : undefined;
 
+  // when delete is off, its tooltip says why
+  const deleteBlocked = !isAdmin
+    ? t('Only an admin can delete a project')
+    : projectsStore.list.length < 2
+      ? t('Can’t delete the only project')
+      : undefined;
+
   const addProject = () =>
     openModal(<ProjectForm onClose={closeModal} />, {
       title: t('Add project'),
@@ -181,11 +188,12 @@ function Projects() {
                   </span>
                   <IconButton
                     icon={<Trash2 size={14} />}
-                    label={t('Delete {{name}}', { name: project.name })}
-                    variant="ghost"
-                    disabled={
-                      !userStore.isAdmin || projectsStore.list.length < 2
+                    label={
+                      deleteBlocked ??
+                      t('Delete {{name}}', { name: project.name })
                     }
+                    variant="ghost"
+                    disabled={!!deleteBlocked}
                     onClick={() => setDeleting(true)}
                   />
                 </div>
@@ -266,6 +274,8 @@ const ThisProject = observer(({ project }: { project: Project }) => {
   const [name, setName] = React.useState(project.name);
   const [platform, setPlatform] = React.useState(project.platform);
   const dirty = name.trim() !== project.name || platform !== project.platform;
+  // the fields lead nowhere without the right to save them
+  const locked = !userStore.isAdmin;
 
   const save = () =>
     projectsStore
@@ -280,14 +290,19 @@ const ThisProject = observer(({ project }: { project: Project }) => {
   return (
     <PrefBlock
       title={t('This project')}
-      hint={t(
-        'The name is yours and changes nothing; the key never changes at all.',
-      )}
+      hint={
+        locked
+          ? t('Only an admin can rename the project or change its type.')
+          : t(
+              'The name is yours and changes nothing; the key never changes at all.',
+            )
+      }
     >
       <PrefField label={t('Project name')}>
         <Input
           value={name}
           maxLength={40}
+          disabled={locked}
           onChange={(e) => setName(e.target.value)}
         />
       </PrefField>
@@ -302,8 +317,8 @@ const ThisProject = observer(({ project }: { project: Project }) => {
           onChange={setPlatform}
           ariaLabel={t('Project type')}
           options={[
-            { value: 'web', label: t('Web') },
-            { value: 'ios', label: t('Mobile') },
+            { value: 'web', label: t('Web'), disabled: locked },
+            { value: 'ios', label: t('Mobile'), disabled: locked },
           ]}
         />
       </PrefField>

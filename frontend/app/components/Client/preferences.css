@@ -603,3 +603,51 @@
   align-items: center;
   gap: var(--m-space-3);
 }
+
+/* an integration's side panel (IntegrationPane): the vendor mark on the
+   cards' own white tile beside the category and name */
+.m-int__mark {
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--m-border-subtle);
+}
+.m-int__blurb {
+  margin: 0 0 var(--m-space-3);
+  font-size: var(--m-text-sm);
+  color: var(--m-content-secondary);
+  line-height: var(--m-leading-snug);
+}
+.m-int__blurb:last-child {
+  margin-bottom: 0;
+}
+.m-int__stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-space-3);
+}
+.m-int__sub {
+  margin: var(--m-space-2) 0 0;
+  font-size: var(--m-text-sm);
+  font-weight: 500;
+  color: var(--m-content-primary);
+}
+.m-int__docs {
+  font-size: var(--m-text-sm);
+  color: var(--m-content-primary);
+  text-decoration: underline;
+  text-decoration-color: var(--m-border-strong);
+  text-underline-offset: 3px;
+}
+.m-int__docs:hover {
+  text-decoration-color: currentColor;
+}
+.m-int__fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-space-5);
+}
+.m-int__scope {
+  margin: 0;
+  font-size: var(--m-text-sm);
+  color: var(--m-content-secondary);
+}

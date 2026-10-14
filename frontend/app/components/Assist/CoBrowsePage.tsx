@@ -1,4 +1,5 @@
 import usePageTitle from '@/hooks/usePageTitle';
+import { ExternalArrow } from '@/ui/actions/ExternalLink';
 import { IconButton } from '@/ui/actions/IconButton';
 import { Button } from '@/ui/actions/button';
 import {
@@ -31,7 +32,6 @@ import {
   Play,
   Plug,
   RefreshCw,
-  SquareArrowOutUpRight,
   Trash2,
 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
@@ -290,7 +290,7 @@ export const LiveSection = observer(
                       rel="noreferrer"
                     >
                       {t('Assist plugin docs')}
-                      <SquareArrowOutUpRight size={13} aria-hidden="true" />
+                      <ExternalArrow size={13} />
                     </a>
                   </Button>
                 }

@@ -24,3 +24,11 @@
   padding: 0;
   border-top: 0;
 }
+
+/* phone: the pager keeps its cells and drops the "go to" field */
+:root[data-viewport='phone'] .m-listfoot {
+  padding-inline: var(--m-space-4);
+}
+:root[data-viewport='phone'] .m-pager__goto {
+  display: none;
+}

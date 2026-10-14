@@ -164,9 +164,12 @@ class NamedIntegrationStore<T extends Integration> {
     }
   };
 
-  saveIntegration = async (name: string, siteId?: string): Promise<void> => {
+  saveIntegration = async (
+    name: string,
+    siteId?: string,
+  ): Promise<{ errors?: string[] } | undefined> => {
     if (!this.instance) return;
-    await integrationsService.saveIntegration(
+    return integrationsService.saveIntegration(
       this.name ?? name,
       this.instance.toData(),
       siteId,

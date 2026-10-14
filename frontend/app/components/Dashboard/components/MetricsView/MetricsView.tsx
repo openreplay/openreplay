@@ -50,7 +50,9 @@ function MetricsView({ siteId }: { siteId: string }) {
   const cards = metricStore.filteredCards;
   const [query, setQuery] = React.useState<string>(filter.query ?? '');
   const [loaded, setLoaded] = React.useState(false);
-  const [adding, setAdding] = React.useState(false);
+  // which "Create card" is open: the head's and the empty state's are two
+  // popovers, so each needs its own state or opening one closes both
+  const [adding, setAdding] = React.useState<'head' | 'empty' | null>(null);
   const [renaming, setRenaming] = React.useState<Widget | null>(null);
   const [deleting, setDeleting] = React.useState<Widget | null>(null);
 
@@ -194,15 +196,20 @@ function MetricsView({ siteId }: { siteId: string }) {
     },
   ];
 
-  const createCard = (variant: 'primary' | 'secondary') => (
+  const createCard = (at: 'head' | 'empty') => (
     <PopoverPanel
-      open={adding}
-      onOpenChange={setAdding}
-      placement="bottomRight"
+      open={adding === at}
+      onOpenChange={(o) => setAdding(o ? at : null)}
+      placement={at === 'head' ? 'bottomRight' : 'bottomLeft'}
       className="p-5"
-      content={<AddCardSection inCards handleOpenChange={setAdding} />}
+      content={
+        <AddCardSection
+          inCards
+          handleOpenChange={(o) => setAdding(o ? at : null)}
+        />
+      }
     >
-      <Button variant={variant}>
+      <Button variant={at === 'head' ? 'primary' : 'secondary'}>
         <Plus size={14} />
         {t('Create card')}
       </Button>
@@ -225,7 +232,7 @@ function MetricsView({ siteId }: { siteId: string }) {
               }}
             />
           )}
-          {createCard('primary')}
+          {createCard('head')}
         </>
       }
       toolbar={
@@ -259,7 +266,7 @@ function MetricsView({ siteId }: { siteId: string }) {
           hint={t(
             'A card asks one question of your sessions: a trend, a funnel, a journey, a heatmap. Make one here, then put it on any dashboard.',
           )}
-          action={createCard('secondary')}
+          action={createCard('empty')}
         />
       ) : cards.length === 0 ? (
         <EmptyState

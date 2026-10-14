@@ -289,8 +289,8 @@
 .m-page:has(> .m-page__body > .m-cardp) > .m-page__head,
 .m-page:has(> .m-page__body .m-dash__grid) > .m-page__head {
   display: grid;
-  grid-template-columns: auto auto 1fr;
-  grid-template-areas: 'back back back' 'lead meta actions';
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'back back' 'lead actions';
   align-items: center;
   row-gap: var(--m-space-3);
   padding-top: var(--m-space-4);
@@ -304,10 +304,6 @@
 .m-page:has(> .m-page__body > .m-cardp) > .m-page__head > .m-page__lead,
 .m-page:has(> .m-page__body .m-dash__grid) > .m-page__head > .m-page__lead {
   grid-area: lead;
-}
-.m-page:has(> .m-page__body > .m-cardp) > .m-page__head > .m-page__meta,
-.m-page:has(> .m-page__body .m-dash__grid) > .m-page__head > .m-page__meta {
-  grid-area: meta;
 }
 .m-page:has(> .m-page__body > .m-cardp) > .m-page__head > .m-page__actions,
 .m-page:has(> .m-page__body .m-dash__grid) > .m-page__head > .m-page__actions {
@@ -476,6 +472,15 @@
   flex-wrap: wrap;
   padding: var(--m-space-2) var(--m-space-4);
   border-bottom: 1px solid var(--m-border-subtle);
+}
+/* one size, one stroke and one ink for every glyph on the row, active or not */
+[data-slot='card-toolbar'] button svg {
+  stroke-width: 1.75;
+  color: var(--m-content-muted);
+}
+[data-slot='card-toolbar'] button svg:not(.lucide-chevron-down) {
+  width: 13px;
+  height: 13px;
 }
 .m-cardp__toolbar-left,
 .m-cardp__toolbar-right {
@@ -766,10 +771,9 @@
 .m-dash__widget.is-full {
   grid-column: span 2;
 }
-@media (max-width: 1100px) {
-  .m-dash__widget {
-    grid-column: span 2;
-  }
+:root[data-viewport='narrow'] .m-dash__widget,
+:root[data-viewport='phone'] .m-dash__widget {
+  grid-column: span 2;
 }
 .m-dash__widget.is-dragging {
   opacity: 0.5;
@@ -830,4 +834,33 @@
   gap: var(--m-space-3);
   padding: var(--m-space-3) var(--m-space-6);
   border-top: 1px solid var(--m-border-subtle);
+}
+
+/* phone: a nav bar's grammar, the way back and the verbs on the top row, the
+   title with its kind under them; the card page is one column */
+:root[data-viewport='phone']
+  .m-page:has(> .m-page__body > .m-cardp)
+  > .m-page__head,
+:root[data-viewport='phone']
+  .m-page:has(> .m-page__body .m-dash__grid)
+  > .m-page__head {
+  grid-template-areas: 'back actions' 'lead lead';
+  column-gap: var(--m-space-3);
+}
+:root[data-viewport='phone']
+  .m-page:has(> .m-page__body > .m-cardp)
+  > .m-page__head
+  > .m-page__actions,
+:root[data-viewport='phone']
+  .m-page:has(> .m-page__body .m-dash__grid)
+  > .m-page__head
+  > .m-page__actions {
+  flex-wrap: nowrap;
+}
+:root[data-viewport='phone'] .m-cardp--left,
+:root[data-viewport='phone'] .m-cardp--right {
+  grid-template-columns: minmax(0, 1fr);
+}
+:root[data-viewport='phone'] .m-cardp--right > :first-child {
+  order: 0;
 }
