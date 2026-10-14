@@ -127,7 +127,8 @@ func (h *handlersImpl) autocompleteProperties(r *api.RequestContext) (any, int, 
 	}
 
 	if qv.Get("live") == "true" {
-		if strings.HasPrefix(propertyName, "metadata_") {
+		source := qv.Get("source")
+		if (source == "metadata" || source == "metadatas") && strings.HasPrefix(propertyName, "metadata_") {
 			index, err := strconv.Atoi(strings.TrimPrefix(propertyName, "metadata_"))
 			if err != nil || index < 1 || index > 10 || propertyName != "metadata_"+strconv.Itoa(index) {
 				return nil, http.StatusBadRequest, errInvalidMetadataProperty

@@ -157,6 +157,61 @@ func TestLiveAutocompleteOrdinaryPropertyUnchanged(t *testing.T) {
 	}
 }
 
+func TestLiveAutocompleteMetadataPrefixOutsideMetadataSource(t *testing.T) {
+	for _, source := range []string{"", "sessions", "users", "events"} {
+		for _, property := range []string{"metadata_custom", "metadata_7"} {
+			t.Run(source+"/"+property, func(t *testing.T) {
+				want := []map[string]interface{}{{"value": "demo"}}
+				h := handlersImpl{
+					projects: autocompleteProjects{get: func(uint32) (*projects.Project, error) {
+						t.Error("ordinary properties must not look up metadata slots")
+						key := "tenant_id"
+						return &projects.Project{Metadata7: &key}, nil
+					}},
+					assist: autocompleteAssist{call: func(id uint32, q, key string) ([]map[string]interface{}, error) {
+						if id != 3 || q != "demo" || key != property {
+							t.Errorf("unexpected Assist arguments: %d %q %q", id, q, key)
+						}
+						return want, nil
+					}},
+				}
+				r := autocompleteRequest(3, property, "demo", true)
+				params := r.Request.URL.Query()
+				params.Set("source", source)
+				r.Request.URL.RawQuery = params.Encode()
+				got, status, err := h.autocompleteProperties(r)
+				if err != nil || status != 0 || !reflect.DeepEqual(got, want) {
+					t.Fatalf("got (%v, %d, %v), want unchanged suggestions", got, status, err)
+				}
+			})
+		}
+	}
+}
+
+func TestLiveMetadataAutocompletePluralSource(t *testing.T) {
+	key := "tenant_id"
+	want := []map[string]interface{}{{"value": "demo"}}
+	h := handlersImpl{
+		projects: autocompleteProjects{get: func(uint32) (*projects.Project, error) {
+			return &projects.Project{Metadata7: &key}, nil
+		}},
+		assist: autocompleteAssist{call: func(id uint32, q, property string) ([]map[string]interface{}, error) {
+			if id != 3 || q != "demo" || property != key {
+				t.Fatalf("unexpected Assist arguments: %d %q %q", id, q, property)
+			}
+			return want, nil
+		}},
+	}
+	r := autocompleteRequest(3, "metadata_7", "demo", true)
+	params := r.Request.URL.Query()
+	params.Set("source", "metadatas")
+	r.Request.URL.RawQuery = params.Encode()
+	got, status, err := h.autocompleteProperties(r)
+	if err != nil || status != 0 || !reflect.DeepEqual(got, want) {
+		t.Fatalf("got (%v, %d, %v), want suggestions for metadata alias", got, status, err)
+	}
+}
+
 type recordedAutocompleteCatalog struct {
 	filters_catalog.FiltersCatalog
 	t *testing.T
