@@ -64,6 +64,26 @@ func SplitSessionFilters(filters []model.Filter) (onEvents, sessionOnly []model.
 	return
 }
 
+// TranslateDeviceValuesForEvents converts user_device_type filter values to
+// the events-table "$device" vocabulary: experimental.sessions stores
+// desktop/mobile/tablet while product_analytics.events "$device" stores
+// web/ios/android. "desktop" becomes "web" and "mobile" expands to
+// "ios"+"android"; other values pass through unchanged.
+func TranslateDeviceValuesForEvents(values []string) []string {
+	out := make([]string, 0, len(values)+1)
+	for _, v := range values {
+		switch v {
+		case "desktop":
+			out = append(out, "web")
+		case "mobile":
+			out = append(out, "ios", "android")
+		default:
+			out = append(out, v)
+		}
+	}
+	return out
+}
+
 // BuildSessionConditionsOnEvents renders session-level filters against their
 // events-table columns on the given table alias. Filters without an events
 // equivalent are ignored; split them out with SplitSessionFilters first.

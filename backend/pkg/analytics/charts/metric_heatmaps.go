@@ -122,8 +122,7 @@ func (h *HeatmapQueryBuilder) buildMatchingSessionsClause(p *Payload, qp *Params
 
 	return fmt.Sprintf(
 		"e.session_id IN (SELECT DISTINCT l.session_id FROM product_analytics.events AS l%s WHERE %s)",
-		subJoin,
-		strings.Join(subBase, "\n\tAND "),
+		subJoin, strings.Join(subBase, "\n\tAND "),
 	)
 }
 
