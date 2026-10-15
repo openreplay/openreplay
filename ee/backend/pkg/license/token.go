@@ -2,9 +2,10 @@ package license
 
 import (
 	"crypto/ed25519"
+	"crypto/x509"
 	"encoding/base64"
-	"encoding/hex"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"strings"
@@ -17,9 +18,11 @@ const (
 	MaxClockSkew   = 24 * time.Hour
 )
 
-// publicKeys maps kid -> raw Ed25519 public key, hex encoded
+// publicKeys maps kid -> PEM encoded Ed25519 public key
 var publicKeys = map[string]string{
-	"2026-10": "03e60cef1dbb63a2ee76e8655639b3499d849dec20f5bd1b11b5de3d6a79d0dc",
+	"25d36fbe": `-----BEGIN PUBLIC KEY-----
+MCowBQYDK2VwAyEAbP4b2Or2Xll/XHEbGvvYRhef22OnXaXXkfufbPHcuNI=
+-----END PUBLIC KEY-----`,
 }
 
 type Payload struct {
@@ -57,6 +60,22 @@ func IsToken(s string) bool {
 	return strings.HasPrefix(s, TokenPrefix+".")
 }
 
+func ParsePublicKey(pemStr string) (ed25519.PublicKey, error) {
+	block, _ := pem.Decode([]byte(pemStr))
+	if block == nil || block.Type != "PUBLIC KEY" {
+		return nil, errors.New("not a PEM public key")
+	}
+	key, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+	pub, ok := key.(ed25519.PublicKey)
+	if !ok {
+		return nil, errors.New("not an Ed25519 public key")
+	}
+	return pub, nil
+}
+
 func Parse(token string, keys map[string]string) (*License, error) {
 	if !IsToken(token) {
 		return nil, errors.New("not a license token")
@@ -78,15 +97,15 @@ func Parse(token string, keys map[string]string) (*License, error) {
 	if err := json.Unmarshal(payloadRaw, &p); err != nil {
 		return nil, fmt.Errorf("malformed payload: %v", err)
 	}
-	pubHex, ok := keys[p.Kid]
+	pubPEM, ok := keys[p.Kid]
 	if p.Kid == "" || !ok {
 		return nil, fmt.Errorf("unknown signing key: %q", p.Kid)
 	}
-	pub, err := hex.DecodeString(pubHex)
-	if err != nil || len(pub) != ed25519.PublicKeySize {
-		return nil, fmt.Errorf("invalid public key for %s", p.Kid)
+	pub, err := ParsePublicKey(pubPEM)
+	if err != nil {
+		return nil, fmt.Errorf("invalid public key for %s: %v", p.Kid, err)
 	}
-	if len(signature) != ed25519.SignatureSize || !ed25519.Verify(ed25519.PublicKey(pub), payloadRaw, signature) {
+	if len(signature) != ed25519.SignatureSize || !ed25519.Verify(pub, payloadRaw, signature) {
 		return nil, errors.New("invalid signature")
 	}
 

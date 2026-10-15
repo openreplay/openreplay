@@ -6,10 +6,13 @@ from dataclasses import dataclass
 from typing import Optional
 
 from cryptography.exceptions import InvalidSignature
+from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
 PUBLIC_KEYS = {
-    "2026-10": "03e60cef1dbb63a2ee76e8655639b3499d849dec20f5bd1b11b5de3d6a79d0dc",
+    "25d36fbe": """-----BEGIN PUBLIC KEY-----
+MCowBQYDK2VwAyEAbP4b2Or2Xll/XHEbGvvYRhef22OnXaXXkfufbPHcuNI=
+-----END PUBLIC KEY-----""",
 }
 
 PREFIX = "OR1"
@@ -50,6 +53,13 @@ def _b64decode(data: str) -> bytes:
         raise LicenseTokenError(f"malformed base64: {e}") from e
 
 
+def load_public_key(pem: str) -> Ed25519PublicKey:
+    key = serialization.load_pem_public_key(pem.encode())
+    if not isinstance(key, Ed25519PublicKey):
+        raise ValueError("not an Ed25519 public key")
+    return key
+
+
 def _required_int(payload: dict, key: str) -> int:
     value = payload.get(key)
     if isinstance(value, bool) or not isinstance(value, int) or value < 0:
@@ -78,12 +88,13 @@ def parse(token: str, public_keys: Optional[dict] = None) -> License:
     if not isinstance(kid, str) or kid not in public_keys:
         raise LicenseTokenError(f"unknown signing key: {kid}")
     try:
-        public_key = Ed25519PublicKey.from_public_bytes(bytes.fromhex(public_keys[kid]))
+        public_key = load_public_key(public_keys[kid])
+    except (ValueError, TypeError) as e:
+        raise LicenseTokenError(f"invalid public key for {kid}: {e}") from e
+    try:
         public_key.verify(signature, payload_raw)
     except InvalidSignature:
         raise LicenseTokenError("invalid signature") from None
-    except ValueError as e:
-        raise LicenseTokenError(f"invalid public key for {kid}: {e}") from e
 
     issued_at = _required_int(payload, "issued_at")
     expires_at = _required_int(payload, "expires_at")
