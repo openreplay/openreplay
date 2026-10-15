@@ -1,5 +1,6 @@
 import { useStore } from '@/mstore';
-import { FilterCategory, FilterKey, FilterType } from 'Types/filter/filterType';
+import { getPropertyName } from '@/mstore/filterStore';
+import { FilterType } from 'Types/filter/filterType';
 import { Input, Select } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -95,14 +96,10 @@ function FilterValue(props: Props) {
     }
 
     if (!filter.isEvent) {
-      baseParams.propertyName = filter.name;
+      baseParams.propertyName = getPropertyName(filter, props.isLive);
       if (filter.eventName) {
         baseParams.eventName = filter.eventName;
       }
-    }
-
-    if (filter.category === FilterCategory.METADATA) {
-      baseParams = { type: FilterKey.METADATA, key: filter.key };
     }
 
     if (isRoute(ASSIST_ROUTE, window.location.pathname)) {
@@ -113,6 +110,7 @@ function FilterValue(props: Props) {
   }, [
     filter.key,
     filter.name,
+    filter.displayName,
     filter.isEvent,
     filter.id,
     filter.category,
@@ -120,6 +118,7 @@ function FilterValue(props: Props) {
     filter.isPredefined,
     filter.possibleValues,
     eventName,
+    props.isLive,
   ]);
 
   const handleNumberInputBlur = useCallback(

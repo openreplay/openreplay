@@ -1,4 +1,4 @@
-import { TopValue } from '@/mstore/filterStore';
+import { TopValue, getTopValuesKey } from '@/mstore/filterStore';
 import { CloseCircleFilled, RedoOutlined } from '@ant-design/icons';
 import {
   Button,
@@ -156,12 +156,8 @@ const ValueAutoComplete = observer(
       }
       return val;
     };
-    const filterKey = useMemo(() => {
-      if (!projectsStore.siteId || !params.id) return null;
-      return `${projectsStore.siteId}_${params.id}`;
-    }, [projectsStore.siteId, params.id]);
-
-    const topValues: TopValue[] = filterStore.topValues[params.id] || [];
+    const topValues: TopValue[] =
+      filterStore.topValues[getTopValuesKey(params.id, isLive)] || [];
 
     const mappedTopValues: OptionType[] = useMemo(() => {
       return topValues
@@ -187,8 +183,8 @@ const ValueAutoComplete = observer(
       if (
         showValueModal &&
         !params.isEvent &&
-        filterKey &&
-        !filterStore.topValues[filterKey]
+        projectsStore.siteId &&
+        params.id
       ) {
         setLoadingTopValues(true);
         filterStore
@@ -198,7 +194,7 @@ const ValueAutoComplete = observer(
       }
     }, [
       showValueModal,
-      filterKey,
+      isLive,
       params.id,
       params.name,
       projectsStore.siteId,
