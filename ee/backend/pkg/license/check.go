@@ -17,7 +17,7 @@ import (
 const (
 	licenseServerURL       = "https://api.openreplay.com/license/validate"
 	licenseServerTimeout   = 10 * time.Second
-	recheckInterval        = time.Hour
+	recheckInterval        = 24 * time.Hour
 	maxConsecutiveFailures = 3
 )
 
