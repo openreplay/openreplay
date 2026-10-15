@@ -78,6 +78,7 @@ type User struct {
 	FirstEventAt  time.Time              `ch:"$first_event_at"`
 	LastSeen      time.Time              `ch:"$last_seen"`
 	Deleted       uint8                  `ch:"_deleted"`
+	Timestamp     time.Time              `ch:"_timestamp"`
 }
 
 var defaultUserProperties = map[string]struct{}{
