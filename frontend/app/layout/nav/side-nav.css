@@ -58,6 +58,83 @@
   white-space: nowrap;
 }
 
+/* open, the collapse is the row's last glyph, its tile on the foot's right edge */
+.m-nav__collapse {
+  margin-left: auto;
+  margin-right: calc(-1 * var(--m-space-4));
+  flex: none;
+  overflow: hidden;
+}
+
+/* the mark's own box: always the 28px tile, so narrow it matches the glyphs
+   below; open, the negative margins give back what the tile adds, so the mark
+   does not move when it gets a box (it is 0.88 of `--m-brand` wide) */
+.m-nav__brand-toggle {
+  --m-brand-pad: calc((1.75rem - 0.88 * var(--m-brand)) / -2);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-inline: var(--m-brand-pad);
+  border-radius: var(--m-radius-control);
+  pointer-events: none;
+  transition:
+    margin var(--m-duration-normal) var(--m-ease-out),
+    background-color var(--m-duration-instant) var(--m-ease-out);
+}
+.m-nav.is-collapsed .m-nav__brand-toggle {
+  margin-inline: 0;
+  pointer-events: auto;
+  cursor: pointer;
+}
+.m-nav.is-collapsed .m-nav__brand-toggle:hover {
+  background: var(--m-nav-row-hover);
+}
+.m-nav__brand-toggle:focus-visible {
+  outline: 2px solid var(--m-focus-ring);
+  outline-offset: -2px;
+}
+
+/* narrow, the expand glyph crossfades in over the mark in the same box */
+.m-nav__brand-toggle .m-nav__mark,
+.m-nav__brand-open {
+  transition: opacity var(--m-duration-fast) var(--m-ease-out);
+}
+.m-nav__brand-open {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  opacity: 0;
+  color: var(--m-content-secondary);
+}
+.m-nav.is-collapsed
+  .m-nav__brand-toggle:is(:hover, :focus-visible)
+  .m-nav__mark {
+  opacity: 0;
+}
+.m-nav.is-collapsed
+  .m-nav__brand-toggle:is(:hover, :focus-visible)
+  .m-nav__brand-open {
+  opacity: 1;
+}
+
+/* the logo's own hover stays still while the control under the cursor answers */
+.m-nav.is-collapsed [data-mark-host]:is(:hover, :focus-within) .m-ormark__fill,
+.m-nav
+  [data-mark-host]:has(.m-nav__collapse:is(:hover, :focus-visible))
+  .m-ormark__fill {
+  transform: none;
+}
+.m-nav.is-collapsed [data-mark-host]:is(:hover, :focus-within) .m-ormark__eye,
+.m-nav
+  [data-mark-host]:has(.m-nav__collapse:is(:hover, :focus-visible))
+  .m-ormark__eye {
+  opacity: 0;
+}
+
 .m-nav__account {
   display: flex;
   align-items: center;
@@ -76,14 +153,29 @@
   overflow: hidden;
   transition:
     background-color var(--m-duration-instant) var(--m-ease-out),
+    box-shadow var(--m-duration-fast) var(--m-ease-out),
     width var(--m-duration-normal) var(--m-ease-out),
     height var(--m-duration-normal) var(--m-ease-out),
     gap var(--m-duration-normal) var(--m-ease-out),
     padding var(--m-duration-normal) var(--m-ease-out);
 }
+/* reached for, the switcher lifts: a hairline edge and the menu's only shadow;
+   on the dark ground the lift comes from a top highlight instead */
+.m-nav {
+  --m-account-lift:
+    inset 0 0 0 1px var(--m-border-strong),
+    0 1px 2px -1px rgb(var(--m-shadow-color) / 0.16),
+    0 3px 8px -3px rgb(var(--m-shadow-color) / 0.14);
+}
+:root.dark .m-nav {
+  --m-account-lift:
+    inset 0 0 0 1px var(--m-border-strong),
+    inset 0 1px 0 rgb(255 255 255 / 0.07), 0 2px 8px -2px rgb(0 0 0 / 0.7);
+}
 .m-nav__account:hover,
-.m-nav__account.is-open {
+.m-nav .m-nav__account.is-open {
   background: var(--m-nav-row-hover);
+  box-shadow: var(--m-account-lift);
 }
 
 .m-nav__account-badge {
@@ -161,9 +253,17 @@
   transition-delay: 0s;
 }
 
+/* the collapse folds with the wordmark: same widths, same fade */
+.m-nav.is-collapsed .m-nav__collapse {
+  max-width: 0;
+  width: 0;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .m-nav.is-collapsed .m-nav__brand,
-.m-nav.is-collapsed .m-nav__account,
-.m-nav.is-collapsed .m-nav__tools {
+.m-nav.is-collapsed .m-nav__account {
   justify-content: center;
 }
 .m-nav.is-collapsed .m-nav__sep,
@@ -246,13 +346,13 @@
 }
 
 .m-nav__rail-light {
-  --m-lt-len: calc(0.9rem + 0.75rem * var(--m-rail-on));
-  --m-lt-spread: calc(0.7rem + 0.55rem * var(--m-rail-on));
+  --m-lt-len: calc(0.6rem + 0.3rem * var(--m-rail-on));
+  --m-lt-spread: calc(0.35rem + 0.2rem * var(--m-rail-on));
   top: 0;
   left: calc(var(--m-border-width) * -0.5);
   width: 0;
   height: 0;
-  opacity: var(--m-rail-on);
+  opacity: calc(var(--m-rail-on) * 0.3);
   transform: translateY(var(--m-rail-y));
 }
 
@@ -270,23 +370,13 @@
   padding-top: var(--m-space-5);
 }
 
+/* edge to edge, and a grid so it still folds as the width animates: auto-fit
+   drops the empty tracks, space-between spreads the filled ones */
 .m-nav__tools {
   display: grid;
-  grid-template-columns: repeat(auto-fill, 1.75rem);
+  grid-template-columns: repeat(auto-fit, 1.75rem);
   gap: var(--m-space-2);
-  justify-content: start;
-  padding-inline: var(--m-space-2);
-  transition: padding var(--m-duration-normal) var(--m-ease-out);
-}
-
-.m-nav.is-collapsed .m-nav__tools {
-  padding-inline: 0;
-}
-/* expanded, the tools are one line spread over the column */
-.m-nav:not(.is-collapsed) .m-nav__tools {
-  display: flex;
   justify-content: space-between;
-  padding-inline: 0;
 }
 
 .m-nav__tool {
@@ -317,23 +407,33 @@
   left: calc(50% + 2px);
 }
 
+/* the same tile and hover as the tools, with the 24px circle drawn inside it */
 .m-nav__avatar {
+  --m-avatar-fill: var(--m-surface-active);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 1.75rem;
   height: 1.75rem;
-  padding: 2px;
-  border-radius: var(--m-radius-full);
-  background: var(--m-surface-active);
-  background-clip: content-box;
+  border-radius: var(--m-radius-control);
+  background-image: radial-gradient(
+    circle closest-side,
+    var(--m-avatar-fill) calc(100% - 2.5px),
+    transparent calc(100% - 2px)
+  );
   color: var(--m-content-secondary);
   font-size: var(--m-text-2xs);
   font-weight: var(--m-weight-medium);
+  transition:
+    background-color var(--m-duration-instant) var(--m-ease-out),
+    color var(--m-duration-instant) var(--m-ease-out);
 }
-
+.m-nav__avatar:hover {
+  background-color: var(--m-nav-row-hover);
+  color: var(--m-content-primary);
+}
 .m-nav__avatar.is-open {
-  background-color: var(--m-action-subtle-bg-active);
+  --m-avatar-fill: var(--m-action-subtle-bg-active);
   color: var(--m-content-primary);
 }
 
@@ -436,6 +536,7 @@
 .m-nav .m-nav-item__label,
 .m-nav .m-nav-item__badge,
 .m-nav .m-nav__brand-name,
+.m-nav .m-nav__collapse,
 .m-nav .m-nav__account-text,
 .m-nav .m-nav__account-caret,
 .m-nav .m-meter__label,
@@ -447,4 +548,14 @@
     width var(--m-duration-normal) var(--m-ease-out),
     margin var(--m-duration-normal) var(--m-ease-out),
     padding var(--m-duration-normal) var(--m-ease-out);
+}
+/* the collapse is also a tool tile: keep its hover on the tools' timing */
+.m-nav .m-nav__collapse {
+  transition:
+    opacity var(--m-duration-fast) var(--m-ease-out) var(--m-duration-fast),
+    max-width var(--m-duration-normal) var(--m-ease-out),
+    width var(--m-duration-normal) var(--m-ease-out),
+    margin var(--m-duration-normal) var(--m-ease-out),
+    background-color var(--m-duration-instant) var(--m-ease-out),
+    color var(--m-duration-instant) var(--m-ease-out);
 }

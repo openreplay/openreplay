@@ -185,9 +185,49 @@ function SideNav({ collapsed, onToggleCollapsed, onNavigated }: SideNavProps) {
       className={`m-nav${collapsed ? ' is-collapsed' : ''}`}
       aria-label={t('Main')}
     >
+      {/* Narrow, the mark is the expand control; open, the collapse is the
+          row's last glyph. Both stay mounted so collapsing is one fold. */}
       <div className="m-nav__brand" data-mark-host>
-        <OpenReplayMark size={16} className="m-nav__mark" />
+        <Tooltip
+          title={`${collapseLabel}  ${COLLAPSE_KEY}`}
+          side="right"
+          disabled={!collapsed}
+        >
+          <button
+            type="button"
+            className="m-nav__brand-toggle"
+            aria-label={collapsed ? collapseLabel : undefined}
+            aria-expanded={collapsed ? false : undefined}
+            aria-hidden={collapsed ? undefined : true}
+            tabIndex={collapsed ? undefined : -1}
+            onClick={collapsed ? onToggleCollapsed : undefined}
+          >
+            <OpenReplayMark size={16} className="m-nav__mark" />
+            <PanelLeftOpen
+              size={15}
+              className="m-nav__brand-open"
+              aria-hidden="true"
+            />
+          </button>
+        </Tooltip>
         <span className="m-nav__brand-name">OpenReplay</span>
+        <Tooltip
+          title={`${collapseLabel}  ${COLLAPSE_KEY}`}
+          side="right"
+          disabled={collapsed}
+        >
+          <button
+            type="button"
+            className="m-nav__tool m-nav__collapse"
+            aria-label={collapseLabel}
+            aria-expanded
+            aria-hidden={collapsed ? true : undefined}
+            tabIndex={collapsed ? -1 : undefined}
+            onClick={onToggleCollapsed}
+          >
+            <PanelLeftClose size={15} aria-hidden="true" />
+          </button>
+        </Tooltip>
       </div>
 
       <AccountMenu
@@ -272,9 +312,6 @@ function SideNav({ collapsed, onToggleCollapsed, onNavigated }: SideNavProps) {
                           items={e.items}
                           active={active}
                           onNavigate={onNavigate}
-                          light={
-                            e.key === 'agents' ? 'var(--m-armada)' : undefined
-                          }
                         />
                       )}
                     </div>
@@ -290,21 +327,6 @@ function SideNav({ collapsed, onToggleCollapsed, onNavigated }: SideNavProps) {
         {!collapsed && <GettingStartedProgress />}
         <div className="m-nav__tools">
           {collapsed && <GettingStartedProgress compact />}
-          <Tooltip title={`${collapseLabel}  ${COLLAPSE_KEY}`} side="right">
-            <button
-              type="button"
-              className="m-nav__tool m-nav__collapse"
-              aria-label={collapseLabel}
-              aria-expanded={!collapsed}
-              onClick={onToggleCollapsed}
-            >
-              {collapsed ? (
-                <PanelLeftOpen size={15} aria-hidden="true" />
-              ) : (
-                <PanelLeftClose size={15} aria-hidden="true" />
-              )}
-            </button>
-          </Tooltip>
           <Tooltip title={t('Preferences')} side="right">
             <button
               type="button"

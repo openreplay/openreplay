@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { useStore } from 'App/mstore';
-import { topValuesKey } from 'App/mstore/filterStore';
+import { getPropertyName, topValuesKey } from 'App/mstore/filterStore';
 import type { Filter } from 'App/mstore/types/filterConstants';
 import { searchService } from 'App/services';
 
@@ -91,7 +91,8 @@ export function useValueOptions(
         live,
         source: entry.category,
       };
-      if (!entry.isEvent) params.propertyName = entry.name;
+      if (!entry.isEvent)
+        params.propertyName = getPropertyName(entry.source, live);
       if (filter.eventName) params.eventName = filter.eventName;
       searchService
         .fetchAutoCompleteValues(params)

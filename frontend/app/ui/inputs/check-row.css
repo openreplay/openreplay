@@ -43,9 +43,9 @@
 
 .m-checkrow--on .m-checkrow__box,
 .m-checkrow--on:hover .m-checkrow__box {
-  background: var(--m-action-primary-bg);
-  border-color: var(--m-action-primary-bg);
-  color: var(--m-action-primary-fg);
+  background: var(--m-action-accent-bg);
+  border-color: var(--m-action-accent-bg);
+  color: var(--m-action-accent-fg);
 }
 
 .m-checkrow--boxed .m-checkrow__box {
@@ -53,8 +53,8 @@
   background: var(--m-surface-default);
 }
 .m-checkrow--boxed.m-checkrow--on .m-checkrow__box {
-  background: var(--m-action-primary-bg);
-  border-color: var(--m-action-primary-bg);
+  background: var(--m-action-accent-bg);
+  border-color: var(--m-action-accent-bg);
 }
 
 .m-checkrow--single .m-checkrow__box {

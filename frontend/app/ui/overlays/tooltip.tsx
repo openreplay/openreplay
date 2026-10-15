@@ -14,6 +14,7 @@ export function Tooltip({
   children,
   side = 'top',
   delay = 200,
+  disabled,
   ...props
 }: {
   title: ReactNode;
@@ -21,6 +22,8 @@ export function Tooltip({
   side?: ComponentProps<typeof T.Content>['side'];
   delay?: number;
   open?: boolean;
+  /** keeps the trigger mounted as it is, without the tip */
+  disabled?: boolean;
 }) {
   if (!title) return <>{children}</>;
   // the trigger slots onto one element; text or fragments get a span to hold the ref
@@ -33,18 +36,20 @@ export function Tooltip({
   return (
     <T.Root delayDuration={delay} {...props}>
       <T.Trigger asChild>{slottable}</T.Trigger>
-      <T.Portal>
-        <T.Content
-          side={side}
-          sideOffset={6}
-          className={cn(
-            'm-tip z-[var(--m-z-tooltip)] max-w-72 rounded-control border border-[var(--m-tooltip-border)] bg-[var(--m-tooltip-bg)] px-4 py-2',
-            'text-xs leading-snug text-[var(--m-tooltip-fg)]',
-          )}
-        >
-          {title}
-        </T.Content>
-      </T.Portal>
+      {!disabled && (
+        <T.Portal>
+          <T.Content
+            side={side}
+            sideOffset={6}
+            className={cn(
+              'm-tip z-[var(--m-z-tooltip)] max-w-72 rounded-control border border-[var(--m-tooltip-border)] bg-[var(--m-tooltip-bg)] px-4 py-2',
+              'text-xs leading-snug text-[var(--m-tooltip-fg)]',
+            )}
+          >
+            {title}
+          </T.Content>
+        </T.Portal>
+      )}
     </T.Root>
   );
 }

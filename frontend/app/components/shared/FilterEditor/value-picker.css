@@ -78,13 +78,22 @@
   padding: var(--m-space-2);
 }
 
+/* the share line hangs under the label out of flow, so the row's checkbox
+   centres on the value text rather than on text plus line */
 .m-vp__opt {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
+  position: relative;
+  display: block;
   min-width: 0;
 }
+/* the label truncates; clip it sideways only, or it hides the line below it */
+.m-checkrow__label:has(> .m-vp__opt) {
+  overflow-x: clip;
+  overflow-y: visible;
+}
 .m-vp__line {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
   display: block;
   height: 2px;
   border-radius: var(--m-radius-full);

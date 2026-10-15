@@ -10,7 +10,9 @@ handoff `context/handoff-2026-10-05.md`. The prototype runs on mock data (`src/s
 - Prototype Tailwind scale verbatim: `@theme inline` maps spacing / text / radius / colors onto `--m-*` tokens
   (`p-4` = 8px ladder, `text-sm` = 13px, `rounded-md` = control corner). Root font back to 16px.
   Legacy classes change meaning, so unported pages look off until ported.
-- Only the shipped variant values: grey cool, accent teal, IBM Plex, corners soft, density spaced from 1440px
+- Only the shipped variant values: the decided look of 2026-10-14 (melonade #11, #13: white page, Slate sections,
+  dark outlines at 50%; Inter / Inter Tight titles / IBM Plex Mono caps tags / Geist Mono figures / JetBrains Mono
+  code, all self-hosted from `app/assets/fonts`), accent teal, corners soft, density spaced from 1440px
   viewport, search chips, entry table, layout stacked, picker panes, filter pills tinted.
   No prototype panel, no variant switches, no `data-*` variant selectors in ported CSS.
 - Keep architecture: mobx stores (`useStore`), `App/routing`, react-query where used, `t()` for every string.
