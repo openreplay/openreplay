@@ -9,8 +9,8 @@
   border-radius: var(--m-radius-control);
   color: var(--m-content-secondary);
   font-size: var(--m-text-sm);
-
-  font-weight: var(--m-weight-medium);
+  /* the menu is the interface face at regular; the current row is medium */
+  font-weight: var(--m-weight-regular);
   text-align: left;
 
   --m-row-bg: var(--m-surface-canvas);
@@ -33,6 +33,9 @@
   background: var(--m-nav-row-on);
   color: var(--m-content-primary);
   --m-row-bg: var(--m-nav-row-on);
+}
+.m-nav-item.is-active .m-nav-item__label {
+  font-weight: var(--m-weight-medium);
 }
 
 .m-nav-item.is-nested {

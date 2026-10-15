@@ -52,7 +52,7 @@ const CURSOR_SERIES_ID = '__band0';
 const AREA_FILL_OPACITY = 0.6;
 
 /* echarts stamps sans-serif on its own text; the old SVG inherited the app's. */
-const FONT_FAMILY = 'IBM Plex Sans, sans-serif';
+const FONT_FAMILY = 'Inter, sans-serif';
 const token = (name: string, fallback: string) =>
   getComputedStyle(document.documentElement)
     .getPropertyValue(`--m-${name}`)
