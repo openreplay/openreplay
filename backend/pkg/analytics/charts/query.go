@@ -323,6 +323,12 @@ func addFilter(f model.Filter, opts BuildConditionsOptions, isEventProperty bool
 		cfg = filterConfig{LogicalProperty: f.Name, IsNumeric: isNumeric, InDProperties: f.AutoCaptured, InProperties: !f.AutoCaptured}
 	}
 	acc, nature := getColumnAccessor(cfg.LogicalProperty, cfg.IsNumeric, cfg.InDProperties, cfg.InProperties, opts, qp)
+	if strings.Contains(acc, `"$device"`) {
+		// The filter arrives in the sessions user_device_type vocabulary
+		// (desktop/mobile) but the events "$device" column stores
+		// web/ios/android.
+		f.Value = TranslateDeviceValuesForEvents(f.Value)
+	}
 	switch f.Operator {
 	case "isAny", "onAny":
 		//This part is unreachable, because you already have if f.IsEvent&return above

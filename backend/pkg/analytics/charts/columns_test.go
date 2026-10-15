@@ -240,3 +240,84 @@ func TestWebVitalsSessionFilterNotDropped(t *testing.T) {
 		t.Errorf("platform filter was dropped:\n%s", q)
 	}
 }
+
+func TestTranslateDeviceValuesForEvents(t *testing.T) {
+	got := TranslateDeviceValuesForEvents([]string{"desktop", "mobile", "tablet", "web"})
+	want := []string{"web", "ios", "android", "tablet", "web"}
+	if len(got) != len(want) {
+		t.Fatalf("got %v, want %v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("got %v, want %v", got, want)
+		}
+	}
+}
+
+func paramValues(qp *Params) map[string]any { return qp.Values() }
+
+func TestDeviceFilterTranslatedOnEventsTable(t *testing.T) {
+	// desktop -> web
+	qp := NewParams()
+	conds := BuildSessionConditionsOnEvents([]model.Filter{
+		{Name: "userDeviceType", Operator: "is", Value: []string{"desktop"}, AutoCaptured: true},
+	}, "e", qp)
+	if len(conds) != 1 || conds[0] != `e."$device" = @p1` {
+		t.Fatalf("unexpected conditions: %v", conds)
+	}
+	if paramValues(qp)["p1"] != "web" {
+		t.Errorf("desktop must be bound as web, got %v", paramValues(qp))
+	}
+
+	// mobile -> ios OR android
+	qp = NewParams()
+	conds = BuildSessionConditionsOnEvents([]model.Filter{
+		{Name: "userDeviceType", Operator: "is", Value: []string{"mobile"}, AutoCaptured: true},
+	}, "e", qp)
+	if len(conds) != 1 || conds[0] != `(e."$device" = @p1 OR e."$device" = @p2)` {
+		t.Fatalf("unexpected conditions: %v", conds)
+	}
+	vals := paramValues(qp)
+	if vals["p1"] != "ios" || vals["p2"] != "android" {
+		t.Errorf("mobile must expand to ios+android, got %v", vals)
+	}
+
+	// negative operator keeps NOT IN semantics over the expanded values
+	qp = NewParams()
+	conds = BuildSessionConditionsOnEvents([]model.Filter{
+		{Name: "userDeviceType", Operator: "isNot", Value: []string{"mobile"}, AutoCaptured: true},
+	}, "e", qp)
+	if len(conds) != 1 || !strings.Contains(conds[0], `e."$device" NOT IN (@p1, @p2)`) {
+		t.Fatalf("unexpected conditions: %v", conds)
+	}
+}
+
+func TestDeviceFilterTranslatedViaMainColumns(t *testing.T) {
+	// Non-autoCaptured userDeviceType resolves through mainColumns to "$device".
+	qp := NewParams()
+	evConds, _, _ := BuildEventConditions([]model.Filter{
+		{Name: "userDeviceType", Operator: "is", Value: []string{"desktop"}},
+	}, BuildConditionsOptions{DefinedColumns: mainColumns, MainTableAlias: "e"}, qp)
+	if len(evConds) != 1 || evConds[0] != `e."$device" = @p1` {
+		t.Fatalf("unexpected conditions: %v", evConds)
+	}
+	if paramValues(qp)["p1"] != "web" {
+		t.Errorf("desktop must be bound as web, got %v", paramValues(qp))
+	}
+}
+
+func TestDeviceFilterUntouchedOnSessionsTable(t *testing.T) {
+	qp := NewParams()
+	_, eventFilters, _, sessionFilters := BuildWhere([]model.Filter{
+		{Name: "userDeviceType", Operator: "is", Value: []string{"desktop"}, AutoCaptured: true},
+	}, "and", "e", "s", qp)
+	if len(eventFilters) != 0 || len(sessionFilters) != 1 {
+		t.Fatalf("expected the filter on the sessions side, got %v / %v", eventFilters, sessionFilters)
+	}
+	if sessionFilters[0] != "s.user_device_type = @p1" {
+		t.Fatalf("unexpected sessions condition: %v", sessionFilters)
+	}
+	if paramValues(qp)["p1"] != "desktop" {
+		t.Errorf("sessions-side value must stay desktop, got %v", paramValues(qp))
+	}
+}
