@@ -135,13 +135,13 @@
 
 .m-fbar__arc {
   stroke-width: 1.25;
-  opacity: 0.62;
+  opacity: 0.19;
   filter: blur(0.7px);
 }
 
 .m-fbar__glow {
   stroke-width: 4;
-  opacity: 0.24;
+  opacity: 0.07;
   filter: blur(3.5px);
 }
 
@@ -154,7 +154,7 @@
 }
 .m-fbar__filter:is(:focus-visible, :focus-within) .m-fbar__ring .m-fbar__arc {
   stroke: var(--m-focus-ring);
-  stroke-width: 2;
+  stroke-width: 1;
   opacity: 1;
   filter: none;
 }

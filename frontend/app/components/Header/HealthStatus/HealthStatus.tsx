@@ -1,5 +1,5 @@
 import { PopoverPanel } from '@/ui/overlays/popover';
-import { Activity, CircleAlert } from 'lucide-react';
+import { CircleAlert, HeartPulse } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -70,7 +70,7 @@ function HealthStatus({ variant = 'tool' }: { variant?: 'tool' | 'row' }) {
   const { t } = useTranslation();
   const [open, setOpen] = React.useState(false);
   const healthy = !isError && healthResponse?.overallHealth;
-  const Icon = healthy ? Activity : CircleAlert;
+  const Icon = healthy ? HeartPulse : CircleAlert;
   return (
     <>
       <PopoverPanel
@@ -84,7 +84,10 @@ function HealthStatus({ variant = 'tool' }: { variant?: 'tool' | 'row' }) {
             getHealth={getHealth}
             isLoading={isLoading}
             lastAsked={lastAsked}
-            setShowModal={setShowModal}
+            setShowModal={(v) => {
+              setOpen(false);
+              setShowModal(v);
+            }}
             isError={isError}
           />
         }

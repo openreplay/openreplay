@@ -58,8 +58,12 @@ button.m-health__row:hover { background: var(--m-surface-hover); }
   text-decoration-color: var(--m-border-default);
 }
 .m-health__link:hover { color: var(--m-content-primary); }
-.m-health__stats { display: grid; grid-template-columns: 1fr 1fr; gap: var(--m-space-3); }
-.m-health__widget { display: flex; flex-direction: column; gap: var(--m-space-4); width: 17rem; padding: var(--m-space-5); }
+/* the card hugs its figures: 17rem is the floor, a figure never wraps, and the
+   labels take no part in the intrinsic width, so only a number widens it */
+.m-health__stats { display: grid; grid-template-columns: repeat(2, minmax(max-content, 1fr)); gap: var(--m-space-3); }
+.m-health__stats .m-tile__value { white-space: nowrap; }
+.m-health__stats .m-tile__label { width: 0; min-width: 100%; }
+.m-health__widget { display: flex; flex-direction: column; gap: var(--m-space-4); width: max-content; min-width: 17rem; max-width: calc(100vw - 2rem); padding: var(--m-space-5); }
 .m-health__widget-head { display: flex; align-items: center; justify-content: space-between; gap: var(--m-space-3); }
 .m-health__title { font-size: var(--m-text-sm); font-weight: var(--m-weight-medium); }
 .m-health__title.is-ok { color: var(--m-status-success-fg); }
