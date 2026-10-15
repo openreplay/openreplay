@@ -19,6 +19,18 @@ const VALUE_MAPPERS: ValueMapper = {
   $country: countryMap,
 };
 
+// assist matches live session metadata by its configured key, not the metadata_N slot
+export const getPropertyName = (
+  filter: { name?: string; displayName?: string; category?: string },
+  isLive?: boolean,
+): string | undefined =>
+  isLive && filter.category === 'metadata'
+    ? filter.displayName || filter.name
+    : filter.name;
+
+export const getTopValuesKey = (id: string, isLive?: boolean): string =>
+  isLive ? `${id}_live` : id;
+
 export interface TopValue {
   rowCount?: number;
   rowPercentage?: number;
@@ -122,8 +134,10 @@ export default class FilterStore {
     isLive?: boolean,
     page?: string,
   ): Promise<TopValue[]> => {
-    if (this.topValues[id]?.length) {
-      return this.topValues[id];
+    const key = getTopValuesKey(id, isLive);
+    // live sessions come and go, so live values are always refetched
+    if (!isLive && this.topValues[key]?.length) {
+      return this.topValues[key];
     }
 
     const filter = this.findFilterById(id);
@@ -140,7 +154,7 @@ export default class FilterStore {
       }
 
       if (!filter.isEvent) {
-        params.propertyName = filter.name;
+        params.propertyName = getPropertyName(filter, isLive);
       }
       if (isLive) {
         params['live'] = 'true';
@@ -154,7 +168,7 @@ export default class FilterStore {
       const response = await searchService.fetchTopValues(params);
 
       runInAction(() => {
-        this.setTopValues(id, response.events || response || []);
+        this.setTopValues(key, response.events || response || []);
       });
 
       return response.events || [];
