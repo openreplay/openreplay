@@ -97,6 +97,7 @@ function AccountMenu({
               )
             }
             label={p.host}
+            title={p.host}
             active={p.id === projectsStore.siteId}
             onClick={() => {
               if (p.id) switchProject(p.id);

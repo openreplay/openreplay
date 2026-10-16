@@ -18,8 +18,8 @@ export function SelectTrigger({
     <S.Trigger
       data-slot="select-trigger"
       className={cn(
-        'inline-flex h-control-sm items-center justify-between gap-3 rounded-control',
-        'px-4 text-sm m-hover',
+        'inline-flex h-control-sm min-w-0 items-center justify-between gap-3 rounded-control',
+        'px-4 text-sm whitespace-nowrap m-hover [&>span]:min-w-0 [&>span]:truncate',
         variant === 'outline' &&
           'border border-border-default bg-surface-default text-content-primary hover:border-border-strong data-[state=open]:border-border-strong',
         variant === 'subtle' &&
@@ -57,7 +57,7 @@ export function SelectContent({
         position={position}
         sideOffset={4}
         className={cn(
-          'm-pop z-[var(--m-z-dropdown)] min-w-[var(--radix-select-trigger-width)] overflow-hidden',
+          'm-pop z-[var(--m-z-dropdown)] min-w-[var(--radix-select-trigger-width)] max-w-[max(var(--radix-select-trigger-width),20rem)] overflow-hidden',
           'rounded-surface border border-border-default bg-surface-raised p-3 m-elevated',
           className,
         )}
@@ -77,8 +77,9 @@ export function SelectItem({
 }: ComponentProps<typeof S.Item> & { hint?: ReactNode }) {
   return (
     <S.Item
+      title={typeof children === 'string' ? children : undefined}
       className={cn(
-        'relative flex cursor-pointer select-none rounded-control px-5 pr-8 text-sm',
+        'relative flex min-w-0 cursor-pointer select-none rounded-control px-5 pr-8 text-sm',
         hint
           ? 'min-h-[var(--m-control-height-md)] flex-col items-start justify-center gap-px py-2'
           : 'h-[var(--m-control-height-md)] items-center gap-4',
@@ -89,7 +90,9 @@ export function SelectItem({
       )}
       {...props}
     >
-      <S.ItemText>{children}</S.ItemText>
+      <span className="min-w-0 max-w-full truncate">
+        <S.ItemText>{children}</S.ItemText>
+      </span>
       {hint && <span className="text-2xs text-content-muted">{hint}</span>}
       <S.ItemIndicator className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center">
         <Check size={12} strokeWidth={2.5} />
@@ -128,7 +131,7 @@ export function InlineSelect<T extends string>({
         data-variant="inline"
         aria-label={ariaLabel}
         className={cn(
-          'm-hover inline-flex h-control-sm shrink-0 items-center gap-2 rounded-control px-2 text-sm text-content-primary',
+          'm-hover inline-flex h-control-sm min-w-0 shrink-0 items-center gap-2 rounded-control px-2 text-sm whitespace-nowrap text-content-primary [&>span]:min-w-0 [&>span]:truncate',
           'border border-transparent bg-transparent',
           'hover:border-border-default hover:bg-surface-default',
           'focus-visible:border-border-default focus-visible:bg-surface-default',
@@ -190,6 +193,7 @@ export function SimpleSelect<T extends string>({
 }) {
   const { t } = useTranslation();
   const placeholder = placeholderProp ?? t('Not set');
+  const label = options.find((o) => o.value === value)?.label;
   return (
     <span className={cn('relative inline-flex min-w-0', className)}>
       <Select
@@ -202,6 +206,7 @@ export function SimpleSelect<T extends string>({
           id={id}
           variant={variant}
           aria-label={ariaLabel}
+          title={typeof label === 'string' ? label : undefined}
           className={cn('w-full', clearable && value != null && 'pr-9')}
         >
           <SelectValue placeholder={placeholder} />
