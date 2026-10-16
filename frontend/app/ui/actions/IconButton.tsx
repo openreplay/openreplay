@@ -11,6 +11,8 @@ export interface IconButtonProps {
   count?: number;
 
   variant?: 'outline' | 'ghost' | 'primary';
+  /** `xs` sits inside a field or a value row */
+  size?: 'sm' | 'xs';
   active?: boolean;
   open?: boolean;
 
@@ -26,6 +28,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
       label,
       count = 0,
       variant = 'outline',
+      size = 'sm',
       active,
       open,
       pressed,
@@ -39,7 +42,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
         <button
           ref={ref}
           type="button"
-          className={`m-iconbtn m-iconbtn--${variant}${active ? ' is-active' : ''}${
+          className={`m-iconbtn m-iconbtn--${variant}${size === 'xs' ? ' m-iconbtn--xs' : ''}${active ? ' is-active' : ''}${
             open ? ' is-open' : ''
           }${pressed ? ' is-on' : ''}`}
           onClick={onClick}

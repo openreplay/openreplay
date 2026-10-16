@@ -54,11 +54,6 @@
   min-width: 0;
   padding-inline: var(--m-space-5);
 }
-.m-rs__aside-close {
-  display: flex;
-  align-items: center;
-  padding-inline: var(--m-space-2);
-}
 .m-rs__aside-head {
   border-bottom: 1px solid var(--m-border-subtle);
 }

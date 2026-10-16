@@ -57,13 +57,15 @@
   gap: var(--m-space-3);
 }
 
+/* shown is the accent's selected tint, hidden a faint outline; not opacity,
+   which would read as disabled */
 .m-dm__pill {
   height: 1.5rem;
   padding-inline: var(--m-space-4);
-  border: 1px solid var(--m-border-default);
+  border: 1px solid var(--m-pill-off-border);
   border-radius: var(--m-radius-full);
-  background: var(--m-surface-default);
-  color: var(--m-content-muted);
+  background: var(--m-pill-off-bg);
+  color: var(--m-pill-off-fg);
   font-size: var(--m-text-xs);
   transition: all var(--m-duration-fast) var(--m-ease-out);
 }
@@ -72,9 +74,12 @@
   color: var(--m-content-primary);
 }
 .m-dm__pill.is-on {
-  background: var(--m-action-primary-bg);
-  border-color: var(--m-action-primary-bg);
-  color: var(--m-action-primary-fg);
+  background: var(--m-pill-on-bg);
+  border-color: var(--m-pill-on-border);
+  color: var(--m-pill-on-fg);
+}
+.m-dm__pill.is-on:hover {
+  border-color: var(--m-pill-on-fg);
 }
 
 .m-dm__foot {

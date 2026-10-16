@@ -61,7 +61,7 @@ function Multiview({ assistCredentials }: { assistCredentials: any }) {
     history.push(withSiteId(assist(), siteId));
   };
 
-  const empty = Math.max(0, SLOTS - assistMultiviewStore.sessions.length);
+  const canAdd = assistMultiviewStore.sessions.length < SLOTS;
 
   return (
     <section className="m-mv">
@@ -121,9 +121,8 @@ function Multiview({ assistCredentials }: { assistCredentials: any }) {
             </div>
           ),
         )}
-        {Array.from({ length: empty }, (_, i) => (
+        {canAdd ? (
           <button
-            key={`empty-${i}`}
             type="button"
             className="m-mv__tile m-mv__empty"
             onClick={() => setPicker({ open: true })}
@@ -131,7 +130,7 @@ function Multiview({ assistCredentials }: { assistCredentials: any }) {
             <Plus size={16} aria-hidden="true" />
             {t('Add a live session')}
           </button>
-        ))}
+        ) : null}
       </div>
       <AssistSessionsModal
         open={picker.open}

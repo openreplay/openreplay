@@ -40,8 +40,8 @@ button.m-health__row:hover { background: var(--m-surface-hover); }
 .m-health__sub-name { flex: 1; min-width: 0; color: var(--m-content-secondary); }
 .m-health__version { font-family: var(--m-font-mono); font-size: var(--m-text-2xs); color: var(--m-content-muted); }
 .m-health__err { color: var(--m-content-danger); overflow-wrap: anywhere; padding-left: calc(12px + var(--m-space-2)); }
-.m-health__dot { flex: none; width: 6px; height: 6px; border-radius: 999px; background: var(--m-status-success-fg); margin-inline: 3px; }
-.m-health__dot.is-bad { background: var(--m-content-danger); }
+.m-health__dot { flex: none; width: 6px; height: 6px; border-radius: 999px; background: var(--m-mark-success); margin-inline: 3px; }
+.m-health__dot.is-bad { background: var(--m-mark-danger); }
 .m-health__links {
   display: flex;
   flex-wrap: wrap;

@@ -53,7 +53,7 @@ export function MultiSelect<T extends string>({
       onOpenChange={setOpen}
       placement="bottomLeft"
       sideOffset={4}
-      className="min-w-[var(--radix-popover-trigger-width)] p-3"
+      className="min-w-[var(--radix-popover-trigger-width)] max-w-[max(var(--radix-popover-trigger-width),20rem)] p-3"
       content={
         <div role="group" aria-label={ariaLabel} className="flex flex-col">
           {options.map((o) => (
@@ -75,6 +75,7 @@ export function MultiSelect<T extends string>({
         aria-label={ariaLabel}
         aria-haspopup="listbox"
         aria-expanded={open}
+        title={chosen.length ? chosen.map(textOf).join(', ') : undefined}
         className={cn(
           'inline-flex h-control-sm w-full items-center justify-between gap-3 rounded-control',
           'border border-border-default bg-surface-default px-4 text-sm text-content-primary',

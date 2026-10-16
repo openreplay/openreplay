@@ -14,6 +14,7 @@ export interface CopyButtonProps {
   className?: string;
 
   variant?: 'subtle' | 'ghost';
+  size?: 'sm' | 'xs';
 }
 
 export function CopyButton({
@@ -22,6 +23,7 @@ export function CopyButton({
   onCopied,
   className,
   variant = 'subtle',
+  size = 'sm',
 }: CopyButtonProps) {
   const { t } = useTranslation();
   const { copy, done } = useCopy();
@@ -42,6 +44,7 @@ export function CopyButton({
         icon={glyph}
         label={name}
         variant="ghost"
+        size={size}
         onClick={() => void doCopy()}
       />
     );

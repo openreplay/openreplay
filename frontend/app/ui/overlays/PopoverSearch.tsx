@@ -1,4 +1,5 @@
 import { Input } from '@/ui/inputs/input';
+import { Search } from 'lucide-react';
 import type { KeyboardEvent, ReactNode } from 'react';
 
 import './popover-search.css';
@@ -35,6 +36,7 @@ export function PopoverSearch({
     <div className={className ? `m-psearch ${className}` : 'm-psearch'}>
       {lead}
       <Input
+        prefix={lead === undefined ? <Search /> : undefined}
         variant="bare"
         autoFocus={autoFocus}
         className="min-w-0 flex-1"

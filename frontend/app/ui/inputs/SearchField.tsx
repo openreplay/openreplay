@@ -1,4 +1,5 @@
-import { X } from 'lucide-react';
+import { IconButton } from '@/ui/actions/IconButton';
+import { Search, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { Input } from './input';
@@ -10,39 +11,40 @@ export interface SearchFieldProps {
   placeholder: string;
   value: string;
   onChange: (value: string) => void;
+  className?: string;
 }
 
+/** Every list search: the magnifier, an input's height, a clear once typed in. */
 export function SearchField({
   placeholder,
   value,
   onChange,
   size = 'md',
+  className,
 }: SearchFieldProps) {
   const { t } = useTranslation();
   return (
-    <div className="m-search relative">
+    <div className={className ? `m-search ${className}` : 'm-search'}>
       <Input
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         maxLength={120}
         aria-label={placeholder}
-        className={
-          [value ? 'pr-6' : '', size === 'sm' ? 'h-control-sm text-sm' : '']
-            .filter(Boolean)
-            .join(' ') || undefined
+        prefix={<Search />}
+        suffix={
+          value ? (
+            <IconButton
+              icon={<X size={12} />}
+              label={t('Clear search')}
+              variant="ghost"
+              size="xs"
+              onClick={() => onChange('')}
+            />
+          ) : undefined
         }
+        className={size === 'sm' ? 'text-sm' : undefined}
       />
-      {value && (
-        <button
-          type="button"
-          aria-label={t('Clear search')}
-          onClick={() => onChange('')}
-          className="absolute inset-y-0 right-1 flex items-center px-1 text-content-decorative hover:text-content-primary"
-        >
-          <X size={12} aria-hidden="true" />
-        </button>
-      )}
     </div>
   );
 }

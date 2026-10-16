@@ -1,5 +1,5 @@
 /* One head, row and empty state for every side-panel tab (Activity, Features,
-   Comments, Journey, Click map); a tab keeps only its particular parts. */
+   Comments, Journey); a tab keeps only its particular parts. */
 
 /* the bar is as tall as the tallest thing it holds (one md control), so
    switching tabs never moves the list under it */

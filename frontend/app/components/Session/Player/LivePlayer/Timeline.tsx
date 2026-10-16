@@ -9,9 +9,6 @@ import {
 import { useStore } from 'App/mstore';
 import { debounce } from 'App/utils';
 import TimeTracker from 'Components/Session_/Player/Controls/TimeTracker';
-import CustomDragLayer, {
-  OnDragCallback,
-} from 'Components/Session_/Player/Controls/components/CustomDragLayer';
 import DraggableCircle from 'Components/Session_/Player/Controls/components/DraggableCircle';
 import TooltipContainer from 'Components/Session_/Player/Controls/components/TooltipContainer';
 import stl from 'Components/Session_/Player/Controls/timeline.module.css';
@@ -23,40 +20,32 @@ function Timeline() {
   const setTimelineHoverTime = sessionStore.setTimelineTooltip;
   // @ts-ignore
   const { player, store } = useContext<ILivePlayerContext>(PlayerContext);
-  const [wasPlaying, setWasPlaying] = useState(false);
-  const { playing, time, ready, endTime, liveTimeTravel } = store.get();
+  // while held, the handle and the played part follow the pointer
+  const [held, setHeld] = useState<number | null>(null);
+  const { time, ready, endTime, liveTimeTravel } = store.get();
 
   const timelineRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef<HTMLDivElement>(null);
 
   const scale = 100 / endTime;
 
-  const debouncedJump = useMemo(() => debounce(player.jump, 500), []);
   const debouncedTooltipChange = useMemo(
     () => debounce(setTimelineHoverTime, 50),
     [],
   );
 
-  const onDragEnd = () => {
-    if (!liveTimeTravel) return;
-
-    if (wasPlaying) {
-      player.togglePlay();
-    }
+  // the playhead moves only while travelling back in time; one jump on release
+  const onScrub = (pct: number | null) => {
+    if (liveTimeTravel) setHeld(pct);
   };
-
-  const onDrag: OnDragCallback = (offset: { x: number }) => {
-    if (!liveTimeTravel || !progressRef.current) return;
-
-    const p = offset.x / progressRef.current.offsetWidth;
-    const time = Math.max(Math.round(p * endTime), 0);
-    debouncedJump(time);
-    hideTimeTooltip();
-    if (playing) {
-      setWasPlaying(true);
-      player.pause();
+  const onSeek = (pct: number) => {
+    if (liveTimeTravel) {
+      player.jump(Math.max(Math.round((pct / 100) * endTime), 0));
+      hideTimeTooltip();
     }
+    setHeld(null);
   };
+  const left = held ?? time * scale;
 
   const getLiveTime = (e: React.MouseEvent) => {
     const duration = new Date().getTime() - startedAt;
@@ -132,9 +121,14 @@ function Timeline() {
         onMouseLeave={hideTimeTooltip}
       >
         <TooltipContainer />
-        <DraggableCircle left={time * scale} onDrop={onDragEnd} live />
-        <CustomDragLayer onDrag={onDrag} containerRef={progressRef} />
-        <TimeTracker scale={scale} live left={time * scale} />
+        <DraggableCircle
+          left={left}
+          live
+          trackRef={progressRef}
+          onScrub={onScrub}
+          onRelease={onSeek}
+        />
+        <TimeTracker scale={scale} live left={left} />
 
         <div className={stl.timeline} ref={timelineRef} />
       </div>

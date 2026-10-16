@@ -244,6 +244,7 @@ function SideNav({ collapsed, onToggleCollapsed, onNavigated }: SideNavProps) {
           })}
           aria-haspopup="menu"
           aria-expanded={accountOpen}
+          title={collapsed ? undefined : projectLabel}
           data-test-id="project-dropdown"
         >
           <span className="m-nav__account-badge" aria-hidden="true">

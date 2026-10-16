@@ -82,7 +82,7 @@ const TAB_LABEL: Record<string, string> = {
 };
 
 const DOM_LOADED_TIME_COLOR = 'bg-content-accent';
-const LOAD_TIME_COLOR = 'bg-content-danger';
+const LOAD_TIME_COLOR = 'bg-mark-danger';
 
 const BATCH_SIZE = 2500;
 const INITIAL_LOAD_SIZE = 5000;

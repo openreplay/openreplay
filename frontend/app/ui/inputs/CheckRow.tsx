@@ -56,7 +56,12 @@ export function CheckRow({
           <span className="m-checkrow__hint">{hint}</span>
         </span>
       ) : (
-        <span className="m-checkrow__label m-truncate">{children}</span>
+        <span
+          className="m-checkrow__label m-truncate"
+          title={typeof children === 'string' ? children : undefined}
+        >
+          {children}
+        </span>
       )}
       {meta != null && <span className="m-checkrow__meta">{meta}</span>}
     </button>

@@ -3,7 +3,7 @@ import { Button } from '@/ui/actions/button';
 import { CountSuffix } from '@/ui/data/CountSuffix';
 import { Tabs, TabsList, TabsTrigger } from '@/ui/layout/tabs';
 import { Tooltip } from '@/ui/overlays/tooltip';
-import { ArrowLeft, PanelRight, X } from 'lucide-react';
+import { ArrowLeft, PanelRight } from 'lucide-react';
 import React, { type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -140,14 +140,6 @@ export function ReplayScreen({
                     ))}
                   </TabsList>
                 </Tabs>
-                <span className="m-rs__aside-close">
-                  <IconButton
-                    icon={<X size={14} />}
-                    label={t('Close the side panel')}
-                    variant="ghost"
-                    onClick={() => onPanel(null)}
-                  />
-                </span>
               </div>
             )}
             <div className="m-jrn__scroll">{renderPanel(panel)}</div>

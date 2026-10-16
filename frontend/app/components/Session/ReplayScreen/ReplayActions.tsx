@@ -13,7 +13,6 @@ import {
   Bug,
   Code2,
   Film,
-  Keyboard,
   MoreHorizontal,
   Radio,
   Share2,
@@ -30,7 +29,6 @@ import { liveSession as liveSessionRoute, withSiteId } from 'App/routes';
 import { useNavigate } from 'App/routing';
 import { useModal } from 'Components/ModalContext';
 import IssueForm from 'Components/Session_/Issues/IssueForm';
-import { ShortcutGrid } from 'Components/Session_/Player/Controls/components/KeyboardHelp';
 import QueueControls from 'Components/Session_/QueueControls';
 
 import { ShareDialog } from 'Shared/SharePopup/SharePopup';
@@ -199,17 +197,6 @@ function ReplayActions({
                     },
                   ]
                 : []),
-              { key: 'div', type: 'divider' as const },
-              {
-                key: 'keys',
-                icon: <Keyboard size={13} />,
-                label: t('Keyboard shortcuts'),
-                onClick: () =>
-                  openModal(<ShortcutGrid />, {
-                    width: 320,
-                    title: t('Keyboard Shortcuts'),
-                  }),
-              },
             ]}
           />
         </DropdownMenuContent>
