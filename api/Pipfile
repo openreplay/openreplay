@@ -4,22 +4,22 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-urllib3 = "==2.6.3"
-requests = "==2.33.1"
-boto3 = "==1.43.0"
-pyjwt = "==2.12.1"
-psycopg2-binary = "==2.9.12"
-clickhouse-connect = "==0.15.1"
-elasticsearch = "==9.3.0"
+urllib3 = "==2.8.0"
+requests = "==2.34.2"
+boto3 = "==1.43.114"
+pyjwt = "==2.15.1"
+psycopg2-binary = "==2.9.13"
+clickhouse-connect = "==1.9.0"
+elasticsearch = "==9.5.1"
 jira = "==3.10.5"
-cachetools = "==7.0.6"
-fastapi = "==0.136.1"
+cachetools = "==7.2.2"
+fastapi = "==0.143.2"
 python-decouple = "==3.8"
-apscheduler = "==3.11.2"
-redis = "==7.4.0"
-psycopg = {extras = ["binary", "pool"], version = "==3.3.3"}
-uvicorn = {extras = ["standard"], version = "==0.46.0"}
-pydantic = {extras = ["email"], version = "==2.13.3"}
+apscheduler = "==3.11.3"
+redis = "==8.1.0"
+psycopg = {extras = ["binary", "pool"], version = "==3.3.6"}
+uvicorn = {extras = ["standard"], version = "==0.54.0"}
+pydantic = {extras = ["email"], version = "==2.14.1"}
 
 [dev-packages]
 
