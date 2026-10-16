@@ -5,6 +5,7 @@ import {
   DropdownMenuItems,
   DropdownMenuTrigger,
 } from '@/ui/actions/dropdown-menu';
+import { EmptyState } from '@/ui/feedback/EmptyState';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import { TYPES } from 'Types/session/event';
 import { Check, Globe, MousePointerClick, Play, Zap } from 'lucide-react';
@@ -123,49 +124,51 @@ function PageInsightsPanel() {
       className="m-feat m-cmap"
       onPointerLeave={() => uiPlayerStore.setClickMapHot(null)}
     >
-      <PanelBar
-        note={
-          total === 0
-            ? t('Nothing clicked on {{page}}', { page })
-            : total === 1
-              ? t('1 click on {{page}}', { page })
-              : t('{{n}} clicks on {{page}}', { n: total, page })
-        }
-      >
-        {pages.length > 1 && (
-          <DropdownMenu>
-            <Tooltip title={t('Another page from this session')}>
-              <DropdownMenuTrigger asChild>
-                <span>
-                  <IconButton
-                    icon={<Globe size={14} />}
-                    label={t('Pick a page')}
-                    variant="ghost"
-                  />
-                </span>
-              </DropdownMenuTrigger>
-            </Tooltip>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItems
-                items={pages.map((p) => ({
-                  key: p,
-                  label: p,
-                  icon: p === page ? <Check size={13} /> : undefined,
-                  onClick: () => pickPage(p),
-                }))}
-              />
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-      </PanelBar>
+      {/* with nothing clicked, the empty state names the page; the bar
+          stays only for the picker */}
+      {total > 0 || pages.length > 1 ? (
+        <PanelBar
+          note={
+            total === 0
+              ? undefined
+              : total === 1
+                ? t('1 click on {{page}}', { page })
+                : t('{{n}} clicks on {{page}}', { n: total, page })
+          }
+        >
+          {pages.length > 1 && (
+            <DropdownMenu>
+              <Tooltip title={t('Another page from this session')}>
+                <DropdownMenuTrigger asChild>
+                  <span>
+                    <IconButton
+                      icon={<Globe size={14} />}
+                      label={t('Pick a page')}
+                      variant="ghost"
+                    />
+                  </span>
+                </DropdownMenuTrigger>
+              </Tooltip>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItems
+                  items={pages.map((p) => ({
+                    key: p,
+                    label: p,
+                    icon: p === page ? <Check size={13} /> : undefined,
+                    onClick: () => pickPage(p),
+                  }))}
+                />
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </PanelBar>
+      ) : null}
       {rows.length === 0 ? (
-        <p className="m-spanel__none">
-          {pages.length > 1
-            ? t(
-                'This page was looked at, not clicked. Pick another page from the bar.',
-              )
-            : t('This page was looked at, not clicked.')}
-        </p>
+        <EmptyState
+          art="frame"
+          className="m-cmap__empty"
+          title={t('Nothing was clicked on {{page}}', { page })}
+        />
       ) : (
         <ol className="m-spanel__list" aria-label={t('Most clicked elements')}>
           {rows.map((r) => (

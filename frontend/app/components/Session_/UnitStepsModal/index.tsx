@@ -53,7 +53,12 @@ const FRAMEWORKS: { key: Framework; label: string }[] = [
 ];
 
 export const frameworkIcons: Record<Framework, React.ReactNode> = {
-  cypress: <Icon name="cypress" size={13} />,
+  // one-colour logo: it takes the text's colour, so it reads in dark mode
+  cypress: (
+    <span className="m-e2e__mono" aria-hidden="true">
+      <Icon name="cypress" size={13} />
+    </span>
+  ),
   puppeteer: <Icon name="puppeteer" size={13} />,
   playwright: <Icon name="pwright" size={13} />,
   k6: (
