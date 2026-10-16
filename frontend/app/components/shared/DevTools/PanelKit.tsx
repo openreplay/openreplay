@@ -6,9 +6,9 @@ import {
   DropdownMenuTrigger,
 } from '@/ui/actions/dropdown-menu';
 import { FilterStrip, type StripItem } from '@/ui/filters/FilterStrip';
-import { Input } from '@/ui/inputs/input';
+import { SearchField } from '@/ui/inputs/SearchField';
 import { Switch } from '@/ui/inputs/switch';
-import { MoreHorizontal, Search, X } from 'lucide-react';
+import { MoreHorizontal } from 'lucide-react';
 import React, { type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -46,32 +46,13 @@ export function Keyword({
   placeholder?: string;
 }) {
   const { t } = useTranslation();
-  const label = placeholder ?? t('Filter by keyword');
   return (
-    <div className="m-dt__keyword relative">
-      <Search
-        size={12}
-        aria-hidden="true"
-        className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-content-decorative"
-      />
-      <Input
-        className="pl-6 pr-6"
-        placeholder={label}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        aria-label={label}
-      />
-      {value && (
-        <button
-          type="button"
-          aria-label={t('Clear')}
-          onClick={() => onChange('')}
-          className="absolute right-1 top-1/2 flex -translate-y-1/2 items-center px-1 text-content-decorative hover:text-content-primary"
-        >
-          <X size={12} aria-hidden="true" />
-        </button>
-      )}
-    </div>
+    <SearchField
+      className="m-dt__keyword"
+      placeholder={placeholder ?? t('Filter by keyword')}
+      value={value}
+      onChange={onChange}
+    />
   );
 }
 
