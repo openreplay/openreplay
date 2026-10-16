@@ -93,13 +93,37 @@ function PlaybackSettings({
     },
   ];
 
+  // a badge is a setting off its default; clicking it puts it back
   const tags = [
     ...(speed !== 1
-      ? [{ key: 'speed', icon: Gauge, text: `${speed}×`, mono: true }]
+      ? [
+          {
+            key: 'speed',
+            icon: Gauge,
+            text: `${speed}×`,
+            mono: true,
+            title: t('Play at {{n}}×', { n: 1 }),
+            reset: () => player.toggleSpeed(SPEED_OPTIONS.indexOf(1)),
+          },
+        ]
       : []),
     ...switches
-      .filter((s) => s.tag)
-      .map((s) => ({ key: s.key, icon: s.icon, text: s.tag!, mono: false })),
+      .filter((x) => x.tag)
+      .map((x) => ({
+        key: x.key,
+        icon: x.icon,
+        text: x.tag!,
+        mono: false,
+        title: [
+          x.on
+            ? t('Turn off: {{name}}', { name: x.label })
+            : t('Turn on: {{name}}', { name: x.label }),
+          x.hint,
+        ]
+          .filter(Boolean)
+          .join('. '),
+        reset: x.toggle,
+      })),
   ];
   const label = tags.length
     ? t('Playback settings · {{list}}', {
@@ -108,100 +132,111 @@ function PlaybackSettings({
     : t('Playback settings');
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild disabled={disabled}>
-        <span className="m-tl__settings">
+    <span className="m-tl__settings">
+      {tags.length > 0 && (
+        <span className="m-tl__tags">
+          {tags.map((x) => (
+            <button
+              key={x.key}
+              type="button"
+              className="m-tl__tag"
+              data-setting={x.key}
+              title={x.title}
+              aria-label={`${x.text}. ${x.title}`}
+              disabled={disabled}
+              onClick={x.reset}
+            >
+              <x.icon size={11} aria-hidden="true" />
+              <span className={x.mono ? 'm-mono' : undefined}>{x.text}</span>
+            </button>
+          ))}
+        </span>
+      )}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild disabled={disabled}>
           <span className="m-tl__settings-hit">
-            {tags.length > 0 && (
-              <span className="m-tl__tags" aria-hidden="true">
-                {tags.map((x) => (
-                  <span key={x.key} className="m-tl__tag" data-setting={x.key}>
-                    <x.icon size={11} aria-hidden="true" />
-                    <span className={x.mono ? 'm-mono' : undefined}>
-                      {x.text}
-                    </span>
-                  </span>
-                ))}
-              </span>
-            )}
             <IconButton
               icon={<Settings2 size={14} />}
               label={label}
               variant="ghost"
             />
           </span>
-        </span>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="m-tl__menu">
-        <p className="m-tl__menu-head">{t('Speed')}</p>
-        {SPEED_OPTIONS.map((s, i) => (
-          <DropdownMenuItem
-            key={s}
-            role="menuitemradio"
-            aria-checked={speed === s}
-            onSelect={(e) => {
-              e.preventDefault();
-              player.toggleSpeed(i);
-            }}
-          >
-            <span className="m-tl__menu-check">
-              {speed === s && <Check size={12} aria-hidden="true" />}
-            </span>
-            <span className="m-mono">{s}×</span>
-          </DropdownMenuItem>
-        ))}
-        <DropdownMenuSeparator />
-        <p className="m-tl__menu-head">{t('Jump by')}</p>
-        <div className="m-tl__menu-row">
-          {Object.keys(SKIP_INTERVALS).map((k) => (
-            <button
-              key={k}
-              type="button"
-              className={`m-tl__chip${Number(k) === skipInterval ? ' is-on' : ''}`}
-              onClick={() => changeSkipInterval(Number(k) as any)}
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="m-tl__menu">
+          <p className="m-tl__menu-head">{t('Speed')}</p>
+          {SPEED_OPTIONS.map((s, i) => (
+            <DropdownMenuItem
+              key={s}
+              role="menuitemradio"
+              aria-checked={speed === s}
+              onSelect={(e) => {
+                e.preventDefault();
+                player.toggleSpeed(i);
+              }}
             >
-              {k}s
-            </button>
+              <span className="m-tl__menu-check">
+                {speed === s && <Check size={12} aria-hidden="true" />}
+              </span>
+              <span className="m-mono">{s}×</span>
+            </DropdownMenuItem>
           ))}
-        </div>
-        <DropdownMenuSeparator />
-        {switches.map((s) => (
+          <DropdownMenuSeparator />
+          <p className="m-tl__menu-head">{t('Jump by')}</p>
+          <div className="m-tl__menu-row">
+            {Object.keys(SKIP_INTERVALS).map((k) => (
+              <button
+                key={k}
+                type="button"
+                className={`m-tl__chip${Number(k) === skipInterval ? ' is-on' : ''}`}
+                onClick={() => changeSkipInterval(Number(k) as any)}
+              >
+                {k}s
+              </button>
+            ))}
+          </div>
+          <DropdownMenuSeparator />
+          {switches.map((s) => (
+            <DropdownMenuItem
+              key={s.key}
+              role="menuitemcheckbox"
+              aria-checked={s.on}
+              className="m-tl__menu-switch"
+              title={s.hint}
+              onSelect={(e) => {
+                e.preventDefault();
+                s.toggle();
+              }}
+            >
+              <span className="m-tl__menu-word">
+                <s.icon
+                  size={13}
+                  aria-hidden="true"
+                  className="m-tl__menu-icon"
+                />
+                {s.label}
+              </span>
+              <Switch checked={s.on} tabIndex={-1} aria-hidden="true" />
+            </DropdownMenuItem>
+          ))}
+          <DropdownMenuSeparator />
           <DropdownMenuItem
-            key={s.key}
-            role="menuitemcheckbox"
-            aria-checked={s.on}
-            className="m-tl__menu-switch"
-            title={s.hint}
-            onSelect={(e) => {
-              e.preventDefault();
-              s.toggle();
-            }}
+            onSelect={() =>
+              openModal(<ShortcutGrid />, {
+                width: 320,
+                title: t('Keyboard Shortcuts'),
+              })
+            }
           >
-            <span className="m-tl__menu-word">
-              <s.icon
-                size={13}
-                aria-hidden="true"
-                className="m-tl__menu-icon"
-              />
-              {s.label}
-            </span>
-            <Switch checked={s.on} tabIndex={-1} aria-hidden="true" />
+            <Keyboard
+              size={13}
+              aria-hidden="true"
+              className="m-tl__menu-icon"
+            />
+            {t('Keyboard shortcuts')}
           </DropdownMenuItem>
-        ))}
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onSelect={() =>
-            openModal(<ShortcutGrid />, {
-              width: 320,
-              title: t('Keyboard Shortcuts'),
-            })
-          }
-        >
-          <Keyboard size={13} aria-hidden="true" className="m-tl__menu-icon" />
-          {t('Keyboard shortcuts')}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </span>
   );
 }
 

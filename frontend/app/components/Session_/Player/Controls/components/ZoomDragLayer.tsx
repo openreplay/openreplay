@@ -147,10 +147,11 @@ function DraggableMarkers({
     setDragging(null);
   }, []);
 
+  // the bar and its handles share the track's centre line
   const barSize = 104;
-  const centering = -41;
-  const topPadding = 41;
   const uiSize = 16;
+  const centering = `calc(50% - ${barSize / 2}px)`;
+  const topPadding = (barSize - uiSize) / 2;
 
   const startRangeStr = shortDurationFromMs(Math.max(defaultStartPos, 0));
   const endRangeStr = shortDurationFromMs(

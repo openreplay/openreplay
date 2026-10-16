@@ -170,7 +170,7 @@ const IssueForm: React.FC<Props> = observer(
               name="description"
               rows={3}
               value={instance?.description}
-              placeholder={t('E.g. Found this issue at 3:29secs')}
+              placeholder={t('E.g. Found this issue at 3m 29s')}
               onChange={handleChange}
             />
           </label>
