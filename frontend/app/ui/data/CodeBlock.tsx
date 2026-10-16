@@ -1,5 +1,5 @@
 import { CopyButton } from '@/ui/actions/CopyButton';
-import { Button } from '@/ui/actions/button';
+import { IconButton } from '@/ui/actions/IconButton';
 import { Eye, EyeOff } from 'lucide-react';
 import { Fragment, type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -64,32 +64,35 @@ export function CodeBlock({
           </span>
         ));
   const reveal = secret ? (
-    <Button
-      variant="subtle"
-      size="icon"
-      onClick={() => setShown((v) => !v)}
-      aria-label={
+    <IconButton
+      icon={shown ? <EyeOff size={14} /> : <Eye size={14} />}
+      label={
         shown
           ? t('Hide {{label}}', { label: secretLabel })
           : t('Show {{label}}', { label: secretLabel })
       }
-      className="m-code__copy"
-    >
-      {shown ? <EyeOff size={14} /> : <Eye size={14} />}
-    </Button>
+      variant="ghost"
+      size="xs"
+      onClick={() => setShown((v) => !v)}
+    />
   ) : null;
 
+  // one row for every copy: a field's height, the small ghost copy centred
   const button = (
     <CopyButton
       text={code}
       label={copyLabel}
       onCopied={onCopied}
-      className="m-code__copy"
+      variant="ghost"
+      size="xs"
     />
   );
+  const oneLine = !code.includes('\n');
   if (inline) {
     return (
-      <div className="m-code m-code--inline">
+      <div
+        className={`m-code m-code--inline${oneLine ? ' m-code--value' : ''}`}
+      >
         <pre className="m-code__pre" tabIndex={0}>
           <code
             className={

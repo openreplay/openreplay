@@ -49,8 +49,9 @@ export const recordGraphQL = tracker.use(trackerGraphQL());`;
     >
       <Section title={t('Install')}>
         <CodeBlock
+          inline
           code="npm i @openreplay/tracker-graphql --save"
-          language="bash"
+          copyLabel={t('Copy command')}
         />
       </Section>
       <Section

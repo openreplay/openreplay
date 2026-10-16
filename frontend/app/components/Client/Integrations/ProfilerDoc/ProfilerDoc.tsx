@@ -59,8 +59,9 @@ const fn = profiler('call_name')(() => {
     >
       <Section title={t('Install')}>
         <CodeBlock
+          inline
           code="npm i @openreplay/tracker-profiler --save"
-          language="bash"
+          copyLabel={t('Copy command')}
         />
       </Section>
       <Section

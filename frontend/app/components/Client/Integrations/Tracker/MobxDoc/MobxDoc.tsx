@@ -51,8 +51,9 @@ function SomeFunctionalComponent() {
     >
       <Section title={t('Install')}>
         <CodeBlock
+          inline
           code="npm i @openreplay/tracker-mobx --save"
-          language="bash"
+          copyLabel={t('Copy command')}
         />
       </Section>
       <Section

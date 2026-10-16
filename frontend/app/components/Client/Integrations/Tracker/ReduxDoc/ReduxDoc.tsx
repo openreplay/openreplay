@@ -58,8 +58,9 @@ const store = createStore(
     >
       <Section title={t('Install')}>
         <CodeBlock
+          inline
           code="npm i @openreplay/tracker-redux --save"
-          language="bash"
+          copyLabel={t('Copy command')}
         />
       </Section>
       <Section

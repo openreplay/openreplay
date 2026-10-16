@@ -44,7 +44,11 @@ function AssistDoc({ onClose }: { onClose?: () => void }) {
       onClose={onClose}
     >
       <Section title={t('Install')}>
-        <CodeBlock language="bash" code="npm i @openreplay/tracker-assist" />
+        <CodeBlock
+          inline
+          code="npm i @openreplay/tracker-assist"
+          copyLabel={t('Copy command')}
+        />
       </Section>
       <Section title={t('Use')}>
         <div className="m-int__stack">
