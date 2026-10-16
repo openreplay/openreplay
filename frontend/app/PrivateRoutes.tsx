@@ -11,7 +11,9 @@ import {
   StableRoutes,
   useHistory,
   useLocation,
+  useParams,
 } from 'App/routing';
+import { CLIENT_TABS } from 'App/utils/routeUtils';
 import { Loader } from 'UI';
 
 import { apiClient } from './api_client';
@@ -114,6 +116,37 @@ const SAAS_ROUTES = saasRoutes.map((route) => ({
   enabled: route.enabled,
   Component: withSiteIdUpdater(route.component),
 }));
+
+// one refetch per page load; if that also comes back empty, land on the projects page
+let projectsRefetched = false;
+
+const NearestProjectRedirect = observer(({ route }: { route: string }) => {
+  const { projectsStore, userStore } = useStore();
+  const { list, siteId, sitesLoading } = projectsStore;
+  const nearest = list.find((s) => s.id === siteId) ?? list[0];
+
+  React.useEffect(() => {
+    if (nearest || sitesLoading || projectsRefetched) return;
+    projectsRefetched = true;
+    void projectsStore.fetchList(undefined, userStore.account.tenantId);
+  }, [nearest, sitesLoading]);
+
+  if (nearest) return <Navigate to={withSiteId(route, nearest.id)} replace />;
+  if (projectsRefetched && !sitesLoading) {
+    return <Navigate to={routes.client(CLIENT_TABS.SITES)} replace />;
+  }
+  return <Loader loading className="flex-1" />;
+});
+
+const OnboardingRoute = observer(() => {
+  const { projectsStore } = useStore();
+  const { siteId } = useParams();
+  return projectsStore.list.some((s) => s.id === siteId) ? (
+    <enhancedComponents.Onboarding />
+  ) : (
+    <NearestProjectRedirect route={routes.sessions()} />
+  );
+});
 
 function PrivateRoutes() {
   const { projectsStore, userStore, searchStore, filterStore } = useStore();
@@ -270,9 +303,9 @@ function PrivateRoutes() {
     }
   }, [projectsStore.activeSiteId]);
 
-  const fallbackTo = redirectToOnboarding
-    ? withSiteId(ONBOARDING_REDIRECT_PATH, siteId)
-    : withSiteId(routes.sessions(), siteId);
+  const fallbackRoute = redirectToOnboarding
+    ? ONBOARDING_REDIRECT_PATH
+    : routes.sessions();
 
   return (
     <Suspense fallback={<Loader loading className="flex-1" />}>
@@ -283,7 +316,7 @@ function PrivateRoutes() {
         />
         <Route
           path={withSiteId(`${ONBOARDING_PATH}/*`, siteIdList)}
-          element={<enhancedComponents.Onboarding />}
+          element={<OnboardingRoute />}
         />
         <Route
           path={SPOTS_LIST_PATH}
@@ -425,7 +458,10 @@ function PrivateRoutes() {
             />
           ),
         )}
-        <Route path="*" element={<Navigate to={fallbackTo} replace />} />
+        <Route
+          path="*"
+          element={<NearestProjectRedirect route={fallbackRoute} />}
+        />
       </StableRoutes>
     </Suspense>
   );
