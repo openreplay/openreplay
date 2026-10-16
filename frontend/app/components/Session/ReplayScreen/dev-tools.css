@@ -63,7 +63,7 @@
   width: 6px;
   height: 6px;
   border-radius: var(--m-radius-full);
-  background: var(--m-content-danger);
+  background: var(--m-mark-danger);
 }
 
 .m-dt__collapse {
@@ -343,7 +343,7 @@
   padding: 0;
   border: 0;
   border-radius: var(--m-radius-full);
-  background: var(--m-content-danger);
+  background: var(--m-mark-danger);
   color: var(--m-content-inverse);
   font-size: 10px;
   font-weight: var(--m-weight-medium);
@@ -364,10 +364,10 @@
   height: 1.125rem;
 }
 .m-dt__lane.is-frustrations .m-dt__mark {
-  background: var(--m-content-warning);
+  background: var(--m-mark-warning);
 }
 .m-dt__lane.is-network .m-dt__mark {
-  background: var(--m-content-danger);
+  background: var(--m-mark-danger);
 }
 
 .m-dt__nodata {

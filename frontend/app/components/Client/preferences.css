@@ -379,7 +379,7 @@
   width: 5px;
   height: 5px;
   border-radius: var(--m-radius-full);
-  background: var(--m-content-success);
+  background: var(--m-mark-success);
 }
 .m-pref__scope {
   display: inline-flex;

@@ -162,7 +162,7 @@
 /* the only colour in the column, and only when something is wrong */
 .m-rd__mark.is-failed .m-rd__ring,
 .m-rd__mark.is-failed .m-rd__in {
-  stroke: var(--m-content-danger);
+  stroke: var(--m-mark-danger);
 }
 
 /* RUNNING has no glyph and no colour of its own: the bare ring, the same one an

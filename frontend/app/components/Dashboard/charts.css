@@ -283,13 +283,13 @@
   background: var(--m-vital, var(--m-content-muted));
 }
 .m-vitals__tile.is-good {
-  --m-vital: var(--m-content-success);
+  --m-vital: var(--m-mark-success);
 }
 .m-vitals__tile.is-medium {
-  --m-vital: var(--m-content-warning);
+  --m-vital: var(--m-mark-warning);
 }
 .m-vitals__tile.is-bad {
-  --m-vital: var(--m-content-danger);
+  --m-vital: var(--m-mark-danger);
 }
 .m-nodata.is-compact {
   gap: var(--m-space-1);

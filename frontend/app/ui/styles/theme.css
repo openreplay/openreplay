@@ -41,6 +41,9 @@
   --color-content-danger: var(--m-content-danger);
   --color-content-success: var(--m-content-success);
   --color-content-warning: var(--m-content-warning);
+  --color-mark-success: var(--m-mark-success);
+  --color-mark-warning: var(--m-mark-warning);
+  --color-mark-danger: var(--m-mark-danger);
 
   --color-border-subtle: var(--m-border-subtle);
   --color-border-default: var(--m-border-default);

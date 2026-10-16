@@ -58,7 +58,7 @@ function EventsList() {
           <Tooltip title={i.label} key={(i as any).startTime}>
             <div
               /* @ts-ignore TODO */
-              className={`absolute h-[10px] z-3 bg-[#ff5454]`}
+              className={`absolute h-[10px] z-3 bg-[var(--m-mark-danger)]`}
               style={{
                 left: `${getTimelinePosition((i as any).time, scale)}%`,
                 width: typeof width === 'string' ? width : `${width}%`,
