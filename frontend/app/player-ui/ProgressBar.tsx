@@ -4,7 +4,6 @@ interface IProps {
   scale: number;
   live?: boolean;
   left: number;
-  time: number;
 }
 
 const styles = {
@@ -18,12 +17,12 @@ const replayBg = 'var(--m-content-secondary)';
 const liveBg = 'var(--m-content-success)';
 
 /** Playtime progress bar */
-export function ProgressBar({ scale, live = false, left, time }: IProps) {
+export function ProgressBar({ live = false, left }: IProps) {
   return (
     <div
       style={{
         ...styles,
-        width: `${time * scale}%`,
+        width: `${Math.min(left, 100)}%`,
         backgroundColor: live && left > 99 ? liveBg : replayBg,
       }}
     />
