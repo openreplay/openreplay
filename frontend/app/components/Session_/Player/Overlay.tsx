@@ -19,7 +19,6 @@ import {
 
 import { useModal } from '../../Modal';
 import AutoplayTimer from './Overlay/AutoplayTimer';
-import ElementsMarker from './Overlay/ElementsMarker';
 import Loader from './Overlay/Loader';
 import PlayIconLayer from './Overlay/PlayIconLayer';
 
@@ -95,7 +94,6 @@ function Overlay({ nextId, isClickmap }: Props) {
     completed,
     autoplay,
     inspectorMode,
-    markedTargets,
     tabStates,
   } = store.get();
   const cssLoading = Object.values(tabStates).some(
@@ -108,11 +106,7 @@ function Overlay({ nextId, isClickmap }: Props) {
   const showAutoplayTimer =
     completed && autoplay && nextId && !switchingSession;
   const showPlayIconLayer =
-    !isClickmap &&
-    !markedTargets &&
-    !inspectorMode &&
-    !loading &&
-    !showAutoplayTimer;
+    !isClickmap && !inspectorMode && !loading && !showAutoplayTimer;
 
   const onClick = ({ key }: { key: string }) => {
     switch (key) {
@@ -183,12 +177,6 @@ function Overlay({ nextId, isClickmap }: Props) {
           )}
         </div>
       </ContextMenu>
-      {markedTargets && (
-        <ElementsMarker
-          targets={markedTargets}
-          hot={uiPlayerStore.clickMapHot}
-        />
-      )}
     </>
   );
 }

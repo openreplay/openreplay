@@ -150,10 +150,6 @@ export default class Screen {
     this.screen.appendChild(el);
   };
 
-  getParentElement(): HTMLElement | null {
-    return this.parentElement;
-  }
-
   setBorderStyle(style: { outline: string }) {
     return Object.assign(this.screen.style, style);
   }
@@ -230,17 +226,6 @@ export default class Screen {
     return this.getElementFromInternalPoint(
       this.getInternalViewportCoordinates(point),
     );
-  }
-
-  getElementBySelector(selector: string) {
-    if (!selector) return null;
-    try {
-      const safeSelector = selector.replace(/\//g, '\\/');
-      return this.document?.querySelector<HTMLElement>(safeSelector) || null;
-    } catch (e) {
-      console.error('Can not select element. ', e);
-      return null;
-    }
   }
 
   display(flag: boolean = true) {

@@ -1,5 +1,4 @@
 import type { Store } from '../../index';
-import { State } from './TargetMarker';
 import Marker from '../Screen/Marker';
 import Inspector from '../Screen/Inspector';
 import Screen, { ScaleMode } from '../Screen/Screen';

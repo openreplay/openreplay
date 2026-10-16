@@ -5,7 +5,6 @@ import TagWatch from 'Components/Session/Player/TagWatch';
 import IssuePanel from 'Components/SmartAlerts/IssuePlayer/IssuePanel';
 
 import EventsBlock from '../Session_/EventsBlock';
-import PageInsightsPanel from '../Session_/PageInsightsPanel/PageInsightsPanel';
 import UnitStepsModal from '../Session_/UnitStepsModal';
 import stl from './rightblock.module.css';
 
@@ -30,12 +29,6 @@ function RightBlock({
         // the dark player backdrop and reads as a different theme
         <div className={panel()}>
           <EventsBlock setActiveTab={setActiveTab} />
-        </div>
-      );
-    case 'CLICKMAP':
-      return (
-        <div className={panel()}>
-          <PageInsightsPanel />
         </div>
       );
     case 'INSPECTOR':

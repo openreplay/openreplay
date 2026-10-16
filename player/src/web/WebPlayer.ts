@@ -13,7 +13,6 @@ import TargetMarker from './addons/TargetMarker';
 export default class WebPlayer extends Player {
   static readonly INITIAL_STATE = {
     ...Player.INITIAL_STATE,
-    ...TargetMarker.INITIAL_STATE,
     ...MessageManager.INITIAL_STATE,
     ...MessageLoader.INITIAL_STATE,
     ...InspectorController.INITIAL_STATE,
@@ -87,7 +86,7 @@ export default class WebPlayer extends Player {
       wpState.update({ mobsFetched: true });
     }
 
-    this.targetMarker = new TargetMarker(this.screen, wpState);
+    this.targetMarker = new TargetMarker(this.screen);
     this.inspectorController = new InspectorController(screen, wpState);
 
     const endTime = session.duration?.valueOf() || 0;
@@ -172,7 +171,7 @@ export default class WebPlayer extends Player {
     void this.messageLoader.loadFiles();
 
     this.targetMarker.destroy();
-    this.targetMarker = new TargetMarker(this.screen, this.wpState);
+    this.targetMarker = new TargetMarker(this.screen);
     this.inspectorController = new InspectorController(
       this.screen,
       this.wpState,
@@ -229,7 +228,6 @@ export default class WebPlayer extends Player {
     if (!this.screen) return;
     const { width, height } = this.wpState.get();
     this.screen.scale({ width, height });
-    this.targetMarker?.updateMarkedTargets();
   };
 
   // delayed message decoding for state plugins
@@ -257,17 +255,6 @@ export default class WebPlayer extends Player {
 
   markBySelector = (selector: string) => {
     this.inspectorController.markBySelector(selector);
-  };
-
-  // Target Marker
-  setActiveTarget = (...args: Parameters<TargetMarker['setActiveTarget']>) => {
-    this.targetMarker.setActiveTarget(...args);
-  };
-
-  markTargets = (...args: Parameters<TargetMarker['markTargets']>) => {
-    // marking needs a still page; clearing the marks must not stop playback
-    if (args[0]) this.pause();
-    this.targetMarker.markTargets(...args);
   };
 
   showClickmap = (...args: Parameters<TargetMarker['injectTargets']>) => {

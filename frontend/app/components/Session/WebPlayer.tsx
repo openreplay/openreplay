@@ -233,12 +233,6 @@ function WebPlayer(props: any) {
     }
   }, [cssLoading, ready]);
 
-  React.useEffect(() => {
-    if (activeTab === 'CLICKMAP') {
-      contextValue.player?.pause();
-    }
-  }, [activeTab]);
-
   // moving to another session only stops this one; the layout (fullscreen,
   // dev tools, side panel) is the screen's and stays until it is left
   useEffect(() => () => playerInst?.pause(), [params.sessionId]);
@@ -284,11 +278,6 @@ function WebPlayer(props: any) {
   } = contextValue.store?.get() || {};
   const panels = [
     { key: 'EVENTS', label: t('Activity'), hint: t('What happened, in order') },
-    {
-      key: 'CLICKMAP',
-      label: t('Click map'),
-      hint: t('Where on each page this person clicked, and how often'),
-    },
     {
       key: 'INSPECTOR',
       label: t('Features'),

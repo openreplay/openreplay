@@ -101,16 +101,9 @@ export default class UiPlayerStore {
 
   requestSheetHosts = 0;
 
-  /** The click map row under the pointer: its dot on the page is lit. */
-  clickMapHot: string | null = null;
-
   constructor() {
     makeAutoObservable(this, { requestSheet: observableRef });
   }
-
-  setClickMapHot = (selector: string | null) => {
-    this.clickMapHot = selector;
-  };
 
   openRequestSheet = (
     rows: any[],
