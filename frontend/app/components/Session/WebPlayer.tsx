@@ -67,10 +67,14 @@ function WebPlayer(props: any) {
   const [activeTab, setActiveTab] = useState('');
   const [visuallyAdjusted, setAdjusted] = useState(false);
   const [windowActive, setWindowActive] = useState(!document.hidden);
-  // @ts-ignore
-  const [contextValue, setContextValue] =
-    useState<IPlayerContext>(defaultContextValue);
+  // `sessionId` says which session the player was made for
+  const [contextValue, setContextValue] = useState<
+    IPlayerContext & { sessionId?: string }
+  >(defaultContextValue as any);
   const params: { sessionId: string } = useParams();
+  // the route is on the next session and its data is not here yet
+  const switching =
+    !!session.sessionId && session.sessionId !== params.sessionId;
   const [fullView, setFullView] = useState(false);
   const openedAt = React.useRef<number>(null);
 
@@ -88,7 +92,6 @@ function WebPlayer(props: any) {
   }, [searchStore.instance.filters]);
 
   React.useEffect(() => {
-    openedAt.current = Date.now();
     const handleActivation = () => {
       if (!document.hidden) {
         setWindowActive(true);
@@ -98,25 +101,36 @@ function WebPlayer(props: any) {
     document.addEventListener('visibilitychange', handleActivation);
 
     return () => {
-      const durWatching = Date.now() - (openedAt.current || performance.now());
-      signalService.send(
-        {
-          source: 'duration',
-          value: durWatching,
-        },
-        session.sessionId,
-      );
       devTools.update('network', { activeTab: 'ALL' });
       document.removeEventListener('visibilitychange', handleActivation);
     };
   }, []);
 
+  // how long each session was watched, autoplay moves included
+  React.useEffect(() => {
+    openedAt.current = Date.now();
+    const watched = params.sessionId;
+    return () => {
+      const durWatching = Date.now() - (openedAt.current || performance.now());
+      signalService.send({ source: 'duration', value: durWatching }, watched);
+    };
+  }, [params.sessionId]);
+
+  React.useEffect(() => {
+    uiPlayerStore.setSwitchingSession(switching);
+  }, [switching]);
+
   useEffect(() => {
     if (session.sessionId) {
       sessionStore.setLastPlayedSessionId(session.sessionId);
     }
-    playerInst = undefined;
-    if (!session.sessionId || contextValue.player !== undefined) return;
+    if (
+      !session.sessionId ||
+      session.sessionId !== params.sessionId ||
+      contextValue.sessionId === session.sessionId
+    )
+      return;
+    const previous = playerInst;
     const mobData = sessionStore.prefetchedMobUrls[session.sessionId] as
       | Record<string, any>
       | undefined;
@@ -134,8 +148,15 @@ function WebPlayer(props: any) {
         WebPlayerInst.preloadFirstFile(mobData?.data, mobData?.fileKey);
       }
     }
-    setContextValue({ player: WebPlayerInst, store: PlayerStore });
+    setContextValue({
+      player: WebPlayerInst,
+      store: PlayerStore,
+      sessionId: session.sessionId,
+    });
     playerInst = WebPlayerInst;
+    setAdjusted(false);
+    // the previous session's player goes once this one has taken its place
+    if (previous) setTimeout(() => previous.clean(), 0);
 
     const freeze = props.query.get('freeze');
     if (freeze) {
@@ -147,7 +168,7 @@ function WebPlayer(props: any) {
       },
       session.sessionId,
     );
-  }, [session.sessionId]);
+  }, [session.sessionId, params.sessionId]);
 
   const domFiles = session?.domURL?.length ?? 0;
   useEffect(() => {
@@ -186,7 +207,7 @@ function WebPlayer(props: any) {
   ]);
 
   React.useEffect(() => {
-    if (activeTab === '' && contextValue.player && windowActive) {
+    if (contextValue.player && windowActive) {
       const jumpToTime = props.query.get('jumpto');
       const shouldAdjustOffset = visualOffset !== 0 && !visuallyAdjusted;
 
@@ -202,7 +223,7 @@ function WebPlayer(props: any) {
         }
       }
     }
-  }, [activeTab, visualOffset, windowActive]);
+  }, [contextValue.player, visualOffset, windowActive]);
 
   useEffect(() => {
     if (cssLoading) {
@@ -218,25 +239,22 @@ function WebPlayer(props: any) {
     }
   }, [activeTab]);
 
-  // LAYOUT (TODO: local layout state - useContext or something..)
+  // moving to another session only stops this one; the layout (fullscreen,
+  // dev tools, side panel) is the screen's and stays until it is left
+  useEffect(() => () => playerInst?.pause(), [params.sessionId]);
   useEffect(
     () => () => {
-      console.debug('cleaning up player after', params.sessionId);
       toggleFullscreen(false);
       closeBottomBlock();
-
-      // Pause immediately (stops animation loop), but defer the heavy
-      // teardown (iframe removal, store resets) so it doesn't block
-      // React from mounting the next page.
-      playerInst?.pause();
+      uiPlayerStore.setSwitchingSession(false);
+      // pause now (stops the animation loop), tear down after React has
+      // mounted the next page
       const inst = playerInst;
-      if (inst) {
-        setTimeout(() => inst.clean(), 0);
-      }
-      // @ts-ignore
-      setContextValue(defaultContextValue);
+      playerInst = undefined;
+      inst?.pause();
+      if (inst) setTimeout(() => inst.clean(), 0);
     },
-    [params.sessionId],
+    [],
   );
 
   useEffect(() => {
@@ -285,8 +303,11 @@ function WebPlayer(props: any) {
     setActiveTab(next);
   };
 
+  // keyed by session: the session's own parts remount with its player, in
+  // the same commit, while the frame around them stays
   const player = contextValue.player ? (
     <PlayerContent
+      key={contextValue.sessionId}
       activeTab={activeTab}
       fullscreen={fullscreen}
       setActiveTab={setActiveTab}
@@ -314,7 +335,12 @@ function WebPlayer(props: any) {
           onPanel={onPanel}
           panelWidth={activeTab === 'EXPORT' ? 480 : undefined}
           renderPanel={(key) => (
-            <RightBlock activeTab={key} setActiveTab={onPanel} embedded />
+            <RightBlock
+              key={contextValue.sessionId}
+              activeTab={key}
+              setActiveTab={onPanel}
+              embedded
+            />
           )}
           notice={<RecordingNotices />}
           fullscreen={fullscreen}

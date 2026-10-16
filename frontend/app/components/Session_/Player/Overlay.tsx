@@ -101,10 +101,12 @@ function Overlay({ nextId, isClickmap }: Props) {
   const cssLoading = Object.values(tabStates).some(
     ({ cssLoading }) => cssLoading,
   );
-  const loading = messagesLoading || cssLoading;
-  const { resolvingInputs } = uiPlayerStore;
+  const { resolvingInputs, switchingSession } = uiPlayerStore;
+  // between sessions the previous one stays on the stage, paused, under the loader
+  const loading = messagesLoading || cssLoading || switchingSession;
 
-  const showAutoplayTimer = completed && autoplay && nextId;
+  const showAutoplayTimer =
+    completed && autoplay && nextId && !switchingSession;
   const showPlayIconLayer =
     !isClickmap &&
     !markedTargets &&

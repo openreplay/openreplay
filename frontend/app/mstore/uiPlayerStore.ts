@@ -59,6 +59,9 @@ const DATA_SOURCE = '__DATA_SOURCE__';
 
 export default class UiPlayerStore {
   fullscreen = false;
+
+  /** the route moved to another session whose data is still on its way */
+  switchingSession = false;
   showOnlySearchEvents = false;
   showSearchEventsSwitchButton = false;
   resolvingInputs = false;
@@ -136,6 +139,10 @@ export default class UiPlayerStore {
   changeDataSource = (source: 'all' | 'current') => {
     this.dataSource = source;
     localStorage.setItem(DATA_SOURCE, source);
+  };
+
+  setSwitchingSession = (val: boolean) => {
+    this.switchingSession = val;
   };
 
   toggleFullscreen = (val?: boolean) => {

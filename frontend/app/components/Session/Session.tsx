@@ -34,6 +34,8 @@ function Session({
   const fetchV2 = sessionStore.fetchSessionData;
   const { clearCurrentSession } = sessionStore;
 
+  // the previous session stays current until the next one arrives, so moving
+  // between sessions keeps the screen (and its panels) instead of reloading it
   useEffect(() => {
     if (sessionId != null) {
       trackerInstance.event('session_opened', { sessionId });
@@ -41,10 +43,8 @@ function Session({
     } else {
       console.error('No sessionID in route.');
     }
-    return () => {
-      clearCurrentSession();
-    };
   }, [sessionId]);
+  useEffect(() => () => clearCurrentSession(), []);
 
   useEffect(() => {
     clearLogs();
