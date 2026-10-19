@@ -1,293 +1,139 @@
 import logging
-from typing import Union
+from typing import Any
 
-from pydantic import ValidationError
+from fastapi import HTTPException as FastAPIHTTPException
+from pydantic_core import from_json, to_json
 from scim2_models import (
     AuthenticationScheme,
-    ServiceProviderConfig,
-    Patch,
     Bulk,
-    Filter,
-    Sort,
-    ETag,
-    Meta,
     ChangePassword,
-    Error,
-    ResourceType,
-    Context,
-    ListResponse,
+    ETag,
+    Filter,
+    Patch,
     PatchOp,
+    ResourceType,
+    ScimPolicy,
+    ServiceProviderConfig,
+    Sort,
+    UnauthorizedException,
 )
-from scim2_server import provider
-from scim2_models import SCIMException
-from scim2_server.utils import merge_resources
-from fastapi import HTTPException as FastAPIHTTPException
-from werkzeug import Request, Response
-from werkzeug.exceptions import HTTPException, NotFound, PreconditionFailed
-from werkzeug.routing.exceptions import RequestRedirect
+from scim2_server.applications.wsgi import WSGIApplication
+from scim2_server.requests import ScimRequest
+from scim2_server.responses import ScimResponse
+from scim2_server.service import ScimService
+from wsgiref.util import application_uri
 
 from chalicelib.utils.scim_auth import verify_access_token
+from routers.scim.backends import CURRENT_TENANT_ID
 
 logger = logging.getLogger(__name__)
 
 
-class MultiTenantProvider(provider.SCIMProvider):
+def get_service_provider_config() -> ServiceProviderConfig:
+    auth_schemes = [
+        AuthenticationScheme(
+            type="oauthbearertoken",
+            name="OAuth Bearer Token",
+            description="Authentication scheme using the OAuth Bearer Token Standard. The access token should be sent in the 'Authorization' header using the Bearer schema.",
+            spec_uri="https://datatracker.ietf.org/doc/html/rfc6750",
+        )
+    ]
+    return ServiceProviderConfig(
+        # todo(jon): write correct documentation uri
+        documentation_uri="https://www.example.com/",
+        patch=Patch(supported=True),
+        bulk=Bulk(supported=False, max_operations=0, max_payload_size=0),
+        filter=Filter(supported=True, max_results=1000),
+        change_password=ChangePassword(supported=False),
+        sort=Sort(supported=True),
+        etag=ETag(supported=False),
+        authentication_schemes=auth_schemes,
+    )
 
-    def check_auth(self, request: Request):
-        logger.debug(f"call processed by check_auth: {request.method} {request.path}")
-        auth = request.headers.get("Authorization")
+
+def get_scim_policy() -> ScimPolicy:
+    """How tolerant the server is with the payloads of the identity providers.
+
+    Unknown attributes are dropped rather than refused, and the PATCH
+    dialect of Microsoft Entra is accepted.
+    """
+    return ScimPolicy(
+        unknown=ScimPolicy.Unknown.ignore,
+        remove_value_as_filter=ScimPolicy.RemoveValue.apply,
+        unmatched_path_filter=ScimPolicy.UnmatchedPathFilter.create,
+    )
+
+
+class OpenReplayScimService(ScimService):
+
+    def read_patch(
+            self, resource_type: ResourceType, body: bytes, content_type: str | None
+    ) -> "PatchOp[Any]":
+        """Validate a PATCH body, after dropping what MS Entra adds to it.
+
+        Entra sometimes sends an ``id`` attribute at the top level, and a
+        ``name`` attribute in its operations. Neither is part of RFC 7644.
+        """
+        self.ensure_json(content_type)
+        try:
+            payload = from_json(body)
+        except ValueError:
+            # Let the regular validation report the syntax error.
+            return super().read_patch(resource_type, body, content_type)
+
+        if isinstance(payload, dict):
+            payload.pop("id", None)
+            operations = payload.get("Operations")
+            if isinstance(operations, list):
+                for operation in operations:
+                    if isinstance(operation, dict):
+                        operation.pop("name", None)
+            body = to_json(payload)
+        return super().read_patch(resource_type, body, content_type)
+
+
+class MultiTenantApplication(WSGIApplication):
+    """The SCIM WSGI application, authenticating each request with a tenant bearer token.
+
+    The tenant of the verified token scopes every storage call, through
+    :data:`routers.scim.backends.CURRENT_TENANT_ID`.
+    """
+
+    @staticmethod
+    def get_base_url(environ: dict[str, Any]) -> str:
+        # The application is mounted under ".../sso/scim/v2": the version is
+        # already part of the mount path, unlike the default implementation.
+        return application_uri(environ).rstrip("/")
+
+    def check_auth(self, request: ScimRequest) -> None:
+        self.authenticate(request)
+
+    @staticmethod
+    def authenticate(request: ScimRequest) -> int:
+        """Return the tenant of the bearer token of a request.
+
+        :raises UnauthorizedException: When the token is missing or invalid.
+        """
+        logger.debug(f"call processed by authenticate: {request.method} {request.path}")
+        auth = request.header("Authorization")
         token = auth[len("Bearer "):] if auth and auth.startswith("Bearer ") else None
         if not token:
-            return Response(
-                "Missing or invalid Authorization header",
-                status=401,
-                headers={"WWW-Authenticate": 'Bearer realm="login required"'},
-            )
+            raise UnauthorizedException(detail="Missing or invalid Authorization header")
         try:
             payload = verify_access_token(token)
         except FastAPIHTTPException as e:
-            return Response(
-                e.detail,
-                status=e.status_code,
-                headers={"WWW-Authenticate": 'Bearer realm="login required"'},
-            )
+            raise UnauthorizedException(detail=str(e.detail))
         return payload["tenant_id"]
 
-    def get_service_provider_config(self):
-        auth_schemes = [
-            AuthenticationScheme(
-                type="oauthbearertoken",
-                name="OAuth Bearer Token",
-                description="Authentication scheme using the OAuth Bearer Token Standard. The access token should be sent in the 'Authorization' header using the Bearer schema.",
-                spec_uri="https://datatracker.ietf.org/doc/html/rfc6750",
-            )
-        ]
-        return ServiceProviderConfig(
-            # todo(jon): write correct documentation uri
-            documentation_uri="https://www.example.com/",
-            patch=Patch(supported=True),
-            bulk=Bulk(supported=False),
-            filter=Filter(supported=True, max_results=1000),
-            change_password=ChangePassword(supported=False),
-            sort=Sort(supported=True),
-            etag=ETag(supported=False),
-            authentication_schemes=auth_schemes,
-            meta=Meta(resource_type="ServiceProviderConfig"),
-        )
-
-    def query_resource(
-            self, request: Request, tenant_id: int, resource: ResourceType | None
-    ):
-        logger.debug(f"call processed by query_resource: {request.method} {request.path}")
-        search_request = self.build_search_request(request)
-
-        kwargs = {}
-        if resource is not None:
-            kwargs["resource_type_id"] = resource.id
-        total_results, results = self.backend.query_resources(
-            search_request=search_request, tenant_id=tenant_id, **kwargs
-        )
-        for r in results:
-            self.adjust_location(request, r)
-
-        resources = [
-            s.model_dump(
-                scim_ctx=Context.RESOURCE_QUERY_RESPONSE,
-                attributes=search_request.attributes,
-                excluded_attributes=search_request.excluded_attributes,
-            )
-            for s in results
-        ]
-
-        return ListResponse[Union[tuple(self.backend.get_models())]](  # noqa: UP007
-            total_results=total_results,
-            items_per_page=search_request.count,
-            start_index=search_request.start_index,
-            resources=resources,
-        )
-
-    def call_resource(
-            self, request: Request, resource_endpoint: str, **kwargs
-    ) -> Response:
-        logger.debug(f"call processed by call_resource: {request.method} {request.path}")
-        resource_type = self.backend.get_resource_type_by_endpoint(
-            "/" + resource_endpoint
-        )
-        if not resource_type:
-            raise NotFound
-
-        if "tenant_id" not in kwargs:
-            raise Exception
-        tenant_id = kwargs["tenant_id"]
-
-        match request.method:
-            case "GET":
-                return self.make_response(
-                    self.query_resource(request, tenant_id, resource_type).model_dump(
-                        scim_ctx=Context.RESOURCE_QUERY_RESPONSE,
-                    )
-                )
-            case _:  # "POST"
-                payload = request.json
-                resource = self.backend.get_model(resource_type.id).model_validate(
-                    payload, scim_ctx=Context.RESOURCE_CREATION_REQUEST
-                )
-                created_resource = self.backend.create_resource(
-                    tenant_id,
-                    resource_type.id,
-                    resource,
-                )
-                self.adjust_location(request, created_resource)
-                return self.make_response(
-                    created_resource.model_dump(
-                        scim_ctx=Context.RESOURCE_CREATION_RESPONSE
-                    ),
-                    status=201,
-                    headers={"Location": created_resource.meta.location},
-                )
-
-    def call_single_resource(
-            self, request: Request, resource_endpoint: str, resource_id: str, **kwargs
-    ) -> Response:
-        logger.debug(f"call processed by call_single_resource: {request.method} {request.path}")
-        find_endpoint = "/" + resource_endpoint
-        resource_type = self.backend.get_resource_type_by_endpoint(find_endpoint)
-        if not resource_type:
-            raise NotFound
-
-        if "tenant_id" not in kwargs:
-            raise Exception
-        tenant_id = kwargs["tenant_id"]
-
-        match request.method:
-            case "GET":
-                if resource := self.backend.get_resource(
-                        tenant_id, resource_type.id, resource_id
-                ):
-                    if self.continue_etag(request, resource):
-                        response_args = self.get_attrs_from_request(request)
-                        self.adjust_location(request, resource)
-                        return self.make_response(
-                            resource.model_dump(
-                                scim_ctx=Context.RESOURCE_QUERY_RESPONSE,
-                                **response_args,
-                            )
-                        )
-                    else:
-                        return self.make_response(None, status=304)
-                raise NotFound
-            case "DELETE":
-                if self.backend.delete_resource(
-                        tenant_id, resource_type.id, resource_id
-                ):
-                    return self.make_response(None, 204)
-                else:
-                    raise NotFound
-            case "PUT":
-                response_args = self.get_attrs_from_request(request)
-                resource = self.backend.get_resource(
-                    tenant_id, resource_type.id, resource_id
-                )
-                if resource is None:
-                    raise NotFound
-                if not self.continue_etag(request, resource):
-                    raise PreconditionFailed
-
-                updated_attributes = self.backend.get_model(
-                    resource_type.id
-                ).model_validate(request.json)
-                merge_resources(resource, updated_attributes)
-                updated = self.backend.update_resource(
-                    tenant_id, resource_type.id, resource
-                )
-                self.adjust_location(request, updated)
-                return self.make_response(
-                    updated.model_dump(
-                        scim_ctx=Context.RESOURCE_REPLACEMENT_RESPONSE,
-                        **response_args,
-                    )
-                )
-            case _:  # "PATCH"
-                payload = request.json
-                # MS Entra sometimes passes a "id" attribute
-                if "id" in payload:
-                    del payload["id"]
-                operations = payload.get("Operations", [])
-                for operation in operations:
-                    if "name" in operation:
-                        # MS Entra sometimes passes a "name" attribute
-                        del operation["name"]
-
-                patch_operation = PatchOp.model_validate(payload)
-                response_args = self.get_attrs_from_request(request)
-                resource = self.backend.get_resource(
-                    tenant_id, resource_type.id, resource_id
-                )
-                if resource is None:
-                    raise NotFound
-                if not self.continue_etag(request, resource):
-                    raise PreconditionFailed
-
-                self.apply_patch_operation(resource, patch_operation)
-                updated = self.backend.update_resource(
-                    tenant_id, resource_type.id, resource
-                )
-
-                if response_args:
-                    self.adjust_location(request, updated)
-                    return self.make_response(
-                        updated.model_dump(
-                            scim_ctx=Context.RESOURCE_REPLACEMENT_RESPONSE,
-                            **response_args,
-                        )
-                    )
-                else:
-                    # RFC 7644, section 3.5.2:
-                    # A PATCH operation MAY return a 204 (no content)
-                    # if no attributes were requested
-                    return self.make_response(
-                        None, 204, headers={"ETag": updated.meta.version}
-                    )
-
-    def wsgi_app(self, request: Request, environ):
-        logger.debug(f"call processed by wsgi_app: {request.method} {request.path}")
+    def dispatch_request(self, request: ScimRequest) -> ScimResponse:
+        logger.debug(f"call processed by dispatch_request: {request.method} {request.path}")
+        tenant_id = None
+        if self.needs_auth(request):
+            # RFC7643, Section 5: skip authentication for ServiceProviderConfig
+            tenant_id = self.authenticate(request)
+        request.subject = tenant_id
+        token = CURRENT_TENANT_ID.set(tenant_id)
         try:
-            if environ.get("PATH_INFO", "").endswith(".scim"):
-                # RFC 7644, Section 3.8
-                # Just strip .scim suffix, the provider always returns application/scim+json
-                environ["PATH_INFO"], _, _ = environ["PATH_INFO"].rpartition(".scim")
-            urls = self.url_map.bind_to_environ(environ)
-            endpoint, args = urls.match()
-
-            tenant_id = None
-            if endpoint != "service_provider_config":
-                # RFC7643, Section 5: skip authentication for ServiceProviderConfig
-                tenant_id = self.check_auth(request)
-                if isinstance(tenant_id, Response):
-                    return tenant_id
-
-            # Wrap the entire call in a transaction. Should probably be optimized (use transaction only when necessary).
-            with self.backend:
-                if endpoint == "service_provider_config" or endpoint == "schema":
-                    response = getattr(self, f"call_{endpoint}")(request, **args)
-                else:
-                    response = getattr(self, f"call_{endpoint}")(
-                        request, **args, tenant_id=tenant_id
-                    )
-            return response
-        except RequestRedirect as e:
-            # urls.match may cause a redirect, handle it as a special case of HTTPException
-            self.log.exception(e)
-            return e.get_response(environ)
-        except HTTPException as e:
-            self.log.exception(e)
-            return self.make_error(Error(status=e.code, detail=e.description))
-        except SCIMException as e:
-            self.log.exception(e)
-            return self.make_error(e.scim_error)
-        except ValidationError as e:
-            self.log.exception(e)
-            return self.make_error(Error(status=400, detail=str(e)))
-        except Exception as e:
-            self.log.exception(e)
-            return self.make_error(Error(status=500, detail="Internal server error."))
+            return self.handler.handle(request)
+        finally:
+            CURRENT_TENANT_ID.reset(token)
