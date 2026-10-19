@@ -1,4 +1,5 @@
 import { EChart, baseOption, useChartTheme } from '@/ui/data/chart';
+import { escapeHtml } from 'App/utils';
 import type { EChartsCoreOption } from 'echarts/core';
 import React from 'react';
 
@@ -272,7 +273,7 @@ export default function TrendChart({
           value: number;
           percent: number;
           marker: string;
-        }) => `${p.marker} ${p.name}<br/>${fmtNum(p.value)} (${p.percent}%)`,
+        }) => `${p.marker} ${escapeHtml(p.name)}<br/>${fmtNum(p.value)} (${p.percent}%)`,
       },
       series: [
         {

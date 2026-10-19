@@ -63,9 +63,11 @@ export function FilterPanel({
         '[data-slot="drawer"], [role="dialog"]',
       ) as HTMLElement | null) ?? document.body;
     setHost(container);
-    const place = () => {
+    const place = (e?: Event) => {
       const a = anchorRef.current;
       if (!a) return;
+      // scrolling the panel's own lists does not move its anchor
+      if (e?.target instanceof Node && box.current?.contains(e.target)) return;
       const r = a.getBoundingClientRect();
       const gap = 8;
       // the drawn size where there is one, so a wider panel never spills
@@ -84,7 +86,9 @@ export function FilterPanel({
         left = left - c.left + container.scrollLeft;
         top = top - c.top + container.scrollTop;
       }
-      setAt({ top: Math.round(top), left: Math.round(left) });
+      const t = Math.round(top);
+      const l = Math.round(left);
+      setAt((p) => (p && p.top === t && p.left === l ? p : { top: t, left: l }));
     };
     place();
     window.addEventListener('scroll', place, true);

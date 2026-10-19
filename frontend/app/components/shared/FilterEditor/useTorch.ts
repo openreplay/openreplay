@@ -20,6 +20,8 @@ export function useTorch(enabled = true) {
     let py = -1e4;
     let radius = 0;
     let shownR = '';
+    let shownX = '';
+    let shownY = '';
     // cached: a pointer move must not force layout; resize / scroll invalidate it
     let box: DOMRect | null = null;
     let frame = 0;
@@ -48,15 +50,18 @@ export function useTorch(enabled = true) {
       const want = away > NOTICE_AT ? 0 : FULL_RADIUS * (1 - away / NOTICE_AT);
 
       radius += (want - radius) * EASE;
-      if (radius < 0.4 && want === 0) {
-        radius = 0;
+      // settled: a resting pointer must not keep a frame loop alive
+      if (Math.abs(want - radius) < 0.4) {
+        radius = want;
         running = false;
       }
 
       // the light's position only matters while it is lit
       if (radius > 0) {
-        el.style.setProperty('--m-torch-x', `${Math.round(px - r.left)}px`);
-        el.style.setProperty('--m-torch-y', `${Math.round(py - r.top)}px`);
+        const x = `${Math.round(px - r.left)}px`;
+        const y = `${Math.round(py - r.top)}px`;
+        if (x !== shownX) el.style.setProperty('--m-torch-x', (shownX = x));
+        if (y !== shownY) el.style.setProperty('--m-torch-y', (shownY = y));
       }
       const nextR = `${radius.toFixed(1)}px`;
       if (nextR !== shownR)

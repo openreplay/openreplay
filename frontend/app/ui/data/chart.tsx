@@ -1,10 +1,5 @@
-import {
-  BarChart,
-  LineChart,
-  PieChart,
-  SankeyChart,
-  SunburstChart,
-} from 'echarts/charts';
+// sankey / sunburst register themselves in their own lazy chunks
+import { BarChart, LineChart, PieChart } from 'echarts/charts';
 import {
   DatasetComponent,
   GridComponent,
@@ -27,8 +22,6 @@ echarts.use([
   LineChart,
   BarChart,
   PieChart,
-  SankeyChart,
-  SunburstChart,
   GridComponent,
   TooltipComponent,
   LegendComponent,

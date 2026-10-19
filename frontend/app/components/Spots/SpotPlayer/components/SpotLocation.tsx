@@ -4,6 +4,8 @@ import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { httpHref } from 'App/utils';
+
 import spotPlayerStore from '../spotPlayerStore';
 
 function SpotLocation() {
@@ -17,7 +19,7 @@ function SpotLocation() {
         {currUrl ? (
           <Tooltip title={t('Open in new tab')} side="bottom">
             <a
-              href={currUrl}
+              href={httpHref(currUrl)}
               target="_blank"
               rel="noreferrer"
               className="m-player__url m-mono m-truncate"

@@ -1,3 +1,5 @@
+import { escapeHtml } from 'App/utils';
+
 import { colors } from '../utils';
 
 export interface SunburstChild {
@@ -120,7 +122,7 @@ export function sunburstTooltip(colorMap: Map<string, string>) {
       <div class="flex flex-col p-2 rounded-sm" style="background:var(--m-surface-raised);border:1px solid var(--m-border-default);color:var(--m-content-primary)">
         <div class="font-semibold text-sm flex gap-1 items-center">
         <span class="text-base" style="color:${color}; font-family: sans-serif;">&#9632;&#xFE0E;</span>
-        ${clearName}
+        ${escapeHtml(clearName)}
         </div>
         <div class="text-sm">${params.value} <span style="color:var(--m-content-muted)">Sessions</span></div>
       </div>

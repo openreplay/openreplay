@@ -52,9 +52,9 @@ function Login({
     }
     int = setInterval(() => {
       window.postMessage({ type: 'orspot:ping' }, '*');
-    });
+    }, 500);
     const onSpotMsg = (e: any) => {
-      if (e.data.type === 'orspot:pong') {
+      if (e.data?.type === 'orspot:pong') {
         setExtExist(true);
         localStorage.setItem(extKey, '1');
         if (int) clearInterval(int);
@@ -65,6 +65,7 @@ function Login({
     window.addEventListener('message', onSpotMsg);
     return () => {
       if (int) clearInterval(int);
+      window.removeEventListener('message', onSpotMsg);
     };
   }, []);
 

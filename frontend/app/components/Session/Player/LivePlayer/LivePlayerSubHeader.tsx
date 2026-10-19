@@ -5,6 +5,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { PlayerContext } from 'App/components/Session/playerContext';
+import { httpHref } from 'App/utils';
 import SessionTabs from 'Components/Session/Player/SharedComponents/SessionTabs';
 
 function SubHeader() {
@@ -20,7 +21,7 @@ function SubHeader() {
         {location ? (
           <Tooltip title={t('Open in new tab')} side="bottom">
             <a
-              href={location}
+              href={httpHref(location)}
               target="_blank"
               rel="noreferrer"
               className="m-player__url m-mono m-truncate"

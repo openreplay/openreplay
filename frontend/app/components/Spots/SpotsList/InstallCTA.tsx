@@ -21,28 +21,29 @@ function InstallCTA() {
 
   React.useEffect(() => {
     let int: any;
+    const onSpotMsg = (e: any) => {
+      if (e.data?.type === 'orspot:pong') {
+        setExtExist(true);
+        localStorage.setItem(extKey, '1');
+        clearInterval(int);
+        int = null;
+        window.removeEventListener('message', onSpotMsg);
+      }
+    };
     const v = localStorage.getItem(extKey);
     if (v) {
       setExtExist(true);
     } else {
       int = setInterval(() => {
         window.postMessage({ type: 'orspot:ping' }, '*');
-      });
-      const onSpotMsg = (e: any) => {
-        if (e.data.type === 'orspot:pong') {
-          setExtExist(true);
-          localStorage.setItem(extKey, '1');
-          clearInterval(int);
-          int = null;
-          window.removeEventListener('message', onSpotMsg);
-        }
-      };
+      }, 500);
       window.addEventListener('message', onSpotMsg);
     }
     return () => {
       if (int) {
         clearInterval(int);
       }
+      window.removeEventListener('message', onSpotMsg);
     };
   }, []);
 

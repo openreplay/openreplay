@@ -65,6 +65,7 @@ function ExportedVideosList() {
   // await) and gets the link when it arrives
   const download = (sessionId: string) => {
     const tab = window.open('', '_blank');
+    if (tab) tab.opener = null;
     recordingsStore
       .getRecordingLink(sessionId)
       .then((url) => {

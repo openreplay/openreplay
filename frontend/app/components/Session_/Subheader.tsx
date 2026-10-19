@@ -5,6 +5,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { PlayerContext } from 'App/components/Session/playerContext';
+import { httpHref } from 'App/utils';
 import SessionTabs from 'Components/Session/Player/SharedComponents/SessionTabs';
 
 /** The recorded browser's address line, with its tabs when there are several. */
@@ -23,7 +24,7 @@ function SubHeader() {
           {currentLocation ? (
             <Tooltip title={t('Open in new tab')} side="bottom">
               <a
-                href={currentLocation}
+                href={httpHref(currentLocation)}
                 target="_blank"
                 rel="noreferrer"
                 className="m-player__url m-mono m-truncate"

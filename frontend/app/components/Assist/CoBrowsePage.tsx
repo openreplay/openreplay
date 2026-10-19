@@ -404,6 +404,7 @@ export const RecordingsSection = observer(() => {
   // after an await) and gets its URL once the presigned link arrives
   const play = (r: IRecord) => {
     const tab = window.open('', '_blank');
+    if (tab) tab.opener = null;
     void recordingsStore.fetchRecordingUrl(r.recordId).then((url) => {
       if (!tab) return;
       if (url) tab.location.href = url;

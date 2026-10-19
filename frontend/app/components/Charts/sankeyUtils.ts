@@ -1,3 +1,5 @@
+import { escapeHtml } from 'App/utils';
+
 export interface SankeyNode {
   name: string | null;
   eventType?: string;
@@ -24,8 +26,8 @@ export function sankeyTooltip(
       const targetName = echartNodes[params.data.target].name;
       const sourceValue = nodeValues[params.data.source];
 
-      const safeSourceName = shortenString(sourceName);
-      const safeTargetName = shortenString(targetName);
+      const safeSourceName = escapeHtml(shortenString(sourceName));
+      const safeTargetName = escapeHtml(shortenString(targetName));
       return `
       <div class="flex gap-2 w-fit px-2 items-center">
         <div class="flex flex-col">
@@ -53,7 +55,7 @@ export function sankeyTooltip(
     if ('name' in params.data) {
       return `
       <div class="flex flex-col">
-        <div class="font-semibold text-sm flex gap-1 items-center"><span class="text-base" style="color:var(--m-chart-1); font-family: sans-serif;">&#9632;&#xFE0E;</span> ${params.data.name}</div>
+        <div class="font-semibold text-sm flex gap-1 items-center"><span class="text-base" style="color:var(--m-chart-1); font-family: sans-serif;">&#9632;&#xFE0E;</span> ${escapeHtml(params.data.name)}</div>
         <div class="text-sm" style="color:var(--m-content-primary)">${params.value} <span style="color:var(--m-content-muted)">Sessions</span></div>
       </div>
       `;

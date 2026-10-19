@@ -61,10 +61,13 @@ function EventsList() {
     [eventCount, uiPlayerStore.showOnlySearchEvents],
   );
   React.useEffect(() => {
-    const hasDuplicates = events.some(
-      (e, i) =>
-        events.findIndex((el) => el.key === e.key && el.time === e.time) !== i,
-    );
+    const seen = new Set<string>();
+    const hasDuplicates = events.some((e) => {
+      const id = `${e.key}_${e.time}`;
+      if (seen.has(id)) return true;
+      seen.add(id);
+      return false;
+    });
     if (hasDuplicates) {
       console.error('Duplicate events detected in list', events);
     }

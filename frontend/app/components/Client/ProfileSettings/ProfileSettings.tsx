@@ -295,6 +295,7 @@ const ApiKey = observer(() => {
         onCancel={() => setConfirming(false)}
         onOk={() => {
           setConfirming(false);
+          if (!userStore.isAdmin) return;
           void userStore
             .regenerateKey()
             .then(() => toast.success(t('A new API key is ready')));

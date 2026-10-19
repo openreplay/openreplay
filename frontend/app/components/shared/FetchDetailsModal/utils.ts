@@ -109,7 +109,11 @@ function shQuote(s: string): string {
 }
 
 function jsQuote(s: string): string {
-  return s.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/'/g, "\\'");
+  return s
+    .replace(/\\/g, '\\\\')
+    .replace(/`/g, '\\`')
+    .replace(/'/g, "\\'")
+    .replace(/\$\{/g, '\\${');
 }
 
 function sortHeaders(h: HeadersMap): [string, string][] {
@@ -152,10 +156,10 @@ export function toFetch(resource: AnyResource): string {
 
   const hasHeaders = Object.keys(h).length > 0;
   const initLines: string[] = [];
-  if (method && method !== 'GET') initLines.push(`method: '${method}',`);
+  if (method && method !== 'GET') initLines.push(`method: '${jsQuote(method)}',`);
   if (hasHeaders) {
     const entries = sortHeaders(h)
-      .map(([k, v]) => `    '${k}': '${jsQuote(v)}',`)
+      .map(([k, v]) => `    '${jsQuote(k)}': '${jsQuote(v)}',`)
       .join('\n');
     initLines.push(`headers: {\n${entries}\n  },`);
   }
