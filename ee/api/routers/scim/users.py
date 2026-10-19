@@ -175,7 +175,7 @@ def create_resource(tenant_id: int, resource: Resource) -> dict:
     }
     with pg_client.PostgresClient() as cur:
         if resource.groups is not None and len(resource.groups) > 0:
-            role_ids = [g["value"] for g in resource.groups]
+            role_ids = [g.value for g in resource.groups]
             if len(role_ids) > 0:
                 cur.execute(cur.mogrify(
                     """ \

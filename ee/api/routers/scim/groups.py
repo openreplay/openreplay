@@ -83,7 +83,9 @@ def search_existing(tenant_id: int, resource: Resource) -> dict | None:
 def group_display_name_to_role_name(group_name_filter: str) -> str:
     # Replace ONLY displayName eq "<something>"
     pattern = r'(displayName\s+eq\s+)"([^"]*)"'
-    s = re.match(pattern, group_name_filter)
+    s = re.search(pattern, group_name_filter)
+    if s is None:
+        return group_name_filter
     new_value = helpers.group_name_to_role_name(s.group(2))
     s = re.sub(
         pattern,

@@ -4,6 +4,37 @@
     "name": "OpenreplayUser",
     "description": "Openreplay User Account Extension",
     "attributes": [
+      {
+        "name": "permissions",
+        "type": "string",
+        "multiValued": true,
+        "description": "The permissions granted to the User through its OpenReplay role.",
+        "required": false,
+        "canonicalValues": [
+          "SESSION_REPLAY",
+          "DEV_TOOLS",
+          "METRICS",
+          "ASSIST_LIVE",
+          "ASSIST_CALL",
+          "SPOT",
+          "SPOT_PUBLIC"
+        ],
+        "caseExact": true,
+        "mutability": "readOnly",
+        "returned": "default",
+        "uniqueness": "none"
+      },
+      {
+        "name": "projectKeys",
+        "type": "string",
+        "multiValued": true,
+        "description": "The keys of the projects the User is allowed to work on.",
+        "required": false,
+        "caseExact": true,
+        "mutability": "readOnly",
+        "returned": "default",
+        "uniqueness": "none"
+      }
     ],
     "meta": {
       "resourceType": "Schema",
@@ -14,8 +45,7 @@
     "id": "urn:ietf:params:scim:schemas:extension:openreplay:2.0:Group",
     "name": "OpenReplayGroup",
     "description": "OpenReplay custom attributes for Group resource",
-    "attributes": [
-    ],
+    "attributes": [],
     "meta": {
       "resourceType": "Schema",
       "location": "/v2/Schemas/urn:ietf:params:scim:schemas:extension:openreplay:2.0:Group"
