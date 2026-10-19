@@ -262,6 +262,19 @@ func (c *cacher) cacheURL(t *Task) {
 		}
 		return
 	}
+	ext := strings.ToLower(filepath.Ext(res.Request.URL.Path))
+	contentType := res.Header.Get("Content-Type")
+	if contentType == "" {
+		contentType = typeByExtension(ext)
+	}
+	contentEncoding := res.Header.Get("Content-Encoding")
+	mediaType := mediaTypeOf(contentType)
+
+	if !isAllowedContentType(mediaType, ext, t.isJS) {
+		c.permanent(ctx, t, "content_type", fmt.Errorf("content type %q is not cacheable", contentType))
+		return
+	}
+
 	data, err := io.ReadAll(io.LimitReader(res.Body, int64(c.sizeLimit+1)))
 	if err != nil {
 		c.retry(ctx, t, 0, "read_body", err)
@@ -273,18 +286,7 @@ func (c *cacher) cacheURL(t *Task) {
 		return
 	}
 
-	contentType := res.Header.Get("Content-Type")
-	if contentType == "" {
-		contentType = typeByExtension(filepath.Ext(res.Request.URL.Path))
-	}
-	contentEncoding := res.Header.Get("Content-Encoding")
-
-	if !isAllowedContentType(contentType, t.isJS) {
-		c.permanent(ctx, t, "content_type", fmt.Errorf("content type %q is not cacheable", contentType))
-		return
-	}
-
-	isCSS := strings.HasPrefix(contentType, "text/css")
+	isCSS := mediaType == "text/css"
 
 	uploadBody := data
 	var cssURLs []string
@@ -458,6 +460,7 @@ func shouldCompress(gzipEnabled bool, contentType, contentEncoding string, isJS 
 var extContentTypes = map[string]string{
 	".css":   "text/css",
 	".js":    "text/javascript",
+	".mjs":   "text/javascript",
 	".woff":  "font/woff",
 	".woff2": "font/woff2",
 	".ttf":   "font/ttf",
@@ -472,24 +475,33 @@ func typeByExtension(ext string) string {
 	return mime.TypeByExtension(ext)
 }
 
-func isAllowedContentType(contentType string, isJS bool) bool {
-	mediaType := strings.ToLower(strings.TrimSpace(strings.SplitN(contentType, ";", 2)[0]))
+func mediaTypeOf(contentType string) string {
+	return strings.ToLower(strings.TrimSpace(strings.SplitN(contentType, ";", 2)[0]))
+}
+
+func isAllowedContentType(mediaType, ext string, isJS bool) bool {
+	if mediaType == "application/octet-stream" || mediaType == "text/plain" {
+		mapped, ok := extContentTypes[ext]
+		if !ok {
+			return false
+		}
+		mediaType = mapped
+	}
 	if isJS {
 		switch mediaType {
 		case "text/javascript", "application/javascript", "application/x-javascript",
-			"text/ecmascript", "application/ecmascript", "application/octet-stream":
+			"text/x-javascript", "text/ecmascript", "application/ecmascript":
 			return true
 		}
 		return false
 	}
-	switch {
-	case mediaType == "text/css",
-		mediaType == "application/octet-stream",
-		mediaType == "application/vnd.ms-fontobject",
-		strings.HasPrefix(mediaType, "font/"),
-		strings.HasPrefix(mediaType, "application/font"),
-		strings.HasPrefix(mediaType, "application/x-font"):
+	if mediaType == "text/css" {
 		return true
+	}
+	for _, hint := range []string{"font", "woff", "opentype", "truetype"} {
+		if strings.Contains(mediaType, hint) {
+			return true
+		}
 	}
 	return false
 }
