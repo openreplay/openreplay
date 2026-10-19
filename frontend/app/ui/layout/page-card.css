@@ -67,6 +67,7 @@
 .m-page__tabs {
   flex: none;
   padding: 0 var(--m-space-7);
+  --m-tabs-ink-inset: var(--m-radius-surface);
 }
 
 .m-page__toolbar {

@@ -1,3 +1,4 @@
+import { getRowsPerPage } from '@/ui/layout/rows-per-page';
 import { toast } from '@/ui/overlays/toast';
 import { makeAutoObservable, runInAction } from 'mobx';
 
@@ -103,8 +104,6 @@ const AGENT_RULE: CriticalRule = {
    /v2/smart-issues endpoints, mapped through SmartAlerts/factories. Filtering,
    sorting and pagination are server-side; mutations persist then refetch. */
 
-export const PAGE_SIZE = 20;
-
 /* Persist light view preferences per project so a chosen view sticks across
    reloads (heavier filters reset — they refetch). */
 const critOnlyKey = (p: string) => `${p}_issues_crit_only`;
@@ -182,7 +181,6 @@ export default class IssuesStore {
 
   // ---- pagination ----
   page = 1;
-  limit = PAGE_SIZE;
 
   // ---- filters (each setter refetches) ----
   query = '';
@@ -209,6 +207,8 @@ export default class IssuesStore {
   criticalRules: CriticalRule[] = [];
   criticalBy: Record<string, number[]> = {};
   notCritical: Record<string, string> = {};
+  /** issues I marked critical this session: the server keeps no attribution */
+  markedByMe: Record<string, true> = {};
   relevantToMe = false;
   segments: SavedSegment[] = [];
   captureMode: CaptureMode = 'full';
@@ -331,6 +331,7 @@ export default class IssuesStore {
     this.criticalRules = [];
     this.criticalBy = {};
     this.notCritical = {};
+    this.markedByMe = {};
     this.journeyTags = [];
     this.categoryCounts = null;
     this.relevantToMe = false;
@@ -368,7 +369,7 @@ export default class IssuesStore {
     this.loading = true;
     try {
       const { rows, total, categoryCounts } = await getIssues(this.projectId, {
-        limit: this.limit,
+        limit: getRowsPerPage(),
         page: this.page,
         journeyLabels: this.labels,
         journeyLabelsMatch: toLabelsMatch(this.match),
@@ -852,7 +853,13 @@ export default class IssuesStore {
     const issue = this.byId(id);
     if (!issue || !issue.critical) return 'none';
     const me = String(userStore.account.id);
-    return (issue.criticalBy ?? []).some((m) => String(m.userId) === me)
+    const mineHere =
+      this.markedByMe[id] ||
+      (this.criticalBy[id] ?? []).some(
+        (rid) => this.criticalRules.find((r) => r.id === rid)?.mine,
+      );
+    return mineHere ||
+      (issue.criticalBy ?? []).some((m) => String(m.userId) === me)
       ? 'mine'
       : 'team';
   }
@@ -983,6 +990,8 @@ export default class IssuesStore {
   /** Suppress the flag for me only; the reasons + note are sent with the flag.
       Replace, never mutate a key (MobX tracks the object identity). */
   setNotCriticalForMe = (id: string, reasons: string[] = [], note = '') => {
+    const { [id]: _mine, ...others } = this.markedByMe;
+    this.markedByMe = others;
     this.notCritical = {
       ...this.notCritical,
       [id]: [...reasons, note.trim()].filter(Boolean).join(' · '),
@@ -992,6 +1001,7 @@ export default class IssuesStore {
   restoreCritical = (id: string) => {
     const { [id]: _dropped, ...rest } = this.notCritical;
     this.notCritical = rest;
+    this.markedByMe = { ...this.markedByMe, [id]: true };
     this.persistCritical(id, true, [], '');
   };
 

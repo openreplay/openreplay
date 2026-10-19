@@ -147,12 +147,19 @@
 
 .m-fbar__filter:is(:focus-visible, :focus-within) {
   outline: none;
+  border-color: var(--m-border-strong);
 }
-.m-fbar__filter:is(:focus-visible, :focus-within) .m-fbar__ring {
+/* the ring is for the keyboard; a click says focus with the border */
+:root[data-modality='keyboard']
+  .m-fbar__filter:is(:focus-visible, :focus-within)
+  .m-fbar__ring {
   -webkit-mask: none;
   mask: none;
 }
-.m-fbar__filter:is(:focus-visible, :focus-within) .m-fbar__ring .m-fbar__arc {
+:root[data-modality='keyboard']
+  .m-fbar__filter:is(:focus-visible, :focus-within)
+  .m-fbar__ring
+  .m-fbar__arc {
   stroke: var(--m-focus-ring);
   stroke-width: 1;
   opacity: 1;
@@ -170,4 +177,20 @@
 
 .m-fbar__triggerwrap.is-docked {
   display: none;
+}
+
+/* the field under a page title, and what sits at the end of its line */
+.m-recs__entryfield {
+  display: flex;
+  min-width: 0;
+}
+.m-recs__entryfield .m-fbar__triggerwrap {
+  position: relative;
+}
+.m-recs__entry-trailing {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  margin-left: auto;
+  padding-left: var(--m-space-4);
 }

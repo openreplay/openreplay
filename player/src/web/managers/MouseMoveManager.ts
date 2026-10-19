@@ -24,7 +24,12 @@ export default class MouseMoveManager extends ListWalker<MouseMove> {
 
     this.removeMouseTrail = localStorage.getItem(MOUSE_TRAIL) === 'false';
     if (!this.removeMouseTrail) {
-      this.mouseTrail = new MouseTrail(canvas);
+      this.mouseTrail = new MouseTrail(
+        canvas,
+        false,
+        () => this.screen.getScale(),
+        () => this.screen.cursor.drawnPosition,
+      );
     }
 
     this.screen.overlay.appendChild(canvas);

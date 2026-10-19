@@ -117,6 +117,7 @@ function FunnelTable(props: Props) {
         <div className="overflow-x-auto">
           <div style={{ minWidth: 140 + (tableProps.length - 1) * 140 }}>
             <DataTable<Record<string, any>>
+              compact
               ariaLabel={t('Funnel conversion')}
               columns={columns}
               rows={tableData}

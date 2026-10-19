@@ -1,3 +1,4 @@
+import { cityAfterCode } from '@/lib/geo';
 import { OpenReplayMark } from '@/ui/brand/OpenReplayMark';
 import { Chip } from '@/ui/data/Chip';
 import { RelativeTime } from '@/ui/data/RelativeTime';
@@ -106,7 +107,8 @@ export interface SessionsTableProps {
   onHover?: (s: Session | null) => void;
   onFilterToUser?: (s: Session) => void;
   onMetaClick?: (key: string, value: string) => void;
-  lastViewedId?: string | null;
+  /** the last sessions played, newest first: each says so */
+  lastViewedIds?: readonly string[];
   timezone?: string;
   /** "Which clock": each row in its user's own zone, when the session has one */
   userTimezone?: boolean;
@@ -132,7 +134,7 @@ export function SessionsTable({
   onHover,
   onFilterToUser,
   onMetaClick,
-  lastViewedId,
+  lastViewedIds,
   timezone,
   userTimezone = false,
   liveBadge = true,
@@ -206,9 +208,10 @@ export function SessionsTable({
           {liveBadge && s.live && (
             <span className="m-ss__live">{t('live')}</span>
           )}
-          {s.sessionId === lastViewedId && (
+          {lastViewedIds?.includes(s.sessionId) && (
             <Chip kind="status" tone="neutral">
-              {t('Last')}
+              <OpenReplayMark variant="plain" filled size={11} />
+              {t('Last viewed')}
             </Chip>
           )}
           {phone && (
@@ -308,13 +311,14 @@ export function SessionsTable({
               const country =
                 (countries as Record<string, string>)[s.userCountry] ??
                 s.userCountry;
+              const city = cityAfterCode(s.userCity, s.userCountry);
               return (
                 <span
                   className="m-ss__where m-truncate"
-                  title={[s.userCity, country].filter(Boolean).join(', ')}
+                  title={[city, country].filter(Boolean).join(', ')}
                 >
                   <span className="m-ss__cc">{s.userCountry}</span>
-                  {s.userCity || country}
+                  {city || (country === s.userCountry ? '' : country)}
                 </span>
               );
             },
@@ -380,7 +384,7 @@ export function SessionsTable({
               </Tooltip>
             )}
             <span className="m-ss__play">
-              <OpenReplayMark variant="plain" filled={!s.viewed} />
+              <OpenReplayMark variant="plain" filled />
             </span>
           </span>
         );

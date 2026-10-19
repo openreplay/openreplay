@@ -86,22 +86,33 @@ export function SyntheticsFrame({
     </DropdownMenu>
   );
 
+  // a list's own menu ends its toolbar line; the header keeps search and the CTA
+  const headActions = toolbar ? (
+    actions
+  ) : (
+    <>
+      {actions}
+      {more}
+    </>
+  );
+  const lineTools = toolbar ? (
+    <>
+      {toolbar}
+      {more}
+    </>
+  ) : undefined;
+
   if (!standalone)
     return (
       <PreferencesPage
         title={t('Synthetics')}
-        actions={
-          <>
-            {actions}
-            {more}
-          </>
-        }
+        actions={headActions}
         tabs={sections}
         activeTab={activeTab}
         onTabChange={onTab}
         flush
       >
-        {toolbar ? <PageToolbar>{toolbar}</PageToolbar> : null}
+        {lineTools ? <PageToolbar>{lineTools}</PageToolbar> : null}
         {children}
       </PreferencesPage>
     );
@@ -124,13 +135,8 @@ export function SyntheticsFrame({
           </TabsList>
         </Tabs>
       }
-      actions={
-        <>
-          {actions}
-          {more}
-        </>
-      }
-      toolbar={toolbar}
+      actions={headActions}
+      toolbar={lineTools}
     >
       {children}
     </PageCard>

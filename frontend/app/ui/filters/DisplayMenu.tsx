@@ -76,14 +76,16 @@ export function DisplayShell({
 
   const content = (
     <div className="m-dm">
-      <div className="m-dm__section">
-        {rows.map((r) => (
-          <label key={r.id} className="m-dm__row" htmlFor={r.id}>
-            <span className="m-dm__label">{r.label}</span>
-            {r.control}
-          </label>
-        ))}
-      </div>
+      {rows.length > 0 && (
+        <div className="m-dm__section">
+          {rows.map((r) => (
+            <label key={r.id} className="m-dm__row" htmlFor={r.id}>
+              <span className="m-dm__label">{r.label}</span>
+              {r.control}
+            </label>
+          ))}
+        </div>
+      )}
 
       {fields && fields.length > 0 && (
         <div className="m-dm__section">

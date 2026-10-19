@@ -169,13 +169,18 @@ export default class UiPlayerStore {
     this.bottomBlock = 0;
   };
 
+  // one selection on the timeline at a time: starting one ends the other
   toggleZoom = (payload: ToggleZoomPayload) => {
+    if (payload.enabled)
+      this.exportEventsSelection = { enabled: false, startTs: 0, endTs: 0 };
     this.timelineZoom.enabled = payload.enabled;
     this.timelineZoom.startTs = payload.range?.[0] ?? 0;
     this.timelineZoom.endTs = payload.range?.[1] ?? 0;
   };
 
   toggleExportEventsSelection = (payload: ToggleZoomPayload) => {
+    if (payload.enabled)
+      this.timelineZoom = { enabled: false, startTs: 0, endTs: 0 };
     this.exportEventsSelection.enabled = payload.enabled;
     this.exportEventsSelection.startTs = payload.range?.[0] ?? 0;
     this.exportEventsSelection.endTs = payload.range?.[1] ?? 0;

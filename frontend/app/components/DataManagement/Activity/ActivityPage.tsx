@@ -11,6 +11,7 @@ import { DisplayShell, SortControl } from '@/ui/filters/DisplayMenu';
 import { DateRange } from '@/ui/inputs/DateRange';
 import { ListFooter } from '@/ui/layout/ListFooter';
 import { PageCard, PagePanel } from '@/ui/layout/PageCard';
+import { setRowsPerPage, useRowsPerPage } from '@/ui/layout/rows-per-page';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import withPermissions from 'HOCs/withPermissions';
 import { RefreshCw } from 'lucide-react';
@@ -84,7 +85,8 @@ function ActivityPage() {
     readList(HIDDEN_KEY),
   );
 
-  const { page, limit, sortBy, sortOrder } = analyticsStore.payloadFilters;
+  const { page, sortBy, sortOrder } = analyticsStore.payloadFilters;
+  const pageSize = useRowsPerPage();
   const list = analyticsStore.events.events;
   const total = analyticsStore.events.total;
   const loading = analyticsStore.loading;
@@ -365,10 +367,14 @@ function ActivityPage() {
             />
             <ListFooter
               page={page}
-              pageSize={limit}
+              pageSize={pageSize}
               total={total}
               noun={[t('event'), t('events')]}
               onPage={(p) => analyticsStore.editPayload({ page: p })}
+              onPageSize={(n) => {
+                setRowsPerPage(n);
+                analyticsStore.editPayload({ page: 1 });
+              }}
             />
           </>
         )}

@@ -270,22 +270,25 @@ function FilterBar({
               </span>
             )}
 
-            <div className="m-fchips__head">
-              <span className="m-fchips__head-name">
-                {t('Group properties')}
-              </span>
-              {events.length > 0 && (
-                <Tooltip title={t('Applied to every event above')}>
-                  <span
-                    className="m-fchips__orderpick is-fixed"
-                    aria-label={t('Applied to every event above')}
-                  >
-                    <Layers2 size={13} aria-hidden="true" />
-                    <span className="m-fchips__ordertag">{t('all')}</span>
-                  </span>
-                </Tooltip>
-              )}
-            </div>
+            {/* with no events to offer, the properties are the filter */}
+            {(eventEntries.length > 0 || events.length > 0) && (
+              <div className="m-fchips__head">
+                <span className="m-fchips__head-name">
+                  {t('Group properties')}
+                </span>
+                {events.length > 0 && (
+                  <Tooltip title={t('Applied to every event above')}>
+                    <span
+                      className="m-fchips__orderpick is-fixed"
+                      aria-label={t('Applied to every event above')}
+                    >
+                      <Layers2 size={13} aria-hidden="true" />
+                      <span className="m-fchips__ordertag">{t('all')}</span>
+                    </span>
+                  </Tooltip>
+                )}
+              </div>
+            )}
             {properties.map((f) => (
               <GroupChip
                 key={f.key}

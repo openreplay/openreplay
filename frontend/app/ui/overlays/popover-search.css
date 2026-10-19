@@ -6,7 +6,7 @@
   border-bottom: var(--m-border-width) solid var(--m-border-subtle);
 }
 
-.m-psearch:focus-within {
+:root[data-modality='keyboard'] .m-psearch:focus-within {
   outline: 2px solid var(--m-focus-ring);
   outline-offset: -3px;
   border-radius: var(--m-radius-control);

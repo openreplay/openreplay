@@ -44,6 +44,8 @@
   --color-mark-success: var(--m-mark-success);
   --color-mark-warning: var(--m-mark-warning);
   --color-mark-danger: var(--m-mark-danger);
+  --color-mark-search: var(--m-mark-search);
+  --color-accent-bright: var(--m-accent-bright);
 
   --color-border-subtle: var(--m-border-subtle);
   --color-border-default: var(--m-border-default);

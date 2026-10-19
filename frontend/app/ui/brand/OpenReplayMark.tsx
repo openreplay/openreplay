@@ -19,6 +19,8 @@ export interface OpenReplayMarkProps {
   variant?: 'brand' | 'plain';
 
   filled?: boolean;
+  /** brand only: the loading state, a light crossing the mark (see Loader) */
+  loop?: boolean;
 }
 
 export function OpenReplayMark({
@@ -26,10 +28,13 @@ export function OpenReplayMark({
   className,
   variant = 'brand',
   filled,
+  loop,
 }: OpenReplayMarkProps) {
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   const clip = `or-hole-${uid}`;
   const mask = `or-cut-${uid}`;
+  const shape = `or-shape-${uid}`;
+  const sheen = `or-sheen-${uid}`;
 
   if (variant === 'plain') {
     return (
@@ -61,7 +66,7 @@ export function OpenReplayMark({
 
   return (
     <svg
-      className={`m-ormark${className ? ` ${className}` : ''}`}
+      className={`m-ormark${loop ? ' is-looping' : ''}${className ? ` ${className}` : ''}`}
       viewBox={OR_VIEWBOX}
       height={size}
       width={(size * 52) / 59}
@@ -72,10 +77,27 @@ export function OpenReplayMark({
           '--m-ormark-scale': OR_FILL_SCALE,
         } as CSSProperties
       }
-      role="img"
-      aria-label="OpenReplay"
+      // a loader is named by its caption; the logo in the nav names itself
+      role={loop ? undefined : 'img'}
+      aria-label={loop ? undefined : 'OpenReplay'}
+      aria-hidden={loop ? true : undefined}
     >
       <defs>
+        {loop ? (
+          <>
+            {/* the painted logo only, so the light crosses it as one object
+                and never lights the gap between the two triangles */}
+            <clipPath id={shape}>
+              <path d={OR_OUTLINE} clipRule="nonzero" />
+              <path d={OR_INNER} />
+            </clipPath>
+            <linearGradient id={sheen} x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stopColor="#fff" stopOpacity="0" />
+              <stop offset="0.5" stopColor="#fff" stopOpacity="0.62" />
+              <stop offset="1" stopColor="#fff" stopOpacity="0" />
+            </linearGradient>
+          </>
+        ) : null}
         <clipPath id={clip}>
           <path d={OR_HOLE} />
         </clipPath>
@@ -100,6 +122,22 @@ export function OpenReplayMark({
           <path className="m-ormark__fill" d={OR_INNER} />
         </g>
       </g>
+
+      {loop ? (
+        <g clipPath={`url(#${shape})`}>
+          {/* the wrapper travels, the band inside keeps its slant */}
+          <g className="m-ormark__sheen">
+            <rect
+              x="-30"
+              y="-6"
+              width="26"
+              height="71"
+              fill={`url(#${sheen})`}
+              transform="skewX(-18)"
+            />
+          </g>
+        </g>
+      ) : null}
     </svg>
   );
 }

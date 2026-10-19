@@ -516,6 +516,13 @@
 .m-nav.is-collapsed .m-meter .m-bar {
   min-width: 0;
 }
+.m-nav.is-collapsed .m-meter__read {
+  flex: none;
+  gap: 0;
+}
+.m-nav.is-collapsed .m-meter .m-iconbtn {
+  display: none;
+}
 
 @media (max-width: 880px) {
   .m-nav:not(.is-collapsed) {

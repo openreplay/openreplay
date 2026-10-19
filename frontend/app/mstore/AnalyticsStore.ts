@@ -7,6 +7,7 @@ import {
   UsersPayload,
   UsersResponse,
 } from '@/services/AnalyticsService';
+import { getRowsPerPage } from '@/ui/layout/rows-per-page';
 import Period, { LAST_24_HOURS } from 'Types/app/period';
 import { makeAutoObservable, runInAction } from 'mobx';
 
@@ -199,6 +200,7 @@ export default class AnalyticsStore {
     try {
       const data: EventsResponse = await analyticsService.getEvents({
         ...this.payloadFilters,
+        limit: getRowsPerPage(),
         columns: eventListColumns,
       });
       this.setEvents(
@@ -242,7 +244,11 @@ export default class AnalyticsStore {
     const seq = ++this.usersSeq;
     this.setLoading(true);
     try {
-      const fullFilters = { ...this.usersPayloadFilters, query };
+      const fullFilters = {
+        ...this.usersPayloadFilters,
+        limit: getRowsPerPage(),
+        query,
+      };
       if (propName) {
         const propFilter = filterStore.findEvent({ name: propName });
         if (propFilter) {

@@ -15,9 +15,12 @@ import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
 import { FilterStrip } from '@/ui/filters/FilterStrip';
 import { DateRange } from '@/ui/inputs/DateRange';
 import { SearchField } from '@/ui/inputs/SearchField';
+import { LargerScreenOnly } from '@/ui/layout/LargerScreenOnly';
 import { ListFooter } from '@/ui/layout/ListFooter';
 import { PageCard, PagePanel } from '@/ui/layout/PageCard';
+import { setRowsPerPage, useRowsPerPage } from '@/ui/layout/rows-per-page';
 import { Tabs, TabsList, TabsTrigger } from '@/ui/layout/tabs';
+import { useViewport } from '@/ui/layout/use-viewport';
 import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
 import { RenameDialog } from '@/ui/overlays/RenameDialog';
 import { useToast } from '@/ui/overlays/toast';
@@ -67,7 +70,6 @@ import './cobrowse-page.css';
 const AssistStats = React.lazy(() => import('Components/AssistStats'));
 
 const AUTOREFRESH_INTERVAL = 2 * 60 * 1000;
-const PER_PAGE = 10;
 /* The picker drawer is narrower than the page: the person, when and how long. */
 const PICKER_FIELDS: readonly SessionField[] = [
   'started',
@@ -101,6 +103,7 @@ type Section = 'live' | 'recordings';
 function CoBrowsePage() {
   usePageTitle('Co-Browse - OpenReplay');
   const { t } = useTranslation();
+  const phone = useViewport() === 'phone';
   const { userStore } = useStore();
   const { showModal } = useModal();
   const [section, setSection] = React.useState<Section>('live');
@@ -113,6 +116,13 @@ function CoBrowsePage() {
     userStore.isAdmin &&
     !modules.includes(MODULES.ASSIST_STATS) &&
     !modules.includes(MODULES.ASSIST);
+
+  if (phone)
+    return (
+      <PageCard title={t('CoBrowse')}>
+        <LargerScreenOnly what={t('CoBrowse')} art="cobrowse" />
+      </PageCard>
+    );
 
   return (
     <PageCard
@@ -183,6 +193,7 @@ export const LiveSection = observer(
     const total = sessionStore.totalLiveSessions;
     const loading = sessionStore.loadingLiveSessions;
     const { currentPage } = searchStoreLive;
+    const pageSize = useRowsPerPage();
     const { sort, order } = searchStoreLive.instance;
     const noRules = editor.properties.length === 0;
 
@@ -246,6 +257,14 @@ export const LiveSection = observer(
           onPick={editor.onAdd}
           hasRules={!noRules}
           placeholder={t('Filter the live sessions')}
+          trailing={
+            <IconButton
+              icon={<RefreshCw size={14} />}
+              label={t('Refresh live sessions')}
+              variant="ghost"
+              onClick={() => void searchStoreLive.fetchSessions(true)}
+            />
+          }
         />
         {!noRules && (
           <PagePanel spills>
@@ -263,12 +282,6 @@ export const LiveSection = observer(
               <span className="m-cb__count">
                 {t('{{n}} live now', { n: total.toLocaleString() })}
               </span>
-              <IconButton
-                icon={<RefreshCw size={14} />}
-                label={t('Refresh live sessions')}
-                variant="ghost"
-                onClick={() => void searchStoreLive.fetchSessions(true)}
-              />
             </>
           }
         >
@@ -343,10 +356,16 @@ export const LiveSection = observer(
               />
               <ListFooter
                 page={currentPage}
-                pageSize={PER_PAGE}
+                pageSize={pageSize}
                 total={total}
                 noun={[t('live session'), t('live sessions')]}
                 onPage={(page) => searchStoreLive.updateCurrentPage(page)}
+                onPageSize={(n) => {
+                  setRowsPerPage(n);
+                  if (currentPage === 1)
+                    void searchStoreLive.fetchSessions(true);
+                  else searchStoreLive.updateCurrentPage(1);
+                }}
               />
             </>
           )}
@@ -361,7 +380,8 @@ export const RecordingsSection = observer(() => {
   const toast = useToast();
   const { recordingsStore, settingsStore } = useStore();
   const { timezone } = settingsStore.sessionSettings;
-  const { recordings, page, pageSize, total, loading } = recordingsStore;
+  const { recordings, page, total, loading } = recordingsStore;
+  const pageSize = useRowsPerPage();
   const [query, setQuery] = React.useState(recordingsStore.search);
   const [renaming, setRenaming] = React.useState<IRecord | null>(null);
   const [deleting, setDeleting] = React.useState<IRecord | null>(null);
@@ -374,6 +394,7 @@ export const RecordingsSection = observer(() => {
     void recordingsStore.fetchRecordings();
   }, [
     page,
+    pageSize,
     recordingsStore.period,
     recordingsStore.search,
     recordingsStore.currentUser,
@@ -526,6 +547,10 @@ export const RecordingsSection = observer(() => {
             total={total}
             noun={[t('recording'), t('recordings')]}
             onPage={(p) => recordingsStore.updatePage(p)}
+            onPageSize={(n) => {
+              setRowsPerPage(n);
+              recordingsStore.updatePage(1);
+            }}
           />
         </>
       )}

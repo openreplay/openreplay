@@ -7,7 +7,7 @@
   display: flex;
   align-items: center;
   gap: var(--m-space-5);
-  height: var(--m-row-height);
+  height: var(--m-list-row-height);
   padding-inline: var(--m-space-5);
   border-bottom: 1px solid var(--m-border-subtle);
 }

@@ -47,7 +47,7 @@
 .m-eart__glass,
 .m-eart__ribbon,
 .m-eart__cal {
-  stroke: var(--m-content-accent);
+  stroke: var(--m-accent-bright);
   stroke-dasharray: 100;
   stroke-dashoffset: 100;
   animation: m-eart-draw 500ms var(--m-ease-out) 600ms both;
@@ -59,7 +59,7 @@
   opacity: 0;
 }
 .m-eart__today {
-  fill: var(--m-content-accent);
+  fill: var(--m-accent-bright);
   opacity: 0;
   animation: m-eart-fade 200ms var(--m-ease-out) 1000ms both;
 }
@@ -168,7 +168,7 @@
   inset: 20px 0 20px 0;
 }
 .m-eart__center--mark.is-on {
-  color: var(--m-content-accent);
+  color: var(--m-accent-bright);
 }
 
 .m-eart__slot {
@@ -195,7 +195,7 @@
 }
 .m-eart__spark {
   fill: none;
-  stroke: var(--m-content-accent);
+  stroke: var(--m-accent-bright);
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -205,7 +205,7 @@
 }
 
 .m-eart__cross {
-  fill: var(--m-content-accent);
+  fill: var(--m-accent-bright);
   opacity: 0;
   transform-box: fill-box;
   transform-origin: center;
@@ -236,7 +236,7 @@
   }
 }
 .m-eart__spark--fill {
-  fill: var(--m-content-accent);
+  fill: var(--m-accent-bright);
   stroke: none;
   stroke-dasharray: none;
   stroke-dashoffset: 0;
@@ -245,7 +245,7 @@
 }
 .m-eart__ring {
   fill: none;
-  stroke: var(--m-content-accent);
+  stroke: var(--m-accent-bright);
   stroke-width: 1.5;
   opacity: 0;
   transform-box: fill-box;
@@ -264,7 +264,7 @@
 }
 .m-eart__tag {
   fill: none;
-  stroke: var(--m-content-accent);
+  stroke: var(--m-accent-bright);
   stroke-width: 1.5;
   stroke-linejoin: round;
   opacity: 0;
@@ -273,14 +273,14 @@
   animation: m-eart-pop 320ms var(--m-ease-spring) 1300ms both;
 }
 .m-eart__tag-hole {
-  fill: var(--m-content-accent);
+  fill: var(--m-accent-bright);
   opacity: 0;
   animation: m-eart-fade 200ms var(--m-ease-out) 1500ms both;
 }
 
 .m-eart__tick {
   fill: none;
-  stroke: var(--m-content-accent);
+  stroke: var(--m-accent-bright);
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -298,7 +298,7 @@
   animation-delay: 1500ms;
 }
 .m-eart__pass {
-  fill: var(--m-content-accent);
+  fill: var(--m-accent-bright);
   opacity: 0;
   transform-box: fill-box;
   transform-origin: center;
@@ -390,4 +390,9 @@
     transform: translateX(45%);
     opacity: 0.85;
   }
+}
+
+/* the drawings light up in their own blue; two classes outrank .m-lt's default */
+.m-eart .m-lt {
+  --m-lt-color: var(--m-accent-bright);
 }

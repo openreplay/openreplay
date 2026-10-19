@@ -1,5 +1,5 @@
 .m-stepper {
-  --m-stepper-bullet: 1.5rem;
+  --m-stepper-bullet: 1.125rem;
   --m-stepper-gap: var(--m-space-4);
   --m-stepper-tail: var(--m-space-6);
   display: flex;
@@ -54,6 +54,8 @@ button.m-stepper__row:focus-visible {
   flex: none;
   width: var(--m-stepper-bullet);
   height: var(--m-stepper-bullet);
+  /* a bullet shorter than the label's line sits on its middle */
+  margin-top: max(0px, (1.25rem - var(--m-stepper-bullet)) / 2);
   border-radius: var(--m-radius-full);
   border: 1.5px solid var(--m-border-strong);
   background: var(--m-surface-default);
@@ -95,7 +97,7 @@ button.m-stepper__row:focus-visible {
   gap: 1px;
   min-width: 0;
 
-  padding-top: calc((var(--m-stepper-bullet) - 1.25rem) / 2);
+  padding-top: max(0px, (var(--m-stepper-bullet) - 1.25rem) / 2);
 }
 .m-stepper__label {
   font-size: var(--m-text-sm);
@@ -119,6 +121,9 @@ button.m-stepper__row:focus-visible {
 }
 .m-stepper--sm .m-stepper__text {
   padding-top: 0;
+}
+.m-stepper--sm .m-stepper__bullet {
+  margin-top: 0;
 }
 .m-stepper--sm .m-stepper__hint {
   display: none;

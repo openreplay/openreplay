@@ -1,5 +1,6 @@
 import withPageTitle from '@/components/hocs/withPageTitle';
 import withPermissions from '@/components/hocs/withPermissions';
+import { cityAfterCode } from '@/lib/geo';
 import { IconButton } from '@/ui/actions/IconButton';
 import { ImpactMeter } from '@/ui/data/ImpactMeter';
 import { Loader } from '@/ui/feedback/Loader';
@@ -29,6 +30,7 @@ import {
 } from 'Components/Session/playerContext';
 import { wrapPlayerStore } from 'Components/Session/playerStore';
 
+import { setDockOverride } from 'Shared/SessionsDock/openSessions';
 import { ShareDialog } from 'Shared/SharePopup/SharePopup';
 
 import IssueActions from '../IssueDetail/IssueActions';
@@ -235,6 +237,37 @@ function IssuePlayer() {
       : null;
   const goSession = (sid: string) =>
     history.push(withSiteId(smartIssueSession(idParam, sid), siteId));
+
+  // the dock holds the issue's sessions in the cards' order, three to start
+  // and one more per "+"; the issue sets the order, so nothing closes
+  const [inDock, setInDock] = React.useState(3);
+  const dockCount = Math.min(sessions.length, Math.max(inDock, sessIdx + 1));
+  const dockKey = sessions.map((c) => c.sessionId).join(',');
+  React.useEffect(() => {
+    if (!sessions.length) return;
+    setDockOverride({
+      rows: sessions.slice(0, dockCount).map((c) => ({
+        id: c.sessionId,
+        siteId: String(siteId),
+        name: c.email || t('Anonymous'),
+        anonymous: !c.email,
+        seed: seedOf(c.email || c.sessionId),
+        metadata: Object.fromEntries(
+          c.metadata.slice(0, 3).map((m) => [m.label, m.value]),
+        ),
+      })),
+      currentId: sessionId,
+      onPick: (s) => s.id !== sessionId && goSession(s.id),
+      onAdd:
+        dockCount < sessions.length
+          ? {
+              label: t('Add the next session with this issue'),
+              onClick: () => setInDock(dockCount + 1),
+            }
+          : undefined,
+    });
+  }, [dockKey, dockCount, sessionId, siteId]);
+  React.useEffect(() => () => setDockOverride(null), []);
   const back = () =>
     history.push(
       withSiteId(issue ? smartIssueDetails(idParam) : smartIssues(), siteId),
@@ -246,9 +279,12 @@ function IssuePlayer() {
     [t('User'), email],
     [
       t('Location'),
-      [card?.city ?? session.userCity, card?.country ?? session.userCountry]
-        .filter(Boolean)
-        .join(', '),
+      (() => {
+        const code = card?.country ?? session.userCountry;
+        return [cityAfterCode(card?.city ?? session.userCity, code), code]
+          .filter(Boolean)
+          .join(', ');
+      })(),
     ],
     [t('Browser'), card?.browser ?? session.userBrowser],
     [t('OS'), card?.os ?? session.userOs],
@@ -416,3 +452,7 @@ function IssuePlayer() {
 export default withPermissions(['SMART_ISSUES'])(
   withPageTitle('Smart Issues')(observer(IssuePlayer)),
 );
+
+/** A stable avatar for a card that has no numeric hash. */
+const seedOf = (s: string) =>
+  [...s].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 0);

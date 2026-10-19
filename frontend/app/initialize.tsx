@@ -16,10 +16,13 @@ import Router from './Router';
 import { ThemeProvider } from './ThemeContext';
 import { i18nReady } from './i18n';
 import './init';
+import { installInputModality } from './lib/inputModality';
 import { RootStore, StoreProvider, client, userStore } from './mstore';
 import { queryClient } from './queryClient';
 import './styles/global.css';
 import './styles/index.css';
+
+installInputModality();
 
 configurePlayer({
   logger,

@@ -134,3 +134,32 @@ export function useSessionQueue(siteId: string) {
     onRemove: (s: { sessionId: string }) => closeSessionTab(s.sessionId),
   };
 }
+
+/** A screen that sets the dock's order itself (an issue's sessions) hands it
+ *  this instead of the queue: no closing, no "Close all". */
+export interface DockOverride {
+  rows: readonly QueuedSession[];
+  currentId: string;
+  onPick: (s: QueuedSession) => void;
+  onAdd?: { label: string; onClick: () => void };
+}
+
+let override: DockOverride | null = null;
+const overrideListeners = new Set<() => void>();
+
+export function setDockOverride(next: DockOverride | null): void {
+  override = next;
+  overrideListeners.forEach((l) => l());
+}
+
+export function useDockOverride(): DockOverride | null {
+  return useSyncExternalStore(
+    (l) => {
+      overrideListeners.add(l);
+      return () => {
+        overrideListeners.delete(l);
+      };
+    },
+    () => override,
+  );
+}

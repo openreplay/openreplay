@@ -1,3 +1,4 @@
+import { getRowsPerPage } from '@/ui/layout/rows-per-page';
 import { FilterCategory, FilterKey } from 'Types/filter/filterType';
 import {
   filtersMap,
@@ -11,8 +12,6 @@ import { checkFilterValue } from 'App/mstore/types/filter';
 import FilterItem, { IFilter } from 'App/mstore/types/filterItem';
 import Search from 'App/mstore/types/search';
 import { searchService } from 'App/services';
-
-const PER_PAGE = 10;
 
 export const checkValues = (key: any, value: any) => {
   if (key === FilterKey.DURATION) {
@@ -54,7 +53,6 @@ class SearchStoreLive {
   savedSearch = new Search();
   filterSearchList: any = {};
   currentPage = 1;
-  pageSize = PER_PAGE;
   activeTab = { name: 'All', type: 'all' };
   scrollY = 0;
   sessions = [];
@@ -245,6 +243,7 @@ class SearchStoreLive {
         {
           ...this.instance.toSearch(),
           page: this.currentPage,
+          limit: getRowsPerPage(),
         },
         () => seq !== this.fetchSeq,
       );

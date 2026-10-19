@@ -35,9 +35,7 @@ function SaveSearchModal({ show, closeHandler, rename = false }: Props) {
     searchStore
       .save(existing ? savedSearch.searchId : null, rename)
       .then(() => {
-        toast.success(
-          `${existing ? t('Updated') : t('Saved')} ${t('Successfully')}`,
-        );
+        toast.success(existing ? t('Segment updated') : t('Segment saved'));
         closeHandler();
       })
       .catch((e) => {

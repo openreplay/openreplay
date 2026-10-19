@@ -1,5 +1,5 @@
 import { Button } from '@/ui/actions/button';
-import { BrandMark } from '@/ui/brand/BrandMark';
+import { OpenReplayMark } from '@/ui/brand/OpenReplayMark';
 import { Icon } from '@/ui/icons/Icon';
 import { TFunction } from 'i18next';
 import { observer } from 'mobx-react-lite';
@@ -93,7 +93,7 @@ function RequestingWindow({ getWindowType }: Props) {
           <span className="font-medium">{userDisplayName}</span>{' '}
           {WIN_VARIANTS(t)[windowType].text}
         </p>
-        <BrandMark loop size={28} />
+        <OpenReplayMark loop size={28} />
         {actions[WIN_VARIANTS(t)[windowType].action] ? (
           <Button
             variant="subtle"

@@ -133,6 +133,11 @@ function EventsBlock(_props: IProps) {
 
   const seek = React.useCallback((at: number) => player.jump(at), [player]);
   const searchedOnly = uiPlayerStore.showOnlySearchEvents;
+  const hits = React.useMemo(
+    () =>
+      (mixedEventsWithIssues ?? []).filter((e: any) => e.isHighlighted).length,
+    [mixedEventsWithIssues],
+  );
 
   return (
     <div className="m-act" data-openreplay-masked>
@@ -144,17 +149,22 @@ function EventsBlock(_props: IProps) {
         }}
       >
         {uiPlayerStore.showSearchEventsSwitchButton && (
-          <IconButton
-            icon={<ListFilter size={13} />}
-            label={
-              searchedOnly
-                ? t('Showing the searched events. Click for everything.')
-                : t('Searched events only')
-            }
-            variant="ghost"
-            pressed={searchedOnly}
-            onClick={() => uiPlayerStore.setShowOnlySearchEvents(!searchedOnly)}
-          />
+          <span className="m-act__hits-toggle">
+            <IconButton
+              icon={<ListFilter size={13} />}
+              label={
+                searchedOnly
+                  ? t('Showing the searched events. Click for everything.')
+                  : t('Searched events only')
+              }
+              variant="ghost"
+              count={hits}
+              pressed={searchedOnly}
+              onClick={() =>
+                uiPlayerStore.setShowOnlySearchEvents(!searchedOnly)
+              }
+            />
+          </span>
         )}
       </PanelBar>
       {usedEvents.length === 0 ? (

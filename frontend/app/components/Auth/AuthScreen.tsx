@@ -35,11 +35,13 @@ interface Props {
   other: 'signup' | 'signin' | 'back' | null;
   /** Keys the card so it re-enters when the step changes. */
   step?: string;
+  /** a column beside the card (the cloud signup's pitch) */
+  aside?: ReactNode;
   children: ReactNode;
 }
 
 /** The public pages' ground: brand row, one card, small print. */
-function AuthScreen({ other, step, children }: Props) {
+function AuthScreen({ other, step, aside, children }: Props) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { userStore } = useStore();
@@ -85,7 +87,8 @@ function AuthScreen({ other, step, children }: Props) {
         </span>
       </header>
 
-      <div className="m-auth__body">
+      <div className={`m-auth__body${aside ? ' is-split' : ''}`}>
+        {aside}
         <section
           className="m-auth__card m-panel"
           aria-labelledby="m-auth-title"

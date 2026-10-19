@@ -1,5 +1,6 @@
 import { MenuButton } from '@/ui/actions/menu-button';
 import { Chip } from '@/ui/data/Chip';
+import { formatVital } from '@/lib/vitals';
 import { Sigma } from 'lucide-react';
 import React from 'react';
 
@@ -282,13 +283,5 @@ const STATUS_LABEL = {
   medium: 'Needs improvement',
   bad: 'Poor',
 } as const;
-
-function formatVital(key: string, value: number) {
-  if (!value) return 'N/A';
-  if (key === 'cls') return value.toFixed(2);
-  return value >= 1000
-    ? `${(value / 1000).toFixed(2)} s`
-    : `${Math.round(value)} ms`;
-}
 
 export default WebVitals;

@@ -33,12 +33,61 @@
 
 .skipInterval {
   position: absolute;
-  top: calc(50% - 1.5px);
-  height: 3px;
-  bottom: 0;
-  background: var(--m-border-subtle);
+  top: 50%;
+  height: 6px;
+  translate: 0 -50%;
+  border-radius: var(--m-radius-full);
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--m-content-decorative) 0 2px,
+    var(--m-surface-default) 2px 4px
+  );
+  box-shadow: inset 0 0 0 1px var(--m-border-strong);
   pointer-events: none;
   z-index: 2;
+}
+
+/* one 2px line per event stays readable at hundreds; the band around it is
+   what the pointer hits */
+.tick {
+  position: absolute;
+  top: 50%;
+  width: 2px;
+  height: 10px;
+  translate: -50% -50%;
+  border-radius: 1px;
+  background: var(--m-content-decorative);
+  cursor: pointer;
+  z-index: 4;
+  transition:
+    height var(--m-duration-fast) var(--m-ease-out),
+    background-color var(--m-duration-instant) var(--m-ease-out);
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -4px -3px;
+  }
+  &:hover {
+    height: 16px;
+    background: var(--m-content-primary);
+  }
+}
+.tickRage {
+  height: 14px;
+  background: var(--m-mark-warning);
+  &:hover {
+    height: 18px;
+  }
+}
+.tickHit {
+  width: 3px;
+  height: 18px;
+  background: var(--m-mark-search);
+  z-index: 5;
+  &:hover {
+    height: 22px;
+    background: var(--m-mark-search);
+  }
 }
 
 /* .event.click, .event.input {

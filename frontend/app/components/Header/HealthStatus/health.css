@@ -42,22 +42,15 @@ button.m-health__row:hover { background: var(--m-surface-hover); }
 .m-health__err { color: var(--m-content-danger); overflow-wrap: anywhere; padding-left: calc(12px + var(--m-space-2)); }
 .m-health__dot { flex: none; width: 6px; height: 6px; border-radius: 999px; background: var(--m-mark-success); margin-inline: 3px; }
 .m-health__dot.is-bad { background: var(--m-mark-danger); }
-.m-health__links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--m-space-2) var(--m-space-5);
-  font-size: var(--m-text-xs);
+.m-health.is-checking {
+  opacity: 0.5;
+  transition: opacity var(--m-duration-fast) var(--m-ease-out);
 }
-.m-health__link {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--m-space-2);
-  color: var(--m-content-secondary);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  text-decoration-color: var(--m-border-default);
-}
-.m-health__link:hover { color: var(--m-content-primary); }
+/* the help rows: glyphs muted at rest, inked on hover, on the report's icon column */
+.m-health__links { display: flex; flex-direction: column; gap: 1px; }
+.m-health__links .m-health__link { min-width: 0; padding-inline: calc(var(--m-space-4) + 1px); }
+.m-health__links .m-health__link .m-support__glyph { color: var(--m-content-decorative); transition: color var(--m-duration-instant) var(--m-ease-out); }
+.m-health__links .m-health__link:hover .m-support__glyph { color: var(--m-content-primary); }
 /* the card hugs its figures: 17rem is the floor, a figure never wraps, and the
    labels take no part in the intrinsic width, so only a number widens it */
 .m-health__stats { display: grid; grid-template-columns: repeat(2, minmax(max-content, 1fr)); gap: var(--m-space-3); }

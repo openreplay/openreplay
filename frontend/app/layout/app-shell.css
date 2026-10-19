@@ -125,3 +125,21 @@
     width: 100%;
   }
 }
+
+/* banners above the app push the shell down; the shell and its menu take
+   what is left of the window */
+.m-app {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+}
+.m-app > .m-shell {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+}
+.m-app > .m-shell .m-nav {
+  height: auto;
+  align-self: stretch;
+}

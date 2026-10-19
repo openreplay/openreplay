@@ -122,6 +122,7 @@ function MetricsLibraryModal({ dashboardId }: Props) {
           />
         ) : (
           <DataTable<Widget>
+            compact
             ariaLabel={t('Saved cards')}
             columns={columns}
             rows={cards}

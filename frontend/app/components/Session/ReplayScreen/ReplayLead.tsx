@@ -1,3 +1,4 @@
+import { cityAfterCode } from '@/lib/geo';
 import { RelativeTime } from '@/ui/data/RelativeTime';
 import { PopoverPanel } from '@/ui/overlays/popover';
 import { Tooltip } from '@/ui/overlays/tooltip';
@@ -64,7 +65,8 @@ function ReplayLead({ width, height }: { width?: number; height?: number }) {
 
   const os = /ios/i.test(userOs) ? 'iOS' : capitalize(userOs ?? '');
   const country = (countries as Record<string, string>)[userCountry];
-  const place = [userCity, country].filter(Boolean).join(', ');
+  const city = cityAfterCode(userCity, userCountry);
+  const place = [city, country].filter(Boolean).join(', ');
   const tech = session.isMobileNative
     ? userDevice
       ? t('{{device}} on {{os}}', { device: userDevice, os })
@@ -86,7 +88,7 @@ function ReplayLead({ width, height }: { width?: number; height?: number }) {
   };
 
   const rows: [string, React.ReactNode][] = [
-    [t('Location'), [userCity, userState, country].filter(Boolean).join(', ')],
+    [t('Location'), [city, userState, country].filter(Boolean).join(', ')],
     [
       t('Browser'),
       userBrowser && !session.isMobileNative

@@ -5,6 +5,7 @@ import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
 import { Segmented } from '@/ui/inputs/toggle-group';
 import { ListFooter } from '@/ui/layout/ListFooter';
 import { PagePanel } from '@/ui/layout/PageCard';
+import { setRowsPerPage, useRowsPerPage } from '@/ui/layout/rows-per-page';
 import { useQuery } from '@tanstack/react-query';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
@@ -17,7 +18,6 @@ import { useHistory } from 'App/routing';
 import { type DistinctProperty, fetchList } from '../Properties/api';
 
 type Scope = 'all' | 'default' | 'custom';
-const PAGE_SIZE = 10;
 
 const SORT: Record<
   string,
@@ -34,6 +34,7 @@ function DistinctEventPropsList({ eventName }: { eventName: string }) {
   const siteId = projectsStore.activeSiteId!;
   const [scope, setScope] = React.useState<Scope>('all');
   const [page, setPage] = React.useState(1);
+  const pageSize = useRowsPerPage();
   const { data = { properties: [], total: 0 }, isPending } = useQuery({
     queryKey: ['distinct-event-props-list', siteId, eventName],
     queryFn: () => fetchList('events', eventName),
@@ -43,7 +44,7 @@ function DistinctEventPropsList({ eventName }: { eventName: string }) {
   const shown =
     scope === 'all' ? data.properties : scope === 'default' ? ours : yours;
   const { sort, onSort, sorted } = useLocalSort(shown, SORT);
-  const rows = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const rows = sorted.slice((page - 1) * pageSize, page * pageSize);
 
   const columns: Column<DistinctProperty>[] = [
     {
@@ -136,10 +137,14 @@ function DistinctEventPropsList({ eventName }: { eventName: string }) {
           />
           <ListFooter
             page={page}
-            pageSize={PAGE_SIZE}
+            pageSize={pageSize}
             total={shown.length}
             noun={[t('property'), t('properties')]}
             onPage={setPage}
+            onPageSize={(n) => {
+              setRowsPerPage(n);
+              setPage(1);
+            }}
           />
         </>
       )}

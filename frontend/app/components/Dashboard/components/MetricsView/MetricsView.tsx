@@ -13,6 +13,7 @@ import { FilterStrip } from '@/ui/filters/FilterStrip';
 import { SearchField } from '@/ui/inputs/SearchField';
 import { ListFooter } from '@/ui/layout/ListFooter';
 import { PageCard } from '@/ui/layout/PageCard';
+import { setRowsPerPage, useRowsPerPage } from '@/ui/layout/rows-per-page';
 import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
 import { RenameDialog } from '@/ui/overlays/RenameDialog';
 import { PopoverPanel } from '@/ui/overlays/popover';
@@ -46,7 +47,8 @@ function MetricsView({ siteId }: { siteId: string }) {
   const toast = useToast();
   const history = useHistory();
   const { metricStore } = useStore();
-  const { filter, page, pageSize, total, isLoading } = metricStore;
+  const { filter, page, total, isLoading } = metricStore;
+  const pageSize = useRowsPerPage();
   const cards = metricStore.filteredCards;
   const [query, setQuery] = React.useState<string>(filter.query ?? '');
   const [loaded, setLoaded] = React.useState(false);
@@ -58,7 +60,7 @@ function MetricsView({ siteId }: { siteId: string }) {
 
   React.useEffect(() => {
     void metricStore.fetchList().finally(() => setLoaded(true));
-  }, [metricStore.page, metricStore.filter, metricStore.sort]);
+  }, [metricStore.page, metricStore.filter, metricStore.sort, pageSize]);
 
   const pushQuery = React.useMemo(
     () =>
@@ -310,6 +312,10 @@ function MetricsView({ siteId }: { siteId: string }) {
             total={total}
             noun={[t('card'), t('cards')]}
             onPage={(p) => metricStore.updateKey('page', p)}
+            onPageSize={(n) => {
+              setRowsPerPage(n);
+              metricStore.updateKey('page', 1);
+            }}
           />
         </>
       )}

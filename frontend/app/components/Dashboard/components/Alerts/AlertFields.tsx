@@ -1,6 +1,6 @@
 import { ExternalLink } from '@/ui/actions/ExternalLink';
 import { Notice } from '@/ui/feedback/Notice';
-import { Checkbox } from '@/ui/inputs/checkbox';
+import { CheckRow } from '@/ui/inputs/CheckRow';
 import { Input } from '@/ui/inputs/input';
 import { MultiSelect } from '@/ui/inputs/multi-select';
 import { SimpleSelect } from '@/ui/inputs/select';
@@ -199,16 +199,16 @@ function AlertFields({
           {toggles
             .filter((c) => c.show)
             .map((c) => (
-              <label
+              <CheckRow
                 key={c.key}
-                className="inline-flex cursor-pointer items-center gap-3 text-sm text-content-primary"
+                boxed
+                on={!!(instance as any)[c.key]}
+                onToggle={() =>
+                  edit({ [c.key]: !(instance as any)[c.key] } as any)
+                }
               >
-                <Checkbox
-                  checked={!!(instance as any)[c.key]}
-                  onCheckedChange={(v) => edit({ [c.key]: !!v } as any)}
-                />
                 {c.label}
-              </label>
+              </CheckRow>
             ))}
         </div>
         {instance.slack ? (

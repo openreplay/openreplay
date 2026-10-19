@@ -64,3 +64,47 @@
     opacity: 0;
   }
 }
+
+/* the loader: a soft light sweeps the mark while the play grows and settles,
+   one 1.4s clock; it crosses in the first 64%, the rest is a held breath */
+.m-ormark__sheen {
+  transform-box: view-box;
+  transform: translateX(0);
+}
+.m-ormark.is-looping .m-ormark__sheen {
+  animation: m-ormark-sheen 1400ms var(--m-ease-in-out) infinite;
+}
+.m-ormark.is-looping .m-ormark__fill {
+  animation: m-ormark-lean 1400ms var(--m-ease-in-out) infinite;
+}
+@keyframes m-ormark-sheen {
+  0% {
+    transform: translateX(0);
+  }
+  64%,
+  100% {
+    transform: translateX(110px);
+  }
+}
+@keyframes m-ormark-lean {
+  0%,
+  18% {
+    transform: none;
+  }
+  46% {
+    transform: scale(1.1);
+  }
+  78%,
+  100% {
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .m-ormark.is-looping .m-ormark__sheen {
+    animation: none;
+    opacity: 0;
+  }
+  .m-ormark.is-looping .m-ormark__fill {
+    animation: none;
+  }
+}

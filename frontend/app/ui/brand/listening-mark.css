@@ -10,7 +10,7 @@
   width: 33.3%;
   height: 33.3%;
   border-radius: var(--m-radius-full);
-  background: var(--m-content-accent);
+  background: var(--m-accent-bright);
 }
 
 .m-listen__glow,
@@ -20,8 +20,8 @@
   border-radius: var(--m-radius-full);
   background: radial-gradient(
     circle,
-    var(--m-content-accent) 0%,
-    var(--m-content-accent) 30%,
+    var(--m-accent-bright) 0%,
+    var(--m-accent-bright) 30%,
     transparent 72%
   );
 }

@@ -1,5 +1,6 @@
 import Project from '@/mstore/types/project';
 import { PopoverPanel } from '@/ui/overlays/popover';
+import { Tooltip } from '@/ui/overlays/tooltip';
 import { Globe, Plus, Settings2, Smartphone } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { type ReactElement } from 'react';
@@ -81,19 +82,18 @@ function AccountMenu({
       </div>
 
       <div
-        className="m-account-menu__group max-h-[50vh] overflow-y-auto"
+        className="m-account-menu__group m-account-menu__projects"
         role="group"
         aria-label={t('Projects')}
       >
         {sites.map((p) => (
           <NavItem
             key={p.id ?? p.host}
-            nested
             icon={
               p.platform === 'web' ? (
-                <Globe size={13} />
+                <Globe size={15} />
               ) : (
-                <Smartphone size={13} />
+                <Smartphone size={15} />
               )
             }
             label={p.host}
@@ -108,16 +108,24 @@ function AccountMenu({
       </div>
 
       <div className="m-account-menu__group">
-        {isAdmin && (
-          <NavItem
-            icon={<Plus size={15} />}
-            label={t('New project')}
-            onClick={() => {
-              addProject();
-              onOpenChange(false);
-            }}
-          />
-        )}
+        <Tooltip
+          title={
+            isAdmin ? undefined : t('Only owners and admins can add projects')
+          }
+          side="right"
+        >
+          <span className="flex">
+            <NavItem
+              icon={<Plus size={15} />}
+              label={t('New project')}
+              disabled={!isAdmin}
+              onClick={() => {
+                addProject();
+                onOpenChange(false);
+              }}
+            />
+          </span>
+        </Tooltip>
         <NavItem
           icon={<Settings2 size={15} />}
           label={t('Preferences')}

@@ -1,4 +1,5 @@
 import { Filter } from '@/mstore/types/filterConstants';
+import { getRowsPerPage } from '@/ui/layout/rows-per-page';
 import Period, { CUSTOM_RANGE } from 'Types/app/period';
 import { FilterCategory, FilterKey } from 'Types/filter/filterType';
 import {
@@ -20,7 +21,6 @@ import SavedSearch, { ISavedSearch } from 'App/mstore/types/savedSearch';
 import Search from 'App/mstore/types/search';
 import { searchService, sessionService } from 'App/services';
 
-const PER_PAGE = 10;
 /* The whole saved-search list is loaded in one request and shared by every
    consumer (session search, Data Management, the Issues capture layer). */
 const SAVED_SEARCH_PAGE_SIZE = 200;
@@ -114,7 +114,6 @@ class SearchStore {
   savedSearch: ISavedSearch = new SavedSearch();
   filterSearchList: any = {};
   currentPage = 1;
-  pageSize = PER_PAGE;
   activeTab = { name: 'All', type: 'all' };
   scrollY = 0;
   sessions = [];
@@ -433,7 +432,19 @@ class SearchStore {
     }
   }
 
+  /** Busy until the list shows the result, so the form can say so. */
   async save(id?: string | null, rename = false): Promise<void> {
+    this.isSaving = true;
+    try {
+      await this.saveSearch(id, rename);
+    } finally {
+      runInAction(() => {
+        this.isSaving = false;
+      });
+    }
+  }
+
+  private async saveSearch(id?: string | null, rename = false): Promise<void> {
     const searchData = this.instance.toSearch();
     const instance = this.savedSearch.toData();
 
@@ -480,15 +491,9 @@ class SearchStore {
       },
     };
 
-    let savedSearchResponse;
-    if (isNew) {
-      savedSearchResponse = await searchService.saveSavedSearch(payload);
-    } else {
-      savedSearchResponse = await searchService.updateSavedSearch(
-        searchId!,
-        payload,
-      );
-    }
+    const savedSearchResponse = isNew
+      ? await searchService.saveSavedSearch(payload)
+      : await searchService.updateSavedSearch(searchId!, payload);
 
     // Update the current savedSearch with the response data
     if (savedSearchResponse) {
@@ -720,7 +725,7 @@ class SearchStore {
         {
           ...pickSearchRequestFields(filter),
           page: this.currentPage,
-          limit: this.pageSize,
+          limit: getRowsPerPage(),
           bookmarked: bookmarked ? true : undefined,
         },
         // SessionStore skips a search whose filters match the persisted ones —

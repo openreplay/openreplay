@@ -11,6 +11,7 @@ import { SearchField } from '@/ui/inputs/SearchField';
 import { Switch } from '@/ui/inputs/switch';
 import { ListFooter } from '@/ui/layout/ListFooter';
 import { PageCard } from '@/ui/layout/PageCard';
+import { setRowsPerPage, useRowsPerPage } from '@/ui/layout/rows-per-page';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import { useQuery } from '@tanstack/react-query';
 import withPermissions from 'HOCs/withPermissions';
@@ -29,7 +30,6 @@ import { type DistinctProperty, fetchList } from './api';
 
 type View = 'users' | 'events';
 
-const PAGE_SIZE = 10;
 const SHOW_HIDDEN_KEY = 'data-management-properties-show-hidden';
 const readShowHidden = () => {
   try {
@@ -53,6 +53,7 @@ function ListPage() {
   const siteId = projectsStore.activeSiteId;
   const [query, setQuery] = React.useState('');
   const [page, setPage] = React.useState(1);
+  const pageSize = useRowsPerPage();
   const [showHidden, setShowHidden] = React.useState(readShowHidden);
   const toggleHidden = (v: boolean) => {
     setShowHidden(v);
@@ -97,7 +98,7 @@ function ListPage() {
     [view],
   );
   const { sort, onSort, sorted } = useLocalSort(visible, sorters);
-  const rows = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const rows = sorted.slice((page - 1) * pageSize, page * pageSize);
 
   const go = (next: Record<string, string | null>) => {
     const p = new URLSearchParams(location.search);
@@ -201,12 +202,6 @@ function ListPage() {
               setPage(1);
             }}
           />
-          <IconButton
-            icon={<BookOpen size={14} />}
-            label={t('Documentation')}
-            variant="ghost"
-            onClick={() => window.open(DM_DOCS, '_blank')}
-          />
         </>
       }
       toolbar={
@@ -240,6 +235,12 @@ function ListPage() {
                   ),
                 },
               ]}
+            />
+            <IconButton
+              icon={<BookOpen size={14} />}
+              label={t('Documentation')}
+              variant="ghost"
+              onClick={() => window.open(DM_DOCS, '_blank')}
             />
           </div>
         </>
@@ -290,10 +291,14 @@ function ListPage() {
           />
           <ListFooter
             page={page}
-            pageSize={PAGE_SIZE}
+            pageSize={pageSize}
             total={visible.length}
             noun={[t('property'), t('properties')]}
             onPage={setPage}
+            onPageSize={(n) => {
+              setRowsPerPage(n);
+              setPage(1);
+            }}
           />
         </>
       )}

@@ -121,6 +121,7 @@ function CustomMetricTableErrors(props: RouteComponentProps & Props) {
   return (
     <div className={`m-errs${compact ? ' is-compact' : ''}`}>
       <DataTable<any>
+        compact
         rowKey={(e) => String(e.errorId)}
         columns={columns}
         rows={shown}

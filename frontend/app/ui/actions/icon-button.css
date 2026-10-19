@@ -88,13 +88,15 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 15px;
-  height: 15px;
-  padding-inline: 3px;
+  min-width: 16px;
+  height: 16px;
+  padding-inline: 4px;
+  border: 1px solid var(--m-pill-on-border);
   border-radius: var(--m-radius-chip);
-  background: var(--m-surface-inverse);
-  color: var(--m-content-inverse);
+  background: var(--m-pill-on-bg);
+  color: var(--m-pill-on-fg);
   font-size: var(--m-text-2xs);
+  font-weight: var(--m-weight-medium);
   font-variant-numeric: tabular-nums;
   line-height: 1;
 }

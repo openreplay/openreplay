@@ -172,8 +172,14 @@
   padding-top: var(--m-space-4);
 }
 
+/* no room beside the stage: the panel opens over it */
 @media (max-width: 1240px) {
   .m-jrn {
-    display: none;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: var(--m-z-overlay);
+    box-shadow: var(--m-shadow-popover);
   }
 }

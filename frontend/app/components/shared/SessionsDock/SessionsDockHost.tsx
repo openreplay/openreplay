@@ -16,6 +16,7 @@ import {
   neighbourOf,
   openSessionTab,
   snapshotOf,
+  useDockOverride,
   useOpenSessions,
 } from './openSessions';
 
@@ -32,6 +33,7 @@ function SessionsDockHost() {
   const history = useHistory();
   const { sessionStore, projectsStore } = useStore();
   const rows = useOpenSessions();
+  const override = useDockOverride();
   const replayId = REPLAY.exec(pathname)?.[1] ?? null;
   const onList = LIST.test(pathname);
   const current = sessionStore.current;
@@ -43,6 +45,16 @@ function SessionsDockHost() {
     if (loadedId) openSessionTab(snapshotOf(current, siteId));
   }, [loadedId]);
 
+  if (override)
+    return (
+      <SessionsDock
+        rows={override.rows}
+        currentId={override.currentId}
+        onPick={override.onPick}
+        onAdd={override.onAdd}
+        overReplay
+      />
+    );
   if (!replayId && !onList) return null;
 
   const toList = () => history.push(withSiteId(sessionsRoute(), siteId));

@@ -1,5 +1,6 @@
 import { ArmadaMark } from '@/ui/brand/ArmadaMark';
 import { OpenReplayMark } from '@/ui/brand/OpenReplayMark';
+import { useViewport } from '@/ui/layout/use-viewport';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import RecordingsMeter from 'Saas/nav/RecordingsMeter';
 import {
@@ -107,6 +108,7 @@ function SideNav({ collapsed, onToggleCollapsed, onNavigated }: SideNavProps) {
   const issues = agentIssuesEnabled();
   const tests = agentTestsEnabled();
   const audits = agentAuditsEnabled();
+  const phone = useViewport() === 'phone';
 
   const groups = useMemo(() => {
     const flags = {
@@ -114,12 +116,22 @@ function SideNav({ collapsed, onToggleCollapsed, onNavigated }: SideNavProps) {
       isAdmin,
       modules,
       isMobile: mobileScreen,
+      phone,
       issues,
       tests,
       audits,
     };
     return navTree(t, flags);
-  }, [isEnterprise, isAdmin, modules, issues, tests, audits, i18n.language]);
+  }, [
+    isEnterprise,
+    isAdmin,
+    modules,
+    issues,
+    tests,
+    audits,
+    phone,
+    i18n.language,
+  ]);
 
   const routeTable = menuRoutes(siteId);
   const activeLeaf = activeMenuKey(

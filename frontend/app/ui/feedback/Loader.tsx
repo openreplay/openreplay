@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { BrandMark } from '@/ui/brand/BrandMark';
+import { OpenReplayMark } from '@/ui/brand/OpenReplayMark';
 import React from 'react';
 
 interface Props {
@@ -10,7 +10,7 @@ interface Props {
   style?: Record<string, any>;
 }
 
-/** Legacy entry point: the kit's looping brand mark while `loading`. */
+/** The OpenReplay mark with a light crossing it while `loading`. */
 export const Loader = React.memo<Props>(
   ({
     className = '',
@@ -28,7 +28,7 @@ export const Loader = React.memo<Props>(
         role="status"
         aria-label="Loading"
       >
-        <BrandMark loop size={Math.max(16, Math.round(size * 0.55))} />
+        <OpenReplayMark loop size={Math.max(16, Math.round(size * 0.55))} />
       </div>
     ),
 );

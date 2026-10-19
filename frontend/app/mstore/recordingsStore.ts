@@ -1,3 +1,4 @@
+import { getRowsPerPage } from '@/ui/layout/rows-per-page';
 import Period, { LAST_7_DAYS } from 'Types/app/period';
 import { makeAutoObservable } from 'mobx';
 
@@ -9,7 +10,6 @@ export default class RecordingsStore {
   loading: boolean;
   page = 1;
   total: number = 0;
-  pageSize = 5;
   order: 'desc' | 'asc' = 'desc';
   search = '';
   startTimestamp = 0;
@@ -52,7 +52,7 @@ export default class RecordingsStore {
   async fetchRecordings() {
     const filter = {
       page: this.page,
-      limit: this.pageSize,
+      limit: getRowsPerPage(),
       order: this.order,
       query: this.search,
       startTimestamp: this.period.start,
@@ -174,7 +174,6 @@ export default class RecordingsStore {
     this.loading = false;
     this.page = 1;
     this.total = 0;
-    this.pageSize = 5;
     this.order = 'desc';
     this.search = '';
     this.startTimestamp = 0;

@@ -9,6 +9,7 @@ import { SearchField } from '@/ui/inputs/SearchField';
 import { Switch } from '@/ui/inputs/switch';
 import { ListFooter } from '@/ui/layout/ListFooter';
 import { PageCard, PagePanel } from '@/ui/layout/PageCard';
+import { setRowsPerPage, useRowsPerPage } from '@/ui/layout/rows-per-page';
 import { useToast } from '@/ui/overlays/toast';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -34,7 +35,6 @@ type Owner = 'all' | 'mine' | 'shared';
 type SegSort = 'updatedAt' | 'name' | 'sessionsCount';
 type SegField = 'count' | 'users' | 'owner' | 'updated';
 const ALL_FIELDS: SegField[] = ['count', 'users', 'owner', 'updated'];
-const PAGE = 10;
 
 const compact = Intl.NumberFormat('en-US', {
   notation: 'compact',
@@ -56,6 +56,7 @@ function SegmentsListPage() {
   const [fields, setFields] = React.useState<SegField[]>(ALL_FIELDS);
   const [query, setQuery] = React.useState('');
   const [page, setPage] = React.useState(1);
+  const pageSize = useRowsPerPage();
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<SavedSegment | null>(null);
   const { segmentId } = useParams<{ segmentId?: string }>();
@@ -88,7 +89,7 @@ function SegmentsListPage() {
         : (b[sort] ?? 0) - (a[sort] ?? 0),
     );
   }, [all, owner, sort, query]);
-  const pageRows = shown.slice((page - 1) * PAGE, page * PAGE);
+  const pageRows = shown.slice((page - 1) * pageSize, page * pageSize);
   const has = (f: SegField) => fields.includes(f);
 
   const toSaved = (s: Segment): SavedSegment =>
@@ -398,10 +399,14 @@ function SegmentsListPage() {
             />
             <ListFooter
               page={page}
-              pageSize={PAGE}
+              pageSize={pageSize}
               total={shown.length}
               noun={[t('segment'), t('segments')]}
               onPage={setPage}
+              onPageSize={(n) => {
+                setRowsPerPage(n);
+                setPage(1);
+              }}
             />
           </>
         )}

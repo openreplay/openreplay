@@ -177,3 +177,85 @@
   border-top: 1px solid var(--m-border-subtle);
   background: var(--m-surface-default);
 }
+
+/* a row the search asked for: the same yellow as its tick on the track */
+.m-spanel__row.is-hit::before {
+  content: '';
+  position: absolute;
+  inset: var(--m-space-1) auto var(--m-space-1) 0;
+  width: 2px;
+  border-radius: var(--m-radius-full);
+  background: var(--m-mark-search);
+}
+/* quiet on or off: the yellow glyph is its only colour */
+.m-act__hits-toggle {
+  display: contents;
+}
+.m-act__hits-toggle .m-iconbtn {
+  gap: var(--m-space-2);
+}
+.m-act__hits-toggle .m-iconbtn__icon {
+  color: var(--m-mark-search);
+}
+.m-act__hits-toggle .m-iconbtn__count {
+  min-width: 0;
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--m-content-secondary);
+  font-weight: inherit;
+}
+.m-act__hits-toggle .m-iconbtn.is-on {
+  background: var(--m-surface-active);
+  border-color: transparent;
+  color: var(--m-content-primary);
+}
+.m-act__hits-toggle .m-iconbtn.is-on .m-iconbtn__count {
+  color: var(--m-content-primary);
+}
+
+/* a visit's vitals: one line each on a hairline rail, a dot in its status */
+.m-act__vitals {
+  display: flex;
+  flex-direction: column;
+  margin-top: var(--m-space-2);
+  padding-left: var(--m-space-3);
+  border-left: 1px solid var(--m-border-subtle);
+}
+.m-act__vital {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-3);
+  min-height: 1.125rem;
+  font-size: var(--m-text-2xs);
+}
+.m-act__vital-dot {
+  position: absolute;
+  left: calc(-1 * var(--m-space-3) - 3px);
+  width: 5px;
+  height: 5px;
+  border-radius: var(--m-radius-full);
+  background: var(--m-content-decorative);
+}
+.m-act__vital.is-good .m-act__vital-dot {
+  background: var(--m-mark-success);
+}
+.m-act__vital.is-medium .m-act__vital-dot {
+  background: var(--m-mark-warning);
+}
+.m-act__vital.is-bad .m-act__vital-dot {
+  background: var(--m-mark-danger);
+}
+.m-act__vital-name {
+  flex: 1;
+  font-family: var(--m-font-tag);
+  color: var(--m-content-muted);
+  letter-spacing: 0.02em;
+}
+.m-act__vital-value {
+  font-family: var(--m-font-num);
+  font-variant-numeric: tabular-nums;
+  color: var(--m-content-secondary);
+}

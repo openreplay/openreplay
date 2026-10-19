@@ -2,6 +2,7 @@ import { IconButton } from '@/ui/actions/IconButton';
 import { OpenReplayMark } from '@/ui/brand/OpenReplayMark';
 import { useViewportAttribute } from '@/ui/layout/use-viewport';
 import { Drawer } from '@/ui/overlays/drawer';
+import AppBanners from 'Saas/layout/AppBanners';
 import { PanelLeftOpen, X } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
@@ -69,54 +70,57 @@ function Layout({ children, immersive = false, bare = false }: Props) {
   }
 
   return (
-    <div className="m-shell">
-      {phone ? (
-        <div className="m-shell__bar">
-          <IconButton
-            icon={<PanelLeftOpen size={16} />}
-            label={t('Open the menu')}
-            variant="ghost"
-            onClick={() => setMobileOpen(true)}
-          />
-          <OpenReplayMark size={16} className="m-shell__bar-mark" />
-          <span className="m-shell__bar-name">OpenReplay</span>
-        </div>
-      ) : (
-        <SideNav collapsed={collapsed} onToggleCollapsed={toggle} />
-      )}
-      <main
-        data-route-scroll
-        className={`m-shell__main${immersive ? ' is-immersive' : ''}`}
-        data-scroll-root
-      >
-        <HeaderBanners />
-        {children}
-        <SessionsDockHost />
-        <Survey />
-      </main>
-      {phone ? (
-        <Drawer
-          side="left"
-          label={t('Navigation')}
-          className="m-mobile-nav w-[280px]!"
-          onClose={() => setMobileOpen(false)}
-          open={mobileOpen}
-        >
-          <span className="m-mobile-nav__close">
+    <div className="m-app">
+      <AppBanners />
+      <div className="m-shell">
+        {phone ? (
+          <div className="m-shell__bar">
             <IconButton
-              icon={<X size={15} />}
-              label={t('Close the menu')}
+              icon={<PanelLeftOpen size={16} />}
+              label={t('Open the menu')}
               variant="ghost"
-              onClick={() => setMobileOpen(false)}
+              onClick={() => setMobileOpen(true)}
             />
-          </span>
-          <SideNav
-            collapsed={false}
-            onToggleCollapsed={() => setMobileOpen(false)}
-            onNavigated={() => setMobileOpen(false)}
-          />
-        </Drawer>
-      ) : null}
+            <OpenReplayMark size={16} className="m-shell__bar-mark" />
+            <span className="m-shell__bar-name">OpenReplay</span>
+          </div>
+        ) : (
+          <SideNav collapsed={collapsed} onToggleCollapsed={toggle} />
+        )}
+        <main
+          data-route-scroll
+          className={`m-shell__main${immersive ? ' is-immersive' : ''}`}
+          data-scroll-root
+        >
+          <HeaderBanners />
+          {children}
+          <SessionsDockHost />
+          <Survey />
+        </main>
+        {phone ? (
+          <Drawer
+            side="left"
+            label={t('Navigation')}
+            className="m-mobile-nav w-[280px]!"
+            onClose={() => setMobileOpen(false)}
+            open={mobileOpen}
+          >
+            <span className="m-mobile-nav__close">
+              <IconButton
+                icon={<X size={15} />}
+                label={t('Close the menu')}
+                variant="ghost"
+                onClick={() => setMobileOpen(false)}
+              />
+            </span>
+            <SideNav
+              collapsed={false}
+              onToggleCollapsed={() => setMobileOpen(false)}
+              onNavigated={() => setMobileOpen(false)}
+            />
+          </Drawer>
+        ) : null}
+      </div>
     </div>
   );
 }

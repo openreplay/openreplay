@@ -9,6 +9,7 @@ import { FilterStrip } from '@/ui/filters/FilterStrip';
 import { SearchField } from '@/ui/inputs/SearchField';
 import { ListFooter } from '@/ui/layout/ListFooter';
 import { PageCard } from '@/ui/layout/PageCard';
+import { setRowsPerPage, useRowsPerPage } from '@/ui/layout/rows-per-page';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import { useQuery } from '@tanstack/react-query';
 import withPermissions from 'HOCs/withPermissions';
@@ -28,7 +29,6 @@ import { type DistinctEvent, fetchList } from './api';
 
 type EventFilter = 'all' | 'autocaptured' | 'my_events';
 
-const PAGE_SIZE = 10;
 const FILTER_KEY = 'data-management-events-filter';
 const readFilter = (): EventFilter => {
   try {
@@ -54,6 +54,7 @@ function EventsListPage() {
   const [filter, setFilter] = React.useState<EventFilter>(readFilter);
   const [query, setQuery] = React.useState('');
   const [page, setPage] = React.useState(1);
+  const pageSize = useRowsPerPage();
   const {
     data = { events: [], total: 0 },
     isPending,
@@ -85,7 +86,7 @@ function EventsListPage() {
     [data.events, filter, q],
   );
   const { sort, onSort, sorted } = useLocalSort(visible, SORT);
-  const rows = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const rows = sorted.slice((page - 1) * pageSize, page * pageSize);
 
   if (shownEvent) {
     const event = data.events.find((e) => e.name === shownEvent);
@@ -205,29 +206,33 @@ function EventsListPage() {
               setPage(1);
             }}
           />
-          <IconButton
-            icon={<BookOpen size={14} />}
-            label={t('Documentation')}
-            variant="ghost"
-            onClick={() => window.open(DM_DOCS, '_blank')}
-          />
         </>
       }
       toolbar={
-        <FilterStrip
-          label={t('Filter by kind')}
-          items={[
-            { key: 'all', label: t('All events'), count: counts.all },
-            {
-              key: 'autocaptured',
-              label: t('Autocaptured'),
-              count: counts.autocaptured,
-            },
-            { key: 'my_events', label: t('Custom'), count: counts.my_events },
-          ]}
-          selected={[filter]}
-          onSelect={pick}
-        />
+        <>
+          <FilterStrip
+            label={t('Filter by kind')}
+            items={[
+              { key: 'all', label: t('All events'), count: counts.all },
+              {
+                key: 'autocaptured',
+                label: t('Autocaptured'),
+                count: counts.autocaptured,
+              },
+              { key: 'my_events', label: t('Custom'), count: counts.my_events },
+            ]}
+            selected={[filter]}
+            onSelect={pick}
+          />
+          <div className="m-page__controls">
+            <IconButton
+              icon={<BookOpen size={14} />}
+              label={t('Documentation')}
+              variant="ghost"
+              onClick={() => window.open(DM_DOCS, '_blank')}
+            />
+          </div>
+        </>
       }
     >
       {isPending ? (
@@ -275,10 +280,14 @@ function EventsListPage() {
           />
           <ListFooter
             page={page}
-            pageSize={PAGE_SIZE}
+            pageSize={pageSize}
             total={visible.length}
             noun={[t('event'), t('events')]}
             onPage={setPage}
+            onPageSize={(n) => {
+              setRowsPerPage(n);
+              setPage(1);
+            }}
           />
         </>
       )}

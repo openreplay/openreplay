@@ -30,7 +30,6 @@ function HealthModal({
       onCancel={() => setShowModal(false)}
       footer={
         <div className="flex w-full items-center gap-4">
-          <HealthLinks />
           <Button className="ml-auto" disabled={isLoading} onClick={getHealth}>
             <RefreshCcw size={13} className={isLoading ? 'animate-spin' : ''} />
             {t('Recheck')}
@@ -38,7 +37,10 @@ function HealthModal({
         </div>
       }
     >
-      <HealthReport report={healthResponse} loading={isLoading} />
+      <div className="flex flex-col gap-5">
+        <HealthReport report={healthResponse} loading={isLoading} />
+        <HealthLinks />
+      </div>
     </Modal>
   );
 }

@@ -1,5 +1,5 @@
 import { Filter } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { FilterPanel } from './FilterPanel';
@@ -20,6 +20,8 @@ export interface EntryFieldProps {
   hasRules: boolean;
   /** The first-rule prompt; defaults to the recordings wording. */
   placeholder?: string;
+  /** controls at the right end of the field's line */
+  trailing?: ReactNode;
 }
 
 /** The search field under a page title; typing opens the catalogue. */
@@ -29,6 +31,7 @@ export function EntryField({
   onPick,
   hasRules,
   placeholder,
+  trailing,
 }: EntryFieldProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -125,6 +128,7 @@ export function EntryField({
           anchorRef={wrap}
         />
       </div>
+      {trailing && <span className="m-recs__entry-trailing">{trailing}</span>}
     </div>
   );
 }

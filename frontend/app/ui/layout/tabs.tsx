@@ -14,7 +14,21 @@ export function TabsList({
 }: ComponentProps<typeof T.List>) {
   const list = useRef<HTMLDivElement>(null);
 
-  const { box: ink, live } = useIndicator(list, '[data-state="active"]');
+  const { box, live } = useIndicator(list, '[data-state="active"]');
+  // a host with a rounded corner under the strip keeps the bar clear of it
+  const el = list.current;
+  const inset = el
+    ? parseFloat(getComputedStyle(el).getPropertyValue('--m-tabs-ink-inset')) ||
+      0
+    : 0;
+  const ink =
+    box && el
+      ? (() => {
+          const x = Math.max(box.x, inset);
+          const end = Math.min(box.x + box.w, el.clientWidth - inset);
+          return { x, w: Math.max(0, end - x) };
+        })()
+      : box;
 
   return (
     <T.List
@@ -30,7 +44,7 @@ export function TabsList({
       <span
         aria-hidden="true"
         className={cn(
-          'm-travel absolute bottom-[-1px] left-0 h-px bg-[var(--m-content-primary)]',
+          'm-travel absolute bottom-[-1px] left-0 z-[1] h-px bg-[var(--m-content-primary)]',
           live && 'is-live',
         )}
         style={{

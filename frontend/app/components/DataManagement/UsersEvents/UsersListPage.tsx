@@ -74,14 +74,6 @@ function UsersListPage() {
     <PageCard
       title={t('People')}
       subtitle={t('Identified users and their sessions.')}
-      actions={
-        <IconButton
-          icon={<BookOpen size={14} />}
-          label={t('Documentation')}
-          variant="ghost"
-          onClick={() => window.open(DM_DOCS, '_blank')}
-        />
-      }
       split
     >
       <EntryField
@@ -119,6 +111,12 @@ function UsersListPage() {
                   on: !hidden.includes(k),
                 }))}
                 onToggleField={toggleColumn}
+              />
+              <IconButton
+                icon={<BookOpen size={14} />}
+                label={t('Documentation')}
+                variant="ghost"
+                onClick={() => window.open(DM_DOCS, '_blank')}
               />
             </span>
           </>

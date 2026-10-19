@@ -12,7 +12,9 @@ import {
 import { Loader } from '@/ui/feedback/Loader';
 import { CheckRow } from '@/ui/inputs/CheckRow';
 import { Segmented } from '@/ui/inputs/toggle-group';
+import { LargerScreenOnly } from '@/ui/layout/LargerScreenOnly';
 import { PageCard, PagePanel } from '@/ui/layout/PageCard';
+import { useViewport } from '@/ui/layout/use-viewport';
 import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
 import { RenameDialog } from '@/ui/overlays/RenameDialog';
 import { Modal } from '@/ui/overlays/modal';
@@ -95,6 +97,7 @@ function WidgetView({
   },
 }: Props) {
   const { t } = useTranslation();
+  const phone = useViewport() === 'phone';
   const [layout, setLayoutState] = useState<Layout>(readLayout);
   const [renaming, setRenaming] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -350,6 +353,23 @@ function WidgetView({
       WEBVITALS,
     ].includes(widget.metricType);
 
+  const back = {
+    label: dashboardName || t('Cards'),
+    onClick: () =>
+      history.push(
+        queryDashboardId
+          ? withSiteId(`/dashboard/${queryDashboardId}`, siteId)
+          : withSiteId('/metrics', siteId),
+      ),
+  };
+
+  if (phone)
+    return (
+      <PageCard back={back} title={widget.name}>
+        <LargerScreenOnly what={t('Editing a card')} art="cards" />
+      </PageCard>
+    );
+
   return (
     <Loader loading={loading || !cardReady}>
       <Prompt
@@ -362,15 +382,7 @@ function WidgetView({
         }
       />
       <PageCard
-        back={{
-          label: dashboardName || t('Cards'),
-          onClick: () =>
-            history.push(
-              queryDashboardId
-                ? withSiteId(`/dashboard/${queryDashboardId}`, siteId)
-                : withSiteId('/metrics', siteId),
-            ),
-        }}
+        back={back}
         title={widget.name}
         meta={
           <Tooltip title={kindLabel}>

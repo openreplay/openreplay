@@ -4,6 +4,11 @@ import { EmptyState } from '@/ui/feedback/EmptyState';
 import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
 import { ListFooter } from '@/ui/layout/ListFooter';
 import { PagePanel } from '@/ui/layout/PageCard';
+import {
+  getRowsPerPage,
+  setRowsPerPage,
+  useRowsPerPage,
+} from '@/ui/layout/rows-per-page';
 import { toast } from '@/ui/overlays/toast';
 import { FilterKey } from 'Types/filter/filterType';
 import { DateTime } from 'luxon';
@@ -65,6 +70,7 @@ function WidgetSessions() {
   const { t } = useTranslation();
   const { open, hover } = useOpenSession();
   const { dashboardStore, metricStore, sessionStore, filterStore } = useStore();
+  const pageSize = useRowsPerPage();
   const isMounted = useIsMounted();
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -294,7 +300,7 @@ function WidgetSessions() {
         metricType: widget.metricType,
         metricOf: widget.metricOf,
         page: metricStore.sessionsPage,
-        limit: metricStore.sessionsPageSize,
+        limit: getRowsPerPage(),
       });
     }
   };
@@ -420,10 +426,14 @@ function WidgetSessions() {
             />
             <ListFooter
               page={metricStore.sessionsPage}
-              pageSize={metricStore.sessionsPageSize}
+              pageSize={pageSize}
               total={filteredSessions.total}
               noun={[t('session'), t('sessions')]}
               onPage={changePage}
+              onPageSize={(n) => {
+                setRowsPerPage(n);
+                changePage(1);
+              }}
             />
           </>
         )}

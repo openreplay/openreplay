@@ -1,5 +1,6 @@
 import { Button } from '@/ui/actions/button';
 import withPageTitle from 'HOCs/withPageTitle';
+import SignupAside from 'Saas/auth/SignupAside';
 import { RefreshCcw } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
@@ -14,6 +15,8 @@ import {
   HealthReport,
 } from 'Components/Header/HealthStatus/HealthReport';
 import { getHealthRequest } from 'Components/Header/HealthStatus/getHealth';
+
+import { Celebration } from 'Shared/Celebration/Celebration';
 
 import SignupForm from './SignupForm';
 
@@ -57,18 +60,25 @@ const Signup: React.FC = () => {
 
   if (authDetails && !healthModalPassed && !authDetails.tenants) {
     return (
-      <AuthScreen other="signin" step="health">
+      <AuthScreen other={null} step="health">
         <div className="m-auth__form">
           <header className="m-auth__head">
+            {healthStatus?.overallHealth && !healthStatusLoading && (
+              <Celebration variant="install" size={184} />
+            )}
             <h1 className="m-auth__title" id="m-auth-title">
               {t('Check your installation')}
             </h1>
             <p className="m-auth__lede">
-              {healthStatus?.overallHealth
-                ? t('Every service answered. You can create the first account.')
-                : t(
-                    'Every service has to answer before the first account can be created.',
-                  )}
+              {healthStatusLoading && healthStatus
+                ? t('Asking every service again.')
+                : healthStatus?.overallHealth
+                  ? t(
+                      'Every service answered. You can create the first account.',
+                    )
+                  : t(
+                      'Every service has to answer before the first account can be created.',
+                    )}
             </p>
           </header>
           <div className="m-auth__fields">
@@ -103,7 +113,7 @@ const Signup: React.FC = () => {
   }
 
   return (
-    <AuthScreen other="signin" step="form">
+    <AuthScreen other="signin" step="form" aside={<SignupAside />}>
       <SignupForm />
     </AuthScreen>
   );

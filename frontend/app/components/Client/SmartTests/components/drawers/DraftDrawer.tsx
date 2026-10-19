@@ -1,4 +1,6 @@
 import { Button } from '@/ui/actions/button';
+import { LargerScreenOnly } from '@/ui/layout/LargerScreenOnly';
+import { useViewport } from '@/ui/layout/use-viewport';
 import { useToast } from '@/ui/overlays/toast';
 import { ArrowLeft, ArrowRight, CalendarClock, Check, X } from 'lucide-react';
 import React, { useState } from 'react';
@@ -57,6 +59,7 @@ function DraftDrawer({
   defaults,
 }: Props) {
   const { t } = useTranslation();
+  const phone = useViewport() === 'phone';
   const toast = useToast();
   const [draft, setDraft] = useState<TestCase | null>(() =>
     test ? withDefaults(test, defaults) : null,
@@ -183,6 +186,13 @@ function DraftDrawer({
           </Button>
         }
       />
+    );
+
+  if (phone)
+    return (
+      <EntityDrawer open={open} onClose={onClose} title={draft.title}>
+        <LargerScreenOnly what={t('The test editor')} />
+      </EntityDrawer>
     );
 
   return (

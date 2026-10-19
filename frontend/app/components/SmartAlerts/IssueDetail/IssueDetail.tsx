@@ -1,7 +1,7 @@
 import withPageTitle from '@/components/hocs/withPageTitle';
 import withPermissions from '@/components/hocs/withPermissions';
 import { Button } from '@/ui/actions/button';
-import { BrandMark } from '@/ui/brand/BrandMark';
+import { OpenReplayMark } from '@/ui/brand/OpenReplayMark';
 import { CountSuffix } from '@/ui/data/CountSuffix';
 import { EmptyState } from '@/ui/feedback/EmptyState';
 import { type FilterDimension, FilterMenu } from '@/ui/filters/FilterMenu';
@@ -330,7 +330,7 @@ function IssueDetail() {
                 </div>
                 <div className="m-strip__scrim">
                   <span className="inline-flex flex-col items-center gap-2 text-xs text-content-muted">
-                    <BrandMark size={22} loop />
+                    <OpenReplayMark size={22} loop />
                     {t('Searching journeys…')}
                   </span>
                 </div>

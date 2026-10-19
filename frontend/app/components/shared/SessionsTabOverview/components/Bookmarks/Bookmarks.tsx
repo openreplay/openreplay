@@ -4,6 +4,7 @@ import { EmptyState } from '@/ui/feedback/EmptyState';
 import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
 import { ListFooter } from '@/ui/layout/ListFooter';
 import { PageCard } from '@/ui/layout/PageCard';
+import { setRowsPerPage, useRowsPerPage } from '@/ui/layout/rows-per-page';
 import withPermissions from 'HOCs/withPermissions';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
@@ -18,7 +19,8 @@ function Bookmarks() {
   const { sessionStore, userStore, settingsStore, projectsStore } = useStore();
   const queue = useSessionQueue(String(projectsStore.activeSiteId ?? ''));
   const { isEnterprise } = userStore;
-  const { bookmarks, lastPlayedSessionId } = sessionStore;
+  const { bookmarks, lastPlayedSessionIds } = sessionStore;
+  const pageSize = useRowsPerPage();
   const { open, hover } = useOpenSession();
 
   usePageTitle(`${isEnterprise ? 'Vault' : 'Bookmarks'} - OpenReplay`);
@@ -63,15 +65,19 @@ function Bookmarks() {
             onOpen={open}
             queue={queue}
             onHover={hover}
-            lastViewedId={lastPlayedSessionId}
+            lastViewedIds={lastPlayedSessionIds}
             timezone={settingsStore.sessionSettings.timezone?.value}
           />
           <ListFooter
             page={bookmarks.page}
-            pageSize={bookmarks.pageSize}
+            pageSize={pageSize}
             total={bookmarks.total}
             noun={[t('session'), t('sessions')]}
             onPage={(page) => sessionStore.updateBookmarksPage(page)}
+            onPageSize={(n) => {
+              setRowsPerPage(n);
+              sessionStore.updateBookmarksPage(1);
+            }}
           />
         </>
       )}

@@ -1,5 +1,6 @@
 import { IconButton } from '@/ui/actions/IconButton';
 import { Chip } from '@/ui/data/Chip';
+import { formatVital, vitalStatus } from '@/lib/vitals';
 import { TYPES } from 'Types/session/event';
 import copy from 'copy-to-clipboard';
 import type { TFunction } from 'i18next';
@@ -62,6 +63,7 @@ interface Detail {
   /** which line is code: a URL or a selector */
   mono?: 'top' | 'sub';
   metrics?: string;
+  vitals?: { key: string; name: string; value: number }[];
   signal?: 'frustration' | 'hesitation';
   error?: boolean;
   copy?: { text: string; label: string };
@@ -79,21 +81,28 @@ function describe(e: any, t: TFunction, isFirst: boolean): Detail {
       if (isFirst && e.referrer)
         notes.push(t('from {{ref}}', { ref: String(e.referrer) }));
       const metrics = [
-        typeof e.fcpTime === 'number' &&
-          `${t('Render')} ${numberWithCommas(e.fcpTime)}ms`,
         typeof e.visuallyComplete === 'number' &&
           `${t('Complete')} ${numberWithCommas(e.visuallyComplete)}ms`,
         typeof e.timeToInteractive === 'number' &&
           `${t('Interactive')} ${numberWithCommas(e.timeToInteractive)}ms`,
-        ...Object.entries(e.webvitals ?? {}).map(
-          ([k, v]) => `${k.toUpperCase()} ${v}`,
-        ),
       ].filter(Boolean);
+      const wv = e.webvitals ?? {};
+      const vitals = (
+        [
+          ['ttfb', 'TTFB', wv.ttfb],
+          ['fcp', 'FCP', e.fcpTime],
+          ['lcp', 'LCP', wv.lcp],
+          ['cls', 'CLS', wv.cls],
+        ] as const
+      )
+        .filter(([, , v]) => typeof v === 'number' && v > 0)
+        .map(([key, name, value]) => ({ key, name, value: value as number }));
       return {
         top: pathOf(e.url ?? ''),
         sub: notes.join(' · '),
         mono: 'top',
         metrics: metrics.join(' · ') || undefined,
+        vitals: vitals.length ? vitals : undefined,
         copy: e.url ? { text: e.url, label: t('Copy URL') } : undefined,
       };
     }
@@ -161,7 +170,12 @@ function ActivityRow({ event, now, ahead, isFirst, onSeek }: Props) {
   const { t } = useTranslation();
   const d = describe(event, t, isFirst);
   const Glyph = GLYPH[event.type];
-  const cls = ['m-spanel__row', now && 'is-now', ahead && 'is-ahead']
+  const cls = [
+    'm-spanel__row',
+    now && 'is-now',
+    ahead && 'is-ahead',
+    event.isHighlighted && 'is-hit',
+  ]
     .filter(Boolean)
     .join(' ');
   const tone = d.error ? ' is-error' : RAGE.has(event.type) ? ' is-rage' : '';
@@ -199,6 +213,22 @@ function ActivityRow({ event, now, ahead, isFirst, onSeek }: Props) {
           {d.metrics && (
             <span className="m-spanel__sub m-truncate" title={d.metrics}>
               {d.metrics}
+            </span>
+          )}
+          {d.vitals && (
+            <span className="m-act__vitals">
+              {d.vitals.map((v) => (
+                <span
+                  key={v.key}
+                  className={`m-act__vital is-${vitalStatus(v.key, v.value)}`}
+                >
+                  <span className="m-act__vital-dot" aria-hidden="true" />
+                  <span className="m-act__vital-name">{v.name}</span>
+                  <span className="m-act__vital-value">
+                    {formatVital(v.key, v.value)}
+                  </span>
+                </span>
+              ))}
             </span>
           )}
           {d.signal && (

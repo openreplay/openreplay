@@ -100,10 +100,25 @@ function DevEmpty({ text }: { text: string }) {
 
 /** Console output captured during the run — machine output, so mono; the level is
  *  the only colour. */
-function ConsoleView({ logs }: { logs?: ConsoleLog[] }) {
+function ConsoleView({
+  logs,
+  running,
+}: {
+  logs?: ConsoleLog[];
+  running?: boolean;
+}) {
   const { t } = useTranslation();
+  // captured is a verdict, and it waits for the end of the run
   if (!logs || logs.length === 0)
-    return <DevEmpty text={t('No console output captured for this run.')} />;
+    return (
+      <DevEmpty
+        text={
+          running
+            ? t('Nothing yet.')
+            : t('No console output captured for this run.')
+        }
+      />
+    );
   return (
     <div className="m-rd__console">
       {logs.map((l, i) => (
@@ -142,7 +157,7 @@ function ScreenshotsView({
   if (run.status === 'running')
     return (
       <DevEmpty
-        text={t('Run in progress. Screenshots appear as it finishes.')}
+        text={t('Nothing yet. Screenshots appear as the run finishes.')}
       />
     );
   if (shotSteps.length === 0)
@@ -612,9 +627,12 @@ function RunDrawer({ run, open, onClose }: Props) {
               reqs={network}
               startedAt={run.date}
               onDownload={harText ? downloadHar : undefined}
+              running={running}
             />
           )}
-          {devTab === 'console' && <ConsoleView logs={run.console} />}
+          {devTab === 'console' && (
+            <ConsoleView logs={run.console} running={running} />
+          )}
         </div>
       </Section>
 
@@ -651,9 +669,12 @@ function RunDrawer({ run, open, onClose }: Props) {
                 startedAt={run.date}
                 fillHeight
                 onDownload={harText ? downloadHar : undefined}
+                running={running}
               />
             )}
-            {modalTab === 'console' && <ConsoleView logs={run.console} />}
+            {modalTab === 'console' && (
+              <ConsoleView logs={run.console} running={running} />
+            )}
           </div>
         </div>
       </Modal>

@@ -34,6 +34,8 @@ export interface NavFlags {
   isAdmin: boolean;
   modules: string[];
   isMobile: boolean;
+  /** phone-width window: surfaces that need the room are left out */
+  phone: boolean;
   issues: boolean;
   tests: boolean;
   audits: boolean;
@@ -81,7 +83,8 @@ export function navTree(t: TFunction, f: NavFlags): readonly NavGroup[] {
         ]),
       }),
     !f.modules.includes(MODULES.ASSIST) &&
-      !f.isMobile && {
+      !f.isMobile &&
+      !f.phone && {
         key: MENU.LIVE_SESSIONS,
         label: t('CoBrowse'),
         icon: 'cobrowse',

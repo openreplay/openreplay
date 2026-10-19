@@ -265,6 +265,7 @@ function NetworkPanel({
   startedAt,
   fillHeight,
   onDownload,
+  running,
 }: {
   reqs?: NetworkRequest[];
   startedAt?: number;
@@ -272,6 +273,8 @@ function NetworkPanel({
   fillHeight?: boolean;
   /** download the captured .HAR — omitted when the run captured none */
   onDownload?: () => void;
+  /** the run is still going: an empty list is not a verdict yet */
+  running?: boolean;
 }) {
   const { t } = useTranslation();
   // default to the Errors filter when the run has failures, so they're front-and-centre
@@ -299,7 +302,9 @@ function NetworkPanel({
   if (!reqs || reqs.length === 0)
     return (
       <p className="m-rd__none">
-        {t('No network activity captured for this run.')}
+        {running
+          ? t('Nothing yet.')
+          : t('No network activity captured for this run.')}
       </p>
     );
 

@@ -10,6 +10,7 @@ import { FilterStrip } from '@/ui/filters/FilterStrip';
 import { DateRange } from '@/ui/inputs/DateRange';
 import { SearchField } from '@/ui/inputs/SearchField';
 import { ListFooter } from '@/ui/layout/ListFooter';
+import { setRowsPerPage, useRowsPerPage } from '@/ui/layout/rows-per-page';
 import { useToast } from '@/ui/overlays/toast';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import Period, {
@@ -63,7 +64,6 @@ import './tests-page.css';
 
 type StatusTab = 'all' | UiRunStatus;
 type FilterKey = 'viewport' | 'tags' | 'env' | 'region';
-const PAGE_SIZE = 20;
 // column key → API sortField (only these two are server-sortable).
 const SORT_FIELD: Record<string, ListAllRunsParams['sortField']> = {
   duration: 'duration_ms',
@@ -140,6 +140,7 @@ function RunsTab() {
   );
   const [sortBy, setSortBy] = useState<TableSort>(NEWEST);
   const [page, setPage] = useState(1);
+  const pageSize = useRowsPerPage();
 
   // adopt a cross-tab handoff exactly once when handoffId bumps — this pane stays
   // mounted between visits, so a fresh id is the signal
@@ -178,7 +179,7 @@ function RunsTab() {
   const sortField = SORT_FIELD[sortBy.key];
   const listParams: ListAllRunsParams = {
     page,
-    limit: PAGE_SIZE,
+    limit: pageSize,
     ...filters,
     status:
       statusTab !== 'all' ? BUCKET_STATUSES[statusTab].join(',') : undefined,
@@ -545,10 +546,14 @@ function RunsTab() {
           />
           <ListFooter
             page={page}
-            pageSize={PAGE_SIZE}
+            pageSize={pageSize}
             total={total}
             noun={[t('run'), t('runs')]}
             onPage={setPage}
+            onPageSize={(n) => {
+              setRowsPerPage(n);
+              setPage(1);
+            }}
           />
         </>
       )}

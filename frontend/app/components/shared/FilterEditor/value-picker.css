@@ -45,7 +45,7 @@
   border-bottom: var(--m-border-width) solid var(--m-border-subtle);
 }
 
-.m-vp__search:focus-within {
+:root[data-modality='keyboard'] .m-vp__search:focus-within {
   outline: 2px solid var(--m-focus-ring);
   outline-offset: -3px;
   border-radius: var(--m-radius-control);

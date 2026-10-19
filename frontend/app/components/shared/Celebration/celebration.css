@@ -1,0 +1,169 @@
+/* Cube robots with session faces in a hand-inked line that boils like stop
+   motion. The base styles are the resting frame (frame 0, no confetti); the
+   boil swaps three drawings every 140ms; `is-cheering` (hover, and 1.5s on
+   arrival) hops the robots on a stepped 560ms loop and pops the confetti. */
+
+.m-cheer {
+  --cb-ink: var(--m-content-primary);
+  --cb-accent: var(--m-accent-bright);
+  --cb-top: var(--m-surface-sunken);
+  --cb-front: var(--m-surface-active);
+  --cb-side: color-mix(
+    in srgb,
+    var(--m-surface-active) 60%,
+    var(--m-content-disabled)
+  );
+  --cb-ground: var(--m-surface-active);
+  --cb-boil: 420ms;
+  display: inline-flex;
+  flex: none;
+  position: relative;
+}
+:root.dark .m-cheer {
+  --cb-top: color-mix(
+    in srgb,
+    var(--m-surface-active) 70%,
+    var(--m-content-disabled)
+  );
+  --cb-front: var(--m-surface-active);
+  --cb-side: var(--m-surface-raised);
+  --cb-ground: var(--m-surface-sunken);
+}
+
+.m-cheer__svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.m-cheer__svg * {
+  transform-box: view-box;
+}
+
+/* ── the drawing ── */
+.m-cheer__line {
+  stroke: var(--cb-ink);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.m-cheer__bit .m-cheer__line {
+  stroke-width: 2;
+}
+.m-cheer__bobble,
+.m-cheer__spark,
+.m-cheer__fill-accent {
+  fill: var(--cb-accent);
+}
+.m-cheer__fill-top {
+  fill: var(--cb-top);
+}
+.m-cheer__fill-front {
+  fill: var(--cb-front);
+}
+.m-cheer__fill-side {
+  fill: var(--cb-side);
+}
+.m-cheer__ground {
+  fill: var(--cb-ground);
+}
+.m-cheer__face {
+  overflow: visible;
+}
+.m-cheer__face > .m-savatar {
+  display: block;
+}
+
+/* resting frame: frame 0 and the robot's own face; the rest waits */
+.m-cheer__frame--1,
+.m-cheer__frame--2 {
+  opacity: 0;
+}
+.m-cheer__bit {
+  opacity: 0;
+  transition: opacity var(--m-duration-fast) var(--m-ease-in);
+}
+
+/* ── the boil: a flip book, each frame shown for a third of the loop ── */
+.m-cheer__frame {
+  animation: m-cheer-boil var(--cb-boil) step-end infinite;
+}
+.m-cheer__frame--1 {
+  animation-delay: calc(var(--cb-boil) * -2 / 3);
+}
+.m-cheer__frame--2 {
+  animation-delay: calc(var(--cb-boil) * -1 / 3);
+}
+
+/* ── the cheer ── */
+.m-cheer.is-cheering .m-cheer__bot {
+  animation: m-cheer-hop 560ms steps(2, end) infinite;
+}
+.m-cheer.is-cheering .m-cheer__bot--b {
+  animation-delay: -280ms;
+}
+.m-cheer.is-cheering .m-cheer__bit {
+  opacity: 1;
+  transition: none;
+  animation: m-cheer-pop 420ms steps(4, end) calc(var(--i) * 40ms) backwards;
+}
+.m-cheer.is-cheering .m-cheer__bit > path {
+  transform-origin: inherit;
+  animation: m-cheer-jig var(--cb-boil) step-end infinite;
+}
+
+@keyframes m-cheer-boil {
+  0% {
+    opacity: 1;
+  }
+  33.333% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes m-cheer-hop {
+  0% {
+    transform: translate(0, 0) scale(1.05, 0.93);
+  }
+  30% {
+    transform: translate(0, -7px) scale(0.97, 1.04);
+  }
+  55% {
+    transform: translate(0, -9px);
+  }
+  85% {
+    transform: translate(0, 0) scale(1.03, 0.96);
+  }
+  100% {
+    transform: translate(0, 0) scale(1.05, 0.93);
+  }
+}
+@keyframes m-cheer-pop {
+  from {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) scale(0.2) rotate(-40deg);
+  }
+}
+@keyframes m-cheer-jig {
+  0% {
+    transform: rotate(-7deg);
+  }
+  33.333% {
+    transform: rotate(5deg) translate(0, -0.6px);
+  }
+  66.666% {
+    transform: rotate(0deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m-cheer *,
+  .m-cheer.is-cheering * {
+    animation: none !important;
+  }
+  .m-cheer__bit,
+  .m-cheer.is-cheering .m-cheer__bit {
+    display: none;
+  }
+}

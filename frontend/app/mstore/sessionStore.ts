@@ -1,4 +1,5 @@
 import { checkEventWithFilters } from '@/components/Session_/Player/Controls/checkEventWithFilters';
+import { getRowsPerPage } from '@/ui/layout/rows-per-page';
 import { loadFile } from 'Player/web/network/loadFiles';
 import { LAST_7_DAYS } from 'Types/app/period';
 import Session from 'Types/session';
@@ -124,6 +125,19 @@ interface Bookmarks {
   loading: boolean;
 }
 
+const LAST_PLAYED = 3;
+const LAST_PLAYED_KEY = '__or_last_played';
+function readLastPlayed(): string[] {
+  try {
+    const v = JSON.parse(localStorage.getItem(LAST_PLAYED_KEY) ?? '[]');
+    return Array.isArray(v)
+      ? v.filter((x) => typeof x === 'string').slice(0, LAST_PLAYED)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
 export default class SessionStore {
   userFilter: UserFilter = new UserFilter();
 
@@ -175,7 +189,12 @@ export default class SessionStore {
 
   sessionPath: Record<string, any> = {};
 
-  lastPlayedSessionId: string = '';
+  /** the last sessions played, newest first, remembered */
+  lastPlayedSessionIds: string[] = readLastPlayed();
+
+  get lastPlayedSessionId(): string {
+    return this.lastPlayedSessionIds[0] ?? '';
+  }
 
   timeLineTooltip = {
     time: 0,
@@ -601,6 +620,7 @@ export default class SessionStore {
     isVisible: boolean;
     localTime: string;
     userTime?: string;
+    inactive?: string;
   }) => {
     this.timeLineTooltip = tp;
   };
@@ -676,7 +696,18 @@ export default class SessionStore {
   };
 
   setLastPlayedSessionId = (sessionId: string) => {
-    this.lastPlayedSessionId = sessionId;
+    this.lastPlayedSessionIds = [
+      sessionId,
+      ...this.lastPlayedSessionIds.filter((id) => id !== sessionId),
+    ].slice(0, LAST_PLAYED);
+    try {
+      localStorage.setItem(
+        LAST_PLAYED_KEY,
+        JSON.stringify(this.lastPlayedSessionIds),
+      );
+    } catch {
+      // private mode: it lasts the visit
+    }
   };
 
   setBookmarksLoading = (loading: boolean) => {
@@ -696,7 +727,7 @@ export default class SessionStore {
       this.setBookmarksLoading(true);
       const params = {
         page: this.bookmarks.page,
-        limit: this.bookmarks.pageSize,
+        limit: getRowsPerPage(),
         bookmarked: true,
       };
       const data = await sessionService.getSessions(params);

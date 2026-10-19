@@ -22,6 +22,31 @@
   border-top: var(--m-border-width) solid var(--m-border-subtle);
 }
 
+.m-account-menu__projects {
+  max-height: calc(7.5 * (var(--m-nav-row-height) + var(--m-space-1)));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--m-border-strong) transparent;
+}
+.m-account-menu__projects > .m-nav-item {
+  flex: none;
+}
+/* hovered is a lighter step than current, so the two never read alike */
+.m-account-menu .m-nav-item:not(.is-active):hover {
+  background: color-mix(in oklab, var(--m-nav-row-on) 45%, transparent);
+}
+.m-account-menu .m-nav-item:disabled {
+  color: var(--m-content-disabled);
+  cursor: not-allowed;
+}
+.m-account-menu .m-nav-item:disabled .m-nav-item__icon {
+  color: inherit;
+}
+.m-account-menu .m-nav-item:disabled:hover {
+  background: transparent;
+}
+
 .m-user-menu {
   width: 15rem;
 }

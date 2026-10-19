@@ -214,3 +214,36 @@
     align-items: flex-start;
   }
 }
+
+/* the cloud signup's column, on the ground beside the card; stacked below 860px */
+.m-auth__body.is-split { gap: clamp(var(--m-space-8), 6vw, 5rem); }
+.m-auth__pitch { display: flex; flex-direction: column; gap: var(--m-space-6); max-width: 22rem; }
+.m-auth__pitch-title {
+  font-family: var(--m-font-display);
+  font-size: calc(var(--m-text-2xl) * var(--m-display-scale));
+  font-weight: var(--m-display-weight);
+  letter-spacing: var(--m-display-tracking);
+  line-height: var(--m-leading-tight);
+  color: var(--m-content-primary);
+}
+.m-auth__pitch-list { display: flex; flex-direction: column; gap: var(--m-space-4); }
+.m-auth__pitch-list li { display: flex; align-items: flex-start; gap: var(--m-space-3); font-size: var(--m-text-sm); line-height: var(--m-leading-snug); color: var(--m-content-secondary); }
+.m-auth__pitch-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-top: -3px;
+  border: 1px solid var(--m-border-subtle);
+  border-radius: var(--m-radius-control);
+  background: var(--m-surface-default);
+  color: var(--m-content-secondary);
+}
+.m-auth__pitch-note { font-size: var(--m-text-xs); color: var(--m-content-muted); }
+@media (max-width: 860px) {
+  .m-auth__body.is-split { flex-direction: column; align-items: stretch; }
+  .m-auth__pitch { max-width: 26rem; margin-inline: auto; }
+  .m-auth__body.is-split .m-auth__card { margin-inline: auto; }
+}

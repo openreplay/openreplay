@@ -65,6 +65,8 @@ export interface DataTableProps<T> {
   /** Turns headers into drag handles; drops `from` onto `to`'s slot. */
   onColumnMove?: (from: string, to: string) => void;
   selection?: TableSelection<T>;
+  /** the compact row of chart and widget tables; paged lists use the taller list row */
+  compact?: boolean;
   className?: string;
   ariaLabel?: string;
 }
@@ -85,6 +87,7 @@ export function DataTable<T>({
   onSort,
   onColumnMove,
   selection,
+  compact,
   className,
   ariaLabel,
 }: DataTableProps<T>) {
@@ -162,6 +165,13 @@ export function DataTable<T>({
     <table
       data-slot="table"
       className={cn('w-full table-fixed border-collapse', className)}
+      style={
+        {
+          '--m-dt-row': compact
+            ? 'var(--m-row-height)'
+            : 'var(--m-list-row-height)',
+        } as CSSProperties
+      }
       aria-label={ariaLabel}
     >
       <colgroup>
@@ -367,7 +377,7 @@ function TableBodyRows<T>({
             ) : (
               <>
                 {selection && (
-                  <td className="h-[calc(var(--m-row-height)+1px)] py-3 pl-7 pr-2 align-middle">
+                  <td className="h-[calc(var(--m-dt-row)+1px)] py-3 pl-7 pr-2 align-middle">
                     {canSelect && (
                       <Checkbox
                         aria-label={selection.label?.(row) ?? t('Select row')}
@@ -387,7 +397,7 @@ function TableBodyRows<T>({
                   <td
                     key={c.key}
                     className={cn(
-                      'h-[calc(var(--m-row-height)+1px)] px-4 py-3 first:pl-7 last:pr-7 align-middle text-sm',
+                      'h-[calc(var(--m-dt-row)+1px)] px-4 py-3 first:pl-7 last:pr-7 align-middle text-sm',
                       alignOf(c.align),
                       c.className,
                     )}

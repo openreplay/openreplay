@@ -1,8 +1,15 @@
-import { ExternalLink } from '@/ui/actions/ExternalLink';
+import { SUPPORT_GLYPHS } from '@/ui/brand/support-glyphs';
 import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
-import { ChevronRight, CircleAlert, CircleCheck } from 'lucide-react';
+import {
+  ArrowUpRight,
+  ChevronRight,
+  CircleAlert,
+  CircleCheck,
+} from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+
+import 'Shared/SupportMenu/support-menu.css';
 
 import type { IServiceStats } from './HealthStatus';
 import './health.css';
@@ -22,7 +29,10 @@ export function HealthReport({
   loading: boolean;
 }) {
   const { t } = useTranslation();
-  const services = Object.entries(report?.healthMap ?? {});
+  // the failing ones first: the one that is down leads its list
+  const services = Object.entries(report?.healthMap ?? {}).sort(
+    ([, a], [, b]) => Number(a.healthOk) - Number(b.healthOk),
+  );
   const [open, setOpen] = React.useState<string[]>([]);
 
   React.useEffect(() => {
@@ -38,16 +48,19 @@ export function HealthReport({
     );
 
   return (
-    <div className="m-health">
+    // a recheck keeps the last answer on screen, dimmed, so nothing jumps
+    <div className={`m-health${loading ? ' is-checking' : ''}`}>
       {services.map(([key, svc]) => {
         const isOpen = open.includes(key);
-        const subs = Object.entries(svc.subservices ?? {}) as [
-          string,
-          {
-            health: boolean;
-            details?: { errors?: string[]; version?: string };
-          },
-        ][];
+        const subs = (
+          Object.entries(svc.subservices ?? {}) as [
+            string,
+            {
+              health: boolean;
+              details?: { errors?: string[]; version?: string };
+            },
+          ][]
+        ).sort(([, a], [, b]) => Number(!!a?.health) - Number(!!b?.health));
         return (
           <div key={key} className={`m-health__svc${isOpen ? ' is-open' : ''}`}>
             <button
@@ -106,27 +119,70 @@ export function HealthReport({
   );
 }
 
-const LINKS = [
+const LINKS: {
+  href: string;
+  label: string;
+  hint: string;
+  glyph: keyof typeof SUPPORT_GLYPHS;
+}[] = [
   {
     href: 'https://docs.openreplay.com/en/troubleshooting/',
     label: 'Troubleshooting guide',
+    hint: 'docs.openreplay.com',
+    glyph: 'docs',
   },
-  { href: 'https://slack.openreplay.com/', label: 'Ask the Slack community' },
+  {
+    href: 'https://slack.openreplay.com/',
+    label: 'Ask the community',
+    hint: 'Slack',
+    glyph: 'slack',
+  },
   {
     href: 'https://github.com/openreplay/openreplay/issues/new/choose',
     label: 'Raise an issue',
+    hint: 'GitHub',
+    glyph: 'github',
   },
 ];
 
+/** The ways out when a service will not answer: the support menu's rows. */
 export function HealthLinks() {
   const { t } = useTranslation();
   return (
-    <div className="m-health__links">
-      {LINKS.map((l) => (
-        <ExternalLink key={l.href} className="m-health__link" href={l.href}>
-          {t(l.label)}
-        </ExternalLink>
-      ))}
-    </div>
+    <nav
+      className="m-health__links"
+      aria-label={t('Help with the installation')}
+    >
+      {LINKS.map((l) => {
+        const g = SUPPORT_GLYPHS[l.glyph];
+        return (
+          <a
+            key={l.href}
+            className="m-support__row m-health__link"
+            href={l.href}
+            target="_blank"
+            rel="noreferrer"
+          >
+            <svg
+              className="m-support__glyph"
+              viewBox={g.viewBox}
+              aria-hidden="true"
+            >
+              <path d={g.d} fill="currentColor" />
+            </svg>
+            <span className="m-support__text">
+              <span className="m-support__label">{t(l.label)}</span>
+              <span className="m-support__hint">{l.hint}</span>
+            </span>
+            <ArrowUpRight
+              size={13}
+              strokeWidth={1.75}
+              className="m-support__out"
+              aria-hidden="true"
+            />
+          </a>
+        );
+      })}
+    </nav>
   );
 }

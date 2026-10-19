@@ -21,6 +21,7 @@ export interface NavItemProps {
   onClick?: () => void;
   /** the full label on hover, where it may be cut */
   title?: string;
+  disabled?: boolean;
 }
 
 export function NavItem({
@@ -35,6 +36,7 @@ export function NavItem({
   onToggle,
   onClick,
   title,
+  disabled,
 }: NavItemProps) {
   // the caret can't be a button inside this one: keyboard users toggle the
   // subitems with the arrow keys, as in a tree
@@ -44,6 +46,7 @@ export function NavItem({
       className={`m-nav-item${active ? ' is-active' : ''}${nested ? ' is-nested' : ''}`}
       aria-current={active ? 'page' : undefined}
       title={title}
+      disabled={disabled}
       aria-expanded={expandable ? !!expanded : undefined}
       onClick={onClick}
       onKeyDown={

@@ -74,6 +74,60 @@ function SessionTabs({ isLive }: { isLive?: boolean }) {
     player.changeTab(tab);
   };
 
+  // the shown tab's surface, measured: tabs are as wide as their titles
+  const strip = React.useRef<HTMLDivElement>(null);
+  const shownId = shownTabs.length === 1 ? shownTabs[0].tab : currentTab;
+  const [thumb, setThumb] = React.useState<{ x: number; w: number } | null>(
+    null,
+  );
+  const [live, setLive] = React.useState(false);
+  React.useLayoutEffect(() => {
+    const host = strip.current;
+    if (!host) return undefined;
+    const measure = () => {
+      const el = host.querySelector<HTMLElement>(
+        `[data-tab="${CSS.escape(shownId)}"]`,
+      );
+      setThumb(el ? { x: el.offsetLeft, w: el.offsetWidth } : null);
+    };
+    measure();
+    // a reflow is not a switch: reposition without the travel
+    const ro = new ResizeObserver(() => {
+      setLive(false);
+      measure();
+      requestAnimationFrame(() => setLive(true));
+    });
+    ro.observe(host);
+    const id = requestAnimationFrame(() => setLive(true));
+    return () => {
+      ro.disconnect();
+      cancelAnimationFrame(id);
+    };
+  }, [shownId, shownTabs.length]);
+
+  const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+    const n = shownTabs.length;
+    const i = shownTabs.findIndex((el) => el.tab === shownId);
+    const next =
+      e.key === 'Home'
+        ? 0
+        : e.key === 'End'
+          ? n - 1
+          : e.key === 'ArrowRight'
+            ? (i + 1) % n
+            : (i - 1 + n) % n;
+    const tab = shownTabs[next];
+    if (!tab) return;
+    e.preventDefault();
+    // the transport's own arrows seek; a key spent on the tabs must not
+    e.stopPropagation();
+    changeTab(tab.tab);
+    strip.current
+      ?.querySelector<HTMLElement>(`[data-tab="${CSS.escape(tab.tab)}"]`)
+      ?.focus();
+  };
+
   const openModal = () => {
     showModal(
       <Modal
@@ -88,13 +142,26 @@ function SessionTabs({ isLive }: { isLive?: boolean }) {
     );
   };
   return (
-    <div className="m-rtabs" role="tablist" aria-label={t('Browser tabs')}>
+    <div
+      className="m-rtabs"
+      role="tablist"
+      aria-label={t('Browser tabs')}
+      ref={strip}
+      onKeyDown={onKeyDown}
+    >
+      {thumb && (
+        <span
+          className={`m-rtabs__thumb m-travel${live ? ' is-live' : ''}`}
+          aria-hidden="true"
+          style={{ transform: `translateX(${thumb.x}px)`, width: thumb.w }}
+        />
+      )}
       {shownTabs.map((tab) => (
         <Tab
           key={tab.tab}
           i={tab.idx}
           tab={tab.tab}
-          currentTab={actualTabs.length === 1 ? tab.tab : currentTab}
+          currentTab={shownId}
           changeTab={changeTab}
           isLive={isLive}
           isClosed={tab.isClosed}

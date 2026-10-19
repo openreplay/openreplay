@@ -1,4 +1,5 @@
 import { Loader } from '@/ui/feedback/Loader';
+import { LargerScreenOnly } from '@/ui/layout/LargerScreenOnly';
 import { getStartAndEndTimestampsByDensity } from 'Types/dashboard/helper';
 import { FilterKey } from 'Types/filter/filterType';
 import { observer } from 'mobx-react-lite';
@@ -689,15 +690,17 @@ function WidgetChart(props: Props) {
           : false;
         const height = props.isPreview ? 550 : 240;
         return (
-          <SunBurstChart
-            height={height}
-            data={data}
-            inGrid={!props.isPreview}
-            onChartClick={(filters: any) => {
-              dashboardStore.drillDownFilter.merge({ filters, page: 1 });
-            }}
-            isUngrouped={isUngrouped}
-          />
+          <LargerScreenOnly what={t('The journey chart')}>
+            <SunBurstChart
+              height={height}
+              data={data}
+              inGrid={!props.isPreview}
+              onChartClick={(filters: any) => {
+                dashboardStore.drillDownFilter.merge({ filters, page: 1 });
+              }}
+              isUngrouped={isUngrouped}
+            />
+          </LargerScreenOnly>
         );
       }
       if (viewType === 'lineChart' && data.links) {
@@ -711,18 +714,20 @@ function WidgetChart(props: Props) {
           )?.value[0] ?? 'unref';
         const getFilter = (name: string) => filterStore.findEvent({ name });
         return (
-          <SankeyChart
-            height={height}
-            data={data}
-            inGrid={!props.isPreview}
-            onChartClick={(filters: any) => {
-              dashboardStore.drillDownFilter.merge({ filters, page: 1 });
-            }}
-            isUngrouped={isUngrouped}
-            startUrl={startUrl}
-            getFilter={getFilter}
-            drilldownFilter={dashboardStore.drillDownFilter.filters}
-          />
+          <LargerScreenOnly what={t('The journey chart')}>
+            <SankeyChart
+              height={height}
+              data={data}
+              inGrid={!props.isPreview}
+              onChartClick={(filters: any) => {
+                dashboardStore.drillDownFilter.merge({ filters, page: 1 });
+              }}
+              isUngrouped={isUngrouped}
+              startUrl={startUrl}
+              getFilter={getFilter}
+              drilldownFilter={dashboardStore.drillDownFilter.filters}
+            />
+          </LargerScreenOnly>
         );
       }
     }

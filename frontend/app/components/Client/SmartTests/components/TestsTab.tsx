@@ -18,6 +18,7 @@ import { type FilterDimension, FilterMenu } from '@/ui/filters/FilterMenu';
 import { FilterStrip } from '@/ui/filters/FilterStrip';
 import { SearchField } from '@/ui/inputs/SearchField';
 import { ListFooter } from '@/ui/layout/ListFooter';
+import { setRowsPerPage, useRowsPerPage } from '@/ui/layout/rows-per-page';
 import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
 import { useToast } from '@/ui/overlays/toast';
 import { Tooltip } from '@/ui/overlays/tooltip';
@@ -98,7 +99,6 @@ import './tests-page.css';
 // needs_review is a flag, not a stored status — its tab sends ?needsReview=true.
 type StatusTab = 'all' | 'needs_review' | TestStatus;
 type FilterKey = 'env' | 'tags';
-const PAGE_SIZE = 20;
 // column key → API sortField (only these are server-sortable).
 const SORT_FIELD: Record<string, ListTestsParams['sortField']> = {
   title: 'name',
@@ -143,6 +143,7 @@ function TestsTab() {
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<TableSort | null>(null);
   const [page, setPage] = useState(1);
+  const pageSize = useRowsPerPage();
   const [hidden, setHidden] = useState<string[]>(readHidden);
   const [deleteKeys, setDeleteKeys] = useState<string[]>([]);
   // the opened test drawer IS the ?test= param — open iff present. No separate state, so
@@ -175,7 +176,7 @@ function TestsTab() {
   const sortField = sortBy ? SORT_FIELD[sortBy.key] : undefined;
   const listParams: ListTestsParams = {
     page,
-    limit: PAGE_SIZE,
+    limit: pageSize,
     ...filters,
     status:
       statusTab === 'all' || statusTab === 'needs_review'
@@ -903,7 +904,7 @@ function TestsTab() {
             value={query}
             onChange={setQuery}
           />
-          <Button variant="primary" onClick={addTest}>
+          <Button variant="primary" onClick={addTest} className="max-sm:hidden">
             <Plus size={14} />
             {t('Add test')}
           </Button>
@@ -1041,13 +1042,17 @@ function TestsTab() {
           />
           <ListFooter
             page={page}
-            pageSize={PAGE_SIZE}
+            pageSize={pageSize}
             total={total}
             noun={[t('test'), t('tests')]}
             onPage={(p) => {
               // selection is per page: the bulk verbs act on the rows in view
               setSelectedKeys([]);
               setPage(p);
+            }}
+            onPageSize={(n) => {
+              setRowsPerPage(n);
+              setPage(1);
             }}
           />
         </>

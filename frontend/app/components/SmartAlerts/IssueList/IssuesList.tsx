@@ -23,6 +23,7 @@ import { Switch } from '@/ui/inputs/switch';
 import { Segmented } from '@/ui/inputs/toggle-group';
 import { ListFooter } from '@/ui/layout/ListFooter';
 import { PageCard } from '@/ui/layout/PageCard';
+import { setRowsPerPage, useRowsPerPage } from '@/ui/layout/rows-per-page';
 import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
 import { useToast } from '@/ui/overlays/toast';
 import { Tooltip } from '@/ui/overlays/tooltip';
@@ -82,6 +83,7 @@ const MINE = '__mine__';
 
 function IssuesList() {
   const { issuesStore, projectsStore } = useStore();
+  const pageSize = useRowsPerPage();
   const { t } = useTranslation();
   const toast = useToast();
   const siteId = projectsStore.activeSiteId;
@@ -529,36 +531,6 @@ function IssuesList() {
             value={issuesStore.query}
             onChange={(v) => issuesStore.setQuery(v)}
           />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <span>
-                <IconButton
-                  icon={<MoreHorizontal size={15} />}
-                  label={t('More')}
-                  variant="ghost"
-                />
-              </span>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItems
-                items={[
-                  {
-                    key: 'settings',
-                    icon: <Settings2 size={13} />,
-                    label: t('Issues settings'),
-                    onClick: () => history.push('/client/agents?agent=issues'),
-                  },
-                  {
-                    key: 'docs',
-                    icon: <BookOpen size={13} />,
-                    label: t('Documentation'),
-                    onClick: () =>
-                      window.open('https://docs.openreplay.com/', '_blank'),
-                  },
-                ]}
-              />
-            </DropdownMenuContent>
-          </DropdownMenu>
         </>
       }
       toolbar={
@@ -640,6 +612,37 @@ function IssuesList() {
                 ),
               ]}
             />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <span>
+                  <IconButton
+                    icon={<MoreHorizontal size={15} />}
+                    label={t('More')}
+                    variant="ghost"
+                  />
+                </span>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItems
+                  items={[
+                    {
+                      key: 'settings',
+                      icon: <Settings2 size={13} />,
+                      label: t('Issues settings'),
+                      onClick: () =>
+                        history.push('/client/agents?agent=issues'),
+                    },
+                    {
+                      key: 'docs',
+                      icon: <BookOpen size={13} />,
+                      label: t('Documentation'),
+                      onClick: () =>
+                        window.open('https://docs.openreplay.com/', '_blank'),
+                    },
+                  ]}
+                />
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </>
       }
@@ -675,10 +678,14 @@ function IssuesList() {
           />
           <ListFooter
             page={issuesStore.page}
-            pageSize={issuesStore.limit}
+            pageSize={pageSize}
             total={issuesStore.total}
             noun={[t('issue'), t('issues')]}
             onPage={(p) => issuesStore.setPage(p)}
+            onPageSize={(n) => {
+              setRowsPerPage(n);
+              issuesStore.setPage(1);
+            }}
           />
         </>
       )}

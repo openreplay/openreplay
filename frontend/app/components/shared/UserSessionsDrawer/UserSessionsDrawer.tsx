@@ -1,3 +1,4 @@
+import { cityAfterCode } from '@/lib/geo';
 import { RelativeTime } from '@/ui/data/RelativeTime';
 import { EmptyState } from '@/ui/feedback/EmptyState';
 import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
@@ -137,7 +138,12 @@ function UserSessionsDrawer({ open, onClose, userId, name }: Props) {
                         [s.userBrowser, s.userOs]
                           .filter(Boolean)
                           .join(t(' on ')),
-                        [s.userCity, s.userCountry].filter(Boolean).join(', '),
+                        [
+                          cityAfterCode(s.userCity, s.userCountry),
+                          s.userCountry,
+                        ]
+                          .filter(Boolean)
+                          .join(', '),
                       ]
                         .filter(Boolean)
                         .join(' · ')}

@@ -3,10 +3,15 @@
  * */
 
 const FRAME_MS = 1000 / 60;
-/** Trail lifetime; the old frame-counted values (3.5 / 5) expressed in milliseconds at 60fps. */
-const LINE_DURATION_MS = ((3.5 * 1000) / 60) * FRAME_MS;
-const LINE_DURATION_MOBILE_MS = ((5 * 1000) / 60) * FRAME_MS;
-const LINE_WIDTH_START = 5;
+/** How long a recorded point stays in the trail: once the cursor rests, the
+ *  tail closes on it in this time and the trail is gone. */
+const TRAIL_MS = 400;
+/** Half-widths at the tail and at the head, in screen pixels. */
+const TAIL_HALF = 0.4;
+const HEAD_HALF = 2.6;
+const HEAD_ALPHA = 0.55;
+/** Samples per curve between two recorded points. */
+const STEPS = 8;
 
 const TOUCH_PULSE_MS = 60 * FRAME_MS;
 const TOUCH_PULSE_BASE_RADIUS = 8;
@@ -21,6 +26,7 @@ export type SwipeEvent = {
 };
 
 type Point = { x: number; y: number; born: number };
+type Sample = { x: number; y: number; born: number };
 type TouchPulse = { x: number; y: number; born: number };
 
 /**
@@ -32,9 +38,9 @@ export default class MouseTrail {
 
   public context: CanvasRenderingContext2D;
 
-  private readonly lineDuration: number;
-
   private points: Point[] = [];
+
+  private color = '57, 78, 255';
 
   private touchPulses: TouchPulse[] = [];
 
@@ -43,11 +49,11 @@ export default class MouseTrail {
   constructor(
     private readonly canvas: HTMLCanvasElement,
     isNativeMobile: boolean = false,
-  ) {
-    this.lineDuration = isNativeMobile
-      ? LINE_DURATION_MOBILE_MS
-      : LINE_DURATION_MS;
-  }
+    /** the screen's scale: the ribbon keeps its width in screen pixels */
+    private readonly getScale: () => number = () => 1,
+    /** where the cursor is drawn now */
+    private readonly getHead?: () => { x: number; y: number },
+  ) {}
 
   resizeCanvas = (w: number, h: number) => {
     if (this.context !== undefined) {
@@ -64,14 +70,27 @@ export default class MouseTrail {
     }
   };
 
+  /** the ribbon ends under the pointer's tip */
   leaveTrail = (x: number, y: number) => {
-    this.addPoint(x + 7, y + 7);
+    this.addPoint(x, y);
   };
 
   addPoint = (x: number, y: number) => {
+    if (reducedMotion()) return;
+    if (!this.points.length) this.readColor();
     this.points.push({ x, y, born: performance.now() });
     this.schedule();
   };
+
+  /** The drawings' accent, as the app's theme has it now. */
+  private readColor() {
+    const hex = getComputedStyle(this.canvas)
+      .getPropertyValue('--m-accent-bright')
+      .trim();
+    const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex);
+    if (m)
+      this.color = `${parseInt(m[1], 16)}, ${parseInt(m[2], 16)}, ${parseInt(m[3], 16)}`;
+  }
 
   addTouch = (x: number, y: number) => {
     this.touchPulses.push({
@@ -116,31 +135,74 @@ export default class MouseTrail {
   private draw(now: number) {
     const ctx = this.context;
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    ctx.lineJoin = 'round';
 
-    // compact in place: splicing inside the loop would skip the next point
+    // the newest point that has aged out still anchors the tail's curve
     const { points } = this;
-    let kept = 0;
-    let lastPoint: Point | undefined;
-    for (let i = 0; i < points.length; i++) {
-      const point = points[i];
-      const inc = (now - point.born) / this.lineDuration; // 0 to 1 over the lifetime
-      if (inc > 1) continue;
-      points[kept++] = point;
-      const from = lastPoint ?? point;
-      lastPoint = point;
-
-      ctx.lineWidth = LINE_WIDTH_START * (1 - inc);
-      ctx.strokeStyle = `rgba(60, 170, 170, ${1 - inc})`;
-      ctx.beginPath();
-      ctx.moveTo(from.x, from.y);
-      ctx.lineTo(point.x, point.y);
-      ctx.stroke();
-      ctx.closePath();
+    let first = 0;
+    while (first < points.length - 1 && now - points[first + 1].born > TRAIL_MS)
+      first++;
+    points.splice(0, first);
+    if (points.length && now - points[points.length - 1].born > TRAIL_MS) {
+      points.length = 0;
     }
-    points.length = kept;
+
+    const samples = smooth(withHead(points, this.getHead?.() ?? null)).filter(
+      (p) => now - p.born <= TRAIL_MS,
+    );
+    if (samples.length > 1) this.drawRibbon(samples);
 
     this.drawTouchPulses(now);
+  }
+
+  /** One filled shape, tapering to a hair at the tail, round at the head. */
+  private drawRibbon(pts: Sample[]) {
+    const ctx = this.context;
+    const scale = this.getScale() || 1;
+    const n = pts.length;
+    const left: Sample[] = [];
+    const right: Sample[] = [];
+    for (let i = 0; i < n; i++) {
+      const a = pts[Math.max(0, i - 1)];
+      const b = pts[Math.min(n - 1, i + 1)];
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const len = Math.hypot(dx, dy) || 1;
+      const k = i / (n - 1);
+      const w = (TAIL_HALF + (HEAD_HALF - TAIL_HALF) * k * k) / scale;
+      left.push({
+        x: pts[i].x - (dy / len) * w,
+        y: pts[i].y + (dx / len) * w,
+        born: 0,
+      });
+      right.push({
+        x: pts[i].x + (dy / len) * w,
+        y: pts[i].y - (dx / len) * w,
+        born: 0,
+      });
+    }
+    const tail = pts[0];
+    const head = pts[n - 1];
+    const grad = ctx.createLinearGradient(tail.x, tail.y, head.x, head.y);
+    grad.addColorStop(0, `rgba(${this.color}, 0)`);
+    grad.addColorStop(1, `rgba(${this.color}, ${HEAD_ALPHA})`);
+    ctx.beginPath();
+    ctx.moveTo(left[0].x, left[0].y);
+    for (let i = 1; i < n; i++) ctx.lineTo(left[i].x, left[i].y);
+    const before = pts[n - 2];
+    const dir = Math.atan2(head.y - before.y, head.x - before.x);
+    // from the left edge round the front to the right edge
+    ctx.arc(
+      head.x,
+      head.y,
+      HEAD_HALF / scale,
+      dir + Math.PI / 2,
+      dir - Math.PI / 2,
+      true,
+    );
+    for (let i = n - 1; i >= 0; i--) ctx.lineTo(right[i].x, right[i].y);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
   }
 
   private drawTouchPulses(now: number) {
@@ -164,4 +226,46 @@ export default class MouseTrail {
     }
     pulses.length = kept;
   }
+}
+
+const reducedMotion = () =>
+  typeof window !== 'undefined' &&
+  !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+/** A smooth path through the recorded points: a curve from each midpoint to
+ *  the next, bent by the point between them. Each sample carries the time it
+ *  stands for, so the tail can retire it. */
+function smooth(points: Point[]): Sample[] {
+  const n = points.length;
+  if (n < 2) return [];
+  const mid = (a: Point, b: Point): Sample => ({
+    x: (a.x + b.x) / 2,
+    y: (a.y + b.y) / 2,
+    born: (a.born + b.born) / 2,
+  });
+  const out: Sample[] = [points[0]];
+  let from: Sample = points[0];
+  for (let i = 1; i < n; i++) {
+    const c = points[i];
+    const to = i === n - 1 ? c : mid(c, points[i + 1]);
+    for (let s = 1; s <= STEPS; s++) {
+      const t = s / STEPS;
+      const u = 1 - t;
+      out.push({
+        x: u * u * from.x + 2 * u * t * c.x + t * t * to.x,
+        y: u * u * from.y + 2 * u * t * c.y + t * t * to.y,
+        born: u * from.born + t * to.born,
+      });
+    }
+    from = to;
+  }
+  return out;
+}
+
+/** The newest point moved to where the cursor is drawn: it eases to each
+ *  recorded point, and the ribbon's head rides with it, not ahead. */
+function withHead(points: Point[], head: { x: number; y: number } | null) {
+  const n = points.length;
+  if (!head || n < 2) return points;
+  return [...points.slice(0, -1), { ...points[n - 1], x: head.x, y: head.y }];
 }

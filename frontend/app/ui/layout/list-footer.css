@@ -19,6 +19,31 @@
   color: var(--m-content-muted);
 }
 
+/* the right end: the rows choice (a quiet word with a caret), then the pager */
+.m-listfoot__end {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-5);
+  margin-left: auto;
+  min-width: 0;
+}
+.m-listfoot__rows {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  white-space: nowrap;
+}
+.m-listfoot__rows-label {
+  font-size: var(--m-text-xs);
+  color: var(--m-content-muted);
+}
+.m-listfoot__rows [data-slot='select-trigger'] {
+  padding-inline: var(--m-space-3);
+  gap: var(--m-space-2);
+  font-family: var(--m-font-num);
+  font-variant-numeric: tabular-nums;
+}
+
 [data-slot='drawer-foot'] > .m-listfoot {
   margin: 0;
   padding: 0;
@@ -31,4 +56,9 @@
 }
 :root[data-viewport='phone'] .m-pager__goto {
   display: none;
+}
+/* phone: the count on its own line, the rows choice and the pager under it */
+:root[data-viewport='phone'] .m-listfoot__end {
+  width: 100%;
+  justify-content: space-between;
 }

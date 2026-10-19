@@ -1,4 +1,5 @@
 import { filterStore, projectStore } from '@/mstore';
+import { getRowsPerPage } from '@/ui/layout/rows-per-page';
 import { makeAutoObservable } from 'mobx';
 
 import { tagWatchService } from 'App/services';
@@ -8,7 +9,6 @@ export default class TagWatchStore {
   tags: Tag[] = [];
   total = 0;
   page = 1;
-  limit = 10;
 
   isLoading = false;
 
@@ -34,7 +34,11 @@ export default class TagWatchStore {
     this.setLoading(true);
     try {
       const pid = projectId || projectStore.active?.projectId;
-      const resp = await tagWatchService.getTags(pid!, this.page, this.limit);
+      const resp = await tagWatchService.getTags(
+        pid!,
+        this.page,
+        getRowsPerPage(),
+      );
       this.setTags(resp.tags || []);
       this.total = resp.total || 0;
       return resp.tags;

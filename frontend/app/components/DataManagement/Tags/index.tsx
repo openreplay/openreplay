@@ -8,6 +8,7 @@ import { EmptyState } from '@/ui/feedback/EmptyState';
 import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
 import { ListFooter } from '@/ui/layout/ListFooter';
 import { PageCard } from '@/ui/layout/PageCard';
+import { setRowsPerPage, useRowsPerPage } from '@/ui/layout/rows-per-page';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -30,6 +31,7 @@ function TagsPage() {
   const { t } = useTranslation();
   const history = useHistory();
   const { tagWatchStore, projectsStore } = useStore();
+  const pageSize = useRowsPerPage();
   const siteId = projectsStore.siteId;
   const list = tagWatchStore.tags;
   const [openId, setOpenId] = React.useState<number | null>(null);
@@ -126,10 +128,14 @@ function TagsPage() {
           />
           <ListFooter
             page={tagWatchStore.page}
-            pageSize={tagWatchStore.limit}
+            pageSize={pageSize}
             total={tagWatchStore.total}
             noun={[t('feature'), t('features')]}
             onPage={(p) => void tagWatchStore.getTags(Number(siteId), p)}
+            onPageSize={(n) => {
+              setRowsPerPage(n);
+              void tagWatchStore.getTags(Number(siteId), 1);
+            }}
           />
         </>
       )}

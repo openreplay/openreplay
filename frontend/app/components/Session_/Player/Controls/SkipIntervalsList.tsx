@@ -8,9 +8,7 @@ import { getTimelinePosition } from './getTimelinePosition';
 
 function SkipIntervalsList({ scale }: { scale: number }) {
   const { store } = useContext(PlayerContext);
-  const { skipIntervals, skip } = store.get();
-
-  if (!skip) return null;
+  const { skipIntervals } = store.get();
 
   return (
     <>

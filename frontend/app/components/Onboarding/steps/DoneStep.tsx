@@ -7,6 +7,8 @@ import { useTranslation } from 'react-i18next';
 
 import { useStore } from 'App/mstore';
 
+import { Celebration } from 'Shared/Celebration/Celebration';
+
 import type { Invite } from './InviteStep';
 
 export type StepKey = 'install' | 'identify' | 'invite';
@@ -104,32 +106,7 @@ function DoneStep({
 
   return (
     <div className="m-ob__done">
-      <span className="m-ob__seal" aria-hidden="true">
-        <svg viewBox="0 0 72 72" className="m-ob__seal-svg">
-          <circle cx="36" cy="36" r="33" className="m-ob__seal-aura" />
-          <circle cx="36" cy="36" r="33" className="m-ob__seal-halo" />
-          <circle
-            cx="36"
-            cy="36"
-            r="33"
-            className="m-ob__seal-glow"
-            pathLength={100}
-          />
-          <circle cx="36" cy="36" r="33" className="m-ob__seal-disc" />
-          <circle
-            cx="36"
-            cy="36"
-            r="33"
-            className="m-ob__seal-ring"
-            pathLength={100}
-          />
-          <path
-            d="M23 37l9 9 18-20"
-            className="m-ob__seal-check"
-            pathLength={100}
-          />
-        </svg>
-      </span>
+      <Celebration variant="ready" size={184} className="m-ob__cheer" />
       <div className="m-ob__done-words">
         <h1 className="m-ob__title m-ob__done-title" id="m-ob-title">
           {allDone ? t('All set.') : t('Good to go.')}

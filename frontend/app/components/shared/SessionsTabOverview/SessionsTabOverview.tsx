@@ -14,6 +14,7 @@ import { FilterStrip } from '@/ui/filters/FilterStrip';
 import { DateRange } from '@/ui/inputs/DateRange';
 import { ListFooter } from '@/ui/layout/ListFooter';
 import { PageCard, PagePanel } from '@/ui/layout/PageCard';
+import { setRowsPerPage, useRowsPerPage } from '@/ui/layout/rows-per-page';
 import { useToast } from '@/ui/overlays/toast';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import withPermissions from 'HOCs/withPermissions';
@@ -107,9 +108,10 @@ function SessionsTabOverview() {
   const [saving, setSaving] = useState(false);
   const [fields, setFields] = useState<SessionField[]>(readFields);
 
-  const { list, total, lastPlayedSessionId } = sessionStore;
+  const { list, total, lastPlayedSessionIds } = sessionStore;
   const loading = sessionStore.loadingSessions;
-  const { currentPage, pageSize, activeTags } = searchStore;
+  const { currentPage, activeTags } = searchStore;
+  const pageSize = useRowsPerPage();
   const { sort, order, startDate, endDate, rangeValue } = searchStore.instance;
   const orderKey = `${sort}-${order}` as OrderKey;
   const platform = projectsStore.active?.platform || 'web';
@@ -324,48 +326,6 @@ function SessionsTabOverview() {
     <PageCard
       title={t('Sessions')}
       subtitle={t('Every session recorded on this project.')}
-      actions={
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <span>
-              <IconButton
-                icon={<MoreHorizontal size={15} />}
-                label={t('More')}
-                variant="ghost"
-              />
-            </span>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItems
-              items={[
-                {
-                  key: 'share',
-                  icon: <Share2 size={13} />,
-                  label: t('Copy link to this search'),
-                  disabled: noRules,
-                  onClick: share,
-                },
-                {
-                  key: 'settings',
-                  icon: <Settings2 size={13} />,
-                  label: t('Session settings'),
-                  onClick: () => navigate(client(CLIENT_TABS.SESSION_SETTINGS)),
-                },
-                {
-                  key: 'docs',
-                  icon: <BookOpen size={13} />,
-                  label: t('Documentation'),
-                  onClick: () =>
-                    window.open(
-                      'https://docs.openreplay.com/en/session-replay/',
-                      '_blank',
-                    ),
-                },
-              ]}
-            />
-          </DropdownMenuContent>
-        </DropdownMenu>
-      }
       split
     >
       <EntryField
@@ -467,6 +427,47 @@ function SessionsTabOverview() {
                 }))}
                 onToggleField={toggleField}
               />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <span>
+                    <IconButton
+                      icon={<MoreHorizontal size={15} />}
+                      label={t('More')}
+                      variant="ghost"
+                    />
+                  </span>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItems
+                    items={[
+                      {
+                        key: 'share',
+                        icon: <Share2 size={13} />,
+                        label: t('Copy link to this search'),
+                        disabled: noRules,
+                        onClick: share,
+                      },
+                      {
+                        key: 'settings',
+                        icon: <Settings2 size={13} />,
+                        label: t('Session settings'),
+                        onClick: () =>
+                          navigate(client(CLIENT_TABS.SESSION_SETTINGS)),
+                      },
+                      {
+                        key: 'docs',
+                        icon: <BookOpen size={13} />,
+                        label: t('Documentation'),
+                        onClick: () =>
+                          window.open(
+                            'https://docs.openreplay.com/en/session-replay/',
+                            '_blank',
+                          ),
+                      },
+                    ]}
+                  />
+                </DropdownMenuContent>
+              </DropdownMenu>
             </span>
           </>
         }
@@ -505,7 +506,7 @@ function SessionsTabOverview() {
               onHover={hover}
               onFilterToUser={filterToUser}
               onMetaClick={onMetaClick}
-              lastViewedId={lastPlayedSessionId}
+              lastViewedIds={lastPlayedSessionIds}
               timezone={timezone}
               userTimezone={
                 settingsStore.sessionSettings.shownTimezone === 'user'
@@ -518,6 +519,10 @@ function SessionsTabOverview() {
               total={total}
               noun={[t('session'), t('sessions')]}
               onPage={(page) => searchStore.updateCurrentPage(page)}
+              onPageSize={(n) => {
+                setRowsPerPage(n);
+                searchStore.updateCurrentPage(1, true);
+              }}
             />
           </>
         )}

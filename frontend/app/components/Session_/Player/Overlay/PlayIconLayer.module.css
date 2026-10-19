@@ -1,17 +1,56 @@
-.iconWrapper {
-  background-color: rgba(0, 0, 0, 0.1);
-  width: 50px;
-  height: 50px;
-  display: flex;
+/* solid and theme-aware, so it reads on a white site and on a dark one; it
+   shows the state just entered, springs in and fades on its own */
+.bezel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  opacity: 0;
-  transition: all 0.2s; /* Animation */
+  width: 3.5rem;
+  height: 3.5rem;
+  margin: -1.75rem 0 0 -1.75rem;
+  border-radius: var(--m-radius-full);
+  background: var(--m-surface-inverse);
+  color: var(--m-content-inverse);
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, var(--m-surface-default) 70%, transparent),
+    var(--m-shadow-popover);
+  pointer-events: none;
+  animation: bezel 720ms both;
 }
-
-.zoomIcon {
-  opacity: 1;
-  transform: scale(1.8);
-  transition: all 0.8s;
+@keyframes bezel {
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
+    animation-timing-function: var(--m-ease-spring);
+  }
+  25% {
+    opacity: 1;
+    transform: scale(1);
+    animation-timing-function: linear;
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1);
+    animation-timing-function: var(--m-ease-in);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.08);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bezel {
+    animation: bezel-still 720ms step-end both;
+  }
+  @keyframes bezel-still {
+    0%,
+    99% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
 }

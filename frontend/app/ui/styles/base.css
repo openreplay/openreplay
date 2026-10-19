@@ -87,6 +87,31 @@ svg {
   outline-offset: 1px;
   border-radius: var(--m-radius-control);
 }
+/* a text field matches :focus-visible on a click too (the caret needs the
+   keyboard); outside keyboard modality its firmer border says focus instead */
+:root:not([data-modality='keyboard'])
+  :is(
+    input:not(
+      [type='checkbox'],
+      [type='radio'],
+      [type='range'],
+      [type='button'],
+      [type='submit'],
+      [type='reset']
+    ),
+    textarea,
+    [contenteditable]
+  ):focus-visible {
+  outline: none;
+}
+:root[data-modality='keyboard']
+  :is(
+    [data-slot='input'][data-variant='outlined'],
+    [data-slot='textarea']
+  ):focus {
+  outline: 2px solid var(--m-focus-ring);
+  outline-offset: 0;
+}
 
 ::selection {
   background: var(--m-status-info-bg);

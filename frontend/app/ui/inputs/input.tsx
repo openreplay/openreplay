@@ -41,6 +41,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
     <input
       ref={ref}
       data-slot="input"
+      data-variant={variant ?? 'outlined'}
       className={cn(
         input({ variant, size }),
         prefix && 'pl-9',

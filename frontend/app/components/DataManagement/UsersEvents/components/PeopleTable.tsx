@@ -5,6 +5,7 @@ import { type Column, DataTable, type TableSort } from '@/ui/data/table';
 import { EmptyState } from '@/ui/feedback/EmptyState';
 import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
 import { ListFooter } from '@/ui/layout/ListFooter';
+import { setRowsPerPage, useRowsPerPage } from '@/ui/layout/rows-per-page';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -37,7 +38,8 @@ function PeopleTable({ query, propName, hidden = [], onOpen, empty }: Props) {
   const { t } = useTranslation();
   const { analyticsStore, settingsStore } = useStore();
   const timezone = settingsStore.sessionSettings.timezone?.value;
-  const { page, limit, sortBy, sortOrder } = analyticsStore.usersPayloadFilters;
+  const { page, sortBy, sortOrder } = analyticsStore.usersPayloadFilters;
+  const pageSize = useRowsPerPage();
   const { total, users } = analyticsStore.users;
 
   React.useEffect(() => {
@@ -136,10 +138,14 @@ function PeopleTable({ query, propName, hidden = [], onOpen, empty }: Props) {
       />
       <ListFooter
         page={page}
-        pageSize={limit}
+        pageSize={pageSize}
         total={total}
         noun={[t('person'), t('people')]}
         onPage={(p) => analyticsStore.editUsersPayload({ page: p })}
+        onPageSize={(n) => {
+          setRowsPerPage(n);
+          analyticsStore.editUsersPayload({ page: 1 });
+        }}
       />
     </>
   );

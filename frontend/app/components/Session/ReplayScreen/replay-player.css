@@ -45,6 +45,18 @@
   padding-right: var(--m-space-3);
   border-right: var(--m-border-width) solid var(--m-border-subtle);
 }
+/* the shown tab's surface travels from tab to tab */
+.m-rtabs__thumb {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: 1.5rem;
+  translate: 0 -50%;
+  border: var(--m-border-width) solid var(--m-border-default);
+  border-radius: var(--m-radius-control);
+  background: var(--m-surface-default);
+  pointer-events: none;
+}
 .m-rtabs__tab {
   position: relative;
   z-index: 1;
@@ -111,22 +123,6 @@
   color: var(--m-content-secondary);
 }
 
-.m-rtabs__tab.is-closed::after {
-  content: 'closed';
-  flex: none;
-  padding-inline: var(--m-space-1);
-  border-radius: var(--m-radius-sm, var(--m-radius-control));
-  background: var(--m-surface-active);
-  color: var(--m-content-decorative);
-  font-size: var(--m-text-3xs, 0.625rem);
-  letter-spacing: var(--m-tracking-wide);
-  text-decoration: none;
-}
-@container (max-width: 30rem) {
-  .m-rtabs__tab.is-closed::after {
-    display: none;
-  }
-}
 .m-rtabs__more {
   flex: none;
   padding-inline: var(--m-space-2);

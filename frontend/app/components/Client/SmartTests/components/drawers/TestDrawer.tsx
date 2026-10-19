@@ -5,6 +5,8 @@ import {
   DropdownMenuItems,
   DropdownMenuTrigger,
 } from '@/ui/actions/dropdown-menu';
+import { LargerScreenOnly } from '@/ui/layout/LargerScreenOnly';
+import { useViewport } from '@/ui/layout/use-viewport';
 import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
 import { useToast } from '@/ui/overlays/toast';
 import { Tooltip } from '@/ui/overlays/tooltip';
@@ -99,6 +101,7 @@ function TestDrawer({
   onCancelMerge,
 }: Props) {
   const { t } = useTranslation();
+  const phone = useViewport() === 'phone';
   const toast = useToast();
   const settingsRef = useRef<HTMLDivElement>(null);
   const [confirm, setConfirm] = useState<'discard' | 'delete' | null>(null);
@@ -427,6 +430,13 @@ function TestDrawer({
   const pausedNote = (text: string) => (
     <span className="m-tdrawer__note max-sm:hidden">{text}</span>
   );
+
+  if (phone)
+    return (
+      <EntityDrawer open={open} onClose={onClose} title={view.title}>
+        <LargerScreenOnly what={t('The test editor')} />
+      </EntityDrawer>
+    );
 
   return (
     <>

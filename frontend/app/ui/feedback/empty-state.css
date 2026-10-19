@@ -50,8 +50,12 @@
   flex-direction: column;
   align-items: center;
 }
+/* words, steps, action: the words stay tight, the parts breathe apart */
+.m-empty--page .m-empty__body {
+  margin-top: var(--m-space-8);
+}
 .m-empty--page .m-empty__action {
-  margin-top: var(--m-space-5);
+  margin-top: var(--m-space-8);
 }
 
 .m-empty--page > * {

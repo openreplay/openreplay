@@ -15,6 +15,7 @@ import { CheckRow } from '@/ui/inputs/CheckRow';
 import { SearchField } from '@/ui/inputs/SearchField';
 import { ListFooter } from '@/ui/layout/ListFooter';
 import { PageCard } from '@/ui/layout/PageCard';
+import { setRowsPerPage, useRowsPerPage } from '@/ui/layout/rows-per-page';
 import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
 import { RenameDialog } from '@/ui/overlays/RenameDialog';
 import { Modal } from '@/ui/overlays/modal';
@@ -42,7 +43,6 @@ import {
   type NewDashboardSpec,
 } from './CreateDashboardDrawer';
 
-const PAGE = 20;
 const millis = (d: Dashboard) => d.updatedAt?.toMillis?.() ?? 0;
 const SORT: Record<string, (a: Dashboard, b: Dashboard) => number> = {
   name: (a, b) => (a.name ?? '').localeCompare(b.name ?? ''),
@@ -61,11 +61,12 @@ function DashboardsView() {
   const [accessFor, setAccessFor] = React.useState<Dashboard | null>(null);
   const [deleting, setDeleting] = React.useState<Dashboard | null>(null);
   const [page, setPage] = React.useState(1);
+  const pageSize = useRowsPerPage();
 
   const { query, showMine } = dashboardStore.filter;
   const list = dashboardStore.filteredList;
   const { sort, onSort, sorted } = useLocalSort(list, SORT);
-  const rows = sorted.slice((page - 1) * PAGE, page * PAGE);
+  const rows = sorted.slice((page - 1) * pageSize, page * pageSize);
   const noneAtAll = dashboardStore.dashboards.length === 0;
 
   const setFilter = (patch: Partial<typeof dashboardStore.filter>) => {
@@ -260,10 +261,14 @@ function DashboardsView() {
           />
           <ListFooter
             page={page}
-            pageSize={PAGE}
+            pageSize={pageSize}
             total={list.length}
             noun={[t('dashboard'), t('dashboards')]}
             onPage={setPage}
+            onPageSize={(n) => {
+              setRowsPerPage(n);
+              setPage(1);
+            }}
           />
         </>
       )}

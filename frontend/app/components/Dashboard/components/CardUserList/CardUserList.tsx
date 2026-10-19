@@ -74,6 +74,7 @@ function CardUserList() {
         </Button>
       </div>
       <DataTable<User>
+        compact
         ariaLabel={t('Returning users')}
         columns={columns}
         rows={data}

@@ -332,6 +332,8 @@ Below is what to change on the saas side, roughly in the order the build will co
 | `app/components/Client/Modules/extra.ts` | `MODULES.HIGHLIGHTS` removed (Highlights dropped) | harmless to keep |
 | `Header/DefaultMenuView/Version.tsx`, `Header/HealthStatus/HealthStatus.tsx` | restyled; Version now renders at the foot of the user menu, HealthStatus in the nav tools | saas `return null` versions keep working |
 | `app/extraRoutes.ts` | unchanged here, but the saas copy is older (its `queried` drops array params) | delete the override |
+| `app/components/Signup/Signup.tsx` | the install check (failing first, dimmed recheck, celebration, no Sign in corner) and an `aside` slot on `AuthScreen` (`Saas/auth/SignupAside`) | keep saas's no-gate version, pass `aside={<SignupPitch />}`, drop the plan list under the form (section 7, task 4) |
+| `app/layout/HeaderBanners.tsx` (new override) | FOSS still renders `account.alerts` inside the page | override without `AlertsBanner` once `saas/layout/AppBanners.tsx` shows them (section 7, task 3) |
 
 ### 3. Overrides that import FOSS modules removed by the redesign
 
@@ -373,9 +375,109 @@ Below is what to change on the saas side, roughly in the order the build will co
   replacement renders one trigger with the `m-nav__tool` class.
 - `SessionsTable` takes a `queue` prop (`useSessionQueue` from `Shared/SessionsDock/openSessions`) for the
   sessions dock's "Add to queue"; any saas list of sessions can pass it.
+- `Shared/RecordingsMeter/RecordingsMeter` (`onUpgrade`), `@/ui/feedback/Banner`, `@/ui/inputs/RangeSlider`,
+  `Saas/billing/PayAsYouGo`, `Components/Auth/SignupPitch` and the `saas/layout/AppBanners.tsx` /
+  `saas/auth/SignupAside.tsx` slots came with melonade PR #17: see section 7 for wiring them.
 
 ### 6. Locales
 
 FOSS `app/locales/*.json` were not regenerated for the redesign's new strings (open FOSS item: run
 `app/locales/extractTranslations.js`). Saas overwrites all locale files with an older set (80 keys behind, 56
 saas-only); re-sync after FOSS regenerates.
+
+### 7. Melonade PR #17: the SaaS tasks (agent checklist)
+
+Written to be run by an agent when saas is deployed on this branch. Saas repo:
+`~/Documents/work/work/saas/saas/frontend` (overlays `frontend/` by path). Linear: OR-3807, OR-3808, OR-3834,
+OR-3809, OR-3810, plus the SaaS halves of OR-3831 and OR-3835. Design source: gabelinares/melonade PR #17
+(`DESIGN.md` §83.6-§83.9, §85.1, §87), branch `onboarding/install-status-1016`. Every string through `t()`,
+no em dashes in UI copy, kit components only (no antd).
+
+**Data the saas side already has** (use these, do not invent fields):
+- `userStore.account.verifiedEmail`, `userStore.account.email`, `userStore.resendEmailVerification(email)`
+  (today in `app/components/Header/SaasHeaderMenuItems/SaasHeaderMenuItems.tsx`, the `VerifyEmail` tool).
+- `userStore.account.plan`: `type` (`FREE` / `TRIAL` from `Types/plan`), `billingSetup`, `remainingTrialDays`;
+  `billingStore.instance.hasActivePlan` (today in
+  `app/components/Header/components/TrialNotification/TrialNotification.tsx`).
+- `billingStore.fetchPlan()`, `billingStore.instance.current.recordedSessions` (the plan's limit),
+  `.count.capturedSessions`, `.billing.nextBillingDate` (today in `saas/nav/RecordingsMeter.tsx`).
+- `userStore.account.alerts` (`{ text, level, button, url }[]`): the account announcements. FOSS renders them
+  inside the page with `app/layout/AlertsBanner.tsx` (via `app/layout/HeaderBanners.tsx`).
+- `app/components/Client/Billing/PaymentInformation.tsx`: the card form, today opened in a modal titled
+  "Billing details" from `TrialNotification`.
+
+**Task 1. Recordings counter** (OR-3807, OR-3836)
+- Edit `saas/nav/RecordingsMeter.tsx`. Render only when `plan.type === TRIAL` or `plan.type === FREE` (free
+  is 1,000 a month, the trial 50,000 for a week) and there is no active paid plan; otherwise `null`.
+- Pass `onUpgrade` to `Shared/RecordingsMeter/RecordingsMeter`: it opens Set up billing (task 2) where you are.
+- FOSS already draws the rest: red bar, figures and edge from 90%; "Limit reached" on a red tint at 100% with
+  the tooltip "All N recordings used. New sessions are not recorded until <date>, or until you upgrade.";
+  a 24px upgrade control 2px clear of the edge that hovers red; hidden on the collapsed rail.
+- Done when: free at 500/1000 is neutral with the upgrade control; 950/1000 is red; 1000/1000 says "Limit
+  reached"; a paid plan shows nothing; upgrade opens billing without leaving the page.
+
+**Task 2. Set up billing, pay as you go** (OR-3808, OR-3834)
+- Turn the `PaymentInformation` modal into the slide-out Update card uses (`EntityDrawer` from
+  `@/ui/overlays/EntityDrawer`), with a `setup` mode: title "Set up billing".
+- At the top, `<PayAsYouGo />` from `Saas/billing/PayAsYouGo` (FOSS file, saas may override): "$5.95 per
+  1,000 sessions", sessions kept 30 days, a "See pricing" link (openreplay.com/pricing), and "Estimate my
+  cost" which opens a `RangeSlider` over 1K, 5K, 10K, 25K, 50K, 100K, 250K, 500K, 1M sessions a month and the
+  monthly estimate (100,000 is $595.00). The estimate chooses nothing; billing is only the card. The prepaid
+  tiers (10K to 250K at $420 per 50K) are gone.
+- Then the existing card form (the card that fills as you type, Link, the address). The primary button reads
+  "Start plan"; success toast "Billing set up. <brand> ending <last4> pays as you go."; afterwards the plan is
+  paid, so the counter (task 1) and the billing banner item (task 3) go.
+- Every "Set up billing" entry point opens this same slide-out: the counter's upgrade, the banner item, and
+  Preferences > Billing.
+- Done when: the slider moves stop to stop by keyboard and pointer, the estimate updates, Start plan stays
+  disabled until the card is complete.
+
+**Task 3. Banners above the app** (OR-3809)
+- Edit `saas/layout/AppBanners.tsx` (FOSS mounts it above the whole shell; the shell takes what is left of the
+  window, so a banner pushes the app down and never covers it). Build with `Banner`, `BannerItem`,
+  `BannerAction` from `@/ui/feedback/Banner` (36px strip in the status chips' tints; `tone` danger | info |
+  neutral; `onDismiss` adds the X).
+- Announcement first, and it takes precedence over the first-user banner: from `account.alerts`. Level
+  alert / error is `danger` with no dismiss (stays until the reason is gone), e.g. "Your account is paused.
+  The October invoice is unpaid, so new sessions are not being recorded." with "Pay the invoice"; anything
+  else is `info` with a dismiss for this visit (maintenance with its status-page link). The alert's `button`
+  + `url` become a `BannerAction href`.
+- Then stop rendering the alerts inside the page: override `app/layout/HeaderBanners.tsx` without
+  `AlertsBanner` (keep `LangBanner`), so an alert never shows twice.
+- First-user banner, `neutral`, when there is no announcement: up to two `BannerItem`s with a rule between.
+  "Verify your email. The link went to <email>." with "Resend" (calls `resendEmailVerification`, toast
+  "Verification email sent to <email>") while `!verifiedEmail`; "No active plan yet." (or the trial's days
+  left) with "Set up billing" (opens task 2) while on TRIAL / FREE without `billingSetup`. Each item goes away
+  when done; the strip goes with the last one.
+- Remove the now duplicated nav tools: `VerifyEmail` and `TrialNotification` in `SaasHeaderMenuItems.tsx`
+  (keep the free plan's upgrade-to-pay-as-you-go confirm if it is still wanted, as a banner action or a
+  menu row).
+- Done when: danger has no X and survives a reload; info dismisses; the side nav's foot stays on screen with a
+  banner up; phone width wraps the items without overflow.
+
+**Task 4. Cloud signup text column** (OR-3810)
+- Saas overrides `app/components/Signup/Signup.tsx`. Merge with FOSS: keep saas's choices (no installation
+  health gate, no tenants redirect), pass `aside={<SignupPitch />}` (from `Components/Auth/SignupPitch`) to
+  `AuthScreen`, and drop the old plan summary under the form (the pitch replaces it). If saas stops
+  overriding `Signup.tsx`, put `return <SignupPitch />` in `saas/auth/SignupAside.tsx` instead.
+- The pitch: "Start with 1,000 recordings a month, free.", three lines with 28px icon tiles (MonitorPlay,
+  Search, the Armada mark), "No card needed. Set up billing when you need more." It sits on the page ground
+  left of the card and stacks above it below 860px.
+- Done when: desktop shows the column beside the card; 800px stacks it; the form still submits.
+
+**Task 5. Audits page** (`saas/audits/AuditsPage.tsx`; OR-3831, OR-3835)
+- The page header holds only search and the main button; the ••• menu moves to the list's toolbar line, after
+  the display menu.
+- Page the list with the shared rows choice: `useRowsPerPage()` / `setRowsPerPage()` from
+  `@/ui/layout/rows-per-page`, and `ListFooter` with `onPageSize` (10 / 50 / 100, shown once the list is longer
+  than 10). Rows use `DataTable`'s default `list-row-height`.
+- Billing's invoices are a Preferences list: keep their fixed 10 (`Invoices.tsx`), no change.
+
+**Task 6. Checks after wiring**
+- `yarn install` with `mod-package.js` applied, then the production build
+  (`NODE_ENV=production VITE_USER_NODE_ENV=production node node_modules/vite/bin/vite.js build`) and
+  `node node_modules/typescript/bin/tsc --noEmit -p .` filtered to the touched files.
+- Walk: free account (counter, banner items, upgrade into billing, estimate, Start plan), a verified paid
+  account (no counter, no banner), an account with a danger alert, signup at 1440 and 800 px, Audits paging.
+- Locales: new strings from this round (banner, billing, pitch, counter) need extracting into the saas locale
+  set too (section 6).

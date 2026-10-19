@@ -1,6 +1,7 @@
 import { DateTime, Duration } from 'luxon';
 import { observer } from 'mobx-react-lite';
 import React, { useContext, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { useStore } from 'App/mstore';
@@ -27,6 +28,7 @@ function Timeline({
   /** laid out in the transport row instead of over the controls' top edge */
   inline?: boolean;
 }) {
+  const { t } = useTranslation();
   const { player, store } = useContext(PlayerContext);
   const { settingsStore, uiPlayerStore, sessionStore } = useStore();
   const startedAt = sessionStore.current.startedAt ?? 0;
@@ -35,7 +37,8 @@ function Timeline({
   const { timezone } = sessionStore.current;
   const timelineZoomEnabled = uiPlayerStore.timelineZoom.enabled;
   const exportEventsEnabled = uiPlayerStore.exportEventsSelection.enabled;
-  const { ready, endTime, devtoolsLoading, domLoading } = store.get();
+  const { ready, endTime, devtoolsLoading, domLoading, skipIntervals } =
+    store.get();
   const sessionId = sessionStore.current.sessionId;
   const loadingEvents = !sessionStore.current.addedEvents;
 
@@ -92,10 +95,18 @@ function Timeline({
           .toFormat(format)
       : undefined;
 
+    const idle = skipIntervals.find((i) => i.contains(time));
+    const clock = (ms: number) => Duration.fromMillis(ms).toFormat('m:ss');
     const timeLineTooltip = {
       time: Duration.fromMillis(time).toFormat('mm:ss'),
       localTime: timeStr,
       userTime: userTimeStr,
+      inactive: idle
+        ? t('Inactive {{from}} to {{to}}', {
+            from: clock(idle.start),
+            to: clock(idle.end),
+          })
+        : undefined,
       offset,
       isVisible: true,
     };

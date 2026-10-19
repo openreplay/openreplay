@@ -29,3 +29,48 @@
   color: var(--m-content-muted);
   font-variant-numeric: tabular-nums;
 }
+
+/* the readout and the upgrade control share the box */
+.m-meter__read {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  gap: var(--m-space-4);
+  cursor: default;
+}
+/* 24px, 2px clear of the edge, so its hover never thickens the border */
+.m-meter .m-iconbtn {
+  flex: none;
+  width: calc(1.875rem - 6px);
+  height: calc(1.875rem - 6px);
+  margin-inline-start: calc(-1 * var(--m-space-2));
+  border-radius: var(--m-radius-chip);
+}
+.m-meter:has(.m-iconbtn) {
+  padding-inline-end: 2px;
+}
+
+/* red from nine tenths used, and at the limit */
+.m-meter.is-near,
+.m-meter.is-full {
+  border-color: var(--m-status-danger-border);
+}
+.m-meter.is-full {
+  background: var(--m-status-danger-bg);
+}
+.m-meter.is-near .m-bar__fill,
+.m-meter.is-full .m-bar__fill {
+  background: var(--m-mark-danger);
+}
+.m-meter.is-near .m-meter__value,
+.m-meter.is-full .m-meter__value,
+.m-meter.is-full .m-meter__label,
+.m-meter.is-near .m-iconbtn,
+.m-meter.is-full .m-iconbtn {
+  color: var(--m-content-danger);
+}
+.m-meter.is-near .m-iconbtn:hover,
+.m-meter.is-full .m-iconbtn:hover {
+  background: color-mix(in oklab, var(--m-mark-danger) 16%, transparent);
+}

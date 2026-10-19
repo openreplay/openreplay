@@ -4,7 +4,6 @@ import { observer } from 'mobx-react-lite';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { useStore } from 'App/mstore';
-import { debounceCall } from 'App/utils';
 
 import { SKIP_INTERVALS } from '../Controls/Controls';
 import cls from './PlayIconLayer.module.css';
@@ -20,7 +19,8 @@ const DOUBLE_TAP_DELAY = 300;
 function PlayIconLayer({ playing, togglePlay, jumpInterval }: Props) {
   const { sessionStore } = useStore();
   const notesEdit = sessionStore.createNoteTooltip.isVisible;
-  const [showPlayOverlayIcon, setShowPlayOverlayIcon] = useState(false);
+  // which click this is: a new key replays the disc's animation
+  const [bezel, setBezel] = useState(0);
 
   const leftLastTap = React.useRef(0);
   const rightLastTap = React.useRef(0);
@@ -48,13 +48,8 @@ function PlayIconLayer({ playing, togglePlay, jumpInterval }: Props) {
     }
   };
 
-  const playAnimation = () => {
-    setShowPlayOverlayIcon(true);
-    setTimeout(() => setShowPlayOverlayIcon(false), 500);
-  };
-
   const togglePlayAnimated = useCallback(() => {
-    playAnimation();
+    setBezel((n) => n + 1);
     togglePlay();
   }, []);
 
@@ -68,7 +63,6 @@ function PlayIconLayer({ playing, togglePlay, jumpInterval }: Props) {
   const onDoubleClick = (dir: 'left' | 'right') => {
     const now = Date.now();
     const lastTap = dir === 'left' ? leftLastTap : rightLastTap;
-    debounceCall(playAnimation(), DOUBLE_TAP_DELAY);
     if (now - lastTap.current < DOUBLE_TAP_DELAY) {
       if (dir === 'left') {
         doubleLeft();
@@ -80,16 +74,7 @@ function PlayIconLayer({ playing, togglePlay, jumpInterval }: Props) {
     }
   };
   return (
-    <div
-      className={cn(
-        clsOv.overlay,
-        'relative. transition-all',
-        showPlayOverlayIcon
-          ? 'opacity-100 bg-[rgba(0,0,0,0.1)]'
-          : 'opacity-0 bg-transparent',
-      )}
-      onClick={togglePlayAnimated}
-    >
+    <div className={clsOv.overlay} onClick={togglePlayAnimated}>
       <div
         className={cn(
           'flex items-center pl-10 lg:hidden absolute left-0 top-0',
@@ -114,17 +99,15 @@ function PlayIconLayer({ playing, togglePlay, jumpInterval }: Props) {
       >
         <FastForward size={30} />
       </div>
-      <div
-        className={cn(cls.iconWrapper, {
-          [cls.zoomIcon]: showPlayOverlayIcon,
-        })}
-      >
-        {playing ? (
-          <Play size={22} className="text-content-muted" />
-        ) : (
-          <Pause size={22} className="text-content-muted" />
-        )}
-      </div>
+      {bezel > 0 && (
+        <span key={bezel} className={cls.bezel} aria-hidden="true">
+          {playing ? (
+            <Play size={22} fill="currentColor" />
+          ) : (
+            <Pause size={22} fill="currentColor" />
+          )}
+        </span>
+      )}
     </div>
   );
 }

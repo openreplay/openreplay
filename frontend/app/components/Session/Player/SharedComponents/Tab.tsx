@@ -26,6 +26,8 @@ function Tab({ i, tab, currentTab, changeTab, isLive, isClosed, name }: Props) {
         type="button"
         role="tab"
         aria-selected={shown}
+        tabIndex={shown ? 0 : -1}
+        data-tab={tab}
         disabled={isLive}
         className={`m-rtabs__tab${shown ? ' is-shown' : ''}${isClosed ? ' is-closed' : ''}`}
         onClick={() => changeTab?.(tab)}

@@ -16,8 +16,6 @@ import { useTranslation } from 'react-i18next';
 
 import { useStore } from 'App/mstore';
 
-import { PrefToggle } from '../../../PrefSection';
-
 /** A role: its name, which projects it reaches and what it may do there. */
 function RoleForm({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { t } = useTranslation();
@@ -85,11 +83,17 @@ function RoleForm({ open, onClose }: { open: boolean; onClose: () => void }) {
         }
       >
         <Section title={t('Projects')}>
-          <PrefToggle
-            checked={!!role.allProjects}
-            onChange={(v) => roleStore.editRole({ allProjects: v })}
-            label={t('All projects, including new ones')}
-          />
+          <div className="m-checklist">
+            <CheckRow
+              boxed
+              on={!!role.allProjects}
+              onToggle={() =>
+                roleStore.editRole({ allProjects: !role.allProjects })
+              }
+            >
+              {t('All projects, including new ones')}
+            </CheckRow>
+          </div>
           {!role.allProjects ? (
             <Field label={t('Only these')}>
               <MultiSelect<string>

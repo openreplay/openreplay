@@ -13,6 +13,7 @@ import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
 import { SearchField } from '@/ui/inputs/SearchField';
 import { ListFooter } from '@/ui/layout/ListFooter';
 import { PageCard } from '@/ui/layout/PageCard';
+import { setRowsPerPage, useRowsPerPage } from '@/ui/layout/rows-per-page';
 import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
 import { toast } from '@/ui/overlays/toast';
 import withPageTitle from 'HOCs/withPageTitle';
@@ -30,14 +31,13 @@ import { filterList } from 'App/utils';
 import '../../product-analytics.css';
 import { alertSentence } from './alertSentence';
 
-const PAGE = 10;
-
 function AlertsView({ siteId }: { siteId: string }) {
   const { t } = useTranslation();
   const history = useHistory();
   const location = useLocation();
   const { alertsStore, settingsStore } = useStore();
   const { alerts, alertsSearch, page } = alertsStore;
+  const pageSize = useRowsPerPage();
   const { webhooks } = settingsStore;
   const [loaded, setLoaded] = React.useState(false);
   const [deleting, setDeleting] = React.useState<Alert | null>(null);
@@ -56,7 +56,7 @@ function AlertsView({ siteId }: { siteId: string }) {
           q.test(item.query.left),
         )
       : alerts;
-  const rows = list.slice((page - 1) * PAGE, page * PAGE);
+  const rows = list.slice((page - 1) * pageSize, page * pageSize);
 
   const open = (a: Alert) => {
     alertsStore.init(a);
@@ -202,10 +202,14 @@ function AlertsView({ siteId }: { siteId: string }) {
           />
           <ListFooter
             page={page}
-            pageSize={PAGE}
+            pageSize={pageSize}
             total={list.length}
             noun={[t('alert'), t('alerts')]}
             onPage={(p) => alertsStore.updateKey('page', p)}
+            onPageSize={(n) => {
+              setRowsPerPage(n);
+              alertsStore.updateKey('page', 1);
+            }}
           />
         </>
       )}

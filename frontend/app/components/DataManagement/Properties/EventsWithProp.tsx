@@ -4,6 +4,7 @@ import { EmptyState } from '@/ui/feedback/EmptyState';
 import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
 import { ListFooter } from '@/ui/layout/ListFooter';
 import { PagePanel } from '@/ui/layout/PageCard';
+import { setRowsPerPage, useRowsPerPage } from '@/ui/layout/rows-per-page';
 import { useQuery } from '@tanstack/react-query';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
@@ -15,7 +16,6 @@ import { useHistory } from 'App/routing';
 
 import { type DistinctEvent, fetchListByProp } from '../Events/api';
 
-const PAGE_SIZE = 10;
 const SORT: Record<string, (a: DistinctEvent, b: DistinctEvent) => number> = {
   name: (a, b) => a.name.localeCompare(b.name),
   displayName: (a, b) => a.displayName.localeCompare(b.displayName),
@@ -27,6 +27,7 @@ function EventsWithProp({ propName }: { propName: string }) {
   const { projectsStore, filterStore } = useStore();
   const siteId = projectsStore.activeSiteId!;
   const [page, setPage] = React.useState(1);
+  const pageSize = useRowsPerPage();
   const { data = { events: [], total: 0 }, isPending } = useQuery({
     queryKey: ['events-with-prop', siteId, propName],
     queryFn: () => fetchListByProp(propName),
@@ -41,7 +42,7 @@ function EventsWithProp({ propName }: { propName: string }) {
     [data.events],
   );
   const { sort, onSort, sorted } = useLocalSort(events, SORT);
-  const rows = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const rows = sorted.slice((page - 1) * pageSize, page * pageSize);
 
   const columns: Column<DistinctEvent>[] = [
     {
@@ -113,10 +114,14 @@ function EventsWithProp({ propName }: { propName: string }) {
           />
           <ListFooter
             page={page}
-            pageSize={PAGE_SIZE}
+            pageSize={pageSize}
             total={events.length}
             noun={[t('event'), t('events')]}
             onPage={setPage}
+            onPageSize={(n) => {
+              setRowsPerPage(n);
+              setPage(1);
+            }}
           />
         </>
       )}

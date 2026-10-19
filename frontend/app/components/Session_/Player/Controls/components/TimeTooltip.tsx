@@ -16,7 +16,8 @@ function TimeTooltip() {
     isVisible,
     localTime,
     userTime,
-  } = timeLineTooltip;
+    inactive,
+  } = timeLineTooltip as typeof timeLineTooltip & { inactive?: string };
   return (
     <div
       className={stl.timeTooltip}
@@ -30,6 +31,12 @@ function TimeTooltip() {
       }}
     >
       {!time ? 'Loading' : time}
+      {inactive ? (
+        <>
+          <br />
+          <span className={stl.timeTooltipSub}>{inactive}</span>
+        </>
+      ) : null}
       {localTime ? (
         <>
           <br />

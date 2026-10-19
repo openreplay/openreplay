@@ -1,6 +1,16 @@
 import { Truncated } from '@/ui/data/truncated';
 import { Tooltip } from '@/ui/overlays/tooltip';
-import { ChevronLeft, ChevronRight, ListX, X } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  ListX,
+  Moon,
+  Pin,
+  PinOff,
+  Plus,
+  Sun,
+  X,
+} from 'lucide-react';
 import {
   type CSSProperties,
   useCallback,
@@ -36,13 +46,32 @@ const PEEK = 1400;
 /** Tabs in view at once; the arrows reach the rest. */
 const IN_VIEW = 4;
 
+/* pinned open, and its own theme over a white recording: both remembered */
+const PREFS_KEY = '__or_dock_prefs';
+type DockScheme = 'page' | 'dark' | 'light';
+const readPrefs = (): { pinned: boolean; scheme: DockScheme } => {
+  try {
+    const v = JSON.parse(localStorage.getItem(PREFS_KEY) ?? '{}');
+    return {
+      pinned: v.pinned === true,
+      scheme: v.scheme === 'dark' || v.scheme === 'light' ? v.scheme : 'page',
+    };
+  } catch {
+    return { pinned: false, scheme: 'page' };
+  }
+};
+
 export interface SessionsDockProps {
   rows: readonly QueuedSession[];
   /** the one on screen, if a replay is open */
   currentId: string | null;
   onPick: (s: QueuedSession) => void;
-  onClose: (id: string) => void;
-  onClear: () => void;
+  /** absent, tabs carry no close: an order set for you is not pruned */
+  onClose?: (id: string) => void;
+  /** absent, there is no "Close all" */
+  onClear?: () => void;
+  /** a "+" among the dock's actions */
+  onAdd?: { label: string; onClick: () => void };
   /** a replay is on screen: the dock lifts clear of the player's foot */
   overReplay?: boolean;
 }
@@ -59,12 +88,28 @@ export function SessionsDock({
   onPick,
   onClose,
   onClear,
+  onAdd,
   overReplay = false,
 }: SessionsDockProps) {
   const { t } = useTranslation();
 
   /* ── open / at rest ── */
   const [hover, setHover] = useState(false);
+  const [prefs, setPrefs] = useState(readPrefs);
+  const savePrefs = (next: Partial<typeof prefs>) =>
+    setPrefs((p) => {
+      const v = { ...p, ...next };
+      try {
+        localStorage.setItem(PREFS_KEY, JSON.stringify(v));
+      } catch {
+        // private mode: it lasts the tab
+      }
+      return v;
+    });
+  const dockDark =
+    prefs.scheme === 'page'
+      ? document.documentElement.classList.contains('dark')
+      : prefs.scheme === 'dark';
   const leaveTimer = useRef<number | null>(null);
   const enterTimer = useRef<number | null>(null);
   const enter = useCallback(() => {
@@ -126,7 +171,7 @@ export function SessionsDock({
     const id = window.setTimeout(() => setPeek(null), PEEK);
     return () => window.clearTimeout(id);
   }, [peek]);
-  const open = hover;
+  const open = hover || prefs.pinned;
   const peeking = !open && peek != null;
 
   /* ── over a replay: just above the panel tab strip, which moves with the
@@ -308,7 +353,7 @@ export function SessionsDock({
       >
         <div className="m-sdock-reach" ref={reach}>
           <div
-            className={`m-sdock m-morph${state}`}
+            className={`m-sdock m-morph${state}${prefs.scheme !== 'page' ? ` m-scheme-${prefs.scheme}` : ''}`}
             style={style}
             aria-label={t('Replay queue')}
             aria-expanded={open}
@@ -376,14 +421,16 @@ export function SessionsDock({
                           <MetaChips metadata={s.metadata} />
                         </span>
                       </button>
-                      <button
-                        type="button"
-                        className="m-sdock__close"
-                        aria-label={t('Close {{name}}', { name: s.name })}
-                        onClick={() => onClose(s.id)}
-                      >
-                        <X size={11} aria-hidden="true" />
-                      </button>
+                      {onClose && (
+                        <button
+                          type="button"
+                          className="m-sdock__close"
+                          aria-label={t('Close {{name}}', { name: s.name })}
+                          onClick={() => onClose(s.id)}
+                        >
+                          <X size={11} aria-hidden="true" />
+                        </button>
+                      )}
                     </span>
                   );
                 })}
@@ -398,18 +445,83 @@ export function SessionsDock({
                   <ChevronRight size={13} aria-hidden="true" />
                 </button>
               )}
-              {rows.length > 1 && (
-                <Tooltip title={t('Close all')} side="top" delay={400}>
+              <span className="m-sdock__acts">
+                {onAdd && (
+                  <Tooltip title={onAdd.label} side="top" delay={400}>
+                    <button
+                      type="button"
+                      className="m-sdock__act"
+                      aria-label={onAdd.label}
+                      onClick={onAdd.onClick}
+                    >
+                      <Plus size={14} aria-hidden="true" />
+                    </button>
+                  </Tooltip>
+                )}
+                <Tooltip
+                  title={
+                    prefs.pinned
+                      ? t('Unpin: fold away when the pointer leaves')
+                      : t('Pin: keep the queue open')
+                  }
+                  side="top"
+                  delay={400}
+                >
                   <button
                     type="button"
-                    className="m-sdock__clear"
-                    aria-label={t('Close all')}
-                    onClick={onClear}
+                    className={`m-sdock__act${prefs.pinned ? ' is-on' : ''}`}
+                    aria-label={
+                      prefs.pinned
+                        ? t('Unpin the queue')
+                        : t('Pin the queue open')
+                    }
+                    aria-pressed={prefs.pinned}
+                    onClick={() => savePrefs({ pinned: !prefs.pinned })}
                   >
-                    <ListX size={14} aria-hidden="true" />
+                    {prefs.pinned ? (
+                      <PinOff size={14} aria-hidden="true" />
+                    ) : (
+                      <Pin size={14} aria-hidden="true" />
+                    )}
                   </button>
                 </Tooltip>
-              )}
+                <Tooltip
+                  title={dockDark ? t('Light queue') : t('Dark queue')}
+                  side="top"
+                  delay={400}
+                >
+                  <button
+                    type="button"
+                    className="m-sdock__act"
+                    aria-label={
+                      dockDark
+                        ? t('Make the queue light')
+                        : t('Make the queue dark')
+                    }
+                    onClick={() =>
+                      savePrefs({ scheme: dockDark ? 'light' : 'dark' })
+                    }
+                  >
+                    {dockDark ? (
+                      <Sun size={14} aria-hidden="true" />
+                    ) : (
+                      <Moon size={14} aria-hidden="true" />
+                    )}
+                  </button>
+                </Tooltip>
+                {onClear && rows.length > 1 && (
+                  <Tooltip title={t('Close all')} side="top" delay={400}>
+                    <button
+                      type="button"
+                      className="m-sdock__act"
+                      aria-label={t('Close all')}
+                      onClick={onClear}
+                    >
+                      <ListX size={14} aria-hidden="true" />
+                    </button>
+                  </Tooltip>
+                )}
+              </span>
             </div>
           </div>
         </div>
