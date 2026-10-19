@@ -48,21 +48,8 @@ EOF
     # Creating public bucket; Do not change this block!
     # !! PUBLIC BUCKETS !!
     #####################################################
-    cat <<EOF >/tmp/sessions-assets-policy.json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": {"AWS": ["*"]},
-      "Action": ["s3:GetObject"],
-      "Resource": ["arn:aws:s3:::sessions-assets/*"]
-    }
-  ]
-}
-EOF
-    mc policy set-json /tmp/sessions-assets-policy.json minio/sessions-assets || true
-    mc anonymous set-json /tmp/sessions-assets-policy.json minio/sessions-assets || true
+    mc policy set download minio/sessions-assets || true
+    mc anonymous set download minio/sessions-assets || true
 
 }
 
