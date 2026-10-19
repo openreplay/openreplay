@@ -262,6 +262,15 @@ func (c *cacher) cacheURL(t *Task) {
 		}
 		return
 	}
+	ext := strings.ToLower(filepath.Ext(res.Request.URL.Path))
+	contentType, mediaType := resolveContentType(res.Header.Get("Content-Type"), ext)
+	contentEncoding := res.Header.Get("Content-Encoding")
+
+	if !isAllowedContentType(mediaType, ext, t.isJS) {
+		c.permanent(ctx, t, "content_type", fmt.Errorf("content type %q is not cacheable", contentType))
+		return
+	}
+
 	data, err := io.ReadAll(io.LimitReader(res.Body, int64(c.sizeLimit+1)))
 	if err != nil {
 		c.retry(ctx, t, 0, "read_body", err)
@@ -273,19 +282,7 @@ func (c *cacher) cacheURL(t *Task) {
 		return
 	}
 
-	contentType := res.Header.Get("Content-Type")
-	if contentType == "" {
-		contentType = mime.TypeByExtension(filepath.Ext(res.Request.URL.Path))
-	}
-	contentEncoding := res.Header.Get("Content-Encoding")
-
-	// Skip html file (usually it's a CDN mock for 404 error)
-	if strings.HasPrefix(contentType, "text/html") {
-		c.permanent(ctx, t, "text_html", fmt.Errorf("content type is text/html"))
-		return
-	}
-
-	isCSS := strings.HasPrefix(contentType, "text/css")
+	isCSS := mediaType == "text/css"
 
 	uploadBody := data
 	var cssURLs []string
@@ -454,6 +451,65 @@ func parseRetryAfter(h string) (time.Duration, bool) {
 
 func shouldCompress(gzipEnabled bool, contentType, contentEncoding string, isJS bool) bool {
 	return gzipEnabled && !isJS && contentEncoding == "" && isCompressibleType(contentType)
+}
+
+var extContentTypes = map[string]string{
+	".css":   "text/css",
+	".js":    "text/javascript",
+	".mjs":   "text/javascript",
+	".woff":  "font/woff",
+	".woff2": "font/woff2",
+	".ttf":   "font/ttf",
+	".otf":   "font/otf",
+	".eot":   "application/vnd.ms-fontobject",
+}
+
+func typeByExtension(ext string) string {
+	if ct, ok := extContentTypes[strings.ToLower(ext)]; ok {
+		return ct
+	}
+	return mime.TypeByExtension(ext)
+}
+
+func isGenericType(mediaType string) bool {
+	return mediaType == "application/octet-stream" || mediaType == "text/plain"
+}
+
+func resolveContentType(header, ext string) (contentType, mediaType string) {
+	contentType = header
+	if contentType == "" {
+		contentType = typeByExtension(ext)
+	}
+	mediaType = strings.ToLower(strings.TrimSpace(strings.SplitN(contentType, ";", 2)[0]))
+	if isGenericType(mediaType) {
+		if mapped, ok := extContentTypes[ext]; ok {
+			return mapped, mapped
+		}
+	}
+	return contentType, mediaType
+}
+
+func isAllowedContentType(mediaType, ext string, isJS bool) bool {
+	if isGenericType(mediaType) {
+		return !isJS && ext == ".ashx"
+	}
+	if isJS {
+		switch mediaType {
+		case "text/javascript", "application/javascript", "application/x-javascript",
+			"text/x-javascript", "text/ecmascript", "application/ecmascript":
+			return true
+		}
+		return false
+	}
+	if mediaType == "text/css" {
+		return true
+	}
+	for _, hint := range []string{"font", "woff", "opentype", "truetype"} {
+		if strings.Contains(mediaType, hint) {
+			return true
+		}
+	}
+	return false
 }
 
 func isCompressibleType(contentType string) bool {
