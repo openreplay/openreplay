@@ -187,8 +187,6 @@ global:
     # idp_name: ''
     # idp_tenantKey: ''
     # enforce_SSO: 'false'
-    # SCIM_ACCESS_SECRET_KEY:
-    # SCIM_REFRESH_SECRET_KEY:
     # SCIM_JWT_ALGORITHM: 'HS512'
     # SCIM_ACCESS_TOKEN_EXPIRE_SECONDS: '86400'
     # SCIM_REFRESH_TOKEN_EXPIRE_SECONDS: '2592000'
