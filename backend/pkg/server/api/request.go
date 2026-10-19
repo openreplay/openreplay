@@ -86,6 +86,19 @@ func ReadBody(log logger.Logger, w http.ResponseWriter, r *http.Request, limit i
 	return bodyBytes, nil
 }
 
+var ErrBodyTooLarge = errors.New("decompressed body exceeds size limit")
+
+func ReadLimited(r io.Reader, limit int64) ([]byte, error) {
+	data, err := io.ReadAll(io.LimitReader(r, limit+1))
+	if err != nil {
+		return nil, err
+	}
+	if int64(len(data)) > limit {
+		return nil, ErrBodyTooLarge
+	}
+	return data, nil
+}
+
 func ReadCompressedBody(log logger.Logger, w http.ResponseWriter, r *http.Request, limit int64) ([]byte, error) {
 	body := http.MaxBytesReader(w, r.Body, limit)
 	var (
@@ -99,9 +112,9 @@ func ReadCompressedBody(log logger.Logger, w http.ResponseWriter, r *http.Reques
 		if err != nil {
 			return nil, fmt.Errorf("can't create gzip reader: %s", err)
 		}
-		bodyBytes, err = io.ReadAll(reader)
+		bodyBytes, err = ReadLimited(reader, limit)
 		if err != nil {
-			return nil, fmt.Errorf("can't read gzip body: %s", err)
+			return nil, fmt.Errorf("can't read gzip body: %w", err)
 		}
 		if err := reader.Close(); err != nil {
 			log.Warn(r.Context(), "can't close gzip reader: %s", err)
