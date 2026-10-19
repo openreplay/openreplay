@@ -4,6 +4,7 @@ from urllib.parse import urlencode, urlparse
 from decouple import config, Csv
 from fastapi import HTTPException, Request
 from fastapi.responses import RedirectResponse
+from scim2_models import ScimProvider
 from scim2_server import utils
 
 from chalicelib.utils import pg_client
@@ -13,14 +14,31 @@ from chalicelib.utils.scim_auth import (
 )
 from routers.base import get_routers
 from routers.scim import users, groups, helpers
-from routers.scim.backends import PostgresBackend
+from routers.scim.backends import PostgresStorage
 from routers.scim.postgres_resource import PostgresResource
-from routers.scim.providers import MultiTenantProvider
+from routers.scim.providers import (
+    MultiTenantApplication,
+    OpenReplayScimService,
+    get_scim_policy,
+    get_service_provider_config,
+)
 
 logger = logging.getLogger(__name__)
 
-b = PostgresBackend()
-b.register_postgres_resource(
+# The provider describes what the server publishes on its discovery endpoints,
+# and builds the models the resources are validated with.
+provider = ScimProvider.from_discovery(
+    schemas=[
+        *utils.load_default_schemas().values(),
+        *helpers.load_custom_schemas().values(),
+    ],
+    resource_types=helpers.load_custom_resource_types().values(),
+    config=get_service_provider_config(),
+    policy=get_scim_policy(),
+)
+
+storage = PostgresStorage(provider)
+storage.register_postgres_resource(
     "User",
     PostgresResource(
         query_resources=users.query_resources,
@@ -32,7 +50,7 @@ b.register_postgres_resource(
         update_resource=users.update_resource,
     ),
 )
-b.register_postgres_resource(
+storage.register_postgres_resource(
     "Group",
     PostgresResource(
         query_resources=groups.query_resources,
@@ -45,14 +63,11 @@ b.register_postgres_resource(
     ),
 )
 
-scim_app = MultiTenantProvider(b)
-
-for schema in utils.load_default_schemas().values():
-    scim_app.register_schema(schema)
-for schema in helpers.load_custom_schemas().values():
-    scim_app.register_schema(schema)
-for resource_type in helpers.load_custom_resource_types().values():
-    scim_app.register_resource_type(resource_type)
+scim_app = MultiTenantApplication(
+    storage=storage,
+    provider=provider,
+    service=OpenReplayScimService(provider),
+)
 
 public_app, app, app_apikey = get_routers(prefix="/sso/scim/v2")
 
