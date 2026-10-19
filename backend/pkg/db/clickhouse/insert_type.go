@@ -28,11 +28,16 @@ func nullableString(v string) *string {
 	return p
 }
 
+const maxTimestampSkew = 30 * 24 * time.Hour
+
 func datetime(timestamp uint64) time.Time {
+	return datetimeAt(timestamp, time.Now())
+}
+
+func datetimeAt(timestamp uint64, now time.Time) time.Time {
 	t := time.Unix(int64(timestamp/1e3), 0)
-	// Temporal solution for not correct timestamps in performance messages
-	if t.Year() < 2023 || t.Year() > 2026 {
-		return time.Now()
+	if t.Before(now.Add(-maxTimestampSkew)) || t.After(now.Add(maxTimestampSkew)) {
+		return now
 	}
 	return t
 }
