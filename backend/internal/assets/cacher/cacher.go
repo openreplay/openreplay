@@ -275,13 +275,12 @@ func (c *cacher) cacheURL(t *Task) {
 
 	contentType := res.Header.Get("Content-Type")
 	if contentType == "" {
-		contentType = mime.TypeByExtension(filepath.Ext(res.Request.URL.Path))
+		contentType = typeByExtension(filepath.Ext(res.Request.URL.Path))
 	}
 	contentEncoding := res.Header.Get("Content-Encoding")
 
-	// Skip html file (usually it's a CDN mock for 404 error)
-	if strings.HasPrefix(contentType, "text/html") {
-		c.permanent(ctx, t, "text_html", fmt.Errorf("content type is text/html"))
+	if !isAllowedContentType(contentType, t.isJS) {
+		c.permanent(ctx, t, "content_type", fmt.Errorf("content type %q is not cacheable", contentType))
 		return
 	}
 
@@ -454,6 +453,45 @@ func parseRetryAfter(h string) (time.Duration, bool) {
 
 func shouldCompress(gzipEnabled bool, contentType, contentEncoding string, isJS bool) bool {
 	return gzipEnabled && !isJS && contentEncoding == "" && isCompressibleType(contentType)
+}
+
+var extContentTypes = map[string]string{
+	".css":   "text/css",
+	".js":    "text/javascript",
+	".woff":  "font/woff",
+	".woff2": "font/woff2",
+	".ttf":   "font/ttf",
+	".otf":   "font/otf",
+	".eot":   "application/vnd.ms-fontobject",
+}
+
+func typeByExtension(ext string) string {
+	if ct, ok := extContentTypes[strings.ToLower(ext)]; ok {
+		return ct
+	}
+	return mime.TypeByExtension(ext)
+}
+
+func isAllowedContentType(contentType string, isJS bool) bool {
+	mediaType := strings.ToLower(strings.TrimSpace(strings.SplitN(contentType, ";", 2)[0]))
+	if isJS {
+		switch mediaType {
+		case "text/javascript", "application/javascript", "application/x-javascript",
+			"text/ecmascript", "application/ecmascript", "application/octet-stream":
+			return true
+		}
+		return false
+	}
+	switch {
+	case mediaType == "text/css",
+		mediaType == "application/octet-stream",
+		mediaType == "application/vnd.ms-fontobject",
+		strings.HasPrefix(mediaType, "font/"),
+		strings.HasPrefix(mediaType, "application/font"),
+		strings.HasPrefix(mediaType, "application/x-font"):
+		return true
+	}
+	return false
 }
 
 func isCompressibleType(contentType string) bool {
