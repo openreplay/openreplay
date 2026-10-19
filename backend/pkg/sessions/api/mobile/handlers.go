@@ -293,9 +293,13 @@ func (e *handlersImpl) pushMessages(w http.ResponseWriter, r *http.Request, sess
 	default:
 		reader = body
 	}
-	buf, err := io.ReadAll(reader)
+	buf, err := api.ReadLimited(reader, e.cfg.BeaconSizeLimit)
 	if err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, start, r.URL.Path, 0)
+		code := http.StatusInternalServerError
+		if errors.Is(err, api.ErrBodyTooLarge) {
+			code = http.StatusRequestEntityTooLarge
+		}
+		e.responser.ResponseWithError(e.log, r.Context(), w, code, err, start, r.URL.Path, 0)
 		return
 	}
 	if err := e.producer.Produce(topicName, sessionID, buf); err != nil {
