@@ -263,12 +263,8 @@ func (c *cacher) cacheURL(t *Task) {
 		return
 	}
 	ext := strings.ToLower(filepath.Ext(res.Request.URL.Path))
-	contentType := res.Header.Get("Content-Type")
-	if contentType == "" {
-		contentType = typeByExtension(ext)
-	}
+	contentType, mediaType := resolveContentType(res.Header.Get("Content-Type"), ext)
 	contentEncoding := res.Header.Get("Content-Encoding")
-	mediaType := mediaTypeOf(contentType)
 
 	if !isAllowedContentType(mediaType, ext, t.isJS) {
 		c.permanent(ctx, t, "content_type", fmt.Errorf("content type %q is not cacheable", contentType))
@@ -475,17 +471,27 @@ func typeByExtension(ext string) string {
 	return mime.TypeByExtension(ext)
 }
 
-func mediaTypeOf(contentType string) string {
-	return strings.ToLower(strings.TrimSpace(strings.SplitN(contentType, ";", 2)[0]))
+func isGenericType(mediaType string) bool {
+	return mediaType == "application/octet-stream" || mediaType == "text/plain"
+}
+
+func resolveContentType(header, ext string) (contentType, mediaType string) {
+	contentType = header
+	if contentType == "" {
+		contentType = typeByExtension(ext)
+	}
+	mediaType = strings.ToLower(strings.TrimSpace(strings.SplitN(contentType, ";", 2)[0]))
+	if isGenericType(mediaType) {
+		if mapped, ok := extContentTypes[ext]; ok {
+			return mapped, mapped
+		}
+	}
+	return contentType, mediaType
 }
 
 func isAllowedContentType(mediaType, ext string, isJS bool) bool {
-	if mediaType == "application/octet-stream" || mediaType == "text/plain" {
-		mapped, ok := extContentTypes[ext]
-		if !ok {
-			return false
-		}
-		mediaType = mapped
+	if isGenericType(mediaType) {
+		return !isJS && ext == ".ashx"
 	}
 	if isJS {
 		switch mediaType {
