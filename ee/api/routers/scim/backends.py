@@ -1,209 +1,194 @@
-import operator
+import logging
+from contextvars import ContextVar
+from typing import Any, cast
 
-from scim2_filter_parser import lexer
-from scim2_filter_parser.parser import SCIMParser
 from scim2_models import (
-    SearchRequest,
-    Resource,
     Context,
-    Error,
+    NotFoundException,
+    NotImplementedException,
+    Resource,
+    ResourceType,
+    ResponseParameters,
+    ScimFilter,
+    ScimProvider,
+    SearchRequest,
+    UniquenessException,
 )
-from scim2_server import backend
-from scim2_server.filter import evaluate_filter
-from scim2_server.operators import ResolveSortOperator
-from scim2_models import SCIMException
+from scim2_server.storage import ScimStorage, SearchPage
+from scim2_server.utils import parametrize
 
 from routers.scim import groups
 from routers.scim.postgres_resource import PostgresResource
 
+logger = logging.getLogger(__name__)
 
-class PostgresBackend(backend.Backend):
-    def __init__(self):
-        super().__init__()
-        self._postgres_resources = {}
+# The tenant of the request being served. The WSGI application sets it once the
+# bearer token is verified, so the storage can scope every query to it.
+CURRENT_TENANT_ID: ContextVar[int | None] = ContextVar("scim_tenant_id", default=None)
+
+
+def current_tenant_id() -> int:
+    tenant_id = CURRENT_TENANT_ID.get()
+    if tenant_id is None:
+        raise RuntimeError("SCIM storage called outside of an authenticated request")
+    return tenant_id
+
+
+class PostgresStorage(ScimStorage):
+    """A :class:`ScimStorage` serving the OpenReplay users and roles of the current tenant.
+
+    The SQL of each resource type lives in a :class:`PostgresResource`. This
+    class maps the SCIM protocol steps onto them, converts the returned dicts
+    into the models of the provider, and applies filtering, sorting and paging
+    in memory, as the previous scim2-server backend did.
+    """
+
+    def __init__(self, provider: ScimProvider):
+        self.provider = provider
+        self._postgres_resources: dict[str, PostgresResource] = {}
 
     def register_postgres_resource(
             self, resource_type_id: str, postgres_resource: PostgresResource
     ):
         self._postgres_resources[resource_type_id] = postgres_resource
 
-    def query_resources(
+    # -- helpers --------------------------------------------------------
+
+    def _postgres_resource(self, resource_type: ResourceType) -> PostgresResource:
+        try:
+            return self._postgres_resources[cast(str, resource_type.id)]
+        except KeyError:
+            raise NotImplementedException(
+                detail=f"Resource type {resource_type.id!r} has no storage"
+            )
+
+    def get_model(self, resource_type: ResourceType) -> type[Resource[Any]]:
+        return cast(type[Resource[Any]], self.provider.model_for(resource_type))
+
+    def _to_model(
             self,
-            search_request: SearchRequest,
-            tenant_id: int,
-            resource_type_id: str | None = None,
-    ) -> tuple[int, list[Resource]]:
-        """Query the backend for a set of resources.
+            resource_type: ResourceType,
+            data: dict | None,
+            scim_ctx: Context | None = Context.DEFAULT,
+    ) -> Resource[Any] | None:
+        if data is None:
+            return None
+        return self.get_model(resource_type).model_validate(data, scim_ctx=scim_ctx)
 
-        :param search_request: SearchRequest instance describing the
-            query.
-        :param resource_type_id: ID of the resource type to query. If
-            None, all resource types are queried.
-        :return: A tuple of "total results" and a List of found
-            Resources. The List must contain a copy of resources.
-            Mutating elements in the List must not modify the data
-            stored in the backend.
-        :raises SCIMException: If the backend only supports querying for
-            one resource type at a time, setting resource_type_id to
-            None the backend may raise a
-            SCIMException(Error.make_too_many_error()).
+    def _filter_for(
+            self, resource_type: ResourceType, search_request: SearchRequest[Any]
+    ) -> ScimFilter[Any] | None:
+        """Return the filter of a search, bound to the model of a resource type.
+
+        Group filters on ``displayName`` are rewritten so that the IdP group
+        name is compared to the role name stored in OpenReplay.
         """
-        start_index = (search_request.start_index or 1) - 1
+        if search_request.filter is None:
+            return None
+        expression = str(search_request.filter)
+        if resource_type.id == "Group":
+            expression = groups.group_display_name_to_role_name(expression)
+        return parametrize(ScimFilter, self.get_model(resource_type))(expression)
 
-        tree = None
-        if search_request.filter is not None:
-            if resource_type_id == "Group":
-                search_request.filter = groups.group_display_name_to_role_name(search_request.filter)
-            token_stream = lexer.SCIMLexer().tokenize(search_request.filter)
-            tree = SCIMParser().parse(token_stream)
+    # -- ScimStorage ----------------------------------------------------
 
-        # todo(jon): handle the case when resource_type_id is None.
-        # we're assuming it's never None for now.
-        # but, this is fine to leave as it doesn't seem to used or reached in
-        # any of my tests yet.
-        if not resource_type_id:
-            raise NotImplementedError
-        resources = self._postgres_resources[resource_type_id].query_resources(
-            tenant_id
+    def get(
+            self,
+            resource_type: ResourceType,
+            resource_id: str,
+            *,
+            response_parameters: ResponseParameters[Any] | None = None,
+    ) -> Resource[Any]:
+        data = self._postgres_resource(resource_type).get_resource(
+            resource_id, current_tenant_id()
         )
-        model = self.get_model(resource_type_id)
-        resources = [
-            model.model_validate(r, scim_ctx=Context.RESOURCE_QUERY_RESPONSE, extra='ignore')
-            for r in resources
-        ]
-        resources = [r for r in resources if (tree is None or evaluate_filter(r, tree))]
-
-        if search_request.sort_by is not None:
-            descending = search_request.sort_order == SearchRequest.SortOrder.descending
-            sort_operator = ResolveSortOperator(search_request.sort_by)
-
-            # To ensure that unset attributes are sorted last (when ascending, as defined in the RFC),
-            # we have to divide the result set into a set and unset subset.
-            unset_values = []
-            set_values = []
-            for resource in resources:
-                result = sort_operator(resource)
-                if result is None:
-                    unset_values.append(resource)
-                else:
-                    set_values.append((resource, result))
-
-            set_values.sort(key=operator.itemgetter(1), reverse=descending)
-            set_values = [value[0] for value in set_values]
-            if descending:
-                resources = unset_values + set_values
-            else:
-                resources = set_values + unset_values
-
-        found_resources = resources[start_index:]
-        if search_request.count is not None:
-            found_resources = resources[: search_request.count]
-
-        return len(resources), found_resources
-
-    def get_resource(
-            self, tenant_id: int, resource_type_id: str, object_id: str
-    ) -> Resource | None:
-        """Query the backend for a resources by its ID.
-
-        :param resource_type_id: ID of the resource type to get the
-            object from.
-        :param object_id: ID of the object to get.
-        :return: The resource object if it exists, None otherwise. The
-            resource must be a copy, modifying it must not change the
-            data stored in the backend.
-        """
-        resource = self._postgres_resources[resource_type_id].get_resource(
-            object_id, tenant_id
-        )
-        if resource:
-            model = self.get_model(resource_type_id)
-            resource = model.model_validate(resource, extra='ignore')
+        resource = self._to_model(resource_type, data)
+        if resource is None:
+            raise NotFoundException(
+                detail=f"{resource_type.name} {resource_id!r} not found"
+            )
         return resource
 
-    def delete_resource(
-            self, tenant_id: int, resource_type_id: str, object_id: str
-    ) -> bool:
-        """Delete a resource.
+    def search(
+            self,
+            resource_types: list[ResourceType],
+            search_request: SearchRequest[Any],
+            *,
+            position: Any = None,
+    ) -> SearchPage:
+        if search_request.cursor is not None:
+            raise NotImplementedException(detail="Cursor pagination is not supported")
 
-        :param resource_type_id: ID of the resource type to delete the
-            object from.
-        :param object_id: ID of the object to delete.
-        :return: True if the resource was deleted, False otherwise.
-        """
-        resource = self.get_resource(tenant_id, resource_type_id, object_id)
-        if resource:
-            self._postgres_resources[resource_type_id].delete_resource(
-                object_id, tenant_id
-            )
-            return True
-        return False
+        tenant_id = current_tenant_id()
+        found: list[Resource[Any]] = []
+        for resource_type in resource_types:
+            scim_filter = self._filter_for(resource_type, search_request)
+            model = self.get_model(resource_type)
+            for data in self._postgres_resource(resource_type).query_resources(tenant_id):
+                resource = model.model_validate(
+                    data, scim_ctx=Context.RESOURCE_QUERY_RESPONSE
+                )
+                if scim_filter is None or scim_filter.match(resource):
+                    found.append(resource)
 
-    def create_resource(
-            self, tenant_id: int, resource_type_id: str, resource: Resource
-    ) -> Resource | None:
-        """Create a resource.
+        found = search_request.sort(found)
+        start = search_request.start_index_0 or 0
+        stop = None if search_request.count is None else start + search_request.count
+        return SearchPage(len(found), found[start:stop])
 
-        :param resource_type_id: ID of the resource type to create.
-        :param resource: Resource to create.
-        :return: The created resource. Creation should set system-
-            defined attributes (ID, Metadata). May be the same object
-            that is passed in.
-        """
-        model = self.get_model(resource_type_id)
-        existing = self._postgres_resources[resource_type_id].search_existing(
-            tenant_id, resource
-        )
+    def create(
+            self, resource_type: ResourceType, resource: Resource[Any]
+    ) -> Resource[Any]:
+        tenant_id = current_tenant_id()
+        postgres_resource = self._postgres_resource(resource_type)
+        existing = postgres_resource.search_existing(tenant_id, resource)
         if existing:
-            # existing = model.model_validate(existing, extra='ignore')
             if existing["active"]:
-                raise SCIMException(Error.make_uniqueness_error())
+                raise UniquenessException()
+            # The resource was soft-deleted: bring it back instead of creating a duplicate.
             resource.id = existing["id"]
-            resource = self._postgres_resources[resource_type_id].restore_resource(
-                tenant_id, resource
-            )
+            if postgres_resource.restore_resource is None:
+                raise UniquenessException()
+            data = postgres_resource.restore_resource(tenant_id, resource)
         else:
-            resource = self._postgres_resources[resource_type_id].create_resource(
-                tenant_id, resource
-            )
-        resource = model.model_validate(resource, extra='ignore')
-        return resource
+            data = postgres_resource.create_resource(tenant_id, resource)
+        return cast(Resource[Any], self._to_model(resource_type, data))
 
-    def update_resource(
-            self, tenant_id: int, resource_type_id: str, resource: Resource
-    ) -> Resource | None:
-        """Update a resource. The resource is identified by its ID.
-
-        :param resource_type_id: ID of the resource type to update.
-        :param resource: Resource to update.
-        :return: The updated resource. Updating should update the
-            "meta.lastModified" data. May be the same object that is
-            passed in.
-        """
-        model = self.get_model(resource_type_id)
-        existing = self._postgres_resources[resource_type_id].search_existing(
-            tenant_id, resource
-        )
-        if existing:
-            # existing = model.model_validate(existing, extra='ignore')
+    def update(
+            self,
+            resource_type: ResourceType,
+            resource: Resource[Any],
+            *,
+            expected_version: str | None = None,
+    ) -> Resource[Any]:
+        tenant_id = current_tenant_id()
+        postgres_resource = self._postgres_resource(resource_type)
+        # The handler fetched the resource by id already, so it exists. What is
+        # left to check is whether its unique value now clashes with another one.
+        existing = postgres_resource.search_existing(tenant_id, resource)
+        if existing and existing["id"] != resource.id:
             if existing["active"]:
-                if existing["id"] != resource.id:
-                    raise SCIMException(Error.make_uniqueness_error())
-                resource = self._postgres_resources[resource_type_id].update_resource(
-                    tenant_id, resource
-                )
-            else:
-                # TODO: do not delete here
-                self._postgres_resources[resource_type_id].delete_resource(
-                    existing["id"], tenant_id
-                )
-                resource = self._postgres_resources[resource_type_id].update_resource(
-                    resource.id, tenant_id, resource
-                )
-        else:
-            raise SCIMException(Error.make_no_target_error())
+                raise UniquenessException()
+            # The unique value belongs to a soft-deleted resource: drop it first.
+            # TODO: do not delete here
+            postgres_resource.delete_resource(existing["id"], tenant_id)
 
-        if resource is not None:
-            resource = model.model_validate(resource, extra='ignore')
+        data = postgres_resource.update_resource(tenant_id, resource)
+        updated = self._to_model(resource_type, data)
+        if updated is None:
+            raise NotFoundException(
+                detail=f"{resource_type.name} {resource.id!r} not found"
+            )
+        return updated
 
-        return resource
+    def delete(
+            self,
+            resource_type: ResourceType,
+            resource_id: str,
+            *,
+            expected_version: str | None = None,
+    ) -> None:
+        # The handler already fetched the resource, so it exists for this tenant.
+        self._postgres_resource(resource_type).delete_resource(
+            resource_id, current_tenant_id()
+        )

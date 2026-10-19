@@ -11,11 +11,11 @@
     "schemaExtensions": [
       {
         "schema": "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User",
-        "required": true
+        "required": false
       },
       {
         "schema": "urn:ietf:params:scim:schemas:extension:openreplay:2.0:User",
-        "required": true
+        "required": false
       }
     ],
     "meta": {
