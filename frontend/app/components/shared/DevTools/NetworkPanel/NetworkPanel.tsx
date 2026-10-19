@@ -3,7 +3,7 @@ import { WsChannel } from 'Player/web/messages';
 import { Tooltip } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { useTranslation } from 'react-i18next';
+import i18n from 'App/i18n';
 
 import {
   MobilePlayerContext,
@@ -60,7 +60,7 @@ export function renderName(r: any) {
 }
 
 export function renderDuration(r: any) {
-  const { t } = useTranslation();
+  const t = i18n.t;
   if (!r.success) return 'x';
 
   const text = `${Math.floor(r.duration)}ms`;
