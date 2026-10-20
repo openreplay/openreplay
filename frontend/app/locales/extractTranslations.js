@@ -15,6 +15,7 @@ const localesDir = __dirname;
 // app/ and the SaaS slots beside it: their strings are FOSS's to translate
 const sourceDirs = [
   path.resolve(__dirname, '..'),
+  path.resolve(__dirname, '../../saas'),
 ];
 const LOCALES = ['es', 'fr', 'ko', 'ru', 'uk', 'zh'];
 const check = process.argv.includes('--check');
