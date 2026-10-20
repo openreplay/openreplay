@@ -5,7 +5,7 @@ python-decouple==3.8
 certifi==2023.7.22
 
 # AWS utils
-awscli==1.29.53
+awscli==1.45.28
 
 # ML modules
 # torch==2.0.1
