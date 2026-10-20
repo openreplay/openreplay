@@ -203,8 +203,9 @@ function TestsTab() {
     ...(statusTab === 'needs_review' ? { needsReview: true } : {}),
   });
 
-  // reset to page 1 (and clear the selection) whenever the filter set changes
-  const filterKey = `${search}|${statusTab}|${envFilter}|${tagFilter}`;
+  // reset to page 1 (and clear the selection) whenever the filter set or the
+  // shared rows-per-page changes
+  const filterKey = `${search}|${statusTab}|${envFilter}|${tagFilter}|${pageSize}`;
   const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
   if (prevFilterKey !== filterKey) {
     setPrevFilterKey(filterKey);

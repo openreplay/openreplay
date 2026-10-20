@@ -18,7 +18,8 @@ const OverviewPanelContainer = React.memo((props: Props) => {
     if (!track) return;
     const rect = track.getBoundingClientRect();
     if (e.clientX < rect.left) return;
-    const p = (e.clientX - rect.left) / rect.width;
+    // the track is narrower than the panel: a click in its padding is the end
+    const p = Math.min((e.clientX - rect.left) / rect.width, 1);
     const time = Math.max(Math.round(p * endTime), 0);
     if (time) {
       player.jump(time);

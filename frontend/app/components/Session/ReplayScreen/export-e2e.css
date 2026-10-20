@@ -3,8 +3,7 @@
   flex-direction: column;
   gap: var(--m-space-5);
   padding: var(--m-space-5);
-
-  overflow: hidden;
+  overflow: auto;
 }
 
 .m-e2e__body .m-code {

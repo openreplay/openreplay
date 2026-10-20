@@ -84,14 +84,28 @@ function BackendIntegrationDrawer({
   });
   const connected = ids.filter((id) => scope?.[id]);
 
+  const sameAs = (
+    a: Record<string, string> | null | undefined,
+    b: Record<string, string> | null | undefined,
+  ) => fields.every((f) => (a?.[f.key] ?? '') === (b?.[f.key] ?? ''));
+  const nameOf = (id: string) => projects.find((p) => p.id === id)?.name ?? id;
+
   const [values, setValues] = React.useState<Record<string, string>>();
   const [covered, setCovered] = React.useState<string[]>();
+  /* the projects holding the connection the form shows: projects connected
+     with other credentials are another connection and stay untouched */
+  const [group, setGroup] = React.useState<string[]>([]);
   React.useEffect(() => {
     if (!scope || values) return;
-    const first = connected[0];
-    setValues({ ...initialValues, ...(first ? scope[first] : {}) });
     const active = String(integrationsStore.integrations.siteId || ids[0]);
-    setCovered(connected.length ? connected : [active]);
+    const source = scope[active] ? active : connected[0];
+    const base = source ? scope[source] : null;
+    setValues({ ...initialValues, ...(base ?? {}) });
+    const holders = base
+      ? connected.filter((id) => sameAs(scope[id], base))
+      : [];
+    setGroup(holders);
+    setCovered(holders.length ? holders : [active]);
   }, [scope]);
 
   const [saving, setSaving] = React.useState(false);
@@ -110,8 +124,24 @@ function BackendIntegrationDrawer({
 
   const save = async () => {
     if (!values || !covered) return;
+    const replaced = covered.filter((id) => scope?.[id] && !group.includes(id));
+    if (
+      replaced.length &&
+      !(await confirm({
+        header: t('Replace the credentials in {{n}} projects?', {
+          n: replaced.length,
+        }),
+        confirmButton: t('Replace'),
+        confirmation: t(
+          '{{names}} connect to {{name}} with different credentials. Saving replaces them with these.',
+          { names: replaced.map(nameOf).join(', '), name: title },
+        ),
+        danger: true,
+      }))
+    )
+      return;
     setSaving(true);
-    const dropped = connected.filter((id) => !covered.includes(id));
+    const dropped = group.filter((id) => !covered.includes(id));
     try {
       await Promise.all([
         ...covered.map((id) =>
@@ -147,7 +177,7 @@ function BackendIntegrationDrawer({
     });
     if (!ok) return;
     await Promise.all(
-      connected.map((id) => client.delete(`/${id}/integration/${name}`)),
+      group.map((id) => client.delete(`/${id}/integration/${name}`)),
     ).catch(() => toast.error(t('Failed to remove {{name}}', { name: title })));
     done();
     onClose();
@@ -174,7 +204,7 @@ function BackendIntegrationDrawer({
       footer={
         <DrawerFooter
           left={
-            connected.length ? (
+            group.length ? (
               <Button variant="danger-subtle" onClick={() => void disconnect()}>
                 {t('Disconnect')}
               </Button>
@@ -191,7 +221,7 @@ function BackendIntegrationDrawer({
                 disabled={!valid}
                 loading={saving}
               >
-                {connected.length ? t('Save') : t('Connect')}
+                {group.length ? t('Save') : t('Connect')}
               </Button>
             </>
           }

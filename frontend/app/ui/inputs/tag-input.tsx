@@ -11,6 +11,9 @@ export interface TagInputProps {
   className?: string;
 
   accept?: (text: string) => boolean;
+  /** Backspace in the empty field drops the last tag. Off where a removal
+      is destructive and must be confirmed. */
+  backspaceRemoves?: boolean;
 }
 
 export function TagInput({
@@ -21,6 +24,7 @@ export function TagInput({
   ariaLabel,
   className,
   accept,
+  backspaceRemoves = true,
 }: TagInputProps) {
   const [draft, setDraft] = useState('');
   const add = () => {
@@ -33,7 +37,12 @@ export function TagInput({
     if (e.key === 'Enter' || e.key === ',') {
       e.preventDefault();
       add();
-    } else if (e.key === 'Backspace' && !draft && value.length) {
+    } else if (
+      backspaceRemoves &&
+      e.key === 'Backspace' &&
+      !draft &&
+      value.length
+    ) {
       onChange(value.slice(0, -1));
     }
   };

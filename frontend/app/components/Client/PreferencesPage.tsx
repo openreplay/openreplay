@@ -3,6 +3,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/ui/layout/tabs';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import { ArrowLeft, Info } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface TabItem {
   key: string;
@@ -39,6 +40,7 @@ function PreferencesPage({
   flush = false,
   children,
 }: Props) {
+  const { t } = useTranslation();
   // a lone help icon repeats the shell's lede, so it only rides along
   const bar = onBack || value != null || actions;
   const current = tabs?.find((i) => i.key === activeTab) ?? tabs?.[0];
@@ -50,7 +52,7 @@ function PreferencesPage({
             <>
               <IconButton
                 icon={<ArrowLeft size={15} />}
-                label="Back"
+                label={t('Back')}
                 variant="ghost"
                 onClick={onBack}
               />

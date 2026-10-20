@@ -27,6 +27,8 @@ export interface EntityDrawerProps {
   footer?: ReactNode;
 
   size?: DrawerSize;
+  /** px; overrides `size` for content laid out at a fixed width */
+  width?: number;
   children: ReactNode;
 }
 
@@ -42,6 +44,7 @@ export function EntityDrawer({
   headerActions,
   footer,
   size,
+  width,
   children,
 }: EntityDrawerProps) {
   const { t } = useTranslation();
@@ -51,6 +54,7 @@ export function EntityDrawer({
       onClose={onClose}
       label={title || namePlaceholder || t('Panel')}
       size={size}
+      width={width}
       header={
         <DrawerHeader
           eyebrow={eyebrow}

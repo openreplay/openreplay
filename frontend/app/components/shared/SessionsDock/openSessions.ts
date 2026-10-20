@@ -99,6 +99,20 @@ export function clearSessionTabs(): void {
   if (queue.length) write([]);
 }
 
+const OWNER_KEY = `${KEY}_owner`;
+
+/** The queue holds user names and metadata: another account signing in on
+    this tab starts with an empty one. */
+export function claimSessionTabs(owner: string): void {
+  try {
+    const prev = sessionStorage.getItem(OWNER_KEY);
+    if (prev && prev !== owner) write([]);
+    sessionStorage.setItem(OWNER_KEY, owner);
+  } catch {
+    /* private window: nothing was kept to leak */
+  }
+}
+
 /** The tab beside a closing one: the one after it, else the one before. */
 export function neighbourOf(id: string): QueuedSession | null {
   const i = queue.findIndex((q) => q.id === id);

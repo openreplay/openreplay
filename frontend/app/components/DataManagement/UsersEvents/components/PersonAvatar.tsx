@@ -50,7 +50,7 @@ export function Where({
       title={[place, country].filter(Boolean).join(', ')}
     >
       {country && <span className="m-dmg__cc">{country}</span>}
-      <span className="m-truncate">{place || country}</span>
+      {place && <span className="m-truncate">{place}</span>}
     </span>
   );
 }

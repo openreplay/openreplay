@@ -27,7 +27,7 @@ export interface IServiceStats {
   }[];
 }
 
-function HealthStatus({ variant = 'tool' }: { variant?: 'tool' | 'row' }) {
+function HealthStatus() {
   const healthResponseSaved = localStorage.getItem(healthResponseKey) || '{}';
   const [healthResponse, setHealthResponse] = React.useState(
     JSON.parse(healthResponseSaved),
@@ -76,7 +76,7 @@ function HealthStatus({ variant = 'tool' }: { variant?: 'tool' | 'row' }) {
       <PopoverPanel
         open={open}
         onOpenChange={setOpen}
-        placement={variant === 'row' ? 'rightBottom' : 'topLeft'}
+        placement="topLeft"
         sideOffset={8}
         content={
           <HealthWidget
@@ -92,30 +92,14 @@ function HealthStatus({ variant = 'tool' }: { variant?: 'tool' | 'row' }) {
           />
         }
       >
-        {variant === 'row' ? (
-          <button
-            type="button"
-            className="m-nav-item"
-            aria-label={t('System health')}
-            style={healthy ? undefined : { color: 'var(--m-content-danger)' }}
-          >
-            <span className="m-nav-item__icon" aria-hidden="true">
-              <Icon size={15} />
-            </span>
-            <span className="m-nav-item__label m-truncate">
-              {t('System health')}
-            </span>
-          </button>
-        ) : (
-          <button
-            type="button"
-            className="m-nav__tool"
-            aria-label={t('System health')}
-            style={healthy ? undefined : { color: 'var(--m-content-danger)' }}
-          >
-            <Icon size={15} aria-hidden="true" />
-          </button>
-        )}
+        <button
+          type="button"
+          className="m-nav__tool"
+          aria-label={t('System health')}
+          style={healthy ? undefined : { color: 'var(--m-content-danger)' }}
+        >
+          <Icon size={15} aria-hidden="true" />
+        </button>
       </PopoverPanel>
       {showModal ? (
         <React.Suspense fallback={null}>

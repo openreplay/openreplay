@@ -7,7 +7,6 @@ interface Props {
   label?: string;
   inGrid?: boolean;
   height?: number;
-  [x: string]: any;
 }
 
 /** The legacy `progress` view: this period's count against the previous one. */

@@ -457,17 +457,20 @@ export default class DashboardStore {
     }
   }
 
+  /** Resolves false when the cards could not be added (already toasted). */
   async addWidgetToDashboard(
     dashboard: Dashboard,
     metricIds: any,
-  ): Promise<any> {
+  ): Promise<boolean> {
     this.isSaving = true;
     try {
       try {
         await dashboardService.addWidget(dashboard, metricIds);
         toast.success('Card added to dashboard.');
+        return true;
       } catch {
         toast.error('Card could not be added.');
+        return false;
       }
     } finally {
       this.isSaving = false;

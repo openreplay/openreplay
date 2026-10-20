@@ -1,3 +1,4 @@
+import { Loader } from '@/ui/feedback/Loader';
 import React from 'react';
 
 // the drawer's trend chart pulls echarts: load it when an error is opened,
@@ -8,7 +9,7 @@ export default function ErrorDetailsModal(
   props: React.ComponentProps<typeof ErrorDrawer>,
 ) {
   return (
-    <React.Suspense fallback={null}>
+    <React.Suspense fallback={<Loader loading />}>
       <ErrorDrawer {...props} />
     </React.Suspense>
   );

@@ -298,8 +298,9 @@ const ThisProject = observer(({ project }: { project: Project }) => {
             )
       }
     >
-      <PrefField label={t('Project name')}>
+      <PrefField label={t('Project name')} htmlFor="pref-project-name">
         <Input
+          id="pref-project-name"
           value={name}
           maxLength={40}
           disabled={locked}

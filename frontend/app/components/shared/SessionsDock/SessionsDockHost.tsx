@@ -11,6 +11,7 @@ import { useHistory, useLocation } from 'App/routing';
 
 import { SessionsDock } from './SessionsDock';
 import {
+  claimSessionTabs,
   clearSessionTabs,
   closeSessionTab,
   neighbourOf,
@@ -31,7 +32,11 @@ const LIST = /^\/[^/]+\/(sessions|bookmarks)\/?$/;
 function SessionsDockHost() {
   const { pathname } = useLocation();
   const history = useHistory();
-  const { sessionStore, projectsStore } = useStore();
+  const { sessionStore, projectsStore, userStore } = useStore();
+  const { id: accountId, tenantId } = userStore.account;
+  useEffect(() => {
+    if (accountId) claimSessionTabs(`${tenantId ?? ''}:${accountId}`);
+  }, [accountId, tenantId]);
   const rows = useOpenSessions();
   const override = useDockOverride();
   const replayId = REPLAY.exec(pathname)?.[1] ?? null;

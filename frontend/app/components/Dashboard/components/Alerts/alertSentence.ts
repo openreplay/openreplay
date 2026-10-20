@@ -15,9 +15,6 @@ export const getNotifyChannel = (
   alert: Record<string, any>,
   webhooks: Array<any>,
 ) => {
-  if (webhooks.length === 0) {
-    return 'OpenReplay';
-  }
   const getSlackChannels = () =>
     ` (${alert.slackInput
       .map(

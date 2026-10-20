@@ -41,13 +41,16 @@
   color: var(--m-content-decorative);
 }
 
-.m-segs__use {
-  opacity: 0;
-  transition: opacity var(--m-duration-instant) var(--m-ease-out);
-}
-.m-segs__row:hover .m-segs__use,
-.m-segs__use:focus-visible {
-  opacity: 1;
+/* revealed on hover only where there is hover: touch keeps it shown */
+@media (hover: hover) {
+  .m-segs__use {
+    opacity: 0;
+    transition: opacity var(--m-duration-instant) var(--m-ease-out);
+  }
+  .m-segs__row:hover .m-segs__use,
+  .m-segs__use:focus-visible {
+    opacity: 1;
+  }
 }
 
 .m-segs__row {

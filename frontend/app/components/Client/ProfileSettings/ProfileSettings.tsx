@@ -113,8 +113,13 @@ const Profile = observer(() => {
           onChange={(e) => setName(e.target.value)}
         />
       </PrefField>
-      <PrefField label={t('Email')}>
-        <Input value={account.email ?? ''} readOnly aria-readonly="true" />
+      <PrefField label={t('Email')} htmlFor="pref-email">
+        <Input
+          id="pref-email"
+          value={account.email ?? ''}
+          readOnly
+          aria-readonly="true"
+        />
       </PrefField>
       <PrefField label={t('Organization')} htmlFor="pref-org">
         <Input

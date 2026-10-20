@@ -22,7 +22,7 @@ function LongLoader({
       </div>
       <div style={{ width: 180 }}>
         <div className="h-1.5 overflow-hidden rounded-full bg-[var(--m-surface-sunken)]">
-          <div className="m-skeleton h-full w-2/5 rounded-full bg-[var(--m-content-accent)]" />
+          <div className="h-full w-2/5 rounded-full bg-[var(--m-content-accent)]" />
         </div>
       </div>
       <div>{t('This is taking longer than expected.')}</div>

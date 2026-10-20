@@ -32,7 +32,8 @@ function LevelControl({
 }) {
   const { t } = useTranslation();
   const [open, setOpen] = React.useState(false);
-  const [draft, setDraft] = React.useState(n || 3);
+  // undefined while the field is cleared, so typing a new number works
+  const [draft, setDraft] = React.useState<number | undefined>(n || 3);
 
   React.useEffect(() => {
     if (n) setDraft(n);
@@ -63,9 +64,13 @@ function LevelControl({
               min={1}
               max={total || 999}
               value={draft}
-              onChange={(v) => v && setDraft(v)}
+              onChange={setDraft}
             />
-            <Button variant="primary" onClick={() => apply(draft)}>
+            <Button
+              variant="primary"
+              disabled={!draft}
+              onClick={() => draft && apply(draft)}
+            >
               {t('Apply')}
             </Button>
           </div>

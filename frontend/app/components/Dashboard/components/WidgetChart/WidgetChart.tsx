@@ -568,8 +568,6 @@ function WidgetChart(props: Props) {
             inGrid={!props.isPreview}
             data={data[0]}
             height={height}
-            colors={colors}
-            params={params}
             label={
               _metric.metricOf ? labels[_metric.metricOf] : labels.sessionCount
             }

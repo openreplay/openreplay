@@ -23,6 +23,7 @@ function CardPicker({ onDone }: { onDone: () => void }) {
   const [creating, setCreating] = React.useState(false);
   const [query, setQuery] = React.useState('');
   const [cards, setCards] = React.useState<Widget[] | null>(null);
+  const [failed, setFailed] = React.useState(false);
   const [picked, setPicked] = React.useState<Set<number>>(() => new Set());
   const [busy, setBusy] = React.useState(false);
 
@@ -36,12 +37,15 @@ function CardPicker({ onDone }: { onDone: () => void }) {
           .getMetricsPaginated({ page: 1, limit: 50, name: q })
           .then((resp: any) => {
             if (id !== latest.current) return;
+            setFailed(false);
             setCards(
               (resp.list ?? []).map((m: any) => new Widget().fromJson(m)),
             );
           })
           .catch(() => {
-            if (id === latest.current) setCards([]);
+            if (id !== latest.current) return;
+            setFailed(true);
+            setCards([]);
           });
       }, 250),
     [],
@@ -59,7 +63,9 @@ function CardPicker({ onDone }: { onDone: () => void }) {
     if (!dashboard) return;
     setBusy(true);
     try {
-      await dashboardStore.addWidgetToDashboard(dashboard, [...picked]);
+      // a failed add keeps the picker and its selection
+      if (!(await dashboardStore.addWidgetToDashboard(dashboard, [...picked])))
+        return;
       await dashboardStore.fetch(dashboard.dashboardId!).catch(() => {});
       onDone();
     } finally {
@@ -86,9 +92,11 @@ function CardPicker({ onDone }: { onDone: () => void }) {
       />
       {cards == null ? null : available.length === 0 ? (
         <p className="m-dash__picker-empty">
-          {query
-            ? t('No card matches that.')
-            : t('Every card is already on it.')}
+          {failed
+            ? t('Cards could not be loaded. Try again in a moment.')
+            : query
+              ? t('No card matches that.')
+              : t('Every card is already on it.')}
         </p>
       ) : (
         <div

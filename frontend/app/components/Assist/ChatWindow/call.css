@@ -51,7 +51,8 @@
 .m-call__none {
   padding: var(--m-space-5);
   font-size: var(--m-text-xs);
-  color: var(--m-content-inverse, #fff);
+  /* on the always-black video, in both themes */
+  color: #fff;
 }
 .m-call__controls {
   display: flex;

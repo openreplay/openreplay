@@ -23,7 +23,6 @@ interface ModalContextType {
 const defaultConfig: ModalConfig = {
   title: '',
   placement: 'right',
-  width: 428,
 };
 
 const ModalContext = createContext<ModalContextType>({
@@ -69,6 +68,7 @@ export function ModalProvider({ children }: { children: ReactNode }) {
         onClose={closeModal}
         title={modalConfig.title ?? ''}
         size={(modalConfig.width ?? 0) > 560 ? 'wide' : 'form'}
+        width={modalConfig.width}
       >
         <div className="px-6 py-5">{modalContent}</div>
       </EntityDrawer>

@@ -2,6 +2,7 @@ import { IconButton } from '@/ui/actions/IconButton';
 import { EditableRow } from '@/ui/inputs/EditableRow';
 import { SearchField } from '@/ui/inputs/SearchField';
 import { EntityDrawer } from '@/ui/overlays/EntityDrawer';
+import { toast } from '@/ui/overlays/toast';
 import { ArrowDownAZ, ArrowDownZA } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
@@ -40,21 +41,26 @@ function UserPropertiesDrawer({ open, onClose, user, onSave }: Props) {
   const [query, setQuery] = React.useState('');
   const [sort, setSort] = React.useState<Sort>('off');
   const flat = flatPropertiesOf(user);
-  const all: [string, any][] = [
-    ...Object.entries(flat),
-    ...Object.entries(user.properties),
+  // each row keeps where it came from: a custom property may share a name
+  // with a built-in field (email, city) and must save back to itself
+  type Row = ['flat' | 'properties', string, any];
+  const all: Row[] = [
+    ...Object.entries(flat).map(([k, v]): Row => ['flat', k, v]),
+    ...Object.entries(user.properties).map(
+      ([k, v]): Row => ['properties', k, v],
+    ),
   ];
   const q = query.trim().toLowerCase();
   const shown = all
     .filter(
-      ([k, v]) =>
+      ([, k, v]) =>
         !q ||
         k.toLowerCase().includes(q) ||
         String(v ?? '')
           .toLowerCase()
           .includes(q),
     )
-    .sort(([a], [b]) =>
+    .sort(([, a], [, b]) =>
       sort === 'asc'
         ? a.localeCompare(b)
         : sort === 'desc'
@@ -101,21 +107,22 @@ function UserPropertiesDrawer({ open, onClose, user, onSave }: Props) {
           {shown.length === 0 ? (
             <p className="m-evd__none">{t('No property matches that.')}</p>
           ) : (
-            shown.map(([key, value]) => (
+            shown.map(([source, key, value]) => (
               <EditableRow
-                key={key}
+                key={`${source}:${key}`}
                 label={
                   <span className="m-dmg__mono">{getDisplayNameStr(key)}</span>
                 }
                 value={value == null ? '' : String(value)}
                 placeholder="—"
-                onSave={(v) =>
-                  onSave(
-                    key in flat ? 'flat' : 'properties',
-                    key,
-                    typeof value === 'number' && v !== '' ? parseFloat(v) : v,
-                  )
-                }
+                onSave={(v) => {
+                  if (typeof value !== 'number' || v === '')
+                    return onSave(source, key, v);
+                  const n = Number(v);
+                  if (!Number.isFinite(n))
+                    return toast.error(t('{{key}} takes a number', { key }));
+                  return onSave(source, key, n);
+                }}
               />
             ))
           )}

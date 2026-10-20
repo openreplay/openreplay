@@ -212,8 +212,9 @@ function RunsTab() {
     .map((b) => b.value)
     .filter(Boolean);
 
-  // reset to page 1 whenever a filter changes (sort resets page in onSort)
-  const filterKey = `${search}|${statusTab}|${resFilter}|${from}|${to}|${tagFilter}|${envFilter}|${regionFilter}`;
+  // reset to page 1 whenever a filter or the shared rows-per-page changes
+  // (sort resets page in onSort)
+  const filterKey = `${search}|${statusTab}|${resFilter}|${from}|${to}|${tagFilter}|${envFilter}|${regionFilter}|${pageSize}`;
   const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
   if (prevFilterKey !== filterKey) {
     setPrevFilterKey(filterKey);

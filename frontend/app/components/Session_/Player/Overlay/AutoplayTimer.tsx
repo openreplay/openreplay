@@ -37,7 +37,12 @@ function AutoplayTimer() {
   if (cancelled) return null;
 
   return (
-    <div className="m-toast m-autoplay" role="status" aria-live="polite">
+    <div
+      className="m-toast m-autoplay"
+      data-state="open"
+      role="status"
+      aria-live="polite"
+    >
       <span className="m-autoplay__text">
         {t('Next session in')} <b className="m-mono">{left}s</b>
       </span>

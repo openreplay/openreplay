@@ -108,9 +108,10 @@ handoff `context/handoff-2026-10-05.md`. The prototype runs on mock data (`src/s
 - [x] 6. Preferences: `PreferencesShell` (grouped rail built from `preferences(t)` + `menuRoutes`, so SaaS-added
       items and `extraRoutes` still route; unknown keys land in a "More" group; side nav no longer swaps), in-shell
       `PreferencesPage` frame, `PrefSection` blocks. Ported: account, session settings, projects (rail, tabs,
-      this-project, key, capture rate, metadata), weekly report, team (+ member drawer), roles (+ role drawer), audit
-      (+ details drawer), modules, integrations (cards; forms still open their own drawers), webhooks (+ drawer),
-      exported videos, agents (headings/toggles). SaaS placeholders kept mounted: `ClientSaas`, `Billing`,
+      this-project, key, capture rate, metadata), team (+ member drawer), roles (+ role drawer), audit
+      (+ details drawer), integrations (cards; forms still open their own drawers), webhooks (+ drawer),
+      exported videos, agents (headings/toggles). Modules and Weekly report are removed, not ported (Mehdi;
+      melonade DESIGN §56–57); their old routes redirect to the account page. SaaS placeholders kept mounted: `ClientSaas`, `Billing`,
       `Dangerzone`, `CaptureLimit`, `Modules/extra.ts`.  EE conditional-capture editor (recording conditions, phase 3), integration forms, test agents + agents' issue
       tab internals (phase 10)
 - [x] 7. Data management: activity (FilterBar, server sort, drag/hide columns via `DataTable.onColumnMove` +

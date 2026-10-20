@@ -45,7 +45,7 @@ function StackTrace({
     `${name}: ${message}`,
     ...frames.map(
       (f) =>
-        `    at ${f.function || '?'} (${f.filename}:${f.lineNo}:${f.colNo})`,
+        `    at ${f.function || '?'} (${f.absPath || f.filename}:${f.lineNo}:${f.colNo})`,
     ),
   ].join('\n');
 

@@ -21,7 +21,8 @@ function TopNButton({ totalValues, onApply, value }: Props) {
   const { metricStore } = useStore();
   const topN = onApply ? (value ?? 0) : metricStore.breakdownTopN;
   const [open, setOpen] = React.useState(false);
-  const [draft, setDraft] = React.useState(topN || 3);
+  // undefined while the field is cleared, so typing a new number works
+  const [draft, setDraft] = React.useState<number | undefined>(topN || 3);
 
   React.useEffect(() => {
     if (!onApply) setDraft(topN);
@@ -58,9 +59,13 @@ function TopNButton({ totalValues, onApply, value }: Props) {
               min={1}
               max={totalValues || 999}
               value={draft}
-              onChange={(v) => v && setDraft(v)}
+              onChange={setDraft}
             />
-            <Button variant="primary" onClick={() => apply(draft)}>
+            <Button
+              variant="primary"
+              disabled={!draft}
+              onClick={() => draft && apply(draft)}
+            >
               {t('Apply')}
             </Button>
           </div>

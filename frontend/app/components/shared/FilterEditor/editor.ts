@@ -34,6 +34,8 @@ async function withDefaults(
   }
 }
 
+let adds: Promise<unknown> = Promise.resolve();
+
 export function buildFilterEditor(target: FilterTarget): FilterEditor {
   const all = target.filters.map((f, i) => viewOf(f, String(i)));
   const events = all.filter((f) => f.isEvent);
@@ -57,7 +59,10 @@ export function buildFilterEditor(target: FilterTarget): FilterEditor {
     properties,
     eventsOrder: target.eventsOrder,
     onAdd: (entry) => {
-      void withDefaults(entry, storeFilterFor(entry)).then(target.add);
+      // defaults are fetched per event: queue the adds so a quick second pick
+      // never lands before the first
+      const ready = withDefaults(entry, storeFilterFor(entry));
+      adds = adds.then(() => ready).then(target.add);
     },
     onReplace: (key, entry) => {
       const before = current(key);
