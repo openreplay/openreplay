@@ -140,7 +140,7 @@ function CustomMetricTableErrors(props: RouteComponentProps & Props) {
           page={metric.page}
           pageSize={5}
           total={data.total ?? errors.length}
-          noun={[t('error'), t('errors')]}
+          noun={(count, n) => t('{{n}} errors', { count, n })}
           onPage={(page) => metric.updateKey('page', page)}
         />
       )}

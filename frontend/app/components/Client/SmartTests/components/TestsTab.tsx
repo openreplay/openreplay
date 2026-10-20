@@ -408,7 +408,10 @@ function TestsTab() {
         onSuccess: (res) => {
           if (res?.failed?.length)
             toast.error(
-              t('{{n}} tests could not be updated', { n: res.failed.length }),
+              t('{{n}} tests could not be updated', {
+                n: res.failed.length,
+                count: res.failed.length,
+              }),
             );
         },
         onError: () => toast.error(t('Failed to update test')),
@@ -466,7 +469,12 @@ function TestsTab() {
     try {
       // one atomic call: creates the merged test + soft-deletes the sources
       await apiMergeTests(projectId, vmToMergeRequest(base, sourceKeys, steps));
-      toast.success(t('Merged {{n}} tests', { n: sourceKeys.length }));
+      toast.success(
+        t('Merged {{n}} tests', {
+          n: sourceKeys.length,
+          count: sourceKeys.length,
+        }),
+      );
     } catch {
       toast.error(t('Failed to merge tests'));
       // reopen the merge review as it was, for a retry
@@ -1008,7 +1016,7 @@ function TestsTab() {
           setTagFilter('all');
         }}
         resultCount={total}
-        noun={[t('test'), t('tests')]}
+        noun={(count, n) => t('{{n}} tests', { count, n })}
       />
       {isPending ? (
         <SkeletonRows rows={7} columns={[34, 16, 12, 14, 8, 10]} />
@@ -1045,7 +1053,7 @@ function TestsTab() {
             page={page}
             pageSize={pageSize}
             total={total}
-            noun={[t('test'), t('tests')]}
+            noun={(count, n) => t('{{n}} tests', { count, n })}
             onPage={(p) => {
               // selection is per page: the bulk verbs act on the rows in view
               setSelectedKeys([]);
@@ -1116,7 +1124,10 @@ function TestsTab() {
         title={
           deleteOne
             ? t('Delete this test?')
-            : t('Delete {{n}} tests?', { n: deleteKeys.length })
+            : t('Delete {{n}} tests?', {
+                n: deleteKeys.length,
+                count: deleteKeys.length,
+              })
         }
         okText={t('Delete')}
         danger

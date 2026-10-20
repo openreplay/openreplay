@@ -514,7 +514,10 @@ function TestDrawer({
               right={
                 <Button variant="primary" onClick={acceptMerge}>
                   <Check size={14} />
-                  {t('Combine {{n}} steps', { n: mergedSteps.length })}
+                  {t('Combine {{n}} steps', {
+                    n: mergedSteps.length,
+                    count: mergedSteps.length,
+                  })}
                 </Button>
               }
             />

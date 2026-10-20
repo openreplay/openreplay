@@ -608,7 +608,7 @@ function SessionsTabOverview() {
               page={currentPage}
               pageSize={pageSize}
               total={total}
-              noun={[t('session'), t('sessions')]}
+              noun={(count, n) => t('{{n}} sessions', { count, n })}
               onPage={(page) => searchStore.updateCurrentPage(page)}
               onPageSize={(n) => {
                 setRowsPerPage(n);
@@ -619,9 +619,7 @@ function SessionsTabOverview() {
         )}
       </PagePanel>
       {/* mounted per open: it reads whether it updates or creates on mount */}
-      {saving && (
-        <SaveSearchModal show closeHandler={() => setSaving(false)} />
-      )}
+      {saving && <SaveSearchModal show closeHandler={() => setSaving(false)} />}
       <SegmentDrawer
         open={segDrawer != null}
         segment={segDrawer}

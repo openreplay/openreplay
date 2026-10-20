@@ -98,6 +98,7 @@ function UsersListPage() {
             <span className="m-dmg__count">
               {t('{{n}} people', {
                 n: numberWithCommas(analyticsStore.users.total),
+                count: analyticsStore.users.total,
               })}
             </span>
             <span className="m-page__controls">

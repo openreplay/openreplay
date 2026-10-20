@@ -10,7 +10,10 @@ export interface ListFooterProps {
   pageSize: number;
   total: number;
 
-  noun: [string, string];
+  /** The count phrase, so each language gets its plural form:
+      `(count, n) => t('{{n}} sessions', { count, n })`. A [one, other] pair
+      still works for callers outside this repo. */
+  noun: ((count: number, n: string) => string) | [string, string];
 
   onPage?: (page: number) => void;
 
@@ -40,19 +43,21 @@ export function ListFooter({
   const n = (x: number) => x.toLocaleString();
   const start = (page - 1) * pageSize + 1;
   const end = Math.min(page * pageSize, total);
-  const word = total === 1 ? noun[0] : noun[1];
+  const phrase =
+    typeof noun === 'function'
+      ? noun(total, n(total))
+      : `${n(total)} ${total === 1 ? noun[0] : noun[1]}`;
 
   return (
     <footer className="m-listfoot">
       <span className="m-listfoot__range">
         {paginated
-          ? t('{{start}}–{{end}} of {{total}} {{noun}}', {
+          ? t('{{start}}–{{end}} of {{phrase}}', {
               start: n(start),
               end: n(end),
-              total: n(total),
-              noun: word,
+              phrase,
             })
-          : `${n(total)} ${word}${detail ? ` ${detail}` : ''}`}
+          : `${phrase}${detail ? ` ${detail}` : ''}`}
       </span>
       {(paginated || sizable) && (
         <span className="m-listfoot__end">

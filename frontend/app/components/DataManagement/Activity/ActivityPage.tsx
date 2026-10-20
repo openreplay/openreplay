@@ -291,7 +291,7 @@ function ActivityPage() {
         head={
           <>
             <span className="m-dmg__count">
-              {t('{{n}} events', { n: numberWithCommas(total) })}
+              {t('{{n}} events', { n: numberWithCommas(total), count: total })}
             </span>
             <span className="m-page__controls">
               <DateRange
@@ -346,6 +346,7 @@ function ActivityPage() {
           >
             {t('Show {{n}} new events', {
               n: numberWithCommas(analyticsStore.newEvents),
+              count: analyticsStore.newEvents,
             })}
           </button>
         )}
@@ -369,7 +370,7 @@ function ActivityPage() {
               page={page}
               pageSize={pageSize}
               total={total}
-              noun={[t('event'), t('events')]}
+              noun={(count, n) => t('{{n}} events', { count, n })}
               onPage={(p) => analyticsStore.editPayload({ page: p })}
               onPageSize={(n) => {
                 setRowsPerPage(n);

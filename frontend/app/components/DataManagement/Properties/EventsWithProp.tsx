@@ -116,7 +116,7 @@ function EventsWithProp({ propName }: { propName: string }) {
             page={page}
             pageSize={pageSize}
             total={events.length}
-            noun={[t('event'), t('events')]}
+            noun={(count, n) => t('{{n}} events', { count, n })}
             onPage={setPage}
             onPageSize={(n) => {
               setRowsPerPage(n);

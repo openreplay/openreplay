@@ -130,6 +130,7 @@ function BackendIntegrationDrawer({
       !(await confirm({
         header: t('Replace the credentials in {{n}} projects?', {
           n: replaced.length,
+          count: replaced.length,
         }),
         confirmButton: t('Replace'),
         confirmation: t(

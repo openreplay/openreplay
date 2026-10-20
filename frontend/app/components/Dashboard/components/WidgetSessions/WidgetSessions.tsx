@@ -428,7 +428,7 @@ function WidgetSessions() {
               page={metricStore.sessionsPage}
               pageSize={pageSize}
               total={filteredSessions.total}
-              noun={[t('session'), t('sessions')]}
+              noun={(count, n) => t('{{n}} sessions', { count, n })}
               onPage={changePage}
               onPageSize={(n) => {
                 setRowsPerPage(n);

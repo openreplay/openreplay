@@ -592,7 +592,10 @@ const AddToDashboard = observer(
         onCancel={close}
         okText={
           picked.length > 1
-            ? t('Add to {{n}} dashboards', { n: picked.length })
+            ? t('Add to {{n}} dashboards', {
+                n: picked.length,
+                count: picked.length,
+              })
             : t('Add')
         }
         okDisabled={picked.length === 0}

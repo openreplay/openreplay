@@ -23,7 +23,8 @@ export function ActiveFilters<K extends string = string>({
   onRemove: (key: K, value: string) => void;
   onClearAll: () => void;
   resultCount?: number;
-  noun: readonly [string, string];
+  /** the count phrase: `(count, n) => t('{{n}} runs', { count, n })` */
+  noun: (count: number, n: string) => string;
 }) {
   const { t } = useTranslation();
   if (chips.length === 0) return null;
@@ -47,7 +48,7 @@ export function ActiveFilters<K extends string = string>({
       ))}
       {resultCount != null && (
         <span className="m-af__result">
-          {resultCount.toLocaleString()} {resultCount === 1 ? noun[0] : noun[1]}
+          {noun(resultCount, resultCount.toLocaleString())}
         </span>
       )}
       <Button variant="subtle" onClick={onClearAll} className="m-af__clear">

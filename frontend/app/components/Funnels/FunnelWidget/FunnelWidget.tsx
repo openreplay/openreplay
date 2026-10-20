@@ -234,7 +234,7 @@ function FunnelWidget({ metric, isWidget = false, data, compData }: Props) {
                 <span className="m-fn__more">
                   {hidden === 1
                     ? t('+1 step')
-                    : t('+{{n}} steps', { n: hidden })}
+                    : t('+{{n}} steps', { n: hidden, count: hidden })}
                 </span>
               )}
               {isWidget ? (

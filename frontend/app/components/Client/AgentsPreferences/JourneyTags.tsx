@@ -227,7 +227,7 @@ function JourneyTags() {
           page={safePage}
           pageSize={PAGE_SIZE}
           total={shown.length}
-          noun={[t('tag'), t('tags')]}
+          noun={(count, n) => t('{{n}} tags', { count, n })}
           onPage={setPage}
         />
       )}

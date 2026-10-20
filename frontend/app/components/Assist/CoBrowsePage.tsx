@@ -358,7 +358,7 @@ export const LiveSection = observer(
                 page={currentPage}
                 pageSize={pageSize}
                 total={total}
-                noun={[t('live session'), t('live sessions')]}
+                noun={(count, n) => t('{{n}} live sessions', { count, n })}
                 onPage={(page) => searchStoreLive.updateCurrentPage(page)}
                 onPageSize={(n) => {
                   setRowsPerPage(n);
@@ -546,7 +546,7 @@ export const RecordingsSection = observer(() => {
             page={page}
             pageSize={pageSize}
             total={total}
-            noun={[t('recording'), t('recordings')]}
+            noun={(count, n) => t('{{n}} recordings', { count, n })}
             onPage={(p) => recordingsStore.updatePage(p)}
             onPageSize={(n) => {
               setRowsPerPage(n);

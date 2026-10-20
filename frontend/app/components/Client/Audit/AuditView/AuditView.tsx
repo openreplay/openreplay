@@ -83,7 +83,10 @@ function AuditView() {
   return (
     <PreferencesPage
       title={t('Audit Trail')}
-      value={t('{{n}} actions', { n: numberWithCommas(auditStore.total) })}
+      value={t('{{n}} actions', {
+        n: numberWithCommas(auditStore.total),
+        count: auditStore.total,
+      })}
       flush
       actions={
         <>
@@ -148,7 +151,7 @@ function AuditView() {
             page={page}
             pageSize={pageSize}
             total={auditStore.total}
-            noun={[t('action'), t('actions')]}
+            noun={(count, n) => t('{{n}} actions', { count, n })}
             onPage={(p) => auditStore.updateKey('page', p)}
           />
         </>

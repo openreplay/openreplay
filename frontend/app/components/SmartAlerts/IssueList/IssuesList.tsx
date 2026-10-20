@@ -479,6 +479,7 @@ function IssuesList() {
           {issuesStore.unfilteredTotal
             ? t('Reset filters to show {{n}} issues', {
                 n: issuesStore.unfilteredTotal,
+                count: issuesStore.unfilteredTotal,
               })
             : t('Reset filters')}
         </Button>
@@ -655,7 +656,7 @@ function IssuesList() {
           issuesStore.clearOrigins();
         }}
         resultCount={issuesStore.total}
-        noun={[t('issue'), t('issues')]}
+        noun={(count, n) => t('{{n}} issues', { count, n })}
       />
       {issuesStore.loading && issuesStore.list.length === 0 ? (
         <SkeletonRows rows={6} columns={[10, 50, 25, 10, 5]} />
@@ -680,7 +681,7 @@ function IssuesList() {
             page={issuesStore.page}
             pageSize={pageSize}
             total={issuesStore.total}
-            noun={[t('issue'), t('issues')]}
+            noun={(count, n) => t('{{n}} issues', { count, n })}
             onPage={(p) => issuesStore.setPage(p)}
             onPageSize={(n) => {
               setRowsPerPage(n);

@@ -72,7 +72,7 @@ function Bookmarks() {
             page={bookmarks.page}
             pageSize={pageSize}
             total={bookmarks.total}
-            noun={[t('session'), t('sessions')]}
+            noun={(count, n) => t('{{n}} sessions', { count, n })}
             onPage={(page) => sessionStore.updateBookmarksPage(page)}
             onPageSize={(n) => {
               setRowsPerPage(n);

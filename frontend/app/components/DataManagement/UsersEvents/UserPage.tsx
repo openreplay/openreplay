@@ -216,7 +216,7 @@ function UserPage() {
             </dl>
             <div className="m-person__actions">
               <Button variant="subtle" onClick={() => setPropsOpen(true)}>
-                {t('+{{n}} properties', { n: propCount })}
+                {t('+{{n}} properties', { n: propCount, count: propCount })}
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

@@ -67,7 +67,7 @@ function CustomMetricTableSessions({
           page={metric.page}
           pageSize={metric.limit}
           total={data.total}
-          noun={[t('session'), t('sessions')]}
+          noun={(count, n) => t('{{n}} sessions', { count, n })}
           onPage={(page) => metric.updateKey('page', page)}
         />
       ) : total > shown.length ? (

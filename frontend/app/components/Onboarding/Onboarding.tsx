@@ -216,7 +216,10 @@ function Onboarding() {
     if (key === 'install') return copied ? t('Snippet copied') : t('Done');
     if (key === 'identify')
       return metadataKeys.length
-        ? t('User ID + {{n}} metadata keys', { n: metadataKeys.length })
+        ? t('User ID + {{n}} metadata keys', {
+            n: metadataKeys.length,
+            count: metadataKeys.length,
+          })
         : t('User ID');
     return invited.length
       ? t('{{n}} invited', { n: invited.length })

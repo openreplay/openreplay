@@ -159,6 +159,7 @@ function InviteStep({
                 ? t('One invitation goes out when you finish setup.')
                 : t('{{n}} invitations go out when you finish setup.', {
                     n: sendable,
+                    count: sendable,
                   })}
           </span>
         </div>

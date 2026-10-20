@@ -204,7 +204,7 @@ function AlertsView({ siteId }: { siteId: string }) {
             page={page}
             pageSize={pageSize}
             total={list.length}
-            noun={[t('alert'), t('alerts')]}
+            noun={(count, n) => t('{{n}} alerts', { count, n })}
             onPage={(p) => alertsStore.updateKey('page', p)}
             onPageSize={(n) => {
               setRowsPerPage(n);

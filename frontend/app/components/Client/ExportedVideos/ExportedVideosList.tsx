@@ -209,7 +209,7 @@ function ExportedVideosList() {
             page={recordingsStore.page}
             pageSize={10}
             total={recordingsStore.total}
-            noun={[t('video'), t('videos')]}
+            noun={(count, n) => t('{{n}} videos', { count, n })}
             onPage={(p) => recordingsStore.updatePage(p)}
           />
         </>

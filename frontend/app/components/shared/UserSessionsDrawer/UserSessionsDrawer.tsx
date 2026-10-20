@@ -89,7 +89,10 @@ function UserSessionsDrawer({ open, onClose, userId, name }: Props) {
           <span>
             {total === 1
               ? t('1 recording')
-              : t('{{n}} recordings', { n: total.toLocaleString() })}
+              : t('{{n}} recordings', {
+                  n: total.toLocaleString(),
+                  count: total,
+                })}
           </span>
         ) : undefined
       }
@@ -150,9 +153,24 @@ function UserSessionsDrawer({ open, onClose, userId, name }: Props) {
                     </span>
                   </span>
                   <span className="m-psess__figs">
-                    <span>{t('{{n}} events', { n: s.eventsCount })}</span>
-                    <span>{t('{{n}} pages', { n: s.pagesCount })}</span>
-                    <span>{t('{{n}} errors', { n: s.errorsCount ?? 0 })}</span>
+                    <span>
+                      {t('{{n}} events', {
+                        n: s.eventsCount,
+                        count: s.eventsCount,
+                      })}
+                    </span>
+                    <span>
+                      {t('{{n}} pages', {
+                        n: s.pagesCount,
+                        count: s.pagesCount,
+                      })}
+                    </span>
+                    <span>
+                      {t('{{n}} errors', {
+                        n: s.errorsCount ?? 0,
+                        count: s.errorsCount ?? 0,
+                      })}
+                    </span>
                   </span>
                 </button>
               </li>
@@ -162,7 +180,7 @@ function UserSessionsDrawer({ open, onClose, userId, name }: Props) {
             page={page}
             pageSize={PER_PAGE}
             total={total}
-            noun={[t('session'), t('sessions')]}
+            noun={(count, n) => t('{{n}} sessions', { count, n })}
             onPage={setPage}
           />
         </>

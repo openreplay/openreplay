@@ -103,7 +103,9 @@ function SpotsList() {
 
   const downloadSelected = async () => {
     const picked = selectedRefs();
-    toast.info(t('Downloading {{n}} videos', { n: picked.length }));
+    toast.info(
+      t('Downloading {{n}} videos', { n: picked.length, count: picked.length }),
+    );
     clearSelection();
     for (const s of picked) await download(s);
   };
@@ -160,7 +162,7 @@ function SpotsList() {
     }
     toast.success(
       refs.length > 1
-        ? t('{{n}} Spots deleted', { n: refs.length })
+        ? t('{{n}} Spots deleted', { n: refs.length, count: refs.length })
         : t('Spot successfully deleted'),
     );
   };
@@ -381,7 +383,7 @@ function SpotsList() {
             page={spotStore.page}
             pageSize={spotStore.limit}
             total={spotStore.total}
-            noun={[t('Spot'), t('Spots')]}
+            noun={(count, n) => t('{{n}} Spots', { count, n })}
             onPage={(page) => {
               spotStore.setPage(page);
               void spotStore.fetchSpots();
@@ -401,7 +403,10 @@ function SpotsList() {
         open={deleting != null}
         title={
           (deleting?.length ?? 0) > 1
-            ? t('Delete {{n}} Spots?', { n: deleting?.length })
+            ? t('Delete {{n}} Spots?', {
+                n: deleting?.length,
+                count: deleting?.length ?? 0,
+              })
             : t('Delete this Spot?')
         }
         okText={t('Delete')}

@@ -154,6 +154,7 @@ function TagWatch() {
                         ? t('new')
                         : t('{{n}} users', {
                             n: (tag.users ?? 0).toLocaleString(),
+                            count: tag.users ?? 0,
                           })}
                     </span>
                   </span>

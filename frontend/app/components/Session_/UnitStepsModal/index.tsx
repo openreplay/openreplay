@@ -549,7 +549,10 @@ function UnitStepsModal({ onClose }: Props) {
         <CodeBlock
           code={eventStr}
           language="JavaScript"
-          caption={t('{{n}} events', { n: events.length })}
+          caption={t('{{n}} events', {
+            n: events.length,
+            count: events.length,
+          })}
           copyLabel={t('Copy test')}
         />
       </div>

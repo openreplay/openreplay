@@ -55,7 +55,7 @@ export function SegmentIndicator({
         <span className="m-segind__count">
           {count === 1
             ? t('1 session')
-            : t('{{n}} sessions', { n: count.toLocaleString() })}
+            : t('{{n}} sessions', { n: count.toLocaleString(), count: count })}
         </span>
         <span className="m-segind__actions">
           {edited && onSaveChanges && (

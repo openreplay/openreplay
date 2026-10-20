@@ -310,7 +310,7 @@ function MetricsView({ siteId }: { siteId: string }) {
             page={page}
             pageSize={pageSize}
             total={total}
-            noun={[t('card'), t('cards')]}
+            noun={(count, n) => t('{{n}} cards', { count, n })}
             onPage={(p) => metricStore.updateKey('page', p)}
             onPageSize={(n) => {
               setRowsPerPage(n);

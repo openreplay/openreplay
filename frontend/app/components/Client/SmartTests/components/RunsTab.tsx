@@ -497,7 +497,7 @@ function RunsTab() {
           (Object.keys(state) as FilterKey[]).forEach((k) => state[k][1]('all'))
         }
         resultCount={total}
-        noun={[t('run'), t('runs')]}
+        noun={(count, n) => t('{{n}} runs', { count, n })}
       />
       {isPending || holdingForTrigger ? (
         <SkeletonRows rows={7} columns={[12, 40, 14, 16, 8, 8]} />
@@ -549,7 +549,7 @@ function RunsTab() {
             page={page}
             pageSize={pageSize}
             total={total}
-            noun={[t('run'), t('runs')]}
+            noun={(count, n) => t('{{n}} runs', { count, n })}
             onPage={setPage}
             onPageSize={(n) => {
               setRowsPerPage(n);

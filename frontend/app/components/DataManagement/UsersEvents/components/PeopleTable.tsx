@@ -140,7 +140,7 @@ function PeopleTable({ query, propName, hidden = [], onOpen, empty }: Props) {
         page={page}
         pageSize={pageSize}
         total={total}
-        noun={[t('person'), t('people')]}
+        noun={(count, n) => t('{{n}} people', { count, n })}
         onPage={(p) => analyticsStore.editUsersPayload({ page: p })}
         onPageSize={(n) => {
           setRowsPerPage(n);

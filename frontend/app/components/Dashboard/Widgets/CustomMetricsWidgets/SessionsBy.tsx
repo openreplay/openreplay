@@ -217,7 +217,10 @@ function SessionsBy(props: Props) {
             meta={
               <span className="m-cardd__facts">
                 <span>
-                  {t('{{n}} values', { n: values.length.toLocaleString() })}
+                  {t('{{n}} values', {
+                    n: values.length.toLocaleString(),
+                    count: values.length,
+                  })}
                 </span>
               </span>
             }
@@ -226,7 +229,7 @@ function SessionsBy(props: Props) {
                 page={page}
                 pageSize={DRAWER_PAGE}
                 total={values.length}
-                noun={[t('value'), t('values')]}
+                noun={(count, n) => t('{{n}} values', { count, n })}
                 onPage={setPage}
               />
             }

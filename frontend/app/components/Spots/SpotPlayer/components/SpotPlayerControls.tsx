@@ -73,13 +73,19 @@ function SpotPlayerControls() {
       <span className="m-rs__controls">
         <IconButton
           icon={<RotateCcw size={14} />}
-          label={t('Back {{n}} seconds', { n: store.skipInterval })}
+          label={t('Back {{n}} seconds', {
+            n: store.skipInterval,
+            count: store.skipInterval,
+          })}
           variant="ghost"
           onClick={() => skip(-1)}
         />
         <IconButton
           icon={<RotateCw size={14} />}
-          label={t('Forward {{n}} seconds', { n: store.skipInterval })}
+          label={t('Forward {{n}} seconds', {
+            n: store.skipInterval,
+            count: store.skipInterval,
+          })}
           variant="ghost"
           onClick={() => skip(1)}
         />

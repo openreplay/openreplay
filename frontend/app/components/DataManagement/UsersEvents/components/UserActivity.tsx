@@ -200,7 +200,7 @@ function UserActivity({ userId, name }: { userId: string; name: string }) {
               page={page}
               pageSize={LIMIT}
               total={total}
-              noun={[t('event'), t('events')]}
+              noun={(count, n) => t('{{n}} events', { count, n })}
               onPage={setPage}
             />
           )}

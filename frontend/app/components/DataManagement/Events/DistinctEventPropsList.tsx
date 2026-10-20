@@ -139,7 +139,7 @@ function DistinctEventPropsList({ eventName }: { eventName: string }) {
             page={page}
             pageSize={pageSize}
             total={shown.length}
-            noun={[t('property'), t('properties')]}
+            noun={(count, n) => t('{{n}} properties', { count, n })}
             onPage={setPage}
             onPageSize={(n) => {
               setRowsPerPage(n);

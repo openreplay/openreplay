@@ -160,7 +160,7 @@ function CardPicker({ onDone }: { onDone: () => void }) {
         >
           {picked.size === 1
             ? t('Add 1 card')
-            : t('Add {{n}} cards', { n: picked.size })}
+            : t('Add {{n}} cards', { n: picked.size, count: picked.size })}
         </Button>
       ) : null}
       <Button

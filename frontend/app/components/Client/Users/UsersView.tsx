@@ -65,7 +65,7 @@ function UsersView({ isOnboarding = false }: { isOnboarding?: boolean }) {
   return (
     <PreferencesPage
       title={t('Team')}
-      value={t('{{n}} members', { n: users.length })}
+      value={t('{{n}} members', { n: users.length, count: users.length })}
       flush
       actions={
         <>
@@ -161,7 +161,7 @@ function UsersView({ isOnboarding = false }: { isOnboarding?: boolean }) {
           page={userStore.page}
           pageSize={userStore.pageSize}
           total={list.length}
-          noun={[t('member'), t('members')]}
+          noun={(count, n) => t('{{n}} members', { count, n })}
           onPage={(p) => userStore.updateKey('page', p)}
         />
       ) : null}

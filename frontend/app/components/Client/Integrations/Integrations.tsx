@@ -207,7 +207,10 @@ function Integrations(props: Props) {
                       {on ? (
                         <span className="m-pref__on">
                           {cat.isProject && covered > 1
-                            ? t('Connected · {{n}} projects', { n: covered })
+                            ? t('Connected · {{n}} projects', {
+                                n: covered,
+                                count: covered,
+                              })
                             : t('Connected')}
                         </span>
                       ) : null}

@@ -194,7 +194,7 @@ function StatsTable({
             page={page}
             pageSize={PER_PAGE}
             total={sessions.total}
-            noun={[t('session'), t('sessions')]}
+            noun={(count, n) => t('{{n}} sessions', { count, n })}
             onPage={onPageChange}
           />
         </>

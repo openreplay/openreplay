@@ -130,7 +130,7 @@ function TagsPage() {
             page={tagWatchStore.page}
             pageSize={pageSize}
             total={tagWatchStore.total}
-            noun={[t('feature'), t('features')]}
+            noun={(count, n) => t('{{n}} features', { count, n })}
             onPage={(p) => void tagWatchStore.getTags(Number(siteId), p)}
             onPageSize={(n) => {
               setRowsPerPage(n);

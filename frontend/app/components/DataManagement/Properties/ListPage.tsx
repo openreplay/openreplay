@@ -293,7 +293,7 @@ function ListPage() {
             page={page}
             pageSize={pageSize}
             total={visible.length}
-            noun={[t('property'), t('properties')]}
+            noun={(count, n) => t('{{n}} properties', { count, n })}
             onPage={setPage}
             onPageSize={(n) => {
               setRowsPerPage(n);

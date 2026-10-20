@@ -85,7 +85,7 @@ function CardUserList() {
         page={metricStore.sessionsPage}
         pageSize={metricStore.sessionsPageSize}
         total={data.length}
-        noun={[t('user'), t('users')]}
+        noun={(count, n) => t('{{n}} users', { count, n })}
         onPage={(page) => metricStore.updateKey('sessionsPage', page)}
       />
       <UserSessionsDrawer

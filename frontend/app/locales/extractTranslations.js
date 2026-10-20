@@ -94,11 +94,25 @@ const read = (lng) =>
 walkDirectory(projectDir);
 
 const en = read('en');
+// plural forms (`key_one`, `key_few`, …) are written by hand per locale and
+// follow their base key; t('key', { count }) picks one by the locale's rules
+const PLURAL = /_(zero|one|two|few|many|other)$/;
+const CATEGORIES = ['zero', 'one', 'two', 'few', 'many', 'other'];
 const kept = (k) => used.has(k) || literals.has(k);
 const order = [
-  ...Object.keys(en).filter(kept),
+  ...Object.keys(en).filter((k) => !PLURAL.test(k) && kept(k)),
   ...[...used].filter((k) => !(k in en)),
 ];
+const withPlurals = (data, value) =>
+  Object.fromEntries(
+    order.flatMap((k) => [
+      [k, value(k)],
+      ...CATEGORIES.filter((c) => `${k}_${c}` in data).map((c) => [
+        `${k}_${c}`,
+        data[`${k}_${c}`],
+      ]),
+    ]),
+  );
 
 let changed = false;
 const write = (lng, data) => {
@@ -109,13 +123,15 @@ const write = (lng, data) => {
   if (!check) fs.writeFileSync(file, next, 'utf8');
 };
 
-write('en', Object.fromEntries(order.map((k) => [k, k])));
+write('en', withPlurals(en, (k) => k));
 for (const lng of LOCALES) {
   const current = read(lng);
-  write(lng, Object.fromEntries(order.map((k) => [k, current[k] ?? k])));
+  write(lng, withPlurals(current, (k) => current[k] ?? k));
 }
 
 const added = order.filter((k) => !(k in en)).length;
-const removed = Object.keys(en).filter((k) => !kept(k)).length;
+const removed = Object.keys(en).filter(
+  (k) => !PLURAL.test(k) && !kept(k),
+).length;
 console.log(`${order.length} keys: ${added} new, ${removed} no longer used`);
 if (check && changed) process.exit(1);

@@ -263,7 +263,7 @@ function DashboardsView() {
             page={page}
             pageSize={pageSize}
             total={list.length}
-            noun={[t('dashboard'), t('dashboards')]}
+            noun={(count, n) => t('{{n}} dashboards', { count, n })}
             onPage={setPage}
             onPageSize={(n) => {
               setRowsPerPage(n);

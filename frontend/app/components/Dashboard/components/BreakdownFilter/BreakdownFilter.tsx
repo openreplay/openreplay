@@ -109,7 +109,12 @@ function BreakdownFilter({ metric, observeChanges = () => {} }: Props) {
       <span>
         <Tooltip
           title={
-            full ? t('At most {{n}} breakdowns', { n: MAX_BREAKDOWNS }) : null
+            full
+              ? t('At most {{n}} breakdowns', {
+                  n: MAX_BREAKDOWNS,
+                  count: MAX_BREAKDOWNS,
+                })
+              : null
           }
         >
           <span>

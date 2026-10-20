@@ -82,10 +82,10 @@ function FilterSeries({
   const count =
     filters.length === 0
       ? null
-      : `${events === 1 ? t('1 event') : t('{{n}} events', { n: events })} · ${
+      : `${events === 1 ? t('1 event') : t('{{n}} events', { n: events, count: events })} · ${
           properties === 1
             ? t('1 filter')
-            : t('{{n}} filters', { n: properties })
+            : t('{{n}} filters', { n: properties, count: properties })
         }`;
 
   return (

@@ -378,7 +378,7 @@ function SegmentsListPage() {
               page={page}
               pageSize={pageSize}
               total={shown.length}
-              noun={[t('segment'), t('segments')]}
+              noun={(count, n) => t('{{n}} segments', { count, n })}
               onPage={setPage}
               onPageSize={(n) => {
                 setRowsPerPage(n);

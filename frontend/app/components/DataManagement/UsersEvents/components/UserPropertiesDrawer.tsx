@@ -75,7 +75,11 @@ function UserPropertiesDrawer({ open, onClose, user, onSave }: Props) {
       onClose={onClose}
       eyebrow={t('User')}
       title={t('All user properties')}
-      meta={<span>{t('{{n}} properties', { n: all.length })}</span>}
+      meta={
+        <span>
+          {t('{{n}} properties', { n: all.length, count: all.length })}
+        </span>
+      }
     >
       <div className="m-uprops">
         <div className="m-uprops__tools">

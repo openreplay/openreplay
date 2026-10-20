@@ -1,6 +1,6 @@
+import { formatVital, vitalStatus } from '@/lib/vitals';
 import { IconButton } from '@/ui/actions/IconButton';
 import { Chip } from '@/ui/data/Chip';
-import { formatVital, vitalStatus } from '@/lib/vitals';
 import { TYPES } from 'Types/session/event';
 import copy from 'copy-to-clipboard';
 import type { TFunction } from 'i18next';
@@ -128,7 +128,9 @@ function describe(e: any, t: TFunction, isFirst: boolean): Detail {
     case TYPES.TAPRAGE:
       return {
         top: e.label || t('Click rage'),
-        sub: e.count ? t('{{n}} clicks', { n: e.count }) : undefined,
+        sub: e.count
+          ? t('{{n}} clicks', { n: e.count, count: e.count })
+          : undefined,
         signal: 'frustration',
       };
     case 'mouse_thrashing':
