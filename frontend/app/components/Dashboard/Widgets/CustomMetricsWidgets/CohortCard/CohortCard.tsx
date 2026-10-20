@@ -8,97 +8,12 @@ interface Props {
 }
 function CohortCard(props: Props) {
   const { t } = useTranslation();
-  // const { data } = props;
-  const data = [
-    {
-      cohort: '2022-01-01',
-      users: 100,
-      data: [
-        100, 95, 90, 85, 80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20, 15,
-        10, 5,
-      ],
-    },
-    {
-      cohort: '2022-01-08',
-      users: 100,
-      data: [
-        100, 95, 90, 85, 80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20, 15,
-      ],
-    },
-    {
-      cohort: '2022-01-08',
-      users: 100,
-      data: [
-        100, 95, 90, 85, 80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20, 15,
-      ],
-    },
-    {
-      cohort: '2022-01-08',
-      users: 100,
-      data: [100, 95, 90, 85, 80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30],
-    },
-    {
-      cohort: '2022-01-08',
-      users: 100,
-      data: [90, 70, 50, 30],
-    },
-    {
-      cohort: '2022-01-08',
-      users: 100,
-      data: [90, 70, 50, 30],
-    },
-    {
-      cohort: '2022-01-08',
-      users: 100,
-      data: [90, 70, 50, 30],
-    },
-    {
-      cohort: '2022-01-08',
-      users: 100,
-      data: [90, 70, 50, 30],
-    },
-    {
-      cohort: '2022-01-08',
-      users: 100,
-      data: [90, 70, 50, 30],
-    },
-    {
-      cohort: '2022-01-08',
-      users: 100,
-      data: [90, 70, 50, 30],
-    },
-    {
-      cohort: '2022-01-08',
-      users: 100,
-      data: [90, 70, 50, 30],
-    },
-    {
-      cohort: '2022-01-08',
-      users: 100,
-      data: [90, 70, 50, 30],
-    },
-    {
-      cohort: '2022-01-08',
-      users: 100,
-      data: [90, 70, 50, 30],
-    },
-    {
-      cohort: '2022-01-08',
-      users: 100,
-      data: [90, 70, 50, 30],
-    },
-    {
-      cohort: '2022-01-08',
-      users: 100,
-      data: [90, 70, 50, 30],
-    },
-    {
-      cohort: '2022-01-08',
-      users: 100,
-      data: [90, 70, 50, 30],
-    },
-    // ... more rows
-  ];
+  // rows of { cohort, users, data: retention % per week }
+  const data: { cohort: string; users: number; data: number[] }[] =
+    Array.isArray(props.data) && Array.isArray(props.data[0]?.data)
+      ? props.data
+      : [];
+  if (!data.length) return null;
 
   return (
     <div className="m-cohort">

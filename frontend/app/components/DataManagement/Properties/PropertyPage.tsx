@@ -23,11 +23,21 @@ function PropertyPage({
   const isUser = source === 'users';
   const volume = (isUser ? p.usersCount : p.count) ?? 0;
 
+  // the prop lags until the list refetches: a second quick edit must not
+  // send the first one's old value back
+  const latest = React.useRef(p);
+  React.useEffect(() => {
+    latest.current = p;
+  }, [p]);
+
   const save = async (patch: Partial<DistinctProperty>) => {
+    const prev = latest.current;
+    latest.current = { ...prev, ...patch };
     try {
-      await updateProperty({ ...p, ...patch, source });
+      await updateProperty({ ...latest.current, source });
       toast.success(t('Property updated'));
     } catch (e) {
+      latest.current = prev;
       console.error(e);
       toast.error(t('Failed to update property'));
     } finally {

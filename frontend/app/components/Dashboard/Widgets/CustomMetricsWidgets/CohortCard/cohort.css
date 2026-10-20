@@ -18,8 +18,20 @@
 }
 .m-cohort__table th.is-fixed,
 .m-cohort__table td.is-fixed {
+  position: sticky;
+  z-index: 1;
   text-align: left;
   white-space: nowrap;
+  background: var(--m-surface-default);
+}
+/* Date and Users stay put while the weeks scroll under them */
+.m-cohort__table .is-fixed:first-child {
+  left: 0;
+  width: 6.5rem;
+  min-width: 6.5rem;
+}
+.m-cohort__table .is-fixed:nth-child(2) {
+  left: calc(6.5rem + 4px);
 }
 .m-cohort__span {
   text-align: left !important;

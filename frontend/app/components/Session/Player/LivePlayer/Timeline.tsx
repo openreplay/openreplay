@@ -39,11 +39,18 @@ function Timeline() {
     if (liveTimeTravel) setHeld(pct);
   };
   const onSeek = (pct: number) => {
+    setHeld(null);
+    hideTimeTooltip();
     if (liveTimeTravel) {
       player.jump(Math.max(Math.round((pct / 100) * endTime), 0));
-      hideTimeTooltip();
+      return;
     }
-    setHeld(null);
+    // the handle stops its click from reaching the bar, so it travels back
+    // itself, as a click on the bar would
+    void player.toggleTimetravel().then((ok) => {
+      if (ok)
+        player.jump(Math.max(Math.round((pct / 100) * store.get().endTime), 0));
+    });
   };
   const left = held ?? time * scale;
 

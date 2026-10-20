@@ -56,6 +56,22 @@ const DraggableCircle: FC<Props> = memo(
       last.current = null;
       onScrub(null);
     };
+    const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+      const step = e.shiftKey ? 10 : 1;
+      const to: Record<string, number> = {
+        ArrowLeft: left - step,
+        ArrowDown: left - step,
+        ArrowRight: left + step,
+        ArrowUp: left + step,
+        Home: 0,
+        End: 100,
+      };
+      if (!(e.key in to)) return;
+      // the player's own arrow seeking must not run as well
+      e.preventDefault();
+      e.stopPropagation();
+      onRelease(Math.min(100, Math.max(0, to[e.key])));
+    };
 
     return (
       <div
@@ -64,6 +80,8 @@ const DraggableCircle: FC<Props> = memo(
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={Math.round(left)}
+        tabIndex={0}
+        onKeyDown={onKeyDown}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}

@@ -15,6 +15,9 @@ import { debounce } from 'App/utils';
 import { cardIcon, cardTypeLabel } from '../../cardIcons';
 import AddCardSection from '../AddCardSection/AddCardSection';
 
+const PAGE = 50;
+const MAX_PAGES = 10;
+
 /** Library cards not yet on the dashboard, ticked and added at once; or a new one. */
 function CardPicker({ onDone }: { onDone: () => void }) {
   const { t } = useTranslation();
@@ -27,34 +30,50 @@ function CardPicker({ onDone }: { onDone: () => void }) {
   const [picked, setPicked] = React.useState<Set<number>>(() => new Set());
   const [busy, setBusy] = React.useState(false);
 
+  const onBoard = new Set(
+    (dashboard?.widgets ?? []).map((w: any) => Number(w.metricId)),
+  );
+  const boardRef = React.useRef(onBoard);
+  boardRef.current = onBoard;
+
   // typing outruns the API: only the latest search's answer is shown
   const latest = React.useRef(0);
   const load = React.useMemo(
     () =>
-      debounce((q: string) => {
+      debounce(async (q: string) => {
         const id = ++latest.current;
-        void metricService
-          .getMetricsPaginated({ page: 1, limit: 50, name: q })
-          .then((resp: any) => {
+        try {
+          // cards already on the board are skipped, so page on until a
+          // screenful is left or the library ends
+          const found: Widget[] = [];
+          for (let page = 1; page <= MAX_PAGES; page++) {
+            const resp: any = await metricService.getMetricsPaginated({
+              page,
+              limit: PAGE,
+              name: q,
+            });
             if (id !== latest.current) return;
-            setFailed(false);
-            setCards(
-              (resp.list ?? []).map((m: any) => new Widget().fromJson(m)),
+            const list = (resp.list ?? []).map((m: any) =>
+              new Widget().fromJson(m),
             );
-          })
-          .catch(() => {
-            if (id !== latest.current) return;
-            setFailed(true);
-            setCards([]);
-          });
+            found.push(...list);
+            const left = found.filter(
+              (c) => !boardRef.current.has(Number(c.metricId)),
+            ).length;
+            if (left >= PAGE || list.length < PAGE) break;
+          }
+          setFailed(false);
+          setCards(found);
+        } catch {
+          if (id !== latest.current) return;
+          setFailed(true);
+          setCards([]);
+        }
       }, 250),
     [],
   );
   React.useEffect(() => load(query), [query]);
 
-  const onBoard = new Set(
-    (dashboard?.widgets ?? []).map((w: any) => Number(w.metricId)),
-  );
   const available = (cards ?? []).filter(
     (c) => !onBoard.has(Number(c.metricId)),
   );

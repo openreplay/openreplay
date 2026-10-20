@@ -70,7 +70,7 @@ const EChartsSunburst = (props: Props) => {
     return () => {
       setDropsByUrl(null);
     };
-  }, [data, height, theme]);
+  }, [data, height, inGrid, theme]);
 
   React.useEffect(() => {
     if (!chartRef.current || !chartData) return;

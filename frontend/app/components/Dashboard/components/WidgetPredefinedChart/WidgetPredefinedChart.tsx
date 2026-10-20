@@ -1,3 +1,4 @@
+import { useChartTheme } from '@/ui/data/chart';
 import { FilterKey } from 'Types/filter/filterType';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
@@ -22,6 +23,8 @@ interface Props {
 }
 function WidgetPredefinedChart(props: Props) {
   const { t } = useTranslation();
+  // the error charts read the palette while rendering: re-render on a theme flip
+  useChartTheme();
   const { data, predefinedKey, metric, isTemplate } = props;
 
   const renderWidget = () => {

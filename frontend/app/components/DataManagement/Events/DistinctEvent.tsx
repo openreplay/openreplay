@@ -23,12 +23,22 @@ function DistinctEventPage({
   const { t } = useTranslation();
   const toast = useToast();
 
+  // the prop lags until the list refetches: a second quick edit must not
+  // send the first one's old value back
+  const latest = React.useRef(event);
+  React.useEffect(() => {
+    latest.current = event;
+  }, [event]);
+
   const save = async (patch: Partial<DistinctEvent>) => {
+    const prev = latest.current;
+    latest.current = { ...prev, ...patch };
     try {
-      await updateEventProperty({ ...event, ...patch });
+      await updateEventProperty(latest.current);
       refetchList();
       toast.success(t('Event updated'));
     } catch (e) {
+      latest.current = prev;
       console.error(e);
       toast.error(t('Failed to update event'));
     }

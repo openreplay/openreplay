@@ -1,4 +1,5 @@
 import { Button } from '@/ui/actions/button';
+import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
 import { DrawerFooter } from '@/ui/overlays/EntityDrawer';
 import { Trash2 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
@@ -36,6 +37,7 @@ function AlertFormModal({ onClose }: Props) {
           }))
       : all;
 
+  const [deleting, setDeleting] = React.useState(false);
   const save = () => alertsStore.save(instance).then(() => onClose?.());
   const remove = () =>
     alertsStore.remove(instance.alertId).then(() => onClose?.());
@@ -48,7 +50,7 @@ function AlertFormModal({ onClose }: Props) {
       <DrawerFooter
         left={
           instance.exists() ? (
-            <Button variant="danger-outline" onClick={() => void remove()}>
+            <Button variant="danger-outline" onClick={() => setDeleting(true)}>
               <Trash2 size={13} />
               {t('Delete')}
             </Button>
@@ -69,6 +71,21 @@ function AlertFormModal({ onClose }: Props) {
           </>
         }
       />
+      <ConfirmDialog
+        open={deleting}
+        title={t('Delete this alert?')}
+        okText={t('Yes, delete')}
+        danger
+        onCancel={() => setDeleting(false)}
+        onOk={() => {
+          setDeleting(false);
+          void remove();
+        }}
+      >
+        {t('{{name}} stops watching and is permanently deleted.', {
+          name: instance.name,
+        })}
+      </ConfirmDialog>
     </div>
   );
 }
