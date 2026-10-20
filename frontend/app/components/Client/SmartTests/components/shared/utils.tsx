@@ -13,6 +13,8 @@ import {
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import i18n from 'App/i18n';
+
 import {
   Resolution,
   Schedule,
@@ -186,6 +188,8 @@ export const ALL_DAYS = [0, 1, 2, 3, 4, 5, 6];
 export const WEEKDAY_DAYS = [1, 2, 3, 4, 5];
 
 export function ordinal(n: number): string {
+  // the suffixes are English; the other locales read the bare day number
+  if (!(i18n.language || 'en').startsWith('en')) return String(n);
   const s = ['th', 'st', 'nd', 'rd'];
   const v = n % 100;
   return `${n}${s[(v - 20) % 10] ?? s[v] ?? s[0]}`;
