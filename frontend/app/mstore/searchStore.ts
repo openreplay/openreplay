@@ -620,19 +620,11 @@ class SearchStore {
           value: checkFilterValue(subFilter.value),
         }))
       : null;
+    // a new array: PrivateRoutes refetches when the filters array changes
     const inst = this.instance.toData();
-    inst.filters.push(filter);
+    inst.filters = [...inst.filters, filter];
     this.instance = new Search(inst);
     this.currentPage = 1;
-
-    const hasValue = Boolean(
-      filter.value && filter.value[0] && filter.value[0] !== '',
-    );
-    const isCustomEvent = Boolean(filter.isEvent) && !filter.autoCaptured;
-
-    if (hasValue || isCustomEvent) {
-      void this.fetchSessions();
-    }
   };
 
   moveFilter(draggedIndex: number, newPosition: number) {

@@ -158,7 +158,8 @@ function PrivateRoutes() {
       (sites.length > 0 && !hasRecordings));
   const siteIdList: any = sites.map(({ id }) => id);
 
-  const initialFetchDoneRef = React.useRef(false);
+  // a remount (e.g. behind the Router's Loader) finds the URL already parsed
+  const initialFetchDoneRef = React.useRef(searchStore.urlParsed);
   const lastFiltersSiteIdRef = React.useRef<string | null>(null);
   const [filtersLoaded, setFiltersLoaded] = React.useState(false);
 
@@ -255,6 +256,9 @@ function PrivateRoutes() {
       });
       searchStore.setUrlParsed();
       void searchStore.fetchSessions(true);
+      setTimeout(() => {
+        initialFetchDoneRef.current = true;
+      }, 500);
     } else {
       searchStore.setUrlParsed();
       void searchStore.fetchSessions(true);
