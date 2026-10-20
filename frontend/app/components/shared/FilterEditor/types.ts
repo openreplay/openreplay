@@ -75,7 +75,9 @@ export interface FilterTarget {
   owner?: object;
   filters: readonly Filter[];
   eventsOrder: EventsOrder;
-  add: (filter: Filter) => void;
+  /** may resolve later (a store fetching the filter's defaults): the add
+      queue waits for it */
+  add: (filter: Filter) => void | Promise<unknown>;
   update: (index: number, filter: Filter) => void;
   remove: (index: number) => void;
   move: (from: number, to: number) => void;

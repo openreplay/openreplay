@@ -2907,9 +2907,9 @@
   "Estimated cost": "Орієнтовна вартість",
   "{{cost}} a month": "{{cost}} на місяць",
   "Estimate my cost": "Розрахувати вартість",
-  "Could not delete the alert.": "Could not delete the alert.",
-  "Team member: {{name}}": "Team member: {{name}}",
-  "Could not check the users limit. Reload to try again.": "Could not check the users limit. Reload to try again.",
-  "Checking the users limit…": "Checking the users limit…",
-  "The card was added; reload to see it on the board.": "The card was added; reload to see it on the board."
+  "Could not delete the alert.": "Не вдалося видалити оповіщення.",
+  "Team member: {{name}}": "Член команди: {{name}}",
+  "Could not check the users limit. Reload to try again.": "Не вдалося перевірити ліміт користувачів. Перезавантажте сторінку та спробуйте ще раз.",
+  "Checking the users limit…": "Перевіряємо ліміт користувачів…",
+  "The card was added; reload to see it on the board.": "Картку додано; перезавантажте сторінку, щоб побачити її на дашборді."
 }

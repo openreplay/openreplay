@@ -152,16 +152,10 @@ const write = (lng, data) => {
   if (!check) fs.writeFileSync(file, next, 'utf8');
 };
 
-write(
-  'en',
-  withPlurals(en, (k) => k),
-);
+write('en', withPlurals(en, (k) => k));
 for (const lng of LOCALES) {
   const current = read(lng);
-  write(
-    lng,
-    withPlurals(current, (k) => current[k] ?? k),
-  );
+  write(lng, withPlurals(current, (k) => current[k] ?? k));
 }
 
 const added = order.filter((k) => !(k in en)).length;

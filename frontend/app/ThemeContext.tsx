@@ -59,9 +59,11 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({
   }, []);
 
   const toggleTheme = () => {
-    const next = theme === 'dark' ? 'light' : 'dark';
-    applyTheme(next);
-    setTheme(next);
+    setTheme((prev) => {
+      const next = prev === 'dark' ? 'light' : 'dark';
+      applyTheme(next);
+      return next;
+    });
   };
 
   return (
@@ -70,10 +72,6 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({
     </ThemeContext.Provider>
   );
 };
-
-/** The theme, or undefined outside the provider. */
-export const useThemeName = (): ThemeType | undefined =>
-  useContext(ThemeContext)?.theme;
 
 export const useTheme = (): ThemeContextType => {
   const context = useContext(ThemeContext);

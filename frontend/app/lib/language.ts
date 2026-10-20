@@ -11,18 +11,26 @@ export const LANGUAGES = [
   { value: 'ko', label: '한국어' },
 ];
 
-/** Switches the interface language and remembers it; `onChanged` runs once
-    the last pick has loaded. */
+/** Switches the interface language and remembers it once it has loaded;
+    `onChanged` runs then, for the last pick only. */
 export function useChangeLanguage(onChanged?: () => void) {
   const { i18n } = useTranslation();
   const pending = useRef<string | null>(null);
   return (code: string) => {
-    localStorage.setItem('i18nextLng', code);
     // a slower earlier locale chunk must not be the one that wins
     pending.current = code;
-    void i18n.changeLanguage(code).then(() => {
-      if (pending.current !== code) void i18n.changeLanguage(pending.current!);
-      else onChanged?.();
+    void i18n.changeLanguage(code, (err) => {
+      if (pending.current !== code) {
+        void i18n.changeLanguage(pending.current!);
+        return;
+      }
+      // a locale that failed to load is neither remembered nor announced
+      if (err) {
+        console.error('Could not load the language', err);
+        return;
+      }
+      localStorage.setItem('i18nextLng', code);
+      onChanged?.();
     });
   };
 }

@@ -44,7 +44,7 @@ export const activityTarget = (store: AnalyticsStore): FilterTarget => ({
     return store.payloadFilters.filters;
   },
   eventsOrder: 'or',
-  add: (f) => void store.addFilter(f),
+  add: (f) => store.addFilter(f),
   update: (i, f) =>
     void store
       .updateFilter(i, f)
@@ -68,7 +68,7 @@ export const peopleTarget = (store: AnalyticsStore): FilterTarget => ({
     return store.usersPayloadFilters.filters;
   },
   eventsOrder: 'and',
-  add: (f) => void store.addUserFilter(f),
+  add: (f) => store.addUserFilter(f),
   update: (i, f) => {
     store.updateUserFilter(i, f);
     store.editUsersPayload({ filters: [...store.usersPayloadFilters.filters] });

@@ -186,6 +186,8 @@ class NamedIntegrationStore<T extends Integration> {
   deleteIntegration = async (siteId?: string) => {
     if (!this.instance) return;
     const res = await integrationsService.removeIntegration(this.name, siteId);
+    // kept unless the server confirms the delete
+    if (!res || res.errors?.length) return res;
     // the old credentials must not read as a live connection
     runInAction(() => {
       this.instance = this.namedTypeCreator({});

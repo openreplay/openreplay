@@ -2721,9 +2721,9 @@
   "Estimated cost": "预估费用",
   "{{cost}} a month": "每月 {{cost}}",
   "Estimate my cost": "估算我的费用",
-  "Could not delete the alert.": "Could not delete the alert.",
-  "Team member: {{name}}": "Team member: {{name}}",
-  "Could not check the users limit. Reload to try again.": "Could not check the users limit. Reload to try again.",
-  "Checking the users limit…": "Checking the users limit…",
-  "The card was added; reload to see it on the board.": "The card was added; reload to see it on the board."
+  "Could not delete the alert.": "无法删除警报。",
+  "Team member: {{name}}": "团队成员：{{name}}",
+  "Could not check the users limit. Reload to try again.": "无法检查用户限制。请重新加载后重试。",
+  "Checking the users limit…": "正在检查用户限制…",
+  "The card was added; reload to see it on the board.": "卡片已添加；重新加载即可在仪表板上看到。"
 }

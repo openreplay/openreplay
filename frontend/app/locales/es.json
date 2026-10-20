@@ -2845,9 +2845,9 @@
   "Estimated cost": "Coste estimado",
   "{{cost}} a month": "{{cost}} al mes",
   "Estimate my cost": "Estimar mi coste",
-  "Could not delete the alert.": "Could not delete the alert.",
-  "Team member: {{name}}": "Team member: {{name}}",
-  "Could not check the users limit. Reload to try again.": "Could not check the users limit. Reload to try again.",
-  "Checking the users limit…": "Checking the users limit…",
-  "The card was added; reload to see it on the board.": "The card was added; reload to see it on the board."
+  "Could not delete the alert.": "No se pudo eliminar la alerta.",
+  "Team member: {{name}}": "Miembro del equipo: {{name}}",
+  "Could not check the users limit. Reload to try again.": "No se pudo comprobar el límite de usuarios. Recarga para intentarlo de nuevo.",
+  "Checking the users limit…": "Comprobando el límite de usuarios…",
+  "The card was added; reload to see it on the board.": "La tarjeta se añadió; recarga para verla en el panel de control."
 }

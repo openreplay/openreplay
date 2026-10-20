@@ -2721,9 +2721,9 @@
   "Estimated cost": "예상 비용",
   "{{cost}} a month": "월 {{cost}}",
   "Estimate my cost": "내 비용 추정",
-  "Could not delete the alert.": "Could not delete the alert.",
-  "Team member: {{name}}": "Team member: {{name}}",
-  "Could not check the users limit. Reload to try again.": "Could not check the users limit. Reload to try again.",
-  "Checking the users limit…": "Checking the users limit…",
-  "The card was added; reload to see it on the board.": "The card was added; reload to see it on the board."
+  "Could not delete the alert.": "알림을 삭제할 수 없습니다.",
+  "Team member: {{name}}": "팀 구성원: {{name}}",
+  "Could not check the users limit. Reload to try again.": "사용자 한도를 확인할 수 없습니다. 새로고침한 후 다시 시도하세요.",
+  "Checking the users limit…": "사용자 한도 확인 중…",
+  "The card was added; reload to see it on the board.": "카드가 추가되었습니다. 대시보드에서 보려면 새로고침하세요."
 }
