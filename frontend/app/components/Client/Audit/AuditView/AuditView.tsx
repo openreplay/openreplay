@@ -52,7 +52,12 @@ function AuditView() {
   }, [page, searchQuery, order, period]);
 
   const when = (a: any) =>
-    a.createdAt ? checkForRecent(a.createdAt, 'LLL dd, yyyy, hh:mm a') : '';
+    a.createdAt
+      ? checkForRecent(a.createdAt, 'LLL dd, yyyy, hh:mm a', {
+          time: 'hh:mm a',
+          t,
+        })
+      : '';
 
   const columns: Column<any>[] = [
     {

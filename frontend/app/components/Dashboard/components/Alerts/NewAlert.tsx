@@ -44,9 +44,24 @@ function NewAlert({ siteId }: { siteId: string }) {
 
   useEffect(() => {
     init({});
-    if (list.length === 0) fetchList();
+    let mounted = true;
+    const listed = list.length === 0 ? fetchList() : Promise.resolve();
+    // an id the list doesn't know leads back to the list, not to a blank create form
+    void listed.then(() => {
+      const alertId = location.pathname.split('/').pop();
+      if (
+        mounted &&
+        alertId !== 'create' &&
+        !alertsStore.alerts.some((a: Alert) => a.alertId === String(alertId))
+      ) {
+        history.replace(withSiteId(alerts(), siteId));
+      }
+    });
     fetchTriggerOptions();
     void fetchWebhooks();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   useEffect(() => {

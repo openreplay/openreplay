@@ -138,6 +138,7 @@ export interface ISession {
   platform: 'web' | 'ios' | 'android';
   projectId: number | string;
   startTs: number;
+  trackerVersion?: string;
   timestamp?: number;
   backendErrors?: number;
   consoleErrors?: number;

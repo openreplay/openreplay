@@ -2,6 +2,7 @@ import { getRowsPerPage } from '@/ui/layout/rows-per-page';
 import Period, { LAST_7_DAYS } from 'Types/app/period';
 import { makeAutoObservable } from 'mobx';
 
+import { userStore } from 'App/mstore';
 import { recordingsService } from 'App/services';
 import { ExportsResponse, IRecord } from 'App/services/RecordingsService';
 
@@ -57,6 +58,8 @@ export default class RecordingsStore {
       query: this.search,
       startTimestamp: this.period.start,
       endTimestamp: this.period.end,
+      // "My videos": the API narrows to one author by user id
+      userId: this.currentUser ? userStore.account.id : undefined,
     };
 
     this.loading = true;

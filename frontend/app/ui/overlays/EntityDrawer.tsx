@@ -245,15 +245,18 @@ export function Section({
 export function Field({
   label,
   error,
+  htmlFor,
   children,
 }: {
   label: ReactNode;
   /** shown under the control while the value can't be saved */
   error?: ReactNode;
+  /** the control's id, when wrapping alone doesn't name it */
+  htmlFor?: string;
   children: ReactNode;
 }) {
   return (
-    <label className="m-dfield">
+    <label className="m-dfield" htmlFor={htmlFor}>
       <span className="m-dfield__label">{label}</span>
       {children}
       {error ? (

@@ -217,9 +217,19 @@ export const LiveSection = observer(
         : null;
 
     const onSort = (next: ColumnSort | null) => {
+      // the table clears a column after desc, but the list is always sorted:
+      // clearing "started" (the default) flips it to asc, clearing duration
+      // falls back to the default
+      if (!next) {
+        searchStoreLive.edit({
+          sort: 'timestamp',
+          order: sort === 'timestamp' ? 'asc' : 'desc',
+        });
+        return;
+      }
       searchStoreLive.edit({
-        sort: next?.column === 'duration' ? 'duration' : 'timestamp',
-        order: next && !next.desc ? 'asc' : 'desc',
+        sort: next.column === 'duration' ? 'duration' : 'timestamp',
+        order: next.desc ? 'desc' : 'asc',
       });
     };
 

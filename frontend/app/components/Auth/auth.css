@@ -48,8 +48,11 @@
   justify-content: center;
   padding: var(--m-space-6) var(--m-space-6) clamp(var(--m-space-8), 10vh, 8rem);
 }
+/* safe: a stack taller than the body starts at its top instead of being cut
+   off above it (the pitch over the card, below 860px) */
 .m-auth__body {
   align-items: safe center;
+  justify-content: safe center;
 }
 .m-auth__foot {
   flex: none;

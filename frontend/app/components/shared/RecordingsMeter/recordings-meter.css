@@ -18,13 +18,19 @@
 
 .m-meter .m-bar {
   flex: 1;
-  min-width: 2rem;
+  /* the first to give way to a long readout */
+  min-width: 0;
   max-width: none;
 }
 
+/* the last: clipped rather than run under the upgrade control */
 .m-meter__value {
   font-family: var(--m-font-num);
-  flex: none;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: var(--m-text-2xs);
   color: var(--m-content-muted);
   font-variant-numeric: tabular-nums;

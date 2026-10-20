@@ -2911,5 +2911,8 @@
   "Team member: {{name}}": "Член команди: {{name}}",
   "Could not check the users limit. Reload to try again.": "Не вдалося перевірити ліміт користувачів. Перезавантажте сторінку та спробуйте ще раз.",
   "Checking the users limit…": "Перевіряємо ліміт користувачів…",
-  "The card was added; reload to see it on the board.": "Картку додано; перезавантажте сторінку, щоб побачити її на дашборді."
+  "The card was added; reload to see it on the board.": "Картку додано; перезавантажте сторінку, щоб побачити її на дашборді.",
+  "Could not send the verification email": "Не вдалося надіслати лист для підтвердження",
+  "Today": "Сьогодні",
+  "Yesterday": "Учора"
 }

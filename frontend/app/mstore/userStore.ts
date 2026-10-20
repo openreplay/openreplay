@@ -407,6 +407,10 @@ class UserStore {
     });
     try {
       const data = await userService.signup(params);
+      // a refused signup (email in use, bad captcha) comes back as 200 with `errors`
+      if (data?.errors?.length) {
+        throw Object.assign(new Error(data.errors[0]), { errors: data.errors });
+      }
       runInAction(() => {
         this.account = new Account(data.user);
         this.scopeState = data.scopeState;
@@ -425,7 +429,7 @@ class UserStore {
       runInAction(() => {
         this.signUpRequest = {
           loading: false,
-          errors: error.response?.errors || [],
+          errors: error.errors || [],
         };
       });
       toast.error(inUse ? inUseMsg : genericMsg);
@@ -490,7 +494,6 @@ class UserStore {
         this.scopeState = data.data.scopeState;
         this.updatePasswordRequest = { loading: false, errors: [] };
       });
-      toast.success(this.t('Successfully changed password'));
       return data;
     } catch (e: any) {
       toast.error(e.message || this.t('Failed to updated password.'));
@@ -591,12 +594,10 @@ class UserStore {
     }
   };
 
-  resendEmailVerification = async (email: string) => {
-    try {
-      await userService.resendEmailVerification(email);
-    } catch (error) {
-      // TODO error handling
-    }
+  /** Rejects when no mail went out, so the caller can say so. The server
+      mails the signed-in account; `_email` is not sent. */
+  resendEmailVerification = async (_email?: string) => {
+    await userService.resendEmailVerification();
   };
 
   pushNewSite = (newSite: any) => {
@@ -644,7 +645,6 @@ class UserStore {
           this.account.apiKey = nextKey;
         }
       });
-      toast.success(this.t('API key regenerated'));
       return data;
     } catch (e: any) {
       toast.error(e.message || this.t('Failed to regenerate API key'));

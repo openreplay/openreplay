@@ -238,7 +238,8 @@ function WidgetView({
           cardData.series[0].maxEvents = 1;
         }
 
-        metricStore.merge(cardData);
+        // a fresh preset is not an edit: leaving it asks nothing until it is changed
+        metricStore.merge(cardData, false);
       }
     };
     sync().finally(() => setCardReady(true));
@@ -247,23 +248,32 @@ function WidgetView({
   useEffect(() => {
     if (metricId && metricId !== 'create') {
       metricStore.fetch(metricId, dashboardStore.period).catch((e) => {
-        if (e.response.status === 404 || e.response.status === 422) {
+        // api_client throws with the response as the cause
+        const status = (e?.cause as Response | undefined)?.status;
+        if (status === 404 || status === 422) {
           setMetricNotFound(true);
         }
       });
     } else if (!metricStore.instance) {
       metricStore.init();
     }
-    const wasCollapsed = settingsStore.menuCollapsed;
-    settingsStore.updateMenuCollapsed(true);
-    return () => {
-      if (!wasCollapsed) settingsStore.updateMenuCollapsed(false);
-    };
-  }, [metricId, metricStore, dashboardStore.period, settingsStore]);
+  }, [metricId, metricStore, dashboardStore.period]);
+
+  // the editor wants the room: the menu folds while it is open, and the
+  // stored choice is left alone so a reload or a closed tab keeps it
+  useEffect(() => {
+    settingsStore.foldMenu(true);
+    return () => settingsStore.foldMenu(null);
+  }, [settingsStore]);
 
   useEffect(() => {
     if (metricNotFound) {
-      history.replace(withSiteId('/metrics', siteId));
+      history.replace(
+        withSiteId(
+          dashboardId ? `/dashboard/${dashboardId}` : '/metrics',
+          siteId,
+        ),
+      );
     }
   }, [metricNotFound, history, siteId]);
 
@@ -371,14 +381,14 @@ function WidgetView({
     );
 
   return (
-    <Loader loading={loading || !cardReady}>
+    <Loader loading={loading || !cardReady || metricNotFound}>
       <Prompt
         when={hasChanged}
         message={(loc: any) =>
-          loc.pathname.includes('/metrics/') ||
-          loc.pathname.includes('/metric/')
+          loc?.pathname?.includes('/metrics/') ||
+          loc?.pathname?.includes('/metric/')
             ? true
-            : 'You have unsaved changes. Are you sure you want to leave?'
+            : t('You have unsaved changes. Are you sure you want to leave?')
         }
       />
       <PageCard

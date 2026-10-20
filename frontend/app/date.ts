@@ -1,5 +1,6 @@
 import { CUSTOM_RANGE } from '@/dateRange';
 import { LAST_7_DAYS, LAST_24_HOURS, LAST_30_DAYS } from 'Types/app/period';
+import type { TFunction } from 'i18next';
 import { DateTime, Duration } from 'luxon';
 
 import { Timezone } from 'App/mstore/types/sessionSettings';
@@ -181,15 +182,23 @@ export function formatTimeOrDate(
  * Check if the given date is today/yesterday else return in specified format.
  * @param {Date} date Date to be cheked.
  * @param {String} format Returning date format.
+ * @param {Object} recent `time`: the format the time keeps after "Today" /
+ *   "Yesterday" (which `format` would otherwise lose); `t`: translates the words.
  * @return {String} Formated date string.
  */
-export const checkForRecent = (date: DateTime, format: string): string => {
+export const checkForRecent = (
+  date: DateTime,
+  format: string,
+  { time, t }: { time?: string; t?: TFunction } = {},
+): string => {
   const d = new Date();
+  const at = time ? `, ${date.toFormat(time)}` : '';
   // Today
-  if (date.hasSame(d, 'day')) return 'Today';
+  if (date.hasSame(d, 'day')) return `${t ? t('Today') : 'Today'}${at}`;
 
   // Yesterday
-  if (date.hasSame(d.setDate(d.getDate() - 1), 'day')) return 'Yesterday';
+  if (date.hasSame(d.setDate(d.getDate() - 1), 'day'))
+    return `${t ? t('Yesterday') : 'Yesterday'}${at}`;
 
   // Formatted
   return date.toFormat(format);

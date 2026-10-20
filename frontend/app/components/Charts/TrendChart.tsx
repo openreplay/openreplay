@@ -300,11 +300,22 @@ export default function TrendChart({
   }, [points, compPoints, namesKey, compNamesKey, viewType, t, label, inGrid]);
 
   if (!option) return null;
+  const drill = (dataIndex: number, seriesName: string) =>
+    onClick?.({
+      activePayload: [{ payload: { timestamp: points[dataIndex]?.timestamp } }],
+      seriesName,
+    });
   return (
     <EChart
       option={option}
       height={height}
       ariaLabel={label}
+      // a 2px line is hard to hit: anywhere in the plot drills into that point
+      onAxisClick={
+        onClick && (viewType === 'lineChart' || viewType === 'areaChart')
+          ? (dataIndex) => drill(dataIndex, '')
+          : undefined
+      }
       onClick={(p) => {
         if (p.componentType !== 'series') return;
         const series = p.seriesName ?? p.name ?? '';
@@ -313,12 +324,7 @@ export default function TrendChart({
           return;
         }
         if (typeof p.dataIndex !== 'number') return;
-        onClick?.({
-          activePayload: [
-            { payload: { timestamp: points[p.dataIndex]?.timestamp } },
-          ],
-          seriesName: series,
-        });
+        drill(p.dataIndex, series);
         if (series) onSeriesFocus?.(series.replace(PREV, ''));
       }}
     />

@@ -56,6 +56,7 @@ export function menuAliases(
   const site = (path: string) => withSiteId(path, siteId);
   return {
     [MENU.USERS]: () => site(routes.dataManagement.userPage('')),
+    [MENU.ALERTS]: () => site(routes.alertEdit('')),
   };
 }
 

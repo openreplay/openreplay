@@ -2849,5 +2849,8 @@
   "Team member: {{name}}": "Membre de l’équipe : {{name}}",
   "Could not check the users limit. Reload to try again.": "Impossible de vérifier la limite d’utilisateurs. Rechargez pour réessayer.",
   "Checking the users limit…": "Vérification de la limite d’utilisateurs…",
-  "The card was added; reload to see it on the board.": "La carte a été ajoutée ; rechargez pour la voir sur le tableau de bord."
+  "The card was added; reload to see it on the board.": "La carte a été ajoutée ; rechargez pour la voir sur le tableau de bord.",
+  "Could not send the verification email": "Impossible d'envoyer l'e-mail de vérification",
+  "Today": "Aujourd'hui",
+  "Yesterday": "Hier"
 }

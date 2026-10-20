@@ -219,6 +219,16 @@ export function formatDuration(sec: number): string {
   return `${m}m ${String(s).padStart(2, '0')}s`;
 }
 
+export const operatorLabel = (f: SearchFilter) =>
+  operatorsFor(f.entry.dataType).find((o) => o.value === f.operator)?.label ??
+  f.operator;
+
+/** The values as read: predefined ones by their label, not their id. */
+export const valueText = (f: SearchFilter) =>
+  f.value
+    .map((v) => f.entry.options?.find((o) => o.value === v)?.label ?? v)
+    .join(', ');
+
 export function describeFilter(t: TFunction, f: SearchFilter): string {
   const { entry } = f;
   const name = entry.displayName;
@@ -238,13 +248,9 @@ export function describeFilter(t: TFunction, f: SearchFilter): string {
       return `${name} ${formatDuration(lo)} – ${formatDuration(hi)}`;
     return `${name} > ${formatDuration(lo || hi)}`;
   }
-  const op =
-    operatorsFor(entry.dataType).find((o) => o.value === f.operator)?.label ??
-    f.operator;
+  const op = operatorLabel(f);
   if (isNullary(f.operator)) return `${name} ${op}`;
-  return f.value.length
-    ? `${name} ${op} ${f.value.join(', ')}`
-    : `${name} ${op}…`;
+  return f.value.length ? `${name} ${op} ${valueText(f)}` : `${name} ${op}…`;
 }
 
 export function describeRules(

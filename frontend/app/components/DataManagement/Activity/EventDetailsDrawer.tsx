@@ -12,6 +12,7 @@ import { useToast } from '@/ui/overlays/toast';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import { useQuery } from '@tanstack/react-query';
 import { Braces, Code2, List, Play } from 'lucide-react';
+import { DateTime } from 'luxon';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -27,6 +28,9 @@ import '../data-management.css';
 
 type Scope = 'all' | 'default' | 'custom';
 type View = 'list' | 'json';
+
+/** the event's own timestamps, epoch ms */
+const DATE_PROPS = ['created_at', 'time'];
 
 interface Props {
   eventId: string | null;
@@ -81,6 +85,14 @@ function EventDetailsDrawer({ eventId, onClose }: Props) {
     null,
     2,
   );
+
+  // a timestamp reads as a date; the JSON and the tooltip keep the raw value
+  const shown = (key: string, value: any) =>
+    DATE_PROPS.includes(key) && typeof value === 'number'
+      ? DateTime.fromMillis(value, timezone ? { zone: timezone } : {}).toFormat(
+          'LLL d, yyyy, HH:mm:ss',
+        )
+      : String(value);
 
   const name = event ? filterStore.getFilterDisplayName(event.event_name) : '';
   const sub = event?.sub_name
@@ -199,7 +211,7 @@ function EventDetailsDrawer({ eventId, onClose }: Props) {
                     </span>
                     <Tooltip title={String(value)} delay={500}>
                       <span className="m-evd__value m-truncate m-dmg__mono">
-                        {String(value)}
+                        {shown(key, value)}
                       </span>
                     </Tooltip>
                   </li>

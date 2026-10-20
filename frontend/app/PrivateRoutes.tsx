@@ -247,12 +247,17 @@ function PrivateRoutes() {
         }
         filters.push(filter);
       });
+      // a custom range needs both bounds; without them keep the default range
       searchStore.edit({
         filters,
-        startDate: start ? parseInt(start) : undefined,
-        endDate: end ? parseInt(end) : undefined,
-        rangeName: 'CUSTOM_RANGE',
-        rangeValue: 'CUSTOM_RANGE',
+        ...(start && end
+          ? {
+              startDate: parseInt(start),
+              endDate: parseInt(end),
+              rangeName: 'CUSTOM_RANGE',
+              rangeValue: 'CUSTOM_RANGE',
+            }
+          : {}),
       });
       searchStore.setUrlParsed();
       void searchStore.fetchSessions(true);

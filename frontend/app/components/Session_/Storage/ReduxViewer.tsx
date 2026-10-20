@@ -46,8 +46,12 @@ function ReduxViewer() {
     return { ...pureMSG, ...decoded };
   };
 
+  // a row that fails to decode is skipped rather than rendered half-empty
   const decodedList = React.useMemo(
-    () => listNow.map((msg) => decodeMessage(msg) as ListItem),
+    () =>
+      listNow
+        .map((msg) => decodeMessage(msg) as ListItem | null)
+        .filter((msg): msg is ListItem => Boolean(msg?.action)),
     [listNow.length],
   );
 

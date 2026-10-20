@@ -39,6 +39,20 @@
 .m-strip__tools { display: flex; align-items: center; gap: var(--m-space-3); flex: none; margin-left: auto; }
 .m-strip__search { width: 14rem; }
 
+/* no room for the hint beside the title: it takes its own line under it */
+@container (max-width: 36rem) {
+  .m-strip__head {
+    flex-wrap: wrap;
+    height: auto;
+    min-height: var(--m-control-height-lg);
+    row-gap: 0;
+  }
+  .m-strip__hint {
+    order: 1;
+    flex-basis: 100%;
+  }
+}
+
 .m-strip__loading { position: relative; }
 
 .m-strip__scrim {

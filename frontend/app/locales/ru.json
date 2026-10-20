@@ -2911,5 +2911,8 @@
   "Team member: {{name}}": "Член команды: {{name}}",
   "Could not check the users limit. Reload to try again.": "Не удалось проверить лимит пользователей. Перезагрузите страницу и попробуйте снова.",
   "Checking the users limit…": "Проверяем лимит пользователей…",
-  "The card was added; reload to see it on the board.": "Карточка добавлена; перезагрузите страницу, чтобы увидеть её на дашборде."
+  "The card was added; reload to see it on the board.": "Карточка добавлена; перезагрузите страницу, чтобы увидеть её на дашборде.",
+  "Could not send the verification email": "Не удалось отправить письмо для подтверждения",
+  "Today": "Сегодня",
+  "Yesterday": "Вчера"
 }

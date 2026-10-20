@@ -117,6 +117,7 @@ function UserPropertiesDrawer({ open, onClose, user, onSave }: Props) {
                 label={
                   <span className="m-dmg__mono">{getDisplayNameStr(key)}</span>
                 }
+                ariaLabel={getDisplayNameStr(key)}
                 value={value == null ? '' : String(value)}
                 placeholder="—"
                 onSave={(v) => {

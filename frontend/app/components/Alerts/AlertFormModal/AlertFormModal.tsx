@@ -39,7 +39,16 @@ function AlertFormModal({ onClose }: Props) {
       : all;
 
   const [deleting, setDeleting] = React.useState(false);
-  const save = () => alertsStore.save(instance).then(() => onClose?.());
+  const save = () => {
+    const wasUpdating = instance.exists();
+    return alertsStore
+      .save(instance)
+      .then(() => {
+        toast.success(wasUpdating ? t('Alert updated') : t('New alert saved'));
+        onClose?.();
+      })
+      .catch(() => toast.error(t('Failed to create an alert')));
+  };
   const remove = () =>
     alertsStore
       .remove(instance.alertId)

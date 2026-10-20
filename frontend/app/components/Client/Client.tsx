@@ -1,6 +1,8 @@
 import { Loader } from '@/ui/feedback/Loader';
-import React from 'react';
+import { observer } from 'mobx-react-lite';
+import React, { type ReactNode } from 'react';
 
+import { useStore } from 'App/mstore';
 import { client as clientRoute } from 'App/routes';
 import { Navigate, withRouter } from 'App/routing';
 import { CLIENT_TABS } from 'App/utils/routeUtils';
@@ -28,6 +30,16 @@ const Roles = React.lazy(() => import('./Roles'));
 const SmartTests = React.lazy(() => import('./SmartTests'));
 const UserView = React.lazy(() => import('./Users/UsersView'));
 const Webhooks = React.lazy(() => import('./Webhooks'));
+
+/** The rail leaves these out below enterprise: a typed URL doesn't open them. */
+const EnterpriseOnly = observer(({ children }: { children: ReactNode }) => {
+  const { userStore } = useStore();
+  return userStore.isEnterprise ? (
+    <>{children}</>
+  ) : (
+    <Navigate to={clientRoute(CLIENT_TABS.PROFILE)} replace />
+  );
+});
 
 class Client extends React.PureComponent<any> {
   constructor(props) {
@@ -66,9 +78,17 @@ class Client extends React.PureComponent<any> {
       case CLIENT_TABS.WEBHOOKS:
         return <Webhooks />;
       case CLIENT_TABS.MANAGE_ROLES:
-        return <Roles />;
+        return (
+          <EnterpriseOnly>
+            <Roles />
+          </EnterpriseOnly>
+        );
       case CLIENT_TABS.AUDIT:
-        return <AuditView />;
+        return (
+          <EnterpriseOnly>
+            <AuditView />
+          </EnterpriseOnly>
+        );
       case CLIENT_TABS.AGENTS:
         return anyAgentEnabled() ? (
           <AgentsPreferences />
@@ -76,7 +96,11 @@ class Client extends React.PureComponent<any> {
           <Navigate to={clientRoute(CLIENT_TABS.PROFILE)} replace />
         );
       case CLIENT_TABS.VIDEOS:
-        return <ExportedVideosList />;
+        return (
+          <EnterpriseOnly>
+            <ExportedVideosList />
+          </EnterpriseOnly>
+        );
       case CLIENT_TABS.TEST_AGENTS:
         return agentTestsEnabled() ? (
           <SmartTests />

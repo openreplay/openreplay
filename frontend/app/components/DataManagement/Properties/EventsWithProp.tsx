@@ -36,8 +36,9 @@ function EventsWithProp({ propName }: { propName: string }) {
     () =>
       data.events.map((e) => ({
         ...e,
-        displayName:
-          filterStore.findEvent({ name: e.name })?.displayName || e.name,
+        // the API's own name first; the catalogue (quiet for an event it
+        // doesn't know) only fills a blank one
+        displayName: e.displayName || filterStore.getFilterDisplayName(e.name),
       })),
     [data.events],
   );

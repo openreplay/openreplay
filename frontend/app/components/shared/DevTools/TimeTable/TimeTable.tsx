@@ -96,9 +96,14 @@ function computeTimeLine(
   firstVisibleRowIndex: number,
   visibleCount: number,
 ): TimeLineInfo {
+  // the index can point past a short (or filtered) list; keep a full page
+  const start = Math.max(
+    0,
+    Math.min(firstVisibleRowIndex, rows.length - visibleCount),
+  );
   const visibleRows = rows.slice(
-    firstVisibleRowIndex,
-    firstVisibleRowIndex + visibleCount + _additionalHeight,
+    start,
+    start + visibleCount + _additionalHeight,
   );
   let timestart =
     visibleRows.length > 0 ? Math.min(...visibleRows.map((r) => r.time)) : 0;
@@ -152,7 +157,11 @@ function TimeTable(props: Props) {
         align: 'center',
         smooth: false,
       });
-      setFirstVisibleRowIndex(props.activeIndex ?? 0);
+      // centred, the active row is not the first one, and a list that fits
+      // does not scroll at all: read where the list actually is
+      setFirstVisibleRowIndex(
+        scroller.current.findItemIndex(scroller.current.scrollOffset),
+      );
     }
   }, [props.activeIndex]);
 

@@ -43,61 +43,68 @@ export type RouteComponentProps<
   match?: RouteMatch<Params>;
 };
 
+type PromptMessage = string | ((location: Location) => string | boolean);
+
+/** Asked before an in-app navigation; false keeps the current page. */
+const blockers = new Set<(next: Location) => boolean>();
+
+/* BrowserRouter's history in react-router 7 has no block(), so Prompt wraps
+   its push / replace (what Link, useNavigate and useHistory end in) once.
+   Back / forward and the browser's own navigations are not asked. */
+function guardNavigator(navigator: any) {
+  if (navigator.__guarded) return;
+  navigator.__guarded = true;
+  for (const key of ['push', 'replace'] as const) {
+    const navigate = navigator[key].bind(navigator);
+    navigator[key] = (to: To, ...rest: unknown[]) => {
+      const next = navigator.encodeLocation(to) as Location;
+      for (const allow of blockers) if (!allow(next)) return;
+      navigate(to, ...rest);
+    };
+  }
+}
+
 export function Prompt({
   when,
   message,
 }: {
   when: boolean;
-  message: string | ((location: Location) => string | boolean);
+  message: PromptMessage;
 }) {
   const { navigator } = React.useContext(UNSAFE_NavigationContext) as any;
+  const messageRef = React.useRef(message);
+  messageRef.current = message;
 
   React.useEffect(() => {
-    if (!when) return;
-    if (!navigator || typeof navigator.block !== 'function') return;
+    if (!when || !navigator) return;
+    guardNavigator(navigator);
 
-    const unblock = navigator.block((tx: any) => {
-      const nextLocation = tx.location as Location;
-      const result =
-        typeof message === 'function' ? message(nextLocation) : message;
-
-      if (result === true) {
-        unblock();
-        tx.retry();
-        return;
-      }
-
-      if (result === false) {
-        return;
-      }
-
-      const ok = typeof window !== 'undefined' ? window.confirm(result) : true;
-      if (ok) {
-        unblock();
-        tx.retry();
-      }
-    });
-
-    return unblock;
-  }, [navigator, when, message]);
+    const allow = (next: Location) => {
+      const msg = messageRef.current;
+      const result = typeof msg === 'function' ? msg(next) : msg;
+      return typeof result === 'boolean' ? result : window.confirm(result);
+    };
+    blockers.add(allow);
+    return () => {
+      blockers.delete(allow);
+    };
+  }, [navigator, when]);
 
   React.useEffect(() => {
     if (!when) return;
     if (typeof window === 'undefined') return;
 
+    // a reload or a closed tab has no next location to ask the message about
     const handler = (e: BeforeUnloadEvent) => {
-      const result =
-        typeof message === 'function' ? message({} as any) : message;
-      if (result === false) return;
-
+      const msg = messageRef.current;
       e.preventDefault();
-      e.returnValue = typeof result === 'string' ? result : '';
+      e.returnValue = typeof msg === 'string' ? msg : '';
       return e.returnValue;
     };
 
     window.addEventListener('beforeunload', handler);
     return () => window.removeEventListener('beforeunload', handler);
-  }, [when, message]);
+  }, [when]);
 
   return null;
 }

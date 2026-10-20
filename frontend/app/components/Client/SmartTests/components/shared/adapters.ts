@@ -380,7 +380,8 @@ export function apiRunDetailToVM(
     ...(results?.js_errors ?? []),
   ]
     .filter((m): m is string => typeof m === 'string' && m.trim() !== '')
-    .map((text) => ({ level: 'error', text, time: 0 }));
+    // the runner lists the messages without saying when they came
+    .map((text) => ({ level: 'error', text }));
   return {
     key: detail.runId,
     testId: detail.testId,

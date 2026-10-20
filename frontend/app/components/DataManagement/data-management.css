@@ -155,6 +155,22 @@
   margin-inline-start: auto;
   flex: none;
 }
+/* a phone has no room for one row: the person, then the facts, then actions */
+@media (max-width: 640px) {
+  .m-person__card {
+    flex-wrap: wrap;
+    row-gap: var(--m-space-5);
+  }
+  .m-person__who {
+    flex-basis: 100%;
+  }
+  .m-person__facts {
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    row-gap: var(--m-space-4);
+    min-width: 0;
+  }
+}
 .m-person__ids {
   display: flex;
   flex-direction: column;

@@ -2787,5 +2787,8 @@
   "Team member: {{name}}": "Team member: {{name}}",
   "Could not check the users limit. Reload to try again.": "Could not check the users limit. Reload to try again.",
   "Checking the users limit…": "Checking the users limit…",
-  "The card was added; reload to see it on the board.": "The card was added; reload to see it on the board."
+  "The card was added; reload to see it on the board.": "The card was added; reload to see it on the board.",
+  "Could not send the verification email": "Could not send the verification email",
+  "Today": "Today",
+  "Yesterday": "Yesterday"
 }

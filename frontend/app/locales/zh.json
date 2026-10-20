@@ -2725,5 +2725,8 @@
   "Team member: {{name}}": "团队成员：{{name}}",
   "Could not check the users limit. Reload to try again.": "无法检查用户限制。请重新加载后重试。",
   "Checking the users limit…": "正在检查用户限制…",
-  "The card was added; reload to see it on the board.": "卡片已添加；重新加载即可在仪表板上看到。"
+  "The card was added; reload to see it on the board.": "卡片已添加；重新加载即可在仪表板上看到。",
+  "Could not send the verification email": "无法发送验证邮件",
+  "Today": "今天",
+  "Yesterday": "昨天"
 }

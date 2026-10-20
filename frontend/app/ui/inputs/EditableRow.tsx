@@ -9,6 +9,8 @@ import { Textarea } from './textarea';
 
 export interface EditableRowProps {
   label: ReactNode;
+  /** names the input and the pencil when `label` isn't plain text */
+  ariaLabel?: string;
   value: string;
 
   onSave?: (value: string) => void;
@@ -23,6 +25,7 @@ export interface EditableRowProps {
 
 export function EditableRow({
   label,
+  ariaLabel,
   value,
   onSave,
   multiline,
@@ -51,7 +54,8 @@ export function EditableRow({
     setEditing(false);
   };
   const cancel = () => setEditing(false);
-  const name = typeof label === 'string' ? label.toLowerCase() : 'value';
+  const name =
+    ariaLabel ?? (typeof label === 'string' ? label.toLowerCase() : 'value');
 
   return (
     <div

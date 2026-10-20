@@ -98,19 +98,13 @@ const Router: React.FC = () => {
 
     if (userData?.tenantId) {
       projectsStore.setTenantId(userData.tenantId);
-      const existing = localStorage.getItem(SITE_ID_STORAGE_KEY);
-      const [storedSiteId, storedTenantId] = existing
-        ? existing.split('_$_')
-        : [null, null];
-
-      if (userData?.tenantId === storedTenantId) {
-        projectsStore.setSiteId(storedSiteId!);
-      } else {
-        localStorage.setItem(
-          SITE_ID_STORAGE_KEY,
-          `${projectsStore.siteId}_$_${userData.tenantId}`,
-        );
-      }
+      // fetchSiteList already chose the path's project, else the stored one,
+      // else the first: remember that one rather than going back to the stored
+      // one, which sent a link into another project to the last-used project
+      localStorage.setItem(
+        SITE_ID_STORAGE_KEY,
+        `${projectsStore.siteId}_$_${userData.tenantId}`,
+      );
     }
 
     if (localSpotJwt && !isTokenExpired(localSpotJwt)) {

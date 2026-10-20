@@ -32,7 +32,9 @@ function QueueControls(props: Props) {
   } = props;
 
   const { currentPage } = searchStore;
+  const currentId = sessionStore.current.sessionId;
 
+  // prev/next point around the loaded session, so redo this on every hop
   useEffect(() => {
     setAutoplayValues();
     const totalPages = Math.ceil(total / PER_PAGE);
@@ -47,7 +49,7 @@ function QueueControls(props: Props) {
     if (currentPage !== totalPages && index === sessionIds.length - 1) {
       sessionStore.fetchAutoplayList(currentPage + 1).then(setAutoplayValues);
     }
-  }, []);
+  }, [currentId]);
 
   const nextHandler = () => {
     const siteId = projectsStore.getSiteId().siteId!;

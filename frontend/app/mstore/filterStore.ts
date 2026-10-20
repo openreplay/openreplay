@@ -708,7 +708,6 @@ export default class FilterStore {
     const issueFilter = this.getCurrentProjectFilters().find(
       (f) => f.name === 'issue',
     );
-    console.log(subName, issueFilter);
     if (!issueFilter) return subName;
     const matchingValue = issueFilter.possibleValues?.find(
       (v) => v.value === subName,

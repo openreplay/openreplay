@@ -180,9 +180,11 @@ export default class BaseProjectsStore {
         } else if (lastStoredId && siteIds.includes(lastStoredId)) {
           siteId = lastStoredId;
         } else if (!siteId || !siteExists) {
+          // ids are strings: the raw projectId (a number) matched no project,
+          // so the picker read "All Projects" after a first sign-in
           siteId = siteIds.includes(this.siteId)
             ? this.siteId
-            : response.data[0].projectId;
+            : (this.list[0]?.id ?? null);
         }
 
         const hasRecordings = this.list.some((site) => site.recorded);
@@ -302,11 +304,16 @@ export default class BaseProjectsStore {
         platform: projectData.platform,
       });
       runInAction(() => {
-        const updatedSite = new Project(response.data);
         this.listWrites += 1;
-        const index = this.list.findIndex((site) => site.id === updatedSite.id);
+        const index = this.list.findIndex((site) => site.id === projectId);
         if (index !== -1) {
-          this.list[index] = updatedSite;
+          // the answer carries only the id, name and gdpr: the platform is the
+          // one just saved, the key and sample rate stay as the list has them
+          this.list[index] = new Project({
+            ...this.list[index].toData(),
+            platform: projectData.platform ?? this.list[index].platform,
+            ...response.data,
+          });
         }
         this.relink();
       });

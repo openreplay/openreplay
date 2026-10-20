@@ -38,6 +38,12 @@ export default class SettingsStore {
     localStorage.setItem(MENU_COLLAPSED, collapsed.toString());
   };
 
+  /** A page folds the menu for itself without storing it; `null` brings the stored choice back. */
+  foldMenu = (folded: boolean | null) => {
+    this.menuCollapsed =
+      folded ?? localStorage.getItem(MENU_COLLAPSED) === 'true';
+  };
+
   saveCaptureRate = (projectId: number, data: any) =>
     sessionService
       .saveCaptureRate(projectId, data)

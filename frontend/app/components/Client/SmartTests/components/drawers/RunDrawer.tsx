@@ -123,9 +123,11 @@ function ConsoleView({
     <div className="m-rd__console">
       {logs.map((l, i) => (
         <div key={i} className={`m-rd__line is-${l.level}`}>
-          <span className="m-rd__at">
-            {t('{{n}}s', { n: (l.time / 1000).toFixed(2) })}
-          </span>
+          {l.time != null && (
+            <span className="m-rd__at">
+              {t('{{n}}s', { n: (l.time / 1000).toFixed(2) })}
+            </span>
+          )}
           <span className="m-rd__msg">{l.text}</span>
         </div>
       ))}
@@ -293,6 +295,7 @@ function RunDrawer({ run, open, onClose }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [modalTab, setModalTab] = useState<DevTab>('screenshots');
   const activityRef = useRef<HTMLDivElement>(null);
+  const stepsRef = useRef<HTMLOListElement>(null);
   const triggerMut = useTriggerRun();
   // the detail response carries no network of its own — it comes from the streamed HAR
   const { data: harText } = useRunHar(run?.key, run?.status !== 'running');
@@ -327,6 +330,23 @@ function RunDrawer({ run, open, onClose }: Props) {
       0,
     );
   };
+
+  // the step list scrolls on its own: open it on the failed step, not above it
+  const failedStep = run?.status === 'failed' ? run.failedStep : undefined;
+  useEffect(() => {
+    if (!open || failedStep == null) return;
+    const frame = requestAnimationFrame(() => {
+      const list = stepsRef.current;
+      const row = list?.children[failedStep] as HTMLElement | undefined;
+      if (!list || !row) return;
+      const top =
+        row.getBoundingClientRect().top -
+        list.getBoundingClientRect().top +
+        list.scrollTop;
+      list.scrollTop = top - (list.clientHeight - row.offsetHeight) / 2;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [open, run?.key, failedStep]);
 
   if (!run) return null;
 
@@ -587,6 +607,7 @@ function RunDrawer({ run, open, onClose }: Props) {
       >
         {/* bounded like the test drawer — Activity stays reachable on long runs */}
         <ol
+          ref={stepsRef}
           className={`m-rd__steps${running ? ' is-live' : ''}`}
           style={{ maxHeight: '46vh', overflowY: 'auto' }}
         >

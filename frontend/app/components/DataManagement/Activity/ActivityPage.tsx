@@ -195,13 +195,15 @@ function ActivityPage() {
       key: 'distinct_id',
       width: '24%',
       sortable: true,
+      // the person page looks people up by $user_id, which a distinct id
+      // need not be: the link opens the identified user it belongs to
       render: (e) =>
         e.user_id ? (
           <Tooltip title={t('Open this person')} delay={400}>
             <button
               type="button"
               className="m-truncate m-dmg__mono m-dmg__link block max-w-full"
-              onClick={(ev) => openPerson(e.distinct_id, ev)}
+              onClick={(ev) => openPerson(e.user_id!, ev)}
             >
               {e.distinct_id}
             </button>

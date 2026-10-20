@@ -11,10 +11,13 @@ function EmailVerificationMessage(props) {
   const [sent, setSent] = useState(false);
   const { email } = props;
   const send = () => {
-    userStore.resendEmailVerification().then(() => {
-      toast.success(`${t('Verification email sent to')} ${email}`);
-      setSent(true);
-    });
+    userStore
+      .resendEmailVerification()
+      .then(() => {
+        toast.success(`${t('Verification email sent to')} ${email}`);
+        setSent(true);
+      })
+      .catch(() => toast.error(t('Could not send the verification email')));
   };
   return !sent ? (
     <Tooltip

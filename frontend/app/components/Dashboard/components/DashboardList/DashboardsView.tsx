@@ -28,7 +28,7 @@ import {
   Trash2,
   Users,
 } from 'lucide-react';
-import { observer } from 'mobx-react-lite';
+import { Observer, observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -104,13 +104,19 @@ function DashboardsView() {
     }
   };
 
+  // cells render inside DataTable, which doesn't observe: the ones the row
+  // menu changes (name, visibility) observe the dashboard themselves
   const columns: Column<Dashboard>[] = [
     {
       title: t('Title'),
       key: 'name',
       width: '31%',
       sortable: true,
-      render: (d) => <span className="m-truncate">{d.name}</span>,
+      render: (d) => (
+        <Observer>
+          {() => <span className="m-truncate">{d.name}</span>}
+        </Observer>
+      ),
     },
     {
       title: t('Owner'),
@@ -131,10 +137,14 @@ function DashboardsView() {
       key: 'visibility',
       width: '19%',
       render: (d) => (
-        <Chip kind="tag">
-          {d.isPublic ? <Users size={11} /> : <Lock size={11} />}
-          {d.isPublic ? t('Team') : t('Private')}
-        </Chip>
+        <Observer>
+          {() => (
+            <Chip kind="tag">
+              {d.isPublic ? <Users size={11} /> : <Lock size={11} />}
+              {d.isPublic ? t('Team') : t('Private')}
+            </Chip>
+          )}
+        </Observer>
       ),
     },
     {

@@ -251,6 +251,8 @@ export default class Alert {
     delete js.currentPeriod;
     // @ts-ignore
     delete js.previousPeriod;
+    // @ts-ignore
+    delete js.isExists;
 
     return { ...js, options };
   }

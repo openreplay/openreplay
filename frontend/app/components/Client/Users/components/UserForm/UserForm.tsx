@@ -86,16 +86,18 @@ function UserForm({ open, onClose }: { open: boolean; onClose: () => void }) {
         }
       >
         <Section title={t('Who')}>
-          <Field label={t('Full name')}>
+          <Field label={t('Full name')} htmlFor="member-name">
             <Input
+              id="member-name"
               autoFocus
               maxLength={50}
               value={user.name ?? ''}
               onChange={(e) => user.updateKey('name', e.target.value)}
             />
           </Field>
-          <Field label={t('Email address')}>
+          <Field label={t('Email address')} htmlFor="member-email">
             <Input
+              id="member-email"
               type="email"
               maxLength={320}
               disabled={exists}

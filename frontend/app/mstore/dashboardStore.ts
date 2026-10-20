@@ -586,6 +586,8 @@ export default class DashboardStore {
           );
           data.domURL = sessionResp?.domURL || [];
           data.startedAt = sessionResp?.startTs ?? data.startTs ?? 0;
+          // the player reads a headerless (pre-v18 tracker) file by this version
+          data.trackerVersion = sessionResp?.trackerVersion;
           data.events = [];
         }
 
