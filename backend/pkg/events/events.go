@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 	"unicode"
 
-	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 
 	"openreplay/backend/pkg/logger"
@@ -273,16 +273,36 @@ func (e *eventsImpl) GetErrorsBySessionID(projectID uint32, sessID uint64, lower
 }
 
 type customEvent struct {
-	Name                   string     `ch:"name" json:"name"`
-	Type                   string     `ch:"type" json:"type"`
-	AutoCapturedProperties chcol.JSON `ch:"auto_props" json:"autoCapturedProperties"`
-	Properties             chcol.JSON `ch:"properties" json:"properties"`
-	CreatedAt              time.Time  `ch:"created_at" json:"-"`
+	Name                   string    `ch:"name" json:"name"`
+	Type                   string    `ch:"type" json:"type"`
+	AutoCapturedProperties string    `ch:"auto_props" json:"autoCapturedProperties"`
+	Properties             string    `ch:"properties" json:"properties"`
+	CreatedAt              time.Time `ch:"created_at" json:"-"`
+}
+
+// parseJSONObject decodes a JSON object produced by ClickHouse's toJSONString()
+// into a nested map. Numbers are kept as json.Number so they round-trip
+// unchanged. Empty or malformed input yields an empty map.
+func parseJSONObject(raw string) map[string]interface{} {
+	res := make(map[string]interface{})
+	raw = strings.TrimSpace(raw)
+	if raw == "" || raw == "null" {
+		return res
+	}
+	dec := json.NewDecoder(strings.NewReader(raw))
+	dec.UseNumber()
+	if err := dec.Decode(&res); err != nil {
+		return make(map[string]interface{})
+	}
+	return res
 }
 
 func (e *eventsImpl) GetCustomsBySessionID(projectID uint32, sessID uint64, lower, upper time.Time) ([]interface{}, error) {
-	query := `SELECT "$properties" AS auto_props,
-				properties,
+	// JSON columns are serialised to strings server-side: the native JSON
+	// object encoding is not fully decoded by clickhouse-go (shared-data paths
+	// desynchronise the stream and surface as "unsupported column type <path>").
+	query := `SELECT toJSONString("$properties") AS auto_props,
+				toJSONString(properties) AS properties,
 				created_at,
 				'CUSTOM' AS type,
 				"$event_name" AS name
@@ -306,10 +326,10 @@ func (e *eventsImpl) GetCustomsBySessionID(projectID uint32, sessID uint64, lowe
 		event["type"] = cEvent.Type
 		event["timestamp"] = cEvent.CreatedAt.UnixMilli()
 
-		for key, value := range cEvent.AutoCapturedProperties.NestedMap() {
+		for key, value := range parseJSONObject(cEvent.AutoCapturedProperties) {
 			event[toCamelCase(key)] = value
 		}
-		event["properties"] = cEvent.Properties.NestedMap()
+		event["properties"] = parseJSONObject(cEvent.Properties)
 
 		res = append(res, event)
 	}
@@ -508,8 +528,8 @@ type mobileEvent struct {
 }
 
 func (e *eventsImpl) GetMobileCrashesBySessionID(projID uint32, sessID uint64, lower, upper time.Time) ([]interface{}, error) {
-	query := `SELECT ` + "`$properties`" + `AS auto_captures,
-				properties,
+	query := `SELECT toJSONString(` + "`$properties`" + `) AS auto_captures,
+				toJSONString(properties) AS properties,
 				created_at,
 				'CRASH' AS type,
 				` + "`$event_name`" + ` AS name
@@ -533,8 +553,8 @@ func (e *eventsImpl) GetMobileCrashesBySessionID(projID uint32, sessID uint64, l
 }
 
 func (e *eventsImpl) GetMobileCustomsBySessionID(projID uint32, sessID uint64, lower, upper time.Time) ([]interface{}, error) {
-	query := `SELECT ` + "`$properties`" + `AS auto_captures,
-				properties,
+	query := `SELECT toJSONString(` + "`$properties`" + `) AS auto_captures,
+				toJSONString(properties) AS properties,
 				created_at,
 				'CUSTOM' AS type,
 				` + "`$event_name`" + `AS name
