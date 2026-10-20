@@ -113,6 +113,9 @@ class SearchStore {
   list: SavedSearch[] = [];
   /** the window start of the list on screen; null until one has loaded */
   latestRequestTime: number | null = null;
+  /** bumped whenever the list on screen changes: a count asked about an
+      older list is not applied */
+  private listGeneration = 0;
   latestList = [];
   alertMetricId: number | null = null;
   instance = new Search({
@@ -161,6 +164,7 @@ class SearchStore {
     makeAutoObservable(this, {
       savedSearchRequest: false,
       searchAbort: false,
+      listGeneration: false,
     } as any);
   }
 
@@ -575,6 +579,7 @@ class SearchStore {
     sessionStore.clearList();
     this.latestRequestTime = null;
     this.latestSessionCount = 0;
+    this.listGeneration += 1;
   }
 
   /** Sessions matching the search that arrived since the list on screen loaded.
@@ -586,6 +591,7 @@ class SearchStore {
       this.latestRequestTime == null
     )
       return;
+    const generation = this.listGeneration;
     try {
       let filter = this.instance.toSearch();
       filter = this.applyTagFilter(filter, this.activeTags);
@@ -610,8 +616,8 @@ class SearchStore {
       const response = await sessionService.getSessions(filter);
 
       runInAction(() => {
-        // a search that started meanwhile answers for itself
-        if (this.searchInProgress) return;
+        // a search started or landed meanwhile: it answers for itself
+        if (this.searchInProgress || generation !== this.listGeneration) return;
         if (response?.total && response.total > sessionStore.total) {
           this.latestSessionCount = response.total - sessionStore.total;
         } else {
@@ -764,7 +770,7 @@ class SearchStore {
     this.latestList = [];
     this.searchInProgress = true;
     try {
-      await sessionStore.fetchSessions(
+      const loaded = await sessionStore.fetchSessions(
         {
           ...pickSearchRequestFields(filter),
           page: this.currentPage,
@@ -776,11 +782,12 @@ class SearchStore {
         force || superseded,
         controller.signal,
       );
-      if (!controller.signal.aborted) {
+      if (loaded && !controller.signal.aborted) {
         // the list on screen now holds everything up to this request
         runInAction(() => {
           this.latestRequestTime = filter.startDate;
           this.latestSessionCount = 0;
+          this.listGeneration += 1;
         });
       }
     } catch (e) {

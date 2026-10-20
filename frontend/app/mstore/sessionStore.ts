@@ -331,11 +331,12 @@ export default class SessionStore {
     }
   };
 
+  /** Resolves true when the list on screen answers these params. */
   fetchSessions = async (
     params = {},
     force = false,
     abortSignal?: AbortSignal,
-  ) => {
+  ): Promise<boolean> => {
     runInAction(() => {
       this.loadingSessions = true;
     });
@@ -343,11 +344,11 @@ export default class SessionStore {
       if (!force) {
         const oldFilters = getSessionFilter();
         if (compareJsonObjects(oldFilters, cleanSessionFilters(params))) {
-          return;
+          return true;
         }
       }
       const data = await sessionService.getSessions(params, abortSignal);
-      if (abortSignal?.aborted) return;
+      if (abortSignal?.aborted) return false;
       // recorded as done only once it worked: a failed search must not make an
       // identical retry look like a no-op
       setSessionFilter(cleanSessionFilters(params));
@@ -358,9 +359,11 @@ export default class SessionStore {
         this.sessionIds = data.sessions.map((s) => s.sessionId);
         this.favoriteList = list.filter((s) => s.favorite);
       });
+      return true;
     } catch (e) {
       if (abortSignal?.aborted) throw e;
       console.error(e);
+      return false;
     } finally {
       // A superseded search has already handed the spinner to its replacement.
       if (!abortSignal?.aborted) {
