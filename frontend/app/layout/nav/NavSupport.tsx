@@ -1,5 +1,6 @@
+import { SUPPORT_GLYPHS } from '@/ui/brand/support-glyphs';
 import ENV from 'env';
-import { CircleHelp, MessageCircle } from 'lucide-react';
+import { ChevronRight, CircleHelp } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -31,16 +32,28 @@ function NavSupport() {
                     setChat(true);
                   }}
                 >
-                  <MessageCircle
-                    size={15}
+                  <svg
                     className="m-support__glyph"
+                    viewBox={SUPPORT_GLYPHS.chat.viewBox}
                     aria-hidden="true"
-                  />
+                  >
+                    <path d={SUPPORT_GLYPHS.chat.d} fill="currentColor" />
+                  </svg>
                   <span className="m-support__text">
                     <span className="m-support__label">
                       {t('Chat with us')}
                     </span>
+                    <span className="m-support__hint">
+                      {t('Message the team')}
+                    </span>
                   </span>
+                  {/* opens in the app, not a new tab */}
+                  <ChevronRight
+                    size={13}
+                    strokeWidth={1.75}
+                    className="m-support__out"
+                    aria-hidden="true"
+                  />
                 </button>
               )
             : undefined
