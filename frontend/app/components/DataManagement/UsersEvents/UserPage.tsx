@@ -128,6 +128,7 @@ function UserPage() {
                 userId={user.userId}
                 avatarUrl={user.avatarUrl}
                 size={48}
+                cheer
               />
               <div className="m-person__names">
                 <span className="m-person__name m-truncate">{label}</span>

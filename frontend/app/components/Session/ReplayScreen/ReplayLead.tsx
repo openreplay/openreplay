@@ -113,7 +113,7 @@ function ReplayLead({ width, height }: { width?: number; height?: number }) {
 
   return (
     <div className="m-rs__who">
-      <SessionAvatar seed={userNumericHash ?? 0} size={28} />
+      <SessionAvatar seed={userNumericHash ?? 0} size={24} cheer />
       <div className="m-rs__names">
         {userId && !iframe ? (
           <Tooltip title={t('All sessions of this user')} delay={500}>

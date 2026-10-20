@@ -163,7 +163,7 @@ export function ReplayIdentity({
 }) {
   return (
     <div className="m-rs__who">
-      <SessionAvatar seed={seed} size={28} />
+      <SessionAvatar seed={seed} size={24} cheer />
       <div className="m-rs__names">
         <Tooltip title={title} delay={500}>
           <span className="m-rs__name m-truncate">{name}</span>
