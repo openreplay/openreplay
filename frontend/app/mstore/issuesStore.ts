@@ -54,6 +54,7 @@ import {
   makeIssueSessionCard,
 } from 'App/components/SmartAlerts/factories';
 import { summarize } from 'App/components/SmartAlerts/segments/segmentUtils';
+import type { EventsOrder } from 'App/components/shared/FilterEditor/types';
 import {
   CAT_ORDER,
   type CategoryName,
@@ -158,6 +159,7 @@ function toSavedSegment(
     // server-provided creator name (may be "")
     createdBy: mine ? 'You' : s.userName || 'a teammate',
     filters: s.filters,
+    eventsOrder: s.eventsOrder,
     summary: summarize(s.filters),
     sessionsCount: s.sessionsCount,
     usersCount: s.usersCount,
@@ -1173,6 +1175,7 @@ export default class IssuesStore {
     name: string;
     isPublic: boolean;
     filters: FilterItem[];
+    eventsOrder: EventsOrder;
     active: boolean;
     instructions?: string;
   }): Promise<boolean> => {
@@ -1184,6 +1187,7 @@ export default class IssuesStore {
       name: input.name,
       isPublic: input.isPublic,
       filters: input.filters,
+      eventsOrder: input.eventsOrder,
       isCapture: capture,
     };
     // a failed save rejects, so the drawer can keep the form open and say so

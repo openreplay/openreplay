@@ -101,6 +101,7 @@ function SegmentsListPage() {
       mine: isMine(s),
       createdBy: s.userName,
       filters: s.filters,
+      eventsOrder: s.eventsOrder,
       summary: '',
       sessionsCount: s.sessionsCount,
       usersCount: s.usersCount,
@@ -143,7 +144,7 @@ function SegmentsListPage() {
       t,
       views.filter((v) => v.isEvent),
       views.filter((v) => !v.isEvent),
-      'then',
+      s.eventsOrder,
     );
   };
 

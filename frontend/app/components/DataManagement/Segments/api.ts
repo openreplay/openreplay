@@ -1,6 +1,8 @@
 import { client, filterStore } from '@/mstore';
 import FilterItem from '@/mstore/types/filterItem';
 
+import type { EventsOrder } from 'Shared/FilterEditor/types';
+
 /** The API sends epoch ms on some rows and ISO strings on others. */
 const toMs = (v: number | string | undefined): number =>
   typeof v === 'string' ? Date.parse(v) || 0 : (v ?? 0);
@@ -8,6 +10,7 @@ const toMs = (v: number | string | undefined): number =>
 export class Segment {
   name: string;
   filters: FilterItem[] = [];
+  eventsOrder: EventsOrder = 'then';
   id: string;
   updatedAt: number;
   createdAt: number;
@@ -33,6 +36,7 @@ export class Segment {
       this.filters = rawFilters.length
         ? filterStore.processFiltersFromData(rawFilters)
         : [];
+      this.eventsOrder = data.data?.eventsOrder ?? 'then';
       this.isPublic = data.isPublic || false;
       this.id = data.searchId ? String(data.searchId) : '';
       this.updatedAt = toMs(data.updatedAt) || toMs(data.createdAt);
@@ -63,7 +67,7 @@ interface ApiSegment {
   totalSessionCount?: number;
   trafficPct?: number;
   sessionsPerDay?: number;
-  data?: { filters: Record<string, unknown>[] };
+  data?: { filters: Record<string, unknown>[]; eventsOrder?: EventsOrder };
   filter?: { filters: Record<string, unknown>[] };
 }
 
@@ -89,7 +93,7 @@ const ensureFilterFields = (filter: any): any => ({
 
 const toPayload = (
   payload: Pick<Segment, 'name' | 'isPublic' | 'filters'> &
-    Partial<Pick<Segment, 'isCapture'>>,
+    Partial<Pick<Segment, 'isCapture' | 'eventsOrder'>>,
 ) => ({
   name: payload.name || null,
   isPublic: Boolean(payload.isPublic),
@@ -106,7 +110,7 @@ const toPayload = (
     }),
     sort: 'startTs',
     order: 'desc',
-    eventsOrder: 'then',
+    eventsOrder: payload.eventsOrder ?? 'then',
     limit: 10,
     page: 1,
   },
@@ -167,7 +171,7 @@ export function fetchSegment(segmentId: string): Promise<Segment> {
 
 export function createSegment(
   payload: Pick<Segment, 'name' | 'isPublic' | 'filters'> &
-    Partial<Pick<Segment, 'isCapture'>>,
+    Partial<Pick<Segment, 'isCapture' | 'eventsOrder'>>,
 ): Promise<Segment> {
   return client
     .post('/PROJECT_ID/sessions/search/save', toPayload(payload))
@@ -182,7 +186,7 @@ export function deleteSegment(segmentId: string): Promise<any> {
 export function updateSegment(
   segmentId: string,
   payload: Pick<Segment, 'name' | 'isPublic' | 'filters'> &
-    Partial<Pick<Segment, 'isCapture'>>,
+    Partial<Pick<Segment, 'isCapture' | 'eventsOrder'>>,
 ): Promise<Segment> {
   return client
     .put(`/PROJECT_ID/sessions/search/saved/${segmentId}`, toPayload(payload))

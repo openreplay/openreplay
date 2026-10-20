@@ -1,6 +1,8 @@
 import { client } from 'App/mstore';
 import type FilterItem from 'App/mstore/types/filterItem';
 
+import type { EventsOrder } from 'Shared/FilterEditor/types';
+
 /* Smart Issues REST client — the Go `api` service under /v2/smart-issues.
    See api3.yaml for the full contract.
 
@@ -42,6 +44,7 @@ export interface SavedSegment {
   mine: boolean;
   createdBy: string;
   filters: FilterItem[];
+  eventsOrder: EventsOrder;
   /** one-line human summary of the query */
   summary: string;
   sessionsCount: number;

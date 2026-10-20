@@ -79,6 +79,9 @@ export interface FilterBarProps {
   saveAction?: ReactNode;
   variant?: 'page' | 'panel';
   orderLocked?: boolean;
+  /** Printed beside the order word: a choice allowed here that something
+      downstream can't honour. It informs, never blocks. */
+  orderNote?: (order: EventsOrder) => ReactNode;
   /** Assist live search: only `is`/`contains`. */
   live?: boolean;
 }
@@ -90,6 +93,7 @@ function FilterBar({
   variant = 'page',
   lead: leadProp,
   orderLocked = false,
+  orderNote,
   live = false,
 }: FilterBarProps) {
   const { t } = useTranslation();
@@ -233,6 +237,7 @@ function FilterBar({
                   onChange={editor.onEventsOrder}
                 />
               )}
+              {events.length > 0 && orderNote?.(eventsOrder)}
               {trailing}
             </div>
             {events.map((f, i) => (

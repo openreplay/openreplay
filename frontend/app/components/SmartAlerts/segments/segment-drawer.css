@@ -25,3 +25,25 @@
   font-size: var(--m-text-xs);
   color: var(--m-content-muted);
 }
+
+/* beside the order word: informs in the info tint, never a warning */
+.m-sd__ordernote {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  height: 1.375rem;
+  padding-inline: var(--m-space-4);
+  border: 1px solid var(--m-status-info-border);
+  border-radius: var(--m-radius-full);
+  background: var(--m-status-info-bg);
+  color: var(--m-status-info-fg);
+  font-size: var(--m-text-2xs);
+  white-space: nowrap;
+  animation: m-step-in var(--m-duration-fast) var(--m-ease-out) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m-sd__ordernote {
+    animation: none;
+  }
+}

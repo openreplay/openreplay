@@ -5,6 +5,7 @@ import { EntityDrawer, Section } from '@/ui/overlays/EntityDrawer';
 import { Modal } from '@/ui/overlays/modal';
 import { useToast } from '@/ui/overlays/toast';
 import { Tooltip } from '@/ui/overlays/tooltip';
+import { Info } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -14,6 +15,7 @@ import FilterItem from 'App/mstore/types/filterItem';
 import { agentIssuesEnabled } from 'App/utils/split-utils';
 
 import {
+  type EventsOrder,
   FilterBar,
   buildFilterEditor,
   useCatalogue,
@@ -59,7 +61,10 @@ function SegmentDrawer({ open, segment, source, onClose, onSaved }: Props) {
     setInstructions(segment?.instructions ?? '');
     setIsPublic(fromIssues ? true : (segment?.isPublic ?? true));
     setCapture(segment?.active ?? fromIssues);
-    target.reset(segment ? ([...segment.filters] as any[]) : []);
+    target.reset(
+      segment ? ([...segment.filters] as any[]) : [],
+      segment?.eventsOrder,
+    );
   }, [open, segment]);
 
   const publicNow = fromIssues ? true : isPublic;
@@ -82,6 +87,7 @@ function SegmentDrawer({ open, segment, source, onClose, onSaved }: Props) {
         name: name.trim(),
         isPublic: publicNow,
         filters: target.filters.map((f) => new FilterItem(f as any)),
+        eventsOrder: target.eventsOrder,
         active: captureNow,
         instructions: instructions.trim() || undefined,
       });
@@ -98,6 +104,21 @@ function SegmentDrawer({ open, segment, source, onClose, onSaved }: Props) {
     onSaved?.();
     onClose();
   };
+
+  // a segment keeps all three orders; issue capture only follows THEN
+  const issuesOrderNote = (order: EventsOrder) =>
+    order === 'then' ? null : (
+      <Tooltip
+        title={t(
+          'A segment with AND or OR still filters Sessions. An issue only captures events in order, so it can’t use this one.',
+        )}
+      >
+        <span className="m-sd__ordernote">
+          <Info size={12} aria-hidden="true" />
+          {t('Issues capture in order only')}
+        </span>
+      </Tooltip>
+    );
 
   return (
     <>
@@ -168,7 +189,7 @@ function SegmentDrawer({ open, segment, source, onClose, onSaved }: Props) {
               variant="panel"
               editor={editor}
               entries={entries}
-              orderLocked
+              orderNote={issuesOrderNote}
             />
           </div>
         </Section>
