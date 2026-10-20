@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v4"
 
 	spotConfig "openreplay/backend/internal/config/spot"
 	"openreplay/backend/pkg/logger"
