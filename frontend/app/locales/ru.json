@@ -651,7 +651,7 @@
   "Cannot save funnel metric without at least 2 events": "Невозможно сохранить метрику воронки без как минимум 2 событий",
   "Create & Add to Dashboard": "Создать и добавить в дашборд",
   "Undo": "Отменить",
-  "Maximum of 3 series reached.": "Достигнут максимум из 3 серий.",
+  "Maximum of {{limit}} series reached.": "Достигнут максимум из {{limit}} серий.",
   "Add Series": "Добавить серию",
   "Expand": "Развернуть",
   "Collapse": "Свернуть",
