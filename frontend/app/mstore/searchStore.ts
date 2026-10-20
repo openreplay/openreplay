@@ -111,6 +111,7 @@ export const TAB_MAP: any = {
 
 class SearchStore {
   list: SavedSearch[] = [];
+  /** the window start of the list on screen; null until one has loaded */
   latestRequestTime: number | null = null;
   latestList = [];
   alertMetricId: number | null = null;
@@ -572,9 +573,19 @@ class SearchStore {
 
     this.detachSegment();
     sessionStore.clearList();
+    this.latestRequestTime = null;
+    this.latestSessionCount = 0;
   }
 
+  /** Sessions matching the search that arrived since the list on screen loaded.
+      Compared against that list's own total, so it waits for the list. */
   async checkForLatestSessionCount(): Promise<void> {
+    if (
+      this.searchInProgress ||
+      sessionStore.loadingSessions ||
+      this.latestRequestTime == null
+    )
+      return;
     try {
       let filter = this.instance.toSearch();
       filter = this.applyTagFilter(filter, this.activeTags);
@@ -599,6 +610,8 @@ class SearchStore {
       const response = await sessionService.getSessions(filter);
 
       runInAction(() => {
+        // a search that started meanwhile answers for itself
+        if (this.searchInProgress) return;
         if (response?.total && response.total > sessionStore.total) {
           this.latestSessionCount = response.total - sessionStore.total;
         } else {
@@ -748,7 +761,6 @@ class SearchStore {
     let filter = this.instance.toSearch();
     filter = this.applyTagFilter(filter, this.activeTags);
     filter = this.applyDurationFilter(filter);
-    this.latestRequestTime = filter.startDate;
     this.latestList = [];
     this.searchInProgress = true;
     try {
@@ -764,6 +776,13 @@ class SearchStore {
         force || superseded,
         controller.signal,
       );
+      if (!controller.signal.aborted) {
+        // the list on screen now holds everything up to this request
+        runInAction(() => {
+          this.latestRequestTime = filter.startDate;
+          this.latestSessionCount = 0;
+        });
+      }
     } catch (e) {
       if (!controller.signal.aborted) throw e;
     } finally {
