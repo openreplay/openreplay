@@ -2774,5 +2774,12 @@
   "{{n}} Spots": "{{n}} Spots",
   "{{n}} Spots_one": "{{n}} Spot",
   "{{n}} Spots_other": "{{n}} Spots",
-  "{{start}}–{{end}} of {{phrase}}": "{{start}}–{{end}} of {{phrase}}"
+  "{{start}}–{{end}} of {{phrase}}": "{{start}}–{{end}} of {{phrase}}",
+  "per 1,000 sessions": "per 1,000 sessions",
+  "Pay only for the sessions captured. Every session is kept for {{days}} days.": "Pay only for the sessions captured. Every session is kept for {{days}} days.",
+  "See pricing": "See pricing",
+  "Sessions a month": "Sessions a month",
+  "Estimated cost": "Estimated cost",
+  "{{cost}} a month": "{{cost}} a month",
+  "Estimate my cost": "Estimate my cost"
 }

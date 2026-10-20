@@ -1,8 +1,9 @@
 /*
- * Collects every `t('literal')` / `i18n.t('literal', …)` key in app/ into
- * en.json and keeps the other locales on the same keys, in the same order:
- * keys still in use keep their place and translation, unused ones go, new
- * ones are appended (English until translated).
+ * Collects every `t('literal')` / `i18n.t('literal', …)` key in app/
+ * into en.json and keeps the other locales
+ * on the same keys, in the same order: keys still in use keep their place
+ * and translation, unused ones go, new ones are appended (English until
+ * translated).
  *
  *   node extractTranslations.js            # from app/locales
  *   node extractTranslations.js --check    # exit 1 when anything would change
@@ -11,7 +12,10 @@ const fs = require('fs');
 const path = require('path');
 
 const localesDir = __dirname;
-const projectDir = path.resolve(__dirname, '..');
+// app/ and the SaaS slots beside it: their strings are FOSS's to translate
+const sourceDirs = [
+  path.resolve(__dirname, '..'),
+];
 const LOCALES = ['es', 'fr', 'ko', 'ru', 'uk', 'zh'];
 const check = process.argv.includes('--check');
 
@@ -91,7 +95,7 @@ function extractStringLiteral(text, startIndex) {
 const read = (lng) =>
   JSON.parse(fs.readFileSync(path.join(localesDir, `${lng}.json`), 'utf8'));
 
-walkDirectory(projectDir);
+sourceDirs.forEach(walkDirectory);
 
 const en = read('en');
 // plural forms (`key_one`, `key_few`, …) are written by hand per locale and

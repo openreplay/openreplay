@@ -382,9 +382,11 @@ Below is what to change on the saas side, roughly in the order the build will co
 
 ### 6. Locales
 
-FOSS `app/locales/*.json` were not regenerated for the redesign's new strings (open FOSS item: run
-`app/locales/extractTranslations.js`). Saas overwrites all locale files with an older set (80 keys behind, 56
-saas-only); re-sync after FOSS regenerates.
+FOSS owns every string in `app/` and `saas/` (the extractor reads both). Saas no longer ships locale files:
+`saas/frontend/saas-locales/<lng>.json` holds only its diff (`add` for saas-only strings, `override` for FOSS keys
+it words differently), and `merge-locales.js` (run by the makefile after `mod-package.js`) merges it onto these
+files, warning when an added key has since reached FOSS or a placeholder doesn't match. A FOSS string that needs
+translating goes here, not into a saas override.
 
 ### 7. Melonade PR #17: the SaaS tasks (agent checklist)
 
