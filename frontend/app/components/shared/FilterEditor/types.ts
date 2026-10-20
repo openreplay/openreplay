@@ -70,6 +70,9 @@ export type FilterEditor = FilterRules & FilterActions;
 
 /** The list a FilterEditor edits: searchStore, a card series, a segment draft… */
 export interface FilterTarget {
+  /** the store or model behind the list: targets are rebuilt every render,
+      their owner is not */
+  owner?: object;
   filters: readonly Filter[];
   eventsOrder: EventsOrder;
   add: (filter: Filter) => void;

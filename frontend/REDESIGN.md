@@ -96,8 +96,9 @@ handoff `context/handoff-2026-10-05.md`. The prototype runs on mock data (`src/s
 - [x] 4. Replay. Done: frame, header, URL bar + tabs, devtools strip, transport, settings menu, timeline, activity
       panel (`EventsBlock` + `ActivityRow`), shared row Jump/Copy tail, devtools panels on `PanelKit`
       (one `BottomBlock`; the strip owns collapse via `PanelHostContext`), request sheet over the player
-      (`RequestSheetHost`, opened through `uiPlayerStore.openRequestSheet`), X-Ray lanes, performance charts,
-      share dialog, autoplay toast, Features (tag list + tag form), Export E2E panel, Click map list
+      (`RequestSheetHost`, opened through `uiPlayerStore.openRequestSheet`), X-Ray lanes (every mark is a plain
+      dot, frustrations included: the lane names the kind, the tooltip names the event; the per-kind icons were
+      dropped on purpose and live on in the grouped popover), performance charts, share dialog, autoplay toast, Features (tag list + tag form), Export E2E panel, Click map list
 - [x] 5. Product analytics: dashboards list (+ create drawer from saved cards), dashboard page (4-col grid, drag
       swap, half/full width, card picker), cards list, add-card popover, card page (dock switch, kit toolbar, series on
       `FilterBar` via `seriesTarget`, breakdown door/panel, journey options, sessions on `SessionsTable`), charts

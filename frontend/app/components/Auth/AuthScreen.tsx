@@ -1,3 +1,4 @@
+import { LANGUAGES, useChangeLanguage } from '@/lib/language';
 import { ExternalLink } from '@/ui/actions/ExternalLink';
 import { Button } from '@/ui/actions/button';
 import { OpenReplayMark } from '@/ui/brand/OpenReplayMark';
@@ -20,16 +21,6 @@ export const LEGAL = {
   terms: 'https://openreplay.com/legal/terms',
 };
 
-const LANGUAGES = [
-  { value: 'en', label: 'English' },
-  { value: 'fr', label: 'Français' },
-  { value: 'es', label: 'Español' },
-  { value: 'ru', label: 'Русский' },
-  { value: 'uk', label: 'Українська' },
-  { value: 'zh', label: '简体中文' },
-  { value: 'ko', label: '한국어' },
-];
-
 interface Props {
   /** Which other door the top-right corner offers. */
   other: 'signup' | 'signin' | 'back' | null;
@@ -45,17 +36,9 @@ function AuthScreen({ other, step, aside, children }: Props) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { userStore } = useStore();
-  const pending = React.useRef<string | null>(null);
   const year = new Date().getFullYear();
 
-  const changeLanguage = (code: string) => {
-    localStorage.setItem('i18nextLng', code);
-    // a slower earlier locale chunk must not be the one that wins
-    pending.current = code;
-    void i18n.changeLanguage(code).then(() => {
-      if (pending.current !== code) void i18n.changeLanguage(pending.current!);
-    });
-  };
+  const changeLanguage = useChangeLanguage();
 
   return (
     <div className="m-auth">

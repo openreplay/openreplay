@@ -1,5 +1,5 @@
 import { toast } from '@/ui/overlays/toast';
-import { makeAutoObservable } from 'mobx';
+import { makeAutoObservable, runInAction } from 'mobx';
 
 import { serviceNames } from 'App/components/Client/Integrations/apiMethods';
 import { integrationsService } from 'App/services';
@@ -185,7 +185,12 @@ class NamedIntegrationStore<T extends Integration> {
 
   deleteIntegration = async (siteId?: string) => {
     if (!this.instance) return;
-    return integrationsService.removeIntegration(this.name, siteId);
+    const res = await integrationsService.removeIntegration(this.name, siteId);
+    // the old credentials must not read as a live connection
+    runInAction(() => {
+      this.instance = this.namedTypeCreator({});
+    });
+    return res;
   };
 
   init = (config: Record<string, any>): void => {

@@ -38,7 +38,7 @@ function walkDirectory(directory) {
       if (!/^(?:const|let|function) t\b\s*[=(]/m.test(content))
         extractTranslations(content);
       for (const m of content.matchAll(/(['"])((?:\\.|(?!\1)[^\\\n])+)\1/g))
-        literals.add(m[2].replace(/\\(.)/g, '$1'));
+        literals.add(unescapeJs(m[2]));
     }
   }
 }
@@ -59,6 +59,29 @@ function extractTranslations(content) {
   }
 }
 
+const SIMPLE_ESCAPES = {
+  n: '\n',
+  t: '\t',
+  r: '\r',
+  b: '\b',
+  f: '\f',
+  v: '\v',
+  0: '\0',
+};
+/** A string literal's source as the runtime sees it, so keys match `t()`. */
+function unescapeJs(raw) {
+  return raw.replace(
+    /\\(u\{([0-9a-fA-F]+)\}|u([0-9a-fA-F]{4})|x([0-9a-fA-F]{2})|\r\n|[\s\S])/g,
+    (_, all, cp, u4, x2) => {
+      if (cp) return String.fromCodePoint(parseInt(cp, 16));
+      if (u4 || x2) return String.fromCharCode(parseInt(u4 || x2, 16));
+      if (all in SIMPLE_ESCAPES) return SIMPLE_ESCAPES[all];
+      // a backslash before a line break continues the line
+      return /^(\r\n|\n|\r)$/.test(all) ? '' : all;
+    },
+  );
+}
+
 /** The first argument when it is a plain string literal followed by `)` or
     by more arguments (interpolation values, options). */
 function extractStringLiteral(text, startIndex) {
@@ -74,9 +97,10 @@ function extractStringLiteral(text, startIndex) {
   for (; i < text.length; i++) {
     const char = text[i];
     if (escaped) {
-      value += char === 'n' ? '\n' : char;
+      value += char;
       escaped = false;
     } else if (char === '\\') {
+      value += char;
       escaped = true;
     } else if (char === quoteChar) {
       i++;
@@ -90,7 +114,7 @@ function extractStringLiteral(text, startIndex) {
 
   while (/\s/.test(text[i])) i++;
   if (text[i] !== ')' && text[i] !== ',') return null;
-  return { value: value.trim(), end: i };
+  return { value: unescapeJs(value).trim(), end: i };
 }
 
 const read = (lng) =>
@@ -128,10 +152,16 @@ const write = (lng, data) => {
   if (!check) fs.writeFileSync(file, next, 'utf8');
 };
 
-write('en', withPlurals(en, (k) => k));
+write(
+  'en',
+  withPlurals(en, (k) => k),
+);
 for (const lng of LOCALES) {
   const current = read(lng);
-  write(lng, withPlurals(current, (k) => current[k] ?? k));
+  write(
+    lng,
+    withPlurals(current, (k) => current[k] ?? k),
+  );
 }
 
 const added = order.filter((k) => !(k in en)).length;

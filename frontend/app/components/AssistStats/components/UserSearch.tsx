@@ -44,7 +44,11 @@ function UserSearch({ onUserSelect }: { onUserSelect: (id: any) => void }) {
   return (
     <PopoverPanel
       open={open}
-      onOpenChange={setOpen}
+      onOpenChange={(next) => {
+        setOpen(next);
+        // a closed search starts over
+        if (!next) setQuery('');
+      }}
       content={
         <div className="w-64" role="menu" onKeyDown={menuKeyDown}>
           <PopoverSearch
@@ -81,7 +85,12 @@ function UserSearch({ onUserSelect }: { onUserSelect: (id: any) => void }) {
         </div>
       }
     >
-      <Button className="w-52 justify-between" aria-label={t('Team member')}>
+      <Button
+        className="w-52 justify-between"
+        aria-label={t('Team member: {{name}}', {
+          name: current?.name || current?.email || t('All team members'),
+        })}
+      >
         <span className="m-truncate">
           {current?.name || current?.email || t('All team members')}
         </span>

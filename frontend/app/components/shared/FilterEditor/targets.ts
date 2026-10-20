@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import type AnalyticsStore from 'App/mstore/AnalyticsStore';
 import type SearchStore from 'App/mstore/searchStore';
@@ -10,6 +10,7 @@ import type { EventsOrder, FilterTarget } from './types';
 
 /** The sessions search; refetching follows from PrivateRoutes' filters effect. */
 export const searchTarget = (store: SearchStore): FilterTarget => ({
+  owner: store,
   get filters() {
     return store.instance.filters;
   },
@@ -23,6 +24,7 @@ export const searchTarget = (store: SearchStore): FilterTarget => ({
 });
 
 export const liveSearchTarget = (store: SearchStoreLive): FilterTarget => ({
+  owner: store,
   get filters() {
     return store.instance.filters;
   },
@@ -37,6 +39,7 @@ export const liveSearchTarget = (store: SearchStoreLive): FilterTarget => ({
 
 /** Data management lists. A log row is one event, so event rules can only OR. */
 export const activityTarget = (store: AnalyticsStore): FilterTarget => ({
+  owner: store,
   get filters() {
     return store.payloadFilters.filters;
   },
@@ -60,6 +63,7 @@ export const activityTarget = (store: AnalyticsStore): FilterTarget => ({
 });
 
 export const peopleTarget = (store: AnalyticsStore): FilterTarget => ({
+  owner: store,
   get filters() {
     return store.usersPayloadFilters.filters;
   },
@@ -87,6 +91,7 @@ export const seriesTarget = (
       onChange();
     };
   return {
+    owner: filter,
     get filters() {
       return filter.filters as unknown as readonly Filter[];
     },
@@ -109,7 +114,9 @@ export function useLocalTarget(
 ): FilterTarget & { reset: (f: readonly Filter[], o?: EventsOrder) => void } {
   const [filters, setFilters] = useState<readonly Filter[]>(initial);
   const [eventsOrder, setEventsOrder] = useState<EventsOrder>(initialOrder);
+  const owner = useRef({}).current;
   return {
+    owner,
     filters,
     eventsOrder,
     add: (f) =>

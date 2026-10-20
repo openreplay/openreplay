@@ -15,38 +15,23 @@ export const getNotifyChannel = (
   alert: Record<string, any>,
   webhooks: Array<any>,
 ) => {
-  const getSlackChannels = () =>
-    ` (${alert.slackInput
-      .map(
-        (channelId: number) =>
-          `#${
-            webhooks.find(
-              (hook) => hook.webhookId === channelId && hook.type === 'slack',
-            )?.name
-          }`,
-      )
-      .join(', ')})`;
-  const getMsTeamsChannels = () =>
-    ` (${alert.msteamsInput
-      .map(
-        (channelId: number) =>
-          webhooks.find(
-            (hook) => hook.webhookId === channelId && hook.type === 'msteams',
-          )?.name,
-      )
-      .join(', ')})`;
+  // names of the channels the webhooks list knows; unknown ids (the list
+  // still loading, or a deleted hook) are left out rather than printed
+  const channels = (ids: number[], type: string, mark = '') => {
+    const names = ids
+      .map((id) => webhooks.find((h) => h.webhookId === id && h.type === type))
+      .filter((h) => h?.name)
+      .map((h) => `${mark}${h.name}`);
+    return names.length ? ` (${names.join(', ')})` : '';
+  };
   let str = '';
   if (alert.slack) {
     str = 'Slack';
-    if (alert.slackInput.length > 0) {
-      str += getSlackChannels();
-    }
+    str += channels(alert.slackInput, 'slack', '#');
   }
   if (alert.msteams) {
     str += `${str === '' ? '' : ' and '}MS Teams`;
-    if (alert.msteamsInput.length > 0) {
-      str += getMsTeamsChannels();
-    }
+    str += channels(alert.msteamsInput, 'msteams');
   }
   if (alert.email) {
     str +=

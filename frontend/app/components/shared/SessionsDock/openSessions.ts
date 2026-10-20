@@ -100,16 +100,25 @@ export function clearSessionTabs(): void {
 }
 
 const OWNER_KEY = `${KEY}_owner`;
+let claimedBy: string | null = null;
 
 /** The queue holds user names and metadata: another account signing in on
-    this tab starts with an empty one. */
+    this tab starts with an empty one, and so does a queue whose owner cannot
+    be read back. */
 export function claimSessionTabs(owner: string): void {
+  if (claimedBy === owner) return;
+  let prev: string | null = null;
   try {
-    const prev = sessionStorage.getItem(OWNER_KEY);
-    if (prev && prev !== owner) write([]);
+    prev = sessionStorage.getItem(OWNER_KEY);
+  } catch {
+    /* unreadable: treated as someone else's */
+  }
+  if (prev !== owner && queue.length) write([]);
+  claimedBy = owner;
+  try {
     sessionStorage.setItem(OWNER_KEY, owner);
   } catch {
-    /* private window: nothing was kept to leak */
+    /* private window: the claim holds for this visit */
   }
 }
 

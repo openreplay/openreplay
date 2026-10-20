@@ -9,9 +9,10 @@ interface Props {
 function CohortCard(props: Props) {
   const { t } = useTranslation();
   // rows of { cohort, users, data: retention % per week }
+  // a malformed row is left out, not allowed to take the card down
   const data: { cohort: string; users: number; data: number[] }[] =
-    Array.isArray(props.data) && Array.isArray(props.data[0]?.data)
-      ? props.data
+    Array.isArray(props.data)
+      ? props.data.filter((row: any) => Array.isArray(row?.data))
       : [];
   if (!data.length) return null;
 

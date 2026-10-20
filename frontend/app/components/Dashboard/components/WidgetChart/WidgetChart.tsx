@@ -7,6 +7,7 @@ import React, { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useInView } from 'react-intersection-observer';
 
+import { useThemeName } from 'App/ThemeContext';
 import CustomMetricPercentage from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricPercentage';
 import CustomMetricTableErrors from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricTableErrors';
 import CustomMetricTableSessions from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricTableSessions';
@@ -117,6 +118,7 @@ interface Props {
 }
 
 function WidgetChart(props: Props) {
+  const theme = useThemeName();
   const { t } = useTranslation();
   const { ref, inView } = useInView({
     triggerOnce: true,
@@ -846,7 +848,8 @@ function WidgetChart(props: Props) {
             {nothingInWindow(_metric, data) ? (
               <NoDataInWindow inGrid={!props.isPreview} />
             ) : (
-              renderChart()
+              // the palette is read from the theme's tokens: a new theme redraws
+              <React.Fragment key={theme}>{renderChart()}</React.Fragment>
             )}
             {showTable &&
             mergedBreakdownData &&

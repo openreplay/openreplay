@@ -135,7 +135,11 @@ function BackendIntegrationDrawer({
         confirmButton: t('Replace'),
         confirmation: t(
           '{{names}} connect to {{name}} with different credentials. Saving replaces them with these.',
-          { names: replaced.map(nameOf).join(', '), name: title },
+          {
+            names: replaced.map(nameOf).join(', '),
+            name: title,
+            count: replaced.length,
+          },
         ),
         danger: true,
       }))

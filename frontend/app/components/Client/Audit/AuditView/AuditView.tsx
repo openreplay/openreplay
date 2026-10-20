@@ -17,7 +17,7 @@ import { useTranslation } from 'react-i18next';
 
 import { checkForRecent } from 'App/date';
 import { useStore } from 'App/mstore';
-import { debounce, numberWithCommas } from 'App/utils';
+import { debounce } from 'App/utils';
 
 import PreferencesPage from '../../PreferencesPage';
 
@@ -84,7 +84,7 @@ function AuditView() {
     <PreferencesPage
       title={t('Audit Trail')}
       value={t('{{n}} actions', {
-        n: numberWithCommas(auditStore.total),
+        n: auditStore.total.toLocaleString(),
         count: auditStore.total,
       })}
       flush

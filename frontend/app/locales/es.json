@@ -635,7 +635,7 @@
   "Unmute": "Activar sonido",
   "Stop video": "Detener video",
   "Start video": "Iniciar video",
-  "+ other agents in the call": "+ other agents in the call",
+  "+ other agents in the call": "+ otros agentes en la llamada",
   "CoBrowse": "CoBrowse",
   "Live sessions you can join, and past calls.": "Live sessions you can join, and past calls.",
   "Sections of CoBrowse": "Secciones de CoBrowse",
@@ -701,7 +701,6 @@
   "Search team members": "Buscar miembros del equipo",
   "All team members": "Todos los miembros del equipo",
   "Nothing matches that.": "Nada coincide con eso.",
-  "Team member": "Miembro del equipo",
   "New here?": "¿Eres nuevo?",
   "Create account": "Crear cuenta",
   "Already have an account?": "¿Ya tienes una cuenta?",
@@ -843,6 +842,9 @@
   "Replace the credentials in {{n}} projects?_other": "¿Reemplazar las credenciales en {{n}} proyectos?",
   "Replace": "Reemplazar",
   "{{names}} connect to {{name}} with different credentials. Saving replaces them with these.": "{{names}} connect to {{name}} with different credentials. Saving replaces them with these.",
+  "{{names}} connect to {{name}} with different credentials. Saving replaces them with these._one": "{{names}} se conecta a {{name}} con otras credenciales. Al guardar se reemplazan por estas.",
+  "{{names}} connect to {{name}} with different credentials. Saving replaces them with these._many": "{{names}} se conectan a {{name}} con otras credenciales. Al guardar se reemplazan por estas.",
+  "{{names}} connect to {{name}} with different credentials. Saving replaces them with these._other": "{{names}} se conectan a {{name}} con otras credenciales. Al guardar se reemplazan por estas.",
   "{{name}} connected": "{{name}} conectado",
   "{{name}} did not accept these credentials": "{{name}} did not accept these credentials",
   "Failed to save {{name}}": "Error al guardar {{name}}",
@@ -2842,5 +2844,10 @@
   "Sessions a month": "Sesiones al mes",
   "Estimated cost": "Coste estimado",
   "{{cost}} a month": "{{cost}} al mes",
-  "Estimate my cost": "Estimar mi coste"
+  "Estimate my cost": "Estimar mi coste",
+  "Could not delete the alert.": "Could not delete the alert.",
+  "Team member: {{name}}": "Team member: {{name}}",
+  "Could not check the users limit. Reload to try again.": "Could not check the users limit. Reload to try again.",
+  "Checking the users limit…": "Checking the users limit…",
+  "The card was added; reload to see it on the board.": "The card was added; reload to see it on the board."
 }

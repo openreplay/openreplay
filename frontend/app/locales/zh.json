@@ -635,7 +635,7 @@
   "Unmute": "取消静音",
   "Stop video": "关闭视频",
   "Start video": "开启视频",
-  "+ other agents in the call": "+ other agents in the call",
+  "+ other agents in the call": "+通话中的其他坐席",
   "CoBrowse": "CoBrowse",
   "Live sessions you can join, and past calls.": "Live sessions you can join, and past calls.",
   "Sections of CoBrowse": "CoBrowse 分区",
@@ -701,7 +701,6 @@
   "Search team members": "搜索团队成员",
   "All team members": "所有团队成员",
   "Nothing matches that.": "没有匹配项。",
-  "Team member": "团队成员",
   "New here?": "新用户？",
   "Create account": "创建账户",
   "Already have an account?": "已有账户？",
@@ -837,6 +836,7 @@
   "Replace the credentials in {{n}} projects?_other": "替换 {{n}} 个项目中的凭据？",
   "Replace": "替换",
   "{{names}} connect to {{name}} with different credentials. Saving replaces them with these.": "{{names}} connect to {{name}} with different credentials. Saving replaces them with these.",
+  "{{names}} connect to {{name}} with different credentials. Saving replaces them with these._other": "{{names}} 使用不同的凭据连接到 {{name}}。保存后将替换为这些凭据。",
   "{{name}} connected": "{{name}} 已连接",
   "{{name}} did not accept these credentials": "{{name}} did not accept these credentials",
   "Failed to save {{name}}": "保存 {{name}} 失败",
@@ -2720,5 +2720,10 @@
   "Sessions a month": "每月会话数",
   "Estimated cost": "预估费用",
   "{{cost}} a month": "每月 {{cost}}",
-  "Estimate my cost": "估算我的费用"
+  "Estimate my cost": "估算我的费用",
+  "Could not delete the alert.": "Could not delete the alert.",
+  "Team member: {{name}}": "Team member: {{name}}",
+  "Could not check the users limit. Reload to try again.": "Could not check the users limit. Reload to try again.",
+  "Checking the users limit…": "Checking the users limit…",
+  "The card was added; reload to see it on the board.": "The card was added; reload to see it on the board."
 }

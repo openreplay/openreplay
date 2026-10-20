@@ -55,7 +55,9 @@ function MetricsLibraryModal({ dashboardId }: Props) {
     if (!dashboard?.dashboardId) return;
     void dashboardStore
       .addWidgetToDashboard(dashboard, selected.map(Number))
-      .then(() => {
+      .then((added) => {
+        // a failed add keeps the modal and its selection (already toasted)
+        if (!added) return;
         hideModal();
         void dashboardStore.fetch(dashboard.dashboardId!).catch(() => {});
       });

@@ -57,6 +57,8 @@ const DraggableCircle: FC<Props> = memo(
       onScrub(null);
     };
     const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+      // Alt/Ctrl/Meta + arrows belong to the browser and the OS
+      if (e.altKey || e.ctrlKey || e.metaKey) return;
       const step = e.shiftKey ? 10 : 1;
       const to: Record<string, number> = {
         ArrowLeft: left - step,

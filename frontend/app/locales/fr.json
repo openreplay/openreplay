@@ -635,7 +635,7 @@
   "Unmute": "Réactiver le son",
   "Stop video": "Arrêter la vidéo",
   "Start video": "Démarrer la vidéo",
-  "+ other agents in the call": "+ other agents in the call",
+  "+ other agents in the call": "+ d'autres agents dans l'appel",
   "CoBrowse": "CoBrowse",
   "Live sessions you can join, and past calls.": "Live sessions you can join, and past calls.",
   "Sections of CoBrowse": "Sections de CoBrowse",
@@ -701,7 +701,6 @@
   "Search team members": "Rechercher des membres de l'équipe",
   "All team members": "Tous les membres de l'équipe",
   "Nothing matches that.": "Aucun résultat ne correspond.",
-  "Team member": "Membre de l'équipe",
   "New here?": "Nouveau ici ?",
   "Create account": "Créer un compte",
   "Already have an account?": "Vous avez déjà un compte ?",
@@ -843,6 +842,9 @@
   "Replace the credentials in {{n}} projects?_other": "Remplacer les identifiants dans {{n}} projets ?",
   "Replace": "Remplacer",
   "{{names}} connect to {{name}} with different credentials. Saving replaces them with these.": "{{names}} connect to {{name}} with different credentials. Saving replaces them with these.",
+  "{{names}} connect to {{name}} with different credentials. Saving replaces them with these._one": "{{names}} se connecte à {{name}} avec d'autres identifiants. L'enregistrement les remplace par ceux-ci.",
+  "{{names}} connect to {{name}} with different credentials. Saving replaces them with these._many": "{{names}} se connectent à {{name}} avec d'autres identifiants. L'enregistrement les remplace par ceux-ci.",
+  "{{names}} connect to {{name}} with different credentials. Saving replaces them with these._other": "{{names}} se connectent à {{name}} avec d'autres identifiants. L'enregistrement les remplace par ceux-ci.",
   "{{name}} connected": "{{name}} connecté",
   "{{name}} did not accept these credentials": "{{name}} did not accept these credentials",
   "Failed to save {{name}}": "Échec de l'enregistrement de {{name}}",
@@ -2842,5 +2844,10 @@
   "Sessions a month": "Sessions par mois",
   "Estimated cost": "Coût estimé",
   "{{cost}} a month": "{{cost}} par mois",
-  "Estimate my cost": "Estimer mon coût"
+  "Estimate my cost": "Estimer mon coût",
+  "Could not delete the alert.": "Could not delete the alert.",
+  "Team member: {{name}}": "Team member: {{name}}",
+  "Could not check the users limit. Reload to try again.": "Could not check the users limit. Reload to try again.",
+  "Checking the users limit…": "Checking the users limit…",
+  "The card was added; reload to see it on the board.": "The card was added; reload to see it on the board."
 }

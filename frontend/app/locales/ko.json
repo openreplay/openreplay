@@ -635,7 +635,7 @@
   "Unmute": "음소거 해제",
   "Stop video": "비디오 끄기",
   "Start video": "비디오 켜기",
-  "+ other agents in the call": "+ other agents in the call",
+  "+ other agents in the call": "+ 통화 중인 다른 상담원",
   "CoBrowse": "CoBrowse",
   "Live sessions you can join, and past calls.": "Live sessions you can join, and past calls.",
   "Sections of CoBrowse": "CoBrowse 섹션",
@@ -701,7 +701,6 @@
   "Search team members": "팀 구성원 검색",
   "All team members": "모든 팀 구성원",
   "Nothing matches that.": "일치하는 항목이 없습니다.",
-  "Team member": "팀 구성원",
   "New here?": "처음이신가요?",
   "Create account": "계정 만들기",
   "Already have an account?": "이미 계정이 있으신가요?",
@@ -837,6 +836,7 @@
   "Replace the credentials in {{n}} projects?_other": "프로젝트 {{n}}개의 자격 증명을 교체하시겠습니까?",
   "Replace": "교체",
   "{{names}} connect to {{name}} with different credentials. Saving replaces them with these.": "{{names}} connect to {{name}} with different credentials. Saving replaces them with these.",
+  "{{names}} connect to {{name}} with different credentials. Saving replaces them with these._other": "{{names}}은(는) 다른 자격 증명으로 {{name}}에 연결되어 있습니다. 저장하면 이 자격 증명으로 바뀝니다.",
   "{{name}} connected": "{{name}} 연결됨",
   "{{name}} did not accept these credentials": "{{name}} did not accept these credentials",
   "Failed to save {{name}}": "{{name}} 저장에 실패했습니다",
@@ -2720,5 +2720,10 @@
   "Sessions a month": "월 세션 수",
   "Estimated cost": "예상 비용",
   "{{cost}} a month": "월 {{cost}}",
-  "Estimate my cost": "내 비용 추정"
+  "Estimate my cost": "내 비용 추정",
+  "Could not delete the alert.": "Could not delete the alert.",
+  "Team member: {{name}}": "Team member: {{name}}",
+  "Could not check the users limit. Reload to try again.": "Could not check the users limit. Reload to try again.",
+  "Checking the users limit…": "Checking the users limit…",
+  "The card was added; reload to see it on the board.": "The card was added; reload to see it on the board."
 }

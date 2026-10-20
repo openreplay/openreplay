@@ -34,9 +34,11 @@ async function withDefaults(
   }
 }
 
-let adds: Promise<unknown> = Promise.resolve();
+/* adds wait for their defaults, in pick order, per list */
+const adds = new WeakMap<object, Promise<unknown>>();
 
 export function buildFilterEditor(target: FilterTarget): FilterEditor {
+  const owner = target.owner ?? {};
   const all = target.filters.map((f, i) => viewOf(f, String(i)));
   const events = all.filter((f) => f.isEvent);
   const properties = all.filter((f) => !f.isEvent);
@@ -62,7 +64,12 @@ export function buildFilterEditor(target: FilterTarget): FilterEditor {
       // defaults are fetched per event: queue the adds so a quick second pick
       // never lands before the first
       const ready = withDefaults(entry, storeFilterFor(entry));
-      adds = adds.then(() => ready).then(target.add);
+      const next = (adds.get(owner) ?? Promise.resolve())
+        .then(() => ready)
+        .then(target.add)
+        // one failed add must not stop the ones after it
+        .catch((e) => console.error('Could not add the filter', e));
+      adds.set(owner, next);
     },
     onReplace: (key, entry) => {
       const before = current(key);

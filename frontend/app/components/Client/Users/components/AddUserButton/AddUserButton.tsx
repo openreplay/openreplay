@@ -16,24 +16,27 @@ function AddUserButton({ isAdmin = false, onClick }: any) {
   const { t } = useTranslation();
   const { userStore } = useStore();
   const limtis = userStore.limits;
+  const [failed, setFailed] = React.useState(false);
   React.useEffect(() => {
-    // unknown limits leave the action enabled; the server still enforces them
-    userStore.ensureLimits().catch(() => {});
+    userStore.ensureLimits().catch((e) => {
+      console.error('Could not load the users limit', e);
+      setFailed(true);
+    });
   }, []);
-  // until the limits are known (or if they can't be loaded) don't claim the
-  // limit is reached: the server still enforces it on invite
+  // inviting waits until the limit is known: the UI is where it is enforced
+  const known = userStore.limitsLoaded && typeof limtis.teamMember === 'number';
   const cannAddUser =
-    isAdmin &&
-    (!userStore.limitsLoaded ||
-      limtis.teamMember == null ||
-      limtis.teamMember === -1 ||
-      limtis.teamMember > 0);
+    isAdmin && known && (limtis.teamMember === -1 || limtis.teamMember > 0);
 
   const blocked = !isAdmin
     ? PERMISSION_WARNING(t)
-    : !cannAddUser
-      ? LIMIT_WARNING(t)
-      : undefined;
+    : failed || (userStore.limitsLoaded && !known)
+      ? t('Could not check the users limit. Reload to try again.')
+      : !known
+        ? t('Checking the users limit…')
+        : !cannAddUser
+          ? LIMIT_WARNING(t)
+          : undefined;
   const button = (
     <Button variant="primary" disabled={!!blocked} onClick={onClick}>
       <Plus size={14} />

@@ -701,7 +701,6 @@
   "Search team members": "Search team members",
   "All team members": "All team members",
   "Nothing matches that.": "Nothing matches that.",
-  "Team member": "Team member",
   "New here?": "New here?",
   "Create account": "Create account",
   "Already have an account?": "Already have an account?",
@@ -840,6 +839,8 @@
   "Replace the credentials in {{n}} projects?_other": "Replace the credentials in {{n}} projects?",
   "Replace": "Replace",
   "{{names}} connect to {{name}} with different credentials. Saving replaces them with these.": "{{names}} connect to {{name}} with different credentials. Saving replaces them with these.",
+  "{{names}} connect to {{name}} with different credentials. Saving replaces them with these._one": "{{names}} connects to {{name}} with different credentials. Saving replaces them with these.",
+  "{{names}} connect to {{name}} with different credentials. Saving replaces them with these._other": "{{names}} connect to {{name}} with different credentials. Saving replaces them with these.",
   "{{name}} connected": "{{name}} connected",
   "{{name}} did not accept these credentials": "{{name}} did not accept these credentials",
   "Failed to save {{name}}": "Failed to save {{name}}",
@@ -2781,5 +2782,10 @@
   "Sessions a month": "Sessions a month",
   "Estimated cost": "Estimated cost",
   "{{cost}} a month": "{{cost}} a month",
-  "Estimate my cost": "Estimate my cost"
+  "Estimate my cost": "Estimate my cost",
+  "Could not delete the alert.": "Could not delete the alert.",
+  "Team member: {{name}}": "Team member: {{name}}",
+  "Could not check the users limit. Reload to try again.": "Could not check the users limit. Reload to try again.",
+  "Checking the users limit…": "Checking the users limit…",
+  "The card was added; reload to see it on the board.": "The card was added; reload to see it on the board."
 }

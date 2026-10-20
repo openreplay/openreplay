@@ -1,9 +1,9 @@
 import React, {
+  ReactNode,
   createContext,
   useContext,
-  useState,
   useEffect,
-  ReactNode,
+  useState,
 } from 'react';
 
 type ThemeType = 'light' | 'dark';
@@ -14,6 +14,11 @@ interface ThemeContextType {
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+
+/* applied before the state changes, so a render for the new theme already
+   reads its tokens (charts take their palette from them) */
+const applyTheme = (theme: ThemeType) =>
+  document.documentElement.classList.toggle('dark', theme === 'dark');
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({
   children,
@@ -44,7 +49,9 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
     const handleChange = (e: MediaQueryListEvent) => {
-      setTheme(e.matches ? 'dark' : 'light');
+      const next = e.matches ? 'dark' : 'light';
+      applyTheme(next);
+      setTheme(next);
     };
 
     mediaQuery.addEventListener('change', handleChange);
@@ -52,7 +59,9 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({
   }, []);
 
   const toggleTheme = () => {
-    setTheme((prevTheme) => (prevTheme === 'dark' ? 'light' : 'dark'));
+    const next = theme === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+    setTheme(next);
   };
 
   return (
@@ -61,6 +70,10 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({
     </ThemeContext.Provider>
   );
 };
+
+/** The theme, or undefined outside the provider. */
+export const useThemeName = (): ThemeType | undefined =>
+  useContext(ThemeContext)?.theme;
 
 export const useTheme = (): ThemeContextType => {
   const context = useContext(ThemeContext);

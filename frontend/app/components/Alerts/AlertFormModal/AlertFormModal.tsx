@@ -1,6 +1,7 @@
 import { Button } from '@/ui/actions/button';
 import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
 import { DrawerFooter } from '@/ui/overlays/EntityDrawer';
+import { toast } from '@/ui/overlays/toast';
 import { Trash2 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
@@ -40,7 +41,10 @@ function AlertFormModal({ onClose }: Props) {
   const [deleting, setDeleting] = React.useState(false);
   const save = () => alertsStore.save(instance).then(() => onClose?.());
   const remove = () =>
-    alertsStore.remove(instance.alertId).then(() => onClose?.());
+    alertsStore
+      .remove(instance.alertId)
+      .then(() => onClose?.())
+      .catch(() => toast.error(t('Could not delete the alert.')));
 
   return (
     <div className="flex h-full flex-col">

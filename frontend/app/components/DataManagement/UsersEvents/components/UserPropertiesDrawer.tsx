@@ -124,7 +124,11 @@ function UserPropertiesDrawer({ open, onClose, user, onSave }: Props) {
                     return onSave(source, key, v);
                   const n = Number(v);
                   if (!Number.isFinite(n))
-                    return toast.error(t('{{key}} takes a number', { key }));
+                    return toast.error(
+                      t('{{key}} takes a number', {
+                        key: getDisplayNameStr(key),
+                      }),
+                    );
                   return onSave(source, key, n);
                 }}
               />

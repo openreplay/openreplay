@@ -1,5 +1,5 @@
 import { observer } from 'mobx-react-lite';
-import React, { useEffect } from 'react';
+import React, { useEffect, useLayoutEffect } from 'react';
 
 import { useStore } from 'App/mstore';
 import {
@@ -34,7 +34,8 @@ function SessionsDockHost() {
   const history = useHistory();
   const { sessionStore, projectsStore, userStore } = useStore();
   const { id: accountId, tenantId } = userStore.account;
-  useEffect(() => {
+  // before paint, so another account's rows never show for a frame
+  useLayoutEffect(() => {
     if (accountId) claimSessionTabs(`${tenantId ?? ''}:${accountId}`);
   }, [accountId, tenantId]);
   const rows = useOpenSessions();
@@ -60,7 +61,7 @@ function SessionsDockHost() {
         overReplay
       />
     );
-  if (!replayId && !onList) return null;
+  if (!accountId || (!replayId && !onList)) return null;
 
   const toList = () => history.push(withSiteId(sessionsRoute(), siteId));
   return (

@@ -2,6 +2,7 @@ import { Button } from '@/ui/actions/button';
 import { CheckRow } from '@/ui/inputs/CheckRow';
 import { PopoverSearch } from '@/ui/overlays/PopoverSearch';
 import { menuKeyDown } from '@/ui/overlays/menuKeys';
+import { toast } from '@/ui/overlays/toast';
 import { Plus } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
@@ -85,7 +86,11 @@ function CardPicker({ onDone }: { onDone: () => void }) {
       // a failed add keeps the picker and its selection
       if (!(await dashboardStore.addWidgetToDashboard(dashboard, [...picked])))
         return;
-      await dashboardStore.fetch(dashboard.dashboardId!).catch(() => {});
+      await dashboardStore
+        .fetch(dashboard.dashboardId!)
+        .catch(() =>
+          toast.error(t('The card was added; reload to see it on the board.')),
+        );
       onDone();
     } finally {
       setBusy(false);

@@ -1,3 +1,4 @@
+import { LANGUAGES, useChangeLanguage } from '@/lib/language';
 import { Button } from '@/ui/actions/button';
 import { Input } from '@/ui/inputs/input';
 import { PasswordInput } from '@/ui/inputs/password-input';
@@ -15,16 +16,6 @@ import { validatePassword } from 'App/validate';
 
 import { PrefBlock, PrefField, PrefToggle, SecretValue } from '../PrefSection';
 import Dangerzone from './Dangerzone';
-
-const LANGUAGES = [
-  { value: 'en', label: 'English' },
-  { value: 'fr', label: 'Français' },
-  { value: 'es', label: 'Español' },
-  { value: 'ru', label: 'Русский' },
-  { value: 'uk', label: 'Українська' },
-  { value: 'zh', label: '简体中文' },
-  { value: 'ko', label: '한국어' },
-];
 
 function ProfileSettings() {
   const { t } = useTranslation();
@@ -236,16 +227,7 @@ const Password = observer(() => {
 function Language() {
   const { t, i18n } = useTranslation();
   const toast = useToast();
-  const pending = React.useRef<string | null>(null);
-  const change = (code: string) => {
-    localStorage.setItem('i18nextLng', code);
-    // a slower earlier locale chunk must not be the one that wins
-    pending.current = code;
-    void i18n.changeLanguage(code).then(() => {
-      if (pending.current !== code) void i18n.changeLanguage(pending.current!);
-      else toast.success(t('Language updated'));
-    });
-  };
+  const change = useChangeLanguage(() => toast.success(t('Language updated')));
   return (
     <PrefBlock
       title={t('Interface language')}
