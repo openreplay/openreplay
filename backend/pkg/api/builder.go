@@ -9,6 +9,7 @@ import (
 	"github.com/go-playground/validator/v10"
 
 	config "openreplay/backend/internal/config/api"
+	"openreplay/backend/pkg/alerts"
 	"openreplay/backend/pkg/analytics/cards"
 	"openreplay/backend/pkg/analytics/charts"
 	"openreplay/backend/pkg/analytics/dashboards"
@@ -44,6 +45,7 @@ import (
 	"openreplay/backend/pkg/metrics/web"
 	"openreplay/backend/pkg/notes"
 	noteAPI "openreplay/backend/pkg/notes/api"
+	"openreplay/backend/pkg/notifications"
 	"openreplay/backend/pkg/objectstorage"
 	"openreplay/backend/pkg/projects"
 	replayAPI "openreplay/backend/pkg/replays/api"
@@ -74,6 +76,8 @@ type serviceBuilder struct {
 	tagsAdminAPI       api.Handlers
 	filtersCatalogAPI  api.Handlers
 	integrationsAPI    api.Handlers
+	alertsAPI          api.Handlers
+	notificationsAPI   api.Handlers
 	extraHandlers      []api.Handlers
 	workers            []Worker
 	wg                 sync.WaitGroup
@@ -81,7 +85,7 @@ type serviceBuilder struct {
 
 func (b *serviceBuilder) Handlers() []api.Handlers {
 	handlers := []api.Handlers{b.sessionAPI, b.eventAPI, b.filtersCatalogAPI, b.analyticsEventsAPI, b.favoriteAPI, b.noteAPI, b.replayAPI, b.apiKeyAPI, b.conditionsAPI,
-		b.chartsAPI, b.dashboardsAPI, b.cardsAPI, b.searchAPI, b.savedSearchesAPI, b.usersAPI, b.lexiconAPI, b.tagsAdminAPI, b.integrationsAPI}
+		b.chartsAPI, b.dashboardsAPI, b.cardsAPI, b.searchAPI, b.savedSearchesAPI, b.usersAPI, b.lexiconAPI, b.tagsAdminAPI, b.integrationsAPI, b.alertsAPI, b.notificationsAPI}
 	return append(handlers, b.extraHandlers...)
 }
 
@@ -269,6 +273,16 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		return nil, err
 	}
 
+	alertsHandlers, err := alerts.NewHandlers(log, requestHandler, alerts.New(log, pgconn))
+	if err != nil {
+		return nil, err
+	}
+
+	notificationsHandlers, err := notifications.NewHandlers(log, requestHandler, notifications.New(log, pgconn))
+	if err != nil {
+		return nil, err
+	}
+
 	extraHandlers, workers, err := eeServices(eeDeps{
 		log:        log,
 		cfg:        cfg,
@@ -304,6 +318,8 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		tagsAdminAPI:       tagAdminHandlers,
 		filtersCatalogAPI:  filtersCatalogHandlers,
 		integrationsAPI:    integrationsHandlers,
+		alertsAPI:          alertsHandlers,
+		notificationsAPI:   notificationsHandlers,
 		extraHandlers:      extraHandlers,
 		workers:            workers,
 	}, nil
