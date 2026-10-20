@@ -11,6 +11,7 @@ import { EmptyState } from '@/ui/feedback/EmptyState';
 import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
 import { DisplayShell, MenuSelect } from '@/ui/filters/DisplayMenu';
 import { FilterStrip } from '@/ui/filters/FilterStrip';
+import { SegmentIndicator } from '@/ui/filters/SegmentIndicator';
 import { DateRange } from '@/ui/inputs/DateRange';
 import { ListFooter } from '@/ui/layout/ListFooter';
 import { PageCard, PagePanel } from '@/ui/layout/PageCard';
@@ -38,7 +39,14 @@ import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import {
+  asSavedSegment,
+  segmentOf,
+} from 'App/components/DataManagement/Segments/api';
+import type { SavedSegment } from 'App/components/SmartAlerts/api';
+import SegmentDrawer from 'App/components/SmartAlerts/segments/SegmentDrawer';
 import { useStore } from 'App/mstore';
+import FilterItem from 'App/mstore/types/filterItem';
 import { CLIENT_TABS, client } from 'App/routes';
 import { useLocation, useNavigate } from 'App/routing';
 import { presetReaching, windowPhrase } from 'App/utils/windowPhrase';
@@ -47,6 +55,7 @@ import {
   EntryField,
   FilterBar,
   buildFilterEditor,
+  describeFilters,
   searchTarget,
   useCatalogue,
 } from 'Shared/FilterEditor';
@@ -101,6 +110,8 @@ function SessionsTabOverview() {
     filterStore,
     projectsStore,
     settingsStore,
+    issuesStore,
+    userStore,
   } = useStore();
   const entries = useCatalogue(['sessions']);
   const editor = buildFilterEditor(searchTarget(searchStore));
@@ -145,6 +156,64 @@ function SessionsTabOverview() {
   const usesSegment = editor.properties
     .concat(editor.events)
     .some((f) => f.entry.category === 'segments');
+
+  // a search that IS a saved segment folds into its indicator; one that only
+  // adds a segment as an entry is bigger than it and keeps the filter
+  const segmentId = usesSegment ? null : searchStore.activeSegmentId;
+  const { savedSearch } = searchStore;
+  const segment = React.useMemo(
+    () => (segmentId ? segmentOf(savedSearch) : null),
+    [segmentId, savedSearch],
+  );
+  const segmentMine =
+    savedSearch.userId == null ||
+    String(savedSearch.userId) === String(userStore.account.id);
+  const [segOpen, setSegOpen] = useState(false);
+  useEffect(() => setSegOpen(false), [segmentId]);
+  const [segDrawer, setSegDrawer] = useState<SavedSegment | null>(null);
+  const [savingSegment, setSavingSegment] = useState(false);
+
+  const loadSegment = async () => {
+    await issuesStore.loadSegments(String(projectsStore.activeSiteId));
+    return issuesStore.segmentById(segmentId!);
+  };
+  const editSegment = async () => {
+    if (!segment) return;
+    setSegDrawer((await loadSegment()) ?? asSavedSegment(segment, segmentMine));
+  };
+  const freshSaved = () =>
+    searchStore.list.find((x) => String(x.searchId) === segmentId);
+  const saveSegmentChanges = async () => {
+    if (!segment) return;
+    setSavingSegment(true);
+    try {
+      const known = await loadSegment();
+      await issuesStore.saveSegment({
+        id: segment.id,
+        name: known?.name ?? segment.name,
+        isPublic: known?.isPublic ?? segment.isPublic,
+        filters: searchStore.instance.filters.map(
+          (f) => new FilterItem(f as any),
+        ),
+        eventsOrder: editor.eventsOrder,
+        active: known?.active ?? segment.isCapture,
+        instructions: known?.instructions,
+      });
+      const fresh = freshSaved();
+      if (fresh) searchStore.adoptSegment(fresh);
+      toast.success(t('Segment updated'));
+    } catch {
+      toast.error(t('Could not save the segment'));
+    } finally {
+      setSavingSegment(false);
+    }
+  };
+  // the drawer may have changed the rules, or deleted the segment
+  const onSegmentSaved = () => {
+    const fresh = freshSaved();
+    if (fresh) searchStore.applySavedSearch(fresh);
+    else searchStore.detachSegment();
+  };
 
   useEffect(() => {
     trackerInstance.event('session_list_viewed');
@@ -238,8 +307,7 @@ function SessionsTabOverview() {
   const share = async () => {
     if (searchStore.instance.filters.length === 0) return;
     try {
-      await searchStore.saveAsShare();
-      const id = searchStore.savedSearch.searchId;
+      const id = await searchStore.saveAsShare();
       if (!id) return;
       await navigator.clipboard.writeText(
         `${window.location.origin}${window.location.pathname}?sid=${id}`,
@@ -335,34 +403,57 @@ function SessionsTabOverview() {
         hasRules={!noRules}
       />
 
-      {!noRules && (
-        <PagePanel spills>
-          <FilterBar
-            editor={editor}
-            entries={entries}
-            saveAction={
-              <Tooltip
-                title={
-                  usesSegment
-                    ? t('A filter that uses a segment cannot itself be saved')
-                    : t(
-                        'Save these rules as a segment. The date window is not part of it.',
-                      )
-                }
-              >
-                <span>
-                  <Button
-                    className="m-fbar__save"
-                    disabled={usesSegment}
-                    onClick={() => setSaving(true)}
-                  >
-                    {t('Save as segment')}
-                  </Button>
-                </span>
-              </Tooltip>
-            }
-          />
-        </PagePanel>
+      {segment ? (
+        <SegmentIndicator
+          name={segment.name}
+          rules={describeFilters(
+            t,
+            segment.filters as any[],
+            segment.eventsOrder,
+          )}
+          count={total}
+          edited={searchStore.segmentEdited}
+          expanded={segOpen}
+          onToggle={() => setSegOpen((o) => !o)}
+          onEdit={editSegment}
+          onClear={() => searchStore.clearSearch()}
+          onSaveChanges={segmentMine ? saveSegmentChanges : undefined}
+          saving={savingSegment}
+        >
+          <PagePanel spills>
+            <FilterBar variant="panel" editor={editor} entries={entries} />
+          </PagePanel>
+        </SegmentIndicator>
+      ) : (
+        !noRules && (
+          <PagePanel spills>
+            <FilterBar
+              editor={editor}
+              entries={entries}
+              saveAction={
+                <Tooltip
+                  title={
+                    usesSegment
+                      ? t('A filter that uses a segment cannot itself be saved')
+                      : t(
+                          'Save these rules as a segment. The date window is not part of it.',
+                        )
+                  }
+                >
+                  <span>
+                    <Button
+                      className="m-fbar__save"
+                      disabled={usesSegment}
+                      onClick={() => setSaving(true)}
+                    >
+                      {t('Save as segment')}
+                    </Button>
+                  </span>
+                </Tooltip>
+              }
+            />
+          </PagePanel>
+        )
       )}
 
       <PagePanel
@@ -527,7 +618,17 @@ function SessionsTabOverview() {
           </>
         )}
       </PagePanel>
-      <SaveSearchModal show={saving} closeHandler={() => setSaving(false)} />
+      {/* mounted per open: it reads whether it updates or creates on mount */}
+      {saving && (
+        <SaveSearchModal show closeHandler={() => setSaving(false)} />
+      )}
+      <SegmentDrawer
+        open={segDrawer != null}
+        segment={segDrawer}
+        source="dm"
+        onClose={() => setSegDrawer(null)}
+        onSaved={onSegmentSaved}
+      />
     </PageCard>
   );
 }

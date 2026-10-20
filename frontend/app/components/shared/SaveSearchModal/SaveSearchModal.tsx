@@ -98,7 +98,7 @@ function SaveSearchModal({ show, closeHandler, rename = false }: Props) {
             autoFocus
             size="md"
             name="name"
-            value={savedSearch.name}
+            value={savedSearch.name ?? ''}
             onChange={onNameChange}
             placeholder={t('Title')}
           />

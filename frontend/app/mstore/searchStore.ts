@@ -89,6 +89,19 @@ export const filterMap = (filter: any) => {
   };
 };
 
+/** What decides a search's results, comparable across reloads of the same
+    rules (values stringified, empty ones dropped). */
+const ruleKey = (f: any): unknown => [
+  f.name,
+  Boolean(f.isEvent),
+  f.operator || 'is',
+  (Array.isArray(f.value) ? f.value : [f.value])
+    .filter((v: unknown) => v != null && v !== '')
+    .map(String),
+  f.isEvent ? (f.propertyOrder ?? 'and') : null,
+  (f.filters ?? []).map(ruleKey),
+];
+
 export const TAB_MAP: any = {
   all: { name: 'All', type: 'all' },
   sessions: { name: 'Sessions', type: 'sessions' },
@@ -112,6 +125,8 @@ class SearchStore {
     eventsOrder: 'then',
   });
   savedSearch: ISavedSearch = new SavedSearch();
+  /** the rules when the search became its saved segment */
+  segmentRules: string | null = null;
   filterSearchList: any = {};
   currentPage = 1;
   activeTab = { name: 'All', type: 'all' };
@@ -165,6 +180,35 @@ class SearchStore {
     this.urlParsed = true;
   }
 
+  private get rulesKey() {
+    return JSON.stringify([
+      this.instance.eventsOrder,
+      this.instance.filters.map(ruleKey),
+    ]);
+  }
+
+  /** The search IS a saved segment: saved from it, or used from Segments. */
+  get activeSegmentId(): string | null {
+    const { searchId, isShare } = this.savedSearch;
+    return searchId && !isShare ? String(searchId) : null;
+  }
+
+  get segmentEdited(): boolean {
+    return this.segmentRules != null && this.rulesKey !== this.segmentRules;
+  }
+
+  /** The segment was saved with the rules on the page: take its record. */
+  adoptSegment(saved: ISavedSearch) {
+    this.savedSearch = new SavedSearch(saved);
+    this.segmentRules = this.rulesKey;
+  }
+
+  /** Stop treating the search as its segment; the rules stay. */
+  detachSegment() {
+    this.savedSearch = new SavedSearch({});
+    this.segmentRules = null;
+  }
+
   get filterList() {
     return generateFilterOptions(filtersMap);
   }
@@ -194,6 +238,7 @@ class SearchStore {
       eventsOrder: searchData?.eventsOrder || this.instance.eventsOrder,
     });
     this.currentPage = 1;
+    this.segmentRules = this.rulesKey;
   }
 
   fetchSavedSearchList(
@@ -379,11 +424,13 @@ class SearchStore {
 
   async removeSavedSearch(id: string): Promise<void> {
     await searchService.deleteSavedSearch(id);
-    this.savedSearch = new SavedSearch({});
+    this.detachSegment();
     await this.fetchSavedSearchList();
   }
 
-  async saveAsShare(): Promise<void> {
+  /** Saves the search as a share link and returns its id; the search keeps
+      whatever segment it is. */
+  async saveAsShare(): Promise<string | undefined> {
     const searchData = this.instance.toSearch();
 
     // Ensure all filters have required fields
@@ -420,16 +467,7 @@ class SearchStore {
     };
 
     const savedSearchResponse = await searchService.saveSavedSearch(payload);
-
-    // Update the current savedSearch with the response data
-    if (savedSearchResponse) {
-      this.savedSearch = new SavedSearch({
-        searchId: savedSearchResponse.searchId,
-        isPublic: false,
-        isShare: true,
-        data: payload.data,
-      });
-    }
+    return savedSearchResponse?.searchId;
   }
 
   /** Busy until the list shows the result, so the form can say so. */
@@ -505,6 +543,7 @@ class SearchStore {
         isShare: instance.isShare,
         data: payload.data,
       });
+      if (!rename) this.segmentRules = this.rulesKey;
     }
 
     // Refresh the list to show the latest saved searches
@@ -531,7 +570,7 @@ class SearchStore {
       }),
     );
 
-    this.savedSearch = new SavedSearch({});
+    this.detachSegment();
     sessionStore.clearList();
   }
 

@@ -173,7 +173,11 @@ function FilterBar({
 
   const trailing = (
     <span className="m-fchips__trailing">
-      <Button variant="subtle" onClick={editor.onClear}>
+      <Button
+        variant="subtle"
+        className="m-fchips__clear"
+        onClick={editor.onClear}
+      >
         {t('Clear')}
       </Button>
       {saveAction}

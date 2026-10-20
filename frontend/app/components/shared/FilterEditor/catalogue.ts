@@ -262,6 +262,21 @@ export function describeRules(
   return parts.join(', ');
 }
 
+/** A stored rule list as one sentence, as the Segments list prints it. */
+export function describeFilters(
+  t: TFunction,
+  filters: readonly Filter[],
+  order: string,
+): string {
+  const views = filters.map((f, i) => viewOf(f, String(i)));
+  return describeRules(
+    t,
+    views.filter((v) => v.isEvent),
+    views.filter((v) => !v.isEvent),
+    order,
+  );
+}
+
 export function summariseRules(
   t: TFunction,
   events: readonly SearchFilter[],

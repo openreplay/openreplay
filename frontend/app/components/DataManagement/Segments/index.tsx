@@ -26,9 +26,9 @@ import { sessions, withSiteId } from 'App/routes';
 import { useHistory, useParams } from 'App/routing';
 import { agentIssuesEnabled } from 'App/utils/split-utils';
 
-import { describeRules, viewOf } from 'Shared/FilterEditor';
+import { describeFilters } from 'Shared/FilterEditor';
 
-import { type Segment, mapSegments } from './api';
+import { type Segment, asSavedSegment, mapSegments } from './api';
 import './segments-panel.css';
 
 type Owner = 'all' | 'mine' | 'shared';
@@ -93,24 +93,7 @@ function SegmentsListPage() {
   const has = (f: SegField) => fields.includes(f);
 
   const toSaved = (s: Segment): SavedSegment =>
-    issuesStore.segmentById(s.id) ??
-    ({
-      id: s.id,
-      name: s.name,
-      isPublic: s.isPublic,
-      mine: isMine(s),
-      createdBy: s.userName,
-      filters: s.filters,
-      eventsOrder: s.eventsOrder,
-      summary: '',
-      sessionsCount: s.sessionsCount,
-      usersCount: s.usersCount,
-      totalSessionCount: s.totalSessionCount,
-      updatedAt: s.updatedAt,
-      active: s.isCapture,
-      trafficPct: s.trafficPct,
-      sessionsPerDay: s.sessionsPerDay,
-    } as SavedSegment);
+    issuesStore.segmentById(s.id) ?? asSavedSegment(s, isMine(s));
 
   // a deep link opens its segment once (the list may arrive after the URL);
   // later list changes must not reopen it over the user's work
@@ -138,15 +121,8 @@ function SegmentsListPage() {
     history.push(withSiteId(sessions(), siteId!));
   };
 
-  const rules = (s: Segment) => {
-    const views = s.filters.map((f, i) => viewOf(f as any, String(i)));
-    return describeRules(
-      t,
-      views.filter((v) => v.isEvent),
-      views.filter((v) => !v.isEvent),
-      s.eventsOrder,
-    );
-  };
+  const rules = (s: Segment) =>
+    describeFilters(t, s.filters as any[], s.eventsOrder);
 
   const columns: Column<Segment>[] = [
     {

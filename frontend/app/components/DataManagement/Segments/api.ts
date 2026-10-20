@@ -1,6 +1,9 @@
 import { client, filterStore } from '@/mstore';
 import FilterItem from '@/mstore/types/filterItem';
 
+import type { SavedSegment } from 'App/components/SmartAlerts/api';
+import type { ISavedSearch } from 'App/mstore/types/savedSearch';
+
 import type { EventsOrder } from 'Shared/FilterEditor/types';
 
 /** The API sends epoch ms on some rows and ISO strings on others. */
@@ -52,6 +55,36 @@ export class Segment {
     }
   }
 }
+
+/** The search store's saved search, as a Segment. */
+export const segmentOf = (s: ISavedSearch) =>
+  new Segment({
+    searchId: s.searchId ?? '',
+    name: s.name ?? '',
+    isPublic: s.isPublic,
+    userId: s.userId,
+    userName: s.userName,
+    data: s.data as ApiSegment['data'],
+  });
+
+/** The drawer's view of a segment the capture layer hasn't loaded. */
+export const asSavedSegment = (s: Segment, mine: boolean): SavedSegment => ({
+  id: s.id,
+  name: s.name,
+  isPublic: s.isPublic,
+  mine,
+  createdBy: s.userName,
+  filters: s.filters,
+  eventsOrder: s.eventsOrder,
+  summary: '',
+  sessionsCount: s.sessionsCount,
+  usersCount: s.usersCount,
+  totalSessionCount: s.totalSessionCount,
+  updatedAt: s.updatedAt,
+  active: s.isCapture,
+  trafficPct: s.trafficPct,
+  sessionsPerDay: s.sessionsPerDay,
+});
 
 interface ApiSegment {
   searchId: string | number;

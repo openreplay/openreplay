@@ -1,0 +1,133 @@
+.m-segind {
+  /* never shrink: with overflow hidden a flex child squeezes below its rules */
+  flex: none;
+  overflow: hidden;
+  border: 1px solid var(--m-border-subtle);
+  border-radius: var(--m-radius-panel, var(--m-radius-control));
+  background: var(--m-surface-default);
+  animation: m-step-in var(--m-duration-normal) var(--m-ease-out) both;
+}
+
+.m-segind.is-edited {
+  border-color: var(--m-status-warning-border);
+}
+
+.m-segind__bar {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-5);
+  min-height: 2.75rem;
+  padding: var(--m-space-3) var(--m-space-4) var(--m-space-3) var(--m-space-5);
+}
+
+.m-segind__mark {
+  flex: none;
+  color: var(--m-content-primary);
+}
+
+.m-segind__chip {
+  flex: none;
+  min-width: 0;
+  max-width: 16rem;
+  height: 1.5rem;
+  padding-inline: var(--m-space-4);
+  border: 1px solid var(--m-pill-on-border);
+  border-radius: var(--m-radius-chip);
+  background: var(--m-pill-on-bg);
+  color: var(--m-pill-on-fg);
+  font-size: var(--m-text-xs);
+  font-weight: var(--m-weight-medium);
+  line-height: 1.375rem;
+}
+
+.m-segind__edited {
+  flex: none;
+  height: 1.25rem;
+  padding-inline: var(--m-space-3);
+  border: 1px solid var(--m-status-warning-border);
+  border-radius: var(--m-radius-full);
+  background: var(--m-status-warning-bg);
+  color: var(--m-status-warning-fg);
+  font-size: var(--m-text-2xs);
+  line-height: 1.125rem;
+}
+
+.m-segind__rules {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--m-text-xs);
+  color: var(--m-content-muted);
+}
+
+.m-segind__count {
+  flex: none;
+  font-family: var(--m-font-num);
+  font-size: var(--m-text-2xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--m-content-secondary);
+}
+
+.m-segind__actions {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--m-space-2);
+}
+
+/* rows 0fr → 1fr, so the body keeps its natural height */
+.m-segind__fold {
+  display: grid;
+  grid-template-rows: 0fr;
+  border-top: 1px solid transparent;
+  transition:
+    grid-template-rows var(--m-duration-normal) var(--m-ease-out),
+    border-color var(--m-duration-normal) var(--m-ease-out);
+}
+
+.m-segind.is-open .m-segind__fold {
+  grid-template-rows: 1fr;
+  border-top-color: var(--m-border-subtle);
+}
+
+.m-segind__body {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.m-segind.is-open .m-segind__body {
+  overflow: visible;
+}
+
+/* the strip is the card: the panel inside gives up its own edge */
+.m-segind__body .m-panel {
+  padding-inline: var(--m-space-4);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* the strip owns Clear */
+.m-segind__body .m-fchips__clear {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  .m-segind__rules {
+    display: none;
+  }
+
+  .m-segind__chip {
+    max-width: 10rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m-segind {
+    animation: none;
+  }
+
+  .m-segind__fold {
+    transition: none;
+  }
+}

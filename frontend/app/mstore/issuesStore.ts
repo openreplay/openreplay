@@ -537,8 +537,12 @@ export default class IssuesStore {
   /** Load just the segments — for the Data Management page, which needs the
       capture layer without the full Issues init. */
   ensureSegments = (projectId: string) => {
+    void this.loadSegments(projectId);
+  };
+
+  loadSegments = async (projectId: string) => {
     this.switchProject(projectId);
-    void this.fetchSegments();
+    await this.fetchSegments();
   };
 
   /** Load just the journey tags — for Preferences > Agents. Without this the
