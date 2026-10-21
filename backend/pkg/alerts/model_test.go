@@ -84,6 +84,9 @@ func TestAlertRequestParsing(t *testing.T) {
 		{name: "NaN right", body: `{"name":"x","detectionMethod":"threshold","query":{"left":"errors.backend.count","operator":">","right":"NaN"},"options":{"currentPeriod":15}}`, wantErr: true},
 		{name: "Inf right", body: `{"name":"x","detectionMethod":"threshold","query":{"left":"errors.backend.count","operator":">","right":"Inf"},"options":{"currentPeriod":15}}`, wantErr: true},
 		{name: "null message value", body: `{"name":"x","detectionMethod":"threshold","query":{"left":"errors.backend.count","operator":">","right":1},"options":{"currentPeriod":15,"message":[{"type":"slack","value":null}]}}`, wantErr: true},
+		{name: "missing message value", body: `{"name":"x","detectionMethod":"threshold","query":{"left":"errors.backend.count","operator":">","right":1},"options":{"currentPeriod":15,"message":[{"type":"email"}]}}`, wantErr: true},
+		{name: "null message list", body: `{"name":"x","detectionMethod":"threshold","query":{"left":"errors.backend.count","operator":">","right":1},"options":{"currentPeriod":15,"message":null}}`, wantErr: true},
+		{name: "null previous period", body: `{"name":"x","detectionMethod":"change","query":{"left":"errors.backend.count","operator":">","right":1},"options":{"currentPeriod":15,"previousPeriod":null}}`, wantErr: true},
 		{name: "non numeric right", body: `{"name":"x","detectionMethod":"threshold","query":{"left":"errors.backend.count","operator":">","right":"abc"},"options":{"currentPeriod":15}}`, wantErr: true},
 	}
 

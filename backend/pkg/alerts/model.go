@@ -75,9 +75,6 @@ func (v *MessageValue) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 	var n int64
-	if string(data) == "null" {
-		return fmt.Errorf("message value is required")
-	}
 	if err := json.Unmarshal(data, &n); err != nil {
 		return fmt.Errorf("message value must be a string or an integer")
 	}
@@ -86,8 +83,8 @@ func (v *MessageValue) UnmarshalJSON(data []byte) error {
 }
 
 type Message struct {
-	Type  string       `json:"type"`
-	Value MessageValue `json:"value"`
+	Type  string        `json:"type"`
+	Value *MessageValue `json:"value"`
 }
 
 type Options struct {
@@ -99,14 +96,20 @@ type Options struct {
 }
 
 func (o *Options) UnmarshalJSON(data []byte) error {
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	for _, key := range []string{"message", "previousPeriod"} {
+		if v, ok := raw[key]; ok && string(v) == "null" {
+			return fmt.Errorf("options.%s must not be null", key)
+		}
+	}
 	type plain Options
 	renotify := 720
 	p := plain{Message: []Message{}, PreviousPeriod: 15, RenotifyInterval: &renotify}
 	if err := json.Unmarshal(data, &p); err != nil {
 		return err
-	}
-	if p.Message == nil {
-		p.Message = []Message{}
 	}
 	*o = Options(p)
 	return nil
@@ -208,6 +211,9 @@ func (r *AlertRequest) Validate() error {
 	for i, m := range r.Options.Message {
 		if m.Type == "" {
 			return fmt.Errorf("options.message[%d].type is required", i)
+		}
+		if m.Value == nil {
+			return fmt.Errorf("options.message[%d].value is required", i)
 		}
 	}
 	if r.Query == nil {
