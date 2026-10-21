@@ -1,6 +1,32 @@
 import { gunzipSync } from 'fflate';
 import * as fzstd from 'fzstd';
 
+// fzstd's one-shot decompress computes bit positions as `byteOffset << 3` (int32),
+// which overflows once the input passes 256MiB and fails with "invalid zstd data".
+// The streaming decoder only ever indexes into the chunk it was pushed.
+const ZSTD_ONESHOT_LIMIT = 1 << 28;
+const ZSTD_CHUNK = 1 << 20;
+
+const zstdDecompress = (b: Uint8Array): Uint8Array => {
+  if (b.byteLength < ZSTD_ONESHOT_LIMIT) return fzstd.decompress(b);
+  const parts: Uint8Array[] = [];
+  let length = 0;
+  const stream = new fzstd.Decompress((chunk) => {
+    parts.push(chunk);
+    length += chunk.length;
+  });
+  for (let i = 0; i < b.byteLength; i += ZSTD_CHUNK) {
+    stream.push(b.subarray(i, i + ZSTD_CHUNK), i + ZSTD_CHUNK >= b.byteLength);
+  }
+  const out = new Uint8Array(length);
+  let offset = 0;
+  for (const part of parts) {
+    out.set(part, offset);
+    offset += part.length;
+  }
+  return out;
+};
+
 const unpack = (b: Uint8Array): Uint8Array => {
   // zstd magical numbers 40 181 47 253
   const isZstd =
@@ -23,7 +49,7 @@ const unpack = (b: Uint8Array): Uint8Array => {
   }
   if (isZstd) {
     const now = performance.now();
-    const uData = fzstd.decompress(b);
+    const uData = zstdDecompress(b);
     console.debug(
       'Zstd unpack time',
       `${Math.floor(performance.now() - now)}ms`,
