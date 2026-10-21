@@ -207,6 +207,11 @@ func ParseInt(s string) (int, error) {
 	return strconv.Atoi(s)
 }
 
+func ParseInt32(s string) (int, error) {
+	v, err := strconv.ParseInt(s, 10, 32)
+	return int(v), err
+}
+
 func ParseUint32(s string) (uint32, error) {
 	v, err := strconv.ParseUint(s, 10, 32)
 	return uint32(v), err
