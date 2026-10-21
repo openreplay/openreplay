@@ -1,3 +1,5 @@
+from enum import StrEnum
+from itertools import chain
 from typing import Annotated, List, Literal, Optional, Union
 
 from pydantic import (
@@ -345,7 +347,11 @@ class _AlertOptionSchema(BaseModel):
     renotifyInterval: Optional[int] = Field(default=720)
 
 
-class AlertColumn(str, Enum):
+class AlertSessionsColumn(str, Enum):
+    PERFORMANCE__CRASHES__COUNT = "performance.crashes.count"
+
+
+class AlertEventsColumn(str, Enum):
     PERFORMANCE__DOM_CONTENT_LOADED__AVERAGE = "performance.dom_content_loaded.average"
     PERFORMANCE__FIRST_MEANINGFUL_PAINT__AVERAGE = (
         "performance.first_meaningful_paint.average"
@@ -356,10 +362,16 @@ class AlertColumn(str, Enum):
     PERFORMANCE__PAGE_RESPONSE_TIME__AVERAGE = "performance.page_response_time.average"
     PERFORMANCE__TTFB__AVERAGE = "performance.ttfb.average"
     PERFORMANCE__TIME_TO_RENDER__AVERAGE = "performance.time_to_render.average"
-    PERFORMANCE__CRASHES__COUNT = "performance.crashes.count"
     ERRORS__JAVASCRIPT__COUNT = "errors.javascript.count"
     ERRORS__BACKEND__COUNT = "errors.backend.count"
     CUSTOM = "CUSTOM"
+
+
+AlertColumn = StrEnum(
+    "AlertColumn",
+    {m.name: m.value for m in chain(AlertSessionsColumn, AlertEventsColumn)},
+    type=str,
+)
 
 
 class MathOperator(str, Enum):

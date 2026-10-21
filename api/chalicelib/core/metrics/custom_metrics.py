@@ -22,5 +22,7 @@ def get_series_for_alert(project_id, user_id):
                 {"project_id": project_id, "user_id": user_id}
             )
         )
-        rows = cur.fetchall()
-    return helper.list_to_camel_case(rows)
+        rows = helper.list_to_camel_case(cur.fetchall())
+    for r in rows:
+        r["source"] = "metrics"
+    return rows
