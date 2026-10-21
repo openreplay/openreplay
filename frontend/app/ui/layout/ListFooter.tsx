@@ -18,7 +18,7 @@ export interface ListFooterProps {
   onPage?: (page: number) => void;
 
   detail?: string;
-  /** offers 10 / 50 / 100 rows beside the pager, once the list is longer than 10 */
+  /** offers 10 / 25 / 50 / 100 rows beside the pager, once the list is longer than 10 */
   onPageSize?: (size: RowsPerPage) => void;
 }
 

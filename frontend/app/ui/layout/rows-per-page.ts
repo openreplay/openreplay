@@ -1,28 +1,42 @@
 import { useSyncExternalStore } from 'react';
 
 /** One rows-per-page choice for every paged list, remembered. */
-export const ROWS_OPTIONS = [10, 50, 100] as const;
+export const ROWS_OPTIONS = [10, 25, 50, 100] as const;
 export type RowsPerPage = (typeof ROWS_OPTIONS)[number];
 export const DEFAULT_ROWS: RowsPerPage = 10;
 
 const KEY = '__or_rows_per_page';
+// what Sessions spends around its rows: header, filters, table head, footer
+const LIST_CHROME = 290;
 const listeners = new Set<() => void>();
 
-function read(): RowsPerPage {
+function stored(): RowsPerPage | null {
   try {
     const n = Number(localStorage.getItem(KEY));
     return (ROWS_OPTIONS as readonly number[]).includes(n)
       ? (n as RowsPerPage)
-      : DEFAULT_ROWS;
+      : null;
   } catch {
-    return DEFAULT_ROWS;
+    return null;
   }
 }
 
-let current: RowsPerPage = read();
+// no choice made yet: the smallest of 10 / 25 / 50 that fills the window,
+// so a tall screen never ends a short list halfway down
+function byHeight(): RowsPerPage {
+  const root = getComputedStyle(document.documentElement);
+  const rem = parseFloat(root.fontSize) || 16;
+  const row =
+    (parseFloat(root.getPropertyValue('--m-list-row-height')) || 3.5) * rem +
+    1;
+  const fits = Math.floor((window.innerHeight - LIST_CHROME) / row);
+  return ([10, 25, 50] as const).find((n) => n >= fits) ?? 50;
+}
+
+let current: RowsPerPage | undefined;
 
 export function getRowsPerPage(): RowsPerPage {
-  return current;
+  return (current ??= stored() ?? byHeight());
 }
 
 export function setRowsPerPage(n: RowsPerPage) {
@@ -44,9 +58,5 @@ const subscribe = (l: () => void) => {
 };
 
 export function useRowsPerPage(): RowsPerPage {
-  return useSyncExternalStore(
-    subscribe,
-    () => current,
-    () => current,
-  );
+  return useSyncExternalStore(subscribe, getRowsPerPage, getRowsPerPage);
 }
