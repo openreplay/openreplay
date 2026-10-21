@@ -134,7 +134,8 @@ jobs:
           [ -d $MSAAS_REPO_FOLDER ] || {
           git clone -b $INPUT_TAG --recursive https://x-access-token:$MSAAS_REPO_CLONE_TOKEN@$MSAAS_REPO_URL $MSAAS_REPO_FOLDER
           cd $MSAAS_REPO_FOLDER
-          cd openreplay && git fetch origin && git checkout $INPUT_TAG
+          # Build from the patch branch; INPUT_TAG still points to the old commit until the last step.
+          cd openreplay && git fetch origin $BRANCH_NAME && git checkout FETCH_HEAD
           git log -1
           cd $MSAAS_REPO_FOLDER
           bash git-init.sh
