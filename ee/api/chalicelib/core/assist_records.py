@@ -87,7 +87,9 @@ def get_record(project_id, record_id, context: schemas.CurrentContext):
     conditions = ["projects.tenant_id=%(tenant_id)s",
                   "projects.deleted_at ISNULL",
                   "assist_records.record_id=%(record_id)s",
-                  "assist_records.deleted_at ISNULL"]
+                  "assist_records.deleted_at ISNULL",
+                  "assist_records.project_id=%(project_id)s",
+                  "projects.project_id=%(project_id)s"]
     params = {"tenant_id": context.tenant_id, "project_id": project_id, "record_id": record_id}
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""SELECT record_id, user_id, session_id, assist_records.created_at, 
