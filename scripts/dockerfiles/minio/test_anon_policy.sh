@@ -8,8 +8,8 @@ set -u
 DIR=$(cd "$(dirname "$0")" && pwd)
 SCRIPT=$(realpath "${1:-$DIR/../../helmcharts/openreplay/files/minio.sh}")
 TAG=${2:-1.0.0}
-NET=or-anon-test-net
-SRV=or-anon-test-rustfs
+NET=or-anon-test-net-$$
+SRV=or-anon-test-rustfs-$$
 AK=testaccess
 SK=testsecret123
 
