@@ -1,6 +1,13 @@
 .m-dt__sheet.m-rq {
   width: min(31rem, 74%);
 }
+/* the player behind the sheet: a click there closes it */
+.m-rq__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 29;
+  background: color-mix(in srgb, var(--m-scrim) 35%, transparent);
+}
 
 .m-rq__head {
   display: flex;

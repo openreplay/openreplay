@@ -8,5 +8,4 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  text-shadow: 0 0 6px var(--m-surface-default);
 }

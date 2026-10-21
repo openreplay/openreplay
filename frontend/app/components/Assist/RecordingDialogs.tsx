@@ -54,17 +54,21 @@ function RecordingDialogs({
           const target = deleting;
           onClose();
           if (!target) return;
-          void recordingsStore.deleteRecording(target.recordId).then(() => {
-            recordingsStore.setRecordings(
-              recordingsStore.recordings.filter(
-                (rec) => rec.recordId !== target.recordId,
-              ),
-              recordingsStore.total - 1,
-            );
-            if (recordingsStore.openRecord?.recordId === target.recordId)
-              recordingsStore.openRecording(null);
-            toast.success(t('Recording deleted'));
-          });
+          recordingsStore
+            .deleteRecording(target.recordId)
+            .then(() => {
+              recordingsStore.setRecordings(
+                recordingsStore.recordings.filter(
+                  (rec) => rec.recordId !== target.recordId,
+                ),
+                recordingsStore.total - 1,
+              );
+              void recordingsStore.fetchRecordings();
+              if (recordingsStore.openRecord?.recordId === target.recordId)
+                recordingsStore.openRecording(null);
+              toast.success(t('Recording deleted'));
+            })
+            .catch(() => toast.error(t("Couldn't delete recording")));
         }}
       >
         {t(

@@ -38,8 +38,10 @@ export default class AlertsStore {
     try {
       const list = await alertsService.fetchList();
       this.setAlerts(list.map((alert) => new Alert(alert, true)));
+      return true;
     } catch (e) {
       console.error(e);
+      return false;
     } finally {
       this.setLoading(false);
     }

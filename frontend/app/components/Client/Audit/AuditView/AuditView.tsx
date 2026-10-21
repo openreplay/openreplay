@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { checkForRecent } from 'App/date';
 import { useStore } from 'App/mstore';
 import { debounce } from 'App/utils';
+import { getLocalHourFormat } from 'App/utils/intlUtils';
 
 import PreferencesPage from '../../PreferencesPage';
 
@@ -53,10 +54,14 @@ function AuditView() {
 
   const when = (a: any) =>
     a.createdAt
-      ? checkForRecent(a.createdAt, 'LLL dd, yyyy, hh:mm a', {
-          time: 'hh:mm a',
-          t,
-        })
+      ? checkForRecent(
+          a.createdAt,
+          `LLL dd, yyyy, ${getLocalHourFormat(false)}`,
+          {
+            time: getLocalHourFormat(false),
+            t,
+          },
+        )
       : '';
 
   const columns: Column<any>[] = [

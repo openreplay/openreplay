@@ -153,44 +153,48 @@ function DashboardsView() {
       width: '10%',
       align: 'right',
       render: (d) => (
-        <span onClick={(e) => e.stopPropagation()}>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="subtle"
-                size="icon"
-                aria-label={t('Actions for {{name}}', { name: d.name })}
-              >
-                <MoreHorizontal size={15} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItems
-                items={[
-                  {
-                    key: 'rename',
-                    icon: <Pencil size={13} />,
-                    label: t('Rename'),
-                    onClick: () => setRenaming(d),
-                  },
-                  {
-                    key: 'access',
-                    icon: <Users size={13} />,
-                    label: t('Visibility & access'),
-                    onClick: () => setAccessFor(d),
-                  },
-                  {
-                    key: 'delete',
-                    icon: <Trash2 size={13} />,
-                    label: t('Delete'),
-                    danger: true,
-                    onClick: () => setDeleting(d),
-                  },
-                ]}
-              />
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </span>
+        <Observer>
+          {() => (
+            <span onClick={(e) => e.stopPropagation()}>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="subtle"
+                    size="icon"
+                    aria-label={t('Actions for {{name}}', { name: d.name })}
+                  >
+                    <MoreHorizontal size={15} />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItems
+                    items={[
+                      {
+                        key: 'rename',
+                        icon: <Pencil size={13} />,
+                        label: t('Rename'),
+                        onClick: () => setRenaming(d),
+                      },
+                      {
+                        key: 'access',
+                        icon: <Users size={13} />,
+                        label: t('Visibility & access'),
+                        onClick: () => setAccessFor(d),
+                      },
+                      {
+                        key: 'delete',
+                        icon: <Trash2 size={13} />,
+                        label: t('Delete'),
+                        danger: true,
+                        onClick: () => setDeleting(d),
+                      },
+                    ]}
+                  />
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </span>
+          )}
+        </Observer>
       ),
     },
   ];

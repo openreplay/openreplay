@@ -136,6 +136,8 @@ function WidgetChart(props: Props) {
   const { period } = dashboardStore;
   const { drillDownPeriod } = dashboardStore;
   const { drillDownFilter } = dashboardStore;
+  // on a dashboard a card is drawn over the dashboard's period
+  const drawnPeriod = isSaved ? period : drillDownPeriod;
   const colors = Styles.safeColors;
   const [loading, setLoading] = useState(true);
   const [stale, setStale] = useState(false);
@@ -192,7 +194,7 @@ function WidgetChart(props: Props) {
     if (event) {
       if (Array.isArray(event)) {
         // get the filter of clicked row
-        const periodTimestamps = drillDownPeriod.toTimestamps();
+        const periodTimestamps = drawnPeriod.toTimestamps();
         drillDownFilter.merge({
           filters: event,
           startTimestamp: periodTimestamps.startTimestamp,
@@ -204,8 +206,8 @@ function WidgetChart(props: Props) {
         const { timestamp } = payload;
         const periodTimestamps = getStartAndEndTimestampsByDensity(
           timestamp,
-          drillDownPeriod.start,
-          drillDownPeriod.end,
+          drawnPeriod.start,
+          drawnPeriod.end,
           params.density,
         );
 
@@ -344,7 +346,7 @@ function WidgetChart(props: Props) {
     const payload = isSaved
       ? { ...metricParams, density }
       : { ...params, ...timestmaps, ..._metric.toJson(), density };
-    const requestPeriod = !isSaved ? drillDownPeriod : period;
+    const requestPeriod = drawnPeriod;
     // both the dependency effect and the page effect call loadPage on mount;
     // the debounce used to collapse them, the key does it now
     const requestKey = JSON.stringify([
@@ -420,14 +422,29 @@ function WidgetChart(props: Props) {
   ]);
   useEffect(loadPage, [_metric.page]);
 
-  const onFocus = (seriesName: string) => {
+  const focusSeries = (seriesName: string) => {
     metricStore.setFocusedSeriesName(seriesName);
     metricStore.setDrillDown(true);
-    props.onDatum?.();
+  };
+  // a drill opened from a widget is over the window the widget draws
+  const drawnWindow = () => {
+    const ts = drawnPeriod.toTimestamps();
+    return { startTimestamp: ts.startTimestamp, endTimestamp: ts.endTimestamp };
+  };
+  // a tile or a slice is the datum; a point's click already opened the card
+  const onFocus = (seriesName: string) => {
+    focusSeries(seriesName);
+    if (!props.onDatum) return;
+    drillDownFilter.merge(drawnWindow());
+    props.onDatum();
   };
 
   const onJourneyClick = (filters: any) => {
-    dashboardStore.drillDownFilter.merge({ filters, page: 1 });
+    dashboardStore.drillDownFilter.merge({
+      filters,
+      page: 1,
+      ...(props.onDatum ? drawnWindow() : {}),
+    });
     props.onDatum?.();
   };
 
@@ -476,6 +493,7 @@ function WidgetChart(props: Props) {
           data={data}
           compData={compData}
           isWidget={isSaved || isTemplate}
+          drillPeriod={drawnPeriod}
           onDrill={props.onDatum}
         />
       );
@@ -572,7 +590,11 @@ function WidgetChart(props: Props) {
             inGrid={!props.isPreview}
             data={chartData}
             compData={compDataCopy}
-            onSeriesFocus={onFocus}
+            onSeriesFocus={
+              viewType === 'progressChart' || viewType === 'pieChart'
+                ? onFocus
+                : focusSeries
+            }
             onClick={onChartClick}
             height={height ?? 240}
             label={

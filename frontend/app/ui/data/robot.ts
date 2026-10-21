@@ -203,6 +203,7 @@ export interface RobotArt {
   light: string;
 }
 
+const CACHE_MAX = 300;
 const cache = new Map<string, RobotArt>();
 
 export function robotArt(
@@ -228,6 +229,7 @@ export function robotArt(
     dark: `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`,
     light: lightVariant(svg, glow, glow === '#ffffff'),
   };
+  if (cache.size >= CACHE_MAX) cache.delete(cache.keys().next().value!);
   cache.set(key, art);
   return art;
 }

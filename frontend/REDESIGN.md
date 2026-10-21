@@ -294,8 +294,8 @@ handoff `context/handoff-2026-10-05.md`. The prototype runs on mock data (`src/s
   (OR-3853). One Add card per dashboard (the empty state has none); a new dashboard can start empty. The
   card picker is a filter menu: the search on top with the step's back chip, Create a new card as a second
   step, skeleton rows while loading, one 24rem size, a footer. Display menu select 10rem, one line. Not
-  ported: the drill's share "% of the card" (the sessions list has no card total) and the prototype's mock
-  `drillSessionsOf` (the API already returns the datum's sessions).
+  ported: the prototype's mock `drillSessionsOf` (the API already returns the datum's sessions). OR-3855
+  added the drilled row's share of the card to the list head, and Open in Sessions for request rows.
 
 ## Review pass (2026-10-08)
 

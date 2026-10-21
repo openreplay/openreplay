@@ -24,6 +24,7 @@ import React, {
 import { useTranslation } from 'react-i18next';
 
 import { FUNNEL, HEATMAP, TABLE, USER_PATH } from 'App/constants/card';
+import { CUSTOM_RANGE } from 'App/dateRange';
 import useIsMounted from 'App/hooks/useIsMounted';
 import { useStore } from 'App/mstore';
 import { sessions as sessionsRoute, withSiteId } from 'App/routes';
@@ -241,6 +242,18 @@ function WidgetSessions() {
     [fetchClickmapSessions],
   );
 
+  // the series the list stands for: the focused one, less the hidden ones
+  const listedSeries = () => {
+    const base = focused
+      ? widget.series.filter(
+          (s) => s.name === focused || focused.startsWith(s.name + ' / '),
+        )
+      : widget.series;
+    return metricStore.disabledSeries.length
+      ? base.filter((s) => !metricStore.disabledSeries.includes(s.name))
+      : base;
+  };
+
   const filterDeps = widget.series
     .flatMap((s) => s.filter.filters.map((f) => JSON.stringify(f)))
     .join('$');
@@ -262,15 +275,7 @@ function WidgetSessions() {
         filters: [...sessionStore.userFilter.filters, clickFilter],
       });
     } else {
-      const baseSeries = focused
-        ? widget.series.filter(
-            (s) => s.name === focused || focused.startsWith(s.name + ' / '),
-          )
-        : widget.series;
-      const active = metricStore.disabledSeries.length
-        ? baseSeries.filter((s) => !metricStore.disabledSeries.includes(s.name))
-        : baseSeries;
-      const seriesJson = active.map((s) => s.toJson());
+      const seriesJson = listedSeries().map((s) => s.toJson());
 
       if (widget.metricType === USER_PATH) {
         if (
@@ -409,8 +414,18 @@ function WidgetSessions() {
         ? { ...c, ...f, displayName: f.displayName ?? c.displayName }
         : f;
     };
+    // the list's whole search: the row, the card's own rules, its window
+    const rules = [
+      ...filter.filters,
+      ...listedSeries().flatMap((s) => s.toJson().filter.filters ?? []),
+    ];
     searchStore.clearSearch();
-    filter.filters.forEach((f: any) =>
+    searchStore.edit({
+      startDate: filter.startTimestamp,
+      endDate: filter.endTimestamp,
+      rangeValue: CUSTOM_RANGE,
+    });
+    rules.forEach((f: any) =>
       searchStore.addFilter({ ...named(f), filters: f.filters?.map(named) }),
     );
     history.push(

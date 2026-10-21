@@ -591,6 +591,7 @@
   "New alert saved": "Новое уведомление сохранено",
   "Alert updated": "Уведомление обновлено",
   "Failed to create an alert": "Не удалось создать уведомление",
+  "Failed to update the alert": "Не удалось обновить уведомление",
   "Eg. When Threshold is above 1ms over the past 15mins, notify me through Slack #foss-notifications.": "Например: если порог превышает 1 мс за последние 15 минут, уведомить меня через Slack #foss-notifications.",
   "Alert based on": "Уведомление на основе",
   "Session Replay": "Воспроизведение сессий",
@@ -663,6 +664,7 @@
   "Couldn't update recording name": "Не удалось обновить название записи",
   "Delete this recording?": "Удалить эту запись?",
   "Recording deleted": "Запись удалена",
+  "Couldn't delete recording": "Не удалось удалить запись",
   "{{name}} is deleted for everyone on the team. The co-browsing session it came from is not affected.": "{{name}} is deleted for everyone on the team. The co-browsing session it came from is not affected.",
   "to allow viewing this session": "to allow viewing this session",
   "Live session was closed.": "Онлайн-сессия была закрыта.",
@@ -2936,5 +2938,9 @@
   "Sessions that called {{value}}": "Сессии с запросом к {{value}}",
   "Sessions with {{value}}": "Сессии с {{value}}",
   "Open in Sessions": "Открыть в Сессиях",
-  "{{share}} of the card": "{{share}} карточки"
+  "{{share}} of the card": "{{share}} карточки",
+  "Alert": "Оповещение",
+  "Could not load this alert": "Не удалось загрузить это оповещение",
+  "Check your connection and try again.": "Проверьте подключение и попробуйте снова.",
+  "Try again": "Повторить"
 }

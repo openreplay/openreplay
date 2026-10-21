@@ -141,7 +141,7 @@ function CardPicker({ onDone }: { onDone: () => void }) {
         }
       />
       {creating ? (
-        <div key="create" className="m-fm__body m-dash__picker-body">
+        <div key="create" className="m-fm__body m-dash__picker-body m-step-in">
           <AddCardSection
             step={{ query }}
             handleOpenChange={(o) => !o && onDone()}
@@ -152,11 +152,12 @@ function CardPicker({ onDone }: { onDone: () => void }) {
         <>
           <div
             key="cards"
-            className="m-fm__body m-dash__picker-body"
+            className="m-fm__body m-dash__picker-body m-step-in"
             aria-busy={cards == null || undefined}
           >
             <button
               type="button"
+              role="menuitem"
               className="m-fm__dim-row"
               onClick={() => {
                 setCreating(true);

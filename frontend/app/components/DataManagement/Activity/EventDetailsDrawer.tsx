@@ -29,7 +29,7 @@ import '../data-management.css';
 type Scope = 'all' | 'default' | 'custom';
 type View = 'list' | 'json';
 
-/** the event's own timestamps, epoch ms */
+/** the event's own timestamps: created_at in epoch ms, time ($time) in epoch seconds */
 const DATE_PROPS = ['created_at', 'time'];
 
 interface Props {
@@ -87,11 +87,15 @@ function EventDetailsDrawer({ eventId, onClose }: Props) {
   );
 
   // a timestamp reads as a date; the JSON and the tooltip keep the raw value
+  // a custom property that happens to be called `time` is shown as sent
+  const ownDate = (key: string) =>
+    DATE_PROPS.includes(key) && !!event && !(key in event.customProps);
   const shown = (key: string, value: any) =>
-    DATE_PROPS.includes(key) && typeof value === 'number'
-      ? DateTime.fromMillis(value, timezone ? { zone: timezone } : {}).toFormat(
-          'LLL d, yyyy, HH:mm:ss',
-        )
+    ownDate(key) && typeof value === 'number'
+      ? DateTime.fromMillis(
+          key === 'time' ? value * 1000 : value,
+          timezone ? { zone: timezone } : {},
+        ).toFormat('LLL d, yyyy, HH:mm:ss')
       : String(value);
 
   const name = event ? filterStore.getFilterDisplayName(event.event_name) : '';

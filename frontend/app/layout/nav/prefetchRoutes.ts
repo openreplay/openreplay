@@ -36,8 +36,8 @@ const loaders: Record<string, () => Promise<unknown>> = {
 };
 
 export function prefetchRoute(key: string): void {
-  // import() is cached by the browser; a failed one is retried by React.lazy
-  // if the user actually navigates
+  // best-effort warm-up: errors are swallowed here, and the route's own
+  // React.lazy import runs on navigation and reports them
   void loaders[key]?.().catch(() => {});
 }
 

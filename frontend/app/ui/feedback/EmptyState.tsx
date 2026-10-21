@@ -60,8 +60,9 @@ export function EmptyState({
       />
     ) : null);
   const page =
-    art != null ||
-    (drawn != null && (illustration != null || entry?.size === 'page'));
+    drawn != null
+      ? illustration != null || entry?.size === 'page'
+      : art != null;
   return (
     <div
       className={`m-empty${page ? ' m-empty--page' : ''}${drawn && !page ? ' m-empty--drawn' : ''}${className ? ` ${className}` : ''}`}

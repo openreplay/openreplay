@@ -47,7 +47,13 @@ function AlertFormModal({ onClose }: Props) {
         toast.success(wasUpdating ? t('Alert updated') : t('New alert saved'));
         onClose?.();
       })
-      .catch(() => toast.error(t('Failed to create an alert')));
+      .catch(() =>
+        toast.error(
+          wasUpdating
+            ? t('Failed to update the alert')
+            : t('Failed to create an alert'),
+        ),
+      );
   };
   const remove = () =>
     alertsStore

@@ -101,6 +101,9 @@ export default class UiPlayerStore {
 
   requestSheetHosts = 0;
 
+  /** the request's open tab, kept while paging through requests */
+  requestTab = 'headers';
+
   constructor() {
     makeAutoObservable(this, { requestSheet: observableRef });
   }
@@ -123,6 +126,10 @@ export default class UiPlayerStore {
     const closing = this.requestSheet;
     this.requestSheet = null;
     closing?.onClose?.();
+  };
+
+  setRequestTab = (tab: string) => {
+    this.requestTab = tab;
   };
 
   setRequestSheetHost = (on: boolean) => {

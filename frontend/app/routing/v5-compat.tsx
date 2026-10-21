@@ -103,7 +103,7 @@ type PathInput =
   | To
   | { pathname?: string; search?: string; hash?: string; state?: unknown };
 
-/** v5 semantics: an object keeps the parts of the current path it leaves out. */
+/** An object keeps the parts of the current path it leaves out (v5 kept only the pathname). */
 function resolveTo(
   input: PathInput,
   location: Location,

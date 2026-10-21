@@ -591,6 +591,7 @@
   "New alert saved": "新警报已保存",
   "Alert updated": "警报已更新",
   "Failed to create an alert": "创建警报失败",
+  "Failed to update the alert": "更新警报失败",
   "Eg. When Threshold is above 1ms over the past 15mins, notify me through Slack #foss-notifications.": "例如：当过去15分钟内阈值超过1毫秒时，通过Slack #foss-notifications通知我。",
   "Alert based on": "警报依据",
   "Session Replay": "会话回放",
@@ -663,6 +664,7 @@
   "Couldn't update recording name": "无法更新录制名称",
   "Delete this recording?": "删除此录制？",
   "Recording deleted": "录制已删除",
+  "Couldn't delete recording": "无法删除录制",
   "{{name}} is deleted for everyone on the team. The co-browsing session it came from is not affected.": "{{name}} is deleted for everyone on the team. The co-browsing session it came from is not affected.",
   "to allow viewing this session": "to allow viewing this session",
   "Live session was closed.": "实时会话已关闭。",
@@ -2750,5 +2752,9 @@
   "Sessions that called {{value}}": "调用过 {{value}} 的会话",
   "Sessions with {{value}}": "包含 {{value}} 的会话",
   "Open in Sessions": "在会话中打开",
-  "{{share}} of the card": "占卡片的 {{share}}"
+  "{{share}} of the card": "占卡片的 {{share}}",
+  "Alert": "警报",
+  "Could not load this alert": "无法加载此警报",
+  "Check your connection and try again.": "请检查网络连接后重试。",
+  "Try again": "重试"
 }

@@ -23,6 +23,7 @@ import { PageCard, PagePanel } from '@/ui/layout/PageCard';
 import { setRowsPerPage, useRowsPerPage } from '@/ui/layout/rows-per-page';
 import { Tabs, TabsList, TabsTrigger } from '@/ui/layout/tabs';
 import { useViewport } from '@/ui/layout/use-viewport';
+import Period, { LAST_7_DAYS } from 'Types/app/period';
 import { FilterKey } from 'Types/filter/filterType';
 import type Session from 'Types/session';
 import {
@@ -401,7 +402,9 @@ export const RecordingsSection = observer(() => {
   const [renaming, setRenaming] = React.useState<IRecord | null>(null);
   const [deleting, setDeleting] = React.useState<IRecord | null>(null);
   // the date is the API's order; the duration sorts the page shown
-  const [sort, setSort] = React.useState<RecordingSort>(null);
+  const [sort, setSort] = React.useState<RecordingSort>(() =>
+    recordingsStore.order === 'asc' ? { key: 'at', desc: false } : null,
+  );
   const updateSearch = React.useMemo(
     () => debounce((v: string) => recordingsStore.updateSearch(v), 400),
     [],
@@ -427,11 +430,15 @@ export const RecordingsSection = observer(() => {
         : recordings,
     [recordings, sort],
   );
-  const narrowed = !!recordingsStore.search || recordingsStore.currentUser;
+  const narrowed =
+    !!recordingsStore.search ||
+    recordingsStore.currentUser ||
+    recordingsStore.period.rangeName !== LAST_7_DAYS;
   const resetQuery = () => {
     setQuery('');
     recordingsStore.updateSearch('');
     recordingsStore.setCurrUser(false);
+    recordingsStore.updateTimestamps(Period({ rangeName: LAST_7_DAYS }));
   };
 
   const columns: Column<IRecord>[] = [
@@ -585,9 +592,9 @@ export const RecordingsSection = observer(() => {
               const next: RecordingSort =
                 key === 'at' || key === 'duration' ? { key, desc } : null;
               setSort(next);
-              recordingsStore.setOrder(
-                next?.key === 'at' && !next.desc ? 'asc' : 'desc',
-              );
+              const order = next?.key === 'at' && !next.desc ? 'asc' : 'desc';
+              if (order !== recordingsStore.order)
+                recordingsStore.setOrder(order);
             }}
             rowClassName={() => 'm-ss__row'}
             rowStyle={(r) =>

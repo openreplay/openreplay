@@ -273,12 +273,12 @@ function WidgetView({
     if (metricNotFound) {
       history.replace(
         withSiteId(
-          dashboardId ? `/dashboard/${dashboardId}` : '/metrics',
+          queryDashboardId ? `/dashboard/${queryDashboardId}` : '/metrics',
           siteId,
         ),
       );
     }
-  }, [metricNotFound, history, siteId]);
+  }, [metricNotFound, history, siteId, queryDashboardId]);
 
   const undoChanges = () => {
     const w = new Widget();

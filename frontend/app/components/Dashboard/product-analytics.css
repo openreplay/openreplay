@@ -114,14 +114,6 @@
   padding: var(--m-space-3);
   gap: 0;
 }
-.m-dash__picker-body {
-  animation: m-step-in var(--m-duration-normal) var(--m-ease-out) both;
-}
-@media (prefers-reduced-motion: reduce) {
-  .m-dash__picker-body {
-    animation: none;
-  }
-}
 .m-dash__picker-field {
   margin: 0;
   padding: var(--m-space-3) var(--m-space-4) var(--m-space-2);

@@ -25,21 +25,28 @@ function RequestSheetHost() {
   const resource = sheet?.rows[sheet.index];
   if (!sheet || !resource) return null;
   return (
-    <aside
-      className="m-dt__sheet m-rq"
-      role="dialog"
-      aria-label={t('Request {{url}}', { url: resource.url })}
-    >
-      <RequestDetails
-        resource={resource}
-        index={sheet.index}
-        total={sheet.rows.length}
-        onPrev={() => uiPlayerStore.setRequestSheetIndex(sheet.index - 1)}
-        onNext={() => uiPlayerStore.setRequestSheetIndex(sheet.index + 1)}
-        onJump={(time) => player?.jump(time)}
-        onClose={uiPlayerStore.closeRequestSheet}
+    <>
+      <div
+        className="m-rq__scrim"
+        aria-hidden="true"
+        onClick={uiPlayerStore.closeRequestSheet}
       />
-    </aside>
+      <aside
+        className="m-dt__sheet m-rq"
+        role="dialog"
+        aria-label={t('Request {{url}}', { url: resource.url })}
+      >
+        <RequestDetails
+          resource={resource}
+          index={sheet.index}
+          total={sheet.rows.length}
+          onPrev={() => uiPlayerStore.setRequestSheetIndex(sheet.index - 1)}
+          onNext={() => uiPlayerStore.setRequestSheetIndex(sheet.index + 1)}
+          onJump={(time) => player?.jump(time)}
+          onClose={uiPlayerStore.closeRequestSheet}
+        />
+      </aside>
+    </>
   );
 }
 

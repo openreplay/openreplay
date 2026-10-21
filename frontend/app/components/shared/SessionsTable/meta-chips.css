@@ -39,7 +39,7 @@
     color var(--m-duration-instant) var(--m-ease-out);
 }
 
-/* in the table a value gets its length; the dock's tabs keep 7rem */
+/* in the table a value gets its length; the dock's chips keep their own 5.5rem */
 .m-ss__table .m-ss__meta-chip {
   max-width: 16rem;
 }

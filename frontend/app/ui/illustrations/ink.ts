@@ -86,3 +86,13 @@ export const rrect = (
 
 export const shift = (pts: P[], dx: number, dy: number): P[] =>
   pts.map(([x, y]) => [x + dx, y + dy] as P);
+
+export const PAPER = 'm-ill__fill-paper';
+export const ACCENT = 'm-ill__fill-accent';
+
+export function disc(cx: number, cy: number, rad: number, n = 14): P[] {
+  return Array.from({ length: n }, (_, i) => {
+    const a = (i / n) * Math.PI * 2;
+    return [cx + Math.cos(a) * rad, cy + Math.sin(a) * rad] as P;
+  });
+}

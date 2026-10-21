@@ -160,7 +160,7 @@ function TimeTable(props: Props) {
       // centred, the active row is not the first one, and a list that fits
       // does not scroll at all: read where the list actually is
       setFirstVisibleRowIndex(
-        scroller.current.findItemIndex(scroller.current.scrollOffset),
+        Math.floor(scroller.current.scrollOffset / ROW_HEIGHT + 0.33),
       );
     }
   }, [props.activeIndex]);

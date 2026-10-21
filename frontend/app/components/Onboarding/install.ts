@@ -37,7 +37,7 @@ export const DOCS = {
 };
 
 export const ingestPoint = () => `https://${window.location.hostname}/ingest`;
-const isSaas = () => ingestPoint().includes('app.openreplay.com');
+const isSaas = () => window.location.hostname === 'app.openreplay.com';
 
 const lastMajor = ENV.TRACKER_MAJOR_VERSION
   ? ENV.TRACKER_MAJOR_VERSION

@@ -217,7 +217,7 @@ function Robot({
           height={FACE}
           className={`m-cheer__face m-cheer__face--${kind}`}
         >
-          <SessionAvatar seed={face.seed} face={part} size={FACE} />
+          <SessionAvatar seed={face.seed} face={part} size={FACE} faceOnly />
         </foreignObject>
       ))}
 

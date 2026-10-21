@@ -46,11 +46,16 @@ function SessionsBy(props: Props) {
   // the row the card's drill points at (a dashboard datum opens it drilled)
   const drillFilter: any = dashboardStore.drillDownFilter.filters[0];
   const drilled =
-    !inGrid && drillFilter?.name === metric.metricOf
-      ? ((drillFilter.isEvent
-          ? drillFilter.filters?.find((s: any) => s.value?.length)?.value?.[0]
-          : drillFilter.value?.[0]) ?? null)
-      : null;
+    inGrid || !drillFilter
+      ? null
+      : metric.metricOf === FilterKey.RESOLUTIONS
+        ? (drillFilter.displayValue ?? null)
+        : drillFilter.name === metric.metricOf
+          ? ((drillFilter.isEvent
+              ? drillFilter.filters?.find((s: any) => s.value?.length)
+                  ?.value?.[0]
+              : drillFilter.value?.[0]) ?? null)
+          : null;
   const [selected, setSelected] = React.useState<any>(drilled);
   React.useEffect(() => {
     if (drilled != null) setSelected(drilled);

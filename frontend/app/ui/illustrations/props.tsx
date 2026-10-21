@@ -1,6 +1,6 @@
 import type { PropSlot } from './Bot';
 import type { Drawing, Move } from './Inked';
-import { type P, inked, poly, ring, rrect } from './ink';
+import { ACCENT, type P, PAPER, disc, inked, poly, ring, rrect } from './ink';
 import { MORE_PROPS } from './props-more';
 
 export interface PropDef {
@@ -11,15 +11,9 @@ export interface PropDef {
   draw: () => Drawing;
 }
 
-export const PAPER = 'm-ill__fill-paper';
-export const ACCENT = 'm-ill__fill-accent';
-
-export function disc(cx: number, cy: number, rad: number, n = 14): P[] {
-  return Array.from({ length: n }, (_, i) => {
-    const a = (i / n) * Math.PI * 2;
-    return [cx + Math.cos(a) * rad, cy + Math.sin(a) * rad] as P;
-  });
-}
+export const shadow = (cx: number, w: number) => (
+  <ellipse cx={cx} cy={71} rx={w} ry={2.6} className="m-ill__ground" />
+);
 
 const BASE_PROPS = {
   magnifier: {

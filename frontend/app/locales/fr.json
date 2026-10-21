@@ -591,6 +591,7 @@
   "New alert saved": "Nouvelle alerte enregistrée",
   "Alert updated": "Alerte mise à jour",
   "Failed to create an alert": "Échec de la création de l'alerte",
+  "Failed to update the alert": "Échec de la mise à jour de l'alerte",
   "Eg. When Threshold is above 1ms over the past 15mins, notify me through Slack #foss-notifications.": "Ex. Lorsque le seuil dépasse 1ms au cours des 15 dernières minutes, notifiez-moi via Slack #foss-notifications.",
   "Alert based on": "Alerte basée sur",
   "Session Replay": "Relecture de session",
@@ -663,6 +664,7 @@
   "Couldn't update recording name": "Impossible de mettre à jour le nom de l'enregistrement",
   "Delete this recording?": "Supprimer cet enregistrement ?",
   "Recording deleted": "Enregistrement supprimé",
+  "Couldn't delete recording": "Impossible de supprimer l'enregistrement",
   "{{name}} is deleted for everyone on the team. The co-browsing session it came from is not affected.": "{{name}} is deleted for everyone on the team. The co-browsing session it came from is not affected.",
   "to allow viewing this session": "to allow viewing this session",
   "Live session was closed.": "La session en direct a été fermée.",
@@ -2874,5 +2876,9 @@
   "Sessions that called {{value}}": "Sessions qui ont appelé {{value}}",
   "Sessions with {{value}}": "Sessions avec {{value}}",
   "Open in Sessions": "Ouvrir dans Sessions",
-  "{{share}} of the card": "{{share}} de la carte"
+  "{{share}} of the card": "{{share}} de la carte",
+  "Alert": "Alerte",
+  "Could not load this alert": "Impossible de charger cette alerte",
+  "Check your connection and try again.": "Vérifiez votre connexion et réessayez.",
+  "Try again": "Réessayer"
 }

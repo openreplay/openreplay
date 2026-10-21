@@ -1,6 +1,5 @@
-import { type P, inked, poly, ring, rrect } from './ink';
+import { ACCENT, type P, PAPER, disc, inked, poly, ring, rrect } from './ink';
 import type { PropDef } from './props';
-import { ACCENT, PAPER, disc } from './props';
 
 function starPts(cx: number, cy: number, ro: number, ri: number): P[] {
   return Array.from({ length: 10 }, (_, i) => {

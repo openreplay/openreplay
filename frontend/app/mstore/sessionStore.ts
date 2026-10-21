@@ -675,7 +675,11 @@ export default class SessionStore {
     try {
       const filter = searchStore.instance.toSearch();
       setSessionFilter(cleanSessionFilters(filter));
-      const data = await sessionService.getAutoplayList({ ...filter, page });
+      const data = await sessionService.getAutoplayList({
+        ...filter,
+        page,
+        limit: getRowsPerPage(),
+      });
       const ids = data
         .map((i: any) => `${i.sessionId}`)
         .filter((i, index) => !this.sessionIds.includes(i));

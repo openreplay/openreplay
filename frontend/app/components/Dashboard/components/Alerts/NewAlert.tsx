@@ -7,6 +7,7 @@ import {
   DropdownMenuTrigger,
 } from '@/ui/actions/dropdown-menu';
 import { Chip } from '@/ui/data/Chip';
+import { EmptyState } from '@/ui/feedback/EmptyState';
 import { PageCard, PagePanel } from '@/ui/layout/PageCard';
 import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
 import { toast } from '@/ui/overlays/toast';
@@ -39,28 +40,35 @@ function NewAlert({ siteId }: { siteId: string }) {
 
   const history = useHistory();
   const [deleting, setDeleting] = React.useState(false);
+  // an edit link whose alert could not be loaded: never a blank create form
+  const [loadFailed, setLoadFailed] = React.useState(false);
+  const mounted = React.useRef(true);
+  const alertId = location.pathname.split('/').pop();
+  const loadList = (force = false) => {
+    setLoadFailed(false);
+    const listed =
+      force || list.length === 0 ? fetchList() : Promise.resolve(true);
+    // an id the list doesn't know leads back to the list
+    void listed.then((ok) => {
+      if (!mounted.current || alertId === 'create') return;
+      if (!ok) setLoadFailed(true);
+      else if (
+        !alertsStore.alerts.some((a: Alert) => a.alertId === String(alertId))
+      )
+        history.replace(withSiteId(alerts(), siteId));
+    });
+  };
   const { webhooks } = settingsStore;
   const { fetchWebhooks } = settingsStore;
 
   useEffect(() => {
     init({});
-    let mounted = true;
-    const listed = list.length === 0 ? fetchList() : Promise.resolve();
-    // an id the list doesn't know leads back to the list, not to a blank create form
-    void listed.then(() => {
-      const alertId = location.pathname.split('/').pop();
-      if (
-        mounted &&
-        alertId !== 'create' &&
-        !alertsStore.alerts.some((a: Alert) => a.alertId === String(alertId))
-      ) {
-        history.replace(withSiteId(alerts(), siteId));
-      }
-    });
+    mounted.current = true;
+    loadList();
     fetchTriggerOptions();
     void fetchWebhooks();
     return () => {
-      mounted = false;
+      mounted.current = false;
     };
   }, []);
 
@@ -98,8 +106,35 @@ function NewAlert({ siteId }: { siteId: string }) {
           toast.success(t('Alert updated'));
         }
       })
-      .catch(() => toast.error(t('Failed to create an alert')));
+      .catch(() =>
+        toast.error(
+          wasUpdating
+            ? t('Failed to update the alert')
+            : t('Failed to create an alert'),
+        ),
+      );
   };
+
+  if (loadFailed)
+    return (
+      <PageCard
+        back={{
+          label: t('Alerts'),
+          onClick: () => history.push(withSiteId(alerts(), siteId)),
+        }}
+        title={t('Alert')}
+      >
+        <EmptyState
+          title={t('Could not load this alert')}
+          hint={t('Check your connection and try again.')}
+          action={
+            <Button loading={loading} onClick={() => loadList(true)}>
+              {t('Try again')}
+            </Button>
+          }
+        />
+      </PageCard>
+    );
 
   const exists = instance.exists();
   const trigger = triggerOptions.find(

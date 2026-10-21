@@ -591,6 +591,7 @@
   "New alert saved": "새 알림이 저장되었습니다",
   "Alert updated": "알림이 업데이트되었습니다",
   "Failed to create an alert": "알림 생성에 실패했습니다",
+  "Failed to update the alert": "알림 업데이트에 실패했습니다",
   "Eg. When Threshold is above 1ms over the past 15mins, notify me through Slack #foss-notifications.": "예: 지난 15분 동안 임계값이 1ms를 초과하면 Slack #foss-notifications로 알림 받기",
   "Alert based on": "다음을 기준으로 알림",
   "Session Replay": "세션 리플레이",
@@ -663,6 +664,7 @@
   "Couldn't update recording name": "녹화 이름을 업데이트하지 못했습니다",
   "Delete this recording?": "이 녹화를 삭제하시겠습니까?",
   "Recording deleted": "녹화가 삭제되었습니다",
+  "Couldn't delete recording": "녹화를 삭제하지 못했습니다",
   "{{name}} is deleted for everyone on the team. The co-browsing session it came from is not affected.": "{{name}} is deleted for everyone on the team. The co-browsing session it came from is not affected.",
   "to allow viewing this session": "to allow viewing this session",
   "Live session was closed.": "실시간 세션이 종료되었습니다.",
@@ -2750,5 +2752,9 @@
   "Sessions that called {{value}}": "{{value}}을(를) 호출한 세션",
   "Sessions with {{value}}": "{{value}}이(가) 있는 세션",
   "Open in Sessions": "세션에서 열기",
-  "{{share}} of the card": "카드의 {{share}}"
+  "{{share}} of the card": "카드의 {{share}}",
+  "Alert": "알림",
+  "Could not load this alert": "이 알림을 불러올 수 없습니다",
+  "Check your connection and try again.": "연결을 확인하고 다시 시도하세요.",
+  "Try again": "다시 시도"
 }

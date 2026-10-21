@@ -591,6 +591,7 @@
   "New alert saved": "New alert saved",
   "Alert updated": "Alert updated",
   "Failed to create an alert": "Failed to create an alert",
+  "Failed to update the alert": "Failed to update the alert",
   "Eg. When Threshold is above 1ms over the past 15mins, notify me through Slack #foss-notifications.": "Eg. When Threshold is above 1ms over the past 15mins, notify me through Slack #foss-notifications.",
   "Alert based on": "Alert based on",
   "Session Replay": "Session Replay",
@@ -663,6 +664,7 @@
   "Couldn't update recording name": "Couldn't update recording name",
   "Delete this recording?": "Delete this recording?",
   "Recording deleted": "Recording deleted",
+  "Couldn't delete recording": "Couldn't delete recording",
   "{{name}} is deleted for everyone on the team. The co-browsing session it came from is not affected.": "{{name}} is deleted for everyone on the team. The co-browsing session it came from is not affected.",
   "to allow viewing this session": "to allow viewing this session",
   "Live session was closed.": "Live session was closed.",
@@ -2812,5 +2814,9 @@
   "Sessions that called {{value}}": "Sessions that called {{value}}",
   "Sessions with {{value}}": "Sessions with {{value}}",
   "Open in Sessions": "Open in Sessions",
-  "{{share}} of the card": "{{share}} of the card"
+  "{{share}} of the card": "{{share}} of the card",
+  "Alert": "Alert",
+  "Could not load this alert": "Could not load this alert",
+  "Check your connection and try again.": "Check your connection and try again.",
+  "Try again": "Try again"
 }

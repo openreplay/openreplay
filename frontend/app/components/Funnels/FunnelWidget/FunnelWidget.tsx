@@ -20,6 +20,8 @@ interface Props {
   data: { funnel: Funnel; funnelBreakdown?: Record<string, Funnel> };
   /** a stage was drilled into (a dashboard opens its card) */
   onDrill?: () => void;
+  /** the window the funnel is drawn over, when not the card's drill-down one */
+  drillPeriod?: Record<string, any>;
   compData?: { funnel: Funnel; funnelBreakdown?: Record<string, Funnel> };
 }
 
@@ -50,6 +52,7 @@ function FunnelWidget({
   data,
   compData,
   onDrill,
+  drillPeriod,
 }: Props) {
   const { t } = useTranslation();
   const { dashboardStore, metricStore } = useStore();
@@ -99,7 +102,7 @@ function FunnelWidget({
   }, [drilledStages]);
 
   const applyDrillDown = (index: number) => {
-    const ts = drillDownPeriod.toTimestamps();
+    const ts = (drillPeriod ?? drillDownPeriod).toTimestamps();
     drillDownFilter.merge({
       filters: metricFilters.slice(0, index + 1),
       startTimestamp: ts.startTimestamp,

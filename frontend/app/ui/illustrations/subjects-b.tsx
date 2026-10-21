@@ -1,10 +1,7 @@
-import { type P, inked, poly, ring, rrect } from './ink';
-import { ACCENT, PAPER, disc } from './props';
+import { ACCENT, type P, PAPER, disc, inked, poly, ring, rrect } from './ink';
+import { shadow } from './props';
 import type { SubjectDef } from './subjects';
 
-const shadow = (cx: number, w: number) => (
-  <ellipse cx={cx} cy={71} rx={w} ry={2.6} className="m-ill__ground" />
-);
 const SOFT = 'm-ill__fill-accent-soft';
 
 export const SUBJECTS_B = {

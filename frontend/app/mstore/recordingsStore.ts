@@ -98,25 +98,21 @@ export default class RecordingsStore {
     }
   }
 
+  /** Rejects on failure; callers say so. */
   async deleteRecording(id: number) {
     this.loading = true;
     try {
-      const recording = await recordingsService.deleteRecording(id);
-      return recording;
-    } catch (e) {
-      console.error(e);
+      return await recordingsService.deleteRecording(id);
     } finally {
       this.loading = false;
     }
   }
 
+  /** Rejects on failure; callers say so. */
   async updateRecordingName(id: number, name: string) {
     this.loading = true;
     try {
-      const recording = await recordingsService.updateRecordingName(id, name);
-      return recording;
-    } catch (e) {
-      console.error(e);
+      return await recordingsService.updateRecordingName(id, name);
     } finally {
       this.loading = false;
     }

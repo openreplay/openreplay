@@ -20,6 +20,7 @@ import {
   X,
 } from 'lucide-react';
 import { DateTime } from 'luxon';
+import { observer } from 'mobx-react-lite';
 import React, { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -80,7 +81,7 @@ export interface RequestDetailsProps {
   isSpot?: boolean;
 }
 
-export function RequestDetails({
+export const RequestDetails = observer(function RequestDetails({
   resource: r,
   index = 0,
   total = 0,
@@ -91,11 +92,11 @@ export function RequestDetails({
 }: RequestDetailsProps) {
   const { t } = useTranslation();
   const toast = useToast();
-  const { settingsStore } = useStore();
+  const { settingsStore, uiPlayerStore } = useStore();
   const { timezone } = settingsStore.sessionSettings;
   const call = FETCH_LIKE.includes(r.type as ResourceType);
-  const [tab, setTab] = useState(call ? 'headers' : 'timings');
-  useEffect(() => setTab(call ? 'headers' : 'timings'), [r, call]);
+  // a resource that isn't a call has only timings; the call's tab stays stored
+  const tab = call ? uiPlayerStore.requestTab : 'timings';
   const req = useMemo(() => parsePart(r.request), [r]);
   const res = useMemo(() => parsePart(r.response), [r]);
 
@@ -126,6 +127,12 @@ export function RequestDetails({
         .setZone(timezone.value)
         .toFormat(`LLL dd, yyyy, ${getLocalHourFormat()}`)
     : null;
+
+  const reqName: string = r.url ?? '';
+  const safeReqName =
+    reqName.length > 200
+      ? `${reqName.slice(0, 90)}...${reqName.slice(-90)}`
+      : reqName;
 
   return (
     <>
@@ -159,7 +166,12 @@ export function RequestDetails({
         <dl className="m-rq__facts">
           <dt>{t('Name')}</dt>
           <dd>
-            <span className="m-rq__name m-mono">{r.url}</span>
+            <span
+              className="m-rq__name m-mono"
+              title={safeReqName !== reqName ? reqName : undefined}
+            >
+              {safeReqName}
+            </span>
           </dd>
           {r.method && r.method !== '..' ? (
             <>
@@ -211,7 +223,11 @@ export function RequestDetails({
           ) : null}
         </dl>
 
-        <Tabs value={tab} onValueChange={setTab} className="m-rq__tabs">
+        <Tabs
+          value={tab}
+          onValueChange={uiPlayerStore.setRequestTab}
+          className="m-rq__tabs"
+        >
           <TabsList aria-label={t('Request detail')}>
             {call && <TabsTrigger value="headers">{t('Headers')}</TabsTrigger>}
             {call && <TabsTrigger value="request">{t('Request')}</TabsTrigger>}
@@ -269,7 +285,7 @@ export function RequestDetails({
       )}
     </>
   );
-}
+});
 
 function HeaderList({
   title,

@@ -1,11 +1,19 @@
-/** The avatar's seed: the user id, else the anonymous id (a visit with
- *  neither is its own). Never a hash: two identities could share a robot. */
+/** The avatar's seed: the user id, else the anonymous id, else the tracker's
+ *  visitor id (a visit with none is its own). Never a hash: two identities
+ *  could share a robot. */
 export const seedFor = (identity: {
   userId?: string | null;
   userAnonymousId?: string | null;
+  userUuid?: string | null;
+  userUUID?: string | null;
   sessionId?: string;
 }): string =>
-  identity.userId || identity.userAnonymousId || identity.sessionId || '';
+  identity.userId ||
+  identity.userAnonymousId ||
+  identity.userUuid ||
+  identity.userUUID ||
+  identity.sessionId ||
+  '';
 
 export interface AvatarFace {
   eyes?:

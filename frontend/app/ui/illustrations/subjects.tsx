@@ -1,6 +1,6 @@
 import type { Drawing } from './Inked';
-import { type P, inked, poly, ring, rrect } from './ink';
-import { ACCENT, PAPER, type PropKind, disc } from './props';
+import { ACCENT, type P, PAPER, disc, inked, poly, ring, rrect } from './ink';
+import { type PropKind, shadow } from './props';
 import { SUBJECTS_A } from './subjects-a';
 import { SUBJECTS_B } from './subjects-b';
 
@@ -8,12 +8,7 @@ export interface SubjectDef {
   label: string;
   prop: PropKind;
   draw: () => Drawing;
-  withRobot?: () => Drawing;
 }
-
-export const shadow = (cx: number, w: number) => (
-  <ellipse cx={cx} cy={71} rx={w} ry={2.6} className="m-ill__ground" />
-);
 
 function noMatchLayers(): Drawing {
   const list = rrect(8, 14, 62, 50, 4);
@@ -484,7 +479,6 @@ const BASE_SUBJECTS = {
     label: 'Nothing matches',
     prop: 'magnifier',
     draw: noMatchLayers,
-    withRobot: (): Drawing => noMatchLayers().slice(0, 1),
   },
 } satisfies Record<string, SubjectDef>;
 

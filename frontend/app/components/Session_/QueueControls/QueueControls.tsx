@@ -1,4 +1,5 @@
 import { IconButton } from '@/ui/actions/IconButton';
+import { getRowsPerPage } from '@/ui/layout/rows-per-page';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
@@ -7,8 +8,6 @@ import { useTranslation } from 'react-i18next';
 import { useStore } from 'App/mstore';
 import { session as sessionRoute, withSiteId } from 'App/routes';
 import { RouteComponentProps, withRouter } from 'App/routing';
-
-const PER_PAGE = 10;
 
 interface Props extends RouteComponentProps {
   defaultList: any;
@@ -37,11 +36,12 @@ function QueueControls(props: Props) {
   // prev/next point around the loaded session, so redo this on every hop
   useEffect(() => {
     setAutoplayValues();
-    const totalPages = Math.ceil(total / PER_PAGE);
+    const perPage = getRowsPerPage();
+    const totalPages = Math.ceil(total / perPage);
     const index = sessionIds.indexOf(sessionId);
 
     // sync the page number and refetch list when user navigates into next-page sessions
-    const sessionPage = Math.floor(index / PER_PAGE) + 1;
+    const sessionPage = Math.floor(index / perPage) + 1;
     if (sessionPage > 1 && currentPage < sessionPage) {
       searchStore.updateCurrentPage(currentPage + sessionPage - 1);
     }
