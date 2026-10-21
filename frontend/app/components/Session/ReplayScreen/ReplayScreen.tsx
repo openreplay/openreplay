@@ -24,7 +24,8 @@ export interface ReplayPanelTab {
 }
 
 export interface ReplayScreenProps {
-  back?: { label: string; onClick: () => void };
+  /** `onIntent`: the pointer or focus is on it, a click is likely */
+  back?: { label: string; onClick: () => void; onIntent?: () => void };
   lead: ReactNode;
   actions?: ReactNode;
   /** Tabs of the side panel; `panel` may also be a transient key outside them. */
@@ -83,6 +84,8 @@ export function ReplayScreen({
             <Button
               variant="subtle"
               onClick={back.onClick}
+              onMouseEnter={back.onIntent}
+              onFocus={back.onIntent}
               className="m-rs__back"
             >
               <ArrowLeft size={15} />

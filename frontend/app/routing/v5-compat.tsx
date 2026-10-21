@@ -1,27 +1,22 @@
 import * as React from 'react';
 import {
-  useParams,
-  UNSAFE_NavigationContext,
   type Location,
   type NavigateOptions,
   type To,
+  UNSAFE_NavigationContext,
+  createPath,
+  useBeforeUnload,
+  useParams,
 } from 'react-router';
+
 import {
   useStableLocation as useLocation,
   useStableNavigate,
 } from './StableLocationProvider';
 
 export type History = {
-  push: (
-    to:
-      | To
-      | { pathname?: string; search?: string; hash?: string; state?: unknown },
-  ) => void;
-  replace: (
-    to:
-      | To
-      | { pathname?: string; search?: string; hash?: string; state?: unknown },
-  ) => void;
+  push: (to: PathInput) => void;
+  replace: (to: PathInput) => void;
   go: (delta: number) => void;
   goBack: () => void;
   goForward: () => void;
@@ -90,66 +85,38 @@ export function Prompt({
     };
   }, [navigator, when]);
 
-  React.useEffect(() => {
-    if (!when) return;
-    if (typeof window === 'undefined') return;
-
-    // a reload or a closed tab has no next location to ask the message about
-    const handler = (e: BeforeUnloadEvent) => {
-      const msg = messageRef.current;
-      e.preventDefault();
-      e.returnValue = typeof msg === 'string' ? msg : '';
-      return e.returnValue;
-    };
-
-    window.addEventListener('beforeunload', handler);
-    return () => window.removeEventListener('beforeunload', handler);
-  }, [when]);
+  // a reload or a closed tab has no next location to ask the message about;
+  // the browser shows its own wording
+  useBeforeUnload(
+    React.useCallback(
+      (e: BeforeUnloadEvent) => {
+        if (when) e.preventDefault();
+      },
+      [when],
+    ),
+  );
 
   return null;
 }
 
+type PathInput =
+  | To
+  | { pathname?: string; search?: string; hash?: string; state?: unknown };
+
+/** v5 semantics: an object keeps the parts of the current path it leaves out. */
 function resolveTo(
-  input:
-    | To
-    | { pathname?: string; search?: string; hash?: string; state?: unknown },
+  input: PathInput,
   location: Location,
 ): { to: To; options: NavigateOptions } {
-  if (typeof input === 'string') {
-    return { to: input, options: {} };
-  }
-
-  const pathname =
-    'pathname' in input && input.pathname != null
-      ? input.pathname
-      : location.pathname;
-
-  const rawSearch = (input as any).search;
-  const rawHash = (input as any).hash;
-
-  const search =
-    rawSearch === undefined
-      ? location.search
-      : rawSearch === ''
-        ? ''
-        : rawSearch.startsWith('?')
-          ? rawSearch
-          : `?${rawSearch}`;
-
-  const hash =
-    rawHash === undefined
-      ? location.hash
-      : rawHash === ''
-        ? ''
-        : rawHash.startsWith('#')
-          ? rawHash
-          : `#${rawHash}`;
-  const state = (input as any).state;
-
-  const toString = `${pathname}${search || ''}${hash || ''}`;
+  if (typeof input === 'string') return { to: input, options: {} };
+  const p = input as Exclude<PathInput, string> & { state?: unknown };
   return {
-    to: toString,
-    options: state === undefined ? {} : { state },
+    to: createPath({
+      pathname: p.pathname ?? location.pathname,
+      search: p.search ?? location.search,
+      hash: p.hash ?? location.hash,
+    }),
+    options: p.state === undefined ? {} : { state: p.state },
   };
 }
 
@@ -162,17 +129,11 @@ export function useHistory(): History {
   return React.useMemo<History>(() => {
     return {
       push: (to) => {
-        const { to: resolvedTo, options } = resolveTo(
-          to as any,
-          locationRef.current,
-        );
+        const { to: resolvedTo, options } = resolveTo(to, locationRef.current);
         navigate(resolvedTo, options);
       },
       replace: (to) => {
-        const { to: resolvedTo, options } = resolveTo(
-          to as any,
-          locationRef.current,
-        );
+        const { to: resolvedTo, options } = resolveTo(to, locationRef.current);
         navigate(resolvedTo, { ...options, replace: true });
       },
       go: (delta) => navigate(delta),

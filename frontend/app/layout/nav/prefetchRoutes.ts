@@ -35,14 +35,10 @@ const loaders: Record<string, () => Promise<unknown>> = {
   [MENU.AUDITS]: () => import('Saas/audits/AuditsPage'),
 };
 
-const started = new Set<string>();
-
 export function prefetchRoute(key: string): void {
-  const load = loaders[key];
-  if (!load || started.has(key)) return;
-  started.add(key);
-  // React.lazy retries and reports properly if the user actually navigates.
-  void load().catch(() => started.delete(key));
+  // import() is cached by the browser; a failed one is retried by React.lazy
+  // if the user actually navigates
+  void loaders[key]?.().catch(() => {});
 }
 
 /** Pages outside the menu, keyed for prefetchRoute. */

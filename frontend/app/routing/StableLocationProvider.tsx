@@ -1,13 +1,10 @@
 import {
-  createContext,
   useCallback,
   useContext,
   useLayoutEffect,
   useMemo,
   useRef,
-  useState,
   useSyncExternalStore,
-  useTransition,
 } from 'react';
 import * as React from 'react';
 import {
@@ -46,7 +43,6 @@ let _location: Location = {
   hash: window.location.hash,
   state: window.history.state?.usr ?? null,
   key: window.history.state?.key ?? 'default',
-  unstable_mask: undefined,
 };
 
 let _navigationType: NavigationType = 'POP';
@@ -89,33 +85,12 @@ export function LocationSync() {
 
 // ─── Stable hooks ──────────────────────────────────────────────────────
 
-/* Inside <StableRoutes> the location trails the store by one transition (the
-   old page stays up while the next one's chunk loads); everything rendered by
-   the routes reads that one, so a page never sees a URL it isn't showing. */
-type RoutedLocation = { location: Location; navigationType: NavigationType };
-const RoutedLocationContext = createContext<RoutedLocation | null>(null);
-
 /**
  * Drop-in replacement for React Router's useLocation().
  * Only re-renders when the location key actually changes (once per nav).
  */
 export function useStableLocation(): Location {
-  const routed = useContext(RoutedLocationContext);
-  const live = useSyncExternalStore(_subscribe, _getSnapshot, _getSnapshot);
-  return routed ? routed.location : live;
-}
-
-/**
- * Drop-in replacement for React Router's useNavigationType().
- */
-export function useStableNavigationType(): NavigationType {
-  const routed = useContext(RoutedLocationContext);
-  const live = useSyncExternalStore(
-    _subscribe,
-    _getNavTypeSnapshot,
-    _getNavTypeSnapshot,
-  );
-  return routed ? routed.navigationType : live;
+  return useSyncExternalStore(_subscribe, _getSnapshot, _getSnapshot);
 }
 
 /**
@@ -132,15 +107,8 @@ export function useStableNavigate(): (
 
   return useCallback(
     (to: To | number, options?: NavigateOptions) => {
-      if (typeof to === 'number') {
-        navigator.go(to);
-        return;
-      }
-      if (options?.replace) {
-        navigator.replace(to, options.state);
-      } else {
-        navigator.push(to, options?.state);
-      }
+      if (typeof to === 'number') navigator.go(to);
+      else navigator[options?.replace ? 'replace' : 'push'](to, options?.state);
     },
     [navigator],
   );
@@ -149,49 +117,35 @@ export function useStableNavigate(): (
 // ─── StableRoutes ──────────────────────────────────────────────────────
 // Wraps <Routes> in an overridden UNSAFE_LocationContext so that <Routes>
 // and everything it renders subscribe to our stable location instead of
-// the raw React Router context that fires ~40× per navigation.
+// the raw React Router context that fires ~40× per navigation. The store
+// renders a navigation synchronously, like the browser's back / forward.
 
 export function StableRoutes({ children }: { children: React.ReactNode }) {
-  const location = useSyncExternalStore(_subscribe, _getSnapshot, _getSnapshot);
+  const location = useStableLocation();
   const navigationType = useSyncExternalStore(
     _subscribe,
     _getNavTypeSnapshot,
     _getNavTypeSnapshot,
   );
-  const [shown, setShown] = useState<RoutedLocation>(() => ({
-    location,
-    navigationType,
-  }));
-  const [pending, startTransition] = useTransition();
 
-  // a transition: a route whose chunk isn't loaded yet suspends without
-  // replacing the current page with the Suspense fallback
+  const locationCtx = useMemo(
+    () => ({ location, navigationType }),
+    [location, navigationType],
+  );
+
+  // the shell's scroller outlives the page: a pushed navigation to another
+  // path opens at its top; back / forward keep the offset
+  const path = useRef(location.pathname);
   useLayoutEffect(() => {
-    if (shown.location === location) return;
-    startTransition(() => setShown({ location, navigationType }));
+    if (path.current === location.pathname) return;
+    path.current = location.pathname;
+    if (navigationType !== 'POP')
+      document.querySelector('[data-route-scroll]')?.scrollTo(0, 0);
   }, [location, navigationType]);
 
-  const locationCtx = useMemo(() => shown, [shown]);
-
-  // a pushed navigation to another path opens at the top of the shell's
-  // scroller (the old page stays mounted while the next one loads, so its
-  // offset would otherwise carry over); back / forward keep theirs
-  const shownPath = useRef(shown.location.pathname);
-  useLayoutEffect(() => {
-    if (shownPath.current === shown.location.pathname) return;
-    shownPath.current = shown.location.pathname;
-    if (shown.navigationType !== 'POP')
-      document.querySelector('[data-route-scroll]')?.scrollTo(0, 0);
-  }, [shown]);
-
   return (
-    <RoutedLocationContext.Provider value={locationCtx}>
-      <UNSAFE_LocationContext.Provider value={locationCtx as any}>
-        {pending && (
-          <div className="m-route-pending" role="progressbar" aria-busy />
-        )}
-        <Routes>{children}</Routes>
-      </UNSAFE_LocationContext.Provider>
-    </RoutedLocationContext.Provider>
+    <UNSAFE_LocationContext.Provider value={locationCtx as any}>
+      <Routes>{children}</Routes>
+    </UNSAFE_LocationContext.Provider>
   );
 }

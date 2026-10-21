@@ -7,6 +7,8 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { IFRAME } from 'App/constants/storageKeys';
+import { MENU } from 'App/layout/data';
+import { prefetchRoute } from 'App/layout/nav/prefetchRoutes';
 import { useStore } from 'App/mstore';
 import { sessions as sessionsRoute, withSiteId } from 'App/routes';
 import { useNavigate, useParams } from 'App/routing';
@@ -56,6 +58,8 @@ function WebPlayer(props: any) {
       navigate(sessionPath.pathname + sessionPath.search);
     }
   };
+  // the list's chunk, when the replay was opened straight from a link
+  const warmBack = () => prefetchRoute(MENU.SESSIONS);
   const devTools = sessionStore.devTools;
   const session = sessionStore.current;
   const { prefetched } = sessionStore;
@@ -314,7 +318,11 @@ function WebPlayer(props: any) {
         player
       ) : (
         <ReplayScreen
-          back={hideBack ? undefined : { label: t('Sessions'), onClick: back }}
+          back={
+            hideBack
+              ? undefined
+              : { label: t('Sessions'), onClick: back, onIntent: warmBack }
+          }
           lead={<ReplayLead width={width} height={height} />}
           actions={
             <ReplayActions activeTab={activeTab} setActiveTab={onPanel} />

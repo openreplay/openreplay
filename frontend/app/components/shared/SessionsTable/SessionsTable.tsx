@@ -183,11 +183,7 @@ export function SessionsTable({
       title: t('Session'),
       key: 'user',
       render: (s) => (
-        <div
-          className="m-ss__who"
-          onMouseEnter={() => onHover?.(s)}
-          onMouseLeave={() => onHover?.(null)}
-        >
+        <div className="m-ss__who">
           <SessionAvatar seed={s.userNumericHash ?? 0} />
           {onFilterToUser ? (
             <button
@@ -415,6 +411,7 @@ export function SessionsTable({
       onRowClick={(s, e) => {
         if (!rowDisabled?.(s)) onOpen(s, e);
       }}
+      onRowHover={onHover}
     />
   );
 }

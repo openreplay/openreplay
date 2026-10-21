@@ -51,6 +51,8 @@ export interface DataTableProps<T> {
   rows: readonly T[];
   rowKey: (row: T, index: number) => string;
   onRowClick?: (row: T, e: MouseEvent<HTMLTableRowElement>) => void;
+  /** pointer resting on a row, null when it leaves */
+  onRowHover?: (row: T | null) => void;
   rowClassName?: (row: T) => string | undefined;
 
   rowStyle?: (row: T) => CSSProperties | undefined;
@@ -79,6 +81,7 @@ export function DataTable<T>({
   rows,
   rowKey,
   onRowClick,
+  onRowHover,
   rowClassName,
   rowStyle,
   stickyHeader,
@@ -152,6 +155,7 @@ export function DataTable<T>({
       rows={rows}
       rowKey={rowKey}
       onRowClick={onRowClick}
+      onRowHover={onRowHover}
       rowClassName={rowClassName}
       rowStyle={rowStyle}
       isSpanningRow={isSpanningRow}
@@ -315,6 +319,7 @@ function TableBodyRows<T>({
   rows,
   rowKey,
   onRowClick,
+  onRowHover,
   rowClassName,
   rowStyle,
   isSpanningRow,
@@ -327,6 +332,7 @@ function TableBodyRows<T>({
   | 'rows'
   | 'rowKey'
   | 'onRowClick'
+  | 'onRowHover'
   | 'rowClassName'
   | 'rowStyle'
   | 'isSpanningRow'
@@ -358,6 +364,12 @@ function TableBodyRows<T>({
             data-slot={spans ? 'group-row' : 'row'}
             style={rowStyle?.(row)}
             onClick={spans ? undefined : onRow(row)}
+            onMouseEnter={
+              spans || !onRowHover ? undefined : () => onRowHover(row)
+            }
+            onMouseLeave={
+              spans || !onRowHover ? undefined : () => onRowHover(null)
+            }
             tabIndex={!spans && onRowClick ? 0 : undefined}
             onKeyDown={!spans && onRowClick ? onRowKey(row) : undefined}
             className={cn(
