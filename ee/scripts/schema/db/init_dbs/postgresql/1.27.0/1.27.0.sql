@@ -22,6 +22,9 @@ $fn_def$, :'next_version')
 ALTER TABLE IF EXISTS public.tags
     ADD COLUMN IF NOT EXISTS location text NULL DEFAULT NULL;
 
+ALTER TABLE IF EXISTS public.roles
+    ADD COLUMN IF NOT EXISTS updated_at timestamp without time zone NOT NULL DEFAULT (now() at time zone 'utc');
+
 CREATE TABLE IF NOT EXISTS public.mcp_authentication_tokens
 (
     user_id   integer                     NOT NULL REFERENCES public.users (user_id) ON DELETE CASCADE,
