@@ -1,5 +1,5 @@
 // Compat for the saas overlay, which still imports these from 'UI'. FOSS code imports the kit
-// directly (@/ui/<group>/<file>); delete this folder once saas migrates (REDESIGN.md → SaaS repo handoff).
+// directly (@/ui/<group>/<file>); delete this folder once saas migrates off it.
 export { default as Form } from './Form';
 export { default as Input } from './Input';
 export { default as Message } from './Message';
