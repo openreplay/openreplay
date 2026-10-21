@@ -63,6 +63,7 @@ export default class CanvasManager extends ListWalker<Timestamp> {
           console.error(
             'Failed to load canvas recording for node',
             this.nodeId,
+            e,
           );
         }
       });
