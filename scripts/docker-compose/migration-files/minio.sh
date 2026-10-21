@@ -48,8 +48,19 @@ EOF
     # Creating public bucket; Do not change this block!
     # !! PUBLIC BUCKETS !!
     #####################################################
-    mc policy set download minio/sessions-assets || true
-    mc anonymous set download minio/sessions-assets || true
+    # Anonymous read of known keys only; no ListBucket (GHSA-j6c9-g48h-wh4c)
+    cat <<EOF >/tmp/sessions-assets-policy.json
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Principal": {"AWS": ["*"]},
+    "Action": ["s3:GetObject"],
+    "Resource": ["arn:aws:s3:::sessions-assets/*"]
+  }]
+}
+EOF
+    mc anonymous set-json /tmp/sessions-assets-policy.json minio/sessions-assets
 
 }
 
