@@ -28,6 +28,9 @@ export default class StylesManager {
 
   private skipCSSLinks: Array<string> = [];
 
+  /** the document's first stylesheets are in; later ones load in place */
+  private revealed = false;
+
   constructor(
     private readonly screen: Screen,
     private readonly setLoading: (flag: boolean) => void,
@@ -36,12 +39,25 @@ export default class StylesManager {
   reset(): void {
     this.linkLoadingCount = 0;
     this.linkLoadPromises = [];
+    this.revealed = false;
   }
 
   setStyleHandlers(node: HTMLLinkElement, value: string): void {
+    if (this.skipCSSLinks.includes(value)) return;
+    if (this.revealed) {
+      // a stylesheet added to a page already on screen (an SPA's lazy chunk):
+      // hiding the frame until it loads blinks the replay
+      node.onload = () => {
+        node.onload = null;
+        const doc = this.screen.document;
+        if (node.ownerDocument === doc && doc) {
+          rewriteNodeStyleSheet(doc, node);
+        }
+      };
+      return;
+    }
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
     const promise = new Promise<void>((resolve) => {
-      if (this.skipCSSLinks.includes(value)) resolve();
       this.linkLoadingCount++;
       this.setLoading(true);
       const addSkipAndResolve = (e: any) => {
@@ -65,6 +81,7 @@ export default class StylesManager {
       clearTimeout(timeoutId);
       this.linkLoadingCount--;
       if (this.linkLoadingCount === 0) {
+        this.revealed = true;
         this.setLoading(false);
         this.linkLoadPromises = [];
       }
