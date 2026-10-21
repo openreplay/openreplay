@@ -1,0 +1,33 @@
+.m-payg { display: flex; flex-direction: column; align-items: flex-start; gap: var(--m-space-3); }
+.m-payg__rate { display: flex; align-items: baseline; gap: var(--m-space-3); }
+.m-payg__price {
+  font-family: var(--m-font-display);
+  font-size: calc(var(--m-text-2xl) * var(--m-display-scale));
+  font-weight: var(--m-display-weight);
+  letter-spacing: var(--m-display-tracking);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.m-payg__unit { font-size: var(--m-text-sm); color: var(--m-content-secondary); }
+.m-payg__terms { font-size: var(--m-text-sm); line-height: var(--m-leading-snug); color: var(--m-content-muted); }
+.m-payg__link { color: var(--m-content-accent); text-decoration: underline; text-underline-offset: 2px; text-decoration-color: color-mix(in oklab, currentColor 40%, transparent); }
+.m-payg__link:hover { text-decoration-color: currentColor; }
+.m-payg__open { margin-top: var(--m-space-1); }
+.m-payg__est {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-space-4);
+  margin-top: var(--m-space-2);
+  padding: var(--m-space-5) var(--m-space-6);
+  border: 1px solid var(--m-border-subtle);
+  border-radius: var(--m-radius-control);
+  background: var(--m-surface-sunken);
+  animation: m-step-in var(--m-duration-normal) var(--m-ease-out) both;
+}
+.m-payg__est-head, .m-payg__est-total { display: flex; align-items: baseline; justify-content: space-between; gap: var(--m-space-4); font-size: var(--m-text-sm); }
+.m-payg__est-label, .m-payg__est-total > :first-child { color: var(--m-content-secondary); }
+.m-payg__est-sessions { font-family: var(--m-font-num); font-variant-numeric: tabular-nums; color: var(--m-content-primary); }
+.m-payg__est-total { padding-top: var(--m-space-4); border-top: 1px solid var(--m-border-subtle); }
+.m-payg__est-cost { font-family: var(--m-font-num); font-variant-numeric: tabular-nums; font-weight: var(--m-weight-medium); color: var(--m-content-primary); }
+@media (prefers-reduced-motion: reduce) { .m-payg__est { animation: none; } }

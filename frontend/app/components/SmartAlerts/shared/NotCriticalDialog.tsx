@@ -1,4 +1,6 @@
-import { Input, Modal } from 'antd';
+import { Textarea } from '@/ui/inputs/textarea';
+import '@/ui/overlays/dialogs.css';
+import { Modal } from '@/ui/overlays/modal';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -7,16 +9,13 @@ import { useStore } from 'App/mstore';
 import ReasonChip from './ReasonChip';
 import { CRITICAL_REASONS, humanizeReason } from './model';
 
-/* The "not critical for me" dialog (shared by list + detail). Per-user: it
-   suppresses the flag for me; a teammate's view is untouched. */
+/* Per-user "not critical for me" (list + detail); teammates keep their view. */
 export default function NotCriticalDialog({
   issue,
   reasons: options = CRITICAL_REASONS,
   onClose,
 }: {
-  /** null closes it */
   issue: { id: string; head: string } | null;
-  /** server reason vocabulary; falls back to the built-in list */
   reasons?: string[];
   onClose: () => void;
 }) {
@@ -24,8 +23,6 @@ export default function NotCriticalDialog({
   const { t } = useTranslation();
   const [reasons, setReasons] = React.useState<string[]>([]);
   const [note, setNote] = React.useState('');
-
-  // reset on open — adjusting state during render (not an effect)
   const isOpen = issue != null;
   const [wasOpen, setWasOpen] = React.useState(isOpen);
   if (isOpen !== wasOpen) {
@@ -38,25 +35,24 @@ export default function NotCriticalDialog({
 
   return (
     <Modal
+      width={440}
       title={t('Not critical for you?')}
-      open={issue != null}
+      open={isOpen}
       onCancel={onClose}
       onOk={() => {
-        // reasons are validated server-side against its enum (GET …/reasons);
-        // the note is free text
         if (issue) issuesStore.setNotCriticalForMe(issue.id, reasons, note);
         onClose();
       }}
       okText={t('Not critical for me')}
-      okButtonProps={{ danger: true }}
+      okVariant="danger"
     >
-      <p className="mb-3 color-gray-dark">
+      <p className="m-dlg__lede">
+        <span className="m-dlg__subject">{issue?.head}</span>{' '}
         {t(
-          '“{{head}}” stops showing as critical for you. Teammates keep their own view, and your reason helps the agent learn.',
-          { head: issue?.head },
+          'stops showing as critical for you. Teammates keep their own view, and your reason helps the agent learn.',
         )}
       </p>
-      <div className="flex flex-wrap gap-2 mb-3">
+      <div className="m-dlg__chips">
         {options.map((r) => (
           <ReasonChip
             key={r}
@@ -70,9 +66,9 @@ export default function NotCriticalDialog({
           />
         ))}
       </div>
-      <Input.TextArea
+      <Textarea
         rows={3}
-        placeholder={t('Add a note (optional)…')}
+        placeholder={t('Anything else worth knowing (optional)')}
         value={note}
         onChange={(e) => setNote(e.target.value)}
       />

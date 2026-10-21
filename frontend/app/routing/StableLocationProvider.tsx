@@ -3,18 +3,19 @@ import {
   useContext,
   useLayoutEffect,
   useMemo,
+  useRef,
   useSyncExternalStore,
 } from 'react';
 import * as React from 'react';
 import {
-  useLocation as useRouterLocation,
-  useNavigationType as useRouterNavigationType,
-  Routes,
-  UNSAFE_NavigationContext,
-  UNSAFE_LocationContext,
   type Location,
   type NavigateOptions,
+  Routes,
   type To,
+  UNSAFE_LocationContext,
+  UNSAFE_NavigationContext,
+  useLocation as useRouterLocation,
+  useNavigationType as useRouterNavigationType,
 } from 'react-router';
 
 /**
@@ -42,7 +43,6 @@ let _location: Location = {
   hash: window.location.hash,
   state: window.history.state?.usr ?? null,
   key: window.history.state?.key ?? 'default',
-  unstable_mask: undefined,
 };
 
 let _navigationType: NavigationType = 'POP';
@@ -94,17 +94,6 @@ export function useStableLocation(): Location {
 }
 
 /**
- * Drop-in replacement for React Router's useNavigationType().
- */
-export function useStableNavigationType(): NavigationType {
-  return useSyncExternalStore(
-    _subscribe,
-    _getNavTypeSnapshot,
-    _getNavTypeSnapshot,
-  );
-}
-
-/**
  * Drop-in replacement for React Router's useNavigate().
  * Does NOT subscribe to location context, so it never causes re-renders.
  * Uses UNSAFE_NavigationContext.navigator (the BrowserHistory instance)
@@ -118,15 +107,8 @@ export function useStableNavigate(): (
 
   return useCallback(
     (to: To | number, options?: NavigateOptions) => {
-      if (typeof to === 'number') {
-        navigator.go(to);
-        return;
-      }
-      if (options?.replace) {
-        navigator.replace(to, options.state);
-      } else {
-        navigator.push(to, options?.state);
-      }
+      if (typeof to === 'number') navigator.go(to);
+      else navigator[options?.replace ? 'replace' : 'push'](to, options?.state);
     },
     [navigator],
   );
@@ -135,16 +117,31 @@ export function useStableNavigate(): (
 // ─── StableRoutes ──────────────────────────────────────────────────────
 // Wraps <Routes> in an overridden UNSAFE_LocationContext so that <Routes>
 // and everything it renders subscribe to our stable location instead of
-// the raw React Router context that fires ~40× per navigation.
+// the raw React Router context that fires ~40× per navigation. The store
+// renders a navigation synchronously, like the browser's back / forward.
 
 export function StableRoutes({ children }: { children: React.ReactNode }) {
   const location = useStableLocation();
-  const navigationType = useStableNavigationType();
+  const navigationType = useSyncExternalStore(
+    _subscribe,
+    _getNavTypeSnapshot,
+    _getNavTypeSnapshot,
+  );
 
   const locationCtx = useMemo(
     () => ({ location, navigationType }),
     [location, navigationType],
   );
+
+  // the shell's scroller outlives the page: a pushed navigation to another
+  // path opens at its top; back / forward keep the offset
+  const path = useRef(location.pathname);
+  useLayoutEffect(() => {
+    if (path.current === location.pathname) return;
+    path.current = location.pathname;
+    if (navigationType !== 'POP')
+      document.querySelector('[data-route-scroll]')?.scrollTo(0, 0);
+  }, [location, navigationType]);
 
   return (
     <UNSAFE_LocationContext.Provider value={locationCtx as any}>

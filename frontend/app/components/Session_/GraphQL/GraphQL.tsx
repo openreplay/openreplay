@@ -1,19 +1,21 @@
+import { IIOSPlayerStore, IWebPlayerStore } from 'Player/create';
 import { Duration } from 'luxon';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
+import { useModal } from 'App/components/Modal';
 import {
-  PlayerContext,
   MobilePlayerContext,
+  PlayerContext,
 } from 'App/components/Session/playerContext';
 import { getRE } from 'App/utils';
 import TimeTable from 'Components/shared/DevTools/TimeTable';
-import { CloseButton, Input, NoContent, SlideModal } from 'UI';
+
+import { Keyword, NoData } from 'Shared/DevTools/PanelKit';
+import GraphQLDetailsModal from 'Shared/GraphQLDetailsModal';
 
 import BottomBlock from '../BottomBlock';
-import GQLDetails from './GQLDetails';
-import { useTranslation } from 'react-i18next';
-import { IWebPlayerStore, IIOSPlayerStore } from 'Player/create';
 
 export function renderStart(r) {
   return (
@@ -34,74 +36,44 @@ export function renderStart(r) {
 }
 
 interface Props {
-  onFilterChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  filter: string;
+  onFilterChange: (value: string) => void;
   filteredList: Array<any>;
-  current: any;
   renderName: (item: any) => React.ReactNode;
   panelHeight: number;
-  closeModal: () => void;
-  currentIndex: number;
-  setCurrent: (item: any, index: number) => void;
+  setCurrent: (item: any) => void;
   lastActiveItem?: any;
   onJump?: ({ time }: { time: number }) => void;
 }
 
 const GraphQLComponent = ({
+  filter,
   onFilterChange,
   filteredList,
-  current,
   renderName,
   panelHeight,
-  closeModal,
-  currentIndex,
   setCurrent,
   lastActiveItem,
   onJump,
 }: Props) => {
+  const { t } = useTranslation();
   return (
     <React.Fragment>
-      <SlideModal
-        size="middle"
-        right
-        title={
-          <div className="flex justify-between">
-            <h1>GraphQL</h1>
-            <div className="flex items-center">
-              <CloseButton onClick={closeModal} size="18" className="ml-2" />
-            </div>
-          </div>
-        }
-        isDisplayed={current != null}
-        content={
-          current && (
-            <GQLDetails
-              gql={current}
-              first={currentIndex === 0}
-              last={currentIndex === filteredList.length - 1}
-            />
-          )
-        }
-        onClose={closeModal}
-      />
       <BottomBlock>
         <BottomBlock.Header>
-          <span className="font-semibold color-gray-medium mr-4">GraphQL</span>
-          <div className="flex items-center">
-            <Input
-              // className="input-small"
-              placeholder="Filter by name or type"
-              icon="search"
-              name="filter"
+          <span />
+          <div className="m-dt__bar-right">
+            <Keyword
+              value={filter}
               onChange={onFilterChange}
+              placeholder={t('Filter by name or type')}
             />
           </div>
         </BottomBlock.Header>
         <BottomBlock.Content>
-          <NoContent
-            size="small"
-            title="No recordings found"
-            show={filteredList.length === 0}
-          >
+          {filteredList.length === 0 ? (
+            <NoData hint={t('No GraphQL operation matches that.')} />
+          ) : (
             <TimeTable
               rows={filteredList}
               onRowClick={setCurrent}
@@ -128,7 +100,7 @@ const GraphQLComponent = ({
                 },
               ]}
             </TimeTable>
-          </NoContent>
+          )}
         </BottomBlock.Content>
       </BottomBlock>
     </React.Fragment>
@@ -167,10 +139,6 @@ function GraphQL({
     filter: '',
     filteredList: list,
     filteredListNow: listNow,
-    // @ts-ignore
-    current: null,
-    currentIndex: 0,
-    showFetchDetails: false,
     hasNextError: false,
     hasPreviousError: false,
     lastActiveItem: 0,
@@ -200,9 +168,7 @@ function GraphQL({
       : list;
   };
 
-  const onFilterChange = ({
-    target: { value },
-  }: React.ChangeEvent<HTMLInputElement>) => {
+  const onFilterChange = (value: string) => {
     const filtered = filterList(list, value);
     setState((prevState) => ({
       ...prevState,
@@ -212,12 +178,9 @@ function GraphQL({
     }));
   };
 
-  const setCurrent = (item: any, index: number) => {
-    setState((prevState) => ({
-      ...prevState,
-      current: item,
-      currentIndex: index,
-    }));
+  const { showModal } = useModal();
+  const setCurrent = (item: any) => {
+    showModal(<GraphQLDetailsModal resource={item} />, { right: true });
   };
 
   const onJump = ({ time }: { time: number }) => {
@@ -226,13 +189,6 @@ function GraphQL({
       player.jump(time);
     }
   };
-
-  const closeModal = () =>
-    setState((prevState) => ({
-      ...prevState,
-      current: null,
-      showFetchDetails: false,
-    }));
 
   useEffect(() => {
     const filtered = filterList(listNow, state.filter);
@@ -244,17 +200,15 @@ function GraphQL({
     }
   }, [time]);
 
-  const { current, currentIndex, filteredList, lastActiveItem } = state;
+  const { filteredList, lastActiveItem } = state;
 
   return (
     <GraphQLComponent
+      filter={state.filter}
       onFilterChange={onFilterChange}
       filteredList={filteredList}
-      current={current}
       renderName={renderName}
       panelHeight={panelHeight}
-      closeModal={closeModal}
-      currentIndex={currentIndex}
       setCurrent={setCurrent}
       lastActiveItem={lastActiveItem}
       onJump={onJump}

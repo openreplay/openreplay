@@ -1,0 +1,99 @@
+.m-dm {
+  display: flex;
+  flex-direction: column;
+  width: 17.5rem;
+}
+
+.m-dm__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-space-3);
+  padding: var(--m-space-4);
+}
+.m-dm__section + .m-dm__section {
+  border-top: 1px solid var(--m-border-subtle);
+}
+
+.m-dm__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--m-space-4);
+  cursor: pointer;
+}
+
+.m-dm__label {
+  font-size: var(--m-text-sm);
+  color: var(--m-content-secondary);
+}
+/* one left-aligned line that truncates before it would wrap */
+.m-dm__select {
+  width: 10rem;
+  justify-content: space-between;
+  text-align: left;
+}
+.m-dm__select > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.m-dm__pair {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-3);
+  width: 10rem;
+}
+.m-dm__pair .m-dm__select {
+  flex: 1;
+  width: auto;
+  min-width: 0;
+}
+
+.m-dm__heading {
+  margin-bottom: var(--m-space-1);
+  font-size: var(--m-text-2xs);
+  font-weight: var(--m-weight-medium);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--m-content-muted);
+}
+
+.m-dm__pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--m-space-3);
+}
+
+/* shown is the accent's selected tint, hidden a faint outline; not opacity,
+   which would read as disabled */
+.m-dm__pill {
+  height: 1.5rem;
+  padding-inline: var(--m-space-4);
+  border: 1px solid var(--m-pill-off-border);
+  border-radius: var(--m-radius-full);
+  background: var(--m-pill-off-bg);
+  color: var(--m-pill-off-fg);
+  font-size: var(--m-text-xs);
+  transition: all var(--m-duration-fast) var(--m-ease-out);
+}
+.m-dm__pill:hover {
+  border-color: var(--m-border-strong);
+  color: var(--m-content-primary);
+}
+.m-dm__pill.is-on {
+  background: var(--m-pill-on-bg);
+  border-color: var(--m-pill-on-border);
+  color: var(--m-pill-on-fg);
+}
+.m-dm__pill.is-on:hover {
+  border-color: var(--m-pill-on-fg);
+}
+
+.m-dm__foot {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--m-space-2) var(--m-space-3);
+  border-top: 1px solid var(--m-border-subtle);
+}

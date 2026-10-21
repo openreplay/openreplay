@@ -1,8 +1,10 @@
+import { NoContent } from '@/ui/feedback/NoContent';
+import { Info } from 'lucide-react';
 import React from 'react';
-import { NoContent } from 'UI';
-import TimeseriesChart from 'Components/Charts/TimeseriesChart';
+
 import { NO_METRIC_DATA } from 'App/constants/messages';
-import { InfoCircleOutlined } from '@ant-design/icons';
+import TimeseriesChart from 'Components/Charts/TimeseriesChart';
+
 import { Styles } from '../../common';
 
 interface Props {
@@ -16,7 +18,7 @@ function CallsErrors4xx(props: Props) {
       size="small"
       title={
         <div className="flex items-center gap-2 text-base font-normal">
-          <InfoCircleOutlined size={12} /> {NO_METRIC_DATA}
+          <Info size={12} /> {NO_METRIC_DATA}
         </div>
       }
       show={metric.data.chart.length === 0}
@@ -28,13 +30,14 @@ function CallsErrors4xx(props: Props) {
         data={metric.data.chart}
         xInterval={metric.params.density / 7}
         yLabel="Number of Errors"
-        series={(Array.isArray(metric.data.namesMap) ? metric.data.namesMap : []).map(
-          (key: string, index: number) => ({
-            key,
-            name: key,
-            color: Styles.colors[index % Styles.colors.length],
-          }),
-        )}
+        series={(Array.isArray(metric.data.namesMap)
+          ? metric.data.namesMap
+          : []
+        ).map((key: string, index: number) => ({
+          key,
+          name: key,
+          color: Styles.colors[index % Styles.colors.length],
+        }))}
       />
     </NoContent>
   );

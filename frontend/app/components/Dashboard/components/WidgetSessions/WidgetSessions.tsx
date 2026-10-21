@@ -1,7 +1,17 @@
-import { DownOutlined, UndoOutlined } from '@ant-design/icons';
+import { Button } from '@/ui/actions/button';
+import { MenuButton } from '@/ui/actions/menu-button';
+import { Chip } from '@/ui/data/Chip';
+import { EmptyState } from '@/ui/feedback/EmptyState';
+import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
+import { ListFooter } from '@/ui/layout/ListFooter';
+import { PagePanel } from '@/ui/layout/PageCard';
+import {
+  getRowsPerPage,
+  setRowsPerPage,
+  useRowsPerPage,
+} from '@/ui/layout/rows-per-page';
+import { toast } from '@/ui/overlays/toast';
 import { FilterKey } from 'Types/filter/filterType';
-import { Button, Dropdown, Tag, Tooltip } from 'antd';
-import cn from 'classnames';
 import { DateTime } from 'luxon';
 import { observer } from 'mobx-react-lite';
 import React, {
@@ -12,17 +22,22 @@ import React, {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'react-toastify';
 
 import { FUNNEL, HEATMAP, TABLE, USER_PATH } from 'App/constants/card';
+import { CUSTOM_RANGE } from 'App/dateRange';
 import useIsMounted from 'App/hooks/useIsMounted';
 import { useStore } from 'App/mstore';
+import { sessions as sessionsRoute, withSiteId } from 'App/routes';
+import { useHistory } from 'App/routing';
 import Session from 'App/types/session/session';
-import { debounce, numberWithCommas } from 'App/utils';
-import { Loader, NoContent, Pagination } from 'UI';
+import { debounce } from 'App/utils';
+import { windowPhrase } from 'App/utils/windowPhrase';
 
-import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
-import SessionItem from 'Shared/SessionItem';
+import {
+  type SessionField,
+  SessionsTable,
+} from 'Shared/SessionsTable/SessionsTable';
+import { useOpenSession } from 'Shared/SessionsTable/useOpenSession';
 
 import { checkIsSingleSeries } from '../WidgetForm/WidgetFormNew';
 
@@ -55,17 +70,31 @@ const getListSessionsBySeries = (
   return result;
 };
 
-function WidgetSessions({ className = '' }) {
+// the rows whose drill is a Sessions search too
+const OPENABLE = new Set<string>([
+  FilterKey.LOCATION,
+  FilterKey.FETCH,
+  FilterKey.USER_COUNTRY,
+  FilterKey.USER_BROWSER,
+  FilterKey.USER_DEVICE,
+  FilterKey.USERID,
+]);
+
+function WidgetSessions() {
   const { t } = useTranslation();
+  const { open, hover } = useOpenSession();
+  const history = useHistory();
   const {
     dashboardStore,
     metricStore,
     sessionStore,
-    customFieldStore,
     filterStore,
+    searchStore,
+    projectsStore,
   } = useStore();
+  const pageSize = useRowsPerPage();
   const isMounted = useIsMounted();
-  const listRef = useRef(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   const [activeSeries, setActiveSeries] = useState('all');
   const [seriesOptions, setSeriesOptions] = useState([
@@ -127,7 +156,6 @@ function WidgetSessions({ className = '' }) {
     // 3. Regular filter - use value directly
     return firstFilter?.value?.[0] || '';
   }, [filter.filters]);
-  const metaList = customFieldStore.list.map((i) => i.key);
 
   useEffect(() => {
     if (widget.series) {
@@ -214,6 +242,18 @@ function WidgetSessions({ className = '' }) {
     [fetchClickmapSessions],
   );
 
+  // the series the list stands for: the focused one, less the hidden ones
+  const listedSeries = () => {
+    const base = focused
+      ? widget.series.filter(
+          (s) => s.name === focused || focused.startsWith(s.name + ' / '),
+        )
+      : widget.series;
+    return metricStore.disabledSeries.length
+      ? base.filter((s) => !metricStore.disabledSeries.includes(s.name))
+      : base;
+  };
+
   const filterDeps = widget.series
     .flatMap((s) => s.filter.filters.map((f) => JSON.stringify(f)))
     .join('$');
@@ -235,15 +275,7 @@ function WidgetSessions({ className = '' }) {
         filters: [...sessionStore.userFilter.filters, clickFilter],
       });
     } else {
-      const baseSeries = focused
-        ? widget.series.filter(
-            (s) => s.name === focused || focused.startsWith(s.name + ' / '),
-          )
-        : widget.series;
-      const active = metricStore.disabledSeries.length
-        ? baseSeries.filter((s) => !metricStore.disabledSeries.includes(s.name))
-        : baseSeries;
-      const seriesJson = active.map((s) => s.toJson());
+      const seriesJson = listedSeries().map((s) => s.toJson());
 
       if (widget.metricType === USER_PATH) {
         if (
@@ -294,7 +326,7 @@ function WidgetSessions({ className = '' }) {
         metricType: widget.metricType,
         metricOf: widget.metricOf,
         page: metricStore.sessionsPage,
-        limit: metricStore.sessionsPageSize,
+        limit: getRowsPerPage(),
       });
     }
   };
@@ -338,6 +370,69 @@ function WidgetSessions({ className = '' }) {
     }
   }, [focused, seriesOptions]);
 
+  // a drilled row says what the list is
+  const drilledRow =
+    widget.metricType === TABLE && filter.filters.length > 0 && filterText
+      ? String(filterText)
+      : null;
+  // the drilled row's share of the card's sessions, as its bar draws it
+  const drilledProgress: number | null = drilledRow
+    ? ((widget.data?.values ?? []).find((r: any) => r.name === drilledRow)
+        ?.progress ?? null)
+    : null;
+  const drillTitle = (value: string) => {
+    switch (widget.metricOf) {
+      case FilterKey.LOCATION:
+        return t('Sessions that visited {{value}}', { value });
+      case FilterKey.USER_COUNTRY:
+        return t('Sessions from {{value}}', { value });
+      case FilterKey.USER_BROWSER:
+      case FilterKey.USER_DEVICE:
+        return t('Sessions on {{value}}', { value });
+      case FilterKey.USERID:
+        return t('Sessions by {{value}}', { value });
+      case FilterKey.REFERRER:
+        return value === 'direct'
+          ? t('Sessions that came direct')
+          : t('Sessions referred by {{value}}', { value });
+      case FilterKey.RESOLUTIONS:
+        return t('Sessions at {{value}}', { value });
+      case FilterKey.FETCH:
+        return t('Sessions that called {{value}}', { value });
+      default:
+        return t('Sessions with {{value}}', { value });
+    }
+  };
+  const openInSessions = () => {
+    // a drill is built bare (name and value): the rule takes its catalogue entry
+    const catalogue = filterStore.getCurrentProjectFilters();
+    const named = (f: any) => {
+      const c = catalogue.find(
+        (x) => x.name === f.name && !!x.isEvent === !!f.isEvent,
+      );
+      return c
+        ? { ...c, ...f, displayName: f.displayName ?? c.displayName }
+        : f;
+    };
+    // the list's whole search: the row, the card's own rules, its window
+    const rules = [
+      ...filter.filters,
+      ...listedSeries().flatMap((s) => s.toJson().filter.filters ?? []),
+    ];
+    searchStore.clearSearch();
+    searchStore.edit({
+      startDate: filter.startTimestamp,
+      endDate: filter.endTimestamp,
+      rangeValue: CUSTOM_RANGE,
+    });
+    rules.forEach((f: any) =>
+      searchStore.addFilter({ ...named(f), filters: f.filters?.map(named) }),
+    );
+    history.push(
+      withSiteId(sessionsRoute(), projectsStore.getSiteId().siteId!),
+    );
+  };
+
   const clearFilters = () => {
     dashboardStore.resetDrillDownFilter();
     metricStore.setFocusedSeriesName(null, false);
@@ -350,140 +445,119 @@ function WidgetSessions({ className = '' }) {
     loadData();
   };
 
-  const seriesDropdownItems = seriesOptions.map((opt) => ({
-    key: opt.value,
-    label: <div onClick={() => setActiveSeries(opt.value)}>{opt.label}</div>,
-  }));
-
   return (
-    <div
-      className={cn(
-        className,
-        'bg-white p-3 pb-0 rounded-xl shadow-xs border mt-3',
-      )}
-    >
-      <div className="flex flex-col md:flex-row md:items-center justify-between">
-        <div>
-          <div className="flex flex-col md:flex-row items-baseline gap-2">
-            <h2 className="text-xl">
-              {metricStore.clickMapSearch ? t('Clicks') : t('Sessions')}
-            </h2>
-            <div className="flex items-center gap-1">
-              <div className="color-gray-medium">
-                {metricStore.clickMapLabel &&
-                  `on \"${metricStore.clickMapLabel}\" `}
-                {t('between')}{' '}
-                <span className="font-medium color-gray-darkest">
-                  {startTime}
-                </span>{' '}
-                {t('and')}{' '}
-                <span className="font-medium color-gray-darkest">
-                  {endTime}
-                </span>
-              </div>
-              {hasFilters && (
-                <Tooltip title={t('Clear Drilldown')}>
-                  <Button type="text" size="small" onClick={clearFilters}>
-                    <UndoOutlined />
-                  </Button>
-                </Tooltip>
-              )}
-            </div>
-          </div>
-          {hasFilters && widget.metricType === 'table' && (
-            <Tag
-              closable
-              onClose={clearFilters}
-              className="truncate max-w-44 rounded-lg"
-            >
-              {filterText}
-            </Tag>
-          )}
-        </div>
-        <div className="flex items-center gap-4">
-          {isSingleSeries ? null : (
-            <div className="flex items-center md:ml-6">
-              <span className="mr-2 color-gray-medium">
-                {t('Filter by Series')}
+    <div ref={listRef}>
+      <PagePanel
+        head={
+          <>
+            <span className="m-pa__head-title">
+              {metricStore.clickMapSearch
+                ? t('Clicks')
+                : drilledRow
+                  ? drillTitle(drilledRow)
+                  : t('Sessions')}
+            </span>
+            <span className="m-cardp__between">
+              {metricStore.clickMapLabel
+                ? `${t('on')} "${metricStore.clickMapLabel}" · `
+                : ''}
+              {drilledRow && !loading
+                ? `${t('{{n}} sessions', {
+                    n: filteredSessions.total.toLocaleString(),
+                    count: filteredSessions.total,
+                  })} · `
+                : ''}
+              {drilledRow && !loading && drilledProgress != null
+                ? `${t('{{share}} of the card', {
+                    share: drilledProgress >= 1 ? `${drilledProgress}%` : '<1%',
+                  })} · `
+                : ''}
+              {t('between {{start}} and {{end}}', {
+                start: startTime,
+                end: endTime,
+              })}
+            </span>
+            {hasFilters ? (
+              <span className="m-cardp__drill">
+                <Chip
+                  kind="tag"
+                  onRemove={clearFilters}
+                  removeLabel={t('Clear drilldown')}
+                >
+                  {(widget.metricType === 'table' && filterText) ||
+                    t('Drilldown')}
+                </Chip>
               </span>
-              <Dropdown
-                menu={{
-                  items: seriesDropdownItems,
-                  selectable: true,
-                  selectedKeys: [activeSeries],
-                }}
-                trigger={['click']}
-              >
-                <Button type="text" size="small">
-                  {seriesOptions.find((o) => o.value === activeSeries)?.label ||
-                    t('Select Series')}
-                  <DownOutlined />
-                </Button>
-              </Dropdown>
-            </div>
-          )}
-        </div>
-      </div>
-      <div className="mt-3">
-        <Loader loading={loading}>
-          <NoContent
-            show={filteredSessions.sessions.length === 0}
-            title={
-              <div className="flex flex-col items-center">
-                <AnimatedSVG name={ICONS.NO_SESSIONS} size={60} />
-                <div className="mt-4 text-center">
-                  {t('No relevant sessions found for the selected time period')}
-                </div>
-              </div>
-            }
-          >
-            {filteredSessions.sessions.map((s) => (
-              <React.Fragment key={s.sessionId}>
-                <SessionItem
-                  noWrap
-                  disableUser
-                  session={s}
-                  metaList={metaList}
+            ) : null}
+            {drilledRow && OPENABLE.has(widget.metricOf) ? (
+              <Button variant="subtle" size="sm" onClick={openInSessions}>
+                {t('Open in Sessions')}
+              </Button>
+            ) : null}
+            {isSingleSeries ? null : (
+              <div className="m-page__controls">
+                <MenuButton
+                  ariaLabel={t('Filter by series')}
+                  label={`${t('Filter by series')} · ${
+                    seriesOptions.find((o) => o.value === activeSeries)
+                      ?.label ?? t('All')
+                  }`}
+                  value={activeSeries}
+                  onChange={setActiveSeries}
+                  options={seriesOptions}
+                  align="end"
                 />
-                <div className="border-b" />
-              </React.Fragment>
-            ))}
-            <div
-              className="flex items-center justify-between p-5"
-              ref={listRef}
-            >
-              <div>
-                {t('Showing')}{' '}
-                <span className="font-medium">
-                  {(metricStore.sessionsPage - 1) *
-                    metricStore.sessionsPageSize +
-                    1}
-                </span>{' '}
-                {t('to')}{' '}
-                <span className="font-medium">
-                  {(metricStore.sessionsPage - 1) *
-                    metricStore.sessionsPageSize +
-                    filteredSessions.sessions.length}
-                </span>{' '}
-                {t('of')}{' '}
-                <span className="font-medium">
-                  {numberWithCommas(filteredSessions.total)}
-                </span>{' '}
-                {t('sessions.')}
               </div>
-              <Pagination
-                page={metricStore.sessionsPage}
-                total={filteredSessions.total}
-                onPageChange={(p) => changePage(p)}
-                limit={metricStore.sessionsPageSize}
-                debounceRequest={500}
-              />
-            </div>
-          </NoContent>
-        </Loader>
-      </div>
+            )}
+          </>
+        }
+      >
+        {loading && filteredSessions.sessions.length === 0 ? (
+          <SkeletonRows rows={4} columns={[24, 16, 16, 28, 16]} />
+        ) : filteredSessions.sessions.length === 0 ? (
+          <EmptyState
+            className="m-cardp__none"
+            state="card-sessions"
+            title={t('No sessions {{window}}', {
+              window: windowPhrase(t, dashboardStore.drillDownPeriod),
+            })}
+            hint={t(
+              'Sessions that match the definition are listed here as they are recorded.',
+            )}
+          />
+        ) : (
+          <>
+            <SessionsTable
+              rows={filteredSessions.sessions}
+              fields={CARD_FIELDS}
+              onOpen={open}
+              onHover={hover}
+            />
+            <ListFooter
+              page={metricStore.sessionsPage}
+              pageSize={pageSize}
+              total={filteredSessions.total}
+              noun={(count, n) => t('{{n}} sessions', { count, n })}
+              onPage={changePage}
+              onPageSize={(n) => {
+                setRowsPerPage(n);
+                changePage(1);
+              }}
+            />
+          </>
+        )}
+      </PagePanel>
     </div>
   );
 }
+
+const CARD_FIELDS: readonly SessionField[] = [
+  'started',
+  'duration',
+  'events',
+  'pages',
+  'location',
+  'device',
+];
 
 export default observer(WidgetSessions);

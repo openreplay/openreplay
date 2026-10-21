@@ -1,6 +1,7 @@
-import React from 'react';
-import Icon from '../Icon';
+import { Icon } from '@/ui/icons/Icon';
 import cn from 'classnames';
+import React from 'react';
+
 import styles from './message.module.css';
 
 // TODO this has to be improved

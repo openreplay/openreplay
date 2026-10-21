@@ -1,8 +1,15 @@
-import { action, makeAutoObservable, observable, runInAction } from 'mobx';
-import { sessionService, metricService } from 'App/services';
+import { checkEventWithFilters } from '@/components/Session_/Player/Controls/checkEventWithFilters';
+import { getRowsPerPage } from '@/ui/layout/rows-per-page';
+import { loadFile } from 'Player/web/network/loadFiles';
+import { LAST_7_DAYS } from 'Types/app/period';
 import Session from 'Types/session';
 import ErrorStack from 'Types/session/errorStack';
 import { InjectedEvent, Location } from 'Types/session/event';
+import { action, makeAutoObservable, observable, runInAction } from 'mobx';
+
+import { getDateRangeFromValue } from 'App/dateRange';
+import { filterMap } from 'App/mstore/searchStore';
+import { metricService, sessionService } from 'App/services';
 import {
   cleanSessionFilters,
   compareJsonObjects,
@@ -10,12 +17,9 @@ import {
   getSessionFilter,
   setSessionFilter,
 } from 'App/utils';
-import { loadFile } from 'Player/web/network/loadFiles';
-import { LAST_7_DAYS } from 'Types/app/period';
-import { filterMap } from 'App/mstore/searchStore';
-import { getDateRangeFromValue } from 'App/dateRange';
+
 import { searchStore, searchStoreLive } from './index';
-import { checkEventWithFilters } from '@/components/Session_/Player/Controls/checkEventWithFilters';
+
 const range = getDateRangeFromValue(LAST_7_DAYS);
 
 const defaultDateFilters = {
@@ -121,6 +125,19 @@ interface Bookmarks {
   loading: boolean;
 }
 
+const LAST_PLAYED = 3;
+const LAST_PLAYED_KEY = '__or_last_played';
+function readLastPlayed(): string[] {
+  try {
+    const v = JSON.parse(localStorage.getItem(LAST_PLAYED_KEY) ?? '[]');
+    return Array.isArray(v)
+      ? v.filter((x) => typeof x === 'string').slice(0, LAST_PLAYED)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
 export default class SessionStore {
   userFilter: UserFilter = new UserFilter();
 
@@ -172,7 +189,12 @@ export default class SessionStore {
 
   sessionPath: Record<string, any> = {};
 
-  lastPlayedSessionId: string = '';
+  /** the last sessions played, newest first, remembered */
+  lastPlayedSessionIds: string[] = readLastPlayed();
+
+  get lastPlayedSessionId(): string {
+    return this.lastPlayedSessionIds[0] ?? '';
+  }
 
   timeLineTooltip = {
     time: 0,
@@ -256,8 +278,8 @@ export default class SessionStore {
     const nextEntryNum =
       keys.length > 0
         ? Math.max(
-          ...keys.map((key) => this.prefetchedMobUrls[key]?.entryNum || 0),
-        ) + 1
+            ...keys.map((key) => this.prefetchedMobUrls[key]?.entryNum || 0),
+          ) + 1
         : 0;
     this.prefetchedMobUrls[sessionId] = {
       data: fileData,
@@ -283,7 +305,11 @@ export default class SessionStore {
         });
     });
 
-  fetchLiveSessions = async (params: any = {}) => {
+  /** `isStale` lets the caller drop a response a newer request has superseded. */
+  fetchLiveSessions = async (
+    params: any = {},
+    isStale: () => boolean = () => false,
+  ) => {
     runInAction(() => {
       this.loadingLiveSessions = true;
     });
@@ -294,6 +320,7 @@ export default class SessionStore {
         params.order = params.order === 'asc' ? 'desc' : 'asc';
       }
       const data: any = await sessionService.getLiveSessions(params);
+      if (isStale()) return;
       this.customSetSessions(data);
     } catch (e) {
       console.error(e);
@@ -304,11 +331,12 @@ export default class SessionStore {
     }
   };
 
+  /** Resolves true when the list on screen answers these params. */
   fetchSessions = async (
     params = {},
     force = false,
     abortSignal?: AbortSignal,
-  ) => {
+  ): Promise<boolean> => {
     runInAction(() => {
       this.loadingSessions = true;
     });
@@ -316,12 +344,14 @@ export default class SessionStore {
       if (!force) {
         const oldFilters = getSessionFilter();
         if (compareJsonObjects(oldFilters, cleanSessionFilters(params))) {
-          return;
+          return true;
         }
       }
-      setSessionFilter(cleanSessionFilters(params));
       const data = await sessionService.getSessions(params, abortSignal);
-      if (abortSignal?.aborted) return;
+      if (abortSignal?.aborted) return false;
+      // recorded as done only once it worked: a failed search must not make an
+      // identical retry look like a no-op
+      setSessionFilter(cleanSessionFilters(params));
       const list = data.sessions.map((s) => new Session(s));
       runInAction(() => {
         this.list = list;
@@ -329,9 +359,11 @@ export default class SessionStore {
         this.sessionIds = data.sessions.map((s) => s.sessionId);
         this.favoriteList = list.filter((s) => s.favorite);
       });
+      return true;
     } catch (e) {
       if (abortSignal?.aborted) throw e;
       console.error(e);
+      return false;
     } finally {
       // A superseded search has already handed the spinner to its replacement.
       if (!abortSignal?.aborted) {
@@ -475,17 +507,6 @@ export default class SessionStore {
     return newSess;
   };
 
-  fetchNotes = async (sessionId: string) => {
-    try {
-      const notes = await sessionService.getSessionNotes(sessionId);
-      if (notes.length > 0) {
-        this.current = this.current.addNotes(notes);
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
   fetchFavoriteList = async () => {
     try {
       const data = await sessionService.getFavoriteSessions();
@@ -519,13 +540,13 @@ export default class SessionStore {
 
     const filteredEvents = query
       ? events.filter(
-        (e) =>
-          searchRe.test(e.url) ||
-          searchRe.test(e.value) ||
-          searchRe.test(e.label) ||
-          searchRe.test(e.type) ||
-          (e.type === 'LOCATION' && searchRe.test('visited')),
-      )
+          (e) =>
+            searchRe.test(e.url) ||
+            searchRe.test(e.value) ||
+            searchRe.test(e.label) ||
+            searchRe.test(e.type) ||
+            (e.type === 'LOCATION' && searchRe.test('visited')),
+        )
       : null;
 
     this.filteredEvents = filteredEvents;
@@ -602,6 +623,7 @@ export default class SessionStore {
     isVisible: boolean;
     localTime: string;
     userTime?: string;
+    inactive?: string;
   }) => {
     this.timeLineTooltip = tp;
   };
@@ -653,7 +675,11 @@ export default class SessionStore {
     try {
       const filter = searchStore.instance.toSearch();
       setSessionFilter(cleanSessionFilters(filter));
-      const data = await sessionService.getAutoplayList({ ...filter, page });
+      const data = await sessionService.getAutoplayList({
+        ...filter,
+        page,
+        limit: getRowsPerPage(),
+      });
       const ids = data
         .map((i: any) => `${i.sessionId}`)
         .filter((i, index) => !this.sessionIds.includes(i));
@@ -677,7 +703,18 @@ export default class SessionStore {
   };
 
   setLastPlayedSessionId = (sessionId: string) => {
-    this.lastPlayedSessionId = sessionId;
+    this.lastPlayedSessionIds = [
+      sessionId,
+      ...this.lastPlayedSessionIds.filter((id) => id !== sessionId),
+    ].slice(0, LAST_PLAYED);
+    try {
+      localStorage.setItem(
+        LAST_PLAYED_KEY,
+        JSON.stringify(this.lastPlayedSessionIds),
+      );
+    } catch {
+      // private mode: it lasts the visit
+    }
   };
 
   setBookmarksLoading = (loading: boolean) => {
@@ -697,7 +734,7 @@ export default class SessionStore {
       this.setBookmarksLoading(true);
       const params = {
         page: this.bookmarks.page,
-        limit: this.bookmarks.pageSize,
+        limit: getRowsPerPage(),
         bookmarked: true,
       };
       const data = await sessionService.getSessions(params);

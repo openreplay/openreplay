@@ -1,7 +1,9 @@
+import { Truncated } from '@/ui/data/truncated';
 import React from 'react';
-import { TextEllipsis } from 'UI';
-import stl from './Bar.module.css';
 import { useTranslation } from 'react-i18next';
+
+import stl from './Bar.module.css';
+
 // import { Styles } from '../common'
 
 function Bar({
@@ -28,9 +30,9 @@ function Bar({
                 className="text-xs"
                 style={{ width: `${w}%`, backgroundColor: colors[i] }}
               >
-                <TextEllipsis
-                  text={v.key}
-                  hintText={
+                <Truncated
+                  text={String(v.key)}
+                  full={
                     <div className="text-sm">
                       <div>
                         {t('Version:')}

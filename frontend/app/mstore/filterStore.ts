@@ -28,9 +28,6 @@ export const getPropertyName = (
     ? filter.displayName || filter.name
     : filter.name;
 
-export const getTopValuesKey = (id: string, isLive?: boolean): string =>
-  isLive ? `${id}_live` : id;
-
 export interface TopValue {
   rowCount?: number;
   rowPercentage?: number;
@@ -68,6 +65,10 @@ interface CacheEntry {
 // Constants
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 const MAX_CACHE_SIZE = 100;
+
+/** Live sessions get their own suggestions: same property, different values. */
+export const topValuesKey = (id: string, live?: boolean) =>
+  live ? `${id}:live` : id;
 
 export default class FilterStore {
   topValues: TopValues = {};
@@ -133,7 +134,7 @@ export default class FilterStore {
     id: string,
     isLive?: boolean,
   ): Promise<TopValue[]> => {
-    const key = getTopValuesKey(id, isLive);
+    const key = topValuesKey(id, isLive);
     // live sessions come and go, so live values are always refetched
     if (!isLive && this.topValues[key]?.length) {
       return this.topValues[key];
@@ -707,7 +708,6 @@ export default class FilterStore {
     const issueFilter = this.getCurrentProjectFilters().find(
       (f) => f.name === 'issue',
     );
-    console.log(subName, issueFilter);
     if (!issueFilter) return subName;
     const matchingValue = issueFilter.possibleValues?.find(
       (v) => v.value === subName,

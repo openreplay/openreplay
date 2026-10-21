@@ -1,14 +1,15 @@
+import { toast } from '@/ui/overlays/toast';
 import copy from 'copy-to-clipboard';
 import { useContext, useEffect } from 'react';
-import { toast } from 'react-toastify';
 
+import { blockValues, blocks } from 'App/mstore/uiPlayerStore';
+import { ownsKeys } from 'App/utils/keys';
 import { PlayerContext } from 'Components/Session/playerContext';
 import { SKIP_INTERVALS } from 'Components/Session_/Player/Controls/Controls';
-import { blockValues, blocks } from 'App/mstore/uiPlayerStore';
 
 function useShortcuts({
   skipInterval,
-  fullScreenOn,
+  fullScreenToggle,
   fullScreenOff,
   toggleBottomBlock,
   openNextSession,
@@ -17,7 +18,7 @@ function useShortcuts({
   disableDevtools,
 }: {
   skipInterval: keyof typeof SKIP_INTERVALS;
-  fullScreenOn: () => void;
+  fullScreenToggle: () => void;
   fullScreenOff: () => void;
   toggleBottomBlock: (blockName: (typeof blockValues)[number]) => void;
   openNextSession: () => void;
@@ -47,18 +48,13 @@ function useShortcuts({
 
   useEffect(() => {
     const handleShortcuts = (e: KeyboardEvent) => {
-      if (
-        e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLTextAreaElement
-      ) {
-        return false;
-      }
+      if (ownsKeys(e.target)) return false;
       if (e.shiftKey && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
         player.toggleInspectorMode(false);
         switch (e.key) {
           case 'F':
-            return fullScreenOn();
+            return fullScreenToggle();
           case 'X':
             return disableDevtools ? null : toggleBottomBlock(blocks.overview);
           case 'P':
@@ -113,7 +109,13 @@ function useShortcuts({
     return () => {
       document.removeEventListener('keydown', handleShortcuts);
     };
-  }, [forthTenSeconds, backTenSeconds, player, fullScreenOn, fullScreenOff]);
+  }, [
+    forthTenSeconds,
+    backTenSeconds,
+    player,
+    fullScreenToggle,
+    fullScreenOff,
+  ]);
 }
 
 export default useShortcuts;

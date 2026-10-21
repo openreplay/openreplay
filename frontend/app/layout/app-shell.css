@@ -1,0 +1,105 @@
+.m-shell {
+  --m-plane-max: 100rem;
+  display: flex;
+  align-items: stretch;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--m-surface-canvas);
+}
+
+.m-shell__main {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  padding: var(--m-space-5) var(--m-space-5) var(--m-space-5) 0;
+  overflow: auto;
+}
+
+.m-shell__main > * {
+  width: 100%;
+  max-width: var(--m-plane-max);
+  margin-inline: auto;
+}
+
+.m-shell.is-bare .m-shell__main {
+  padding: 0;
+}
+
+.m-shell__main.is-immersive > * {
+  max-width: none;
+}
+
+@media (max-width: 700px) {
+  .m-shell__main {
+    padding: var(--m-space-4);
+  }
+}
+
+/* Phone: one column, a bar with the mark and the menu button over the plane;
+   the menu is a left sheet. */
+.m-mobile-nav .m-drawer__body {
+  padding: 0;
+}
+/* in the sheet the menu takes the sheet's width, labels and all; a close at
+   its head, and no collapse control (a rail in a sheet means nothing) */
+:root[data-viewport='phone'] .m-mobile-nav .m-nav {
+  width: 100%;
+}
+.m-mobile-nav .m-drawer__body {
+  position: relative;
+}
+.m-mobile-nav__close {
+  position: absolute;
+  top: var(--m-space-4);
+  right: var(--m-space-3);
+  z-index: 1;
+}
+.m-mobile-nav .m-nav__collapse {
+  display: none;
+}
+.m-shell__bar {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  flex: none;
+  height: 2.75rem;
+  padding-inline: var(--m-space-2) var(--m-space-4);
+}
+.m-shell__bar-mark {
+  height: 1rem;
+  width: auto;
+  margin-inline-start: var(--m-space-1);
+}
+.m-shell__bar-name {
+  font-size: var(--m-text-md);
+  font-weight: var(--m-weight-medium);
+  letter-spacing: var(--m-tracking-tight);
+  color: var(--m-content-primary);
+}
+:root[data-viewport='phone'] .m-shell {
+  flex-direction: column;
+}
+:root[data-viewport='phone'] .m-shell__main {
+  padding: 0 var(--m-space-3) var(--m-space-3);
+}
+
+/* banners above the app push the shell down; the shell and its menu take
+   what is left of the window */
+.m-app {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+}
+.m-app > .m-shell {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+}
+.m-app > .m-shell .m-nav {
+  height: auto;
+  align-self: stretch;
+}

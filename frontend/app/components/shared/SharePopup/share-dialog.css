@@ -1,0 +1,52 @@
+/* two parts and a rule between them: the link you take, the channel you send it to */
+.m-share {
+  display: flex;
+  flex-direction: column;
+}
+.m-share__part {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-space-5);
+}
+.m-share__part + .m-share__part {
+  margin-top: var(--m-space-7);
+  padding-top: var(--m-space-7);
+  border-top: 1px solid var(--m-border-subtle);
+}
+.m-share__h {
+  margin: 0;
+  font-size: var(--m-text-sm);
+  font-weight: var(--m-weight-semibold);
+  color: var(--m-content-primary);
+}
+.m-share__at {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-3);
+  align-self: flex-start;
+  font-size: var(--m-text-sm);
+  color: var(--m-content-secondary);
+  cursor: pointer;
+}
+/* the brand's own mark, in its own colours */
+.m-share__brand {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  object-fit: contain;
+}
+.m-share__empty {
+  margin: 0;
+  font-size: var(--m-text-sm);
+  color: var(--m-content-muted);
+}
+.m-share__link-btn {
+  color: var(--m-content-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.m-share__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--m-space-6);
+}

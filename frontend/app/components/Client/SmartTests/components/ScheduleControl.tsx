@@ -1,4 +1,4 @@
-import { InputNumber, Select } from 'antd';
+import { SimpleSelect } from '@/ui/inputs/select';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -10,6 +10,7 @@ import {
   TIME_OPTIONS,
   WEEKDAY_DAYS,
   dayInitial,
+  formatTime,
   ordinal,
   scheduleFreq,
   scheduleLabel,
@@ -74,62 +75,60 @@ function ScheduleControl({ value, onChange }: Props) {
   const options = FREQ_OPTIONS.map((o) => ({ ...o, label: t(o.label) }));
   if (freq === 'custom') options.push({ value: 'custom', label: t('Custom') });
 
-  const TimeSelect = (
-    <span className="flex items-center gap-2">
-      <span className="text-sm text-disabled-text">{t('at')}</span>
-      <Select
-        size="small"
-        value={time}
-        options={TIME_OPTIONS}
-        style={{ width: 110 }}
-        onChange={setTime}
-      />
-    </span>
-  );
+  // a cron set elsewhere can land off the hour; keep it pickable rather than blank
+  const timeOptions = TIME_OPTIONS.some((o) => o.value === time)
+    ? TIME_OPTIONS
+    : [...TIME_OPTIONS, { value: time, label: formatTime(time) }].sort((a, b) =>
+        a.value.localeCompare(b.value),
+      );
+  const dayOfMonthOptions = Array.from({ length: 31 }, (_, i) => ({
+    value: String(i + 1),
+    label: t('the {{day}}', { day: ordinal(i + 1) }),
+  }));
 
-  // Everything on one wrapping line: frequency, then its day picker (daily/weekdays/weekly)
-  // or day-of-month (monthly), then the time — to spare vertical space.
+  // One wrapping line: frequency, its day-of-month (monthly), then the time; the day
+  // picker for daily / weekdays / weekly sits under it.
   return (
-    <div className="flex items-center gap-x-2 gap-y-2 flex-wrap">
-      <Select
-        size="small"
-        value={freq ?? 'never'}
-        options={options}
-        style={{ width: 124 }}
-        onChange={setFreq}
-      />
-
-      {freq === 'monthly' && (
-        <span className="flex items-center gap-2">
-          <span className="text-sm text-disabled-text">{t('on every')}</span>
-          <InputNumber
-            size="small"
-            min={1}
-            max={31}
-            precision={0}
-            value={sched?.dayOfMonth ?? 1}
-            // show the ordinal (1st / 2nd / 19th); strip the suffix back to a number
-            formatter={(v) => (v && Number(v) >= 1 ? ordinal(Number(v)) : '')}
-            parser={(display) => Number((display ?? '').replace(/\D/g, ''))}
-            style={{ width: 72 }}
-            onChange={(v) =>
-              update({
-                ...(sched as Schedule),
-                dayOfMonth: Math.min(
-                  31,
-                  Math.max(1, Math.round(Number(v) || 1)),
-                ),
-              })
+    <div className="m-runset__schedule">
+      <div className="m-runset__sched">
+        <SimpleSelect
+          ariaLabel={t('How often')}
+          value={freq ?? 'never'}
+          onChange={(f) => f && setFreq(f as ScheduleFreq | 'never')}
+          options={options}
+          className="m-runset__freq"
+        />
+        {freq === 'monthly' && (
+          <SimpleSelect
+            ariaLabel={t('On which day of the month')}
+            value={String(sched?.dayOfMonth || 1)}
+            onChange={(d) =>
+              d && update({ ...(sched as Schedule), dayOfMonth: Number(d) })
             }
+            options={dayOfMonthOptions}
+            className="m-runset__dom"
           />
-        </span>
-      )}
+        )}
+        {freq && freq !== 'custom' && (
+          <SimpleSelect
+            ariaLabel={t('At what time')}
+            value={time}
+            onChange={(v) => v && setTime(v)}
+            options={timeOptions}
+            className="m-runset__time"
+          />
+        )}
+        {/* legacy non-preset cron — read-only (no picker option to create one) */}
+        {freq === 'custom' && (
+          <span className="m-runset__cron">{sched?.cron}</span>
+        )}
+      </div>
 
-      {/* day-of-week circles — shared by daily / weekdays / weekly (multi-select) */}
+      {/* day squares — shared by daily / weekdays / weekly; toggling reclassifies */}
       {showDays && (
-        <span className="flex items-center gap-1">
+        <div className="m-runset__days" role="group" aria-label={t('Days')}>
           {DAY_SHORT.map((_, d) => {
-            const on = sched?.days?.includes(d);
+            const on = !!sched?.days?.includes(d);
             return (
               <button
                 key={d}
@@ -137,33 +136,18 @@ function ScheduleControl({ value, onChange }: Props) {
                 aria-pressed={on}
                 aria-label={t(DAY_SHORT[d])}
                 onClick={() => pickDay(d)}
-                className={`w-6 h-6 rounded-full text-xs border transition-colors ${
-                  on
-                    ? 'bg-active-blue border-active-blue-border text-blue'
-                    : 'border-gray-light text-disabled-text hover:border-gray-medium'
-                }`}
+                className={`m-runset__day${on ? ' is-on' : ''}`}
               >
                 {dayInitial(t, d)}
               </button>
             );
           })}
-        </span>
+        </div>
       )}
-
-      {/* legacy non-preset cron — read-only (no picker option to create one) */}
-      {freq === 'custom' && (
-        <span className="text-xs font-mono text-disabled-text">
-          {sched?.cron}
-        </span>
-      )}
-
-      {freq && freq !== 'custom' && TimeSelect}
 
       {/* plain-language confirmation of the resolved schedule */}
       {freq && freq !== 'custom' && (
-        <span className="text-xs text-disabled-text">
-          {scheduleLabel(t, sched)}
-        </span>
+        <span className="m-runset__said">{scheduleLabel(t, sched)}</span>
       )}
     </div>
   );

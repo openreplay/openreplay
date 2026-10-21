@@ -139,10 +139,13 @@ describe('SearchStore class', () => {
     mockSessionFetch.mockClear();
   });
 
-  it('addFilterByKeyAndValue adds filter and triggers fetch', () => {
+  it('addFilterByKeyAndValue adds filter as a new filters array', () => {
+    const before = store.instance.filters;
     store.addFilterByKeyAndValue(FilterKey.USERID, ['42']);
     expect(store.instance.filters.length).toBe(1);
-    expect(mockSessionFetch).toHaveBeenCalled();
+    // PrivateRoutes' refetch effect keys on the array's identity
+    expect(store.instance.filters).not.toBe(before);
+    expect(before.length).toBe(0);
   });
 
   it('fetchSessions applies duration filter from settings', async () => {

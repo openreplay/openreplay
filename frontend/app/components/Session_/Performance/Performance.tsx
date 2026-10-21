@@ -1,97 +1,87 @@
+import { Tooltip } from '@/ui/overlays/tooltip';
+import { darkTokens, lightTokens } from '@/ui/styles/token-values';
 import { Timed } from 'Player';
 import { PerformanceChartPoint } from 'Player/mobile/managers/IOSPerformanceTrackManager';
+import { TFunction } from 'i18next';
+import { observer } from 'mobx-react-lite';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { useTheme } from 'App/ThemeContext';
+import ConnectionQuality from 'App/components/Session/Player/ReplayPlayer/ConnectionQuality';
 import {
   MobilePlayerContext,
   PlayerContext,
 } from 'App/components/Session/playerContext';
-import { observer } from 'mobx-react-lite';
+import { durationFromMsFormatted } from 'App/date';
+import { useStore } from 'App/mstore';
+import { formatBytes } from 'App/utils';
 import PerformanceAreaChart, {
   PerfBand,
 } from 'Components/Charts/PerformanceAreaChart';
-import { durationFromMsFormatted } from 'App/date';
-import { formatBytes } from 'App/utils';
-import { Tooltip as TooltipANT, Segmented } from 'antd';
 
-import { useStore } from 'App/mstore';
-import stl from './performance.module.css';
+import { NoData } from 'Shared/DevTools/PanelKit';
 
 import BottomBlock from '../BottomBlock';
-import InfoLine from '../BottomBlock/InfoLine';
-import { useTranslation } from 'react-i18next';
-import { TFunction } from 'i18next';
-import ConnectionQuality from 'App/components/Session/Player/ReplayPlayer/ConnectionQuality';
+import stl from './performance.module.css';
 
 const CPU_VISUAL_OFFSET = 10;
 
-const FPS_COLOR = '#C5E5E7';
-const FPS_STROKE_COLOR = '#92C7CA';
-const FPS_LOW_COLOR = 'pink';
-const FPS_VERY_LOW_COLOR = 'red';
-const CPU_COLOR = '#A8D1DE';
-const CPU_STROKE_COLOR = '#69A5B8';
-const USED_HEAP_COLOR = '#A9ABDC';
-const USED_HEAP_STROKE_COLOR = '#8588CF';
-const TOTAL_HEAP_STROKE_COLOR = '#4A4EB7';
-const NODES_COUNT_COLOR = '#C6A9DC';
-const NODES_COUNT_STROKE_COLOR = '#7360AC';
-const HIDDEN_SCREEN_COLOR = '#CCC';
+const FPS_LOW_COLOR = 'var(--m-content-warning)';
+const FPS_VERY_LOW_COLOR = 'var(--m-content-danger)';
+const HIDDEN_SCREEN_COLOR = 'var(--m-content-disabled)';
 
-const CURSOR_COLOR = '#394EFF';
+/* Canvas charts need resolved colours, so the bands are built per theme. */
+function perfBands(c: Record<string, string>) {
+  const line = c['border-accent'];
+  const hidden = c['content-disabled'];
+  const area = (key: string, extra: Partial<PerfBand> = {}): PerfBand => ({
+    key,
+    color: line,
+    strokeColor: line,
+    gradient: true,
+    ...extra,
+  });
+  return {
+    cursor: c['content-accent'],
+    fps: [
+      area('fps', { step: true }),
+      { key: 'fpsLowMarker', color: c['content-warning'], step: true },
+      { key: 'fpsVeryLowMarker', color: c['content-danger'], step: true },
+      { key: 'hiddenScreenMarker', color: hidden, step: true },
+    ],
+    cpu: [
+      area('cpu'),
+      { key: 'hiddenScreenMarker', color: hidden, step: true },
+    ],
+    heap: [
+      {
+        key: 'totalHeap',
+        color: 'transparent',
+        strokeColor: c['content-accent'],
+        line: true,
+      },
+      area('usedHeap'),
+    ],
+    nodes: [area('nodesCount')],
+    mobileCpu: [
+      area('cpu'),
+      { key: 'isBackground', color: hidden, step: true },
+    ],
+    mobileMemory: [
+      { key: 'isMemBackground', color: hidden, step: true },
+      area('memory'),
+    ],
+  } satisfies Record<string, PerfBand[] | string>;
+}
 
-/* Module-level so the strips' option effects, which compare bands by value,
-   never see a new array on the per-tick re-render. */
-const MOBILE_CPU_BANDS: PerfBand[] = [
-  { key: 'cpu', color: CPU_COLOR, strokeColor: CPU_STROKE_COLOR, gradient: true },
-  { key: 'isBackground', color: HIDDEN_SCREEN_COLOR, step: true },
-];
-const MOBILE_MEMORY_BANDS: PerfBand[] = [
-  { key: 'isMemBackground', color: HIDDEN_SCREEN_COLOR, step: true },
-  {
-    key: 'memory',
-    color: USED_HEAP_COLOR,
-    strokeColor: USED_HEAP_STROKE_COLOR,
-    gradient: true,
-  },
-];
-const FPS_BANDS: PerfBand[] = [
-  {
-    key: 'fps',
-    color: FPS_COLOR,
-    strokeColor: FPS_STROKE_COLOR,
-    step: true,
-    gradient: true,
-  },
-  { key: 'fpsLowMarker', color: FPS_LOW_COLOR, step: true },
-  { key: 'fpsVeryLowMarker', color: FPS_VERY_LOW_COLOR, step: true },
-  { key: 'hiddenScreenMarker', color: HIDDEN_SCREEN_COLOR, step: true },
-];
-const CPU_BANDS: PerfBand[] = [
-  { key: 'cpu', color: CPU_COLOR, strokeColor: CPU_STROKE_COLOR, gradient: true },
-  { key: 'hiddenScreenMarker', color: HIDDEN_SCREEN_COLOR, step: true },
-];
-const HEAP_BANDS: PerfBand[] = [
-  {
-    key: 'totalHeap',
-    color: 'transparent',
-    strokeColor: TOTAL_HEAP_STROKE_COLOR,
-    line: true,
-  },
-  {
-    key: 'usedHeap',
-    color: USED_HEAP_COLOR,
-    strokeColor: USED_HEAP_STROKE_COLOR,
-    gradient: true,
-  },
-];
-const NODES_BANDS: PerfBand[] = [
-  {
-    key: 'nodesCount',
-    color: NODES_COUNT_COLOR,
-    strokeColor: NODES_COUNT_STROKE_COLOR,
-    gradient: true,
-  },
-];
+function usePerfBands() {
+  const { theme } = useTheme();
+  return React.useMemo(
+    () => perfBands(theme === 'dark' ? darkTokens : lightTokens),
+    [theme],
+  );
+}
 
 const TOTAL_HEAP = (t: TFunction) => t('Allocated Heap');
 const USED_HEAP = (t: TFunction) => t('JS Heap');
@@ -130,7 +120,10 @@ const cpuTooltip = (t: TFunction) => (row: any) => {
 const mobileCpuTooltip = (t: TFunction) => (row: any) => {
   if (!row) return null;
   if (row.cpu == null)
-    return tipWrap(t('App is in the background.'), `color:${HIDDEN_SCREEN_COLOR}`);
+    return tipWrap(
+      t('App is in the background.'),
+      `color:${HIDDEN_SCREEN_COLOR}`,
+    );
   return tipWrap(tipRow(CPU(t), `${row.cpu}%`));
 };
 
@@ -217,6 +210,7 @@ function generateMobileChart(
 
 export const MobilePerformance = observer(() => {
   const { t } = useTranslation();
+  const bands = usePerfBands();
   const { player, store } = React.useContext(MobilePlayerContext);
   const [_timeTicks, setTicks] = React.useState<number[]>([]);
   const [_data, setData] = React.useState<any[]>([]);
@@ -232,7 +226,7 @@ export const MobilePerformance = observer(() => {
       return acc;
     }, 0);
     setData(generateMobileChart(performanceChartData, biggestMemSpike));
-  }, []);
+  }, [performanceChartData.length]);
 
   const onDotClick = ({ index: pointer }: { index: number }) => {
     const point = _data[pointer];
@@ -241,56 +235,59 @@ export const MobilePerformance = observer(() => {
     }
   };
 
-
+  const memorySize = Number(sessionStore.current.userDeviceMemorySize);
   const availableCount = 2;
   const height = `${100 / availableCount}%`;
 
   return (
     <BottomBlock>
       <BottomBlock.Header>
-        <div className="flex items-center w-full">
-          <div className="font-semibold color-gray-medium mr-auto">
-            {t('Performance')}
-          </div>
-          <InfoLine>
-            <InfoLine.Point
-              label={t('Device Memory Size')}
-              value={formatBytes(
-                sessionStore.current.userDeviceMemorySize * 1024,
-              )}
-              display
-            />
-          </InfoLine>
-        </div>
+        {memorySize > 0 ? (
+          <p className="m-dt__figures m-dt__figures--inline">
+            <span>
+              {t('Device memory size')} <b>{formatBytes(memorySize * 1024)}</b>
+            </span>
+          </p>
+        ) : (
+          <span />
+        )}
       </BottomBlock.Header>
-      <BottomBlock.Content>
-        <PerformanceAreaChart
-            label="CPU"
-            data={_data}
-            cursorTime={performanceChartTime}
-            cursorColor={CURSOR_COLOR}
-            height={height}
-            groupId="or-performance"
-            ticks={_timeTicks}
-            onPointClick={(i) => onDotClick({ index: i })}
-            yMax={120}
-            tooltipFormatter={mobileCpuTooltip(t)}
-            bands={MOBILE_CPU_BANDS}
-          />
-        <PerformanceAreaChart
-            label="Memory"
-            data={_data}
-            cursorTime={performanceChartTime}
-            cursorColor={CURSOR_COLOR}
-            height={height}
-            groupId="or-performance"
-            ticks={_timeTicks}
-            onPointClick={(i) => onDotClick({ index: i })}
-            yFormatter={formatBytes}
-            yMaxRatio={1.2}
-            tooltipFormatter={mobileMemoryTooltip(t)}
-            bands={MOBILE_MEMORY_BANDS}
-          />
+      <BottomBlock.Content
+        className={_data.length ? 'm-dt__charts' : undefined}
+      >
+        {_data.length === 0 ? (
+          <NoData hint={t('This recording has no performance data.')} />
+        ) : (
+          <>
+            <PerformanceAreaChart
+              label={t('CPU')}
+              data={_data}
+              cursorTime={performanceChartTime}
+              cursorColor={bands.cursor}
+              height={height}
+              groupId="or-performance"
+              ticks={_timeTicks}
+              onPointClick={(i) => onDotClick({ index: i })}
+              yMax={120}
+              tooltipFormatter={mobileCpuTooltip(t)}
+              bands={bands.mobileCpu}
+            />
+            <PerformanceAreaChart
+              label={t('Memory')}
+              data={_data}
+              cursorTime={performanceChartTime}
+              cursorColor={bands.cursor}
+              height={height}
+              groupId="or-performance"
+              ticks={_timeTicks}
+              onPointClick={(i) => onDotClick({ index: i })}
+              yFormatter={formatBytes}
+              yMaxRatio={1.2}
+              tooltipFormatter={mobileMemoryTooltip(t)}
+              bands={bands.mobileMemory}
+            />
+          </>
+        )}
       </BottomBlock.Content>
     </BottomBlock>
   );
@@ -298,6 +295,7 @@ export const MobilePerformance = observer(() => {
 
 function Performance() {
   const { t } = useTranslation();
+  const bands = usePerfBands();
   const { sessionStore } = useStore();
   const userDeviceHeapSize = sessionStore.current.userDeviceHeapSize || 0;
   const { player, store } = React.useContext(PlayerContext);
@@ -330,7 +328,6 @@ function Performance() {
     }
   };
 
-
   const { fps, cpu, heap, nodes } = availability;
   const availableCount = [fps, cpu, heap, nodes].reduce(
     (c, av) => (av ? c + 1 : c),
@@ -341,105 +338,83 @@ function Performance() {
   return (
     <BottomBlock>
       <BottomBlock.Header>
-        <div className="flex items-center justify-between w-full">
-          <div className="flex gap-3 items-center">
-            <div className="font-semibold color-gray-medium mr-auto">
-              {t('Performance')}
-            </div>
-            <InfoLine>
-              <InfoLine.Point
-                label="Device Heap Size"
-                value={formatBytes(userDeviceHeapSize)}
-                display
-              />
-            </InfoLine>
-            <ConnectionQuality connection={connectionQuality} />
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Segmented
-              options={[
-                {
-                  label: (
-                    <TooltipANT title="Performance overview isn't supported across tabs.">
-                      <span>{t('All Tabs')}</span>
-                    </TooltipANT>
-                  ),
-                  value: 'all',
-                  disabled: true,
-                },
-                { label: t('Current Tab'), value: 'current' },
-              ]}
-              defaultValue="current"
-              size="small"
-              className="rounded-full font-medium"
-            />
-          </div>
+        <p className="m-dt__figures m-dt__figures--inline">
+          <span>
+            {t('Device heap size')} <b>{formatBytes(userDeviceHeapSize)}</b>
+          </span>
+          <ConnectionQuality connection={connectionQuality} />
+        </p>
+        <div className="m-dt__bar-right">
+          <Tooltip
+            title={t("Performance overview isn't supported across tabs.")}
+          >
+            <span className="m-dt__figrow-note">{t('Current tab')}</span>
+          </Tooltip>
         </div>
       </BottomBlock.Header>
-      <BottomBlock.Content>
+      <BottomBlock.Content className="m-dt__charts">
         {fps && (
           <PerformanceAreaChart
-              label="FPS"
-              data={_data}
-              cursorTime={performanceChartTime}
-              cursorColor={CURSOR_COLOR}
-              height={height}
-              groupId="or-performance"
-              ticks={_timeTicks}
-              onPointClick={(i) => onDotClick({ index: i })}
-              yMax={85}
-              xFormatter={durationFromMsFormatted}
-              tooltipFormatter={fpsTooltip(t)}
-              bands={FPS_BANDS}
-            />
+            label="FPS"
+            data={_data}
+            cursorTime={performanceChartTime}
+            cursorColor={bands.cursor}
+            height={height}
+            groupId="or-performance"
+            ticks={_timeTicks}
+            onPointClick={(i) => onDotClick({ index: i })}
+            yMax={85}
+            xFormatter={durationFromMsFormatted}
+            tooltipFormatter={fpsTooltip(t)}
+            bands={bands.fps}
+          />
         )}
         {cpu && (
           <PerformanceAreaChart
-              label="CPU"
-              data={_data}
-              cursorTime={performanceChartTime}
-              cursorColor={CURSOR_COLOR}
-              height={height}
-              groupId="or-performance"
-              ticks={_timeTicks}
-              onPointClick={(i) => onDotClick({ index: i })}
-              yMax={120}
-              tooltipFormatter={cpuTooltip(t)}
-              bands={CPU_BANDS}
-            />
+            label="CPU"
+            data={_data}
+            cursorTime={performanceChartTime}
+            cursorColor={bands.cursor}
+            height={height}
+            groupId="or-performance"
+            ticks={_timeTicks}
+            onPointClick={(i) => onDotClick({ index: i })}
+            yMax={120}
+            tooltipFormatter={cpuTooltip(t)}
+            bands={bands.cpu}
+          />
         )}
 
         {heap && (
           <PerformanceAreaChart
-              label="HEAP"
-              data={_data}
-              cursorTime={performanceChartTime}
-              cursorColor={CURSOR_COLOR}
-              height={height}
-              groupId="or-performance"
-              ticks={_timeTicks}
-              onPointClick={(i) => onDotClick({ index: i })}
-              yFormatter={formatBytes}
-              yMaxRatio={1.2}
-              tooltipFormatter={heapTooltip(t)}
-              bands={HEAP_BANDS}
-            />
+            label="HEAP"
+            data={_data}
+            cursorTime={performanceChartTime}
+            cursorColor={bands.cursor}
+            height={height}
+            groupId="or-performance"
+            ticks={_timeTicks}
+            onPointClick={(i) => onDotClick({ index: i })}
+            yFormatter={formatBytes}
+            yMaxRatio={1.2}
+            tooltipFormatter={heapTooltip(t)}
+            bands={bands.heap}
+          />
         )}
         {nodes && (
           <PerformanceAreaChart
-              label="NODES"
-              data={_data}
-              cursorTime={performanceChartTime}
-              cursorColor={CURSOR_COLOR}
-              height={height}
-              groupId="or-performance"
-              ticks={_timeTicks}
-              onPointClick={(i) => onDotClick({ index: i })}
-              yMaxRatio={1.2}
-              tooltipFormatter={nodesCountTooltip(t)}
-              bands={NODES_BANDS}
-            />
+            label="NODES"
+            data={_data}
+            cursorTime={performanceChartTime}
+            cursorColor={bands.cursor}
+            height={height}
+            groupId="or-performance"
+            ticks={_timeTicks}
+            onPointClick={(i) => onDotClick({ index: i })}
+            yMaxRatio={1.2}
+            tooltipFormatter={nodesCountTooltip(t)}
+            bands={bands.nodes}
+          />
         )}
       </BottomBlock.Content>
     </BottomBlock>

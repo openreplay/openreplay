@@ -1,9 +1,12 @@
+import { PopoverPanel } from '@/ui/overlays/popover';
+import { CircleAlert, HeartPulse } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
+
 import HealthWidget from 'Components/Header/HealthStatus/HealthWidget';
-import { Popover, Button } from 'antd';
-import { ExclamationCircleOutlined } from '@ant-design/icons';
+
+import { healthResponseKey, lastAskedKey } from './const';
 import { getHealthRequest } from './getHealth';
-import { lastAskedKey, healthResponseKey } from './const';
 
 // Only rendered while showModal is true; the widget stays eager so the header
 // icon does not pop in.
@@ -64,27 +67,40 @@ function HealthStatus() {
     }
   }, []);
 
-  const icon =
-    !isError && healthResponse?.overallHealth
-      ? 'pulse'
-      : ('exclamation-circle-fill' as const);
+  const { t } = useTranslation();
+  const [open, setOpen] = React.useState(false);
+  const healthy = !isError && healthResponse?.overallHealth;
+  const Icon = healthy ? HeartPulse : CircleAlert;
   return (
     <>
-      <Popover
+      <PopoverPanel
+        open={open}
+        onOpenChange={setOpen}
+        placement="topLeft"
+        sideOffset={8}
         content={
           <HealthWidget
             healthResponse={healthResponse}
             getHealth={getHealth}
             isLoading={isLoading}
             lastAsked={lastAsked}
-            setShowModal={setShowModal}
+            setShowModal={(v) => {
+              setOpen(false);
+              setShowModal(v);
+            }}
             isError={isError}
           />
         }
-        placement="topRight"
       >
-        <Button icon={<ExclamationCircleOutlined />} />
-      </Popover>
+        <button
+          type="button"
+          className="m-nav__tool"
+          aria-label={t('System health')}
+          style={healthy ? undefined : { color: 'var(--m-content-danger)' }}
+        >
+          <Icon size={15} aria-hidden="true" />
+        </button>
+      </PopoverPanel>
       {showModal ? (
         <React.Suspense fallback={null}>
           <HealthModal

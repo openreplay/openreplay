@@ -20,6 +20,7 @@ export default class Marker {
   constructor(
     private readonly overlay: HTMLElement,
     private readonly screen: Screen,
+    private readonly picking = true,
   ) {
     this.tooltip = document.createElement('div');
     this.tooltip.className = styles.tooltip;
@@ -31,20 +32,20 @@ export default class Marker {
 
     const marker = document.createElement('div');
     marker.className = styles.marker;
-    const markerL = document.createElement('div');
-    const markerR = document.createElement('div');
-    const markerT = document.createElement('div');
-    const markerB = document.createElement('div');
-    markerL.className = styles.markerL;
-    markerR.className = styles.markerR;
-    markerT.className = styles.markerT;
-    markerB.className = styles.markerB;
-    marker.appendChild(markerL);
-    marker.appendChild(markerR);
-    marker.appendChild(markerT);
-    marker.appendChild(markerB);
-
-    marker.appendChild(this.tooltip);
+    if (picking) {
+      const markerL = document.createElement('div');
+      const markerR = document.createElement('div');
+      const markerT = document.createElement('div');
+      const markerB = document.createElement('div');
+      markerL.className = styles.markerL;
+      markerR.className = styles.markerR;
+      markerT.className = styles.markerT;
+      markerB.className = styles.markerB;
+      marker.append(markerL, markerR, markerT, markerB, this.tooltip);
+    } else {
+      // pointing at a known element: its outline, not the picker's guides
+      marker.classList.add(styles.outline);
+    }
 
     overlay.appendChild(marker);
     this.marker = marker;
@@ -83,6 +84,7 @@ export default class Marker {
   markBySelector(selector: string) {
     this.selector = selector;
     this.lastSelector = selector;
+    if (!selector) this._target = null;
     this.redraw();
   }
 
@@ -146,6 +148,10 @@ export default class Marker {
     this.marker.style.height = `${rect.height}px`;
 
     const replayScale = this.screen.getScale();
+    if (!this.picking) {
+      this.marker.style.borderWidth = `${2 / replayScale}px`;
+      return;
+    }
     if (replayScale < 1) {
       const upscale = (1 / replayScale).toFixed(3);
       const yShift = ((1 - replayScale) / 2) * 100;

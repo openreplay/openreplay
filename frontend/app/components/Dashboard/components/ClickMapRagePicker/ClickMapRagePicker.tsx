@@ -1,11 +1,20 @@
-import React from 'react';
-import { Button, Segmented, Tooltip, Checkbox } from 'antd';
-import { useStore } from 'App/mstore';
-import { observer } from 'mobx-react-lite';
-import { useTranslation } from 'react-i18next';
-import { Smartphone, Tablet, Monitor, RefreshCcw } from 'lucide-react';
 import { FilterKey } from '@/types/filter/filterType';
-import type { CheckboxProps } from 'antd';
+import { IconButton } from '@/ui/actions/IconButton';
+import { Switch } from '@/ui/inputs/switch';
+import { Segmented } from '@/ui/inputs/toggle-group';
+import { Tooltip } from '@/ui/overlays/tooltip';
+import {
+  Monitor,
+  MousePointerClick,
+  RefreshCw,
+  Smartphone,
+  Tablet,
+} from 'lucide-react';
+import { observer } from 'mobx-react-lite';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { useStore } from 'App/mstore';
 
 function ClickMapRagePicker() {
   const { metricStore, dashboardStore, filterStore } = useStore();
@@ -20,8 +29,7 @@ function ClickMapRagePicker() {
   >(metricPlatform ?? 'desktop');
   const { t } = useTranslation();
 
-  const onChange: CheckboxProps['onChange'] = (e) => {
-    const checked = e.target.checked;
+  const onChange = (checked: boolean) => {
     metricStore.setClickMapsRage(checked);
     metricStore.instance.includeClickRage = checked;
     metricStore.instance.updateKey('hasChanged', true);
@@ -72,30 +80,49 @@ function ClickMapRagePicker() {
   }, [platform]);
 
   return (
-    <div className="mr-4 flex items-center gap-2 cursor-pointer">
-      <Checkbox onChange={onChange} checked={metricStore.includeClickRage}>
+    <>
+      <label className="m-cardp__switch">
+        <Switch
+          checked={metricStore.includeClickRage}
+          onCheckedChange={onChange}
+          aria-label={t('Include rage clicks')}
+        />
+        <MousePointerClick size={13} aria-hidden="true" />
         {t('Include rage clicks')}
-      </Checkbox>
-
-      <Segmented
-        options={[
-          { label: <Monitor size={16} />, value: 'desktop' },
-          { label: <Tablet size={16} />, value: 'tablet' },
-          { label: <Smartphone size={16} />, value: 'mobile' },
-        ]}
+      </label>
+      <Segmented<'desktop' | 'mobile' | 'tablet'>
         value={platform}
-        size="small"
-        onChange={(value) =>
-          setPlatform(value as 'desktop' | 'mobile' | 'tablet')
-        }
+        onChange={setPlatform}
+        ariaLabel={t('Platform')}
+        options={[
+          {
+            value: 'desktop',
+            icon: <Monitor size={13} aria-hidden="true" />,
+            title: t('Desktop'),
+          },
+          {
+            value: 'tablet',
+            icon: <Tablet size={13} aria-hidden="true" />,
+            title: t('Tablet'),
+          },
+          {
+            value: 'mobile',
+            icon: <Smartphone size={13} aria-hidden="true" />,
+            title: t('Mobile'),
+          },
+        ]}
       />
-
-      <Tooltip title={t('Get new image')}>
-        <Button size="small" onClick={refreshHeatmapSession}>
-          <RefreshCcw size={14} />
-        </Button>
+      <Tooltip title={t('Get a new image')}>
+        <span>
+          <IconButton
+            icon={<RefreshCw size={13} />}
+            label={t('Get a new image')}
+            variant="ghost"
+            onClick={() => void refreshHeatmapSession()}
+          />
+        </span>
       </Tooltip>
-    </div>
+    </>
   );
 }
 

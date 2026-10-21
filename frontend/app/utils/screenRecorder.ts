@@ -1,4 +1,4 @@
-import { toast } from 'react-toastify';
+import { toast } from '@/ui/overlays/toast';
 
 class AudioContextManager {
   context = new AudioContext();

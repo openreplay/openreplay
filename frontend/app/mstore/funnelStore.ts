@@ -1,9 +1,11 @@
-import { makeAutoObservable, action } from 'mobx';
-import { funnelService } from 'App/services';
 import Period, { LAST_7_DAYS } from 'Types/app/period';
+import { action, makeAutoObservable } from 'mobx';
+
+import { funnelService } from 'App/services';
+
 import Funnel, { IFunnel } from './types/funnel';
-import Session from './types/session';
 import FunnelIssue from './types/funnelIssue';
+import Session from './types/session';
 
 export default class FunnelStore {
   isLoading: boolean = false;
@@ -213,7 +215,8 @@ const sampleIssues = [
     lostConversions: 0,
     affectedUsers: 1,
     conversionImpact: 11,
-    contextString: 'py-1 px-2 bg-white border border-gray-light rounded-sm w-16',
+    contextString:
+      'py-1 px-2 bg-white border border-gray-light rounded-sm w-16',
     issueId: '9159e30220bb6a6a31afcaa1979a0c7d69c',
   },
   {

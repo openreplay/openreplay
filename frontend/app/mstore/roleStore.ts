@@ -1,9 +1,9 @@
+import i18next, { TFunction } from 'i18next';
 import { makeAutoObservable } from 'mobx';
 
 import { userService } from 'App/services';
 
 import Role from './types/role';
-import i18next, { TFunction } from 'i18next';
 
 const permissions = (t: TFunction) => [
   { text: t('Session Replay'), value: 'SESSION_REPLAY' },
@@ -65,6 +65,8 @@ export default class UserStore {
       this.setRoles(data.map((role: any) => new Role().fromJson(role)));
     } catch (e) {
       console.error(e);
+      // the form decides what to tell the user
+      throw e;
     } finally {
       this.toggleLoading(false);
     }
@@ -77,6 +79,8 @@ export default class UserStore {
       this.setRoles([...this.list, new Role().fromJson(data)]);
     } catch (e) {
       console.error(e);
+      // the form decides what to tell the user
+      throw e;
     } finally {
       this.toggleLoading(false);
     }
@@ -93,6 +97,8 @@ export default class UserStore {
       );
     } catch (e) {
       console.error(e);
+      // the form decides what to tell the user
+      throw e;
     } finally {
       this.toggleLoading(false);
     }

@@ -1,4 +1,3 @@
-import { Divider } from 'antd';
 import React from 'react';
 
 import {
@@ -9,6 +8,8 @@ import {
 } from '../queries';
 import Defaults from './Defaults';
 import Environments from './Environments';
+import { SyntheticsFrame } from './SyntheticsFrame';
+import './environments.css';
 import { Resolution, RunDefaults } from './shared/types';
 import { LOOKUP_LIMIT } from './shared/utils';
 
@@ -56,11 +57,12 @@ function SettingsTab() {
   };
 
   return (
-    <div className="flex flex-col p-5 w-full">
-      <Environments />
-      <Divider />
-      <Defaults value={defaults} onChange={changeDefaults} />
-    </div>
+    <SyntheticsFrame>
+      <div className="m-envs">
+        <Environments />
+        <Defaults value={defaults} onChange={changeDefaults} />
+      </div>
+    </SyntheticsFrame>
   );
 }
 

@@ -1,4 +1,4 @@
-import { makeAutoObservable } from 'mobx';
+import { makeAutoObservable, observableRef } from 'mobx';
 
 interface ToggleZoomPayload {
   enabled: boolean;
@@ -59,6 +59,9 @@ const DATA_SOURCE = '__DATA_SOURCE__';
 
 export default class UiPlayerStore {
   fullscreen = false;
+
+  /** the route moved to another session whose data is still on its way */
+  switchingSession = false;
   showOnlySearchEvents = false;
   showSearchEventsSwitchButton = false;
   resolvingInputs = false;
@@ -79,11 +82,6 @@ export default class UiPlayerStore {
     endTs: 0,
   };
 
-  highlightSelection = {
-    enabled: false,
-    startTs: 0,
-    endTs: 0,
-  };
   exportEventsSelection = {
     enabled: false,
     startTs: 0,
@@ -93,13 +91,58 @@ export default class UiPlayerStore {
   // @ts-ignore
   dataSource: 'all' | 'current' = localStorage.getItem(DATA_SOURCE) ?? 'all';
 
+  /** The request open in the player's sheet; rows are the list it pages through. */
+  requestSheet: {
+    rows: any[];
+    index: number;
+    onIndex?: (index: number) => void;
+    onClose?: () => void;
+  } | null = null;
+
+  requestSheetHosts = 0;
+
+  /** the request's open tab, kept while paging through requests */
+  requestTab = 'headers';
+
   constructor() {
-    makeAutoObservable(this);
+    makeAutoObservable(this, { requestSheet: observableRef });
   }
+
+  openRequestSheet = (
+    rows: any[],
+    index: number,
+    hooks: { onIndex?: (index: number) => void; onClose?: () => void } = {},
+  ) => {
+    this.requestSheet = { rows, index, ...hooks };
+  };
+
+  setRequestSheetIndex = (index: number) => {
+    if (!this.requestSheet) return;
+    this.requestSheet = { ...this.requestSheet, index };
+    this.requestSheet.onIndex?.(index);
+  };
+
+  closeRequestSheet = () => {
+    const closing = this.requestSheet;
+    this.requestSheet = null;
+    closing?.onClose?.();
+  };
+
+  setRequestTab = (tab: string) => {
+    this.requestTab = tab;
+  };
+
+  setRequestSheetHost = (on: boolean) => {
+    this.requestSheetHosts += on ? 1 : -1;
+  };
 
   changeDataSource = (source: 'all' | 'current') => {
     this.dataSource = source;
     localStorage.setItem(DATA_SOURCE, source);
+  };
+
+  setSwitchingSession = (val: boolean) => {
+    this.switchingSession = val;
   };
 
   toggleFullscreen = (val?: boolean) => {
@@ -133,19 +176,18 @@ export default class UiPlayerStore {
     this.bottomBlock = 0;
   };
 
+  // one selection on the timeline at a time: starting one ends the other
   toggleZoom = (payload: ToggleZoomPayload) => {
+    if (payload.enabled)
+      this.exportEventsSelection = { enabled: false, startTs: 0, endTs: 0 };
     this.timelineZoom.enabled = payload.enabled;
     this.timelineZoom.startTs = payload.range?.[0] ?? 0;
     this.timelineZoom.endTs = payload.range?.[1] ?? 0;
   };
 
-  toggleHighlightSelection = (payload: ToggleZoomPayload) => {
-    this.highlightSelection.enabled = payload.enabled;
-    this.highlightSelection.startTs = payload.range?.[0] ?? 0;
-    this.highlightSelection.endTs = payload.range?.[1] ?? 0;
-  };
-
   toggleExportEventsSelection = (payload: ToggleZoomPayload) => {
+    if (payload.enabled)
+      this.timelineZoom = { enabled: false, startTs: 0, endTs: 0 };
     this.exportEventsSelection.enabled = payload.enabled;
     this.exportEventsSelection.startTs = payload.range?.[0] ?? 0;
     this.exportEventsSelection.endTs = payload.range?.[1] ?? 0;

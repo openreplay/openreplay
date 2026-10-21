@@ -1,13 +1,15 @@
+import { useChartTheme } from '@/ui/data/chart';
 import React from 'react';
-import Sparkline from 'Components/Charts/Sparkline';
-import { InfoCircleOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+
+import Sparkline, { withAlpha } from 'Components/Charts/Sparkline';
 
 interface Props {
   list: any;
   disabled?: boolean;
 }
 const PerformanceGraph = React.memo((props: Props) => {
+  const theme = useChartTheme();
   const { t } = useTranslation();
   const { list, disabled } = props;
 
@@ -57,21 +59,22 @@ const PerformanceGraph = React.memo((props: Props) => {
   }));
 
   return (
-    <div className="relative">
+    <div className="relative h-full flex flex-col justify-center">
       {disabled ? (
-        <div className="flex justify-start">
-          <div className="text-xs text-neutral-400 ps-2">
-            {t('Multi-tab performance overview is not available.')}
-          </div>
-        </div>
+        <span className="m-dt__lane-none">
+          {t('Multi-tab performance overview is not available.')}
+        </span>
       ) : null}
       <Sparkline
         data={data}
         valueKey="cpu"
         type="area"
         height={35}
-        color="#3EAAAF"
-        gradient={['rgba(204, 0, 0, 0.5)', 'rgba(62, 170, 175, 0.8)']}
+        color={theme.series[0]}
+        gradient={[
+          withAlpha(theme.danger, 0.5),
+          withAlpha(theme.series[0] ?? '', 0.8),
+        ]}
       />
     </div>
   );

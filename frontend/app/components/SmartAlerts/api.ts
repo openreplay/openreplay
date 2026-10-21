@@ -1,6 +1,8 @@
 import { client } from 'App/mstore';
 import type FilterItem from 'App/mstore/types/filterItem';
 
+import type { EventsOrder } from 'Shared/FilterEditor/types';
+
 /* Smart Issues REST client — the Go `api` service under /v2/smart-issues.
    See api3.yaml for the full contract.
 
@@ -42,6 +44,7 @@ export interface SavedSegment {
   mine: boolean;
   createdBy: string;
   filters: FilterItem[];
+  eventsOrder: EventsOrder;
   /** one-line human summary of the query */
   summary: string;
   sessionsCount: number;
@@ -603,10 +606,11 @@ export async function updateProjectSettings(
 
 /** Project capture mode, derived from the real project settings. `active` /
     `instructions` stay empty here — the active set is read from each saved
-    search's `isCapture`, and instructions have no backing yet. */
+    search's `isCapture`, and instructions have no backing yet. Null when the
+    smart-issues API is unreachable. */
 export const getSegmentCapture = async (
   projectId: string,
-): Promise<SegmentCaptureState> => {
+): Promise<SegmentCaptureState | null> => {
   try {
     const { captureSegmentsOnly } = await getProjectSettings(projectId);
     return {
@@ -615,8 +619,7 @@ export const getSegmentCapture = async (
       instructions: {},
     };
   } catch {
-    // don't let a settings error break the segment list it loads alongside
-    return { mode: 'full', active: [], instructions: {} };
+    return null;
   }
 };
 

@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+
 import { getRE } from 'App/utils';
 
 // TODO: merge with utils/filterList (use logic of string getter like here instead of using callback)

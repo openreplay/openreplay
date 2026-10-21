@@ -1,10 +1,12 @@
-import React from 'react';
-import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import ClickMapRenderer from 'App/components/Session/Player/ClickMapRenderer';
-import { NoContent } from 'App/components/ui';
-import { InfoCircleOutlined } from '@ant-design/icons';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+
+import 'App/components/Dashboard/charts.css';
+import ClickMapRenderer from 'App/components/Session/Player/ClickMapRenderer';
+import { useStore } from 'App/mstore';
+import { hasRuleValue } from 'App/utils/hasRuleValue';
+import NoDataInWindow from 'Components/Dashboard/components/NoDataInWindow';
 
 function ClickMapCard() {
   const { t } = useTranslation();
@@ -57,25 +59,25 @@ function ClickMapCard() {
     metricStore.includeClickRage,
   ]);
 
+  // a page was asked for and the window holds no recording of it
+  const asked = metricStore.instance.series.some((s: any) =>
+    (s.filter?.filters ?? []).some(hasRuleValue),
+  );
+  if (!metricStore.instance.data.domURL && asked) {
+    return <NoDataInWindow />;
+  }
   if (!metricStore.instance.data.domURL || insights.length === 0) {
     return (
-      <NoContent
-        style={{ minHeight: 220 }}
-        title={
-          <div className="flex items-center relative">
-            <InfoCircleOutlined className="hidden md:inline-block mr-1" />
-            {t(
-              'Set a start point to visualize the heatmap. If set, try adjusting filters.',
-            )}
-          </div>
-        }
-        show
-      />
+      <p className="m-funnel__empty">
+        {t(
+          'Set a start point to visualize the heatmap. If set, try adjusting filters.',
+        )}
+      </p>
     );
   }
 
   if (!metricStore.instance.data?.sessionId || !customSession) {
-    return <div className="py-2">{t('Loading session')}</div>;
+    return <p className="m-funnel__empty">{t('Loading session…')}</p>;
   }
 
   const jumpToEvent = {

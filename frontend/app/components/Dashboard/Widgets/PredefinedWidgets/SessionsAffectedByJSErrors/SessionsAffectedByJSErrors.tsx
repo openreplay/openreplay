@@ -1,8 +1,10 @@
+import { NoContent } from '@/ui/feedback/NoContent';
+import { Info } from 'lucide-react';
 import React from 'react';
-import { NoContent } from 'UI';
-import TimeseriesChart from 'Components/Charts/TimeseriesChart';
+
 import { NO_METRIC_DATA } from 'App/constants/messages';
-import { InfoCircleOutlined } from '@ant-design/icons';
+import TimeseriesChart from 'Components/Charts/TimeseriesChart';
+
 import { Styles } from '../../common';
 
 interface Props {
@@ -15,7 +17,7 @@ function SessionsAffectedByJSErrors(props: Props) {
     <NoContent
       title={
         <div className="flex items-center gap-2 text-base font-normal">
-          <InfoCircleOutlined size={12} /> {NO_METRIC_DATA}
+          <Info size={12} /> {NO_METRIC_DATA}
         </div>
       }
       size="small"

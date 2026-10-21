@@ -1,15 +1,14 @@
+import { toast } from '@/ui/overlays/toast';
 import Account from 'Types/account';
 import Client from 'Types/client';
 import copy from 'copy-to-clipboard';
+import i18next, { TFunction } from 'i18next';
 import { makeAutoObservable, runInAction } from 'mobx';
 import { makePersistable } from 'mobx-persist-store';
-import { toast } from 'react-toastify';
-
-import { userService } from 'App/services';
-import { deleteCookie } from 'App/utils';
 
 import User from 'App/mstore/types/user';
-import i18next, { TFunction } from 'i18next';
+import { userService } from 'App/services';
+import { deleteCookie } from 'App/utils';
 
 class UserStore {
   t: TFunction;
@@ -363,11 +362,19 @@ class UserStore {
     this.loginRequest = { loading: false, errors: [] };
   };
 
+  /** Accepts the API's `errors` list or a thrown Error; the login form renders a list. */
   syntheticLoginError = (errors: any) => {
     deleteCookie('jwt', '/', 'openreplay.com');
+    const list: string[] = Array.isArray(errors)
+      ? errors
+      : Array.isArray(errors?.errors)
+        ? errors.errors
+        : errors?.message
+          ? [errors.message]
+          : [];
     this.loginRequest = {
       loading: false,
-      errors: errors || [],
+      errors: list,
     };
   };
 
@@ -400,6 +407,10 @@ class UserStore {
     });
     try {
       const data = await userService.signup(params);
+      // a refused signup (email in use, bad captcha) comes back as 200 with `errors`
+      if (data?.errors?.length) {
+        throw Object.assign(new Error(data.errors[0]), { errors: data.errors });
+      }
       runInAction(() => {
         this.account = new Account(data.user);
         this.scopeState = data.scopeState;
@@ -418,7 +429,7 @@ class UserStore {
       runInAction(() => {
         this.signUpRequest = {
           loading: false,
-          errors: error.response?.errors || [],
+          errors: error.errors || [],
         };
       });
       toast.error(inUse ? inUseMsg : genericMsg);
@@ -435,6 +446,10 @@ class UserStore {
     });
     try {
       const data = await userService.resetPassword(params);
+      // a dead or expired link comes back as 200 with `errors`, not as an HTTP error
+      if (data?.errors?.length) {
+        throw Object.assign(new Error(data.errors[0]), { rejectedLink: true });
+      }
       runInAction(() => {
         this.account = new Account(data.user);
         this.jwt = data.jwt;
@@ -479,7 +494,6 @@ class UserStore {
         this.scopeState = data.data.scopeState;
         this.updatePasswordRequest = { loading: false, errors: [] };
       });
-      toast.success(this.t('Successfully changed password'));
       return data;
     } catch (e: any) {
       toast.error(e.message || this.t('Failed to updated password.'));
@@ -521,13 +535,15 @@ class UserStore {
   logout = async () => {
     try {
       await userService.logout();
-      runInAction(() => {
-        deleteCookie('jwt', '/', 'openreplay.com');
-        this.resetStore();
-      });
     } catch (error) {
-      // TODO error handling
+      // the server session may outlive this, but the user asked to leave:
+      // drop the local credentials either way
+      console.error('Logout request failed', error);
     }
+    runInAction(() => {
+      deleteCookie('jwt', '/', 'openreplay.com');
+      this.resetStore();
+    });
   };
 
   updateClient = async (params: any) => {
@@ -578,12 +594,10 @@ class UserStore {
     }
   };
 
-  resendEmailVerification = async (email: string) => {
-    try {
-      await userService.resendEmailVerification(email);
-    } catch (error) {
-      // TODO error handling
-    }
+  /** Rejects when no mail went out, so the caller can say so. The server
+      mails the signed-in account; `_email` is not sent. */
+  resendEmailVerification = async (_email?: string) => {
+    await userService.resendEmailVerification();
   };
 
   pushNewSite = (newSite: any) => {
@@ -631,7 +645,6 @@ class UserStore {
           this.account.apiKey = nextKey;
         }
       });
-      toast.success(this.t('API key regenerated'));
       return data;
     } catch (e: any) {
       toast.error(e.message || this.t('Failed to regenerate API key'));

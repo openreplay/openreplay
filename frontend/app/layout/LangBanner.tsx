@@ -1,34 +1,30 @@
+import { Notice } from '@/ui/feedback/Notice';
 import React from 'react';
-import { Languages, X, Info } from 'lucide-react';
-import { Button } from 'antd';
-import { useHistory } from 'App/routing';
+import { useTranslation } from 'react-i18next';
+
 import { client } from 'App/routes';
+import { useHistory } from 'App/routing';
 
 function LangBanner({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation();
   const history = useHistory();
 
-  const onClick = () => {
-    history.push(client('account'));
-  };
   return (
-    <div className={'px-4 py-2 bg-yellow flex items-center w-screen gap-2'}>
-      <Info size={16} />
-      <div>
-        OpenReplay now supports French, Russian, Chinese, and Spanish 🎉. Update
-        your language in settings.
-      </div>
-      <div className={'ml-auto'} />
-      <Button icon={<Languages size={14} />} size={'small'} onClick={onClick}>
-        Change Language
-      </Button>
-      <Button
-        icon={<X size={16} />}
-        type={'text'}
-        shape={'circle'}
-        onClick={onClose}
-        size={'small'}
-      />
-    </div>
+    <Notice
+      kind="info"
+      onDismiss={onClose}
+      action={
+        <button
+          type="button"
+          className="m-notice__link"
+          onClick={() => history.push(client('account'))}
+        >
+          {t('Change language')}
+        </button>
+      }
+    >
+      {t('OpenReplay now speaks French, Russian, Chinese and Spanish.')}
+    </Notice>
   );
 }
 

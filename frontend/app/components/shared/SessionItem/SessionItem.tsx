@@ -1,4 +1,5 @@
-import { Tooltip } from 'antd';
+import { Icon } from '@/ui/icons/Icon';
+import { Tooltip } from '@/ui/overlays/tooltip';
 import cn from 'classnames';
 import { Duration } from 'luxon';
 import { observer } from 'mobx-react-lite';
@@ -15,12 +16,15 @@ import {
 } from 'App/routes';
 import { RouteComponentProps, useHistory, withRouter } from 'App/routing';
 import { capitalize } from 'App/utils';
-import { Avatar, CountryFlag, Icon, Label, TextEllipsis } from 'UI';
 
+import Avatar from './Avatar';
 import Counter from './Counter';
+import CountryFlag from './CountryFlag';
 import ErrorBars from './ErrorBars';
+import Label from './Label';
 import PlayLink from './PlayLink';
 import SessionMetaList from './SessionMetaList';
+import TextEllipsis from './TextEllipsis';
 import stl from './sessionItem.module.css';
 
 const ASSIST_ROUTE = assistRoute();
@@ -360,12 +364,7 @@ function SessionItem(props: RouteComponentProps & Props) {
               )}
             >
               <div>
-                <Tooltip
-                  // delay={0}
-                  // disabled={isDisabled}
-                  title={isDisabled ? '' : timeTooltipContent}
-                  className="w-fit block!"
-                >
+                <Tooltip title={isDisabled ? '' : timeTooltipContent}>
                   <TextEllipsis
                     text={formattedTime}
                     popupProps={{ inverted: true, size: 'tiny' }}

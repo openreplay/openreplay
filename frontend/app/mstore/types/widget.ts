@@ -288,13 +288,18 @@ export default class Widget {
         if (json.startPoint) {
           if (Array.isArray(json.startPoint) && json.startPoint.length > 0) {
             const sp = json.startPoint[0];
+            // the catalog event brings the display name, the saved rule the rest
             const event = filterStore.findEvent({
               name: sp.name,
               autoCaptured: sp.autoCaptured,
             });
-
-            event.filters = sp.filters;
-            this.startPoint = new FilterItem().fromJson(event);
+            event.merge({
+              value: sp.value,
+              operator: sp.operator,
+              propertyOrder: sp.propertyOrder,
+              filters: sp.filters?.map((f: any) => new FilterItem(f)),
+            });
+            this.startPoint = event;
           }
 
           if (json.startPoint == typeof Object) {

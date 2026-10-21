@@ -1,13 +1,17 @@
-import React from 'react';
-import { NoContent } from 'UI';
-import { getRE } from 'App/utils';
+import { NoContent } from '@/ui/feedback/NoContent';
+import { SearchField } from '@/ui/inputs/SearchField';
 import cn from 'classnames';
+import { Info } from 'lucide-react';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { NO_METRIC_DATA } from 'App/constants/messages';
-import { InfoCircleOutlined } from '@ant-design/icons';
-import stl from './callWithErrors.module.css';
-import MethodType from './MethodType';
-import ImageInfo from './ImageInfo';
+import { getRE } from 'App/utils';
+
 import { Table } from '../../common';
+import ImageInfo from './ImageInfo';
+import MethodType from './MethodType';
+import stl from './callWithErrors.module.css';
 
 const cols = [
   {
@@ -50,22 +54,19 @@ interface Props {
 }
 function CallWithErrors(props: Props) {
   const { data } = props;
+  const { t } = useTranslation();
   const [search, setSearch] = React.useState('');
   const test = (value = '', serach: any) => getRE(serach, 'i').test(value);
   const _data = search
     ? data.chart.filter((i: any) => test(i.urlHostpath, search))
     : data.chart;
 
-  const write = ({ target: { name, value } }: any) => {
-    setSearch(value);
-  };
-
   return (
     <NoContent
       size="small"
       title={
         <div className="flex items-center gap-2 text-base font-normal">
-          <InfoCircleOutlined size={12} /> {NO_METRIC_DATA}
+          <Info size={12} /> {NO_METRIC_DATA}
         </div>
       }
       show={data.chart.length === 0}
@@ -73,12 +74,10 @@ function CallWithErrors(props: Props) {
     >
       <div style={{ height: '240px' }}>
         <div className={cn(stl.topActions, 'py-3 flex text-right')}>
-          <input
-            disabled={data.chart.length === 0}
-            className={stl.searchField}
-            name="search"
-            placeholder="Filter by Path"
-            onChange={write}
+          <SearchField
+            placeholder={t('Filter by path')}
+            value={search}
+            onChange={setSearch}
           />
         </div>
         <Table small cols={cols} rows={_data} isTemplate={props.isTemplate} />

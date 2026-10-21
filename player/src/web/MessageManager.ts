@@ -247,6 +247,18 @@ export default class MessageManager {
     this.updateSpriteMap();
   };
 
+  // three presses on one element within a second read as a rage click
+  private isRageClick(click: MouseClick | MouseClickDeprecated) {
+    const { list, countNow } = this.clickManager;
+    let n = 0;
+    for (let i = countNow - 1; i >= 0; i--) {
+      const c = list[i];
+      if (click.time - c.time > 1000) break;
+      if (c.id === click.id) n++;
+    }
+    return n >= 3;
+  }
+
   public updateSpriteMap = () => {
     if (this.spriteMapSvg) {
       this.injectSpriteMap(this.spriteMapSvg);
@@ -379,7 +391,10 @@ export default class MessageManager {
       }
       // In highlight mode the brackets mark the click, so the cursor ring is
       // only drawn as a fallback when no element could be resolved.
-      this.screen.cursor.click(!highlight || !this.highlightClickHasTarget);
+      this.screen.cursor.click(
+        !highlight || !this.highlightClickHasTarget,
+        this.isRageClick(lastClick),
+      );
     }
     const lastThrashing = this.mouseThrashingManager.moveGetLast(t);
     if (!!lastThrashing && t - lastThrashing.time < 300) {

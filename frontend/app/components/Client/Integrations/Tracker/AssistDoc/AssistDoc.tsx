@@ -1,11 +1,13 @@
-import { useStore } from 'App/mstore';
-import React, { useState } from 'react';
-import DocLink from 'Shared/DocLink/DocLink';
-import { Tabs, CodeBlock } from 'UI';
+import { CodeBlock } from '@/ui/data/CodeBlock';
+import { Tabs, TabsList, TabsTrigger } from '@/ui/layout/tabs';
+import { Section } from '@/ui/overlays/EntityDrawer';
 import { observer } from 'mobx-react-lite';
-import AssistScript from './AssistScript';
-import AssistNpm from './AssistNpm';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { PluginPane, usePluginProject } from '../../PluginPane';
+import AssistNpm from './AssistNpm';
+import AssistScript from './AssistScript';
 
 const NPM = 'NPM';
 const SCRIPT = 'SCRIPT';
@@ -14,14 +16,10 @@ const TABS = [
   { key: NPM, text: NPM },
 ];
 
-function AssistDoc() {
+function AssistDoc({ onClose }: { onClose?: () => void }) {
   const { t } = useTranslation();
-  const { integrationsStore, projectsStore } = useStore();
-  const sites = projectsStore.list;
-  const { siteId } = integrationsStore.integrations;
-  const projectKey = siteId
-    ? sites.find((site) => site.id === siteId)?.projectKey
-    : sites[0]?.projectKey;
+  const scope = usePluginProject();
+  const { projectKey } = scope;
   const [activeTab, setActiveTab] = useState(SCRIPT);
 
   const renderActiveTab = () => {
@@ -35,35 +33,38 @@ function AssistDoc() {
   };
 
   return (
-    <div className="bg-white h-screen overflow-y-auto w-full">
-      <h3 className="p-5 text-2xl">{t('Assist')}</h3>
-      <div className="p-5">
-        <div>
-          {t(
-            'OpenReplay Assist allows you to support your users by seeing their live screen and instantly hopping on call (WebRTC) with them without requiring any 3rd-party screen sharing software.',
-          )}
+    <PluginPane
+      title="Assist"
+      icon="integrations/openreplay"
+      blurb={t(
+        'Lets your team see a user’s live screen and call them over WebRTC, with no screen-sharing software.',
+      )}
+      docs="https://docs.openreplay.com/installation/assist"
+      scope={scope}
+      onClose={onClose}
+    >
+      <Section title={t('Install')}>
+        <CodeBlock
+          inline
+          code="npm i @openreplay/tracker-assist"
+          copyLabel={t('Copy command')}
+        />
+      </Section>
+      <Section title={t('Use')}>
+        <div className="m-int__stack">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList>
+              {TABS.map((tab) => (
+                <TabsTrigger key={tab.key} value={tab.key}>
+                  {tab.text}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+          {renderActiveTab()}
         </div>
-
-        <div className="font-bold my-2">{t('Installation')}</div>
-        <CodeBlock language="bash" code="npm i @openreplay/tracker-assist" />
-        <div className="mb-4" />
-
-        <div className="font-bold my-2">{t('Usage')}</div>
-        <Tabs
-          tabs={TABS}
-          active={activeTab}
-          onClick={(tab) => setActiveTab(tab)}
-        />
-
-        <div className="py-5">{renderActiveTab()}</div>
-
-        <DocLink
-          className="mt-4"
-          label={t('Install Assist')}
-          url="https://docs.openreplay.com/installation/assist"
-        />
-      </div>
-    </div>
+      </Section>
+    </PluginPane>
   );
 }
 

@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
 import cn from 'classnames';
-import { Icon } from 'UI';
+import { FastForward, Pause, Play } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
+import React, { useState } from 'react';
+
+import { debounceCall } from 'App/utils';
 import cls from 'Components/Session_/Player/Overlay/PlayIconLayer.module.css';
 import clsOv from 'Components/Session_/Player/Overlay/overlay.module.css';
-import { FastForward } from 'lucide-react';
-import { debounceCall } from 'App/utils';
 
 interface Props {
   isPlaying: boolean;
@@ -23,15 +23,13 @@ function PlayIconLayer({
   onJumpForward,
   onJumpBackward,
 }: Props) {
-  const [showPlayOverlayIcon, setShowPlayOverlayIcon] = useState(false);
+  const [bezel, setBezel] = useState(0);
 
   const leftLastTap = React.useRef(0);
   const rightLastTap = React.useRef(0);
 
-  const playAnimation = () => {
-    setShowPlayOverlayIcon(true);
-    setTimeout(() => setShowPlayOverlayIcon(false), 500);
-  };
+  // the replay's bezel: it shows the state just entered and fades on its own
+  const playAnimation = () => setBezel((n) => n + 1);
 
   const togglePlayAnimated = () => {
     playAnimation();
@@ -60,20 +58,11 @@ function PlayIconLayer({
     }
   };
   return (
-    <div
-      className={cn(
-        clsOv.overlay,
-        'relative. transition-all',
-        showPlayOverlayIcon
-          ? 'opacity-100 bg-[rgba(0,0,0,0.1)]'
-          : 'opacity-0 bg-transparent',
-      )}
-      onClick={togglePlayAnimated}
-    >
+    <div className={clsOv.overlay} onClick={togglePlayAnimated}>
       <div
         className={cn(
           'flex items-center pl-10 lg:hidden absolute left-0 top-0',
-          'h-full w-1/4 text-gray-medium',
+          'h-full w-1/4 text-content-muted',
         )}
         onClick={(e) => {
           e.stopPropagation();
@@ -85,7 +74,7 @@ function PlayIconLayer({
       <div
         className={cn(
           'flex items-center justify-end pr-10 lg:hidden absolute right-0 top-0',
-          'h-full w-1/4 text-gray-medium',
+          'h-full w-1/4 text-content-muted',
         )}
         onClick={(e) => {
           e.stopPropagation();
@@ -94,17 +83,15 @@ function PlayIconLayer({
       >
         <FastForward size={30} />
       </div>
-      <div
-        className={cn(cls.iconWrapper, {
-          [cls.zoomIcon]: showPlayOverlayIcon,
-        })}
-      >
-        <Icon
-          name={isPlaying ? 'play' : 'pause'}
-          color="gray-medium"
-          size={30}
-        />
-      </div>
+      {bezel > 0 && (
+        <span key={bezel} className={cls.bezel} aria-hidden="true">
+          {isPlaying ? (
+            <Play size={22} fill="currentColor" />
+          ) : (
+            <Pause size={22} fill="currentColor" />
+          )}
+        </span>
+      )}
     </div>
   );
 }

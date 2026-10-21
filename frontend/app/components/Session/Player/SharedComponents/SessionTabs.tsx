@@ -1,10 +1,12 @@
-import React from 'react';
-import { observer } from 'mobx-react-lite';
 import cn from 'classnames';
-import { PlayerContext } from 'Components/Session/playerContext';
-import { useModal } from 'Components/Modal';
-import Tab from './Tab';
+import { observer } from 'mobx-react-lite';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { useModal } from 'Components/Modal';
+import { PlayerContext } from 'Components/Session/playerContext';
+
+import Tab from './Tab';
 
 interface Props {
   tabs: { tab: string; idx: number }[];
@@ -30,8 +32,8 @@ function Modal({ tabs, currentTab, changeTab, hideModal }: Props) {
             hideModal();
           }}
           className={cn(
-            currentTab === tab.tab ? 'font-semibold ' : 'text-disabled-text',
-            'cursor-pointer border-b p-4 hover:bg-active-blue',
+            currentTab === tab.tab ? 'font-semibold ' : 'text-content-disabled',
+            'cursor-pointer border-b p-4 hover:bg-surface-hover',
           )}
         >
           {t('Tab')}&nbsp;{i + 1}
@@ -72,6 +74,60 @@ function SessionTabs({ isLive }: { isLive?: boolean }) {
     player.changeTab(tab);
   };
 
+  // the shown tab's surface, measured: tabs are as wide as their titles
+  const strip = React.useRef<HTMLDivElement>(null);
+  const shownId = shownTabs.length === 1 ? shownTabs[0].tab : currentTab;
+  const [thumb, setThumb] = React.useState<{ x: number; w: number } | null>(
+    null,
+  );
+  const [live, setLive] = React.useState(false);
+  React.useLayoutEffect(() => {
+    const host = strip.current;
+    if (!host) return undefined;
+    const measure = () => {
+      const el = host.querySelector<HTMLElement>(
+        `[data-tab="${CSS.escape(shownId)}"]`,
+      );
+      setThumb(el ? { x: el.offsetLeft, w: el.offsetWidth } : null);
+    };
+    measure();
+    // a reflow is not a switch: reposition without the travel
+    const ro = new ResizeObserver(() => {
+      setLive(false);
+      measure();
+      requestAnimationFrame(() => setLive(true));
+    });
+    ro.observe(host);
+    const id = requestAnimationFrame(() => setLive(true));
+    return () => {
+      ro.disconnect();
+      cancelAnimationFrame(id);
+    };
+  }, [shownId, shownTabs.length]);
+
+  const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+    const n = shownTabs.length;
+    const i = shownTabs.findIndex((el) => el.tab === shownId);
+    const next =
+      e.key === 'Home'
+        ? 0
+        : e.key === 'End'
+          ? n - 1
+          : e.key === 'ArrowRight'
+            ? (i + 1) % n
+            : (i - 1 + n) % n;
+    const tab = shownTabs[next];
+    if (!tab) return;
+    e.preventDefault();
+    // the transport's own arrows seek; a key spent on the tabs must not
+    e.stopPropagation();
+    changeTab(tab.tab);
+    strip.current
+      ?.querySelector<HTMLElement>(`[data-tab="${CSS.escape(tab.tab)}"]`)
+      ?.focus();
+  };
+
   const openModal = () => {
     showModal(
       <Modal
@@ -86,33 +142,42 @@ function SessionTabs({ isLive }: { isLive?: boolean }) {
     );
   };
   return (
-    <>
-      {shownTabs.map((tab, i) => (
-        <React.Fragment key={tab.tab}>
-          <Tab
-            i={tab.idx}
-            tab={tab.tab}
-            currentTab={actualTabs.length === 1 ? tab.tab : currentTab}
-            changeTab={changeTab}
-            isLive={isLive}
-            isClosed={tab.isClosed}
-            name={tabNames[tab.tab]}
-          />
-        </React.Fragment>
+    <div
+      className="m-rtabs"
+      role="tablist"
+      aria-label={t('Browser tabs')}
+      ref={strip}
+      onKeyDown={onKeyDown}
+    >
+      {thumb && (
+        <span
+          className={`m-rtabs__thumb m-travel${live ? ' is-live' : ''}`}
+          aria-hidden="true"
+          style={{ transform: `translateX(${thumb.x}px)`, width: thumb.w }}
+        />
+      )}
+      {shownTabs.map((tab) => (
+        <Tab
+          key={tab.tab}
+          i={tab.idx}
+          tab={tab.tab}
+          currentTab={shownId}
+          changeTab={changeTab}
+          isLive={isLive}
+          isClosed={tab.isClosed}
+          name={tabNames[tab.tab]}
+        />
       ))}
       {shouldTruncate ? (
-        <div
+        <button
+          type="button"
+          className="m-rtabs__more m-mono"
           onClick={openModal}
-          className={cn(
-            'self-end py-1 px-4 text-sm',
-            'cursor-pointer bg-active-blue text-blue',
-            'border-t-transparent! border-l-transparent! border-r-transparent!',
-          )}
         >
-          +{tabsArr.length - DISPLAY_LIMIT}&nbsp;{t('More')}
-        </div>
+          +{tabsArr.length - DISPLAY_LIMIT}
+        </button>
       ) : null}
-    </>
+    </div>
   );
 }
 

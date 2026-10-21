@@ -1,16 +1,49 @@
-import React, { useContext } from 'react';
-import {
-  PlayerContext,
-  MobilePlayerContext,
-} from 'Components/Session/playerContext';
-import { observer } from 'mobx-react-lite';
-import { getTimelinePosition } from './getTimelinePosition';
 import { useStore } from '@/mstore';
+import { Tooltip } from '@/ui/overlays/tooltip';
+import { TYPES } from 'Types/session/event';
+import { observer } from 'mobx-react-lite';
+import React, { useContext } from 'react';
+
+import {
+  MobilePlayerContext,
+  PlayerContext,
+} from 'Components/Session/playerContext';
+
 import { getTimelineEventWidth } from './getTimelineEventWidth';
-import { Tooltip } from 'antd';
+import { getTimelinePosition } from './getTimelinePosition';
+import stl from './timeline.module.css';
+
+const RAGE = new Set<string>([TYPES.CLICKRAGE, TYPES.TAPRAGE]);
+
+/** One event on the track: its kind in height and colour, a click jumps to it. */
+function Tick({
+  e,
+  scale,
+  onJump,
+}: {
+  e: { time: number; type?: string; isHighlighted?: boolean };
+  scale: number;
+  onJump: (time: number) => void;
+}) {
+  const kind = e.isHighlighted
+    ? stl.tickHit
+    : RAGE.has(e.type ?? '')
+      ? stl.tickRage
+      : '';
+  return (
+    <div
+      className={`${stl.tick} ${kind}`}
+      style={{ left: `${getTimelinePosition(e.time, scale)}%` }}
+      onClick={(ev) => {
+        ev.stopPropagation();
+        onJump(e.time);
+      }}
+    />
+  );
+}
 
 function EventsList() {
-  const { store } = useContext(PlayerContext);
+  const { store, player } = useContext(PlayerContext);
   const { uiPlayerStore, sessionStore } = useStore();
   const { eventCount, endTime, tabStates, sessionStart } = store.get();
   const { incidents } = sessionStore.current;
@@ -28,10 +61,13 @@ function EventsList() {
     [eventCount, uiPlayerStore.showOnlySearchEvents],
   );
   React.useEffect(() => {
-    const hasDuplicates = events.some(
-      (e, i) =>
-        events.findIndex((el) => el.key === e.key && el.time === e.time) !== i,
-    );
+    const seen = new Set<string>();
+    const hasDuplicates = events.some((e) => {
+      const id = `${e.key}_${e.time}`;
+      if (seen.has(id)) return true;
+      seen.add(id);
+      return false;
+    });
     if (hasDuplicates) {
       console.error('Duplicate events detected in list', events);
     }
@@ -39,11 +75,12 @@ function EventsList() {
   return (
     <>
       {events.map((e) => (
-        <div
+        <Tick
           /* @ts-ignore TODO */
           key={`${e.key}_${e.time}`}
-          className={`absolute w-[2px] h-[10px] z-4 pointer-events-none ${e.isHighlighted ? 'bg-[#f0a930]' : 'bg-[#394eff]'}`}
-          style={{ left: `${getTimelinePosition(e.time, scale)}%` }}
+          e={e as any}
+          scale={scale}
+          onJump={player.jump}
         />
       ))}
       {incidents?.map((i) => {
@@ -56,7 +93,7 @@ function EventsList() {
           <Tooltip title={i.label} key={(i as any).startTime}>
             <div
               /* @ts-ignore TODO */
-              className={`absolute h-[10px] z-3 bg-[#ff5454]`}
+              className={`absolute h-[10px] z-3 bg-[var(--m-mark-danger)]`}
               style={{
                 left: `${getTimelinePosition((i as any).time, scale)}%`,
                 width: typeof width === 'string' ? width : `${width}%`,
@@ -70,7 +107,7 @@ function EventsList() {
 }
 
 function MobileEventsList() {
-  const { store } = useContext(MobilePlayerContext);
+  const { store, player } = useContext(MobilePlayerContext);
   const { eventList, endTime } = store.get();
   const events = eventList.filter((e) => e.type !== 'SWIPE');
 
@@ -78,11 +115,12 @@ function MobileEventsList() {
   return (
     <>
       {events.map((e) => (
-        <div
+        <Tick
           /* @ts-ignore TODO */
           key={`${e.key}_${e.time}`}
-          className={`absolute w-[2px] h-[10px] z-3 pointer-events-none ${e.isHighlighted ? 'bg-[#f0a930]' : 'bg-[#394eff]'}`}
-          style={{ left: `${getTimelinePosition(e.time, scale)}%` }}
+          e={e as any}
+          scale={scale}
+          onJump={player.jump}
         />
       ))}
     </>

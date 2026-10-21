@@ -1,7 +1,7 @@
+import { isCSSStyleRule } from '../../../guards';
+import logger from '../../../logger';
 import type Screen from '../../Screen/Screen';
 import { replaceCSSPseudoclasses } from '../../messages/rewriter/rewriteMessage';
-import logger from '../../../logger';
-import { isCSSStyleRule } from '../../../guards';
 
 // Doesn't work with css files (hasOwnProperty returns false)
 // TODO: recheck and remove if true
@@ -28,24 +28,45 @@ export default class StylesManager {
 
   private skipCSSLinks: Array<string> = [];
 
+  /** the document's first stylesheets are in; later ones load in place */
+  private revealed = false;
+
+  private generation = 0;
+
   constructor(
     private readonly screen: Screen,
     private readonly setLoading: (flag: boolean) => void,
   ) {}
 
   reset(): void {
+    this.generation++;
+    if (this.linkLoadingCount > 0) this.setLoading(false);
     this.linkLoadingCount = 0;
     this.linkLoadPromises = [];
+    this.revealed = false;
   }
 
   setStyleHandlers(node: HTMLLinkElement, value: string): void {
+    if (this.skipCSSLinks.includes(value)) return;
+    if (this.revealed) {
+      // a stylesheet added to a page already on screen (an SPA's lazy chunk):
+      // hiding the frame until it loads blinks the replay
+      node.onload = () => {
+        node.onload = null;
+        const doc = this.screen.document;
+        if (node.ownerDocument === doc && doc) {
+          rewriteNodeStyleSheet(doc, node);
+        }
+      };
+      return;
+    }
+    const generation = this.generation;
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
     const promise = new Promise<void>((resolve) => {
-      if (this.skipCSSLinks.includes(value)) resolve();
       this.linkLoadingCount++;
       this.setLoading(true);
       const addSkipAndResolve = (e: any) => {
-        this.skipCSSLinks.push(value);
+        if (generation === this.generation) this.skipCSSLinks.push(value);
         logger.error('skip node', e);
         resolve();
       };
@@ -63,8 +84,11 @@ export default class StylesManager {
       node.onload = null;
       node.onerror = null;
       clearTimeout(timeoutId);
+      // settled after reset(): it belongs to the previous document
+      if (generation !== this.generation) return;
       this.linkLoadingCount--;
       if (this.linkLoadingCount === 0) {
+        this.revealed = true;
         this.setLoading(false);
         this.linkLoadPromises = [];
       }
@@ -75,6 +99,10 @@ export default class StylesManager {
   moveReady(): Promise<void[]> {
     if (this.linkLoadingCount > 0) {
       return Promise.all(this.linkLoadPromises);
+    }
+    // a page with no stylesheet of its own is on screen once its body is
+    if (!this.revealed && this.screen.document?.body?.childElementCount) {
+      this.revealed = true;
     }
     return Promise.resolve([]);
   }

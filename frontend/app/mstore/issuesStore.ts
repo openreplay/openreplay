@@ -1,3 +1,5 @@
+import { getRowsPerPage } from '@/ui/layout/rows-per-page';
+import { toast } from '@/ui/overlays/toast';
 import { makeAutoObservable, runInAction } from 'mobx';
 
 import {
@@ -52,6 +54,7 @@ import {
   makeIssueSessionCard,
 } from 'App/components/SmartAlerts/factories';
 import { summarize } from 'App/components/SmartAlerts/segments/segmentUtils';
+import type { EventsOrder } from 'App/components/shared/FilterEditor/types';
 import {
   CAT_ORDER,
   type CategoryName,
@@ -101,8 +104,6 @@ const AGENT_RULE: CriticalRule = {
 /* Store behind the AI Issues surface. Issues + example sessions come from the
    /v2/smart-issues endpoints, mapped through SmartAlerts/factories. Filtering,
    sorting and pagination are server-side; mutations persist then refetch. */
-
-export const PAGE_SIZE = 20;
 
 /* Persist light view preferences per project so a chosen view sticks across
    reloads (heavier filters reset — they refetch). */
@@ -158,6 +159,7 @@ function toSavedSegment(
     // server-provided creator name (may be "")
     createdBy: mine ? 'You' : s.userName || 'a teammate',
     filters: s.filters,
+    eventsOrder: s.eventsOrder,
     summary: summarize(s.filters),
     sessionsCount: s.sessionsCount,
     usersCount: s.usersCount,
@@ -181,7 +183,6 @@ export default class IssuesStore {
 
   // ---- pagination ----
   page = 1;
-  limit = PAGE_SIZE;
 
   // ---- filters (each setter refetches) ----
   query = '';
@@ -208,9 +209,13 @@ export default class IssuesStore {
   criticalRules: CriticalRule[] = [];
   criticalBy: Record<string, number[]> = {};
   notCritical: Record<string, string> = {};
+  /** issues I marked critical this session: the server keeps no attribution */
+  markedByMe: Record<string, true> = {};
   relevantToMe = false;
   segments: SavedSegment[] = [];
   captureMode: CaptureMode = 'full';
+  /** null until the first smart-issues call; false hides the agent UI */
+  agentAvailable: boolean | null = null;
   origins: IssueOrigin[] = [];
   /** AND/OR across the chosen segments ('any' => hasAny, the server default) */
   segmentsMatch: MatchMode = 'any';
@@ -276,10 +281,17 @@ export default class IssuesStore {
     makeAutoObservable(this);
   }
 
+  /** Moving to another project drops everything loaded for the previous one
+      (the ensure* helpers used to switch `projectId` and keep it all). */
+  private switchProject = (projectId: string) => {
+    if (projectId === this.projectId) return;
+    this.reset();
+    this.projectId = projectId;
+  };
+
   init = (projectId: string) => {
     if (projectId === this.projectId && this.loaded) return;
-    if (projectId !== this.projectId) this.reset();
-    this.projectId = projectId;
+    this.switchProject(projectId);
     this.critOnly = readFlag(critOnlyKey(projectId));
     const vis = readStr(visibilityKey(projectId));
     if (
@@ -299,6 +311,10 @@ export default class IssuesStore {
   };
 
   private reset = () => {
+    // an in-flight list for the previous project must not land here
+    this.issuesSeq++;
+    this.loading = false;
+    this.agentAvailable = null;
     this.issues = [];
     this.total = 0;
     this.loaded = false;
@@ -317,6 +333,7 @@ export default class IssuesStore {
     this.criticalRules = [];
     this.criticalBy = {};
     this.notCritical = {};
+    this.markedByMe = {};
     this.journeyTags = [];
     this.categoryCounts = null;
     this.relevantToMe = false;
@@ -345,12 +362,16 @@ export default class IssuesStore {
     this.detailMatch = 'all';
   };
 
+  private issuesSeq = 0;
+
   fetchIssues = async () => {
     if (!this.projectId) return;
+    // filters change faster than the list answers: only the latest request applies
+    const seq = ++this.issuesSeq;
     this.loading = true;
     try {
       const { rows, total, categoryCounts } = await getIssues(this.projectId, {
-        limit: this.limit,
+        limit: getRowsPerPage(),
         page: this.page,
         journeyLabels: this.labels,
         journeyLabelsMatch: toLabelsMatch(this.match),
@@ -370,6 +391,7 @@ export default class IssuesStore {
         minImpact: this.minImpact,
         query: this.query.trim(),
       });
+      if (seq !== this.issuesSeq) return;
       runInAction(() => {
         this.issues = rows.map(makeIssue);
         // keep the deep-link cache fresh, but preserve a description already
@@ -388,16 +410,19 @@ export default class IssuesStore {
     } catch (e) {
       console.error('Failed to load issues', e);
     } finally {
-      runInAction(() => {
-        this.loading = false;
-      });
+      if (seq === this.issuesSeq)
+        runInAction(() => {
+          this.loading = false;
+        });
     }
   };
 
   fetchLabels = async () => {
     if (!this.projectId) return;
+    const pid = this.projectId;
     try {
       const labels = await getLabels(this.projectId);
+      if (pid !== this.projectId) return;
       runInAction(() => {
         this.labelsAll = labels;
       });
@@ -408,8 +433,10 @@ export default class IssuesStore {
 
   fetchReasons = async () => {
     if (!this.projectId) return;
+    const pid = this.projectId;
     try {
       const reasons = await getReasons(this.projectId);
+      if (pid !== this.projectId) return;
       runInAction(() => {
         this.reasons = reasons;
       });
@@ -427,8 +454,10 @@ export default class IssuesStore {
 
   fetchJourneyTags = async () => {
     if (!this.projectId) return;
+    const pid = this.projectId;
     try {
       const tags = await listJourneyTags(this.projectId);
+      if (pid !== this.projectId) return;
       runInAction(() => {
         this.journeyTags = tags.map(this.toJourneyTag);
       });
@@ -449,8 +478,10 @@ export default class IssuesStore {
 
   fetchCriticalDefinitions = async () => {
     if (!this.projectId) return;
+    const pid = this.projectId;
     try {
       const defs = await listCriticalDefinitions(this.projectId);
+      if (pid !== this.projectId) return;
       runInAction(() => {
         this.criticalRules = defs.map(this.toCriticalRule);
       });
@@ -465,16 +496,24 @@ export default class IssuesStore {
      are still unbacked. */
   fetchSegments = async () => {
     if (!this.projectId) return;
+    const pid = this.projectId;
     try {
-      const [, capture] = await Promise.all([
+      const [, captureState] = await Promise.all([
         // the saved-search list is loaded once per project by searchStore and
         // shared with session search and Data Management; the segment cards
         // show session/user counts, which are opt-in
         searchStore.ensureSavedSearchList(true),
         getSegmentCapture(this.projectId),
       ]);
+      if (pid !== this.projectId) return;
       const segments = mapSegments(searchStore.savedSearchRaw);
+      const capture: SegmentCaptureState = captureState ?? {
+        mode: 'full',
+        active: [],
+        instructions: {},
+      };
       runInAction(() => {
+        this.agentAvailable = captureState !== null;
         const mapped = segments.map((s) => toSavedSegment(s, capture));
         /* `captureSegmentsOnly` defaults to true on a project that never set it,
            so a project with nothing capturing would read as "capturing only
@@ -487,27 +526,36 @@ export default class IssuesStore {
       });
     } catch (e) {
       console.error('Failed to load segments', e);
+      // unknown, so the agent surfaces stay hidden for this project
+      if (pid === this.projectId)
+        runInAction(() => {
+          this.agentAvailable = null;
+        });
     }
   };
 
   /** Load just the segments — for the Data Management page, which needs the
       capture layer without the full Issues init. */
   ensureSegments = (projectId: string) => {
-    if (this.projectId !== projectId) this.projectId = projectId;
-    void this.fetchSegments();
+    void this.loadSegments(projectId);
+  };
+
+  loadSegments = async (projectId: string) => {
+    this.switchProject(projectId);
+    await this.fetchSegments();
   };
 
   /** Load just the journey tags — for Preferences > Agents. Without this the
       panel renders empty AND every write no-ops on the blank `projectId`. */
   ensureJourneyTags = (projectId: string) => {
-    if (this.projectId !== projectId) this.projectId = projectId;
+    this.switchProject(projectId);
     void this.fetchJourneyTags();
   };
 
   /** Load just the critical definitions — for Preferences > Agents, reachable
       without opening Issues (where init() would fetch them). */
   ensureCriticalDefinitions = (projectId: string) => {
-    if (this.projectId !== projectId) this.projectId = projectId;
+    this.switchProject(projectId);
     void this.fetchCriticalDefinitions();
   };
 
@@ -811,7 +859,13 @@ export default class IssuesStore {
     const issue = this.byId(id);
     if (!issue || !issue.critical) return 'none';
     const me = String(userStore.account.id);
-    return (issue.criticalBy ?? []).some((m) => String(m.userId) === me)
+    const mineHere =
+      this.markedByMe[id] ||
+      (this.criticalBy[id] ?? []).some(
+        (rid) => this.criticalRules.find((r) => r.id === rid)?.mine,
+      );
+    return mineHere ||
+      (issue.criticalBy ?? []).some((m) => String(m.userId) === me)
       ? 'mine'
       : 'team';
   }
@@ -840,6 +894,11 @@ export default class IssuesStore {
         mine: true,
       },
     ];
+    // what the rollback restores: the shared flag only goes back to false if
+    // this call raised it, and a muted-for-me state comes back with its note
+    const wasCritical = forIssueId != null && this.serverCritical(forIssueId);
+    const prevNot =
+      forIssueId != null ? this.notCritical[forIssueId] : undefined;
     if (forIssueId != null) {
       const { [forIssueId]: _dropped, ...rest } = this.notCritical;
       this.notCritical = rest;
@@ -866,7 +925,27 @@ export default class IssuesStore {
         }
         return this.fetchCriticalDefinitions();
       })
-      .catch((e) => console.error('Failed to create critical definition', e));
+      .catch((e) => {
+        console.error('Failed to create critical definition', e);
+        // undo the optimistic rule: the issue must not read critical on the
+        // strength of a rule that doesn't exist
+        runInAction(() => {
+          this.criticalRules = this.criticalRules.filter(
+            (r) => r.id !== tempId,
+          );
+          if (forIssueId != null) {
+            const left = (this.criticalBy[forIssueId] ?? []).filter(
+              (r) => r !== tempId,
+            );
+            this.criticalBy = { ...this.criticalBy, [forIssueId]: left };
+            if (prevNot != null)
+              this.notCritical = { ...this.notCritical, [forIssueId]: prevNot };
+            if (!left.length && !wasCritical)
+              this.persistCritical(forIssueId, false, [], prevNot ?? '');
+          }
+        });
+        toast.error('Could not save the critical rule');
+      });
   };
   updateCriticalRule = (id: number, description: string) => {
     if (!this.projectId) return;
@@ -907,13 +986,9 @@ export default class IssuesStore {
     note: string,
   ) => {
     if (!this.projectId) return;
-    void setIssueCritical(
-      this.projectId,
-      id,
-      critical,
-      reasons,
-      note,
-    ).catch((e) => console.error('Failed to persist criticality', e));
+    void setIssueCritical(this.projectId, id, critical, reasons, note).catch(
+      (e) => console.error('Failed to persist criticality', e),
+    );
     // keep the row + cache in step so the UI doesn't wait on the round-trip
     this.afterMutation(id, { critical });
   };
@@ -921,6 +996,8 @@ export default class IssuesStore {
   /** Suppress the flag for me only; the reasons + note are sent with the flag.
       Replace, never mutate a key (MobX tracks the object identity). */
   setNotCriticalForMe = (id: string, reasons: string[] = [], note = '') => {
+    const { [id]: _mine, ...others } = this.markedByMe;
+    this.markedByMe = others;
     this.notCritical = {
       ...this.notCritical,
       [id]: [...reasons, note.trim()].filter(Boolean).join(' · '),
@@ -930,6 +1007,7 @@ export default class IssuesStore {
   restoreCritical = (id: string) => {
     const { [id]: _dropped, ...rest } = this.notCritical;
     this.notCritical = rest;
+    this.markedByMe = { ...this.markedByMe, [id]: true };
     this.persistCritical(id, true, [], '');
   };
 
@@ -945,8 +1023,11 @@ export default class IssuesStore {
       back to the loaded segment list. */
   segmentName(searchId?: string): string | undefined {
     if (!searchId) return undefined;
-    // segment filters carry searchId at runtime; the Filter type doesn't list it
-    const f = filterStore.findEvent({ searchId } as any);
+    // segment filters carry searchId at runtime; the Filter type doesn't list
+    // it. Looked up directly: findEvent logs an error per miss, per row.
+    const f = filterStore.filters[this.projectId ?? '']?.find(
+      (x: any) => x.searchId === searchId,
+    );
     return f?.name || this.segmentById(searchId)?.name;
   }
   /** segments I can see: mine or team-visible (teammates' private ones hidden) */
@@ -1098,6 +1179,7 @@ export default class IssuesStore {
     name: string;
     isPublic: boolean;
     filters: FilterItem[];
+    eventsOrder: EventsOrder;
     active: boolean;
     instructions?: string;
   }): Promise<boolean> => {
@@ -1109,23 +1191,23 @@ export default class IssuesStore {
       name: input.name,
       isPublic: input.isPublic,
       filters: input.filters,
+      eventsOrder: input.eventsOrder,
       isCapture: capture,
     };
-    let saved: Segment;
-    try {
-      saved = input.id
-        ? await updateSegment(input.id, payload)
-        : await createSegment(payload);
-    } catch (e) {
-      console.error('Failed to save segment', e);
-      return false;
-    }
+    // a failed save rejects, so the drawer can keep the form open and say so
+    const saved: Segment = input.id
+      ? await updateSegment(input.id, payload)
+      : await createSegment(payload);
     // best-effort: mirror capture + instructions to the (NOT-YET-BACKED) capture
     // endpoint until it's the single source of truth
-    await setSegmentCapture(this.projectId, saved.id, {
-      active: capture,
-      instructions: input.instructions ?? '',
-    });
+    try {
+      await setSegmentCapture(this.projectId, saved.id, {
+        active: capture,
+        instructions: input.instructions ?? '',
+      });
+    } catch (e) {
+      console.error('Failed to mirror segment capture', e);
+    }
     searchStore.invalidateSavedSearchList();
     await this.fetchSegments();
     if (this.captureMode === 'segments' && this.activeSegmentCount === 0) {

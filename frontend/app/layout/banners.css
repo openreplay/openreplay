@@ -1,0 +1,8 @@
+/* account-wide notices sit inside the page, on the page's own inset */
+.m-shell__notices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-space-3);
+  flex: none;
+  padding: var(--m-space-5) var(--m-space-7) 0;
+}

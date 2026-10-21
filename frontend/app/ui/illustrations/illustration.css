@@ -1,0 +1,839 @@
+.m-ill {
+  --ill-ink: var(--m-content-primary);
+  --ill-soft: var(--m-content-muted);
+  --ill-accent: var(--m-accent-bright);
+  --ill-accent-soft: color-mix(
+    in srgb,
+    var(--m-accent-bright) 22%,
+    var(--m-surface-default)
+  );
+  --ill-paper: var(--m-surface-default);
+  --ill-top: var(--m-surface-sunken);
+  --ill-front: var(--m-surface-active);
+  --ill-side: color-mix(
+    in srgb,
+    var(--m-surface-active) 60%,
+    var(--m-content-disabled)
+  );
+  --ill-ground: var(--m-surface-active);
+  --ill-boil: 420ms;
+  --ill-amp: 1;
+  display: inline-flex;
+  flex: none;
+  position: relative;
+}
+.m-ill--compact {
+  --ill-amp: 0.5;
+}
+:root.dark .m-ill {
+  --ill-paper: var(--m-surface-raised);
+  --ill-top: color-mix(
+    in srgb,
+    var(--m-surface-active) 70%,
+    var(--m-content-disabled)
+  );
+  --ill-side: var(--m-surface-raised);
+  --ill-ground: var(--m-surface-sunken);
+}
+.m-ill__svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.m-ill__svg * {
+  transform-box: view-box;
+}
+
+.m-ill path,
+.m-ill circle {
+  vector-effect: non-scaling-stroke;
+}
+.m-ill {
+  --ill-w: 2.6px;
+  --ill-w-thick: 3.4px;
+  --ill-w-hair: 1.6px;
+}
+.m-ill__line {
+  stroke: var(--ill-ink);
+  stroke-width: var(--ill-w);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.m-ill__line .m-ill__thick {
+  stroke-width: var(--ill-w-thick);
+}
+.m-ill__line .m-ill__hair,
+.m-ill__line.m-ill__hair {
+  stroke-width: var(--ill-w-hair);
+}
+.m-ill__line .m-ill__soft {
+  stroke: var(--ill-soft);
+}
+.m-ill__line .m-ill__accent {
+  stroke: var(--ill-accent);
+}
+.m-ill__line .m-ill__dash {
+  stroke-dasharray: 3 4;
+}
+.m-ill__accent-fill,
+.m-ill__fill-accent {
+  fill: var(--ill-accent);
+}
+.m-ill__fill-accent-soft {
+  fill: var(--ill-accent-soft);
+}
+.m-ill__fill-paper {
+  fill: var(--ill-paper);
+}
+.m-ill__fill-top {
+  fill: var(--ill-top);
+}
+.m-ill__fill-front {
+  fill: var(--ill-front);
+}
+.m-ill__fill-side {
+  fill: var(--ill-side);
+}
+.m-ill__ground {
+  fill: var(--ill-ground);
+}
+.m-ill__face {
+  overflow: visible;
+}
+.m-ill__face > .m-savatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 0;
+}
+.m-ill__face > .m-savatar {
+  position: relative;
+}
+.m-ill__face > .m-savatar > img {
+  position: absolute;
+  left: var(--img-x, 0);
+  top: var(--img-y, 0);
+  flex: none;
+}
+.m-ill__grid-cell {
+  fill: #000;
+  fill-opacity: 0.14;
+}
+:root.dark .m-ill__grid-cell {
+  fill-opacity: 0.4;
+}
+.m-ill__face--on-cube > .m-savatar {
+  clip-path: inset(3.5% round 3px);
+}
+.m-ill__face--on-sphere > .m-savatar {
+  clip-path: circle(46.5%);
+}
+.m-ill__face--on-triangle > .m-savatar {
+  clip-path: polygon(56.4% 6%, 95.4% 96.5%, 4.6% 96.5%);
+}
+
+.m-ill__frame--1,
+.m-ill__frame--2,
+.m-ill__face--drift,
+.m-ill__face--blink,
+.m-ill__face--cheer {
+  opacity: 0;
+}
+
+.m-ill__frame {
+  animation: m-ill-boil var(--ill-boil) step-end infinite;
+}
+.m-ill__frame--1 {
+  animation-delay: calc(var(--ill-boil) * -2 / 3);
+}
+.m-ill__frame--2 {
+  animation-delay: calc(var(--ill-boil) * -1 / 3);
+}
+
+.m-ill__face--blink {
+  animation: m-ill-blink 4.4s step-end 1.6s infinite;
+}
+.m-ill__bot--b .m-ill__face--blink {
+  animation-delay: 2.9s;
+}
+.m-ill__face--drift {
+  animation: m-ill-drift 3.1s step-end 0.8s infinite;
+}
+
+.m-ill__aura-line {
+  stroke: var(--ill-ink);
+  stroke-width: 2px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+.m-ill__aura-line.is-bold {
+  stroke-width: var(--ill-w);
+}
+.m-ill__aura-dot {
+  fill: var(--ill-ink);
+}
+.m-ill__aura-mark {
+  transform: scale(0);
+  transition: transform 180ms steps(2, end);
+}
+.m-ill__aura--zzz .m-ill__aura-mark,
+.m-ill__aura--waves .m-ill__aura-mark,
+.m-ill__aura--ticks .m-ill__aura-mark {
+  transform: scale(1);
+}
+
+.m-ill.is-active .m-ill__aura-mark {
+  transform: scale(1);
+  transition: none;
+  animation: m-ill-aura-pop 360ms steps(3, end) calc(260ms + var(--i) * 70ms)
+    backwards;
+}
+.m-ill.is-active .m-ill__aura--curious .m-ill__aura-wig,
+.m-ill.is-active .m-ill__aura--confetti .m-ill__aura-wig,
+.m-ill.is-active .m-ill__aura--sparks .m-ill__aura-wig {
+  animation:
+    m-ill-wiggle var(--ill-boil) step-end calc(620ms + var(--i) * 70ms) infinite,
+    m-ill-come-go 2100ms step-end calc(620ms + var(--i) * 420ms) infinite;
+}
+.m-ill.is-active .m-ill__aura--confetti .m-ill__aura-mark {
+  animation: m-ill-aura-pop 360ms steps(3, end) calc(260ms + var(--i) * 70ms)
+    backwards;
+}
+.m-ill.is-active .m-ill__aura--sparks .m-ill__aura-wig {
+  animation:
+    m-ill-flicker 420ms steps(2, end) calc(var(--i) * 140ms) infinite,
+    m-ill-come-go 1680ms step-end calc(var(--i) * 280ms) infinite;
+}
+.m-ill.is-active .m-ill__aura--waves .m-ill__aura-mark {
+  animation: m-ill-broadcast 1260ms step-end calc(var(--i) * 140ms) infinite;
+}
+.m-ill.is-active .m-ill__aura--zzz .m-ill__aura-mark {
+  animation: m-ill-zstream 2100ms steps(7, end) calc(var(--i) * 700ms - 2100ms)
+    infinite;
+}
+.m-ill.is-active .m-ill__aura--ticks .m-ill__aura-mark {
+  animation: m-ill-tick 840ms steps(2, end) calc(var(--i) * 280ms) infinite;
+}
+
+.m-ill.is-active .m-ill__pose--stand .m-ill__bot {
+  animation: m-ill-curious 1120ms steps(2, end) infinite;
+}
+.m-ill.is-active .m-ill__pose--wait .m-ill__bot {
+  animation: m-ill-tap 560ms steps(2, end) infinite;
+}
+.m-ill.is-active .m-ill__pose--work .m-ill__bot {
+  animation: m-ill-work 420ms steps(2, end) infinite;
+}
+.m-ill.is-active .m-ill__pose--cheer .m-ill__bot {
+  animation: m-ill-hop 560ms steps(2, end) infinite;
+}
+.m-ill.is-active .m-ill__pose--cheer .m-ill__bot-shadow {
+  animation: m-ill-shadow-hop 560ms steps(2, end) infinite;
+}
+@keyframes m-ill-shadow-hop {
+  0% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(0.8);
+  }
+  55% {
+    transform: scale(0.72);
+  }
+  85% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.m-ill.is-active .m-ill__pose--sit .m-ill__bot {
+  animation: m-ill-bob 840ms steps(2, end) infinite;
+}
+.m-ill__pose--sleep .m-ill__bot {
+  animation: m-ill-breathe 2400ms steps(2, end) infinite;
+}
+.m-ill.is-active .m-ill__pose--sleep .m-ill__bot {
+  animation: m-ill-hop 560ms steps(2, end) 1;
+}
+
+.m-ill__peek {
+  opacity: 0;
+  transform: translate(0, 0) rotate(0deg);
+  transition:
+    transform 420ms steps(3, end),
+    opacity 0ms linear 420ms;
+}
+.m-ill.is-active .m-ill__peek {
+  opacity: 1;
+  transform: translate(var(--peek-x), var(--peek-y)) rotate(var(--peek-r));
+  transition:
+    transform 480ms steps(4, end),
+    opacity 0ms linear 0ms;
+}
+.m-ill.is-active .m-ill__peek .m-ill__bot {
+  animation: m-ill-curious 1120ms steps(2, end) 480ms infinite;
+}
+
+.m-ill.is-active .m-ill__face--cheer {
+  opacity: 1;
+}
+
+.m-ill--page.is-active .m-ill__svg > g > .m-ill__bot {
+  animation: m-ill-hop 560ms steps(2, end) infinite;
+}
+.m-ill--compact.is-active .m-ill__svg > g > .m-ill__bot {
+  animation: m-ill-lean 720ms steps(2, end) infinite;
+}
+
+.m-ill.is-active .m-ill__held-item--swing {
+  animation: m-ill-swing 840ms steps(3, end) infinite;
+}
+.m-ill.is-active .m-ill__held-item--scan {
+  animation: m-ill-scan 1120ms steps(4, end) infinite;
+}
+.m-ill.is-active .m-ill__held-item--bob {
+  animation: m-ill-bob 560ms steps(2, end) infinite;
+}
+.m-ill.is-active .m-ill__held-item--ring {
+  animation: m-ill-ring 420ms steps(3, end) infinite;
+}
+.m-ill.is-active .m-ill__held-item--pulse {
+  animation: m-ill-pulse 840ms steps(3, end) infinite;
+}
+.m-ill.is-active .m-ill__held-item--spin {
+  animation: m-ill-spin 1120ms steps(4, end) infinite;
+}
+.m-ill.is-active .m-ill__held-item--tilt {
+  animation: m-ill-tilt 840ms steps(3, end) infinite;
+}
+
+.m-ill.is-active .m-ill__move--bob {
+  animation: m-ill-bob 560ms steps(2, end) infinite;
+}
+.m-ill.is-active .m-ill__move--swing {
+  animation: m-ill-swing 840ms steps(3, end) infinite;
+}
+.m-ill.is-active .m-ill__move--pulse {
+  animation: m-ill-pulse 840ms steps(3, end) infinite;
+}
+.m-ill.is-active .m-ill__move--ring {
+  animation: m-ill-ring 420ms steps(3, end) infinite;
+}
+.m-ill.is-active .m-ill__move--scan {
+  animation: m-ill-scan 1120ms steps(4, end) infinite;
+}
+.m-ill.is-active .m-ill__move--wave {
+  animation: m-ill-wave 560ms steps(2, end) infinite;
+}
+.m-ill.is-active .m-ill__move--spin {
+  animation: m-ill-spin 1120ms steps(4, end) infinite;
+}
+.m-ill.is-active .m-ill__move--blink {
+  animation: m-ill-dim 840ms steps(2, end) infinite;
+}
+.m-ill.is-active .m-ill__move--rise {
+  animation: m-ill-rise 1120ms steps(4, end) infinite;
+}
+.m-ill.is-active .m-ill__move--tilt {
+  animation: m-ill-tilt 840ms steps(3, end) infinite;
+}
+.m-ill.is-active .m-ill__move--scrub {
+  animation: m-ill-scrub 1120ms step-end infinite;
+}
+@keyframes m-ill-scrub {
+  0% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(calc(var(--ill-amp) * 7px));
+  }
+  50% {
+    transform: translateX(calc(var(--ill-amp) * 14px));
+  }
+  75% {
+    transform: translateX(calc(var(--ill-amp) * 21px));
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.m-ill__move--connect {
+  opacity: 0;
+}
+.m-ill.is-active .m-ill__move--plugIn {
+  animation: m-ill-plug-in 1680ms steps(3, end) infinite;
+}
+.m-ill.is-active .m-ill__move--connect {
+  animation: m-ill-connect 1680ms step-end infinite;
+}
+@keyframes m-ill-plug-in {
+  0% {
+    transform: translateX(0);
+  }
+  30% {
+    transform: translateX(calc(var(--ill-amp) * 19px));
+  }
+  78% {
+    transform: translateX(calc(var(--ill-amp) * 19px));
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+@keyframes m-ill-connect {
+  0% {
+    opacity: 0;
+  }
+  32% {
+    opacity: 1;
+  }
+  78% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes m-ill-boil {
+  0% {
+    opacity: 1;
+  }
+  33.333% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes m-ill-blink {
+  0% {
+    opacity: 0;
+  }
+  94% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes m-ill-drift {
+  0% {
+    opacity: 0;
+  }
+  60% {
+    opacity: 1;
+  }
+  74% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes m-ill-hop {
+  0% {
+    transform: translate(0, 0) scale(1.05, 0.93);
+  }
+  30% {
+    transform: translate(0, -7px) scale(0.97, 1.04);
+  }
+  55% {
+    transform: translate(0, -9px);
+  }
+  85% {
+    transform: translate(0, 0) scale(1.03, 0.96);
+  }
+  100% {
+    transform: translate(0, 0) scale(1.05, 0.93);
+  }
+}
+@keyframes m-ill-lean {
+  0% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-5deg) translate(0, -1px);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+@keyframes m-ill-swing {
+  0% {
+    transform: rotate(calc(var(--ill-amp) * -9deg));
+  }
+  50% {
+    transform: rotate(calc(var(--ill-amp) * 9deg));
+  }
+  100% {
+    transform: rotate(calc(var(--ill-amp) * -9deg));
+  }
+}
+@keyframes m-ill-scan {
+  0% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(
+      calc(var(--ill-amp) * -6px),
+      calc(var(--ill-amp) * -2px)
+    );
+  }
+  50% {
+    transform: translate(0, calc(var(--ill-amp) * -3px));
+  }
+  75% {
+    transform: translate(
+      calc(var(--ill-amp) * 6px),
+      calc(var(--ill-amp) * -1px)
+    );
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+@keyframes m-ill-bob {
+  0% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(0, calc(var(--ill-amp) * -4px));
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+@keyframes m-ill-ring {
+  0% {
+    transform: rotate(calc(var(--ill-amp) * -14deg));
+  }
+  50% {
+    transform: rotate(calc(var(--ill-amp) * 14deg));
+  }
+  100% {
+    transform: rotate(calc(var(--ill-amp) * -14deg));
+  }
+}
+@keyframes m-ill-pulse {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(calc(1 + var(--ill-amp) * 0.16));
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes m-ill-wave {
+  0% {
+    transform: skewY(0deg) scaleX(1);
+  }
+  50% {
+    transform: skewY(calc(var(--ill-amp) * 6deg)) scaleX(0.94);
+  }
+  100% {
+    transform: skewY(0deg) scaleX(1);
+  }
+}
+@keyframes m-ill-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(calc(var(--ill-amp) * 90deg));
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+@keyframes m-ill-dim {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes m-ill-rise {
+  0% {
+    transform: translate(0, 0);
+    opacity: 1;
+  }
+  60% {
+    transform: translate(0, calc(var(--ill-amp) * -8px));
+    opacity: 1;
+  }
+  100% {
+    transform: translate(0, calc(var(--ill-amp) * -12px));
+    opacity: 0;
+  }
+}
+@keyframes m-ill-aura-pop {
+  from {
+    transform: translate(var(--from-x), var(--from-y)) scale(0);
+  }
+}
+@keyframes m-ill-broadcast {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  12% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+  72% {
+    opacity: 0.5;
+  }
+  84% {
+    opacity: 0;
+  }
+}
+@keyframes m-ill-zstream {
+  0% {
+    opacity: 1;
+    transform: translate(calc(var(--from-x) * 0.7), calc(var(--from-y) * 0.7))
+      scale(0.3) rotate(8deg);
+  }
+  30% {
+    transform: translate(0, 0) scale(1) rotate(-6deg);
+  }
+  55% {
+    transform: translate(0.5px, -1.5px) scale(1.04) rotate(5deg);
+  }
+  78% {
+    opacity: 1;
+    transform: translate(1px, -3px) scale(1) rotate(-4deg);
+  }
+  88% {
+    opacity: 0.5;
+    transform: translate(1.5px, -4px) scale(0.6);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(2px, -5px) scale(0);
+  }
+}
+@keyframes m-ill-come-go {
+  0% {
+    opacity: 1;
+  }
+  38% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0;
+  }
+  86% {
+    opacity: 0.5;
+  }
+}
+@keyframes m-ill-wiggle {
+  0% {
+    transform: rotate(-14deg) scale(1);
+  }
+  33.333% {
+    transform: rotate(10deg) scale(1.08) translate(0, -0.5px);
+  }
+  66.666% {
+    transform: rotate(-3deg) scale(0.96);
+  }
+}
+@keyframes m-ill-flick {
+  0% {
+    opacity: 0.4;
+    transform: translate(0, 0) scale(0.6);
+  }
+  40% {
+    opacity: 1;
+    transform: translate(var(--out-x), var(--out-y)) scale(1);
+  }
+  100% {
+    opacity: 0.4;
+    transform: translate(0, 0) scale(0.6);
+  }
+}
+@keyframes m-ill-burst {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.4);
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(var(--out-x) * 2.2), calc(var(--out-y) * 2.2))
+      scale(1.1) rotate(20deg);
+  }
+}
+@keyframes m-ill-flicker {
+  0% {
+    transform: scale(0.55) rotate(0deg);
+  }
+  50% {
+    transform: scale(1.2) rotate(18deg);
+  }
+  100% {
+    transform: scale(0.55) rotate(0deg);
+  }
+}
+@keyframes m-ill-ripple {
+  0% {
+    transform: scale(0.65);
+    opacity: 1;
+  }
+  60% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 0.5;
+  }
+  85% {
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.3);
+    opacity: 0;
+  }
+}
+@keyframes m-ill-aura-beat {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes m-ill-zfloat {
+  0% {
+    transform: translate(0, 0) rotate(0deg) scale(0.5);
+  }
+  30% {
+    transform: translate(1.5px, -3px) rotate(-6deg) scale(1);
+  }
+  100% {
+    transform: translate(5px, -10px) rotate(-14deg) scale(0);
+  }
+}
+@keyframes m-ill-wave-out {
+  0% {
+    opacity: 0.2;
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.2;
+  }
+}
+@keyframes m-ill-tick {
+  0% {
+    transform: translate(0, -2px);
+  }
+  50% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(0, -2px);
+  }
+}
+@keyframes m-ill-tap {
+  0% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(calc(var(--lean, 1) * 3deg)) translate(0, -1px);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+@keyframes m-ill-work {
+  0% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(calc(var(--lean, 1) * 6deg))
+      translate(calc(var(--lean, 1) * 1.5px), 0);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+@keyframes m-ill-breathe {
+  0% {
+    transform: scale(1, 1);
+  }
+  50% {
+    transform: scale(1.02, 0.97);
+  }
+  100% {
+    transform: scale(1, 1);
+  }
+}
+@keyframes m-ill-twinkle {
+  0% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  33% {
+    transform: scale(1.35) rotate(12deg);
+    opacity: 0.6;
+  }
+  66% {
+    transform: scale(0.9) rotate(-6deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+@keyframes m-ill-curious {
+  0% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-4deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+@keyframes m-ill-tilt {
+  0% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(calc(var(--ill-amp) * -8deg));
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m-ill *,
+  .m-ill.is-active * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

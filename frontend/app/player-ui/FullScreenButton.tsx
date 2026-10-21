@@ -1,8 +1,10 @@
+import { IconButton } from '@/ui/actions/IconButton';
+import { Tooltip } from '@/ui/overlays/tooltip';
+import { Maximize } from 'lucide-react';
 import React from 'react';
-import { Popover, Button } from 'antd';
-import { FullscreenOutlined } from '@ant-design/icons';
-import { PlaySessionInFullscreenShortcut } from 'Components/Session_/Player/Controls/components/KeyboardHelp';
 import { useTranslation } from 'react-i18next';
+
+import { PlaySessionInFullscreenShortcut } from 'Components/Session_/Player/Controls/components/KeyboardHelp';
 
 interface IProps {
   size: number;
@@ -11,26 +13,25 @@ interface IProps {
   noShortcut?: boolean;
 }
 
-export function FullScreenButton({ size = 18, onClick, noShortcut }: IProps) {
+export function FullScreenButton({ size = 15, onClick, noShortcut }: IProps) {
   const { t } = useTranslation();
-
   return (
-    <Popover
-      content={
-        <div className="flex gap-2 items-center">
+    <Tooltip
+      title={
+        <span className="flex gap-2 items-center">
           {!noShortcut ? <PlaySessionInFullscreenShortcut /> : null}
-          <div>{t('Play In Fullscreen')}</div>
-        </div>
+          {t('Play In Fullscreen')}
+        </span>
       }
-      placement="topRight"
     >
-      <Button
-        onClick={onClick}
-        shape="circle"
-        size="small"
-        className="flex items-center justify-center"
-        icon={<FullscreenOutlined />}
-      />
-    </Popover>
+      <span>
+        <IconButton
+          icon={<Maximize size={size} />}
+          label={t('Play In Fullscreen')}
+          variant="ghost"
+          onClick={onClick}
+        />
+      </span>
+    </Tooltip>
   );
 }

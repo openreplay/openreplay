@@ -1,7 +1,16 @@
+import { useChartTheme } from '@/ui/data/chart';
 import { BarChart, LineChart } from 'echarts/charts';
 import React from 'react';
 
 import { echarts } from './init';
+
+/** `#rrggbb` + alpha → rgba(), for gradients built from theme colours. */
+export function withAlpha(hex: string, a: number): string {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return hex;
+  const n = parseInt(m[1], 16);
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
+}
 
 echarts.use([BarChart, LineChart]);
 
@@ -34,7 +43,7 @@ function Sparkline(props: Props) {
     data,
     valueKey,
     type = 'bar',
-    color = '#3EAAAF',
+    color: colorProp,
     gradient,
     height = 40,
     width = '100%',
@@ -46,6 +55,8 @@ function Sparkline(props: Props) {
     strokeOpacity = 1,
   } = props;
 
+  const theme = useChartTheme();
+  const color = colorProp ?? theme.series[0];
   const chartRef = React.useRef<HTMLDivElement>(null);
   const instRef = React.useRef<any>(null);
   const latest = React.useRef({ rows: data ?? [], tooltipFormatter });
@@ -105,11 +116,11 @@ function Sparkline(props: Props) {
         tooltip: hasTooltip
           ? {
               trigger: 'axis',
-              backgroundColor: 'var(--color-white)',
-              borderColor: 'var(--color-gray-light)',
+              backgroundColor: theme.raised,
+              borderColor: theme.border,
               borderWidth: 1,
               extraCssText: 'box-shadow: 0 2px 8px rgba(0,0,0,.12);',
-              textStyle: { color: 'var(--color-gray-darkest)' },
+              textStyle: { color: theme.text },
               axisPointer: { type: type === 'bar' ? 'shadow' : 'line' },
               formatter: (params: any) => {
                 const idx = Array.isArray(params)
@@ -156,6 +167,7 @@ function Sparkline(props: Props) {
     strokeColor,
     strokeOpacity,
     hasTooltip,
+    theme,
   ]);
 
   return <div ref={chartRef} style={{ width, height }} />;

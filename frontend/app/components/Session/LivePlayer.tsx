@@ -1,23 +1,29 @@
-import { audioContextManager } from 'App/utils/screenRecorder';
-import React, { useEffect, useState } from 'react';
-import withPermissions from 'HOCs/withPermissions';
-import { wrapPlayerStore } from 'Components/Session/playerStore';
-import { createLiveWebPlayer } from 'Player';
-import Session from 'App/types/session';
+import { toast } from '@/ui/overlays/toast';
 import withLocationHandlers from 'HOCs/withLocationHandlers';
-import APIClient from 'App/api_client';
-import { useLocation } from 'App/routing';
-import { toast } from 'react-toastify';
-import { useStore } from 'App/mstore';
+import withPermissions from 'HOCs/withPermissions';
+import { createLiveWebPlayer } from 'Player';
 import { observer } from 'mobx-react-lite';
+import React, { useEffect, useState } from 'react';
+
+import APIClient from 'App/api_client';
+import { useStore } from 'App/mstore';
+import { useLocation } from 'App/routing';
 import { sessionService } from 'App/services';
+import Session from 'App/types/session';
+import { audioContextManager } from 'App/utils/screenRecorder';
+import { wrapPlayerStore } from 'Components/Session/playerStore';
+
 import styles from '../Session_/session.module.css';
 import PlayerBlock from './Player/LivePlayer/LivePlayerBlock';
-import PlayerBlockHeader from './Player/LivePlayer/LivePlayerBlockHeader';
+import LiveActions, {
+  useLiveBack,
+} from './Player/LivePlayer/LivePlayerBlockHeader';
+import ReplayLead from './ReplayScreen/ReplayLead';
+import { ReplayScreen } from './ReplayScreen/ReplayScreen';
 import {
+  ILivePlayerContext,
   PlayerContext,
   defaultContextValue,
-  ILivePlayerContext,
 } from './playerContext';
 
 interface Props {
@@ -106,24 +112,49 @@ function LivePlayer({ isMultiview, customSession, query }: Props) {
 
   return (
     <PlayerContext.Provider value={contextValue}>
-      {!fullView && (
-        <PlayerBlockHeader
-          // @ts-ignore
-          isMultiview={openedFromMultiview}
-        />
+      {fullView ? (
+        <div
+          className={styles.session}
+          style={{
+            height: isMultiview ? '100%' : undefined,
+            width: isMultiview ? '100%' : undefined,
+          }}
+        >
+          <PlayerBlock isMultiview={isMultiview} fullView={fullView} />
+        </div>
+      ) : (
+        <LiveFrame isMultiview={openedFromMultiview}>
+          <PlayerBlock isMultiview={isMultiview} fullView={fullView} />
+        </LiveFrame>
       )}
-      <div
-        className={styles.session}
-        style={{
-          height: isMultiview ? '100%' : undefined,
-          width: isMultiview ? '100%' : undefined,
-        }}
-      >
-        <PlayerBlock isMultiview={isMultiview} fullView={fullView} />
-      </div>
     </PlayerContext.Provider>
   );
 }
+
+const LiveFrame = observer(
+  ({
+    isMultiview,
+    children,
+  }: {
+    isMultiview?: boolean;
+    children: React.ReactNode;
+  }) => {
+    const { store } = React.useContext(PlayerContext);
+    const { width, height } = store.get();
+    const back = useLiveBack(isMultiview);
+    return (
+      <div className="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden">
+        <ReplayScreen
+          back={back}
+          lead={<ReplayLead width={width} height={height} />}
+          actions={<LiveActions />}
+        >
+          {children}
+        </ReplayScreen>
+      </div>
+    );
+  },
+);
 
 export default withPermissions(
   ['ASSIST_LIVE', 'SERVICE_ASSIST_LIVE'],

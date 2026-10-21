@@ -1,19 +1,17 @@
-import React, { useMemo, useContext, useState, useRef } from 'react';
-import { useStore } from 'App/mstore';
-import TimeTracker from 'Components/Session_/Player/Controls/TimeTracker';
-import stl from 'Components/Session_/Player/Controls/timeline.module.css';
-import DraggableCircle from 'Components/Session_/Player/Controls/components/DraggableCircle';
-import CustomDragLayer, {
-  OnDragCallback,
-} from 'Components/Session_/Player/Controls/components/CustomDragLayer';
-import { debounce } from 'App/utils';
-import TooltipContainer from 'Components/Session_/Player/Controls/components/TooltipContainer';
-import {
-  PlayerContext,
-  ILivePlayerContext,
-} from 'App/components/Session/playerContext';
-import { observer } from 'mobx-react-lite';
 import { Duration } from 'luxon';
+import { observer } from 'mobx-react-lite';
+import React, { useContext, useMemo, useRef, useState } from 'react';
+
+import {
+  ILivePlayerContext,
+  PlayerContext,
+} from 'App/components/Session/playerContext';
+import { useStore } from 'App/mstore';
+import { debounce } from 'App/utils';
+import TimeTracker from 'Components/Session_/Player/Controls/TimeTracker';
+import DraggableCircle from 'Components/Session_/Player/Controls/components/DraggableCircle';
+import TooltipContainer from 'Components/Session_/Player/Controls/components/TooltipContainer';
+import stl from 'Components/Session_/Player/Controls/timeline.module.css';
 
 function Timeline() {
   const { sessionStore } = useStore();
@@ -22,45 +20,44 @@ function Timeline() {
   const setTimelineHoverTime = sessionStore.setTimelineTooltip;
   // @ts-ignore
   const { player, store } = useContext<ILivePlayerContext>(PlayerContext);
-  const [wasPlaying, setWasPlaying] = useState(false);
-  const { playing, time, ready, endTime, liveTimeTravel } = store.get();
+  // while held, the handle and the played part follow the pointer
+  const [held, setHeld] = useState<number | null>(null);
+  const { time, ready, endTime, liveTimeTravel } = store.get();
 
   const timelineRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef<HTMLDivElement>(null);
 
   const scale = 100 / endTime;
 
-  const debouncedJump = useMemo(() => debounce(player.jump, 500), []);
   const debouncedTooltipChange = useMemo(
     () => debounce(setTimelineHoverTime, 50),
     [],
   );
 
-  const onDragEnd = () => {
-    if (!liveTimeTravel) return;
-
-    if (wasPlaying) {
-      player.togglePlay();
-    }
+  // the playhead moves only while travelling back in time; one jump on release
+  const onScrub = (pct: number | null) => {
+    if (liveTimeTravel) setHeld(pct);
   };
-
-  const onDrag: OnDragCallback = (offset: { x: number }) => {
-    if (!liveTimeTravel || !progressRef.current) return;
-
-    const p = offset.x / progressRef.current.offsetWidth;
-    const time = Math.max(Math.round(p * endTime), 0);
-    debouncedJump(time);
+  const onSeek = (pct: number) => {
+    setHeld(null);
     hideTimeTooltip();
-    if (playing) {
-      setWasPlaying(true);
-      player.pause();
+    if (liveTimeTravel) {
+      player.jump(Math.max(Math.round((pct / 100) * endTime), 0));
+      return;
     }
+    // the handle stops its click from reaching the bar, so it travels back
+    // itself, as a click on the bar would
+    void player.toggleTimetravel().then((ok) => {
+      if (ok)
+        player.jump(Math.max(Math.round((pct / 100) * store.get().endTime), 0));
+    });
   };
+  const left = held ?? time * scale;
 
   const getLiveTime = (e: React.MouseEvent) => {
     const duration = new Date().getTime() - startedAt;
-    // @ts-ignore type mismatch from react?
-    const p = e.nativeEvent.offsetX / e.target.offsetWidth;
+    const rect = progressRef.current?.getBoundingClientRect();
+    const p = rect ? (e.clientX - rect.left) / rect.width : 0;
     const time = Math.max(Math.round(p * duration), 0);
 
     return [time, duration];
@@ -112,23 +109,15 @@ function Timeline() {
     e: React.MouseEvent<HTMLDivElement>,
     customEndTime?: number,
   ) => {
-    // @ts-ignore type mismatch from react?
-    const p = e.nativeEvent.offsetX / e.target.offsetWidth;
+    const rect = progressRef.current?.getBoundingClientRect();
+    const p = rect ? (e.clientX - rect.left) / rect.width : 0;
     const targetTime = customEndTime || endTime;
 
     return Math.max(Math.round(p * targetTime), 0);
   };
 
   return (
-    <div
-      className="flex items-center absolute w-full"
-      style={{
-        top: '-4px',
-        zIndex: 100,
-        maxWidth: 'calc(100% - 1rem)',
-        left: '0.5rem',
-      }}
-    >
+    <div className="relative flex flex-1 min-w-0 items-center">
       <div
         className={stl.progress}
         onClick={ready ? jumpToTime : undefined}
@@ -139,13 +128,14 @@ function Timeline() {
         onMouseLeave={hideTimeTooltip}
       >
         <TooltipContainer />
-        <DraggableCircle left={time * scale} onDrop={onDragEnd} live />
-        <CustomDragLayer
-          onDrag={onDrag}
-          minX={0}
-          maxX={progressRef.current ? progressRef.current.offsetWidth : 0}
+        <DraggableCircle
+          left={left}
+          live
+          trackRef={progressRef}
+          onScrub={onScrub}
+          onRelease={onSeek}
         />
-        <TimeTracker scale={scale} live left={time * scale} />
+        <TimeTracker scale={scale} live left={left} />
 
         <div className={stl.timeline} ref={timelineRef} />
       </div>

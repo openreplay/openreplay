@@ -1,0 +1,11 @@
+.m-extlink__arrow {
+  flex: none;
+  display: inline-block;
+  margin-inline-start: 0.125em;
+  vertical-align: -0.1em;
+  color: var(--m-content-placeholder);
+}
+.m-extlink:hover .m-extlink__arrow,
+a:hover > .m-extlink__arrow {
+  color: currentColor;
+}

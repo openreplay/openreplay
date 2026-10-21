@@ -1,7 +1,9 @@
+import { NoContent } from '@/ui/feedback/NoContent';
+import { Info } from 'lucide-react';
 import React from 'react';
-import { NoContent } from 'UI';
+
 import { NO_METRIC_DATA } from 'App/constants/messages';
-import { InfoCircleOutlined } from '@ant-design/icons';
+
 import { Styles } from '../../common';
 import Bar from './Bar';
 
@@ -25,7 +27,7 @@ function SessionsPerBrowser(props: Props) {
       size="small"
       title={
         <div className="flex items-center gap-2 text-base font-normal">
-          <InfoCircleOutlined size={12} /> {NO_METRIC_DATA}
+          <Info size={12} /> {NO_METRIC_DATA}
         </div>
       }
       show={data.chart.length === 0}

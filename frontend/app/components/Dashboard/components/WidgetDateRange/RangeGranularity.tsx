@@ -1,6 +1,6 @@
+import { MenuButton } from '@/ui/actions/menu-button';
 import React from 'react';
-import { DownOutlined } from '@ant-design/icons';
-import { Button, Dropdown, MenuProps } from 'antd';
+import { useTranslation } from 'react-i18next';
 
 function RangeGranularity({
   period,
@@ -13,25 +13,11 @@ function RangeGranularity({
   density: number;
   onDensityChange: (density: number) => void;
 }) {
+  const { t } = useTranslation();
   const granularityOptions = React.useMemo(() => {
     if (!period) return [];
     return calculateGranularities(period.getDuration());
   }, [period]);
-
-  const menuProps: MenuProps = {
-    items: granularityOptions,
-    onClick: (item: any) => onDensityChange(Number(item.key)),
-  };
-  const selected = React.useMemo(() => {
-    let selected = 'Custom';
-    for (const option of granularityOptions) {
-      if (option.key === density) {
-        selected = option.label;
-        break;
-      }
-    }
-    return selected;
-  }, [period, density]);
 
   React.useEffect(() => {
     if (granularityOptions.length === 0) return;
@@ -43,17 +29,22 @@ function RangeGranularity({
   }, [period, granularityOptions.length]);
 
   return (
-    <Dropdown menu={menuProps} trigger={['click']}>
-      <Button
-        type="text"
-        variant="text"
-        size="small"
-        className="btn-granularity"
-      >
-        <span>{selected}</span>
-        <DownOutlined />
-      </Button>
-    </Dropdown>
+    <MenuButton<string>
+      ariaLabel={t('Granularity')}
+      value={String(density)}
+      label={
+        granularityOptions.find((o) => o.key === density)?.label ?? t('Custom')
+      }
+      onChange={(v) => onDensityChange(Number(v))}
+      options={granularityOptions.map((o) => ({
+        value: String(o.key),
+        label: t(o.label),
+        disabled: o.disabled,
+        hint: o.disabled
+          ? t('The window is shorter than this bucket')
+          : undefined,
+      }))}
+    />
   );
 }
 
@@ -70,7 +61,7 @@ export function calculateGranularities(periodDurationMs: number) {
     },
   ];
 
-  const result = [];
+  const result: { label: string; key: number; disabled: boolean }[] = [];
   for (const granularity of granularities) {
     const density = Math.floor(
       Number(BigInt(periodDurationMs) / BigInt(granularity.durationMs)),

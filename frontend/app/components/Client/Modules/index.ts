@@ -1,8 +1,8 @@
 import { TFunction } from 'i18next';
-import extraModules, { MODULES } from './extra';
-export * from './extra';
 
-export { default } from './Modules';
+import extraModules, { MODULES } from './extra';
+
+export * from './extra';
 
 export interface Module {
   label: string;
@@ -14,7 +14,7 @@ export interface Module {
   enterprise?: boolean;
 }
 
-export const modules = (t: TFunction) => [
+export const modules = (t: TFunction): Module[] => [
   {
     label: t('Co-Browse'),
     description: t(
@@ -39,13 +39,6 @@ export const modules = (t: TFunction) => [
     key: MODULES.ASSIST_STATS,
     icon: 'file-bar-graph',
     enterprise: true,
-  },
-  {
-    label: t('Highlights'),
-    description: t('Add highlights to sessions and share with your team.'),
-    key: MODULES.HIGHLIGHTS,
-    icon: 'chat-square-quote',
-    isEnabled: true,
   },
   {
     label: t('Alerts'),

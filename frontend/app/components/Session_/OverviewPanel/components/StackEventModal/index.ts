@@ -1,1 +1,1 @@
-export { default } from './StackEventModal';
+export { default } from 'Shared/DevTools/StackEventModal';

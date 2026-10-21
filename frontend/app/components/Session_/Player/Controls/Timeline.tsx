@@ -1,6 +1,7 @@
 import { DateTime, Duration } from 'luxon';
 import { observer } from 'mobx-react-lite';
-import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useContext, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { useStore } from 'App/mstore';
@@ -10,22 +11,25 @@ import { getLocalHourFormat } from 'App/utils/intlUtils';
 import TimelineTracker from 'Components/Session_/Player/Controls/TimelineTracker';
 import {
   ExportEventsSelection,
-  HighlightDragLayer,
   ZoomDragLayer,
 } from 'Components/Session_/Player/Controls/components/ZoomDragLayer';
 
 import { MobEventsList, WebEventsList } from './EventsList';
 import IssueMarkersList from './IssueMarkersList';
-import NotesList from './NotesList';
 import SkipIntervalsList from './SkipIntervalsList';
-import CustomDragLayer, { OnDragCallback } from './components/CustomDragLayer';
 import TooltipContainer from './components/TooltipContainer';
 import stl from './timeline.module.css';
 
-function Timeline({ isMobile }: { isMobile: boolean }) {
+function Timeline({
+  isMobile,
+  inline,
+}: {
+  isMobile?: boolean;
+  /** laid out in the transport row instead of over the controls' top edge */
+  inline?: boolean;
+}) {
+  const { t } = useTranslation();
   const { player, store } = useContext(PlayerContext);
-  const [wasPlaying, setWasPlaying] = useState(false);
-  const [maxWidth, setMaxWidth] = useState(0);
   const { settingsStore, uiPlayerStore, sessionStore } = useStore();
   const startedAt = sessionStore.current.startedAt ?? 0;
   const tooltipVisible = sessionStore.timeLineTooltip.isVisible;
@@ -33,8 +37,8 @@ function Timeline({ isMobile }: { isMobile: boolean }) {
   const { timezone } = sessionStore.current;
   const timelineZoomEnabled = uiPlayerStore.timelineZoom.enabled;
   const exportEventsEnabled = uiPlayerStore.exportEventsSelection.enabled;
-  const highlightEnabled = uiPlayerStore.highlightSelection.enabled;
-  const { playing, ready, endTime, devtoolsLoading, domLoading } = store.get();
+  const { ready, endTime, devtoolsLoading, domLoading, skipIntervals } =
+    store.get();
   const sessionId = sessionStore.current.sessionId;
   const loadingEvents = !sessionStore.current.addedEvents;
 
@@ -43,41 +47,17 @@ function Timeline({ isMobile }: { isMobile: boolean }) {
 
   const scale = 100 / endTime;
 
-  useEffect(() => {
-    if (progressRef.current) {
-      setMaxWidth(progressRef.current.clientWidth);
-    }
-  }, []);
-
-  const debouncedJump = useMemo(() => debounce(player.jump, 500), []);
   const debouncedTooltipChange = useMemo(
     () => debounce(setTimelineHoverTime, 50),
     [],
   );
 
-  const onDragEnd = () => {
-    if (wasPlaying) {
-      player.togglePlay();
-    }
-  };
-
-  const onDrag: OnDragCallback = (offset) => {
-    // @ts-ignore react mismatch
-    const p = offset.x / progressRef.current.offsetWidth;
-    const time = Math.max(Math.round(p * endTime), 0);
-    debouncedJump(time);
+  // the playhead was dragged and let go: one jump, there
+  const onSeek = (pct: number) => {
+    const time = Math.round((pct / 100) * endTime);
+    player.jump(time);
     hideTimeTooltip();
-    signalService.send(
-      {
-        source: 'jump',
-        value: time,
-      },
-      sessionId,
-    );
-    if (playing) {
-      setWasPlaying(true);
-      player.pause();
-    }
+    signalService.send({ source: 'jump', value: time }, sessionId);
   };
 
   const showTimeTooltip = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -92,6 +72,18 @@ function Timeline({ isMobile }: { isMobile: boolean }) {
 
     const time = getTime(e);
     if (!time) return;
+    tooltipAt(
+      time,
+      e.clientX - (progressRef.current?.getBoundingClientRect().left ?? 0),
+      debouncedTooltipChange,
+    );
+  };
+
+  const tooltipAt = (
+    time: number,
+    offset: number,
+    set: (tooltip: Record<string, any>) => void,
+  ) => {
     const format = getLocalHourFormat();
     const tz = settingsStore.sessionSettings.timezone.value;
     const timeStr = DateTime.fromMillis(startedAt + time)
@@ -103,15 +95,35 @@ function Timeline({ isMobile }: { isMobile: boolean }) {
           .toFormat(format)
       : undefined;
 
+    const idle = skipIntervals.find((i) => i.contains(time));
+    const clock = (ms: number) => Duration.fromMillis(ms).toFormat('m:ss');
     const timeLineTooltip = {
       time: Duration.fromMillis(time).toFormat('mm:ss'),
       localTime: timeStr,
       userTime: userTimeStr,
-      offset: e.nativeEvent.pageX,
+      inactive: idle
+        ? t('Inactive {{from}} to {{to}}', {
+            from: clock(idle.start),
+            to: clock(idle.end),
+          })
+        : undefined,
+      offset,
       isVisible: true,
     };
 
-    debouncedTooltipChange(timeLineTooltip);
+    set(timeLineTooltip);
+  };
+
+  // a held playhead takes the pointer's mouse events, so it drives the
+  // tooltip itself, without the hover's debounce
+  const onScrub = (pct: number | null) => {
+    const width = progressRef.current?.offsetWidth ?? 0;
+    if (pct == null || !width) return hideTimeTooltip();
+    tooltipAt(
+      Math.round((pct / 100) * endTime),
+      (pct / 100) * width,
+      setTimelineHoverTime,
+    );
   };
 
   const hideTimeTooltip = () => {
@@ -136,26 +148,36 @@ function Timeline({ isMobile }: { isMobile: boolean }) {
     e: React.MouseEvent<HTMLDivElement>,
     customEndTime?: number,
   ) => {
-    // @ts-ignore react mismatch
-    const p = e.nativeEvent.offsetX / e.target.offsetWidth;
+    const box = progressRef.current?.getBoundingClientRect();
+    const p = box?.width
+      ? Math.min(1, Math.max(0, (e.clientX - box.left) / box.width))
+      : 0;
     const targetTime = customEndTime || endTime;
 
     return Math.max(Math.round(p * targetTime), 0);
   };
 
-  const showLoaderStripes = devtoolsLoading || domLoading || !ready || loadingEvents
+  const showLoaderStripes =
+    devtoolsLoading || domLoading || !ready || loadingEvents;
   return (
     <div
-      className="flex items-center absolute w-full"
-      style={{
-        top: '-4px',
-        zIndex: 100,
-        maxWidth: 'calc(100% - 1rem)',
-        left: '0.5rem',
-      }}
+      className={
+        inline
+          ? 'relative flex flex-1 min-w-0 items-center'
+          : 'flex items-center absolute w-full'
+      }
+      style={
+        inline
+          ? undefined
+          : {
+              top: '-4px',
+              zIndex: 100,
+              maxWidth: 'calc(100% - 1rem)',
+              left: '0.5rem',
+            }
+      }
     >
       {timelineZoomEnabled ? <ZoomDragLayer scale={scale} /> : null}
-      {highlightEnabled ? <HighlightDragLayer scale={scale} /> : null}
       {exportEventsEnabled ? <ExportEventsSelection scale={scale} /> : null}
       <div
         className={stl.progress}
@@ -167,17 +189,18 @@ function Timeline({ isMobile }: { isMobile: boolean }) {
         onMouseLeave={hideTimeTooltip}
       >
         <TooltipContainer />
-        {highlightEnabled ? null : (
-          <TimelineTracker scale={scale} onDragEnd={onDragEnd} />
-        )}
-        <CustomDragLayer onDrag={onDrag} minX={0} maxX={maxWidth} />
+        <TimelineTracker
+          scale={scale}
+          trackRef={progressRef}
+          onScrub={onScrub}
+          onSeek={onSeek}
+        />
 
         <div className={stl.timeline} ref={timelineRef}>
           {showLoaderStripes ? <div className={stl.stripes} /> : null}
         </div>
 
         {isMobile ? <MobEventsList /> : <WebEventsList />}
-        <NotesList scale={scale} />
         <SkipIntervalsList scale={scale} />
         <IssueMarkersList scale={scale} />
       </div>

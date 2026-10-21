@@ -1,30 +1,31 @@
+import { Loader } from '@/ui/feedback/Loader';
+import { toast } from '@/ui/overlays/toast';
 import withLocationHandlers from 'HOCs/withLocationHandlers';
 import { createWebPlayer } from 'Player';
-import { wrapPlayerStore } from 'Components/Session/playerStore';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
-import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 
+import { IFRAME } from 'App/constants/storageKeys';
+import { MENU } from 'App/layout/data';
+import { prefetchRoute } from 'App/layout/nav/prefetchRoutes';
 import { useStore } from 'App/mstore';
-import { useParams } from 'App/routing';
+import { sessions as sessionsRoute, withSiteId } from 'App/routes';
+import { useNavigate, useParams } from 'App/routing';
 import { signalService } from 'App/services';
-import { Note } from 'App/services/NotesService';
-import { Loader, Modal } from 'UI';
+import { wrapPlayerStore } from 'Components/Session/playerStore';
+import RecordingNotices from 'Components/Session_/RecordingNotices';
 
-import ReadNote from '../Session_/Player/Controls/components/ReadNote';
-import PlayerBlockHeader from './Player/ReplayPlayer/PlayerBlockHeader';
 import PlayerContent from './Player/ReplayPlayer/PlayerContent';
+import ReplayActions from './ReplayScreen/ReplayActions';
+import ReplayLead from './ReplayScreen/ReplayLead';
+import { ReplayScreen } from './ReplayScreen/ReplayScreen';
+import RightBlock from './RightBlock';
 import {
   IPlayerContext,
   PlayerContext,
   defaultContextValue,
 } from './playerContext';
-
-const TABS = {
-  EVENTS: 'Activity',
-  CLICKMAP: 'Click map',
-  INSPECTOR: 'Tag',
-};
 
 let playerInst: IPlayerContext['player'] | undefined;
 
@@ -34,12 +35,31 @@ const hasEvents = (filters: { isEvent?: boolean }[] = []) => {
 
 function WebPlayer(props: any) {
   const {
-    notesStore,
     sessionStore,
     uiPlayerStore,
     integrationsStore,
     searchStore,
+    projectsStore,
   } = useStore();
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const hideBack = localStorage.getItem(IFRAME) === 'true';
+  const back = () => {
+    const { sessionPath } = sessionStore;
+    const list = withSiteId(sessionsRoute(), projectsStore.siteId!);
+    if (
+      !sessionPath?.pathname ||
+      sessionPath.pathname === document.location.pathname ||
+      sessionPath.pathname.includes('/session/') ||
+      sessionPath.pathname.includes('/assist/')
+    ) {
+      navigate(list);
+    } else {
+      navigate(sessionPath.pathname + sessionPath.search);
+    }
+  };
+  // the list's chunk, when the replay was opened straight from a link
+  const warmBack = () => prefetchRoute(MENU.SESSIONS);
   const devTools = sessionStore.devTools;
   const session = sessionStore.current;
   const { prefetched } = sessionStore;
@@ -49,13 +69,16 @@ function WebPlayer(props: any) {
   const { toggleFullscreen } = uiPlayerStore;
   const { closeBottomBlock } = uiPlayerStore;
   const [activeTab, setActiveTab] = useState('');
-  const [noteItem, setNoteItem] = useState<Note | undefined>(undefined);
   const [visuallyAdjusted, setAdjusted] = useState(false);
   const [windowActive, setWindowActive] = useState(!document.hidden);
-  // @ts-ignore
-  const [contextValue, setContextValue] =
-    useState<IPlayerContext>(defaultContextValue);
+  // `sessionId` says which session the player was made for
+  const [contextValue, setContextValue] = useState<
+    IPlayerContext & { sessionId?: string }
+  >(defaultContextValue as any);
   const params: { sessionId: string } = useParams();
+  // the route is on the next session and its data is not here yet
+  const switching =
+    !!session.sessionId && session.sessionId !== params.sessionId;
   const [fullView, setFullView] = useState(false);
   const openedAt = React.useRef<number>(null);
 
@@ -73,7 +96,6 @@ function WebPlayer(props: any) {
   }, [searchStore.instance.filters]);
 
   React.useEffect(() => {
-    openedAt.current = Date.now();
     const handleActivation = () => {
       if (!document.hidden) {
         setWindowActive(true);
@@ -83,25 +105,36 @@ function WebPlayer(props: any) {
     document.addEventListener('visibilitychange', handleActivation);
 
     return () => {
-      const durWatching = Date.now() - (openedAt.current || performance.now());
-      signalService.send(
-        {
-          source: 'duration',
-          value: durWatching,
-        },
-        session.sessionId,
-      );
       devTools.update('network', { activeTab: 'ALL' });
       document.removeEventListener('visibilitychange', handleActivation);
     };
   }, []);
 
+  // how long each session was watched, autoplay moves included
+  React.useEffect(() => {
+    openedAt.current = Date.now();
+    const watched = params.sessionId;
+    return () => {
+      const durWatching = Date.now() - (openedAt.current || performance.now());
+      signalService.send({ source: 'duration', value: durWatching }, watched);
+    };
+  }, [params.sessionId]);
+
+  React.useEffect(() => {
+    uiPlayerStore.setSwitchingSession(switching);
+  }, [switching]);
+
   useEffect(() => {
     if (session.sessionId) {
       sessionStore.setLastPlayedSessionId(session.sessionId);
     }
-    playerInst = undefined;
-    if (!session.sessionId || contextValue.player !== undefined) return;
+    if (
+      !session.sessionId ||
+      session.sessionId !== params.sessionId ||
+      contextValue.sessionId === session.sessionId
+    )
+      return;
+    const previous = playerInst;
     const mobData = sessionStore.prefetchedMobUrls[session.sessionId] as
       | Record<string, any>
       | undefined;
@@ -119,16 +152,15 @@ function WebPlayer(props: any) {
         WebPlayerInst.preloadFirstFile(mobData?.data, mobData?.fileKey);
       }
     }
-    setContextValue({ player: WebPlayerInst, store: PlayerStore });
-    playerInst = WebPlayerInst;
-
-    notesStore.fetchSessionNotes(session.sessionId).then((r) => {
-      const note = props.query.get('note');
-      if (note) {
-        setNoteItem(notesStore.getNoteById(parseInt(note, 10), r));
-        WebPlayerInst.pause();
-      }
+    setContextValue({
+      player: WebPlayerInst,
+      store: PlayerStore,
+      sessionId: session.sessionId,
     });
+    playerInst = WebPlayerInst;
+    setAdjusted(false);
+    // the previous session's player goes once this one has taken its place
+    if (previous) setTimeout(() => previous.clean(), 0);
 
     const freeze = props.query.get('freeze');
     if (freeze) {
@@ -140,7 +172,7 @@ function WebPlayer(props: any) {
       },
       session.sessionId,
     );
-  }, [session.sessionId]);
+  }, [session.sessionId, params.sessionId]);
 
   const domFiles = session?.domURL?.length ?? 0;
   useEffect(() => {
@@ -179,64 +211,49 @@ function WebPlayer(props: any) {
   ]);
 
   React.useEffect(() => {
-    if (noteItem === undefined) {
-      if (activeTab === '' && contextValue.player && windowActive) {
-        const jumpToTime = props.query.get('jumpto');
-        const shouldAdjustOffset = visualOffset !== 0 && !visuallyAdjusted;
+    if (contextValue.player && windowActive) {
+      const jumpToTime = props.query.get('jumpto');
+      const shouldAdjustOffset = visualOffset !== 0 && !visuallyAdjusted;
 
-        if (jumpToTime || shouldAdjustOffset) {
-          if (jumpToTime && jumpToTime > visualOffset) {
-            const diff =
-              jumpToTime > duration ? jumpToTime - startedAt : jumpToTime;
-            contextValue.player.jump(Math.max(diff, 0));
-            setAdjusted(true);
-          } else {
-            contextValue.player.jump(visualOffset);
-            setAdjusted(true);
-          }
+      if (jumpToTime || shouldAdjustOffset) {
+        if (jumpToTime && jumpToTime > visualOffset) {
+          const diff =
+            jumpToTime > duration ? jumpToTime - startedAt : jumpToTime;
+          contextValue.player.jump(Math.max(diff, 0));
+          setAdjusted(true);
+        } else {
+          contextValue.player.jump(visualOffset);
+          setAdjusted(true);
         }
       }
     }
-  }, [activeTab, noteItem, visualOffset, windowActive]);
+  }, [contextValue.player, visualOffset, windowActive]);
 
   useEffect(() => {
-    if (cssLoading || noteItem) {
+    if (cssLoading) {
       contextValue.player?.pause();
     } else if (ready) {
       contextValue.player?.play();
     }
-  }, [cssLoading, ready, noteItem]);
+  }, [cssLoading, ready]);
 
-  React.useEffect(() => {
-    if (activeTab === 'Click map') {
-      contextValue.player?.pause();
-    }
-  }, [activeTab]);
-
-  // LAYOUT (TODO: local layout state - useContext or something..)
+  // moving to another session only stops this one; the layout (fullscreen,
+  // dev tools, side panel) is the screen's and stays until it is left
+  useEffect(() => () => playerInst?.pause(), [params.sessionId]);
   useEffect(
     () => () => {
-      console.debug('cleaning up player after', params.sessionId);
       toggleFullscreen(false);
       closeBottomBlock();
-
-      // Pause immediately (stops animation loop), but defer the heavy
-      // teardown (iframe removal, store resets) so it doesn't block
-      // React from mounting the next page.
-      playerInst?.pause();
+      uiPlayerStore.setSwitchingSession(false);
+      // pause now (stops the animation loop), tear down after React has
+      // mounted the next page
       const inst = playerInst;
-      if (inst) {
-        setTimeout(() => inst.clean(), 0);
-      }
-      // @ts-ignore
-      setContextValue(defaultContextValue);
+      playerInst = undefined;
+      inst?.pause();
+      if (inst) setTimeout(() => inst.clean(), 0);
     },
-    [params.sessionId],
+    [],
   );
-
-  const onNoteClose = () => {
-    setNoteItem(undefined);
-  };
 
   useEffect(() => {
     const isFullView = new URLSearchParams(location.search).get('fullview');
@@ -258,44 +275,76 @@ function WebPlayer(props: any) {
     );
   }
 
+  const {
+    width = 0,
+    height = 0,
+    showEvents = false,
+  } = contextValue.store?.get() || {};
+  const panels = [
+    { key: 'EVENTS', label: t('Activity'), hint: t('What happened, in order') },
+    {
+      key: 'INSPECTOR',
+      label: t('Features'),
+      hint: t('Elements someone named, on the pages this session was on'),
+    },
+  ];
+  const onPanel = (key: string | null) => {
+    const next = key ?? '';
+    if ((next === '') !== (activeTab === '') && contextValue.player) {
+      if (next === '' || !showEvents) contextValue.player.toggleEvents();
+    }
+    setActiveTab(next);
+  };
+
+  // keyed by session: the session's own parts remount with its player, in
+  // the same commit, while the frame around them stays
+  const player = contextValue.player ? (
+    <PlayerContent
+      key={contextValue.sessionId}
+      activeTab={activeTab}
+      fullscreen={fullscreen}
+      setActiveTab={setActiveTab}
+      session={session}
+      fillHeight
+      noSidePanel={!fullView}
+    />
+  ) : (
+    <Loader style={{ margin: 'auto' }} />
+  );
+
   return (
     <PlayerContext.Provider value={contextValue}>
-      {!fullView && (
-        <PlayerBlockHeader
-          // @ts-ignore TODO?
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          tabs={TABS}
-          fullscreen={fullscreen}
-        />
-      )}
-      {/* @ts-ignore  */}
-      {contextValue.player ? (
-        <PlayerContent
-          activeTab={activeTab}
-          fullscreen={fullscreen}
-          setActiveTab={setActiveTab}
-          session={session}
-        />
+      {fullView ? (
+        player
       ) : (
-        <Loader
-          style={{
-            position: 'fixed',
-            top: '0%',
-            left: '50%',
-            transform: 'translateX(-50%)',
-          }}
-        />
+        <ReplayScreen
+          back={
+            hideBack
+              ? undefined
+              : { label: t('Sessions'), onClick: back, onIntent: warmBack }
+          }
+          lead={<ReplayLead width={width} height={height} />}
+          actions={
+            <ReplayActions activeTab={activeTab} setActiveTab={onPanel} />
+          }
+          panels={panels}
+          panel={activeTab || null}
+          onPanel={onPanel}
+          panelWidth={activeTab === 'EXPORT' ? 480 : undefined}
+          renderPanel={(key) => (
+            <RightBlock
+              key={contextValue.sessionId}
+              activeTab={key}
+              setActiveTab={onPanel}
+              embedded
+            />
+          )}
+          notice={<RecordingNotices />}
+          fullscreen={fullscreen}
+        >
+          {player}
+        </ReplayScreen>
       )}
-      <Modal open={noteItem !== undefined} onClose={onNoteClose}>
-        {noteItem !== undefined ? (
-          <ReadNote
-            note={noteItem}
-            onClose={onNoteClose}
-            notFound={!noteItem}
-          />
-        ) : null}
-      </Modal>
     </PlayerContext.Provider>
   );
 }

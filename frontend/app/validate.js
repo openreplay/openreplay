@@ -34,14 +34,13 @@ export function validateName(value, options) {
   if (typeof value !== 'string') return false; // throw Error?
   if (!empty && value && value.trim() === '') return false;
 
-  const charsRegex = admissibleChars
-    ? `|${admissibleChars.split('').map(escapeRegexp).join('|')}`
-    : '';
-  const spaceRegex = spaces ? '| ' : '';
-
-  const letters = `[A-Za-z${numbers ? '0-9' : ''}${diacritics ? 'À-žØ-öø-ÿ' : ''}]`;
-  const regExp = `^(${letters}${spaceRegex}${charsRegex})*$`;
-  return new RegExp(regExp).test(value);
+  // one class, matched with `u`: the letters of any script ("Грейс"), their
+  // combining marks, and the admissible characters (escaped, so `-` is literal)
+  const letters = diacritics ? '\\p{L}\\p{M}' : 'A-Za-z';
+  const chars = `${letters}${numbers ? '0-9' : ''}${spaces ? ' ' : ''}${
+    admissibleChars ? admissibleChars.split('').map(escapeRegexp).join('') : ''
+  }`;
+  return new RegExp(`^[${chars}]*$`, 'u').test(value);
 }
 
 export function notEmptyString(value) {

@@ -1,6 +1,8 @@
-import React from 'react';
+import { Button } from '@/ui/actions/button';
+import { Tooltip } from '@/ui/overlays/tooltip';
 import { Keyboard } from 'lucide-react';
-import { Button, Tooltip } from 'antd';
+import React from 'react';
+
 import { useModal } from 'Components/Modal';
 
 function Key({ label }: { label: string }) {
@@ -82,6 +84,7 @@ export function ShortcutGrid() {
       <Cell shortcut="⇧ + R" text="Launch State" />
       <Cell shortcut="⇧ + E" text="Launch Events" />
       <Cell shortcut="⇧ + F" text="Play Session in Fullscreen" />
+      <Cell shortcut="Esc" text="Leave Fullscreen" />
       <Cell shortcut="Space" text="Play/Pause Session" />
       <Cell shortcut="⇧ + X" text="Launch X-Ray" />
       <Cell shortcut="⇧ + A" text="Launch User Actions" />
@@ -100,9 +103,8 @@ export function ShortcutGrid() {
 function KeyboardHelp() {
   const { showModal } = useModal();
   return (
-    <Tooltip placement="bottom" title="Keyboard Shortcuts">
+    <Tooltip side="bottom" title="Keyboard Shortcuts">
       <Button
-        size="small"
         className="flex items-center justify-center"
         onClick={() => {
           showModal(<ShortcutGrid />, { right: true, width: 320 });

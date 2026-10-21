@@ -1,20 +1,17 @@
-import { useStore } from 'App/mstore';
-import React from 'react';
+import { CodeBlock } from '@/ui/data/CodeBlock';
+import { Section } from '@/ui/overlays/EntityDrawer';
 import { observer } from 'mobx-react-lite';
-import { CodeBlock } from 'UI';
-
-import DocLink from 'Shared/DocLink/DocLink';
-import ToggleContent from 'Shared/ToggleContent';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-function ProfilerDoc() {
+import ToggleContent from 'Shared/ToggleContent';
+
+import { PluginPane, usePluginProject } from '../PluginPane';
+
+function ProfilerDoc({ onClose }: { onClose?: () => void }) {
   const { t } = useTranslation();
-  const { integrationsStore, projectsStore } = useStore();
-  const sites = projectsStore.list;
-  const { siteId } = integrationsStore.integrations;
-  const projectKey = siteId
-    ? sites.find((site) => site.id === siteId)?.projectKey
-    : sites[0]?.projectKey;
+  const scope = usePluginProject();
+  const { projectKey } = scope;
 
   const usage = `import { tracker } from '@openreplay/tracker';
 import trackerProfiler from '@openreplay/tracker-profiler';
@@ -50,47 +47,36 @@ const fn = profiler('call_name')(() => {
   }, thisArg); // thisArg is optional
 }`;
   return (
-    <div
-      className="bg-white h-screen overflow-y-auto"
-      style={{ width: '500px' }}
+    <PluginPane
+      title="Profiler"
+      icon="integrations/openreplay"
+      blurb={t(
+        'How long the functions you wrap take, with their arguments and results, on the session timeline.',
+      )}
+      docs="https://docs.openreplay.com/plugins/profiler"
+      scope={scope}
+      onClose={onClose}
     >
-      <h3 className="p-5 text-2xl">{t('Profiler')}</h3>
-      <div className="p-5">
-        <div>
-          {t(
-            'The profiler plugin allows you to measure your JS functions performance and capture both arguments and result for each function call',
-          )}
-          .
-        </div>
-
-        <div className="font-bold my-2">{t('Installation')}</div>
+      <Section title={t('Install')}>
         <CodeBlock
+          inline
           code="npm i @openreplay/tracker-profiler --save"
-          language="bash"
+          copyLabel={t('Copy command')}
         />
-
-        <div className="font-bold my-2">{t('Usage')}</div>
-        <p>
-          {t(
-            'Initialize the tracker and load the plugin into it. Then decorate any function inside your code with the generated function.',
-          )}
-        </p>
-        <div className="py-3" />
-
-        <div className="font-bold my-2">{t('Usage')}</div>
+      </Section>
+      <Section
+        title={t('Use')}
+        hint={t(
+          'Initialize the tracker and load the plugin into it. Then decorate any function inside your code with the generated function.',
+        )}
+      >
         <ToggleContent
           label={t('Server-Side-Rendered (SSR)?')}
           first={<CodeBlock language="js" code={usage} />}
           second={<CodeBlock language="jsx" code={usageCjs} />}
         />
-
-        <DocLink
-          className="mt-4"
-          label={t('Integrate Profiler')}
-          url="https://docs.openreplay.com/plugins/profiler"
-        />
-      </div>
-    </div>
+      </Section>
+    </PluginPane>
   );
 }
 

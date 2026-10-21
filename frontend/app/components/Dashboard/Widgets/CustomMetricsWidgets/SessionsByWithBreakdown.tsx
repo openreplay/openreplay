@@ -1,8 +1,9 @@
-import { Avatar, Progress, Typography } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 
 import { numberWithCommas } from 'App/utils';
+
+import '../../charts.css';
 
 interface BreakdownNode {
   key: string;
@@ -31,7 +32,8 @@ function flattenBreakdownRows(
 ): FlatItem[] {
   const items: FlatItem[] = [];
   for (const row of rows) {
-    const pct = parentTotal > 0 ? Math.round((row.total / parentTotal) * 100) : 0;
+    const pct =
+      parentTotal > 0 ? Math.round((row.total / parentTotal) * 100) : 0;
     items.push({
       type: 'sub',
       key: `${keyPrefix}_${row.key}`,
@@ -86,7 +88,7 @@ function SessionsByWithBreakdown(props: Props) {
         const rawTotal =
           typeof row.sessionCount === 'string'
             ? parseInt(row.sessionCount.replace(/,/g, ''), 10)
-            : row.sessionCount ?? 0;
+            : (row.sessionCount ?? 0);
         items.push(
           ...flattenBreakdownRows(
             breakdownRows,
@@ -101,56 +103,43 @@ function SessionsByWithBreakdown(props: Props) {
   }, [data.values]);
 
   return (
-    <div>
+    <div className="m-vlist">
       {flatList.map((item) => {
         if (item.type === 'main') {
           return (
-            <div
-              key={item.key}
-              className="rounded-lg hover:bg-active-blue cursor-pointer"
-              style={{ padding: '4px 10px' }}
-            >
-              <div className="flex items-center gap-2">
-                <Avatar src={item.icon} size={32} />
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between">
-                    <Typography.Text ellipsis className="w-[90%]!">
-                      {item.displayName}
-                    </Typography.Text>
-                    <Typography.Text type="secondary">
-                      {item.sessionCount}
-                    </Typography.Text>
-                  </div>
-                  <Progress
-                    percent={item.progress}
-                    showInfo={false}
-                    strokeColor={{ '0%': '#394EFF', '100%': '#394EFF' }}
-                    size={['small', 2]}
-                    style={{ padding: 0, margin: 0, height: 4 }}
-                  />
+            <div key={item.key} className="m-vlist__row is-main">
+              {item.icon ? (
+                <img className="m-vlist__icon" src={item.icon} alt="" />
+              ) : null}
+              <div className="m-vlist__body">
+                <div className="m-vlist__line">
+                  <span>{item.displayName}</span>
+                  <span className="m-vlist__n">{item.sessionCount}</span>
                 </div>
+                <span className="m-vlist__bar">
+                  <i style={{ width: `${item.progress}%` }} />
+                </span>
               </div>
             </div>
           );
         }
-
-        const indent = 42 + (item.depth - 1) * 16;
         return (
           <div
             key={item.key}
-            style={{ paddingLeft: indent, paddingRight: 10, paddingTop: 2, paddingBottom: 2 }}
+            className="m-vlist__row is-sub"
+            style={{ paddingLeft: 48 + (item.depth - 1) * 16 }}
           >
-            <div className="flex justify-between text-sm text-disabled-text">
-              <span>{item.label}</span>
-              <span>{numberWithCommas(item.total)}</span>
+            <div className="m-vlist__body">
+              <div className="m-vlist__line">
+                <span>{item.label}</span>
+                <span className="m-vlist__n">
+                  {numberWithCommas(item.total)}
+                </span>
+              </div>
+              <span className="m-vlist__bar">
+                <i style={{ width: `${item.progress}%` }} />
+              </span>
             </div>
-            <Progress
-              percent={item.progress}
-              showInfo={false}
-              strokeColor={{ '0%': '#394EFF', '100%': '#394EFF' }}
-              size={['small', 2]}
-              style={{ padding: 0, margin: 0, height: 3 }}
-            />
           </div>
         );
       })}

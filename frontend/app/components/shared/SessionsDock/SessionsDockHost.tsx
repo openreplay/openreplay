@@ -1,0 +1,94 @@
+import { observer } from 'mobx-react-lite';
+import React, { useEffect, useLayoutEffect } from 'react';
+
+import { useStore } from 'App/mstore';
+import {
+  session as sessionRoute,
+  sessions as sessionsRoute,
+  withSiteId,
+} from 'App/routes';
+import { useHistory, useLocation } from 'App/routing';
+
+import { SessionsDock } from './SessionsDock';
+import {
+  claimSessionTabs,
+  clearSessionTabs,
+  closeSessionTab,
+  neighbourOf,
+  openSessionTab,
+  snapshotOf,
+  useDockOverride,
+  useOpenSessions,
+} from './openSessions';
+
+const REPLAY = /^\/[^/]+\/session\/([^/?#]+)/;
+const LIST = /^\/[^/]+\/(sessions|bookmarks)\/?$/;
+
+/**
+ * Mounted once in the app shell so the same dock survives moving between the
+ * sessions list and a replay (and between replays): it only shows on those
+ * routes, and a replay that has loaded joins the queue.
+ */
+function SessionsDockHost() {
+  const { pathname } = useLocation();
+  const history = useHistory();
+  const { sessionStore, projectsStore, userStore } = useStore();
+  const { id: accountId, tenantId } = userStore.account;
+  // before paint, so another account's rows never show for a frame
+  useLayoutEffect(() => {
+    if (accountId) claimSessionTabs(`${tenantId ?? ''}:${accountId}`);
+  }, [accountId, tenantId]);
+  const rows = useOpenSessions();
+  const override = useDockOverride();
+  const replayId = REPLAY.exec(pathname)?.[1] ?? null;
+  const onList = LIST.test(pathname);
+  const current = sessionStore.current;
+  const siteId = String(projectsStore.activeSiteId ?? '');
+
+  const loadedId =
+    replayId && current?.sessionId === replayId ? current.sessionId : null;
+  useEffect(() => {
+    if (loadedId) openSessionTab(snapshotOf(current, siteId));
+  }, [loadedId]);
+
+  if (override)
+    return (
+      <SessionsDock
+        rows={override.rows}
+        currentId={override.currentId}
+        onPick={override.onPick}
+        onAdd={override.onAdd}
+        overReplay
+      />
+    );
+  if (!accountId || (!replayId && !onList)) return null;
+
+  const toList = () => history.push(withSiteId(sessionsRoute(), siteId));
+  return (
+    <SessionsDock
+      rows={rows}
+      currentId={replayId}
+      overReplay={replayId != null}
+      onPick={(s) => {
+        if (s.id !== replayId)
+          history.push(withSiteId(sessionRoute(s.id), s.siteId || siteId));
+      }}
+      onClose={(id) => {
+        const next = neighbourOf(id);
+        closeSessionTab(id);
+        if (id !== replayId) return;
+        if (next)
+          history.push(
+            withSiteId(sessionRoute(next.id), next.siteId || siteId),
+          );
+        else toList();
+      }}
+      onClear={() => {
+        clearSessionTabs();
+        if (replayId) toList();
+      }}
+    />
+  );
+}
+
+export default observer(SessionsDockHost);

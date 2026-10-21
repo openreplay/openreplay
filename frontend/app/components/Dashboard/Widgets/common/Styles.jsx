@@ -1,47 +1,15 @@
 import React from 'react';
+
 import { numberWithCommas } from 'App/utils';
 
-const colorsTeal = ['#1E889A', '#239DB2', '#28B2C9', '#36C0D7', '#65CFE1'];
-const colors = [
-  '#6774E2',
-  '#929ACD',
-  '#3EAAAF',
-  '#565D97',
-  '#8F9F9F',
-  '#376F72',
-];
-const colorsx = [
-  '#256669',
-  '#38999e',
-  '#3eaaaf',
-  '#51b3b7',
-  '#78c4c7',
-  '#9fd5d7',
-  '#c5e6e7',
-].reverse();
-const compareColors = ['#192EDB', '#6272FF', '#808DFF', '#B3BBFF', '#C9CFFF'];
-const compareColorsx = [
-  '#222F99',
-  '#2E3ECC',
-  '#394EFF',
-  '#6171FF',
-  '#8895FF',
-  '#B0B8FF',
-  '#D7DCFF',
-].reverse();
-const customMetricColors = ['#394EFF', '#3EAAAF', '#565D97'];
-const colorsPie = colors.concat(['#DDDDDD']);
-const safeColors = [
-  '#394EFF',
-  '#3EAAAF',
-  '#9276da',
-  '#ceba64',
-  '#bc6f9d',
-  '#966fbc',
-  '#64ce86',
-  '#e06da3',
-  '#6dabe0',
-];
+/* Legacy palettes, now read from the kit's chart tokens so every chart follows the theme.
+   Getters: the tokens change with light/dark, so each read takes the current values. */
+const token = (name) =>
+  typeof document === 'undefined'
+    ? ''
+    : getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const series = () =>
+  Array.from({ length: 8 }, (_, i) => token(`--m-chart-${i + 1}`));
 
 const countView = (count) => {
   const isMoreThanK = count >= 1000;
@@ -49,33 +17,55 @@ const countView = (count) => {
 };
 
 export default {
-  customMetricColors,
-  colors,
-  colorsTeal,
-  colorsPie,
-  colorsx,
-  compareColors,
-  compareColorsx,
-  safeColors,
-  lineColor: '#2A7B7F',
-  lineColorCompare: '#394EFF',
-  strokeColor: compareColors[0],
+  get customMetricColors() {
+    return series();
+  },
+  get colors() {
+    return series();
+  },
+  get colorsTeal() {
+    return series();
+  },
+  get colorsPie() {
+    return [...series(), token('--m-border-default')];
+  },
+  get colorsx() {
+    return series();
+  },
+  get compareColors() {
+    return series();
+  },
+  get compareColorsx() {
+    return series();
+  },
+  get safeColors() {
+    return series();
+  },
+  get lineColor() {
+    return token('--m-chart-1');
+  },
+  get lineColorCompare() {
+    return token('--m-chart-2');
+  },
+  get strokeColor() {
+    return token('--m-chart-1');
+  },
   xaxis: {
-    axisLine: { stroke: '#CCCCCC' },
+    axisLine: { stroke: 'var(--m-chart-grid)' },
     interval: 0,
     dataKey: 'time',
-    tick: { fill: '#000000', fontSize: 9 },
-    tickLine: { stroke: '#CCCCCC' },
+    tick: { fill: 'var(--m-chart-axis)', fontSize: 9 },
+    tickLine: { stroke: 'var(--m-chart-grid)' },
     strokeWidth: 0.5,
   },
   yaxis: {
-    axisLine: { stroke: '#CCCCCC' },
-    tick: { fill: '#000000', fontSize: 9 },
-    tickLine: { stroke: '#CCCCCC' },
+    axisLine: { stroke: 'var(--m-chart-grid)' },
+    tick: { fill: 'var(--m-chart-axis)', fontSize: 9 },
+    tickLine: { stroke: 'var(--m-chart-grid)' },
   },
   axisLabelLeft: {
     angle: -90,
-    fill: '#999999',
+    fill: 'var(--m-content-muted)',
     offset: 10,
     style: { textAnchor: 'middle' },
     position: 'insideLeft',
@@ -95,11 +85,11 @@ export default {
     },
     contentStyle: {
       padding: '5px',
-      background: 'white',
-      border: '1px solid #DDD',
-      borderRadius: '3px',
+      background: 'var(--m-surface-raised)',
+      border: '1px solid var(--m-border-default)',
+      borderRadius: 'var(--m-radius-control)',
       lineHeight: '1.25rem',
-      color: '#888',
+      color: 'var(--m-content-secondary)',
       fontSize: '10px',
     },
     labelStyle: {},
@@ -111,22 +101,22 @@ export default {
     },
     itemStyle: {
       lineHeight: '0.75rem',
-      color: '#000',
+      color: 'var(--m-content-primary)',
       fontSize: '12px',
     },
     cursor: {
-      fill: '#eee',
+      fill: 'var(--m-surface-hover)',
     },
   },
   gradientDef: () => (
     <defs>
       <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="5%" stopColor={compareColors[2]} stopOpacity={0.5} />
-        <stop offset="95%" stopColor={compareColors[2]} stopOpacity={0.2} />
+        <stop offset="5%" stopColor="var(--m-chart-1)" stopOpacity={0.5} />
+        <stop offset="95%" stopColor="var(--m-chart-1)" stopOpacity={0.2} />
       </linearGradient>
       <linearGradient id="colorCountCompare" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="5%" stopColor={compareColors[4]} stopOpacity={0.9} />
-        <stop offset="95%" stopColor={compareColors[4]} stopOpacity={0.2} />
+        <stop offset="5%" stopColor="var(--m-chart-2)" stopOpacity={0.9} />
+        <stop offset="95%" stopColor="var(--m-chart-2)" stopOpacity={0.2} />
       </linearGradient>
     </defs>
   ),

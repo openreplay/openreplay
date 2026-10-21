@@ -1,27 +1,22 @@
 import * as React from 'react';
 import {
-  useParams,
-  UNSAFE_NavigationContext,
   type Location,
   type NavigateOptions,
   type To,
+  UNSAFE_NavigationContext,
+  createPath,
+  useBeforeUnload,
+  useParams,
 } from 'react-router';
+
 import {
   useStableLocation as useLocation,
   useStableNavigate,
 } from './StableLocationProvider';
 
 export type History = {
-  push: (
-    to:
-      | To
-      | { pathname?: string; search?: string; hash?: string; state?: unknown },
-  ) => void;
-  replace: (
-    to:
-      | To
-      | { pathname?: string; search?: string; hash?: string; state?: unknown },
-  ) => void;
+  push: (to: PathInput) => void;
+  replace: (to: PathInput) => void;
   go: (delta: number) => void;
   goBack: () => void;
   goForward: () => void;
@@ -43,106 +38,85 @@ export type RouteComponentProps<
   match?: RouteMatch<Params>;
 };
 
+type PromptMessage = string | ((location: Location) => string | boolean);
+
+/** Asked before an in-app navigation; false keeps the current page. */
+const blockers = new Set<(next: Location) => boolean>();
+
+/* BrowserRouter's history in react-router 7 has no block(), so Prompt wraps
+   its push / replace (what Link, useNavigate and useHistory end in) once.
+   Back / forward and the browser's own navigations are not asked. */
+function guardNavigator(navigator: any) {
+  if (navigator.__guarded) return;
+  navigator.__guarded = true;
+  for (const key of ['push', 'replace'] as const) {
+    const navigate = navigator[key].bind(navigator);
+    navigator[key] = (to: To, ...rest: unknown[]) => {
+      const next = navigator.encodeLocation(to) as Location;
+      for (const allow of blockers) if (!allow(next)) return;
+      navigate(to, ...rest);
+    };
+  }
+}
+
 export function Prompt({
   when,
   message,
 }: {
   when: boolean;
-  message: string | ((location: Location) => string | boolean);
+  message: PromptMessage;
 }) {
   const { navigator } = React.useContext(UNSAFE_NavigationContext) as any;
+  const messageRef = React.useRef(message);
+  messageRef.current = message;
 
   React.useEffect(() => {
-    if (!when) return;
-    if (!navigator || typeof navigator.block !== 'function') return;
+    if (!when || !navigator) return;
+    guardNavigator(navigator);
 
-    const unblock = navigator.block((tx: any) => {
-      const nextLocation = tx.location as Location;
-      const result =
-        typeof message === 'function' ? message(nextLocation) : message;
-
-      if (result === true) {
-        unblock();
-        tx.retry();
-        return;
-      }
-
-      if (result === false) {
-        return;
-      }
-
-      const ok = typeof window !== 'undefined' ? window.confirm(result) : true;
-      if (ok) {
-        unblock();
-        tx.retry();
-      }
-    });
-
-    return unblock;
-  }, [navigator, when, message]);
-
-  React.useEffect(() => {
-    if (!when) return;
-    if (typeof window === 'undefined') return;
-
-    const handler = (e: BeforeUnloadEvent) => {
-      const result =
-        typeof message === 'function' ? message({} as any) : message;
-      if (result === false) return;
-
-      e.preventDefault();
-      e.returnValue = typeof result === 'string' ? result : '';
-      return e.returnValue;
+    const allow = (next: Location) => {
+      const msg = messageRef.current;
+      const result = typeof msg === 'function' ? msg(next) : msg;
+      return typeof result === 'boolean' ? result : window.confirm(result);
     };
+    blockers.add(allow);
+    return () => {
+      blockers.delete(allow);
+    };
+  }, [navigator, when]);
 
-    window.addEventListener('beforeunload', handler);
-    return () => window.removeEventListener('beforeunload', handler);
-  }, [when, message]);
+  // a reload or a closed tab has no next location to ask the message about;
+  // the browser shows its own wording
+  useBeforeUnload(
+    React.useCallback(
+      (e: BeforeUnloadEvent) => {
+        if (when) e.preventDefault();
+      },
+      [when],
+    ),
+  );
 
   return null;
 }
 
+type PathInput =
+  | To
+  | { pathname?: string; search?: string; hash?: string; state?: unknown };
+
+/** An object keeps the parts of the current path it leaves out (v5 kept only the pathname). */
 function resolveTo(
-  input:
-    | To
-    | { pathname?: string; search?: string; hash?: string; state?: unknown },
+  input: PathInput,
   location: Location,
 ): { to: To; options: NavigateOptions } {
-  if (typeof input === 'string') {
-    return { to: input, options: {} };
-  }
-
-  const pathname =
-    'pathname' in input && input.pathname != null
-      ? input.pathname
-      : location.pathname;
-
-  const rawSearch = (input as any).search;
-  const rawHash = (input as any).hash;
-
-  const search =
-    rawSearch === undefined
-      ? location.search
-      : rawSearch === ''
-        ? ''
-        : rawSearch.startsWith('?')
-          ? rawSearch
-          : `?${rawSearch}`;
-
-  const hash =
-    rawHash === undefined
-      ? location.hash
-      : rawHash === ''
-        ? ''
-        : rawHash.startsWith('#')
-          ? rawHash
-          : `#${rawHash}`;
-  const state = (input as any).state;
-
-  const toString = `${pathname}${search || ''}${hash || ''}`;
+  if (typeof input === 'string') return { to: input, options: {} };
+  const p = input as Exclude<PathInput, string> & { state?: unknown };
   return {
-    to: toString,
-    options: state === undefined ? {} : { state },
+    to: createPath({
+      pathname: p.pathname ?? location.pathname,
+      search: p.search ?? location.search,
+      hash: p.hash ?? location.hash,
+    }),
+    options: p.state === undefined ? {} : { state: p.state },
   };
 }
 
@@ -155,17 +129,11 @@ export function useHistory(): History {
   return React.useMemo<History>(() => {
     return {
       push: (to) => {
-        const { to: resolvedTo, options } = resolveTo(
-          to as any,
-          locationRef.current,
-        );
+        const { to: resolvedTo, options } = resolveTo(to, locationRef.current);
         navigate(resolvedTo, options);
       },
       replace: (to) => {
-        const { to: resolvedTo, options } = resolveTo(
-          to as any,
-          locationRef.current,
-        );
+        const { to: resolvedTo, options } = resolveTo(to, locationRef.current);
         navigate(resolvedTo, { ...options, replace: true });
       },
       go: (delta) => navigate(delta),

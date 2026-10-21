@@ -1,6 +1,7 @@
 .playerBody {
-  background: $white;
+  background: var(--m-surface-default);
   height: 100%;
+  min-height: 0;
 }
 
 .screenWrapper {
@@ -13,17 +14,17 @@
 }
 
 .checkers {
-  background: repeating-linear-gradient(135deg, var(--color-gray-lighter), var(--color-gray-lighter) 1px, var(--color-gray-lightest) 1px, var(--color-white) 4px);
+  background: var(--m-surface-canvas);
 }
 .solidBg {
-  background: $gray-lightest;
+  background: var(--m-surface-sunken);
 }
 
 .mobileScreenWrapper {
   width: 100%;
   position: relative;
   height: 100%;
-  background: #F6F6F6;
+  background: var(--m-surface-canvas);
 }
 
 .disconnected {

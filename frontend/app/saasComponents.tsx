@@ -1,7 +1,11 @@
 import React from 'react';
 
 import { MENU } from 'App/layout/data';
-import { agentIssuesEnabled, agentTestsEnabled } from 'App/utils/split-utils';
+import {
+  agentAuditsEnabled,
+  agentIssuesEnabled,
+  agentTestsEnabled,
+} from 'App/utils/split-utils';
 
 export const saasComponents = {};
 interface Route {
@@ -22,6 +26,7 @@ export const smartIssueSession = (
 ) => `/smart-issues/${id}/session/${sessionId}`;
 
 export const testAgents = () => '/test-agents';
+export const audits = () => '/audits';
 
 const siteIdToUrl = (
   siteId: string | string[] | null | undefined = ':siteId',
@@ -81,10 +86,24 @@ const testAgentsRoutes: Route[] = [
   },
 ];
 
+const auditsRoutes: Route[] = [
+  {
+    path: audits(),
+    component: React.lazy(() => import('Saas/audits/AuditsPage')),
+    withId: true,
+    canChangeId: true,
+    enabled: agentAuditsEnabled,
+  },
+];
+
 /* The whole list is exported: plan features only arrive with /account, long
    after this module is evaluated, so PrivateRoutes filters on `enabled()` at
    render time instead. */
-export const saasRoutes: Route[] = [...smartIssuesRoutes, ...testAgentsRoutes];
+export const saasRoutes: Route[] = [
+  ...smartIssuesRoutes,
+  ...testAgentsRoutes,
+  ...auditsRoutes,
+];
 
 export const extraMenuItems = (siteId: string | null) => ({
   ...(agentIssuesEnabled()
@@ -92,5 +111,8 @@ export const extraMenuItems = (siteId: string | null) => ({
     : {}),
   ...(agentTestsEnabled()
     ? { [MENU.TEST_AGENTS]: () => withSiteId(testAgents(), siteId) }
+    : {}),
+  ...(agentAuditsEnabled()
+    ? { [MENU.AUDITS]: () => withSiteId(audits(), siteId) }
     : {}),
 });

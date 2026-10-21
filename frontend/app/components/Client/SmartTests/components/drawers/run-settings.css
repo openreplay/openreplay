@@ -1,0 +1,85 @@
+.m-runset {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-space-5);
+}
+
+/* Three narrow cells on one row; they summarise, so a second pick never changes height. */
+.m-runset__row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--m-space-4);
+}
+.m-runset__row [data-slot='select-trigger'] {
+  width: 100%;
+}
+@media (max-width: 640px) {
+  .m-runset__row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.m-runset__opt {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-3);
+}
+
+.m-runset__schedule {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-space-3);
+}
+.m-runset__sched {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-3);
+  flex-wrap: wrap;
+}
+.m-runset__freq {
+  min-width: 8.5rem;
+}
+.m-runset__time {
+  min-width: 6.5rem;
+}
+.m-runset__dom {
+  min-width: 7rem;
+}
+.m-runset__cron {
+  font-family: var(--m-font-mono);
+  font-size: var(--m-text-xs);
+  color: var(--m-content-muted);
+}
+.m-runset__said {
+  font-size: var(--m-text-xs);
+  color: var(--m-content-muted);
+}
+
+.m-runset__days {
+  display: flex;
+  gap: var(--m-space-2);
+}
+.m-runset__day {
+  width: 1.625rem;
+  height: 1.625rem;
+  border: 1px solid var(--m-border-default);
+  border-radius: var(--m-radius-control);
+  background: var(--m-surface-default);
+  font-size: var(--m-text-xs);
+  color: var(--m-content-secondary);
+  transition:
+    background-color var(--m-duration-instant) var(--m-ease-out),
+    color var(--m-duration-instant) var(--m-ease-out),
+    border-color var(--m-duration-instant) var(--m-ease-out);
+}
+.m-runset__day:hover {
+  border-color: var(--m-border-strong);
+  color: var(--m-content-primary);
+}
+/* A chosen day is a selection, so it wears what selection wears everywhere else. */
+.m-runset__day.is-on {
+  background: var(--m-surface-selected);
+  border-color: var(--m-border-accent);
+  color: var(--m-content-accent);
+  font-weight: var(--m-weight-medium);
+}

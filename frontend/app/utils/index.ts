@@ -14,6 +14,17 @@ export const escapeHtml = (str: string) =>
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 
+/** Recorded URLs are attacker-controlled: only http(s) may become a link. */
+export const httpHref = (url?: string | null): string | undefined => {
+  if (!url) return undefined;
+  try {
+    const { protocol } = new URL(url);
+    return protocol === 'http:' || protocol === 'https:' ? url : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
 export const formatExpirationTime = (seconds: number) => {
   if (seconds >= WEEK_SECS) {
     return `${Math.floor(seconds / DAY_SECS)} days`;

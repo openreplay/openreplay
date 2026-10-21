@@ -1,26 +1,27 @@
+import { Icon } from '@/ui/icons/Icon';
+import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
+import { toast } from '@/ui/overlays/toast';
+import { useQuery } from '@tanstack/react-query';
 import withPageTitle from 'HOCs/withPageTitle';
 import { TFunction } from 'i18next';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'react-toastify';
 
 import { useModal } from 'App/components/Modal';
 import { useStore } from 'App/mstore';
 import { namedStore } from 'App/mstore/integrationsStore';
-import { mobileScreen } from 'App/utils/isMobile';
-import IntegrationFilters from 'Components/Client/Integrations/IntegrationFilters';
+import { integrationsService } from 'App/services';
 
 import DocCard from 'Shared/DocCard/DocCard';
-import SiteDropdown from 'Shared/SiteDropdown';
 
+import { PrefBlock } from '../PrefSection';
 import PreferencesPage from '../PreferencesPage';
 import DatadogForm from './Backend/DatadogForm/DatadogFormModal';
 import DynatraceFormModal from './Backend/DynatraceForm/DynatraceFormModal';
 import ElasticsearchForm from './Backend/ElasticForm/ElasticFormModal';
 import SentryForm from './Backend/SentryForm/SentryFormModal';
 import GithubForm from './GithubForm';
-import IntegrationItem from './IntegrationItem';
 import JiraForm from './JiraForm';
 import LinearForm from './LinearForm';
 import ProfilerDoc from './ProfilerDoc';
@@ -40,7 +41,7 @@ import ZustandDoc from './Tracker/ZustandDoc';
    connection to drop first. Slug -> display name. */
 const issueTrackers: Record<string, string> = {
   jira: 'Jira',
-  github: 'Github',
+  github: 'GitHub',
   linear: 'Linear',
 };
 
@@ -60,15 +61,14 @@ function Integrations(props: Props) {
   const fetchIntegrationList = integrationsStore.integrations.fetchIntegrations;
   const storeIntegratedList = integrationsStore.integrations.list;
   const { showModal, hideModal } = useModal();
-  const [integratedList, setIntegratedList] = useState<string[]>([]);
-  const [activeFilter, setActiveFilter] = useState<string>('all');
-
-  useEffect(() => {
-    const list = integrationsStore.integrations.integratedServices.map(
-      (item: any) => item.name,
-    );
-    setIntegratedList(list);
-  }, [storeIntegratedList]);
+  // derived, not mirrored through an effect (which rendered a stale frame first)
+  const integratedList = React.useMemo<string[]>(
+    () =>
+      integrationsStore.integrations.integratedServices.map(
+        (item: any) => item.name,
+      ),
+    [storeIntegratedList],
+  );
 
   useEffect(() => {
     if (siteId) {
@@ -78,8 +78,35 @@ function Integrations(props: Props) {
     }
   }, [siteId]);
 
-  const onClick = (integration: any, width: number) => {
-    const modalWidth = mobileScreen ? '100vw' : width;
+  // a connection covers projects of its own choosing: a card is connected
+  // where any project has it, and a backend one says how many
+  const projectIds = projectsStore.list.map((p) => String(p.projectId));
+  const { data: byProject, refetch: refetchByProject } = useQuery({
+    queryKey: ['integrationsByProject', projectIds],
+    queryFn: async () =>
+      Object.fromEntries(
+        await Promise.all(
+          projectIds.map(async (id) => {
+            const { data } = await integrationsService
+              .fetchList(undefined, id)
+              .catch(() => ({ data: [] }));
+            const names = (Array.isArray(data) ? data : [])
+              .filter((i: any) => i.integrated)
+              .map((i: any) => i.name as string);
+            return [id, names] as const;
+          }),
+        ),
+      ) as Record<string, string[]>,
+    enabled: projectIds.length > 0,
+  });
+  const projectsWith = (slug: string) =>
+    byProject
+      ? projectIds.filter((id) => byProject[id]?.includes(slug)).length
+      : integratedList.includes(slug)
+        ? 1
+        : 0;
+
+  const onClick = (integration: any) => {
     if (
       integration.slug &&
       integration.slug !== 'slack' &&
@@ -100,13 +127,17 @@ function Integrations(props: Props) {
       }
     }
 
+    const close = () => {
+      hideModal();
+      void refetchByProject();
+    };
     showModal(
       React.cloneElement(integration.component, {
         integrated: integratedList.includes(integration.slug),
         siteId,
-        onClose: hideModal,
+        onClose: close,
       }),
-      { right: true, modalWidth },
+      { right: true, onClose: () => void refetchByProject() },
     );
   };
 
@@ -119,99 +150,102 @@ function Integrations(props: Props) {
       toast.error(t('Failed to remove integration'));
     } finally {
       void fetchIntegrationList(siteId);
+      void refetchByProject();
     }
   };
-
-  const onChange = (key: string) => {
-    setActiveFilter(key);
-  };
-
-  const filteredIntegrations = integrations(t).filter((cat: any) => {
-    if (activeFilter === 'all') {
-      return true;
-    }
-
-    return cat.key === activeFilter;
-  });
-
-  const filters = integrations(t).map((cat: any) => ({
-    key: cat.key,
-    title: cat.title,
-    label: cat.title,
-    icon: cat.icon,
-  }));
-
-  const allIntegrations = filteredIntegrations.flatMap(
-    (cat) => cat.integrations,
-  );
 
   const activeTracker = connectedTracker(integratedList);
+  const [disconnecting, setDisconnecting] = useState<any | null>(null);
 
-  const onChangeSelect = ({ value }: any) => {
-    integrationsStore.integrations.setSiteId(value.value);
+  const open = (integration: any) => {
+    if (integration.oauth && integratedList.includes(integration.slug)) {
+      setDisconnecting(integration);
+      return;
+    }
+    onClick(integration);
   };
 
   return (
-    <>
-      <PreferencesPage
-        title={t('Integrations')}
-        actions={
-          <SiteDropdown value={siteId} onChange={onChangeSelect} size="small" />
-        }
+    <PreferencesPage title={t('Integrations')} flush>
+      {integrations(t).map((cat) => (
+        <PrefBlock key={cat.key} title={cat.title} hint={cat.description}>
+          <div className="m-pref__cards">
+            {cat.integrations.map((integration: any) => {
+              const covered = integration.slug
+                ? projectsWith(integration.slug)
+                : 0;
+              const on = covered > 0;
+              const blocked =
+                integration.slug in issueTrackers &&
+                activeTracker &&
+                activeTracker !== integration.slug
+                  ? activeTracker
+                  : undefined;
+              const card = (
+                <button
+                  key={integration.slug ?? integration.title}
+                  type="button"
+                  className={`m-pref__card m-hover${on ? ' is-on' : ''}`}
+                  disabled={!!blocked}
+                  onClick={() => open(integration)}
+                >
+                  <span className="m-pref__card-mark">
+                    {integration.useIcon ? (
+                      <Icon name={integration.icon} size={16} />
+                    ) : (
+                      <img
+                        src={`/assets/${integration.icon}.svg`}
+                        alt=""
+                        height={16}
+                        width={16}
+                      />
+                    )}
+                  </span>
+                  <span className="m-pref__card-lead">
+                    <span className="m-pref__card-title">
+                      {integration.title}
+                      {on ? (
+                        <span className="m-pref__on">
+                          {cat.isProject && covered > 1
+                            ? t('Connected · {{n}} projects', {
+                                n: covered,
+                                count: covered,
+                              })
+                            : t('Connected')}
+                        </span>
+                      ) : null}
+                    </span>
+                    <span className="m-pref__card-sub">
+                      {blocked
+                        ? t(
+                            'Only one issue tracker can be connected at a time. Disconnect {{name}} first.',
+                            { name: issueTrackers[blocked] },
+                          )
+                        : integration.subtitle}
+                    </span>
+                  </span>
+                </button>
+              );
+              return card;
+            })}
+          </div>
+        </PrefBlock>
+      ))}
+      <ConfirmDialog
+        open={disconnecting != null}
+        title={t('Disconnect {{name}}?', { name: disconnecting?.title ?? '' })}
+        okText={t('Disconnect')}
+        danger
+        onCancel={() => setDisconnecting(null)}
+        onOk={() => {
+          const i = disconnecting;
+          setDisconnecting(null);
+          if (i) void onDisconnect(i.slug);
+        }}
       >
-        <IntegrationFilters
-          onChange={onChange}
-          activeItem={activeFilter}
-          filters={filters}
-        />
-      </PreferencesPage>
-
-      <div className="mb-4" />
-
-      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        {allIntegrations.map((integration: any, i) => {
-          // a rival tracker holds the slot -> this card is disabled, not hidden
-          const blockedTracker =
-            integration.slug in issueTrackers &&
-            activeTracker &&
-            activeTracker !== integration.slug
-              ? activeTracker
-              : undefined;
-          return (
-            <React.Fragment key={`${integration.slug}+${i}`}>
-              <IntegrationItem
-                integrated={integratedList.includes(integration.slug)}
-                integration={integration}
-                useIcon={integration.useIcon}
-                onClick={() =>
-                  onClick(
-                    integration,
-                    filteredIntegrations.find((cat) =>
-                      cat.integrations.includes(integration),
-                    )?.title === 'Plugins'
-                      ? 500
-                      : 350,
-                  )
-                }
-                onDisconnect={
-                  integration.oauth
-                    ? () => onDisconnect(integration.slug)
-                    : undefined
-                }
-                disabled={blockedTracker !== undefined}
-                disabledHint={
-                  blockedTracker &&
-                  t(
-                    'Only one issue tracker can be connected at a time. Disconnect {{name}} first.',
-                    { name: issueTrackers[blockedTracker] },
-                  )
-                }
-              />
-            </React.Fragment>
-          );
-        })}
-      </div>
-    </>
+        {t('Sessions stop linking to it. You can connect it again later.')}
+      </ConfirmDialog>
+    </PreferencesPage>
   );
 }
 
@@ -221,29 +255,23 @@ export default withPageTitle('Integrations - OpenReplay Preferences')(
 
 const integrations = (t: TFunction) => [
   {
-    title: t('Issue Reporting'),
+    title: t('Issue reporting'),
     key: 'issue-reporting',
-    description: t(
-      'Seamlessly report issues or share issues with your team right from OpenReplay.',
-    ),
+    description: t('Open a ticket from a session, with the replay attached.'),
     isProject: false,
     icon: 'exclamation-triangle',
     integrations: [
       {
         title: t('Jira'),
-        subtitle: t(
-          'Integrate Jira with OpenReplay to enable the creation of a new ticket directly from a session.',
-        ),
+        subtitle: t('Tickets in Jira Cloud or Server, through an API token.'),
         slug: 'jira',
         category: 'Errors',
         icon: 'integrations/jira',
         component: <JiraForm />,
       },
       {
-        title: t('Github'),
-        subtitle: t(
-          'Integrate GitHub with OpenReplay to enable the direct creation of a new issue from a session.',
-        ),
+        title: t('GitHub'),
+        subtitle: t('Issues in any repository your token can reach.'),
         slug: 'github',
         category: 'Errors',
         icon: 'integrations/github',
@@ -251,9 +279,7 @@ const integrations = (t: TFunction) => [
       },
       {
         title: t('Linear'),
-        subtitle: t(
-          'Integrate Linear with OpenReplay to enable the direct creation of a new issue from a session.',
-        ),
+        subtitle: t('Issues in one of your Linear teams.'),
         slug: 'linear',
         category: 'Errors',
         icon: 'integrations/linear',
@@ -262,13 +288,11 @@ const integrations = (t: TFunction) => [
     ],
   },
   {
-    title: t('Backend Logging'),
+    title: t('Backend logging'),
     key: 'backend-logging',
     isProject: true,
     icon: 'terminal',
-    description: t(
-      'Sync your backend errors with sessions replays and see what happened front-to-back.',
-    ),
+    description: t('Put your server errors and logs on the session timeline.'),
     docs: () => (
       <DocCard
         title={t('Why use integrations?')}
@@ -284,36 +308,28 @@ const integrations = (t: TFunction) => [
     integrations: [
       {
         title: t('Sentry'),
-        subtitle: t(
-          'Integrate Sentry with session replays to seamlessly observe backend errors.',
-        ),
+        subtitle: t('Backend errors from Sentry, matched by a session tag.'),
         slug: 'sentry',
         icon: 'integrations/sentry',
         component: <SentryForm />,
       },
       {
         title: t('Elasticsearch'),
-        subtitle: t(
-          'Integrate Elasticsearch with session replays to seamlessly observe backend errors.',
-        ),
+        subtitle: t('Log lines from your own indexes.'),
         slug: 'elasticsearch',
         icon: 'integrations/elasticsearch',
         component: <ElasticsearchForm />,
       },
       {
         title: t('Datadog'),
-        subtitle: t(
-          'Incorporate DataDog to visualize backend errors alongside session replay, for easy troubleshooting.',
-        ),
+        subtitle: t('Datadog logs, matched by a session attribute.'),
         slug: 'datadog',
         icon: 'integrations/datadog',
         component: <DatadogForm />,
       },
       {
         title: t('Dynatrace'),
-        subtitle: t(
-          'Integrate Dynatrace with session replays to link backend logs with user sessions for faster issue resolution.',
-        ),
+        subtitle: t('Dynatrace log records, through an OAuth client.'),
         slug: 'dynatrace',
         icon: 'integrations/dynatrace',
         useIcon: true,
@@ -326,15 +342,11 @@ const integrations = (t: TFunction) => [
     key: 'collaboration',
     isProject: false,
     icon: 'file-code',
-    description: t(
-      'Share your sessions with your team and collaborate on issues.',
-    ),
+    description: t('Share sessions and alerts where your team already talks.'),
     integrations: [
       {
         title: t('Slack'),
-        subtitle: t(
-          'Integrate Slack to empower every user in your org with the ability to send sessions to any Slack channel.',
-        ),
+        subtitle: t('Any Slack channel with an incoming webhook.'),
         slug: 'slack',
         category: 'Errors',
         icon: 'integrations/slack',
@@ -342,10 +354,8 @@ const integrations = (t: TFunction) => [
         shared: true,
       },
       {
-        title: t('MS Teams'),
-        subtitle: t(
-          'Integrate MS Teams to empower every user in your org with the ability to send sessions to any MS Teams channel.',
-        ),
+        title: t('Microsoft Teams'),
+        subtitle: t('Any Teams channel with an incoming webhook.'),
         slug: 'msteams',
         category: 'Errors',
         icon: 'integrations/teams',
@@ -380,61 +390,51 @@ const integrations = (t: TFunction) => [
       </DocCard>
     ),
     description: t(
-      "Reproduce issues as if they happened in your own browser. Plugins help capture your application's store, HTTP requeets, GraphQL queries, and more.",
+      'Capture more of your app in each recording: state, queries, timings.',
     ),
     integrations: [
       {
         title: t('Redux'),
-        subtitle: t(
-          'Capture Redux actions/state and inspect them later on while replaying session recordings.',
-        ),
+        subtitle: t('Every dispatched action and the store after it.'),
         icon: 'integrations/redux',
         component: <ReduxDoc />,
       },
       {
         title: t('VueX'),
-        subtitle: t(
-          'Capture VueX mutations/state and inspect them later on while replaying session recordings.',
-        ),
+        subtitle: t('VueX mutations and the store after each one.'),
         icon: 'integrations/vuejs',
         component: <VueDoc />,
       },
       {
         title: t('Pinia'),
-        subtitle: t(
-          'Capture Pinia mutations/state and inspect them later on while replaying session recordings.',
-        ),
+        subtitle: t('Pinia store mutations, store by store.'),
         icon: 'integrations/pinia',
         component: <PiniaDoc />,
       },
       {
         title: t('GraphQL'),
         subtitle: t(
-          'Capture GraphQL requests and inspect them later on while replaying session recordings. This plugin is compatible with Apollo and Relay implementations.',
+          'Apollo or Relay operations with their variables and results.',
         ),
         icon: 'integrations/graphql',
         component: <GraphQLDoc />,
       },
       {
         title: t('NgRx'),
-        subtitle: t(
-          'Capture NgRx actions/state and inspect them later on while replaying session recordings.\n',
-        ),
+        subtitle: t('NgRx actions and the state they produce.'),
         icon: 'integrations/ngrx',
         component: <NgRxDoc />,
       },
       {
         title: t('MobX'),
-        subtitle: t(
-          'Capture MobX mutations and inspect them later on while replaying session recordings.',
-        ),
+        subtitle: t('MobX observable changes as they happen.'),
         icon: 'integrations/mobx',
         component: <MobxDoc />,
       },
       {
         title: t('Profiler'),
         subtitle: t(
-          'Plugin allows you to measure your JS functions performance and capture both arguments and result for each call.',
+          'Timings, arguments and results of the functions you wrap.',
         ),
         icon: 'integrations/openreplay',
         component: <ProfilerDoc />,
@@ -442,16 +442,14 @@ const integrations = (t: TFunction) => [
       {
         title: t('Assist'),
         subtitle: t(
-          'OpenReplay Assist allows you to support your users by seeing their live screen and instantly hopping on call (WebRTC) with them without requiring any 3rd-party screen sharing software.\n',
+          'See a user’s live screen and call them, no extra software.',
         ),
         icon: 'integrations/openreplay',
         component: <AssistDoc />,
       },
       {
         title: t('Zustand'),
-        subtitle: t(
-          'Capture Zustand mutations/state and inspect them later on while replaying session recordings.',
-        ),
+        subtitle: t('Zustand store changes, before and after.'),
         icon: 'integrations/zustand',
         // header: '🐻',
         component: <ZustandDoc />,

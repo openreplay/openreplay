@@ -1,6 +1,0 @@
-.backLink:hover {
-  color: $teal;
-  & .icon {
-    fill: $teal;
-  }
-}

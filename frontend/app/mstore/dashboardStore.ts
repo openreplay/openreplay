@@ -1,9 +1,9 @@
 import { calculateGranularities } from '@/components/Dashboard/components/WidgetDateRange/RangeGranularity';
 import { HEATMAP } from '@/constants/card';
 import { CUSTOM_RANGE } from '@/dateRange';
+import { toast } from '@/ui/overlays/toast';
 import Period, { LAST_24_HOURS } from 'Types/app/period';
 import { makeAutoObservable, reaction, runInAction } from 'mobx';
-import { toast } from 'react-toastify';
 
 import { sessionStore } from 'App/mstore';
 import { dashboardService, metricService } from 'App/services';
@@ -29,6 +29,13 @@ export default class DashboardStore {
   widgets: Widget[] = [];
   period: Record<string, any> = Period({ rangeName: LAST_24_HOURS });
   drillDownFilter: Filter = new Filter();
+  /** a datum clicked on a dashboard widget: its card opens drilled into it */
+  carriedDrill: {
+    metricId: string;
+    filters: any[];
+    startTimestamp: number;
+    endTimestamp: number;
+  } | null = null;
   comparisonFilter: Filter = new Filter();
   drillDownPeriod: Record<string, any> = Period({ rangeName: LAST_24_HOURS });
   selectedDensity: number = 7;
@@ -93,6 +100,34 @@ export default class DashboardStore {
         ? b.createdAt - a.createdAt
         : a.createdAt - b.createdAt,
     );
+  }
+
+  carryDrill(metricId: string | number) {
+    const f = this.drillDownFilter;
+    this.carriedDrill = {
+      metricId: String(metricId),
+      filters: [...f.filters],
+      startTimestamp: f.startTimestamp,
+      endTimestamp: f.endTimestamp,
+    };
+  }
+
+  /** the drill carried to this card, once */
+  applyCarriedDrill(metricId: string | number) {
+    const carried = this.carriedDrill;
+    // a placeholder chart of another card waits for the right one
+    if (!carried || carried.metricId !== String(metricId)) return;
+    this.carriedDrill = null;
+    this.drillDownFilter.merge({
+      filters: carried.filters,
+      startTimestamp: carried.startTimestamp,
+      endTimestamp: carried.endTimestamp,
+      page: 1,
+    });
+  }
+
+  dropCarriedDrill() {
+    this.carriedDrill = null;
   }
 
   resetDrillDownFilter() {
@@ -215,7 +250,10 @@ export default class DashboardStore {
   }
 
   async fetch(dashboardId: string): Promise<Dashboard> {
-    this.setFetchingDashboard(true);
+    // refreshing the open dashboard happens in place: the page-level loader
+    // would unmount the grid and make every card refetch its chart
+    const refresh = this.selectedDashboard?.dashboardId == dashboardId;
+    if (!refresh) this.setFetchingDashboard(true);
     try {
       const response = await dashboardService.getDashboard(dashboardId);
       if (!response || !response.dashboardId) {
@@ -223,15 +261,28 @@ export default class DashboardStore {
       }
       const detail = new Dashboard().fromJson(response);
       runInAction(() => {
-        if (this.selectedDashboard?.dashboardId == dashboardId) {
-          this.selectedDashboard.update({ widgets: detail.widgets });
+        const current = this.selectedDashboard;
+        if (current?.dashboardId == dashboardId) {
+          // keep an instance already on screen (its chart doesn't reload)
+          // unless the server's copy of that card differs
+          const known = new Map(
+            current.widgets.map((w: any) => [w.widgetId, w]),
+          );
+          const same = (a: any, b: any) =>
+            JSON.stringify(a.toJson()) === JSON.stringify(b.toJson());
+          current.update({
+            widgets: detail.widgets.map((w: any) => {
+              const kept = known.get(w.widgetId);
+              return kept && same(kept, w) ? kept : w;
+            }),
+          });
         } else {
           this.selectedDashboard = detail;
         }
       });
       return this.selectedDashboard!;
     } finally {
-      this.setFetchingDashboard(false);
+      if (!refresh) this.setFetchingDashboard(false);
     }
   }
 
@@ -307,7 +358,8 @@ export default class DashboardStore {
     });
   }
 
-  deleteDashboard(dashboard: Dashboard): Promise<any> {
+  /** Resolves to whether the delete went through (failures are toasted here). */
+  deleteDashboard(dashboard: Dashboard): Promise<boolean> {
     this.isDeleting = true;
     return dashboardService
       .deleteDashboard(dashboard.dashboardId)
@@ -316,9 +368,11 @@ export default class DashboardStore {
         runInAction(() => {
           this.removeDashboard(dashboard);
         });
+        return true;
       })
       .catch(() => {
         toast.error('Dashboard could not be deleted');
+        return false;
       })
       .finally(() => {
         runInAction(() => {
@@ -438,17 +492,20 @@ export default class DashboardStore {
     }
   }
 
+  /** Resolves false when the cards could not be added (already toasted). */
   async addWidgetToDashboard(
     dashboard: Dashboard,
     metricIds: any,
-  ): Promise<any> {
+  ): Promise<boolean> {
     this.isSaving = true;
     try {
       try {
         await dashboardService.addWidget(dashboard, metricIds);
         toast.success('Card added to dashboard.');
+        return true;
       } catch {
         toast.error('Card could not be added.');
+        return false;
       }
     } finally {
       this.isSaving = false;
@@ -564,6 +621,8 @@ export default class DashboardStore {
           );
           data.domURL = sessionResp?.domURL || [];
           data.startedAt = sessionResp?.startTs ?? data.startTs ?? 0;
+          // the player reads a headerless (pre-v18 tracker) file by this version
+          data.trackerVersion = sessionResp?.trackerVersion;
           data.events = [];
         }
 

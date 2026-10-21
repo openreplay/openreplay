@@ -2,6 +2,9 @@ import styles from './cursor.module.css';
 import type { Point } from './types';
 
 const CLICK_MS = 600;
+const RING_MS = 570;
+const RAGE_RING_MS = 380;
+const RAGE_STEP_MS = 100;
 const TIMER_CLICK_MS = 510;
 const SHAKE_MS = 500;
 
@@ -121,7 +124,23 @@ export default class Cursor {
     }, duration);
   }
 
-  click(showTimerRing = true) {
+  /** A click is one ring; a rage click three tighter ones, a beat apart. */
+  private ring(rage: boolean) {
+    const n = rage ? 3 : 1;
+    for (let i = 0; i < n; i++) {
+      const r = document.createElement('span');
+      r.className = rage ? `${styles.ring} ${styles.rage}` : styles.ring;
+      if (i) r.style.animationDelay = `${i * RAGE_STEP_MS}ms`;
+      this.cursor.appendChild(r);
+      // a timer, not animationend: with reduced motion nothing animates
+      setTimeout(
+        () => r.remove(),
+        (rage ? RAGE_RING_MS : RING_MS) + i * RAGE_STEP_MS,
+      );
+    }
+  }
+
+  click(showTimerRing = true, rage = false) {
     if (this.highlightCursor) {
       this.onClick?.();
       // In highlight mode the clicked element gets red brackets; the cursor ring
@@ -130,7 +149,7 @@ export default class Cursor {
       this.flashClickClass(styles.timerClicked, TIMER_CLICK_MS);
       return;
     }
-    this.flashClickClass(styles.clicked, CLICK_MS);
+    this.ring(rage);
     this.onClick?.();
   }
 
@@ -153,4 +172,12 @@ export default class Cursor {
     return this.coords;
   }
 
+  /** where the cursor is drawn right now, partway through its move */
+  get drawnPosition(): Point {
+    if (!supportsTranslate) return this.coords;
+    const [x, y] = getComputedStyle(this.cursor)
+      .translate.split(' ')
+      .map(parseFloat);
+    return Number.isFinite(x) && Number.isFinite(y) ? { x, y } : this.coords;
+  }
 }

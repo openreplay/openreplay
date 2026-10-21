@@ -1,7 +1,7 @@
 .navButtons {
 	position: absolute;
 
-	background: rgba(255, 255, 255, 0.5);
+	background: color-mix(in srgb, var(--m-surface-default) 50%, transparent);
 	padding: 4px;
 
 	right: 24px;

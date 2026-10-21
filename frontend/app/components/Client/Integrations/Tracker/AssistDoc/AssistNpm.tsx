@@ -1,9 +1,8 @@
+import { CodeBlock } from '@/ui/data/CodeBlock';
 import React from 'react';
-
-import { CodeBlock } from 'UI';
+import { useTranslation } from 'react-i18next';
 
 import ToggleContent from 'Shared/ToggleContent';
-import { useTranslation } from 'react-i18next';
 
 function AssistNpm(props) {
   const { t } = useTranslation();
@@ -62,23 +61,20 @@ type ButtonOptions = HTMLButtonElement | string | {
 }
 `;
   return (
-    <div>
-      <p>
+    <>
+      <p className="m-int__blurb">
         {t(
           'Initialize the tracker then load the @openreplay/tracker-assist plugin.',
         )}
       </p>
-
-      <div className="font-bold my-2">{t('Usage')}</div>
       <ToggleContent
-        label="Server-Side-Rendered (SSR)?"
+        label={t('Server-Side-Rendered (SSR)?')}
         first={<CodeBlock code={usage} language="javascript" />}
         second={<CodeBlock code={usageCjs} language="jsx" />}
       />
-
-      <div className="font-bold my-2">{t('Options')}</div>
+      <p className="m-int__sub">{t('Options')}</p>
       <CodeBlock code={options} language="typescript" />
-    </div>
+    </>
   );
 }
 

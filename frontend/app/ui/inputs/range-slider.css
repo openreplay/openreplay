@@ -1,0 +1,69 @@
+.m-range {
+  --m-range-thumb: 14px;
+  appearance: none;
+  width: 100%;
+  height: var(--m-range-thumb);
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.m-range:focus {
+  outline: none;
+}
+
+/* the track: the accent up to the thumb, a quiet groove after it */
+.m-range::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--m-border-accent) var(--m-range-fill),
+    var(--m-border-default) var(--m-range-fill)
+  );
+}
+.m-range::-moz-range-track {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--m-border-default);
+}
+.m-range::-moz-range-progress {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--m-border-accent);
+}
+
+.m-range::-webkit-slider-thumb {
+  appearance: none;
+  width: var(--m-range-thumb);
+  height: var(--m-range-thumb);
+  margin-top: calc((4px - var(--m-range-thumb)) / 2);
+  border: 1px solid var(--m-border-strong);
+  border-radius: 999px;
+  background: var(--m-surface-default);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
+  transition: transform var(--m-duration-fast) var(--m-ease-out);
+}
+.m-range::-moz-range-thumb {
+  width: var(--m-range-thumb);
+  height: var(--m-range-thumb);
+  border: 1px solid var(--m-border-strong);
+  border-radius: 999px;
+  background: var(--m-surface-default);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
+}
+.m-range:active::-webkit-slider-thumb {
+  transform: scale(1.12);
+}
+
+/* keyboard only, like every other ring */
+html[data-modality='keyboard'] .m-range:focus-visible::-webkit-slider-thumb,
+html[data-modality='keyboard'] .m-range:focus-visible::-moz-range-thumb {
+  outline: 2px solid var(--m-focus-ring);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m-range::-webkit-slider-thumb {
+    transition: none;
+  }
+}

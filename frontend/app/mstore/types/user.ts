@@ -90,7 +90,8 @@ export default class User {
 
   valid(isEnterprise: boolean = false) {
     return (
-      validateName(this.name, { empty: false }) &&
+      // "Grace B. Hopper", "Grace O'Hopper": periods and apostrophes too
+      validateName(this.name, { empty: false, admissibleChars: "-_'’." }) &&
       validateEmail(this.email) &&
       (isEnterprise ? !!this.roleId : true)
     );

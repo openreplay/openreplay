@@ -146,16 +146,10 @@ export default class UserService {
   }
 
   updatePassword = async (data: any) => {
+    let responseData: any;
     try {
       const response = await this.client.post('/account/password', data);
-      const responseData = await response.json();
-      if (responseData.errors) {
-        throw new Error(
-          responseData.errors[0] || 'An unexpected error occurred.',
-        );
-      }
-
-      return responseData || {};
+      responseData = await response.json();
     } catch (error: any) {
       if (error.response) {
         const errorData = await error.response.json();
@@ -166,6 +160,14 @@ export default class UserService {
       }
       throw new Error('An unexpected error occurred.');
     }
+    // a refusal (wrong current password) is a 200 with `errors`; thrown out
+    // here, past the catch above, so its message reaches the toast
+    if (responseData?.errors) {
+      throw new Error(
+        responseData.errors[0] || 'An unexpected error occurred.',
+      );
+    }
+    return responseData || {};
   };
 
   fetchTenants() {
@@ -204,7 +206,11 @@ export default class UserService {
     return this.client
       .post('/re-validate')
       .then((response: { json: () => any }) => response.json())
-      .then((response: { data: any }) => response.data || {});
+      .then((response: { data: any; errors?: string[] }) => {
+        // a refusal is a 200 with `errors`
+        if (response.errors?.length) throw new Error(response.errors[0]);
+        return response.data || {};
+      });
   }
 
   makeOwner(userId: string) {

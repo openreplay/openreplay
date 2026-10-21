@@ -1,5 +1,5 @@
 import { Filter } from '@/mstore/types/filterConstants';
-import { iTag } from '@/services/NotesService';
+import { getRowsPerPage } from '@/ui/layout/rows-per-page';
 import Period, { CUSTOM_RANGE } from 'Types/app/period';
 import { FilterCategory, FilterKey } from 'Types/filter/filterType';
 import {
@@ -21,7 +21,6 @@ import SavedSearch, { ISavedSearch } from 'App/mstore/types/savedSearch';
 import Search from 'App/mstore/types/search';
 import { searchService, sessionService } from 'App/services';
 
-const PER_PAGE = 10;
 /* The whole saved-search list is loaded in one request and shared by every
    consumer (session search, Data Management, the Issues capture layer). */
 const SAVED_SEARCH_PAGE_SIZE = 200;
@@ -90,17 +89,33 @@ export const filterMap = (filter: any) => {
   };
 };
 
+/** What decides a search's results, comparable across reloads of the same
+    rules (values stringified, empty ones dropped). */
+const ruleKey = (f: any): unknown => [
+  f.name,
+  Boolean(f.isEvent),
+  f.operator || 'is',
+  (Array.isArray(f.value) ? f.value : [f.value])
+    .filter((v: unknown) => v != null && v !== '')
+    .map(String),
+  f.isEvent ? (f.propertyOrder ?? 'and') : null,
+  (f.filters ?? []).map(ruleKey),
+];
+
 export const TAB_MAP: any = {
   all: { name: 'All', type: 'all' },
   sessions: { name: 'Sessions', type: 'sessions' },
   bookmarks: { name: 'Bookmarks', type: 'bookmarks' },
-  notes: { name: 'Notes', type: 'notes' },
   recommendations: { name: 'Recommendations', type: 'recommendations' },
 };
 
 class SearchStore {
   list: SavedSearch[] = [];
+  /** the window start of the list on screen; null until one has loaded */
   latestRequestTime: number | null = null;
+  /** bumped whenever the list on screen changes: a count asked about an
+      older list is not applied */
+  private listGeneration = 0;
   latestList = [];
   alertMetricId: number | null = null;
   instance = new Search({
@@ -114,9 +129,10 @@ class SearchStore {
     eventsOrder: 'then',
   });
   savedSearch: ISavedSearch = new SavedSearch();
+  /** the rules when the search became its saved segment */
+  segmentRules: string | null = null;
   filterSearchList: any = {};
   currentPage = 1;
-  pageSize = PER_PAGE;
   activeTab = { name: 'All', type: 'all' };
   scrollY = 0;
   sessions = [];
@@ -148,6 +164,7 @@ class SearchStore {
     makeAutoObservable(this, {
       savedSearchRequest: false,
       searchAbort: false,
+      listGeneration: false,
     } as any);
   }
 
@@ -166,6 +183,35 @@ class SearchStore {
 
   setUrlParsed() {
     this.urlParsed = true;
+  }
+
+  private get rulesKey() {
+    return JSON.stringify([
+      this.instance.eventsOrder,
+      this.instance.filters.map(ruleKey),
+    ]);
+  }
+
+  /** The search IS a saved segment: saved from it, or used from Segments. */
+  get activeSegmentId(): string | null {
+    const { searchId, isShare } = this.savedSearch;
+    return searchId && !isShare ? String(searchId) : null;
+  }
+
+  get segmentEdited(): boolean {
+    return this.segmentRules != null && this.rulesKey !== this.segmentRules;
+  }
+
+  /** The segment was saved with the rules on the page: take its record. */
+  adoptSegment(saved: ISavedSearch) {
+    this.savedSearch = new SavedSearch(saved);
+    this.segmentRules = this.rulesKey;
+  }
+
+  /** Stop treating the search as its segment; the rules stay. */
+  detachSegment() {
+    this.savedSearch = new SavedSearch({});
+    this.segmentRules = null;
   }
 
   get filterList() {
@@ -197,6 +243,7 @@ class SearchStore {
       eventsOrder: searchData?.eventsOrder || this.instance.eventsOrder,
     });
     this.currentPage = 1;
+    this.segmentRules = this.rulesKey;
   }
 
   fetchSavedSearchList(
@@ -370,7 +417,7 @@ class SearchStore {
     this.activeTags = ['all'];
   };
 
-  toggleTag(tag?: iTag) {
+  toggleTag(tag?: string) {
     if (!tag) {
       this.activeTags = [];
       void this.fetchSessions(true);
@@ -382,11 +429,13 @@ class SearchStore {
 
   async removeSavedSearch(id: string): Promise<void> {
     await searchService.deleteSavedSearch(id);
-    this.savedSearch = new SavedSearch({});
+    this.detachSegment();
     await this.fetchSavedSearchList();
   }
 
-  async saveAsShare(): Promise<void> {
+  /** Saves the search as a share link and returns its id; the search keeps
+      whatever segment it is. */
+  async saveAsShare(): Promise<string | undefined> {
     const searchData = this.instance.toSearch();
 
     // Ensure all filters have required fields
@@ -423,19 +472,22 @@ class SearchStore {
     };
 
     const savedSearchResponse = await searchService.saveSavedSearch(payload);
+    return savedSearchResponse?.searchId;
+  }
 
-    // Update the current savedSearch with the response data
-    if (savedSearchResponse) {
-      this.savedSearch = new SavedSearch({
-        searchId: savedSearchResponse.searchId,
-        isPublic: false,
-        isShare: true,
-        data: payload.data,
+  /** Busy until the list shows the result, so the form can say so. */
+  async save(id?: string | null, rename = false): Promise<void> {
+    this.isSaving = true;
+    try {
+      await this.saveSearch(id, rename);
+    } finally {
+      runInAction(() => {
+        this.isSaving = false;
       });
     }
   }
 
-  async save(id?: string | null, rename = false): Promise<void> {
+  private async saveSearch(id?: string | null, rename = false): Promise<void> {
     const searchData = this.instance.toSearch();
     const instance = this.savedSearch.toData();
 
@@ -482,15 +534,9 @@ class SearchStore {
       },
     };
 
-    let savedSearchResponse;
-    if (isNew) {
-      savedSearchResponse = await searchService.saveSavedSearch(payload);
-    } else {
-      savedSearchResponse = await searchService.updateSavedSearch(
-        searchId!,
-        payload,
-      );
-    }
+    const savedSearchResponse = isNew
+      ? await searchService.saveSavedSearch(payload)
+      : await searchService.updateSavedSearch(searchId!, payload);
 
     // Update the current savedSearch with the response data
     if (savedSearchResponse) {
@@ -502,6 +548,7 @@ class SearchStore {
         isShare: instance.isShare,
         data: payload.data,
       });
+      if (!rename) this.segmentRules = this.rulesKey;
     }
 
     // Refresh the list to show the latest saved searches
@@ -528,11 +575,23 @@ class SearchStore {
       }),
     );
 
-    this.savedSearch = new SavedSearch({});
+    this.detachSegment();
     sessionStore.clearList();
+    this.latestRequestTime = null;
+    this.latestSessionCount = 0;
+    this.listGeneration += 1;
   }
 
+  /** Sessions matching the search that arrived since the list on screen loaded.
+      Compared against that list's own total, so it waits for the list. */
   async checkForLatestSessionCount(): Promise<void> {
+    if (
+      this.searchInProgress ||
+      sessionStore.loadingSessions ||
+      this.latestRequestTime == null
+    )
+      return;
+    const generation = this.listGeneration;
     try {
       let filter = this.instance.toSearch();
       filter = this.applyTagFilter(filter, this.activeTags);
@@ -557,6 +616,8 @@ class SearchStore {
       const response = await sessionService.getSessions(filter);
 
       runInAction(() => {
+        // a search started or landed meanwhile: it answers for itself
+        if (this.searchInProgress || generation !== this.listGeneration) return;
         if (response?.total && response.total > sessionStore.total) {
           this.latestSessionCount = response.total - sessionStore.total;
         } else {
@@ -617,19 +678,11 @@ class SearchStore {
           value: checkFilterValue(subFilter.value),
         }))
       : null;
+    // a new array: PrivateRoutes refetches when the filters array changes
     const inst = this.instance.toData();
-    inst.filters.push(filter);
+    inst.filters = [...inst.filters, filter];
     this.instance = new Search(inst);
     this.currentPage = 1;
-
-    const hasValue = Boolean(
-      filter.value && filter.value[0] && filter.value[0] !== '',
-    );
-    const isCustomEvent = Boolean(filter.isEvent) && !filter.autoCaptured;
-
-    if (hasValue || isCustomEvent) {
-      void this.fetchSessions();
-    }
   };
 
   moveFilter(draggedIndex: number, newPosition: number) {
@@ -714,15 +767,14 @@ class SearchStore {
     let filter = this.instance.toSearch();
     filter = this.applyTagFilter(filter, this.activeTags);
     filter = this.applyDurationFilter(filter);
-    this.latestRequestTime = filter.startDate;
     this.latestList = [];
     this.searchInProgress = true;
     try {
-      await sessionStore.fetchSessions(
+      const loaded = await sessionStore.fetchSessions(
         {
           ...pickSearchRequestFields(filter),
           page: this.currentPage,
-          limit: this.pageSize,
+          limit: getRowsPerPage(),
           bookmarked: bookmarked ? true : undefined,
         },
         // SessionStore skips a search whose filters match the persisted ones —
@@ -730,6 +782,14 @@ class SearchStore {
         force || superseded,
         controller.signal,
       );
+      if (loaded && !controller.signal.aborted) {
+        // the list on screen now holds everything up to this request
+        runInAction(() => {
+          this.latestRequestTime = filter.startDate;
+          this.latestSessionCount = 0;
+          this.listGeneration += 1;
+        });
+      }
     } catch (e) {
       if (!controller.signal.aborted) throw e;
     } finally {
@@ -739,6 +799,29 @@ class SearchStore {
           this.searchInProgress = false;
         });
       }
+    }
+  }
+
+  /** When the newest session these filters match in the past 30 days was
+      recorded: what an empty window can be widened to. */
+  async fetchLastSessionAt(): Promise<number | null> {
+    let filter = this.instance.toSearch();
+    filter = this.applyTagFilter(filter, this.activeTags);
+    filter = this.applyDurationFilter(filter);
+    const now = Date.now();
+    try {
+      const data = await sessionService.getSessions({
+        ...pickSearchRequestFields(filter),
+        startTimestamp: now - 30 * 86400_000,
+        endTimestamp: now,
+        sort: 'startTs',
+        order: 'desc',
+        page: 1,
+        limit: 1,
+      });
+      return data?.sessions?.[0]?.startTs ?? null;
+    } catch {
+      return null;
     }
   }
 
@@ -758,6 +841,7 @@ class SearchStore {
       return filter;
     }
 
+    // a group (Broken, Frustrated...) stands for any of its kinds
     tagFilter.value = [activeTags[0]];
 
     return {

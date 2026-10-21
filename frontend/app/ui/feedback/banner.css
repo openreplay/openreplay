@@ -1,0 +1,122 @@
+/* each tone is the status chips' tint and hairline, so a banner and a chip
+   that mean the same thing are the same colour */
+.m-banner {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.25rem;
+  padding: var(--m-space-2) calc(var(--m-space-7) + 1.5rem);
+  border-bottom: 1px solid var(--m-banner-edge);
+  background: var(--m-banner-bg);
+  color: var(--m-content-primary);
+  font-size: var(--m-text-xs);
+  line-height: var(--m-leading-snug);
+  animation: m-banner-in var(--m-duration-normal) var(--m-ease-out) both;
+}
+.m-banner--danger {
+  --m-banner-bg: var(--m-status-danger-bg);
+  --m-banner-edge: var(--m-status-danger-border);
+  --m-banner-ink: var(--m-content-danger);
+}
+.m-banner--info {
+  --m-banner-bg: var(--m-status-info-bg);
+  --m-banner-edge: var(--m-status-info-border);
+  --m-banner-ink: var(--m-content-accent);
+}
+.m-banner--neutral {
+  --m-banner-bg: var(--m-surface-default);
+  --m-banner-edge: var(--m-border-subtle);
+  --m-banner-ink: var(--m-content-accent);
+}
+
+.m-banner__inner {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-3);
+  min-width: 0;
+  max-width: 100rem;
+}
+.m-banner__icon {
+  display: inline-flex;
+  flex: none;
+  color: var(--m-banner-ink);
+}
+.m-banner__body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--m-space-2) var(--m-space-7);
+  min-width: 0;
+}
+.m-banner__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-3);
+  min-width: 0;
+}
+.m-banner__item + .m-banner__item {
+  padding-left: var(--m-space-7);
+  border-left: 1px solid var(--m-banner-edge);
+}
+.m-banner__text {
+  color: var(--m-content-secondary);
+}
+.m-banner__text strong {
+  color: var(--m-content-primary);
+  font-weight: var(--m-weight-medium);
+}
+.m-banner__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--m-banner-ink);
+  font: inherit;
+  font-weight: var(--m-weight-medium);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklab, var(--m-banner-ink) 35%, transparent);
+  text-underline-offset: 3px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.m-banner__action:hover {
+  text-decoration-color: currentColor;
+}
+.m-banner__action:focus-visible {
+  outline: 2px solid var(--m-focus-ring);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+.m-banner__close {
+  position: absolute;
+  right: var(--m-space-4);
+  top: 50%;
+  translate: 0 -50%;
+}
+
+@keyframes m-banner-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .m-banner {
+    animation: none;
+  }
+}
+@media (max-width: 700px) {
+  .m-banner {
+    padding-inline: var(--m-space-4) calc(var(--m-space-4) + 1.5rem);
+    justify-content: flex-start;
+  }
+  .m-banner__item + .m-banner__item {
+    padding-left: 0;
+    border-left: 0;
+  }
+}

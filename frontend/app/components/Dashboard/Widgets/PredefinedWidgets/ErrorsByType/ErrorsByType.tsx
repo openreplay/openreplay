@@ -1,8 +1,10 @@
+import { NoContent } from '@/ui/feedback/NoContent';
+import { Info } from 'lucide-react';
 import React from 'react';
-import { NoContent } from 'UI';
-import TimeseriesChart from 'Components/Charts/TimeseriesChart';
+
 import { NO_METRIC_DATA } from 'App/constants/messages';
-import { InfoCircleOutlined } from '@ant-design/icons';
+import TimeseriesChart from 'Components/Charts/TimeseriesChart';
+
 import { Styles } from '../../common';
 
 interface Props {
@@ -16,7 +18,7 @@ function ErrorsByType(props: Props) {
       size="small"
       title={
         <div className="flex items-center gap-2 text-base font-normal">
-          <InfoCircleOutlined size={12} /> {NO_METRIC_DATA}
+          <Info size={12} /> {NO_METRIC_DATA}
         </div>
       }
       show={metric.data.chart.length === 0}
@@ -29,7 +31,11 @@ function ErrorsByType(props: Props) {
         valueFormatter={Styles.tickFormatter}
         stack
         series={[
-          { key: 'integrations', name: 'Integrations', color: Styles.compareColors[0] },
+          {
+            key: 'integrations',
+            name: 'Integrations',
+            color: Styles.compareColors[0],
+          },
           { key: '4xx', name: '4xx', color: Styles.compareColors[1] },
           { key: '5xx', name: '5xx', color: Styles.compareColors[2] },
           { key: 'js', name: 'Javascript', color: Styles.compareColors[3] },

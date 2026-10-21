@@ -52,7 +52,7 @@ export default {
   },
   moduleDirectories: ['node_modules'],
   transformIgnorePatterns: [
-    '/node_modules/(?!(@medv/finder|syncod|modern-tar|@ant-design)/)',
+    '/node_modules/(?!(@medv/finder|syncod|modern-tar|@ant-design|@dicebear)/)',
   ],
   setupFiles: ['<rootDir>/frontend/tests/unit/jest.setup.ts'],
   testPathIgnorePatterns: ['/node_modules/', '/tests/playwright/'],

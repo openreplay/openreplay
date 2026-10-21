@@ -1,0 +1,52 @@
+.m-armada {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  color: inherit;
+}
+.m-armada__svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.m-armada__line {
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+.m-armada__smile {
+  stroke-width: 1.75;
+}
+.m-armada__dot {
+  fill: currentColor;
+  stroke: none;
+}
+
+/* one blink when its row is hovered; the eyes squash toward their centre line */
+.m-armada__eyes {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.m-nav-item:hover .m-armada__eyes {
+  animation: m-armada-blink 320ms var(--m-ease-in-out) 1;
+}
+@keyframes m-armada-blink {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  40%,
+  55% {
+    transform: scaleY(0.12);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m-nav-item:hover .m-armada__eyes {
+    animation: none;
+  }
+}

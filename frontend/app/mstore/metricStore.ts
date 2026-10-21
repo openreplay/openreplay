@@ -1,6 +1,7 @@
+import { getRowsPerPage } from '@/ui/layout/rows-per-page';
+import { toast } from '@/ui/overlays/toast';
 import { FilterKey } from 'Types/filter/filterType';
 import { makeAutoObservable, runInAction } from 'mobx';
-import { toast } from 'react-toastify';
 
 import {
   CATEGORIES,
@@ -86,7 +87,6 @@ export default class MetricStore {
   instance = new Widget();
   page: number = 1;
   total: number = 0;
-  pageSize: number = 10;
   metricsSearch: string = '';
   sort: any = { columnKey: '', field: '', order: false };
   filter: any = { type: '', query: '' };
@@ -402,11 +402,15 @@ export default class MetricStore {
     this.metrics = metrics;
   }
 
+  private listSeq = 0;
+
+  /** Search, filter, sort and pager overlap: only the latest response applies. */
   async fetchList() {
+    const seq = ++this.listSeq;
     this.setLoading(true);
     const params: Record<string, any> = {
       page: this.page,
-      limit: this.pageSize,
+      limit: getRowsPerPage(),
       sortField: this.sort.field,
       sortOrder: this.sort.order === 'ascend' ? 'asc' : 'desc',
       name: this.filter.query,
@@ -418,12 +422,15 @@ export default class MetricStore {
 
     try {
       const resp = await metricService.getMetricsPaginated(params);
-      this.total = resp.total;
+      if (seq !== this.listSeq) return;
+      runInAction(() => {
+        this.total = resp.total;
+      });
       this.setMetrics(
         resp.list ? resp.list.map((m) => new Widget().fromJson(m)) : [],
       );
     } finally {
-      this.setLoading(false);
+      if (seq === this.listSeq) this.setLoading(false);
     }
   }
 

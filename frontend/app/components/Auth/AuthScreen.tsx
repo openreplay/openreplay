@@ -1,0 +1,113 @@
+import { LANGUAGES, useChangeLanguage } from '@/lib/language';
+import { ExternalLink } from '@/ui/actions/ExternalLink';
+import { Button } from '@/ui/actions/button';
+import { OpenReplayMark } from '@/ui/brand/OpenReplayMark';
+import { SimpleSelect } from '@/ui/inputs/select';
+import '@/ui/layout/page-card.css';
+import { observer } from 'mobx-react-lite';
+import React, { type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { useStore } from 'App/mstore';
+import { login, signup } from 'App/routes';
+import { useNavigate } from 'App/routing';
+
+import { SupportMenu } from 'Shared/SupportMenu/SupportMenu';
+
+import './auth.css';
+
+export const LEGAL = {
+  privacy: 'https://openreplay.com/legal/privacy',
+  terms: 'https://openreplay.com/legal/terms',
+};
+
+interface Props {
+  /** Which other door the top-right corner offers. */
+  other: 'signup' | 'signin' | 'back' | null;
+  /** Keys the card so it re-enters when the step changes. */
+  step?: string;
+  /** a column beside the card (the cloud signup's pitch) */
+  aside?: ReactNode;
+  children: ReactNode;
+}
+
+/** The public pages' ground: brand row, one card, small print. */
+function AuthScreen({ other, step, aside, children }: Props) {
+  const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
+  const { userStore } = useStore();
+  const year = new Date().getFullYear();
+
+  const changeLanguage = useChangeLanguage();
+
+  return (
+    <div className="m-auth">
+      <header className="m-auth__top">
+        <span className="m-auth__brand">
+          <OpenReplayMark size={26} />
+          <span className="m-auth__brand-name">OpenReplay</span>
+        </span>
+        <span className="m-auth__other">
+          {other === 'signup' ? (
+            <>
+              {t('New here?')}
+              <Button variant="secondary" onClick={() => navigate(signup())}>
+                {t('Create account')}
+              </Button>
+            </>
+          ) : other === 'signin' ? (
+            <>
+              {t('Already have an account?')}
+              <Button variant="secondary" onClick={() => navigate(login())}>
+                {t('Sign in')}
+              </Button>
+            </>
+          ) : other === 'back' ? (
+            <Button variant="subtle" onClick={() => navigate(login())}>
+              {t('Back to sign in')}
+            </Button>
+          ) : null}
+        </span>
+      </header>
+
+      <div className={`m-auth__body${aside ? ' is-split' : ''}`}>
+        {aside}
+        <section
+          className="m-auth__card m-panel"
+          aria-labelledby="m-auth-title"
+        >
+          <div className="m-auth__enter m-step-in" key={step}>
+            {children}
+          </div>
+        </section>
+      </div>
+
+      <footer className="m-auth__foot">
+        <span>
+          {t('© {{year}} OpenReplay. All rights reserved.', { year })}{' '}
+          <ExternalLink className="m-auth__ext" href={LEGAL.privacy}>
+            {t('Privacy')}
+          </ExternalLink>{' '}
+          {t('and')}{' '}
+          <ExternalLink className="m-auth__ext" href={LEGAL.terms}>
+            {t('Terms')}
+          </ExternalLink>
+          .
+        </span>
+        <span className="m-auth__foot-right">
+          {!userStore.isEnterprise && <SupportMenu placement="topLeft" />}
+          <SimpleSelect<string>
+            variant="subtle"
+            ariaLabel={t('Language')}
+            className="m-auth__lang"
+            value={i18n.language?.slice(0, 2)}
+            onChange={(v) => v && changeLanguage(v)}
+            options={LANGUAGES}
+          />
+        </span>
+      </footer>
+    </div>
+  );
+}
+
+export default observer(AuthScreen);

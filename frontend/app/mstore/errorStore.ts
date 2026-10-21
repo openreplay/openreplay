@@ -1,4 +1,5 @@
 import { makeAutoObservable } from 'mobx';
+
 import { errorService } from 'App/services';
 
 import { ErrorInfo } from './types/error';

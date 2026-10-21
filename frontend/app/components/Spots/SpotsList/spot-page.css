@@ -1,0 +1,281 @@
+.m-spots__display {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  margin-inline-start: auto;
+}
+
+/* the selection takes the head instead of adding a bar that pushes the grid down */
+.m-spots__bulk {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-3);
+  width: 100%;
+}
+.m-spots__count {
+  white-space: nowrap;
+  font-size: var(--m-text-xs);
+  color: var(--m-content-primary);
+  font-variant-numeric: tabular-nums;
+}
+.m-spots__bulk-verbs {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  margin-inline-start: auto;
+}
+@media (max-width: 640px) {
+  .m-spots__bulk {
+    flex-wrap: wrap;
+    row-gap: var(--m-space-2);
+  }
+}
+
+.m-spot-card {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--m-radius-surface);
+  overflow: clip;
+  background: var(--m-surface-raised);
+  border: 1px solid var(--m-border-subtle);
+  transition:
+    border-color var(--m-duration-instant) var(--m-ease-out),
+    box-shadow var(--m-duration-instant) var(--m-ease-out);
+}
+.m-spot-card:hover {
+  border-color: var(--m-border-strong);
+}
+/* the inset ring keeps the state visible on a thumbnail of the accent's hue */
+.m-spot-card.is-selected {
+  border-color: var(--m-border-accent);
+  box-shadow: inset 0 0 0 1px var(--m-border-accent);
+}
+
+.m-spot-card__thumb {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: oklch(0.88 0.05 calc(var(--m-avatar-i, 0) * 30deg));
+}
+:root.dark .m-spot-card__thumb {
+  background: oklch(0.32 0.07 calc(var(--m-avatar-i, 0) * 30deg));
+}
+.m-spot-card__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.m-spot-card__open {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  border: none;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.m-spot-card__open:focus-visible {
+  outline: 2px solid var(--m-focus-ring);
+  outline-offset: -3px;
+}
+/* a veil so the white controls hold on a pale tint or a light screenshot */
+.m-spot-card__open::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 0);
+  transition: background-color var(--m-duration-fast) var(--m-ease-out);
+}
+.m-spot-card:hover .m-spot-card__open::before {
+  background: rgb(0 0 0 / 0.12);
+}
+
+.m-spot-card__play {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--m-radius-full);
+  background: rgb(0 0 0 / 0.28);
+  color: rgb(255 255 255 / 0.82);
+  transform: scale(0.86);
+  transition:
+    transform var(--m-duration-fast) var(--m-ease-out),
+    background-color var(--m-duration-fast) var(--m-ease-out),
+    color var(--m-duration-fast) var(--m-ease-out);
+}
+/* the glyph is optically left-heavy in a disc */
+.m-spot-card__play svg {
+  margin-inline-start: 2px;
+}
+.m-spot-card:hover .m-spot-card__play,
+.m-spot-card__open:focus-visible .m-spot-card__play {
+  transform: scale(1);
+  background: rgb(0 0 0 / 0.5);
+  color: white;
+}
+
+.m-spot-card__pick,
+.m-spot-card__acts,
+.m-spot-card__more {
+  opacity: 0;
+  transition: opacity var(--m-duration-fast) var(--m-ease-out);
+}
+.m-spot-card:hover
+  :is(.m-spot-card__pick, .m-spot-card__acts, .m-spot-card__more),
+.m-spot-card:focus-within
+  :is(.m-spot-card__pick, .m-spot-card__acts, .m-spot-card__more),
+.m-spot-card.is-selected .m-spot-card__pick {
+  opacity: 1;
+}
+@media (hover: none) {
+  .m-spot-card__pick,
+  .m-spot-card__acts,
+  .m-spot-card__more {
+    opacity: 1;
+  }
+}
+
+.m-spot-card__pick {
+  position: absolute;
+  top: var(--m-space-2);
+  inset-inline-start: var(--m-space-2);
+  display: inline-flex;
+  padding: var(--m-space-1);
+  border-radius: var(--m-radius-control);
+  background: var(--m-surface-default);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.2);
+}
+.m-spot-card__acts {
+  position: absolute;
+  top: var(--m-space-2);
+  inset-inline-end: var(--m-space-2);
+  display: flex;
+  gap: var(--m-space-1);
+}
+.m-spot-card__act {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: none;
+  border-radius: var(--m-radius-control);
+  background: rgb(0 0 0 / 0.42);
+  color: rgb(255 255 255 / 0.9);
+  cursor: pointer;
+  transition: background-color var(--m-duration-instant) var(--m-ease-out);
+}
+.m-spot-card__act:hover {
+  background: rgb(0 0 0 / 0.68);
+}
+.m-spot-card__act:focus-visible {
+  outline: 2px solid var(--m-focus-ring);
+  outline-offset: 1px;
+}
+
+.m-spot-card__duration {
+  position: absolute;
+  inset-inline-end: var(--m-space-2);
+  bottom: var(--m-space-2);
+  padding: 1px var(--m-space-2);
+  border-radius: var(--m-radius-chip);
+  background: rgb(0 0 0 / 0.55);
+  color: white;
+  font-size: var(--m-text-2xs);
+  font-family: var(--m-font-num);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+.m-spot-card__foot {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--m-space-3);
+  min-width: 0;
+}
+.m-spot-card__line {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  min-width: 0;
+}
+.m-spot-card__title {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-size: var(--m-text-sm);
+  font-weight: var(--m-weight-medium);
+  color: var(--m-content-primary);
+}
+.m-spot-card__title:hover {
+  text-decoration: underline;
+}
+.m-spot-card__title:focus-visible {
+  outline: 2px solid var(--m-focus-ring);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+/* keeps its space while hidden, so revealing it doesn't re-measure the title */
+.m-spot-card__more {
+  flex: none;
+}
+.m-spot-card__by {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  min-width: 0;
+  font-size: var(--m-text-xs);
+  color: var(--m-content-muted);
+}
+.m-spot-card__dot {
+  color: var(--m-content-decorative);
+}
+
+.m-spot-card--skeleton {
+  height: 220px;
+  background: var(--m-surface-sunken);
+  border: 1px solid var(--m-border-subtle);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m-spot-card,
+  .m-spot-card__play,
+  .m-spot-card__open::before,
+  .m-spot-card__pick,
+  .m-spot-card__acts,
+  .m-spot-card__more,
+  .m-spot-card__act {
+    transition: none;
+  }
+  .m-spot-card__play {
+    transform: none;
+  }
+}
+
+.m-spot-cta {
+  margin: var(--m-space-5) var(--m-space-7) 0;
+}
+.m-spot-cta {
+  align-items: center;
+}
+.m-spot-cta .m-notice__text {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--m-space-5);
+  flex: 1;
+}

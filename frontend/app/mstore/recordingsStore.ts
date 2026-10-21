@@ -1,6 +1,8 @@
+import { getRowsPerPage } from '@/ui/layout/rows-per-page';
 import Period, { LAST_7_DAYS } from 'Types/app/period';
 import { makeAutoObservable } from 'mobx';
 
+import { userStore } from 'App/mstore';
 import { recordingsService } from 'App/services';
 import { ExportsResponse, IRecord } from 'App/services/RecordingsService';
 
@@ -9,7 +11,6 @@ export default class RecordingsStore {
   loading: boolean;
   page = 1;
   total: number = 0;
-  pageSize = 5;
   order: 'desc' | 'asc' = 'desc';
   search = '';
   startTimestamp = 0;
@@ -19,6 +20,8 @@ export default class RecordingsStore {
 
   exportedVideosList: ExportsResponse['data']['videos'] = [];
   currentUser = false;
+  /** the call playing on the replay screen, in place of the list */
+  openRecord: IRecord | null = null;
 
   constructor() {
     makeAutoObservable(this);
@@ -49,14 +52,25 @@ export default class RecordingsStore {
     this.page = page;
   }
 
+  setOrder(order: 'desc' | 'asc') {
+    this.order = order;
+    this.page = 1;
+  }
+
+  openRecording = (r: IRecord | null) => {
+    this.openRecord = r;
+  };
+
   async fetchRecordings() {
     const filter = {
       page: this.page,
-      limit: this.pageSize,
+      limit: getRowsPerPage(),
       order: this.order,
       query: this.search,
       startTimestamp: this.period.start,
       endTimestamp: this.period.end,
+      // "My videos": the API narrows to one author by user id
+      userId: this.currentUser ? userStore.account.id : undefined,
     };
 
     this.loading = true;
@@ -84,25 +98,21 @@ export default class RecordingsStore {
     }
   }
 
+  /** Rejects on failure; callers say so. */
   async deleteRecording(id: number) {
     this.loading = true;
     try {
-      const recording = await recordingsService.deleteRecording(id);
-      return recording;
-    } catch (e) {
-      console.error(e);
+      return await recordingsService.deleteRecording(id);
     } finally {
       this.loading = false;
     }
   }
 
+  /** Rejects on failure; callers say so. */
   async updateRecordingName(id: number, name: string) {
     this.loading = true;
     try {
-      const recording = await recordingsService.updateRecordingName(id, name);
-      return recording;
-    } catch (e) {
-      console.error(e);
+      return await recordingsService.updateRecordingName(id, name);
     } finally {
       this.loading = false;
     }
@@ -117,7 +127,12 @@ export default class RecordingsStore {
     }
   };
 
-  getRecordings = async () => {
+  private recordingsSeq = 0;
+
+  /** `fresh`: another project — drop the old rows while its list loads */
+  getRecordings = async (fresh = false) => {
+    const seq = ++this.recordingsSeq;
+    if (fresh) this.setExportedVideosList([]);
     this.loading = true;
     const params = {
       page: this.page,
@@ -131,12 +146,13 @@ export default class RecordingsStore {
 
     try {
       const resp = await recordingsService.getExports(params);
+      if (seq !== this.recordingsSeq) return;
       this.setExportedVideosList(resp.data.videos ?? []);
       this.setTotal(resp.data.total);
     } catch (e) {
       console.error(e);
     } finally {
-      this.loading = false;
+      if (seq === this.recordingsSeq) this.setLoading(false);
     }
   };
 
@@ -148,21 +164,19 @@ export default class RecordingsStore {
     this.total = total;
   };
 
-  getRecordingLink = async (sessionId: string) => {
-    try {
-      const resp = await recordingsService.getDownloadLink(sessionId);
-      return resp.data;
-    } catch (e) {
-      console.error(e);
-    }
+  setLoading = (loading: boolean) => {
+    this.loading = loading;
   };
 
+  /** Rejects on failure; callers say so. */
+  getRecordingLink = async (sessionId: string): Promise<string> => {
+    const resp = await recordingsService.getDownloadLink(sessionId);
+    return resp.data;
+  };
+
+  /** Rejects on failure; callers say so. */
   deleteSessionRecording = async (sessionId: string) => {
-    try {
-      await recordingsService.deleteVideo(sessionId);
-    } catch (e) {
-      console.error(e);
-    }
+    await recordingsService.deleteVideo(sessionId);
   };
 
   resetValues = () => {
@@ -170,7 +184,6 @@ export default class RecordingsStore {
     this.loading = false;
     this.page = 1;
     this.total = 0;
-    this.pageSize = 5;
     this.order = 'desc';
     this.search = '';
     this.startTimestamp = 0;

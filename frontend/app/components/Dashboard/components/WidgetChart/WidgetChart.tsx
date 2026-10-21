@@ -1,3 +1,6 @@
+import { useChartTheme } from '@/ui/data/chart';
+import { Loader } from '@/ui/feedback/Loader';
+import { LargerScreenOnly } from '@/ui/layout/LargerScreenOnly';
 import { getStartAndEndTimestampsByDensity } from 'Types/dashboard/helper';
 import { FilterKey } from 'Types/filter/filterType';
 import { observer } from 'mobx-react-lite';
@@ -24,21 +27,19 @@ import useIsMounted from 'App/hooks/useIsMounted';
 import { useStore } from 'App/mstore';
 import { debounce } from 'App/utils';
 import {
+  type NestedData,
   buildLevelTree,
   collectTimestamps,
   computeSelectionFromTopN,
   getDepth,
   remapTimestamps,
-  type NestedData,
 } from 'App/utils/breakdownTree';
+import { hasRuleValue } from 'App/utils/hasRuleValue';
 import { hasSampling } from 'App/utils/split-utils';
-import BarChart from 'Components/Charts/BarChart';
-import ColumnChart from 'Components/Charts/ColumnChart';
-import LineChart from 'Components/Charts/LineChart';
-import PieChart from 'Components/Charts/PieChart';
+import TrendChart from 'Components/Charts/TrendChart';
 import SessionsBy from 'Components/Dashboard/Widgets/CustomMetricsWidgets/SessionsBy';
 import SessionsByWithBreakdown from 'Components/Dashboard/Widgets/CustomMetricsWidgets/SessionsByWithBreakdown';
-import { Icon, Loader } from 'UI';
+import NoDataInWindow from 'Components/Dashboard/components/NoDataInWindow';
 
 import BugNumChart from '../../Widgets/CustomMetricsWidgets/BigNumChart';
 import { breakdownName } from '../BreakdownFilter/breakdownDimensions';
@@ -71,15 +72,56 @@ const BreakdownDatatable = lazy(
   () => import('../WidgetDatatable/BreakdownDatatable'),
 );
 
+const TREND_VIEWS = new Set([
+  'lineChart',
+  'areaChart',
+  'barChart',
+  'progressChart',
+  'pieChart',
+]);
+const VITALS = [
+  'domBuildingTime',
+  'ttfb',
+  'speedIndex',
+  'firstContentfulPaintTime',
+  'lcp',
+  'cls',
+];
+
+/** Nothing came back for the window; the list kinds tell it themselves. */
+function nothingInWindow(metric: any, data: any): boolean {
+  if (!data) return false;
+  if (metric.metricType === TIMESERIES && TREND_VIEWS.has(metric.viewType)) {
+    const points: Record<string, unknown>[] = data.chart ?? [];
+    return points.every((p) =>
+      Object.entries(p).every(
+        ([k, v]) => k === 'time' || k === 'timestamp' || !Number(v),
+      ),
+    );
+  }
+  if (metric.metricType === WEBVITALS) {
+    return VITALS.every((k) => !Number(data[k]?.Avg));
+  }
+  // a journey from a set start point that went nowhere in the window
+  if (metric.metricType === USER_PATH && Array.isArray(data.nodes)) {
+    return data.nodes.length === 0 && hasRuleValue(metric.startPoint);
+  }
+  return false;
+}
+
 interface Props {
   metric: any;
   isSaved?: boolean;
   isTemplate?: boolean;
   isPreview?: boolean;
   height?: number;
+  /** on a dashboard: a datum was drilled into, open its card */
+  onDatum?: () => void;
 }
 
 function WidgetChart(props: Props) {
+  // the palette getters read the theme's tokens: re-render when they change
+  useChartTheme();
   const { t } = useTranslation();
   const { ref, inView } = useInView({
     triggerOnce: true,
@@ -94,6 +136,8 @@ function WidgetChart(props: Props) {
   const { period } = dashboardStore;
   const { drillDownPeriod } = dashboardStore;
   const { drillDownFilter } = dashboardStore;
+  // on a dashboard a card is drawn over the dashboard's period
+  const drawnPeriod = isSaved ? period : drillDownPeriod;
   const colors = Styles.safeColors;
   const [loading, setLoading] = useState(true);
   const [stale, setStale] = useState(false);
@@ -106,13 +150,15 @@ function WidgetChart(props: Props) {
     _metric.series.map((s) => s.name),
   );
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    // a datum clicked on a dashboard: its card's chart starts drilled into it
+    if (props.isPreview && _metric.metricId)
+      dashboardStore.applyCarriedDrill(_metric.metricId);
+    return () => {
       dashboardStore.setComparisonPeriod(null, _metric.metricId);
       dashboardStore.resetDrillDownFilter();
-    },
-    [],
-  );
+    };
+  }, []);
 
   useEffect(() => {
     if (enabledRows.length !== _metric.series.length) {
@@ -139,11 +185,16 @@ function WidgetChart(props: Props) {
   }, [chartData]);
 
   const onChartClick = (event: any) => {
+    drill(event);
+    if (event) props.onDatum?.();
+  };
+
+  const drill = (event: any) => {
     metricStore.setDrillDown(true);
     if (event) {
       if (Array.isArray(event)) {
         // get the filter of clicked row
-        const periodTimestamps = drillDownPeriod.toTimestamps();
+        const periodTimestamps = drawnPeriod.toTimestamps();
         drillDownFilter.merge({
           filters: event,
           startTimestamp: periodTimestamps.startTimestamp,
@@ -155,8 +206,8 @@ function WidgetChart(props: Props) {
         const { timestamp } = payload;
         const periodTimestamps = getStartAndEndTimestampsByDensity(
           timestamp,
-          drillDownPeriod.start,
-          drillDownPeriod.end,
+          drawnPeriod.start,
+          drawnPeriod.end,
           params.density,
         );
 
@@ -295,7 +346,7 @@ function WidgetChart(props: Props) {
     const payload = isSaved
       ? { ...metricParams, density }
       : { ...params, ...timestmaps, ..._metric.toJson(), density };
-    const requestPeriod = !isSaved ? drillDownPeriod : period;
+    const requestPeriod = drawnPeriod;
     // both the dependency effect and the page effect call loadPage on mount;
     // the debounce used to collapse them, the key does it now
     const requestKey = JSON.stringify([
@@ -371,9 +422,30 @@ function WidgetChart(props: Props) {
   ]);
   useEffect(loadPage, [_metric.page]);
 
-  const onFocus = (seriesName: string) => {
+  const focusSeries = (seriesName: string) => {
     metricStore.setFocusedSeriesName(seriesName);
     metricStore.setDrillDown(true);
+  };
+  // a drill opened from a widget is over the window the widget draws
+  const drawnWindow = () => {
+    const ts = drawnPeriod.toTimestamps();
+    return { startTimestamp: ts.startTimestamp, endTimestamp: ts.endTimestamp };
+  };
+  // a tile or a slice is the datum; a point's click already opened the card
+  const onFocus = (seriesName: string) => {
+    focusSeries(seriesName);
+    if (!props.onDatum) return;
+    drillDownFilter.merge(drawnWindow());
+    props.onDatum();
+  };
+
+  const onJourneyClick = (filters: any) => {
+    dashboardStore.drillDownFilter.merge({
+      filters,
+      page: 1,
+      ...(props.onDatum ? drawnWindow() : {}),
+    });
+    props.onDatum?.();
   };
 
   const renderChart = React.useCallback(() => {
@@ -421,6 +493,8 @@ function WidgetChart(props: Props) {
           data={data}
           compData={compData}
           isWidget={isSaved || isTemplate}
+          drillPeriod={drawnPeriod}
+          onDrill={props.onDatum}
         />
       );
     }
@@ -503,79 +577,26 @@ function WidgetChart(props: Props) {
           })
         : compDataCopy.namesMap;
 
-      if (viewType === 'lineChart') {
+      if (
+        viewType === 'lineChart' ||
+        viewType === 'areaChart' ||
+        viewType === 'barChart' ||
+        viewType === 'progressChart' ||
+        viewType === 'pieChart'
+      ) {
         return (
-          <LineChart
-            chartName={_metric.name}
+          <TrendChart
+            viewType={viewType}
             inGrid={!props.isPreview}
             data={chartData}
             compData={compDataCopy}
-            onSeriesFocus={onFocus}
+            onSeriesFocus={
+              viewType === 'progressChart' || viewType === 'pieChart'
+                ? onFocus
+                : focusSeries
+            }
             onClick={onChartClick}
-            height={height}
-            label={
-              _metric.metricOf ? labels[_metric.metricOf] : labels.sessionCount
-            }
-          />
-        );
-      }
-      if (viewType === 'areaChart') {
-        return (
-          <LineChart
-            isArea
-            chartName={_metric.name}
-            data={chartData}
-            inGrid={!props.isPreview}
-            onClick={onChartClick}
-            onSeriesFocus={onFocus}
-            label={
-              _metric.metricOf ? labels[_metric.metricOf] : labels.sessionCount
-            }
-          />
-        );
-      }
-      if (viewType === 'barChart') {
-        return (
-          <BarChart
-            inGrid={!props.isPreview}
-            height={height}
-            data={chartData}
-            compData={compDataCopy}
-            params={params}
-            colors={colors}
-            onSeriesFocus={onFocus}
-            onClick={onChartClick}
-            label={
-              _metric.metricOf ? labels[_metric.metricOf] : labels.sessionCount
-            }
-          />
-        );
-      }
-
-      if (viewType === 'progressChart') {
-        return (
-          <ColumnChart
-            height={height}
-            inGrid={!props.isPreview}
-            horizontal
-            data={chartData}
-            compData={compDataCopy}
-            params={params}
-            colors={colors}
-            onSeriesFocus={onFocus}
-            label={
-              _metric.metricOf ? labels[_metric.metricOf] : labels.sessionCount
-            }
-          />
-        );
-      }
-      if (viewType === 'pieChart') {
-        return (
-          <PieChart
-            height={height}
-            inGrid={!props.isPreview}
-            data={chartData}
-            onSeriesFocus={onFocus}
+            height={height ?? 240}
             label={
               _metric.metricOf ? labels[_metric.metricOf] : labels.sessionCount
             }
@@ -588,8 +609,6 @@ function WidgetChart(props: Props) {
             inGrid={!props.isPreview}
             data={data[0]}
             height={height}
-            colors={colors}
-            params={params}
             label={
               _metric.metricOf ? labels[_metric.metricOf] : labels.sessionCount
             }
@@ -647,6 +666,7 @@ function WidgetChart(props: Props) {
             height={height}
             isTemplate={isTemplate}
             isEdit={!isSaved && !isTemplate}
+            inGrid={!props.isPreview}
           />
         );
       }
@@ -678,6 +698,7 @@ function WidgetChart(props: Props) {
             data={data}
             onClick={onChartClick}
             isTemplate={isTemplate}
+            inGrid={!props.isPreview}
           />
         );
       }
@@ -685,34 +706,20 @@ function WidgetChart(props: Props) {
     if (metricType === HEATMAP) {
       if (!props.isPreview) {
         return _metric.thumbnail ? (
-          <div
-            style={{
-              height: '229px',
-              overflow: 'hidden',
-              marginBottom: '10px',
-            }}
-          >
-            <img
-              src={_metric.thumbnail}
-              alt="clickmap thumbnail"
-              className="w-full h-full object-cover"
-            />
+          <div className="m-cmap__thumb">
+            <img src={_metric.thumbnail} alt={t('Click map thumbnail')} />
           </div>
         ) : (
-          <div
-            className="flex items-center relative justify-center"
-            style={{ height: '229px' }}
-          >
-            <Icon name="info-circle" className="mr-2" size="14" />
-            {t('No data available for the selected period.')}
-          </div>
+          <NoDataInWindow inGrid />
         );
       }
       return <ClickMapCard />;
     }
 
     if (metricType === INSIGHTS) {
-      return <InsightsCard height={height} data={data} />;
+      return (
+        <InsightsCard height={height} data={data} inGrid={!props.isPreview} />
+      );
     }
 
     if (metricType === USER_PATH && data) {
@@ -722,15 +729,15 @@ function WidgetChart(props: Props) {
           : false;
         const height = props.isPreview ? 550 : 240;
         return (
-          <SunBurstChart
-            height={height}
-            data={data}
-            inGrid={!props.isPreview}
-            onChartClick={(filters: any) => {
-              dashboardStore.drillDownFilter.merge({ filters, page: 1 });
-            }}
-            isUngrouped={isUngrouped}
-          />
+          <LargerScreenOnly what={t('The journey chart')}>
+            <SunBurstChart
+              height={height}
+              data={data}
+              inGrid={!props.isPreview}
+              onChartClick={onJourneyClick}
+              isUngrouped={isUngrouped}
+            />
+          </LargerScreenOnly>
         );
       }
       if (viewType === 'lineChart' && data.links) {
@@ -744,18 +751,18 @@ function WidgetChart(props: Props) {
           )?.value[0] ?? 'unref';
         const getFilter = (name: string) => filterStore.findEvent({ name });
         return (
-          <SankeyChart
-            height={height}
-            data={data}
-            inGrid={!props.isPreview}
-            onChartClick={(filters: any) => {
-              dashboardStore.drillDownFilter.merge({ filters, page: 1 });
-            }}
-            isUngrouped={isUngrouped}
-            startUrl={startUrl}
-            getFilter={getFilter}
-            drilldownFilter={dashboardStore.drillDownFilter.filters}
-          />
+          <LargerScreenOnly what={t('The journey chart')}>
+            <SankeyChart
+              height={height}
+              data={data}
+              inGrid={!props.isPreview}
+              onChartClick={onJourneyClick}
+              isUngrouped={isUngrouped}
+              startUrl={startUrl}
+              getFilter={getFilter}
+              drilldownFilter={dashboardStore.drillDownFilter.filters}
+            />
+          </LargerScreenOnly>
         );
       }
     }
@@ -763,11 +770,10 @@ function WidgetChart(props: Props) {
     if (metricType === RETENTION) {
       if (viewType === 'trend') {
         return (
-          <LineChart
-            height={height}
+          <TrendChart
+            viewType="lineChart"
+            height={height ?? 240}
             data={data}
-            colors={colors}
-            params={params}
             onClick={onChartClick}
           />
         );
@@ -872,9 +878,13 @@ function WidgetChart(props: Props) {
           <Loader loading={loading} style={{ height: '240px' }} />
         )
       ) : (
-        <div style={{ minHeight: props.isPreview ? undefined : 240 }}>
+        <div>
           <Suspense fallback={<Loader loading style={{ height: '240px' }} />}>
-            {renderChart()}
+            {nothingInWindow(_metric, data) ? (
+              <NoDataInWindow inGrid={!props.isPreview} />
+            ) : (
+              renderChart()
+            )}
             {showTable &&
             mergedBreakdownData &&
             Object.keys(mergedBreakdownData).length > 0 ? (
@@ -882,7 +892,6 @@ function WidgetChart(props: Props) {
                 data={mergedBreakdownData}
                 breakdownLabels={_metric.breakdowns}
                 inBuilder={props.isPreview}
-                defaultOpen
                 metric={_metric}
               />
             ) : null}

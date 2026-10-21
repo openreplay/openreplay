@@ -1,9 +1,9 @@
-import { makeAutoObservable } from 'mobx';
-
-import { integrationsService } from 'App/services';
+import { toast } from '@/ui/overlays/toast';
+import { makeAutoObservable, runInAction } from 'mobx';
 
 import { serviceNames } from 'App/components/Client/Integrations/apiMethods';
-import { toast } from 'react-toastify';
+import { integrationsService } from 'App/services';
+
 import { MessengerConfig } from './types/integrations/messengers';
 import {
   DatadogInt,
@@ -78,11 +78,13 @@ class GenericIntegrationsStore {
     this.setLoading(true);
     try {
       const { data } = await integrationsService.fetchList(undefined, siteId);
+      // the project was switched while this was in flight: not its list
+      if (siteId && siteId !== this.siteId) return;
       this.setList(data);
     } catch (e) {
       console.log(e);
     } finally {
-      this.setLoading(false);
+      if (!siteId || siteId === this.siteId) this.setLoading(false);
     }
   };
 }
@@ -162,9 +164,12 @@ class NamedIntegrationStore<T extends Integration> {
     }
   };
 
-  saveIntegration = async (name: string, siteId?: string): Promise<void> => {
+  saveIntegration = async (
+    name: string,
+    siteId?: string,
+  ): Promise<{ errors?: string[] } | undefined> => {
     if (!this.instance) return;
-    await integrationsService.saveIntegration(
+    return integrationsService.saveIntegration(
       this.name ?? name,
       this.instance.toData(),
       siteId,
@@ -180,7 +185,14 @@ class NamedIntegrationStore<T extends Integration> {
 
   deleteIntegration = async (siteId?: string) => {
     if (!this.instance) return;
-    return integrationsService.removeIntegration(this.name, siteId);
+    const res = await integrationsService.removeIntegration(this.name, siteId);
+    // kept unless the server confirms the delete
+    if (!res || res.errors?.length) return res;
+    // the old credentials must not read as a live connection
+    runInAction(() => {
+      this.instance = this.namedTypeCreator({});
+    });
+    return res;
   };
 
   init = (config: Record<string, any>): void => {
@@ -223,8 +235,9 @@ class MessengerIntegrationStore {
     this.errors = errors;
   };
 
-  saveIntegration = async (): Promise<void> => {
-    if (!this.instance) return;
+  /** Resolves true once the channel is saved; a failure has already been toasted. */
+  saveIntegration = async (): Promise<boolean> => {
+    if (!this.instance) return false;
     this.setLoading(true);
     try {
       const response = await integrationsService.saveIntegration(
@@ -237,12 +250,14 @@ class MessengerIntegrationStore {
           response.errors[0] ||
             "Couldn't process the request: check your data.",
         );
-        return response;
+        return false;
       }
       this.instance.edit({ webhookId: response.data.webhookId });
       this.setList([...this.list, this.instance]);
+      return true;
     } catch (e) {
       toast.error("Couldn't process the request: check your data.");
+      return false;
     } finally {
       this.setLoading(false);
     }
@@ -293,8 +308,8 @@ class MessengerIntegrationStore {
     this.instance.edit(data);
   };
 
-  update = async () => {
-    if (!this.instance) return;
+  update = async (): Promise<boolean> => {
+    if (!this.instance) return false;
     this.setLoading(true);
     try {
       const response = await integrationsService.updateMessengerInt(
@@ -307,15 +322,17 @@ class MessengerIntegrationStore {
           response.errors[0] ||
             "Couldn't process the request: check your data.",
         );
-        return response;
+        return false;
       }
       this.setList(
         this.list.map((int) =>
           int.webhookId === this.instance?.webhookId ? this.instance : int,
         ),
       );
+      return true;
     } catch (e) {
       toast.error("Couldn't process the request: check your data.");
+      return false;
     } finally {
       this.setLoading(false);
     }

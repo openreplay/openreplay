@@ -1,7 +1,12 @@
+import { IconButton } from '@/ui/actions/IconButton';
+import { Button } from '@/ui/actions/button';
+import { Notice } from '@/ui/feedback/Notice';
+import { MultiSelect } from '@/ui/inputs/multi-select';
+import { InlineSelect } from '@/ui/inputs/select';
+import { Tooltip } from '@/ui/overlays/tooltip';
 import { FilterCategory } from 'Types/filter/filterType';
 import { eventKeys } from 'Types/filter/newFilter';
-import { Alert, Button, Card, Form, Select, Space, Tooltip } from 'antd';
-import { ChevronUp, PlusIcon } from 'lucide-react';
+import { ChevronsDownUp, ChevronsUpDown, Plus } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -19,14 +24,18 @@ import {
 } from 'App/constants/card';
 import { issueCategories } from 'App/constants/filterOptions';
 import { projectStore, useStore } from 'App/mstore';
-import BreakdownFilter from 'Components/Dashboard/components/BreakdownFilter/BreakdownFilter';
 import FilterSeries from 'Components/Dashboard/components/FilterSeries/FilterSeries';
 
-import FilterItem from 'Shared/Filters/FilterItem';
+import {
+  SingleRule,
+  buildFilterEditor,
+  useCatalogue,
+} from 'Shared/FilterEditor';
+import type { FilterTarget } from 'Shared/FilterEditor';
 
 import ExcludeFilters from '../FilterSeries/ExcludeFilters';
 
-const supportsBreakdown = (metric: { metricType: string }) =>
+export const supportsBreakdown = (metric: { metricType: string }) =>
   [TIMESERIES, FUNNEL, TABLE].includes(metric.metricType);
 
 export function checkIsSingleSeries(metric: { metricType: string }) {
@@ -81,7 +90,7 @@ function WidgetFormNew({ layout }: { layout: string }) {
   return isPredefined ? (
     <PredefinedMessage />
   ) : (
-    <Space direction="vertical" className="w-full! flex!">
+    <div className="m-cardp__definition">
       <AdditionalFilters />
       <FilterSection
         layout={layout}
@@ -89,7 +98,7 @@ function WidgetFormNew({ layout }: { layout: string }) {
         excludeCategory={excludeCategory}
         excludeFilterKeys={excludeFilterKeys}
       />
-    </Space>
+    </div>
   );
 }
 
@@ -145,180 +154,171 @@ const FilterSection = observer(
     };
 
     const allCollapsed = Object.values(seriesCollapseState).every((v) => v);
-    const showBreakdown = supportsBreakdown(metric);
+    const lead = isPathAnalysis
+      ? t('Filter the sessions')
+      : isFunnel
+        ? t('Add the first step')
+        : isTable
+          ? t('Filter the sessions')
+          : t('Add an event to count');
     return (
       <>
-        {isPathAnalysis && <ExcludeFilters metric={metric} />}
-
-        {metric.series.length > 0 &&
-          metric.series
+        <div className="m-cardp__form">
+          {metric.series
             .slice(0, isSingleSeries ? 1 : metric.series.length)
             .map((series: any, index: number) => (
-              <div className="mb-2" key={series.name}>
-                <FilterSeries
-                  isHeatmap={isHeatMap}
-                  canExclude={isPathAnalysis}
-                  removeEvents={isPathAnalysis}
-                  supportsEmpty={!isHeatMap && !isPathAnalysis}
-                  excludeFilterKeys={excludeFilterKeys}
-                  excludeCategory={excludeCategory}
-                  observeChanges={() => metric.updateKey('hasChanged', true)}
-                  hideHeader={
-                    isTable ||
-                    isHeatMap ||
-                    isInsights ||
-                    isPathAnalysis ||
-                    isFunnel ||
-                    isWebVitals
-                  }
-                  excludeEventOrder={isFunnel || isWebVitals || isHeatMap}
-                  seriesIndex={index}
-                  series={series}
-                  seriesNames={metric.series.map((s: any) => s.name)}
-                  onRemoveSeries={() => metric.removeSeries(index)}
-                  canDelete={metric.series.length > 1}
-                  collapseState={seriesCollapseState[series.seriesId]}
-                  onToggleCollapse={() => {
-                    setSeriesCollapseState((seriesCollapseState) => ({
-                      ...seriesCollapseState,
-                      [series.seriesId]: !seriesCollapseState[series.seriesId],
-                    }));
-                  }}
-                  emptyMessage={
-                    isTable
-                      ? t(
-                          'Filter data using any event or attribute. Use Add Step button below to do so.',
-                        )
-                      : t('Add an event or filter step to define the series.')
-                  }
-                  expandable={isSingleSeries}
-                />
-              </div>
+              <FilterSeries
+                key={series.seriesId ?? series.name}
+                removeEvents={isPathAnalysis}
+                excludeCategory={excludeCategory}
+                observeChanges={() => metric.updateKey('hasChanged', true)}
+                hideHeader={isSingleSeries}
+                excludeEventOrder={isFunnel || isWebVitals || isHeatMap}
+                seriesIndex={index}
+                series={series}
+                seriesNames={metric.series.map((s: any) => s.name)}
+                onRemoveSeries={() => metric.removeSeries(index)}
+                canDelete={metric.series.length > 1}
+                collapseState={seriesCollapseState[series.seriesId]}
+                onToggleCollapse={() =>
+                  setSeriesCollapseState((state) => ({
+                    ...state,
+                    [series.seriesId]: !state[series.seriesId],
+                  }))
+                }
+                lead={lead}
+              />
             ))}
-        {isSingleSeries ? null : (
-          <div className="mx-auto flex items-center gap-2 w-fit">
-            <Tooltip
-              title={canAddSeries ? '' : t('Maximum of 3 series reached.')}
-            >
-              <Button
-                onClick={() => {
-                  if (!canAddSeries) return;
-                  metric.addSeries();
-                }}
-                disabled={!canAddSeries}
-                size="small"
-                type="primary"
-                icon={<PlusIcon size={16} />}
+          {isSingleSeries ? null : (
+            <div className="m-cardp__form-foot">
+              <Tooltip
+                title={
+                  canAddSeries
+                    ? t('Compare another set of events on the same chart')
+                    : t('Maximum of 3 series reached.')
+                }
               >
-                {t('Add Series')}
-              </Button>
-            </Tooltip>
-            <Button
-              size="small"
-              type="text"
-              icon={
-                <ChevronUp
-                  size={16}
-                  className={allCollapsed ? 'rotate-180' : ''}
+                <span>
+                  <Button
+                    variant="secondary"
+                    className="m-cardp__addseries"
+                    disabled={!canAddSeries}
+                    onClick={() => metric.addSeries()}
+                  >
+                    <Plus size={13} />
+                    {t('Add series')}
+                  </Button>
+                </span>
+              </Tooltip>
+              {metric.series.length > 1 ? (
+                <IconButton
+                  icon={
+                    allCollapsed ? (
+                      <ChevronsUpDown size={14} />
+                    ) : (
+                      <ChevronsDownUp size={14} />
+                    )
+                  }
+                  label={
+                    allCollapsed
+                      ? t('Expand all series')
+                      : t('Collapse all series')
+                  }
+                  variant="ghost"
+                  onClick={allCollapsed ? expandAll : collapseAll}
                 />
-              }
-              onClick={allCollapsed ? expandAll : collapseAll}
-            >
-              {allCollapsed ? t('Expand') : t('Collapse')}&nbsp;{t('All')}
-            </Button>
-          </div>
-        )}
-
-        {showBreakdown ? (
-          <div className="mt-2">
-            <BreakdownFilter
-              metric={metric}
-              observeChanges={() => metric.updateKey('hasChanged', true)}
-            />
-          </div>
-        ) : null}
+              ) : null}
+            </div>
+          )}
+        </div>
+        {isPathAnalysis && <ExcludeFilters metric={metric} />}
       </>
     );
   },
 );
 
+const noop = () => {};
+
+/** The journey's anchor: one event rule, replaceable among the journey's events. */
+const StartPoint = observer(({ metric }: { metric: any }) => {
+  const all = useCatalogue();
+  const target: FilterTarget = {
+    filters: [metric.startPoint],
+    eventsOrder: 'then',
+    add: noop,
+    update: (_, f) => metric.updateStartPoint(f),
+    remove: noop,
+    move: noop,
+    setEventsOrder: noop,
+    clear: noop,
+  };
+  const editor = buildFilterEditor(target);
+  const rule = editor.events[0] ?? editor.properties[0];
+  if (!rule) return null;
+  return (
+    <SingleRule
+      filter={rule}
+      editor={editor}
+      entries={all.filter((e) => e.isEvent)}
+    />
+  );
+});
+
 const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
   const { t } = useTranslation();
   const metricValueOptions = [
-    { value: 'location', label: t('Page Paths') },
-    { value: 'title', label: t('Page Titles') },
+    { value: 'location', label: t('Page paths') },
+    { value: 'title', label: t('Page titles') },
     { value: 'click', label: t('Clicks') },
     { value: 'input', label: t('Inputs') },
     { value: 'custom', label: t('Events') },
   ];
 
-  const onPointChange = (value: any) => {
-    writeOption({ name: 'startType', value: { value } });
-  };
   return (
-    <div className="rounded-lg bg-white border">
-      <div className="flex flex-col justify-start gap-2 flex-wrap">
-        <Form.Item className="mb-0! hover:bg-bg-blue/30! px-4! pb-1! pt-2!">
-          <div className="flex flex-wrap gap-2 items-center justify-start">
-            <span className="font-medium">{t('Journeys With')}</span>
-            <div className="flex gap-2 items-center">
-              <Select
-                className="w-36 rounded-lg"
-                name="startType"
-                options={[
-                  { value: 'start', label: t('Start Point') },
-                  { value: 'end', label: t('End Point') },
-                ]}
-                defaultValue={metric.startType || 'start'}
-                onChange={onPointChange}
-                placeholder={t('Select Start Type')}
-              />
-
-              <span className="font-medium">{t('Showing')}</span>
-
-              <Select
-                mode="multiple"
-                className="rounded-lg w-max	min-w-44 max-w-58"
-                allowClear
-                name="metricValue"
-                options={metricValueOptions}
-                value={metric.metricValue || []}
-                onChange={(value) =>
-                  writeOption({ name: 'metricValue', value })
-                }
-                placeholder={t('Select Metrics')}
-                maxTagCount={'responsive'}
-                showSearch={false}
-              />
-            </div>
-          </div>
-        </Form.Item>
-
-        {metric.startPoint && (
-          <Form.Item className="mb-0! hover:bg-bg-blue/30! px-4! pb-2! pt-1!">
-            <div className="flex flex-wrap items-start justify-start">
-              <span className="font-medium mr-2">
-                {t('Start Point')}
-                {/* {metric.startType === 'start' ? t('Start Point') : t('End Point')} */}
-              </span>
-              <span className="font-normal">
-                <FilterItem
-                  hideDelete
-                  filter={metric.startPoint}
-                  // allowedFilterKeys={[
-                  //   FilterKey.LOCATION,
-                  //   FilterKey.CLICK,
-                  //   FilterKey.INPUT,
-                  //   FilterKey.CUSTOM,
-                  // ]}
-                  onUpdate={(val) => metric.updateStartPoint(val)}
-                  onRemoveFilter={() => {}}
-                />
-              </span>
-            </div>
-          </Form.Item>
-        )}
+    <div className="m-jrny">
+      <div className="m-jrny__row">
+        <span className="m-jrny__word">{t('Journeys with')}</span>
+        <InlineSelect<'start' | 'end'>
+          value={metric.startType || 'start'}
+          onChange={(value) =>
+            writeOption({ name: 'startType', value: { value } })
+          }
+          ariaLabel={t('Start or end point')}
+          options={[
+            {
+              value: 'start',
+              label: t('start point'),
+              hint: t('Where sessions go from here'),
+            },
+            {
+              value: 'end',
+              label: t('end point'),
+              hint: t('How sessions arrived here'),
+            },
+          ]}
+        />
+        <span className="m-jrny__word">{t('showing')}</span>
+        <MultiSelect<string>
+          className="m-jrny__showing"
+          value={metric.metricValue || []}
+          onChange={(value) =>
+            writeOption({
+              name: 'metricValue',
+              value: value.length ? value : ['location'],
+            })
+          }
+          ariaLabel={t('What the steps are')}
+          options={metricValueOptions}
+        />
       </div>
+      {metric.startPoint ? (
+        <div className="m-jrny__row">
+          <span className="m-jrny__word">
+            {metric.startType === 'end' ? t('End point') : t('Start point')}
+          </span>
+          <StartPoint metric={metric} />
+        </div>
+      ) : null}
     </div>
   );
 });
@@ -326,21 +326,22 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
 const InsightsFilter = observer(({ metric, writeOption }: any) => {
   const { t } = useTranslation();
   return (
-    <Card styles={{ body: { padding: '20px 20px' } }}>
-      <Form.Item className="mb-0!">
-        <Space>
-          <Select
-            name="metricValue"
-            options={issueCategories}
-            value={metric.metricValue}
-            onChange={writeOption}
-            isMulti
-            placeholder={t('All Categories')}
-            allowClear
-          />
-        </Space>
-      </Form.Item>
-    </Card>
+    <div className="m-jrny">
+      <div className="m-jrny__row">
+        <span className="m-jrny__word">{t('Issue categories')}</span>
+        <MultiSelect<string>
+          className="m-jrny__showing"
+          value={metric.metricValue || []}
+          onChange={(value) => writeOption({ name: 'metricValue', value })}
+          ariaLabel={t('Issue categories')}
+          placeholder={t('All categories')}
+          options={issueCategories.map((c: any) => ({
+            value: c.value,
+            label: c.label,
+          }))}
+        />
+      </div>
+    </div>
   );
 });
 
@@ -369,12 +370,8 @@ const AdditionalFilters = observer(() => {
 const PredefinedMessage = () => {
   const { t } = useTranslation();
   return (
-    <Alert
-      message={t("Drilldown or filtering isn't supported on this legacy card.")}
-      type="warning"
-      showIcon
-      closable
-      className="border-transparent rounded-lg"
-    />
+    <Notice kind="info">
+      {t("Drilldown or filtering isn't supported on this legacy card.")}
+    </Notice>
   );
 };

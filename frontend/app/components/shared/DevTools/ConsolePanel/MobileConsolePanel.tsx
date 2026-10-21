@@ -1,22 +1,23 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { LogLevel, ILog } from 'Player';
-import { Tabs, Input, NoContent } from 'UI';
+import { ILog, LogLevel } from 'Player';
 import cn from 'classnames';
+import { observer } from 'mobx-react-lite';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { VList, VListHandle } from 'virtua';
+
+import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorDetailsModal';
+import { useModal } from 'App/components/Modal';
 import {
   IOSPlayerContext,
   MobilePlayerContext,
 } from 'App/components/Session/playerContext';
-import { observer } from 'mobx-react-lite';
-import { VList, VListHandle } from 'virtua';
 import { useStore } from 'App/mstore';
-import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorDetailsModal';
-import { useModal } from 'App/components/Modal';
-import { InfoCircleOutlined, SearchOutlined } from '@ant-design/icons';
+
+import BottomBlock from '../BottomBlock';
+import ConsoleRow from '../ConsoleRow';
+import { Keyword, NoData, PanelTabs } from '../PanelKit';
 import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
 import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter';
-import ConsoleRow from '../ConsoleRow';
-import BottomBlock from '../BottomBlock';
-import { useTranslation } from 'react-i18next';
 
 const ALL = 'ALL';
 const INFO = 'INFO';
@@ -30,11 +31,6 @@ const LEVEL_TAB = {
   [LogLevel.ERROR]: ERRORS,
   [LogLevel.EXCEPTION]: ERRORS,
 } as const;
-
-const TABS = [ALL, ERRORS, WARNINGS, INFO].map((tab) => ({
-  text: tab,
-  key: tab,
-}));
 
 function renderWithNL(s: string | null = '') {
   if (typeof s !== 'string') return '';
@@ -72,7 +68,9 @@ const INDEX_KEY = 'console';
 function MobileConsolePanel() {
   const {
     sessionStore: { devTools },
+    sessionStore,
   } = useStore();
+  const { sessionId } = sessionStore.current;
 
   const { t } = useTranslation();
   const { filter } = devTools[INDEX_KEY];
@@ -99,8 +97,16 @@ function MobileConsolePanel() {
 
   const onTabClick = (activeTab: any) =>
     devTools.update(INDEX_KEY, { activeTab });
-  const onFilterChange = ({ target: { value } }: any) =>
+  const onFilterChange = (value: string) =>
     devTools.update(INDEX_KEY, { filter: value });
+  const counts = useMemo(() => {
+    const c: Record<string, number> = { [ALL]: list.length };
+    for (const l of list) {
+      const k = LEVEL_TAB[l.level as keyof typeof LEVEL_TAB];
+      if (k) c[k] = (c[k] ?? 0) + 1;
+    }
+    return c;
+  }, [list]);
 
   // AutoScroll
   const [timeoutStartAutoscroll, stopAutoscroll] = useAutoscroll(
@@ -129,7 +135,7 @@ function MobileConsolePanel() {
     setIsDetailsModalActive(true);
     showModal(<ErrorDetailsModal errorId={log.errorId} />, {
       right: true,
-      width: 1200,
+      size: 'wide',
       onClose: () => {
         setIsDetailsModalActive(false);
         timeoutStartAutoscroll();
@@ -146,38 +152,35 @@ function MobileConsolePanel() {
       onMouseLeave={onMouseLeave}
     >
       <BottomBlock.Header>
-        <div className="flex items-center">
-          <span className="font-semibold color-gray-medium mr-4">
-            {t('Console')}
-          </span>
-          <Tabs
-            tabs={TABS}
-            active={activeTab}
-            onClick={onTabClick}
-            border={false}
-          />
-        </div>
-        <Input
-          className="rounded-lg"
-          placeholder="Filter by keyword"
-          name="filter"
-          onChange={onFilterChange}
-          value={filter}
-          size="small"
-          prefix={<SearchOutlined className="text-neutral-400" />}
+        <PanelTabs
+          label={t('Log level')}
+          active={activeTab}
+          onSelect={onTabClick}
+          items={[
+            { key: ALL, label: t('All'), count: counts[ALL] },
+            { key: ERRORS, label: t('Errors'), count: counts[ERRORS] ?? 0 },
+            {
+              key: WARNINGS,
+              label: t('Warnings'),
+              count: counts[WARNINGS] ?? 0,
+            },
+            { key: INFO, label: t('Info'), count: counts[INFO] ?? 0 },
+          ]}
         />
+        <div className="m-dt__bar-right">
+          <Keyword value={filter} onChange={onFilterChange} />
+        </div>
       </BottomBlock.Header>
-      <BottomBlock.Content className="overflow-y-auto">
-        <NoContent
-          title={
-            <div className="capitalize flex items-center mt-16 gap-2">
-              <InfoCircleOutlined size={18} />
-              {t('No Data')}
-            </div>
-          }
-          size="small"
-          show={filteredList.length === 0}
-        >
+      <BottomBlock.Content>
+        {filteredList.length === 0 ? (
+          <NoData
+            hint={
+              filter
+                ? t('Nothing in the logs matches that.')
+                : t('Nothing was logged at this level.')
+            }
+          />
+        ) : (
           <VList ref={_list} itemSize={25} data={filteredList}>
             {(log, index) => (
               <ConsoleRow
@@ -187,11 +190,12 @@ function MobileConsolePanel() {
                 iconProps={getIconProps(log.level)}
                 renderWithNL={renderWithNL}
                 onClick={() => showDetails(log)}
+                sessionId={sessionId}
                 showSingleTab
               />
             )}
           </VList>
-        </NoContent>
+        )}
       </BottomBlock.Content>
     </BottomBlock>
   );

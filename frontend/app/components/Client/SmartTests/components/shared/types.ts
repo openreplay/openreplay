@@ -512,7 +512,7 @@ export type ConsoleLevel = 'info' | 'warn' | 'error';
 export interface ConsoleLog {
   level: ConsoleLevel;
   text: string;
-  time: number; // ms into the run
+  time?: number; // ms into the run; unknown for a runner's bare message list
 }
 
 export interface NetworkTiming {

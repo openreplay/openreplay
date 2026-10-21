@@ -1,9 +1,19 @@
 import { client, filterStore } from '@/mstore';
 import FilterItem from '@/mstore/types/filterItem';
 
+import type { SavedSegment } from 'App/components/SmartAlerts/api';
+import type { ISavedSearch } from 'App/mstore/types/savedSearch';
+
+import type { EventsOrder } from 'Shared/FilterEditor/types';
+
+/** The API sends epoch ms on some rows and ISO strings on others. */
+const toMs = (v: number | string | undefined): number =>
+  typeof v === 'string' ? Date.parse(v) || 0 : (v ?? 0);
+
 export class Segment {
   name: string;
   filters: FilterItem[] = [];
+  eventsOrder: EventsOrder = 'then';
   id: string;
   updatedAt: number;
   createdAt: number;
@@ -29,10 +39,11 @@ export class Segment {
       this.filters = rawFilters.length
         ? filterStore.processFiltersFromData(rawFilters)
         : [];
+      this.eventsOrder = data.data?.eventsOrder ?? 'then';
       this.isPublic = data.isPublic || false;
       this.id = data.searchId ? String(data.searchId) : '';
-      this.updatedAt = data.updatedAt || data.createdAt || 0;
-      this.createdAt = data.createdAt || 0;
+      this.updatedAt = toMs(data.updatedAt) || toMs(data.createdAt);
+      this.createdAt = toMs(data.createdAt);
       this.userId = data.userId;
       this.userName = data.userName ?? '';
       this.sessionsCount = data.sessionsCount ?? 0;
@@ -45,21 +56,51 @@ export class Segment {
   }
 }
 
+/** The search store's saved search, as a Segment. */
+export const segmentOf = (s: ISavedSearch) =>
+  new Segment({
+    searchId: s.searchId ?? '',
+    name: s.name ?? '',
+    isPublic: s.isPublic,
+    userId: s.userId,
+    userName: s.userName,
+    data: s.data as ApiSegment['data'],
+  });
+
+/** The drawer's view of a segment the capture layer hasn't loaded. */
+export const asSavedSegment = (s: Segment, mine: boolean): SavedSegment => ({
+  id: s.id,
+  name: s.name,
+  isPublic: s.isPublic,
+  mine,
+  createdBy: s.userName,
+  filters: s.filters,
+  eventsOrder: s.eventsOrder,
+  summary: '',
+  sessionsCount: s.sessionsCount,
+  usersCount: s.usersCount,
+  totalSessionCount: s.totalSessionCount,
+  updatedAt: s.updatedAt,
+  active: s.isCapture,
+  trafficPct: s.trafficPct,
+  sessionsPerDay: s.sessionsPerDay,
+});
+
 interface ApiSegment {
   searchId: string | number;
   name: string;
   isPublic: boolean;
   userId?: number;
   userName?: string;
-  createdAt?: number;
-  updatedAt?: number;
+  createdAt?: number | string;
+  updatedAt?: number | string;
   sessionsCount?: number;
   usersCount?: number;
   isCapture?: boolean;
   totalSessionCount?: number;
   trafficPct?: number;
   sessionsPerDay?: number;
-  data?: { filters: Record<string, unknown>[] };
+  data?: { filters: Record<string, unknown>[]; eventsOrder?: EventsOrder };
   filter?: { filters: Record<string, unknown>[] };
 }
 
@@ -85,7 +126,7 @@ const ensureFilterFields = (filter: any): any => ({
 
 const toPayload = (
   payload: Pick<Segment, 'name' | 'isPublic' | 'filters'> &
-    Partial<Pick<Segment, 'isCapture'>>,
+    Partial<Pick<Segment, 'isCapture' | 'eventsOrder'>>,
 ) => ({
   name: payload.name || null,
   isPublic: Boolean(payload.isPublic),
@@ -102,7 +143,7 @@ const toPayload = (
     }),
     sort: 'startTs',
     order: 'desc',
-    eventsOrder: 'then',
+    eventsOrder: payload.eventsOrder ?? 'then',
     limit: 10,
     page: 1,
   },
@@ -163,7 +204,7 @@ export function fetchSegment(segmentId: string): Promise<Segment> {
 
 export function createSegment(
   payload: Pick<Segment, 'name' | 'isPublic' | 'filters'> &
-    Partial<Pick<Segment, 'isCapture'>>,
+    Partial<Pick<Segment, 'isCapture' | 'eventsOrder'>>,
 ): Promise<Segment> {
   return client
     .post('/PROJECT_ID/sessions/search/save', toPayload(payload))
@@ -178,7 +219,7 @@ export function deleteSegment(segmentId: string): Promise<any> {
 export function updateSegment(
   segmentId: string,
   payload: Pick<Segment, 'name' | 'isPublic' | 'filters'> &
-    Partial<Pick<Segment, 'isCapture'>>,
+    Partial<Pick<Segment, 'isCapture' | 'eventsOrder'>>,
 ): Promise<Segment> {
   return client
     .put(`/PROJECT_ID/sessions/search/saved/${segmentId}`, toPayload(payload))
