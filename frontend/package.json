@@ -149,7 +149,7 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.59.4",
-    "vite": "8.2.0",
+    "vite": "8.2.4",
     "vite-plugin-static-copy": "^4.1.1",
     "vite-tsconfig-paths": "^6.1.1"
   },
