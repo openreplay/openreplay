@@ -22,10 +22,11 @@ def get(project_id, id):
     try:
         with pg_client.PostgresClient() as cur:
             cur.execute(
-                cur.mogrify("""\
-                    SELECT *
-                    FROM public.alerts
-                    WHERE alert_id =%(id)s AND project_id=%(project_id)s;""",
+                cur.mogrify(""" \
+                            SELECT *
+                            FROM public.alerts
+                            WHERE alert_id = %(id)s
+                              AND project_id = %(project_id)s;""",
                             {"project_id": project_id, "id": id})
             )
 
@@ -42,16 +43,17 @@ def get(project_id, id):
 
 def get_all(project_id):
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify("""\
-                    SELECT alerts.*,
-                           COALESCE(metrics.name || '.' || (COALESCE(metric_series.name, 'series ' || index)) || '.count',
-                                    query ->> 'left') AS series_name
-                    FROM public.alerts
-                         LEFT JOIN metric_series USING (series_id)
-                         LEFT JOIN metrics USING (metric_id)
-                    WHERE alerts.project_id =%(project_id)s
-                        AND alerts.deleted_at ISNULL
-                    ORDER BY alerts.created_at;""",
+        query = cur.mogrify(""" \
+                            SELECT alerts.*,
+                                   COALESCE(metrics.name || '.' || (COALESCE(metric_series.name, 'series ' || index)) ||
+                                            '.count',
+                                            query ->> 'left') AS series_name
+                            FROM public.alerts
+                                     LEFT JOIN metric_series USING (series_id)
+                                     LEFT JOIN metrics USING (metric_id)
+                            WHERE alerts.project_id = %(project_id)s
+                              AND alerts.deleted_at ISNULL
+                            ORDER BY alerts.created_at;""",
                             {"project_id": project_id})
         cur.execute(query=query)
         all = helper.list_to_camel_case(cur.fetchall())
@@ -75,10 +77,11 @@ def create(project_id, data: schemas.AlertSchema):
 
     with pg_client.PostgresClient() as cur:
         cur.execute(
-            cur.mogrify("""\
-                    INSERT INTO public.alerts(project_id, name, description, detection_method, query, options, series_id, change)
-                    VALUES (%(project_id)s, %(name)s, %(description)s, %(detection_method)s, %(query)s, %(options)s::jsonb, %(series_id)s, %(change)s)
-                    RETURNING *;""",
+            cur.mogrify(""" \
+                        INSERT INTO public.alerts(project_id, name, description, detection_method, query, options,
+                                                  series_id, change)
+                        VALUES (%(project_id)s, %(name)s, %(description)s, %(detection_method)s, %(query)s,
+                                %(options)s::jsonb, %(series_id)s, %(change)s) RETURNING *;""",
                         {"project_id": project_id, **data})
         )
         a = helper.dict_to_camel_case(cur.fetchone())
@@ -92,17 +95,19 @@ def update(project_id: int, id: int, data: schemas.AlertSchema):
 
     try:
         with pg_client.PostgresClient() as cur:
-            query = cur.mogrify("""\
-                        UPDATE public.alerts
-                        SET name = %(name)s,
-                            description = %(description)s,
-                            active = TRUE,
-                            detection_method = %(detection_method)s,
-                            query = %(query)s,
-                            options = %(options)s,
-                            series_id = %(series_id)s,
-                            change = %(change)s
-                        WHERE alert_id =%(id)s AND project_id = %(project_id)s AND deleted_at ISNULL 
+            query = cur.mogrify(""" \
+                                UPDATE public.alerts
+                                SET name             = %(name)s,
+                                    description      = %(description)s,
+                                    active           = TRUE,
+                                    detection_method = %(detection_method)s,
+                                    query            = %(query)s,
+                                    options          = %(options)s,
+                                    series_id        = %(series_id)s,
+                                    change           = %(change)s
+                                WHERE alert_id = %(id)s
+                                  AND project_id = %(project_id)s
+                                  AND deleted_at ISNULL 
                         RETURNING *;""",
                                 {"project_id": project_id, "id": id, **data})
             cur.execute(query=query)
@@ -239,18 +244,25 @@ def delete(project_id, alert_id):
         cur.execute(
             cur.mogrify(""" UPDATE public.alerts
                             SET deleted_at = timezone('utc'::text, now()),
-                                active = FALSE
-                            WHERE alert_id = %(alert_id)s AND project_id=%(project_id)s;""",
+                                active     = FALSE
+                            WHERE alert_id = %(alert_id)s
+                              AND project_id = %(project_id)s;""",
                         {"alert_id": alert_id, "project_id": project_id})
         )
     return {"data": {"state": "success"}}
 
 
 def get_predefined_values():
-    values = [e.value for e in schemas.AlertColumn]
-    values = [{"name": v, "value": v,
-               "unit": "count" if v.endswith(".count") else "ms",
-               "predefined": True,
-               "metricId": None,
-               "seriesId": None} for v in values if v != schemas.AlertColumn.CUSTOM]
+    values = ([{"name": v.value, "value": v.value,
+                "unit": "count" if v.endswith(".count") else "ms",
+                "predefined": True,
+                "metricId": None,
+                "seriesId": None,
+                "source": "events"} for v in schemas.AlertEventsColumn if v != schemas.AlertColumn.CUSTOM]
+              + [{"name": v.value, "value": v.value,
+                  "unit": "count" if v.endswith(".count") else "ms",
+                  "predefined": True,
+                  "metricId": None,
+                  "seriesId": None,
+                  "source": "sessions"} for v in schemas.AlertSessionsColumn])
     return values
