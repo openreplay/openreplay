@@ -131,6 +131,7 @@ function AuditView() {
         <div className="m-pref__list-empty">
           <EmptyState
             art="search"
+            state={searchQuery ? 'search-nomatch' : 'audit-log'}
             title={
               searchQuery
                 ? t('Nothing matches “{{q}}”', { q: searchQuery })

@@ -29,6 +29,7 @@ function NoSessionsMessage() {
   return (
     <EmptyState
       art="listening"
+      state="s-listening"
       title={t('Your sessions will appear here soon')}
       hint={t(
         'It may take a few minutes as sessions are optimized for efficient playback.',

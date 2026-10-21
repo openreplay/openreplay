@@ -1,6 +1,7 @@
 import { IconButton } from '@/ui/actions/IconButton';
 import { Button } from '@/ui/actions/button';
 import { CountSuffix } from '@/ui/data/CountSuffix';
+import { SessionAvatar } from '@/ui/data/SessionAvatar';
 import { Tabs, TabsList, TabsTrigger } from '@/ui/layout/tabs';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import { ArrowLeft, PanelRight } from 'lucide-react';
@@ -8,8 +9,6 @@ import React, { type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ownsKeys } from 'App/utils/keys';
-
-import { SessionAvatar } from 'Shared/SessionAvatar/SessionAvatar';
 
 import './issue-header.css';
 import './journey-panel.css';
@@ -158,15 +157,30 @@ export function ReplayIdentity({
   name,
   meta,
   title,
+  presence,
 }: {
-  seed: number;
+  seed: string;
   name: ReactNode;
   meta?: ReactNode;
   title?: string;
+  /** a live visitor: the list row's moving robot and corner dot */
+  presence?: 'active' | 'inactive';
 }) {
+  const { t } = useTranslation();
+  const presenceWord =
+    presence === 'inactive' ? t('Live, inactive') : t('Live, active');
   return (
     <div className="m-rs__who">
-      <SessionAvatar seed={seed} size={24} cheer />
+      {presence ? (
+        <Tooltip title={presenceWord}>
+          <span className="m-rs__avatar">
+            <SessionAvatar seed={seed} size={28} presence={presence} animated />
+            <span className="m-sr-only">{presenceWord}</span>
+          </span>
+        </Tooltip>
+      ) : (
+        <SessionAvatar seed={seed} size={28} />
+      )}
       <div className="m-rs__names">
         <Tooltip title={title} delay={500}>
           <span className="m-rs__name m-truncate">{name}</span>

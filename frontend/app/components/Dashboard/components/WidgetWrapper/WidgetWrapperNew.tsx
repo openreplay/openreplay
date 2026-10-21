@@ -101,6 +101,13 @@ function WidgetWrapperDashboard({
     );
   };
 
+  // the data is the control: a datum opens the card already drilled into it
+  const openDrilled = () => {
+    if (isPredefined || !dashboard) return;
+    dashboardStore.carryDrill(widget.metricId);
+    open();
+  };
+
   const createAlert = () => {
     metricStore.init(widget);
     alertsStore.init({ query: { left: seriesId } } as any);
@@ -171,24 +178,29 @@ function WidgetWrapperDashboard({
                     label: t('Edit'),
                     onClick: open,
                   },
-                  // below wide every widget is full width: nothing to pick
-                  ...(wide
-                    ? [
-                        full
-                          ? {
-                              key: 'half',
-                              icon: <Minimize2 size={13} />,
-                              label: t('Half width'),
-                              onClick: () => setWidth(2),
-                            }
-                          : {
+                  // by what is drawn: below wide every widget is full, and a
+                  // lone half fills its row, so neither has a width to pick
+                  ...(!wide
+                    ? []
+                    : full
+                      ? [
+                          {
+                            key: 'half',
+                            icon: <Minimize2 size={13} />,
+                            label: t('Half width'),
+                            onClick: () => setWidth(2),
+                          },
+                        ]
+                      : drawnFull
+                        ? []
+                        : [
+                            {
                               key: 'full',
                               icon: <Maximize2 size={13} />,
                               label: t('Full width'),
                               onClick: () => setWidth(4),
                             },
-                      ]
-                    : []),
+                          ]),
                   { key: 'd1', type: 'divider' },
                   {
                     key: 'remove',
@@ -208,25 +220,13 @@ function WidgetWrapperDashboard({
           </DropdownMenu>
         </span>
       </header>
-      <div
-        role="button"
-        tabIndex={0}
-        className={`m-dash__widget-body${isPredefined ? ' is-static' : ''}`}
-        // the body opens the card, but not when a control inside it was used
-        onClick={(e) => {
-          const hit = (e.target as HTMLElement).closest(
-            'button, a, input, select, textarea, [role="menuitem"], [role="checkbox"]',
-          );
-          if (!hit || hit === e.currentTarget) open();
-        }}
-        onKeyDown={(e) => {
-          if (e.target !== e.currentTarget) return;
-          if (e.key === 'Enter' || e.key === ' ') open();
-        }}
-        aria-label={t('Open {{name}}', { name: widget.name })}
-      >
+      <div className="m-dash__widget-body">
         <Suspense fallback={<Loader loading style={{ height: 240 }} />}>
-          <WidgetChart metric={widget} isSaved />
+          <WidgetChart
+            metric={widget}
+            isSaved
+            onDatum={isPredefined ? undefined : openDrilled}
+          />
         </Suspense>
       </div>
     </section>

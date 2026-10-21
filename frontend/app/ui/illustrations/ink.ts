@@ -1,15 +1,7 @@
-import type { ReactNode } from 'react';
-
-/* The hand the cube robots are drawn in: seeded jitter, so a frame is the same
-   drawing on every render, and three frames that boil like stop motion. */
-
 export type P = [number, number];
-export type Rough = (k: number) => string;
 
-/** The number of hand-drawn frames each outline boils through. */
 export const FRAMES = [0, 1, 2] as const;
 
-/** A small seeded PRNG. */
 export function rng(seed: number) {
   let s = seed >>> 0;
   return () => {
@@ -20,13 +12,12 @@ export function rng(seed: number) {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
+
 export const f = (n: number) => Math.round(n * 10) / 10;
-/** Point `i` of a ring of points, wrapping. */
-const at = (pts: P[], i: number): P =>
+
+export const at = (pts: P[], i: number): P =>
   pts[((i % pts.length) + pts.length) % pts.length] as P;
 
-/** A line through `points`, drawn by hand: each corner a little off, each edge
- *  bowed through a jittered midpoint. */
 export function inked(
   points: P[],
   closed: boolean,
@@ -49,7 +40,6 @@ export function inked(
   return closed ? `${d}Z` : d;
 }
 
-/** A hand-drawn ring: points on a wobbling radius, smoothed through. */
 export function ring(
   cx: number,
   cy: number,
@@ -74,57 +64,25 @@ export function ring(
   return `${d}Z`;
 }
 
-/** The same shape with no hand in it: the flat fill under the boiling line. */
 export const poly = (pts: P[]) =>
   `M${pts.map(([x, y]) => `${x} ${y}`).join('L')}Z`;
 
-/** The three hand-drawn frames of one outline, swapped on steps by the CSS. */
-export function Boil({ children }: { children: (k: number) => ReactNode }) {
-  return (
-    <>
-      {FRAMES.map((k) => (
-        <g key={k} className={`m-cheer__frame m-cheer__frame--${k}`}>
-          {children(k)}
-        </g>
-      ))}
-    </>
-  );
-}
+export const rrect = (
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  c = 3,
+): P[] => [
+  [x + c, y],
+  [x + w - c, y],
+  [x + w, y + c],
+  [x + w, y + h - c],
+  [x + w - c, y + h],
+  [x + c, y + h],
+  [x, y + h - c],
+  [x, y + c],
+];
 
-/** The roughening filters the frames reference, one per frame. */
-export function RoughDefs({ uid, scale = 1.6 }: { uid: string; scale?: number }) {
-  return (
-    <defs>
-      {FRAMES.map((k) => (
-        <filter
-          key={k}
-          id={`cb-rough-${uid}-${k}`}
-          x="-5%"
-          y="-5%"
-          width="110%"
-          height="110%"
-        >
-          <feTurbulence
-            type="fractalNoise"
-            baseFrequency="0.85"
-            numOctaves="2"
-            seed={3 + k * 11}
-            result="n"
-          />
-          <feDisplacementMap
-            in="SourceGraphic"
-            in2="n"
-            scale={scale}
-            xChannelSelector="R"
-            yChannelSelector="G"
-          />
-        </filter>
-      ))}
-    </defs>
-  );
-}
-
-export const roughOf =
-  (uid: string): Rough =>
-  (k) =>
-    `url(#cb-rough-${uid}-${k})`;
+export const shift = (pts: P[], dx: number, dy: number): P[] =>
+  pts.map(([x, y]) => [x + dx, y + dy] as P);

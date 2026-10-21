@@ -245,6 +245,9 @@ function WidgetView({
     sync().finally(() => setCardReady(true));
   }, [metricId, location.search, metricStore]);
 
+  // a drill carried here and never drawn does not wait for a later visit
+  useEffect(() => () => dashboardStore.dropCarriedDrill(), []);
+
   useEffect(() => {
     if (metricId && metricId !== 'create') {
       metricStore.fetch(metricId, dashboardStore.period).catch((e) => {

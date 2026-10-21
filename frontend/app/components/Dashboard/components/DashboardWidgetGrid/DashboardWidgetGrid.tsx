@@ -12,10 +12,9 @@ import { isFullWidget, loneHalves } from './placement';
 interface Props {
   siteId: string;
   id?: string;
-  addCard: React.ReactNode;
 }
 
-function DashboardWidgetGrid({ siteId, id, addCard }: Props) {
+function DashboardWidgetGrid({ siteId, id }: Props) {
   const { t } = useTranslation();
   const { dashboardStore } = useStore();
   const dashboard = dashboardStore.selectedDashboard;
@@ -32,7 +31,6 @@ function DashboardWidgetGrid({ siteId, id, addCard }: Props) {
             hint={t(
               'Add a card from the library and it takes its place in the grid.',
             )}
-            action={addCard}
           />
         </div>
       ) : (

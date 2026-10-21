@@ -896,6 +896,7 @@ function TestsTab() {
       />
     ) : (
       <EmptyState
+        state="tests-tab"
         title={emptyTab[statusTab]}
         hint={t('Pick another tab to see the rest of the list.')}
       />

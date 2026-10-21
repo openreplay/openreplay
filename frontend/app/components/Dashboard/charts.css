@@ -378,11 +378,16 @@
   font-size: var(--m-text-sm);
   color: var(--m-content-primary);
 }
+.m-top__row:focus-visible {
+  outline: 2px solid var(--m-focus-ring);
+  outline-offset: -2px;
+}
+/* the track is the bar's own hue, translucent: one hue on any ground */
 .m-top__bar {
   display: block;
   height: 10px;
   border-radius: var(--m-radius-chip);
-  background: var(--m-chart-heat-low);
+  background: color-mix(in oklab, var(--m-chart-1) 14%, transparent);
   overflow: hidden;
 }
 .m-top__bar i {
@@ -540,11 +545,16 @@
   flex-direction: column;
   gap: 3px;
 }
+.m-fn__stage-btn:focus-visible {
+  outline: 2px solid var(--m-focus-ring);
+  outline-offset: -2px;
+}
+/* the bar's own hue, translucent, as .m-top__bar */
 .m-fn__track {
   display: block;
   height: 20px;
   border-radius: var(--m-radius-control);
-  background: var(--m-chart-heat-low);
+  background: color-mix(in oklab, var(--m-chart-1) 14%, transparent);
   overflow: hidden;
 }
 .m-fn__fill {

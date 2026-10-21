@@ -1,3 +1,4 @@
+import { seedFor } from '@/ui/data/avatar';
 import { useSyncExternalStore } from 'react';
 
 /**
@@ -16,8 +17,8 @@ export interface QueuedSession {
   siteId: string;
   name: string;
   anonymous: boolean;
-  /** `userNumericHash`: the avatar's glyph and hue */
-  seed: number;
+  /** the avatar's seed (`seedFor`) */
+  seed: string;
   metadata: Record<string, string | null>;
 }
 
@@ -31,7 +32,10 @@ function read(): QueuedSession[] {
     const raw = sessionStorage.getItem(KEY);
     const v = raw ? (JSON.parse(raw) as unknown) : [];
     return Array.isArray(v)
-      ? v.filter((x): x is QueuedSession => typeof x?.id === 'string')
+      ? v
+          .filter((x): x is QueuedSession => typeof x?.id === 'string')
+          // tabs queued before the avatar's seed was the identity
+          .map((x) => ({ ...x, seed: String(x.seed) }))
       : [];
   } catch {
     return [];
@@ -54,7 +58,7 @@ export function snapshotOf(
     sessionId: string;
     userDisplayName?: string;
     userId?: string;
-    userNumericHash?: number;
+    userAnonymousId?: string | null;
     metadata?: Record<string, any>;
   },
   siteId: string,
@@ -64,7 +68,7 @@ export function snapshotOf(
     siteId,
     name: s.userDisplayName || s.userId || 'Anonymous',
     anonymous: !s.userId,
-    seed: s.userNumericHash ?? 0,
+    seed: seedFor(s),
     metadata: capMeta(s.metadata),
   };
 }

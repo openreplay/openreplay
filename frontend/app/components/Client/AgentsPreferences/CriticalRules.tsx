@@ -194,6 +194,7 @@ function CriticalRules() {
 
       {shown.length === 0 ? (
         <EmptyState
+          state={ql ? 'search-nomatch' : undefined}
           title={
             ql
               ? t('Nothing matches “{{q}}”', { q: q.trim() })

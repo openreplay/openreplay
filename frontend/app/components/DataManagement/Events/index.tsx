@@ -248,6 +248,7 @@ function EventsListPage() {
       ) : visible.length === 0 ? (
         <EmptyState
           art="search"
+          state={q ? 'events-nomatch' : 'events-kind'}
           title={
             q ? t('No events match your search') : t('No events of this kind')
           }

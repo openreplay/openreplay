@@ -1,40 +1,35 @@
-.m-cb__row {
-  cursor: pointer;
-}
-.m-cb__identity-cell {
-  display: flex;
-  align-items: center;
-  gap: var(--m-space-3);
-  min-width: 0;
-}
-.m-cb__mono {
-  font-family: var(--m-font-num);
-  font-variant-numeric: tabular-nums;
-  color: var(--m-content-secondary);
-}
-.m-cb__sub {
-  display: block;
-  font-size: var(--m-text-2xs);
-  color: var(--m-content-muted);
-}
-.m-cb__actions {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--m-space-3);
-}
-.m-cb__play {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--m-space-2);
-  padding: 0;
-  color: var(--m-content-accent);
-  font-size: var(--m-text-xs);
-}
-.m-cb__play:hover {
-  text-decoration: underline;
-}
 .m-cb__count {
   margin-right: auto;
   font-size: var(--m-text-sm);
   color: var(--m-content-secondary);
+}
+
+/* a call's name is the row's subject, not a control */
+.m-cb__recs .m-cb__rec-name {
+  display: block;
+  cursor: inherit;
+}
+
+/* who took the call: the name only, the robot would read as a visitor */
+.m-cb__owner {
+  display: block;
+  color: var(--m-content-secondary);
+}
+
+/* an open menu keeps its trigger drawn */
+.m-cb__rec-more[data-state='open'] {
+  opacity: 1;
+}
+
+.m-recp__stage {
+  align-items: center;
+  justify-content: center;
+  background: var(--m-surface-sunken);
+}
+
+.m-recp__video {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  min-height: 0;
 }

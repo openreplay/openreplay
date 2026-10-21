@@ -137,7 +137,6 @@ function FunnelIssueDetails({ issueId }: Props) {
         fields={['started', 'duration', 'events', 'location', 'device']}
         onOpen={open}
         onHover={hover}
-        liveBadge={false}
       />
     </>
   );

@@ -21,7 +21,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { SessionAvatar } from 'Shared/SessionAvatar/SessionAvatar';
+import { SessionAvatar } from '@/ui/data/SessionAvatar';
 import { MetaChips } from 'Shared/SessionsTable/MetaChips';
 
 import { type QueuedSession, onLanding } from './openSessions';

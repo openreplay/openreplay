@@ -251,7 +251,7 @@ function IssuePlayer() {
         siteId: String(siteId),
         name: c.email || t('Anonymous'),
         anonymous: !c.email,
-        seed: seedOf(c.email || c.sessionId),
+        seed: c.email || c.sessionId,
         metadata: Object.fromEntries(
           c.metadata.slice(0, 3).map((m) => [m.label, m.value]),
         ),
@@ -452,7 +452,3 @@ function IssuePlayer() {
 export default withPermissions(['SMART_ISSUES'])(
   withPageTitle('Smart Issues')(observer(IssuePlayer)),
 );
-
-/** A stable avatar for a card that has no numeric hash. */
-const seedOf = (s: string) =>
-  [...s].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 0);

@@ -8,7 +8,9 @@ import {
   DropdownMenuItems,
   DropdownMenuTrigger,
 } from '@/ui/actions/dropdown-menu';
+import { OpenReplayMark } from '@/ui/brand/OpenReplayMark';
 import { RelativeTime } from '@/ui/data/RelativeTime';
+import { hueIndexFor } from '@/ui/data/avatar';
 import { type Column, DataTable } from '@/ui/data/table';
 import { EmptyState } from '@/ui/feedback/EmptyState';
 import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
@@ -21,9 +23,6 @@ import { PageCard, PagePanel } from '@/ui/layout/PageCard';
 import { setRowsPerPage, useRowsPerPage } from '@/ui/layout/rows-per-page';
 import { Tabs, TabsList, TabsTrigger } from '@/ui/layout/tabs';
 import { useViewport } from '@/ui/layout/use-viewport';
-import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
-import { RenameDialog } from '@/ui/overlays/RenameDialog';
-import { useToast } from '@/ui/overlays/toast';
 import { FilterKey } from 'Types/filter/filterType';
 import type Session from 'Types/session';
 import {
@@ -32,13 +31,12 @@ import {
   Headset,
   MoreHorizontal,
   Pencil,
-  Play,
   Plug,
   RefreshCw,
   Trash2,
 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
-import React from 'react';
+import React, { type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useModal } from 'App/components/Modal';
@@ -64,6 +62,8 @@ import {
 } from 'Shared/SessionsTable/SessionsTable';
 import { StartPath } from 'Shared/StartPath/StartPath';
 
+import RecordingDialogs from './RecordingDialogs';
+import RecordingPlayer from './RecordingPlayer';
 import './cobrowse-page.css';
 
 // jspdf, html2canvas and echarts: only when the stats drawer opens
@@ -104,9 +104,11 @@ function CoBrowsePage() {
   usePageTitle('Co-Browse - OpenReplay');
   const { t } = useTranslation();
   const phone = useViewport() === 'phone';
-  const { userStore } = useStore();
+  const { userStore, recordingsStore } = useStore();
   const { showModal } = useModal();
   const [section, setSection] = React.useState<Section>('live');
+  // the call player is the page's own state: leaving CoBrowse closes it
+  React.useEffect(() => () => recordingsStore.openRecording(null), []);
   const modules = userStore.account.settings?.modules ?? [];
   const { isEnterprise } = userStore;
   const hasRecordings =
@@ -116,6 +118,9 @@ function CoBrowsePage() {
     userStore.isAdmin &&
     !modules.includes(MODULES.ASSIST_STATS) &&
     !modules.includes(MODULES.ASSIST);
+
+  if (recordingsStore.openRecord)
+    return <RecordingPlayer record={recordingsStore.openRecord} />;
 
   if (phone)
     return (
@@ -361,7 +366,6 @@ export const LiveSection = observer(
                 onOpen={open}
                 onFilterToUser={filterToUser}
                 onMetaClick={onMetaClick}
-                liveBadge={false}
                 rowDisabled={isPicked}
               />
               <ListFooter
@@ -385,9 +389,10 @@ export const LiveSection = observer(
   },
 );
 
+type RecordingSort = { key: 'at' | 'duration'; desc: boolean } | null;
+
 export const RecordingsSection = observer(() => {
   const { t } = useTranslation();
-  const toast = useToast();
   const { recordingsStore, settingsStore } = useStore();
   const { timezone } = settingsStore.sessionSettings;
   const { recordings, page, total, loading } = recordingsStore;
@@ -395,6 +400,8 @@ export const RecordingsSection = observer(() => {
   const [query, setQuery] = React.useState(recordingsStore.search);
   const [renaming, setRenaming] = React.useState<IRecord | null>(null);
   const [deleting, setDeleting] = React.useState<IRecord | null>(null);
+  // the date is the API's order; the duration sorts the page shown
+  const [sort, setSort] = React.useState<RecordingSort>(null);
   const updateSearch = React.useMemo(
     () => debounce((v: string) => recordingsStore.updateSearch(v), 400),
     [],
@@ -405,73 +412,86 @@ export const RecordingsSection = observer(() => {
   }, [
     page,
     pageSize,
+    recordingsStore.order,
     recordingsStore.period,
     recordingsStore.search,
     recordingsStore.currentUser,
   ]);
 
-  // the tab opens inside the click (popup blockers drop a window.open made
-  // after an await) and gets its URL once the presigned link arrives
-  const play = (r: IRecord) => {
-    const tab = window.open('', '_blank');
-    if (tab) tab.opener = null;
-    void recordingsStore.fetchRecordingUrl(r.recordId).then((url) => {
-      if (!tab) return;
-      if (url) tab.location.href = url;
-      else tab.close();
-    });
+  const rows = React.useMemo(
+    () =>
+      sort?.key === 'duration'
+        ? [...recordings].sort((a, b) =>
+            sort.desc ? b.duration - a.duration : a.duration - b.duration,
+          )
+        : recordings,
+    [recordings, sort],
+  );
+  const narrowed = !!recordingsStore.search || recordingsStore.currentUser;
+  const resetQuery = () => {
+    setQuery('');
+    recordingsStore.updateSearch('');
+    recordingsStore.setCurrUser(false);
   };
 
   const columns: Column<IRecord>[] = [
     {
-      title: t('Name'),
+      title: t('Recording'),
       key: 'name',
-      width: '44%',
+      priority: 1,
       render: (r) => (
-        <span className="m-cb__identity-cell">
-          <span className="min-w-0">
-            <span className="m-truncate block">{r.name}</span>
-            <span className="m-cb__sub m-cb__mono">
-              {formatDuration(Math.round(r.duration / 1000))}
-            </span>
-          </span>
-        </span>
+        <span className="m-ss__name m-truncate m-cb__rec-name">{r.name}</span>
       ),
     },
     {
       title: t('Recorded by'),
       key: 'by',
-      width: '22%',
-      render: (r) => <span className="m-truncate">{r.createdBy}</span>,
+      width: 184,
+      priority: 3,
+      render: (r) => (
+        <span className="m-cb__owner m-truncate">{r.createdBy}</span>
+      ),
+    },
+    {
+      title: t('Duration'),
+      key: 'duration',
+      width: 96,
+      sortable: true,
+      priority: 2,
+      render: (r) => (
+        <span className="m-ss__fig">
+          {formatDuration(Math.round(r.duration / 1000))}
+        </span>
+      ),
     },
     {
       title: t('Recorded'),
       key: 'at',
-      width: '16%',
+      width: 112,
+      sortable: true,
+      priority: 2,
       render: (r) => (
         <RelativeTime at={r.createdAt} timezone={timezone.value} />
       ),
     },
     {
       title: '',
-      key: 'actions',
-      width: '18%',
-      align: 'right',
+      key: 'play',
+      width: 88,
+      align: 'center',
+      className: 'm-ss__playcell',
       render: (r) => (
-        <span className="m-cb__actions">
-          <button type="button" className="m-cb__play" onClick={() => play(r)}>
-            <Play size={12} aria-hidden="true" />
-            {t('Play video')}
-          </button>
+        <span className="m-ss__acts">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant="subtle"
-                size="icon"
+              <button
+                type="button"
+                className="m-ss__queue m-cb__rec-more"
                 aria-label={t('Actions for {{name}}', { name: r.name })}
+                onClick={(e) => e.stopPropagation()}
               >
-                <MoreHorizontal size={15} />
-              </Button>
+                <MoreHorizontal size={15} aria-hidden="true" />
+              </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItems
@@ -493,6 +513,9 @@ export const RecordingsSection = observer(() => {
               />
             </DropdownMenuContent>
           </DropdownMenu>
+          <span className="m-ss__play">
+            <OpenReplayMark variant="plain" filled />
+          </span>
         </span>
       ),
     },
@@ -503,10 +526,10 @@ export const RecordingsSection = observer(() => {
       head={
         <>
           <FilterStrip
-            label={t('Whose recordings')}
+            label={t('Filter by who recorded')}
             items={[
-              { key: 'all', label: t('All videos') },
-              { key: 'mine', label: t('My videos') },
+              { key: 'all', label: t('All recordings') },
+              { key: 'mine', label: t('My recordings') },
             ]}
             selected={[recordingsStore.currentUser ? 'mine' : 'all']}
             onSelect={(k) => recordingsStore.setCurrUser(k === 'mine')}
@@ -530,27 +553,48 @@ export const RecordingsSection = observer(() => {
       }
     >
       {loading && recordings.length === 0 ? (
-        <SkeletonRows rows={4} />
+        <SkeletonRows rows={6} />
       ) : recordings.length === 0 ? (
-        <EmptyState
-          title={
-            recordingsStore.search
-              ? t('No matching results')
-              : t('No videos have been recorded in your co-browsing sessions.')
-          }
-          hint={t(
-            'Capture and share video recordings of co-browsing sessions with your team for product feedback and training.',
-          )}
-        />
+        narrowed ? (
+          <EmptyState
+            title={t('Nothing matches')}
+            hint={t('Widen the window, or clear the search.')}
+            action={
+              <Button onClick={resetQuery}>{t('Show all recordings')}</Button>
+            }
+          />
+        ) : (
+          <EmptyState
+            art="cobrowse"
+            state="cobrowse-videos"
+            title={t('No calls recorded yet')}
+            hint={t(
+              'Record a call from a live session and it lands here, for the whole team to watch back.',
+            )}
+          />
+        )
       ) : (
         <>
           <DataTable<IRecord>
+            className="m-ss__table m-cb__recs"
             rowKey={(r) => String(r.recordId)}
             columns={columns}
-            rows={recordings}
-            rowClassName={() => 'm-cb__row'}
-            onRowClick={(r) => void play(r)}
-            ariaLabel={t('Co-browsing recordings')}
+            rows={rows}
+            sort={sort}
+            onSort={(key, desc) => {
+              const next: RecordingSort =
+                key === 'at' || key === 'duration' ? { key, desc } : null;
+              setSort(next);
+              recordingsStore.setOrder(
+                next?.key === 'at' && !next.desc ? 'asc' : 'desc',
+              );
+            }}
+            rowClassName={() => 'm-ss__row'}
+            rowStyle={(r) =>
+              ({ '--m-avatar-i': hueIndexFor(r.name) }) as CSSProperties
+            }
+            onRowClick={(r) => recordingsStore.openRecording(r)}
+            ariaLabel={t('Recorded calls')}
           />
           <ListFooter
             page={page}
@@ -565,51 +609,14 @@ export const RecordingsSection = observer(() => {
           />
         </>
       )}
-
-      <RenameDialog
-        open={renaming != null}
-        title={t('Rename recording')}
-        value={renaming?.name ?? ''}
-        onCancel={() => setRenaming(null)}
-        onOk={(name) => {
-          if (renaming) {
-            recordingsStore
-              .updateRecordingName(renaming.recordId, name)
-              .then(() => {
-                void recordingsStore.fetchRecordings();
-                toast.success(t('Recording name updated'));
-              })
-              .catch(() => toast.error(t("Couldn't update recording name")));
-          }
+      <RecordingDialogs
+        renaming={renaming}
+        deleting={deleting}
+        onClose={() => {
           setRenaming(null);
+          setDeleting(null);
         }}
       />
-      <ConfirmDialog
-        open={deleting != null}
-        title={t('Delete this recording?')}
-        okText={t('Delete')}
-        danger
-        onCancel={() => setDeleting(null)}
-        onOk={() => {
-          const target = deleting;
-          setDeleting(null);
-          if (!target) return;
-          void recordingsStore.deleteRecording(target.recordId).then(() => {
-            recordingsStore.setRecordings(
-              recordingsStore.recordings.filter(
-                (rec) => rec.recordId !== target.recordId,
-              ),
-              recordingsStore.total - 1,
-            );
-            toast.success(t('Recording deleted'));
-          });
-        }}
-      >
-        {t(
-          '{{name}} is deleted for everyone on the team. The co-browsing session it came from is not affected.',
-          { name: deleting?.name },
-        )}
-      </ConfirmDialog>
     </PagePanel>
   );
 });

@@ -33,7 +33,7 @@ handoff `context/handoff-2026-10-05.md`. The prototype runs on mock data (`src/s
   shadcn kebab-case names, composed pieces are PascalCase; named exports only.
 - `app/ui/styles/` — `tokens.css` (flattened shipped theme, light + `.dark`), `base.css`, `theme.css`
   (`@theme inline`), `motion.css`.
-- Pieces built from the kit for one product area live with it (`Shared/SessionAvatar`, `Shared/RecordingsMeter`,
+- Pieces built from the kit for one product area live with it (`Shared/Celebration`, `Shared/RecordingsMeter`,
   `Shared/Link`, `SmartAlerts/shared/*`, `layout/nav/ThemeToggle`, …).
 - `app/components/ui` (`'UI'`) is only a compat barrel for the saas overlay (Form, Input, Message, Tooltip, Icon,
   Loader, NoContent, confirm, Link, `UI/Icons`); eslint keeps FOSS code off it.
@@ -53,7 +53,9 @@ handoff `context/handoff-2026-10-05.md`. The prototype runs on mock data (`src/s
 - Prototype kit pieces not ported as such: CapturePill (our `SegmentsIndicator`), HealthScore / StubDrawer /
   Placeholder (audit and stub pages: saas placeholders), IconPicker / JourneyIcon (journey tags have no icon data),
   RunResultChip / TestStatusChip (Synthetics `shared/utils` chips), BrandLoader (`BrandMark` loop).
-- SessionAvatar uses local glyphs on `userNumericHash` (the prototype's dicebear fetch would leak user ids).
+- `ui/data/SessionAvatar` is the prototype's pixelbot, generated in the browser (`@dicebear/core` + the bundled
+  CC0 `pixelbot.json` with OpenReplay's parts, `ui/data/robot.ts`); seeded by identity (`seedFor`: user id, else
+  anonymous id), never fetched, so no user id leaves the page.
 - Every user-facing string goes through `t()`; kit defaults like `okText` resolve inside the component.
 
 ## Shell notes
@@ -263,6 +265,37 @@ handoff `context/handoff-2026-10-05.md`. The prototype runs on mock data (`src/s
   System health is an icon in the footer row (open source only) instead of its own line. Also from the call:
   "Your sessions will appear here soon" is the list's own centered empty state with Troubleshoot and Complete
   setup.
+- melonade #10 to #17: see the phase commits (the look, accent tokens, Share session, PR #17's batch).
+- melonade #18 "Segments": OR-3842 (free events order, the issues chip) and OR-3844 (a saved search folds
+  into `SegmentIndicator`).
+- melonade #19 "The illustration gallery" + #20 "Avatars: pixelbot drawn locally" (ported 10-21): the kit in
+  `ui/illustrations/` (`ink`, `Inked`, `Aura`, `Bot`, `Illustration`, props, subjects; robots wear a pixelbot
+  face) and `ui/data/{avatar,robot,SessionAvatar}`. The cube robot avatar (OR-3841) is gone: every avatar is
+  the pixelbot, the replay header's at 28px. Celebration robots blink and cheer with pixelbot's own eyes and
+  mouths. Not ported: the gallery page and the stories (prototype tools).
+- melonade #21 "CoBrowse: presence dot, live robots, recordings like every other list" (ported 10-21): a live
+  row is its avatar (no "live" chip): the robot blinks and smiles (frames over the chip's ground, offset by
+  hue, still under reduced motion) and a corner dot says active / inactive (`session.active`), with the words
+  as tooltip and screen-reader text, on every list and in the replay header. Session and Metadata share the
+  row's leftover width; a table tag runs to 16rem. Cheeks one row lower. Recordings: the sessions table's
+  parts (Recording, Recorded by, Duration in-page sort, Recorded via the API's order, the play cell with
+  Rename / Delete on hover), All / My recordings; a call opens on the replay screen (`RecordingPlayer`: the
+  signed video, Open the session, Rename / Delete). Not ported: the Visitor column and per-scope counts (the
+  records API has neither the visitor nor counts).
+- melonade #22 "Product analytics interaction, Add card picker, illustrated empty states" (ported 10-21):
+  every `EmptyState` draws its entry from `ui/illustrations/states` (by `state`, else its title in the reader's
+  language; computed titles pass their state), robots face-only with ground shadows. On a dashboard the data is
+  the control: the widget body is a plain container; a datum (ranked row, trend point, funnel stage, journey
+  node, vital, big number) drills as on the card page and opens the card already drilled
+  (`dashboardStore.carryDrill`: the dashboard's charts reset the drill as they unmount, so the card's own
+  chart applies it). A ranked row / stage hovers like a table row; a bar's track is its own hue at 14%. A
+  drilled table card says what its list is ("Sessions that visited /pricing", the count) and offers Open in
+  Sessions for pages, countries, browsers, devices and users. The width menu follows what is drawn
+  (OR-3853). One Add card per dashboard (the empty state has none); a new dashboard can start empty. The
+  card picker is a filter menu: the search on top with the step's back chip, Create a new card as a second
+  step, skeleton rows while loading, one 24rem size, a footer. Display menu select 10rem, one line. Not
+  ported: the drill's share "% of the card" (the sessions list has no card total) and the prototype's mock
+  `drillSessionsOf` (the API already returns the datum's sessions).
 
 ## Review pass (2026-10-08)
 

@@ -116,6 +116,7 @@ function MetricsLibraryModal({ dashboardId }: Props) {
         ) : cards.length === 0 ? (
           <EmptyState
             art="cards"
+            state={query ? 'search-nomatch' : 'cards-category'}
             title={
               query
                 ? t('No cards match “{{q}}”', { q: query })

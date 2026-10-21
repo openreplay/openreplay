@@ -29,7 +29,6 @@
   --cb-side: var(--m-surface-raised);
   --cb-ground: var(--m-surface-sunken);
 }
-
 .m-cheer__svg {
   width: 100%;
   height: 100%;
@@ -39,7 +38,6 @@
   transform-box: view-box;
 }
 
-/* ── the drawing ── */
 .m-cheer__line {
   stroke: var(--cb-ink);
   stroke-width: 2.4;
@@ -73,9 +71,11 @@
   display: block;
 }
 
-/* resting frame: frame 0 and the robot's own face; the rest waits */
 .m-cheer__frame--1,
-.m-cheer__frame--2 {
+.m-cheer__frame--2,
+.m-cheer__face--drift,
+.m-cheer__face--blink,
+.m-cheer__face--cheer {
   opacity: 0;
 }
 .m-cheer__bit {
@@ -83,7 +83,6 @@
   transition: opacity var(--m-duration-fast) var(--m-ease-in);
 }
 
-/* ── the boil: a flip book, each frame shown for a third of the loop ── */
 .m-cheer__frame {
   animation: m-cheer-boil var(--cb-boil) step-end infinite;
 }
@@ -94,7 +93,22 @@
   animation-delay: calc(var(--cb-boil) * -1 / 3);
 }
 
-/* ── the cheer ── */
+.m-cheer__face--blink {
+  animation: m-cheer-blink 4.4s step-end 1.6s infinite;
+}
+.m-cheer__bot--b .m-cheer__face--blink {
+  animation-delay: 2.9s;
+}
+.m-cheer__face--drift {
+  animation: m-cheer-drift 3.1s step-end 0.8s infinite;
+}
+.m-cheer__bot--b .m-cheer__face--drift {
+  animation-delay: 2.2s;
+}
+
+.m-cheer.is-cheering .m-cheer__face--cheer {
+  opacity: 1;
+}
 .m-cheer.is-cheering .m-cheer__bot {
   animation: m-cheer-hop 560ms steps(2, end) infinite;
 }
@@ -116,6 +130,31 @@
     opacity: 1;
   }
   33.333% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes m-cheer-blink {
+  0% {
+    opacity: 0;
+  }
+  94% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes m-cheer-drift {
+  0% {
+    opacity: 0;
+  }
+  60% {
+    opacity: 1;
+  }
+  74% {
     opacity: 0;
   }
   100% {

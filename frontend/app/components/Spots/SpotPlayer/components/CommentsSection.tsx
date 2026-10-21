@@ -1,3 +1,4 @@
+import { SessionAvatar } from '@/ui/data/SessionAvatar';
 import { Input } from '@/ui/inputs/input';
 import { useToast } from '@/ui/overlays/toast';
 import { Tooltip } from '@/ui/overlays/tooltip';
@@ -8,10 +9,7 @@ import { useTranslation } from 'react-i18next';
 
 import { resentOrDate } from 'App/date';
 import { useStore } from 'App/mstore';
-import { hashString } from 'App/types/session/session';
 import { PanelBar } from 'Components/Session/ReplayScreen/PanelBar';
-
-import { SessionAvatar } from 'Shared/SessionAvatar/SessionAvatar';
 
 /** The thread on a spot, with the composer pinned to the panel's foot. */
 function CommentsSection() {
@@ -53,7 +51,7 @@ function CommentsSection() {
         {comments.map((c) => (
           <li key={c.createdAt} className="m-spanel__row m-rs__comment">
             <span className="m-spanel__cell">
-              <SessionAvatar seed={hashString(c.user)} size={20} />
+              <SessionAvatar seed={c.user} size={20} />
               <span className="m-spanel__body">
                 <span className="m-spanel__line">
                   <span className="m-spanel__label m-rs__comment-author m-truncate">

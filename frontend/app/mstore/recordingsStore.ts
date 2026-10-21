@@ -20,6 +20,8 @@ export default class RecordingsStore {
 
   exportedVideosList: ExportsResponse['data']['videos'] = [];
   currentUser = false;
+  /** the call playing on the replay screen, in place of the list */
+  openRecord: IRecord | null = null;
 
   constructor() {
     makeAutoObservable(this);
@@ -49,6 +51,15 @@ export default class RecordingsStore {
   updatePage(page: number) {
     this.page = page;
   }
+
+  setOrder(order: 'desc' | 'asc') {
+    this.order = order;
+    this.page = 1;
+  }
+
+  openRecording = (r: IRecord | null) => {
+    this.openRecord = r;
+  };
 
   async fetchRecordings() {
     const filter = {

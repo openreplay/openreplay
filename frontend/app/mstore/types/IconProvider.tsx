@@ -1,9 +1,8 @@
+import { SessionAvatar } from '@/ui/data/SessionAvatar';
 import { Icon } from '@/ui/icons/Icon';
-import { hashString } from 'Types/session/session';
 import { Laptop, Monitor, Smartphone, Tablet } from 'lucide-react';
 import React from 'react';
 
-import { SessionAvatar } from 'Shared/SessionAvatar/SessionAvatar';
 import { flagUrl } from 'Shared/flagAssets';
 
 interface IconProvider {
@@ -123,9 +122,7 @@ class OsIconProvider implements IconProvider {
 
 class UserIconProvider implements IconProvider {
   getIcon(obj: any): React.ReactNode {
-    return (
-      <SessionAvatar seed={hashString(obj.name || 'Anonymous')} size={18} />
-    );
+    return <SessionAvatar seed={obj.name || 'Anonymous'} size={18} />;
   }
 }
 

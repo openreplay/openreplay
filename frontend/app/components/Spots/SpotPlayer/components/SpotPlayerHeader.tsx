@@ -6,6 +6,7 @@ import {
   DropdownMenuItems,
   DropdownMenuTrigger,
 } from '@/ui/actions/dropdown-menu';
+import { SessionAvatar } from '@/ui/data/SessionAvatar';
 import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
 import { PopoverPanel } from '@/ui/overlays/popover';
 import { useToast } from '@/ui/overlays/toast';
@@ -24,10 +25,7 @@ import { useTranslation } from 'react-i18next';
 import { useStore } from 'App/mstore';
 import { spotsList } from 'App/routes';
 import { useHistory } from 'App/routing';
-import { hashString } from 'App/types/session/session';
 import { mobileScreen } from 'App/utils/isMobile';
-
-import { SessionAvatar } from 'Shared/SessionAvatar/SessionAvatar';
 
 import AccessModal from './AccessModal';
 
@@ -57,7 +55,7 @@ export const SpotLead = observer(
     ].filter(Boolean);
     return (
       <div className="m-rs__who">
-        <SessionAvatar seed={hashString(user)} size={28} />
+        <SessionAvatar seed={user} size={28} />
         <div className="m-rs__names">
           <span className="m-rs__name m-truncate" title={title}>
             {title}

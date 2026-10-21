@@ -29,6 +29,13 @@ export default class DashboardStore {
   widgets: Widget[] = [];
   period: Record<string, any> = Period({ rangeName: LAST_24_HOURS });
   drillDownFilter: Filter = new Filter();
+  /** a datum clicked on a dashboard widget: its card opens drilled into it */
+  carriedDrill: {
+    metricId: string;
+    filters: any[];
+    startTimestamp: number;
+    endTimestamp: number;
+  } | null = null;
   comparisonFilter: Filter = new Filter();
   drillDownPeriod: Record<string, any> = Period({ rangeName: LAST_24_HOURS });
   selectedDensity: number = 7;
@@ -93,6 +100,34 @@ export default class DashboardStore {
         ? b.createdAt - a.createdAt
         : a.createdAt - b.createdAt,
     );
+  }
+
+  carryDrill(metricId: string | number) {
+    const f = this.drillDownFilter;
+    this.carriedDrill = {
+      metricId: String(metricId),
+      filters: [...f.filters],
+      startTimestamp: f.startTimestamp,
+      endTimestamp: f.endTimestamp,
+    };
+  }
+
+  /** the drill carried to this card, once */
+  applyCarriedDrill(metricId: string | number) {
+    const carried = this.carriedDrill;
+    // a placeholder chart of another card waits for the right one
+    if (!carried || carried.metricId !== String(metricId)) return;
+    this.carriedDrill = null;
+    this.drillDownFilter.merge({
+      filters: carried.filters,
+      startTimestamp: carried.startTimestamp,
+      endTimestamp: carried.endTimestamp,
+      page: 1,
+    });
+  }
+
+  dropCarriedDrill() {
+    this.carriedDrill = null;
   }
 
   resetDrillDownFilter() {

@@ -1,5 +1,6 @@
 import { IconButton } from '@/ui/actions/IconButton';
 import { Chip } from '@/ui/data/Chip';
+import { SessionAvatar } from '@/ui/data/SessionAvatar';
 import { EmptyState } from '@/ui/feedback/EmptyState';
 import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
 import { SearchField } from '@/ui/inputs/SearchField';
@@ -14,15 +15,10 @@ import { checkForRecent } from 'App/date';
 import { useStore } from 'App/mstore';
 import { debounce, filterList, sliceListPerPage } from 'App/utils';
 
-import { SessionAvatar } from 'Shared/SessionAvatar/SessionAvatar';
-
 import { PrefList, PrefListRow } from '../PrefSection';
 import PreferencesPage from '../PreferencesPage';
 import AddUserButton from './components/AddUserButton';
 import UserForm from './components/UserForm';
-
-const seedOf = (s: string) =>
-  [...(s || '')].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
 
 function UsersView({ isOnboarding = false }: { isOnboarding?: boolean }) {
   const { t } = useTranslation();
@@ -88,6 +84,7 @@ function UsersView({ isOnboarding = false }: { isOnboarding?: boolean }) {
       ) : list.length === 0 ? (
         <div className="m-pref__list-empty">
           <EmptyState
+            state={userStore.searchQuery ? 'team-nomatch' : undefined}
             title={
               userStore.searchQuery
                 ? t('Nobody matches “{{q}}”', { q: userStore.searchQuery })
@@ -103,7 +100,7 @@ function UsersView({ isOnboarding = false }: { isOnboarding?: boolean }) {
             return (
               <PrefListRow
                 key={u.userId}
-                lead={<SessionAvatar seed={seedOf(u.email)} size={26} />}
+                lead={<SessionAvatar seed={u.email} size={26} />}
                 title={u.name || u.email}
                 sub={[
                   u.email,

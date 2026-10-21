@@ -31,6 +31,7 @@
   },
   "dependencies": {
     "@codewonders/html2canvas": "^1.0.2",
+    "@dicebear/core": "10.7.0",
     "@medv/finder": "^4.0.2",
     "@neodrag/react": "^2.3.1",
     "@openreplay/player": "portal:../player",

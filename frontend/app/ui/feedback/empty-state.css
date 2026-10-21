@@ -28,8 +28,13 @@
   gap: var(--m-space-2);
   padding: var(--m-space-11) var(--m-space-6) var(--m-space-11);
 }
-.m-empty--page .m-eart {
+.m-empty--page .m-eart,
+.m-empty--page .m-empty__illustration {
   margin-bottom: var(--m-space-5);
+}
+/* a compact state with its small drawing: the drawing, then the words */
+.m-empty--drawn .m-empty__illustration {
+  margin-bottom: var(--m-space-3);
 }
 .m-empty--page .m-empty__title {
   font-family: var(--m-font-display);

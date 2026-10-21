@@ -87,12 +87,14 @@ export function CreateDashboardDrawer({
         <DrawerFooter
           left={
             <span className="m-ndash__count">
-              {picked.size === 1
-                ? t('1 card to start with')
-                : t('{{n}} cards to start with', {
-                    n: picked.size,
-                    count: picked.size,
-                  })}
+              {picked.size === 0
+                ? t('Starts empty, add cards later')
+                : picked.size === 1
+                  ? t('1 card to start with')
+                  : t('{{n}} cards to start with', {
+                      n: picked.size,
+                      count: picked.size,
+                    })}
             </span>
           }
           right={

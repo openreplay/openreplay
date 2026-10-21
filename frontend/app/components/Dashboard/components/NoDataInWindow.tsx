@@ -30,12 +30,14 @@ function NoDataInWindow({
   return inGrid ? (
     <EmptyState
       className="m-nodata is-compact"
+      state="card-nodata-small"
       title={title}
       hint={t('Widen the window above.')}
     />
   ) : (
     <EmptyState
       art="window"
+      state="card-nodata"
       title={title}
       hint={
         list

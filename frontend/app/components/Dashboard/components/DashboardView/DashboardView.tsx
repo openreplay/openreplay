@@ -48,7 +48,7 @@ interface Props {
   renderReport?: () => void;
 }
 
-/** Each instance owns its popover, so the header's and the empty state's never open together. */
+/** The page's one Add card: the empty dashboard does not repeat it. */
 function AddCardButton() {
   const { t } = useTranslation();
   const [adding, setAdding] = React.useState(false);
@@ -57,7 +57,6 @@ function AddCardButton() {
       open={adding}
       onOpenChange={setAdding}
       placement="bottomRight"
-      className="p-5"
       content={
         <CardPicker key={String(adding)} onDone={() => setAdding(false)} />
       }
@@ -69,9 +68,6 @@ function AddCardButton() {
     </PopoverPanel>
   );
 }
-
-// one element for the grid's empty state, so the (observer, memoized) grid doesn't re-render with the page
-const EMPTY_ADD_CARD = <AddCardButton />;
 
 function DashboardView({ siteId, dashboardId, renderReport }: Props) {
   const { t } = useTranslation();
@@ -147,7 +143,7 @@ function DashboardView({ siteId, dashboardId, renderReport }: Props) {
         }
         actions={
           <>
-            {dashboard.widgets.length > 0 ? <AddCardButton /> : null}
+            <AddCardButton />
             <DateRange
               period={dashboardStore.period}
               onChange={(p) => dashboardStore.setPeriod(p)}
@@ -209,11 +205,7 @@ function DashboardView({ siteId, dashboardId, renderReport }: Props) {
         }
         split
       >
-        <DashboardWidgetGrid
-          siteId={siteId}
-          id="report"
-          addCard={EMPTY_ADD_CARD}
-        />
+        <DashboardWidgetGrid siteId={siteId} id="report" />
       </PageCard>
 
       <RenameDialog

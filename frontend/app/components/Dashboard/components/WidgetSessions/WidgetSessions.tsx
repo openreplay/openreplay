@@ -1,3 +1,4 @@
+import { Button } from '@/ui/actions/button';
 import { MenuButton } from '@/ui/actions/menu-button';
 import { Chip } from '@/ui/data/Chip';
 import { EmptyState } from '@/ui/feedback/EmptyState';
@@ -25,6 +26,8 @@ import { useTranslation } from 'react-i18next';
 import { FUNNEL, HEATMAP, TABLE, USER_PATH } from 'App/constants/card';
 import useIsMounted from 'App/hooks/useIsMounted';
 import { useStore } from 'App/mstore';
+import { sessions as sessionsRoute, withSiteId } from 'App/routes';
+import { useHistory } from 'App/routing';
 import Session from 'App/types/session/session';
 import { debounce } from 'App/utils';
 import { windowPhrase } from 'App/utils/windowPhrase';
@@ -66,10 +69,28 @@ const getListSessionsBySeries = (
   return result;
 };
 
+// the rows whose drill is a Sessions search too
+const OPENABLE = new Set<string>([
+  FilterKey.LOCATION,
+  FilterKey.FETCH,
+  FilterKey.USER_COUNTRY,
+  FilterKey.USER_BROWSER,
+  FilterKey.USER_DEVICE,
+  FilterKey.USERID,
+]);
+
 function WidgetSessions() {
   const { t } = useTranslation();
   const { open, hover } = useOpenSession();
-  const { dashboardStore, metricStore, sessionStore, filterStore } = useStore();
+  const history = useHistory();
+  const {
+    dashboardStore,
+    metricStore,
+    sessionStore,
+    filterStore,
+    searchStore,
+    projectsStore,
+  } = useStore();
   const pageSize = useRowsPerPage();
   const isMounted = useIsMounted();
   const listRef = useRef<HTMLDivElement>(null);
@@ -344,6 +365,59 @@ function WidgetSessions() {
     }
   }, [focused, seriesOptions]);
 
+  // a drilled row says what the list is
+  const drilledRow =
+    widget.metricType === TABLE && filter.filters.length > 0 && filterText
+      ? String(filterText)
+      : null;
+  // the drilled row's share of the card's sessions, as its bar draws it
+  const drilledProgress: number | null = drilledRow
+    ? ((widget.data?.values ?? []).find((r: any) => r.name === drilledRow)
+        ?.progress ?? null)
+    : null;
+  const drillTitle = (value: string) => {
+    switch (widget.metricOf) {
+      case FilterKey.LOCATION:
+        return t('Sessions that visited {{value}}', { value });
+      case FilterKey.USER_COUNTRY:
+        return t('Sessions from {{value}}', { value });
+      case FilterKey.USER_BROWSER:
+      case FilterKey.USER_DEVICE:
+        return t('Sessions on {{value}}', { value });
+      case FilterKey.USERID:
+        return t('Sessions by {{value}}', { value });
+      case FilterKey.REFERRER:
+        return value === 'direct'
+          ? t('Sessions that came direct')
+          : t('Sessions referred by {{value}}', { value });
+      case FilterKey.RESOLUTIONS:
+        return t('Sessions at {{value}}', { value });
+      case FilterKey.FETCH:
+        return t('Sessions that called {{value}}', { value });
+      default:
+        return t('Sessions with {{value}}', { value });
+    }
+  };
+  const openInSessions = () => {
+    // a drill is built bare (name and value): the rule takes its catalogue entry
+    const catalogue = filterStore.getCurrentProjectFilters();
+    const named = (f: any) => {
+      const c = catalogue.find(
+        (x) => x.name === f.name && !!x.isEvent === !!f.isEvent,
+      );
+      return c
+        ? { ...c, ...f, displayName: f.displayName ?? c.displayName }
+        : f;
+    };
+    searchStore.clearSearch();
+    filter.filters.forEach((f: any) =>
+      searchStore.addFilter({ ...named(f), filters: f.filters?.map(named) }),
+    );
+    history.push(
+      withSiteId(sessionsRoute(), projectsStore.getSiteId().siteId!),
+    );
+  };
+
   const clearFilters = () => {
     dashboardStore.resetDrillDownFilter();
     metricStore.setFocusedSeriesName(null, false);
@@ -362,11 +436,26 @@ function WidgetSessions() {
         head={
           <>
             <span className="m-pa__head-title">
-              {metricStore.clickMapSearch ? t('Clicks') : t('Sessions')}
+              {metricStore.clickMapSearch
+                ? t('Clicks')
+                : drilledRow
+                  ? drillTitle(drilledRow)
+                  : t('Sessions')}
             </span>
             <span className="m-cardp__between">
               {metricStore.clickMapLabel
                 ? `${t('on')} "${metricStore.clickMapLabel}" · `
+                : ''}
+              {drilledRow && !loading
+                ? `${t('{{n}} sessions', {
+                    n: filteredSessions.total.toLocaleString(),
+                    count: filteredSessions.total,
+                  })} · `
+                : ''}
+              {drilledRow && !loading && drilledProgress != null
+                ? `${t('{{share}} of the card', {
+                    share: drilledProgress >= 1 ? `${drilledProgress}%` : '<1%',
+                  })} · `
                 : ''}
               {t('between {{start}} and {{end}}', {
                 start: startTime,
@@ -384,6 +473,11 @@ function WidgetSessions() {
                     t('Drilldown')}
                 </Chip>
               </span>
+            ) : null}
+            {drilledRow && OPENABLE.has(widget.metricOf) ? (
+              <Button variant="subtle" size="sm" onClick={openInSessions}>
+                {t('Open in Sessions')}
+              </Button>
             ) : null}
             {isSingleSeries ? null : (
               <div className="m-page__controls">
@@ -408,6 +502,7 @@ function WidgetSessions() {
         ) : filteredSessions.sessions.length === 0 ? (
           <EmptyState
             className="m-cardp__none"
+            state="card-sessions"
             title={t('No sessions {{window}}', {
               window: windowPhrase(t, dashboardStore.drillDownPeriod),
             })}
@@ -422,7 +517,6 @@ function WidgetSessions() {
               fields={CARD_FIELDS}
               onOpen={open}
               onHover={hover}
-              liveBadge={false}
             />
             <ListFooter
               page={metricStore.sessionsPage}

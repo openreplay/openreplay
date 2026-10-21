@@ -1,20 +1,15 @@
+import { SessionAvatar } from '@/ui/data/SessionAvatar';
 import React from 'react';
 
-import { hashString } from 'App/types/session/session';
-
-import { SessionAvatar } from 'Shared/SessionAvatar/SessionAvatar';
-
-/** The person's own picture when they set one, else their cube robot. */
+/** The person's own picture when they set one, else their robot. */
 export function PersonAvatar({
   userId,
   avatarUrl,
   size = 24,
-  cheer = false,
 }: {
   userId: string;
   avatarUrl?: string;
   size?: number;
-  cheer?: boolean;
 }) {
   const [broken, setBroken] = React.useState(false);
   if (avatarUrl && !broken)
@@ -29,7 +24,7 @@ export function PersonAvatar({
         onError={() => setBroken(true)}
       />
     );
-  return <SessionAvatar seed={hashString(userId)} size={size} cheer={cheer} />;
+  return <SessionAvatar seed={userId} size={size} />;
 }
 
 export function Where({

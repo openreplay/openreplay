@@ -2,6 +2,8 @@ import { cityAfterCode } from '@/lib/geo';
 import { OpenReplayMark } from '@/ui/brand/OpenReplayMark';
 import { Chip } from '@/ui/data/Chip';
 import { RelativeTime } from '@/ui/data/RelativeTime';
+import { SessionAvatar } from '@/ui/data/SessionAvatar';
+import { hueIndexFor, seedFor } from '@/ui/data/avatar';
 import { type Column, DataTable } from '@/ui/data/table';
 import { useViewport } from '@/ui/layout/use-viewport';
 import { Tooltip } from '@/ui/overlays/tooltip';
@@ -23,8 +25,6 @@ import {
 import { useTranslation } from 'react-i18next';
 
 import { countries } from 'App/constants/countries';
-
-import { SessionAvatar, hueIndexFor } from 'Shared/SessionAvatar/SessionAvatar';
 
 import { MetaChips } from './MetaChips';
 import './session-table.css';
@@ -112,7 +112,6 @@ export interface SessionsTableProps {
   timezone?: string;
   /** "Which clock": each row in its user's own zone, when the session has one */
   userTimezone?: boolean;
-  liveBadge?: boolean;
   stickyHeader?: boolean;
   /** rows that can't be opened (already picked elsewhere) */
   rowDisabled?: (s: Session) => boolean;
@@ -137,7 +136,6 @@ export function SessionsTable({
   lastViewedIds,
   timezone,
   userTimezone = false,
-  liveBadge = true,
   stickyHeader = true,
   rowDisabled,
   queue,
@@ -170,6 +168,9 @@ export function SessionsTable({
         {formatDuration(Math.round(s.duration.as('seconds')))}
       </span>
     );
+  // a live row is its avatar: the robot moves and the dot says if anyone is there
+  const liveWords = (s: Session) =>
+    s.active === false ? t('Live, inactive') : t('Live, active');
   const deviceWord = (type: string) =>
     ({
       desktop: t('Desktop'),
@@ -184,7 +185,21 @@ export function SessionsTable({
       key: 'user',
       render: (s) => (
         <div className="m-ss__who">
-          <SessionAvatar seed={s.userNumericHash ?? 0} />
+          {s.live ? (
+            <Tooltip title={liveWords(s)}>
+              <span className="m-ss__avatar">
+                <SessionAvatar
+                  key={seedFor(s)}
+                  seed={seedFor(s)}
+                  presence={s.active === false ? 'inactive' : 'active'}
+                  animated
+                />
+                <span className="m-sr-only">{liveWords(s)}</span>
+              </span>
+            </Tooltip>
+          ) : (
+            <SessionAvatar key={seedFor(s)} seed={seedFor(s)} />
+          )}
           {onFilterToUser ? (
             <button
               type="button"
@@ -200,9 +215,6 @@ export function SessionsTable({
             >
               {s.userDisplayName}
             </span>
-          )}
-          {liveBadge && s.live && (
-            <span className="m-ss__live">{t('live')}</span>
           )}
           {lastViewedIds?.includes(s.sessionId) && (
             <Chip kind="status" tone="neutral">
@@ -232,7 +244,7 @@ export function SessionsTable({
           {
             title: t('Metadata'),
             key: 'metadata',
-            width: narrow ? 136 : 176,
+            width: narrow ? 136 : undefined,
             priority: 2 as const,
             render: (s: Session) => (
               <MetaChips
@@ -405,7 +417,7 @@ export function SessionsTable({
       }
       rowStyle={(s) =>
         ({
-          '--m-avatar-i': hueIndexFor(s.userNumericHash ?? 0),
+          '--m-avatar-i': hueIndexFor(seedFor(s)),
         }) as CSSProperties
       }
       onRowClick={(s, e) => {

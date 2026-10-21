@@ -195,6 +195,7 @@ function JourneyTags() {
 
       {pageRows.length === 0 ? (
         <EmptyState
+          state={ql ? 'search-nomatch' : undefined}
           title={
             ql
               ? t('No tags match “{{q}}”', { q: q.trim() })

@@ -192,6 +192,7 @@ function ExportedVideosList() {
       ) : list.length === 0 ? (
         <EmptyState
           art="frame"
+          state="exports-none"
           title={t('No exported videos yet')}
           hint={t(
             'Export a replay to video from the player; it shows up here when it is ready.',

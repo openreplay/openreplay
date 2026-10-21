@@ -523,6 +523,7 @@ function RunsTab() {
           />
         ) : (
           <EmptyState
+            state="runs-none"
             title={emptyTab[statusTab]}
             hint={t(
               'Runs appear here as scheduled tests execute, and stay for as long as you keep them.',

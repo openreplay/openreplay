@@ -6,6 +6,8 @@ import {
   DropdownMenuTrigger,
 } from '@/ui/actions/dropdown-menu';
 import { RelativeTime } from '@/ui/data/RelativeTime';
+import { SessionAvatar } from '@/ui/data/SessionAvatar';
+import { hueIndexFor } from '@/ui/data/avatar';
 import { Checkbox } from '@/ui/inputs/checkbox';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import {
@@ -21,9 +23,6 @@ import React, { type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { Spot } from 'App/mstore/types/spot';
-import { hashString } from 'App/types/session/session';
-
-import { SessionAvatar, hueIndexFor } from 'Shared/SessionAvatar/SessionAvatar';
 
 interface Props {
   spot: Spot;
@@ -62,7 +61,7 @@ export function SpotCard({
         className="m-spot-card__thumb"
         style={
           {
-            '--m-avatar-i': hueIndexFor(hashString(spot.title)),
+            '--m-avatar-i': hueIndexFor(spot.title),
           } as CSSProperties
         }
       >
@@ -166,7 +165,7 @@ export function SpotCard({
           </DropdownMenu>
         </div>
         <div className="m-spot-card__by">
-          <SessionAvatar seed={hashString(spot.user ?? '')} size={16} />
+          <SessionAvatar seed={spot.user ?? ''} size={16} />
           <span className="m-truncate">{spot.user}</span>
           <span className="m-spot-card__dot" aria-hidden="true">
             ·

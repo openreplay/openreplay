@@ -18,6 +18,8 @@ interface Props {
   metric?: Widget;
   isWidget?: boolean;
   data: { funnel: Funnel; funnelBreakdown?: Record<string, Funnel> };
+  /** a stage was drilled into (a dashboard opens its card) */
+  onDrill?: () => void;
   compData?: { funnel: Funnel; funnelBreakdown?: Record<string, Funnel> };
 }
 
@@ -42,7 +44,13 @@ export function stageText(stage: FunnelStage, t: TFunction): string {
   return stage.label;
 }
 
-function FunnelWidget({ metric, isWidget = false, data, compData }: Props) {
+function FunnelWidget({
+  metric,
+  isWidget = false,
+  data,
+  compData,
+  onDrill,
+}: Props) {
   const { t } = useTranslation();
   const { dashboardStore, metricStore } = useStore();
   const { hideModal } = useModal();
@@ -79,6 +87,17 @@ function FunnelWidget({ metric, isWidget = false, data, compData }: Props) {
     stages.forEach((s, i) => s.updateKey('isActive', i === focusedFilter));
   }, [stages]);
 
+  // a drill applied from outside (a dashboard's stage) marks its stage
+  const drilledStages = dashboardStore.drillDownFilter.filters?.length ?? 0;
+  useEffect(() => {
+    const want = drilledStages > 0 ? drilledStages - 1 : null;
+    if (want === focusedFilter) return;
+    setFocusedFilter(want);
+    stages.forEach((s, i) =>
+      s.updateKey('isActive', want == null ? true : i === want),
+    );
+  }, [drilledStages]);
+
   const applyDrillDown = (index: number) => {
     const ts = drillDownPeriod.toTimestamps();
     drillDownFilter.merge({
@@ -95,6 +114,7 @@ function FunnelWidget({ metric, isWidget = false, data, compData }: Props) {
     );
     setFocusedFilter(clearing ? null : index);
     applyDrillDown(clearing ? -1 : index);
+    if (!clearing) onDrill?.();
   };
 
   const topN = metricStore.breakdownTopN;
@@ -132,7 +152,7 @@ function FunnelWidget({ metric, isWidget = false, data, compData }: Props) {
 
   return (
     <div
-      className={`m-fn${horizontal ? ' m-fn--columns' : ''}${compact ? ' is-compact' : ''}${isWidget ? ' is-inert' : ''}`}
+      className={`m-fn${horizontal ? ' m-fn--columns' : ''}${compact ? ' is-compact' : ''}${isWidget && !onDrill ? ' is-inert' : ''}`}
     >
       <ol className="m-fn__stages">
         {shown.map((index, i) => {
@@ -237,7 +257,7 @@ function FunnelWidget({ metric, isWidget = false, data, compData }: Props) {
                     : t('+{{n}} steps', { n: hidden, count: hidden })}
                 </span>
               )}
-              {isWidget ? (
+              {isWidget && !onDrill ? (
                 <span
                   className="m-fn__stage-btn"
                   role="group"

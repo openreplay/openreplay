@@ -1,4 +1,5 @@
 import { Button } from '@/ui/actions/button';
+import { SessionAvatar } from '@/ui/data/SessionAvatar';
 import { type Column, DataTable } from '@/ui/data/table';
 import { ListFooter } from '@/ui/layout/ListFooter';
 import { ChevronRight } from 'lucide-react';
@@ -9,7 +10,6 @@ import { useTranslation } from 'react-i18next';
 import { useStore } from 'App/mstore';
 import { useHistory, useLocation } from 'App/routing';
 
-import { SessionAvatar } from 'Shared/SessionAvatar/SessionAvatar';
 import UserSessionsDrawer from 'Shared/UserSessionsDrawer';
 
 interface User {
@@ -44,7 +44,7 @@ function CardUserList() {
       key: 'name',
       render: (u) => (
         <span className="flex items-center gap-3 text-sm text-content-primary">
-          <SessionAvatar seed={u.name.length} />
+          <SessionAvatar seed={u.name} />
           {u.name}
         </span>
       ),

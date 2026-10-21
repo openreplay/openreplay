@@ -1,9 +1,11 @@
 import { Button } from '@/ui/actions/button';
+import '@/ui/filters/filter-menu.css';
 import { CheckRow } from '@/ui/inputs/CheckRow';
+import '@/ui/inputs/date-range.css';
 import { PopoverSearch } from '@/ui/overlays/PopoverSearch';
 import { menuKeyDown } from '@/ui/overlays/menuKeys';
 import { toast } from '@/ui/overlays/toast';
-import { Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -17,6 +19,7 @@ import { cardIcon, cardTypeLabel } from '../../cardIcons';
 import AddCardSection from '../AddCardSection/AddCardSection';
 
 const PAGE = 50;
+const SKELETON_ROWS = 7;
 const MAX_PAGES = 10;
 
 /** Library cards not yet on the dashboard, ticked and added at once; or a new one. */
@@ -97,85 +100,147 @@ function CardPicker({ onDone }: { onDone: () => void }) {
     }
   };
 
-  if (creating) {
-    return (
-      <AddCardSection handleOpenChange={(o) => !o && onDone()} hideExisting />
-    );
-  }
+  const toggle = (id: number) =>
+    setPicked((prev) => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
 
   return (
-    <div className="m-dash__picker" onKeyDown={menuKeyDown}>
-      <p className="m-dash__picker-title">
-        {t('Add a card to this dashboard')}
-      </p>
+    <div
+      className="m-fm m-dash__picker"
+      role="menu"
+      aria-label={t('Add a card to this dashboard')}
+      onKeyDown={menuKeyDown}
+    >
       <PopoverSearch
-        className="m-dash__picker-search"
-        placeholder={t('Search cards')}
+        // one field per step: entering a step focuses its search
+        key={creating ? 'kinds' : 'cards'}
+        placeholder={
+          creating ? t('Search kinds of card') : t('Search cards to add')
+        }
         value={query}
         onChange={setQuery}
+        lead={
+          creating ? (
+            <button
+              type="button"
+              className="m-fm__back"
+              onClick={() => {
+                setCreating(false);
+                setQuery('');
+              }}
+              aria-label={t('Back to your cards')}
+            >
+              <ChevronLeft size={14} />
+              <span>{t('New card')}</span>
+            </button>
+          ) : null
+        }
       />
-      {cards == null ? null : available.length === 0 ? (
-        <p className="m-dash__picker-empty">
-          {failed
-            ? t('Cards could not be loaded. Try again in a moment.')
-            : query
-              ? t('No card matches that.')
-              : t('Every card is already on it.')}
-        </p>
-      ) : (
-        <div
-          className="m-dash__picker-list"
-          role="menu"
-          aria-label={t('Cards to add')}
-        >
-          {available.map((c) => {
-            const Icon = cardIcon(c.metricType, c.metricOf);
-            return (
-              <CheckRow
-                key={c.metricId}
-                on={picked.has(c.metricId)}
-                onToggle={() =>
-                  setPicked((prev) => {
-                    const n = new Set(prev);
-                    if (n.has(c.metricId)) n.delete(c.metricId);
-                    else n.add(c.metricId);
-                    return n;
-                  })
-                }
-                icon={<Icon size={14} />}
-                meta={
-                  <span className="m-dash__picker-type">
-                    {cardTypeLabel(t, c.metricType, c.metricOf)}
-                  </span>
-                }
-              >
-                {c.name}
-              </CheckRow>
-            );
-          })}
+      {creating ? (
+        <div key="create" className="m-fm__body m-dash__picker-body">
+          <AddCardSection
+            step={{ query }}
+            handleOpenChange={(o) => !o && onDone()}
+            hideExisting
+          />
         </div>
+      ) : (
+        <>
+          <div
+            key="cards"
+            className="m-fm__body m-dash__picker-body"
+            aria-busy={cards == null || undefined}
+          >
+            <button
+              type="button"
+              className="m-fm__dim-row"
+              onClick={() => {
+                setCreating(true);
+                setQuery('');
+              }}
+              aria-haspopup="menu"
+            >
+              <span className="m-dash__picker-slot" aria-hidden="true" />
+              <span className="m-fm__dim-icon" aria-hidden="true">
+                <Plus size={14} />
+              </span>
+              <span className="m-fm__dim-label">{t('Create a new card')}</span>
+              <ChevronRight
+                size={13}
+                className="m-fm__caret"
+                aria-hidden="true"
+              />
+            </button>
+            <p className="m-dr__field m-dash__picker-field">
+              {t('Your cards')}
+            </p>
+            {cards == null ? (
+              Array.from({ length: SKELETON_ROWS }, (_, i) => (
+                <span
+                  key={i}
+                  className="m-checkrow m-dash__picker-skel"
+                  aria-hidden="true"
+                >
+                  <span className="m-skeleton m-dash__picker-skel-icon" />
+                  <span
+                    className="m-skeleton m-dash__picker-skel-name"
+                    style={{ width: `${46 + ((i * 17) % 30)}%` }}
+                  />
+                  <span className="m-skeleton m-dash__picker-skel-type" />
+                </span>
+              ))
+            ) : available.length === 0 ? (
+              <p className="m-fm__none">
+                {failed
+                  ? t('Cards could not be loaded. Try again in a moment.')
+                  : query
+                    ? t('No card matches that.')
+                    : t('Every card is already on it.')}
+              </p>
+            ) : (
+              available.map((c) => {
+                const Icon = cardIcon(c.metricType, c.metricOf);
+                return (
+                  <CheckRow
+                    key={c.metricId}
+                    on={picked.has(c.metricId)}
+                    onToggle={() => toggle(c.metricId)}
+                    icon={<Icon size={14} />}
+                    meta={
+                      <span className="m-dash__picker-type">
+                        {cardTypeLabel(t, c.metricType, c.metricOf)}
+                      </span>
+                    }
+                  >
+                    {c.name}
+                  </CheckRow>
+                );
+              })
+            )}
+          </div>
+          <div className="m-dash__picker-foot">
+            <span className="m-dash__picker-count">
+              {picked.size > 0
+                ? t('{{n}} selected', { n: picked.size, count: picked.size })
+                : t('None selected')}
+            </span>
+            <Button
+              variant="primary"
+              size="sm"
+              disabled={picked.size === 0 || busy}
+              onClick={() => void add()}
+            >
+              {picked.size > 1
+                ? t('Add {{n}} cards', { n: picked.size, count: picked.size })
+                : t('Add card')}
+            </Button>
+          </div>
+        </>
       )}
-      {picked.size > 0 ? (
-        <Button
-          variant="primary"
-          size="sm"
-          className="m-dash__picker-add"
-          disabled={busy}
-          onClick={() => void add()}
-        >
-          {picked.size === 1
-            ? t('Add 1 card')
-            : t('Add {{n}} cards', { n: picked.size, count: picked.size })}
-        </Button>
-      ) : null}
-      <Button
-        variant="subtle"
-        className="m-dash__picker-new"
-        onClick={() => setCreating(true)}
-      >
-        <Plus size={13} />
-        {t('Create a new card')}
-      </Button>
     </div>
   );
 }

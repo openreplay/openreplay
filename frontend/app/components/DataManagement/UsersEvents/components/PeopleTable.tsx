@@ -167,6 +167,7 @@ export function NoPeople({ filtered }: { filtered: boolean }) {
   return filtered ? (
     <EmptyState
       art="search"
+      state="people-nomatch"
       title={t('No people match')}
       hint={t('Loosen or remove a rule to see everyone.')}
     />

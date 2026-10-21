@@ -1,39 +1,33 @@
-import { type CSSProperties, useEffect, useId, useMemo, useState } from 'react';
-
-import { AvatarFace } from 'Shared/SessionAvatar/SessionAvatar';
-
-import './celebration.css';
+import { SessionAvatar } from '@/ui/data/SessionAvatar';
+import type { AvatarFace } from '@/ui/data/avatar';
 import {
-  Boil,
+  FRAMES,
   type P,
-  type Rough,
-  RoughDefs,
   f,
   inked,
   poly,
   ring,
   rng,
-  roughOf,
-} from './hand';
+} from '@/ui/illustrations/ink';
+import {
+  type CSSProperties,
+  type ReactNode,
+  useEffect,
+  useId,
+  useMemo,
+  useState,
+} from 'react';
+
+import './celebration.css';
 
 export type CelebrationVariant = 'install' | 'ready';
 
 export interface CelebrationProps {
-  /** Which story it tells. `install`: two cube robots cheer, every service
-   *  answered. `ready`: one cube robot cheers beside the first session. */
   variant?: CelebrationVariant;
-  /** Rendered width in px; the height follows the 200 x 112 drawing. */
   size?: number;
   className?: string;
 }
 
-/**
- * The success moment: hand-inked cube robots wearing session faces, the line
- * boiling like stop motion. They cheer (hop, confetti) once on arrival and on
- * hover; with reduced motion they hold one still frame.
- */
-
-/** How long the arrival cheer lasts before the drawing rests (ms). */
 const ARRIVAL_MS = 1500;
 
 export function Celebration({
@@ -49,7 +43,7 @@ export function Celebration({
     return () => window.clearTimeout(t);
   }, []);
   const cheering = arriving || hovered;
-  const rough = roughOf(uid);
+  const rough = (k: number) => `url(#cb-rough-${uid}-${k})`;
   const art = useMemo(
     () =>
       variant === 'install' ? (
@@ -70,27 +64,63 @@ export function Celebration({
       aria-hidden="true"
     >
       <svg viewBox="0 0 200 112" className="m-cheer__svg" fill="none">
-        <RoughDefs uid={uid} />
+        <defs>
+          {FRAMES.map((k) => (
+            <filter
+              key={k}
+              id={`cb-rough-${uid}-${k}`}
+              x="-5%"
+              y="-5%"
+              width="110%"
+              height="110%"
+            >
+              <feTurbulence
+                type="fractalNoise"
+                baseFrequency="0.85"
+                numOctaves="2"
+                seed={3 + k * 11}
+                result="n"
+              />
+              <feDisplacementMap
+                in="SourceGraphic"
+                in2="n"
+                scale="1.6"
+                xChannelSelector="R"
+                yChannelSelector="G"
+              />
+            </filter>
+          ))}
+        </defs>
         {art}
       </svg>
     </span>
   );
 }
 
-/* ── the robot ────────────────────────────────────────────────────────────── */
+type Rough = (k: number) => string;
 
-/** The cube: a 44 x 42 front, 12 x 9 of depth to the upper right. */
+function Boil({ children }: { children: (k: number) => ReactNode }) {
+  return (
+    <>
+      {FRAMES.map((k) => (
+        <g key={k} className={`m-cheer__frame m-cheer__frame--${k}`}>
+          {children(k)}
+        </g>
+      ))}
+    </>
+  );
+}
+
 const W = 44;
 const H = 42;
 const DX = 12;
 const DY = 9;
 const TOP = 52;
-/** The face: a session avatar, inset on the front face. */
 const FACE = 38;
 
-/** Who each robot is: a session avatar's seed. */
 export interface RobotFace {
-  seed: number;
+  seed: string;
+  drift: NonNullable<AvatarFace['mouth']>;
 }
 
 function Robot({
@@ -153,6 +183,13 @@ function Robot({
   ];
   const bobble: P = [cx + 9.5 * lean, cy - 19.5];
 
+  const faces: { kind: string; part?: AvatarFace }[] = [
+    { kind: 'own' },
+    { kind: 'drift', part: { mouth: face.drift } },
+    { kind: 'blink', part: { eyes: 'soft' } },
+    { kind: 'cheer', part: { eyes: 'happy', mouth: 'open' } },
+  ];
+
   return (
     <g
       className={`m-cheer__bot m-cheer__bot--${hop}`}
@@ -171,15 +208,18 @@ function Robot({
       <path d={poly(top)} className="m-cheer__fill-top" />
       <path d={poly(front)} className="m-cheer__fill-front" />
       <path d={poly(side)} className="m-cheer__fill-side" />
-      <foreignObject
-        x={x + (W - FACE) / 2}
-        y={TOP + (H - FACE) / 2}
-        width={FACE}
-        height={FACE}
-        className="m-cheer__face"
-      >
-        <AvatarFace seed={face.seed} size={FACE} />
-      </foreignObject>
+      {faces.map(({ kind, part }) => (
+        <foreignObject
+          key={kind}
+          x={x + (W - FACE) / 2}
+          y={TOP + (H - FACE) / 2}
+          width={FACE}
+          height={FACE}
+          className={`m-cheer__face m-cheer__face--${kind}`}
+        >
+          <SessionAvatar seed={face.seed} face={part} size={FACE} />
+        </foreignObject>
+      ))}
 
       <Boil>
         {(k) => {
@@ -226,8 +266,6 @@ function Robot({
   );
 }
 
-/* ── the confetti ─────────────────────────────────────────────────────────── */
-
 type Bit = {
   kind: 'spark' | 'squig' | 'dash' | 'ring';
   x: number;
@@ -236,7 +274,6 @@ type Bit = {
   a?: number;
 };
 
-/** One piece, drawn in the same hand; it pops out of `from` when they cheer. */
 function Piece({
   bit,
   from,
@@ -328,8 +365,6 @@ function Confetti({
   );
 }
 
-/* ── the two stories ──────────────────────────────────────────────────────── */
-
 const INSTALL_BITS: Bit[] = [
   { kind: 'spark', x: 99, y: 15, s: 5.5 },
   { kind: 'squig', x: 84, y: 24 },
@@ -344,14 +379,13 @@ const INSTALL_BITS: Bit[] = [
   { kind: 'dash', x: 185, y: 36, a: -40 },
 ];
 
-/** install: two robots side by side, every service answered. */
 function Install({ rough }: { rough: Rough }) {
   return (
     <>
       <Robot
         x={28}
         hand={1}
-        face={{ seed: 3 }}
+        face={{ seed: 'armada-a', drift: 'smile' }}
         lean={1}
         rough={rough}
         hop="a"
@@ -359,7 +393,7 @@ function Install({ rough }: { rough: Rough }) {
       <Robot
         x={116}
         hand={2}
-        face={{ seed: 8 }}
+        face={{ seed: 'armada-c', drift: 'bigSmile' }}
         lean={-1}
         rough={rough}
         hop="b"
@@ -380,7 +414,6 @@ const READY_BITS: Bit[] = [
   { kind: 'ring', x: 14, y: 40, s: 2 },
 ];
 
-/** ready: one robot beside the first session, on a hand-drawn card. */
 function Ready({ rough }: { rough: Rough }) {
   const card: P[] = [
     [112, 50],
@@ -443,7 +476,7 @@ function Ready({ rough }: { rough: Rough }) {
       <Robot
         x={30}
         hand={3}
-        face={{ seed: 5 }}
+        face={{ seed: 'armada-b', drift: 'smile' }}
         lean={1}
         rough={rough}
         hop="a"

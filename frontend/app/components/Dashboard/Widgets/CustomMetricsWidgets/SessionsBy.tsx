@@ -1,6 +1,7 @@
 import { useStore } from '@/mstore';
 import { Button } from '@/ui/actions/button';
 import { BrowserIcon } from '@/ui/brand/BrowserIcon';
+import { SessionAvatar } from '@/ui/data/SessionAvatar';
 import { ListFooter } from '@/ui/layout/ListFooter';
 import { EntityDrawer } from '@/ui/overlays/EntityDrawer';
 import { FilterKey } from 'Types/filter/filterType';
@@ -21,10 +22,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import 'App/components/Dashboard/charts.css';
-import { hashString } from 'App/mstore/types/session';
 import NoDataInWindow from 'Components/Dashboard/components/NoDataInWindow';
-
-import { SessionAvatar } from 'Shared/SessionAvatar/SessionAvatar';
 
 interface Props {
   metric?: any;
@@ -44,8 +42,19 @@ function SessionsBy(props: Props) {
   } = props;
   const rows = inGrid ? 4 : 3;
   const { t } = useTranslation();
-  const { filterStore } = useStore();
-  const [selected, setSelected] = React.useState<any>(null);
+  const { filterStore, dashboardStore } = useStore();
+  // the row the card's drill points at (a dashboard datum opens it drilled)
+  const drillFilter: any = dashboardStore.drillDownFilter.filters[0];
+  const drilled =
+    !inGrid && drillFilter?.name === metric.metricOf
+      ? ((drillFilter.isEvent
+          ? drillFilter.filters?.find((s: any) => s.value?.length)?.value?.[0]
+          : drillFilter.value?.[0]) ?? null)
+      : null;
+  const [selected, setSelected] = React.useState<any>(drilled);
+  React.useEffect(() => {
+    if (drilled != null) setSelected(drilled);
+  }, [drilled]);
   const { total } = data;
 
   const onClickHandler = async (_: any, row: any) => {
@@ -271,9 +280,7 @@ function RowMark({ dimension, row }: { dimension: string; row: any }) {
     case FilterKey.USER_BROWSER:
       return <BrowserIcon name={label} size={15} />;
     case FilterKey.USERID:
-      return (
-        <SessionAvatar seed={hashString(label || 'Anonymous')} size={18} />
-      );
+      return <SessionAvatar seed={label || 'Anonymous'} size={18} />;
     case FilterKey.USER_DEVICE: {
       const l = label.toLowerCase();
       const I = /ipad|tablet/.test(l)

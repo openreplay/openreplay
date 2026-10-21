@@ -270,7 +270,6 @@ function ErrorDrawer({ errorId }: { errorId: string }) {
                 fields={SESSION_FIELDS}
                 onOpen={open}
                 onHover={hover}
-                liveBadge={false}
                 stickyHeader={false}
               />
             ) : (

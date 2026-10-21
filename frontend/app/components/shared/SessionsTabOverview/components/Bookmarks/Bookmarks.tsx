@@ -43,6 +43,7 @@ function Bookmarks() {
       ) : bookmarks.list.length === 0 ? (
         <EmptyState
           art="bookmark"
+          state="s-bookmarks"
           title={
             isEnterprise
               ? t('Nothing in the vault yet')

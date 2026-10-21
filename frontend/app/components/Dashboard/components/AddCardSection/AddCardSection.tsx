@@ -199,10 +199,13 @@ const AddCardSection = observer(
     inCards,
     hideExisting,
     handleOpenChange,
+    step,
   }: {
     inCards?: boolean;
     hideExisting?: boolean;
     handleOpenChange?: (isOpen: boolean) => void;
+    /** the second step of another popover: it owns the search and its query */
+    step?: { query: string };
   }) => {
     const { t } = useTranslation();
     const { showModal } = useModal();
@@ -212,7 +215,8 @@ const AddCardSection = observer(
     const [tab, setTab] = React.useState(
       isMobile ? 'web_analytics' : 'product_analytics',
     );
-    const [query, setQuery] = React.useState('');
+    const [ownQuery, setQuery] = React.useState('');
+    const query = step ? step.query : ownQuery;
 
     const labels: Record<string, string> = isMobile
       ? { web_analytics: t('Mobile Analytics') }
@@ -267,15 +271,22 @@ const AddCardSection = observer(
     };
 
     return (
-      <div className="m-addcard" data-slot="add-card">
-        <p className="m-addcard__title">
-          {t('What do you want to visualize?')}
-        </p>
-        <PopoverSearch
-          placeholder={t('Search kinds')}
-          value={query}
-          onChange={setQuery}
-        />
+      <div
+        className={`m-addcard${step ? ' m-addcard--step' : ''}`}
+        data-slot="add-card"
+      >
+        {!step && (
+          <>
+            <p className="m-addcard__title">
+              {t('What do you want to visualize?')}
+            </p>
+            <PopoverSearch
+              placeholder={t('Search kinds')}
+              value={query}
+              onChange={setQuery}
+            />
+          </>
+        )}
         {!q && Object.keys(labels).length > 1 ? (
           <Segmented
             block

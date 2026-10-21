@@ -59,7 +59,6 @@ function CustomMetricTableSessions({
         fields={FIELDS}
         onOpen={open}
         onHover={hover}
-        liveBadge={false}
         stickyHeader={false}
       />
       {isEdit ? (

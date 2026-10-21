@@ -5,6 +5,12 @@
   min-width: 0;
 }
 
+/* a live row's avatar, wrapped for its tooltip */
+.m-ss__avatar {
+  display: block;
+  flex: none;
+}
+
 .m-ss__name {
   min-width: 0;
   padding: 0;
@@ -40,16 +46,6 @@
   font-size: var(--m-text-xs);
   font-weight: var(--m-weight-regular);
   color: var(--m-content-muted);
-}
-
-.m-ss__live {
-  flex: none;
-  padding-inline: var(--m-space-2);
-  border-radius: var(--m-radius-chip);
-  background: var(--m-status-success-bg);
-  color: var(--m-status-success-fg);
-  font-size: var(--m-text-2xs);
-  line-height: 1.45;
 }
 
 .m-ss__fig {
@@ -276,7 +272,6 @@
 :root[data-viewport='phone'] .m-ss__who > .m-ss__name {
   grid-area: name;
 }
-:root[data-viewport='phone'] .m-ss__who > .m-ss__live,
 :root[data-viewport='phone'] .m-ss__who > .m-chip {
   grid-area: live;
 }

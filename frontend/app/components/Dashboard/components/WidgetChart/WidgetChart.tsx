@@ -115,6 +115,8 @@ interface Props {
   isTemplate?: boolean;
   isPreview?: boolean;
   height?: number;
+  /** on a dashboard: a datum was drilled into, open its card */
+  onDatum?: () => void;
 }
 
 function WidgetChart(props: Props) {
@@ -146,13 +148,15 @@ function WidgetChart(props: Props) {
     _metric.series.map((s) => s.name),
   );
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    // a datum clicked on a dashboard: its card's chart starts drilled into it
+    if (props.isPreview && _metric.metricId)
+      dashboardStore.applyCarriedDrill(_metric.metricId);
+    return () => {
       dashboardStore.setComparisonPeriod(null, _metric.metricId);
       dashboardStore.resetDrillDownFilter();
-    },
-    [],
-  );
+    };
+  }, []);
 
   useEffect(() => {
     if (enabledRows.length !== _metric.series.length) {
@@ -179,6 +183,11 @@ function WidgetChart(props: Props) {
   }, [chartData]);
 
   const onChartClick = (event: any) => {
+    drill(event);
+    if (event) props.onDatum?.();
+  };
+
+  const drill = (event: any) => {
     metricStore.setDrillDown(true);
     if (event) {
       if (Array.isArray(event)) {
@@ -414,6 +423,12 @@ function WidgetChart(props: Props) {
   const onFocus = (seriesName: string) => {
     metricStore.setFocusedSeriesName(seriesName);
     metricStore.setDrillDown(true);
+    props.onDatum?.();
+  };
+
+  const onJourneyClick = (filters: any) => {
+    dashboardStore.drillDownFilter.merge({ filters, page: 1 });
+    props.onDatum?.();
   };
 
   const renderChart = React.useCallback(() => {
@@ -461,6 +476,7 @@ function WidgetChart(props: Props) {
           data={data}
           compData={compData}
           isWidget={isSaved || isTemplate}
+          onDrill={props.onDatum}
         />
       );
     }
@@ -696,9 +712,7 @@ function WidgetChart(props: Props) {
               height={height}
               data={data}
               inGrid={!props.isPreview}
-              onChartClick={(filters: any) => {
-                dashboardStore.drillDownFilter.merge({ filters, page: 1 });
-              }}
+              onChartClick={onJourneyClick}
               isUngrouped={isUngrouped}
             />
           </LargerScreenOnly>
@@ -720,9 +734,7 @@ function WidgetChart(props: Props) {
               height={height}
               data={data}
               inGrid={!props.isPreview}
-              onChartClick={(filters: any) => {
-                dashboardStore.drillDownFilter.merge({ filters, page: 1 });
-              }}
+              onChartClick={onJourneyClick}
               isUngrouped={isUngrouped}
               startUrl={startUrl}
               getFilter={getFilter}

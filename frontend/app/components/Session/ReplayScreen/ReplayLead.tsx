@@ -1,5 +1,7 @@
 import { cityAfterCode } from '@/lib/geo';
 import { RelativeTime } from '@/ui/data/RelativeTime';
+import { SessionAvatar } from '@/ui/data/SessionAvatar';
+import { seedFor } from '@/ui/data/avatar';
 import { PopoverPanel } from '@/ui/overlays/popover';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import { observer } from 'mobx-react-lite';
@@ -12,7 +14,6 @@ import { formatTimeOrDate } from 'App/date';
 import { useStore } from 'App/mstore';
 import { capitalize } from 'App/utils';
 
-import { SessionAvatar } from 'Shared/SessionAvatar/SessionAvatar';
 import { MetaChips } from 'Shared/SessionsTable/MetaChips';
 
 // the drawer's session table and date picker load the first time it opens
@@ -39,8 +40,9 @@ function ReplayLead({ width, height }: { width?: number; height?: number }) {
     userDevice,
     userDeviceType,
     userId,
-    userNumericHash,
     userDisplayName,
+    live,
+    active,
     startedAt,
     revId,
     screenWidth,
@@ -111,9 +113,25 @@ function ReplayLead({ width, height }: { width?: number; height?: number }) {
     ...(revId ? ([[t('Rev ID'), revId]] as [string, string][]) : []),
   ];
 
+  const liveWords = active === false ? t('Live, inactive') : t('Live, active');
+
   return (
     <div className="m-rs__who">
-      <SessionAvatar seed={userNumericHash ?? 0} size={24} cheer />
+      {live ? (
+        <Tooltip title={liveWords}>
+          <span className="m-rs__avatar">
+            <SessionAvatar
+              seed={seedFor(session as any)}
+              size={28}
+              presence={active === false ? 'inactive' : 'active'}
+              animated
+            />
+            <span className="m-sr-only">{liveWords}</span>
+          </span>
+        </Tooltip>
+      ) : (
+        <SessionAvatar seed={seedFor(session as any)} size={28} />
+      )}
       <div className="m-rs__names">
         {userId && !iframe ? (
           <Tooltip title={t('All sessions of this user')} delay={500}>

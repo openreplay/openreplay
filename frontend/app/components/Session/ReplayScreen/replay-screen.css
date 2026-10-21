@@ -18,6 +18,11 @@
   flex: 1;
   min-width: 0;
 }
+/* a live visitor's avatar, wrapped for its tooltip */
+.m-rs__avatar {
+  display: block;
+  flex: none;
+}
 .m-rs__names {
   display: flex;
   flex-direction: column;

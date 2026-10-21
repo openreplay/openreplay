@@ -265,6 +265,7 @@ function ListPage() {
       ) : visible.length === 0 ? (
         <EmptyState
           art="search"
+          state="properties-nomatch"
           title={t('No properties match')}
           hint={t('Clear the search, or show the hidden ones too.')}
           action={

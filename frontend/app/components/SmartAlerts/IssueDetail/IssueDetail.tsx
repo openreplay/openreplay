@@ -337,6 +337,7 @@ function IssueDetail() {
               </div>
             ) : shown.length === 0 ? (
               <EmptyState
+                state={filtered || searchQuery ? 'issue-strip' : undefined}
                 title={
                   filtered
                     ? t('No sampled session matches these filters')

@@ -1635,6 +1635,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@dicebear/core@npm:10.7.0":
+  version: 10.7.0
+  resolution: "@dicebear/core@npm:10.7.0"
+  checksum: 10c1/be431c3503927f6e3deec894fc5d0720729fef868e11a96aa44968d7e692cb63737d7e065f2a39f24f6298bd75309620f6ce2111f480be16047728e1cb19454f
+  languageName: node
+  linkType: hard
+
 "@emnapi/core@npm:1.10.0":
   version: 1.10.0
   resolution: "@emnapi/core@npm:1.10.0"
@@ -10216,6 +10223,7 @@ __metadata:
     "@babel/preset-env": "npm:^8.0.2"
     "@babel/preset-react": "npm:^8.0.1"
     "@codewonders/html2canvas": "npm:^1.0.2"
+    "@dicebear/core": "npm:10.7.0"
     "@eslint/eslintrc": "npm:^3.3.5"
     "@eslint/js": "npm:^9.39.4"
     "@jest/globals": "npm:^29.7.0"

@@ -352,6 +352,7 @@ function SessionsTabOverview() {
   const empty = noRules ? (
     <EmptyState
       art="window"
+      state="s-window"
       title={t('Nothing {{window}}', { window: windowPhrase(t, period) })}
       hint={
         lastSessionAt != null
@@ -378,6 +379,7 @@ function SessionsTabOverview() {
   ) : (
     <EmptyState
       art="search"
+      state="s-filters"
       title={t('No sessions match')}
       hint={t(
         'Every rule above is doing its job. Loosen one, or widen the date window.',

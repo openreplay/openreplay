@@ -273,6 +273,7 @@ function MetricsView({ siteId }: { siteId: string }) {
       ) : cards.length === 0 ? (
         <EmptyState
           art="search"
+          state={filter.query ? undefined : 'cards-category'}
           title={
             filter.query
               ? t('No cards match your search')
