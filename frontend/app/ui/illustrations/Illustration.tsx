@@ -178,7 +178,7 @@ const FACE_MID: Record<BotShape, number> = {
   triangle: 29,
 };
 
-function botAura(
+export function botAura(
   kind: AuraKind,
   shape: BotShape,
   lean: 1 | -1,

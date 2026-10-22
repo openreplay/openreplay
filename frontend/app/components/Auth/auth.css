@@ -218,9 +218,11 @@
   }
 }
 
-/* the cloud signup's column, on the ground beside the card; stacked below 860px */
-.m-auth__body.is-split { gap: clamp(var(--m-space-8), 6vw, 5rem); }
-.m-auth__pitch { display: flex; flex-direction: column; gap: var(--m-space-6); max-width: 22rem; }
+/* the cloud signup's column, on the ground beside the card, starting level
+   with its title; stacked below 860px */
+.m-auth__body.is-split { gap: clamp(var(--m-space-8), 6vw, 5rem); align-items: flex-start; }
+.m-auth__body.is-split .m-auth__pitch { margin-top: var(--m-space-7); }
+.m-auth__pitch { display: flex; flex-direction: column; gap: var(--m-space-8); max-width: 24rem; }
 .m-auth__pitch-title {
   font-family: var(--m-font-display);
   font-size: calc(var(--m-text-2xl) * var(--m-display-scale));
@@ -229,22 +231,25 @@
   line-height: var(--m-leading-tight);
   color: var(--m-content-primary);
 }
-.m-auth__pitch-list { display: flex; flex-direction: column; gap: var(--m-space-4); }
-.m-auth__pitch-list li { display: flex; align-items: flex-start; gap: var(--m-space-3); font-size: var(--m-text-sm); line-height: var(--m-leading-snug); color: var(--m-content-secondary); }
-.m-auth__pitch-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  width: 1.75rem;
-  height: 1.75rem;
-  margin-top: -3px;
-  border: 1px solid var(--m-border-subtle);
-  border-radius: var(--m-radius-control);
-  background: var(--m-surface-default);
-  color: var(--m-content-secondary);
-}
+.m-auth__pitch-list { display: flex; flex-direction: column; gap: var(--m-space-6); }
+.m-auth__pitch-list li { display: flex; align-items: center; gap: var(--m-space-4); font-size: var(--m-text-sm); line-height: var(--m-leading-normal); color: var(--m-content-secondary); }
+/* a quiet mark per topic, bare on the ground */
+.m-auth .m-auth__pitch-icon { flex: none; }
 .m-auth__pitch-note { font-size: var(--m-text-xs); color: var(--m-content-muted); }
+/* the agents in the corner, on the ground outside the centring so the card
+   and the pitch never move; not drawn where they would reach the pitch */
+.m-auth__body { position: relative; }
+.m-auth .m-auth__city {
+  position: absolute;
+  left: var(--m-space-6);
+  bottom: var(--m-space-2);
+  width: clamp(300px, 26vw, 400px);
+  pointer-events: none;
+}
+.m-auth .m-auth__city .m-ill__svg { pointer-events: auto; }
+@media (max-width: 1000px), (max-height: 680px) {
+  .m-auth .m-auth__city { display: none; }
+}
 @media (max-width: 860px) {
   .m-auth__body.is-split { flex-direction: column; align-items: stretch; }
   .m-auth__pitch { max-width: 26rem; margin-inline: auto; }

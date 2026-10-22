@@ -16,6 +16,48 @@ export const TOP_Y: Record<BotShape, number> = {
 };
 export const BOT_W = 56;
 
+export type View = 'flat' | 'turned';
+export interface Projection {
+  ax: number;
+  ay: number;
+  cy: number;
+  zx: number;
+  zy: number;
+}
+const TH = (32 * Math.PI) / 180;
+const PH = (14 * Math.PI) / 180;
+export const TURNED: Projection = {
+  ax: 0.88,
+  ay: -Math.sin(TH) * Math.sin(PH),
+  cy: Math.cos(PH),
+  zx: -Math.sin(TH),
+  zy: -Math.cos(TH) * Math.sin(PH),
+};
+export const proj3 = (
+  v: Projection,
+  depth: number,
+  X: number,
+  Y: number,
+  Z: number,
+): P => [X * v.ax + Z * depth * v.zx, Y * v.cy + X * v.ay + Z * depth * v.zy];
+export function affineOf([a, b, c]: [P, P, P], [A, B, C]: [P, P, P]): string {
+  const m = (u: number[]): number =>
+    u[0]! * (u[4]! * u[8]! - u[5]! * u[7]!) -
+    u[1]! * (u[3]! * u[8]! - u[5]! * u[6]!) +
+    u[2]! * (u[3]! * u[7]! - u[4]! * u[6]!);
+  const det = m([a[0], a[1], 1, b[0], b[1], 1, c[0], c[1], 1]);
+  const solve = (p: number, q: number, r: number) => ({
+    k1: m([p, a[1], 1, q, b[1], 1, r, c[1], 1]) / det,
+    k2: m([a[0], p, 1, b[0], q, 1, c[0], r, 1]) / det,
+    k3: m([a[0], a[1], p, b[0], b[1], q, c[0], c[1], r]) / det,
+  });
+  const x = solve(A[0], B[0], C[0]);
+  const y = solve(A[1], B[1], C[1]);
+  const f = (n: number) => Math.round(n * 10000) / 10000;
+  return `matrix(${f(x.k1)} ${f(y.k1)} ${f(x.k2)} ${f(y.k2)} ${f(x.k3)} ${f(y.k3)})`;
+}
+const DEPTH: Record<BotShape, number> = { cube: 36, triangle: 30, sphere: 0 };
+
 export const freshSeed = () =>
   `armada-${Math.random().toString(36).slice(2, 10)}`;
 
@@ -189,6 +231,102 @@ function body(shape: BotShape) {
   };
 }
 
+function turnedBody(shape: BotShape) {
+  const d = DEPTH[shape];
+  const q = (X: number, Y: number, Z: number) => proj3(TURNED, d, X, Y, Z);
+  if (shape === 'sphere') return { ...body('sphere'), map: null };
+  if (shape === 'triangle') {
+    const apex: [number, number, number] = [22, -14, 0.5];
+    return {
+      fills: [
+        {
+          d: poly([q(0, 42, 0), q(0, 42, 1), q(...apex)]),
+          cls: 'm-ill__fill-side',
+        },
+        {
+          d: poly([q(0, 42, 0), q(44, 42, 0), q(...apex)]),
+          cls: 'm-ill__fill-front',
+        },
+      ],
+      outline: [q(44, 42, 0), q(0, 42, 0), q(0, 42, 1), q(...apex)] as
+        | P[]
+        | null,
+      edges: [[q(0, 42, 0), q(...apex)]] as P[][],
+      face: {
+        x: 0,
+        y: -14,
+        w: 44,
+        h: 56,
+        img: 26,
+        ix: 9,
+        iy: 12,
+        front: 'M0 42L44 42L25 -14Z',
+      },
+      map: [
+        [
+          [0, 42],
+          [44, 42],
+          [25, -14],
+        ],
+        [q(0, 42, 0), q(44, 42, 0), q(...apex)],
+      ] as [[P, P, P], [P, P, P]],
+      feet: [6, 26],
+    };
+  }
+  return {
+    fills: [
+      {
+        d: poly([q(0, 0, 0), q(0, 0, 1), q(44, 0, 1), q(44, 0, 0)]),
+        cls: 'm-ill__fill-top',
+      },
+      {
+        d: poly([q(0, 0, 0), q(44, 0, 0), q(44, 42, 0), q(0, 42, 0)]),
+        cls: 'm-ill__fill-front',
+      },
+      {
+        d: poly([q(0, 0, 0), q(0, 0, 1), q(0, 42, 1), q(0, 42, 0)]),
+        cls: 'm-ill__fill-side',
+      },
+    ],
+    outline: [
+      q(44, 0, 0),
+      q(44, 0, 1),
+      q(0, 0, 1),
+      q(0, 42, 1),
+      q(0, 42, 0),
+      q(44, 42, 0),
+    ] as P[] | null,
+    edges: [
+      [q(44, 0, 0), q(0, 0, 0), q(0, 0, 1)],
+      [q(0, 0, 0), q(0, 42, 0)],
+    ] as P[][],
+    face: {
+      x: 0,
+      y: 0,
+      w: 44,
+      h: 42,
+      img: 40,
+      ix: 2,
+      iy: 1,
+      front: 'M0 0L44 0L44 42L0 42Z',
+    },
+    map: [
+      [
+        [0, 0],
+        [44, 0],
+        [0, 42],
+      ],
+      [q(0, 0, 0), q(44, 0, 0), q(0, 42, 0)],
+    ] as [[P, P, P], [P, P, P]],
+    feet: [7, 27],
+  };
+}
+const STEM3: Record<BotShape, [number, number, number]> = {
+  cube: [22, 0, 0.5],
+  triangle: [22, -14, 0.5],
+  sphere: [28, -7, 0],
+};
+
 export interface BotProps {
   x: number;
   ground: number;
@@ -204,6 +342,9 @@ export interface BotProps {
   restFace?: AvatarFace;
   shadow?: boolean;
   beat?: 'a' | 'b';
+  view?: View;
+  legs?: number | [number, number];
+  feet?: boolean;
 }
 
 export function Bot({
@@ -221,27 +362,41 @@ export function Bot({
   restFace,
   shadow = true,
   beat = 'a',
+  view = 'flat',
+  legs = 0,
+  feet: withFeet = true,
 }: BotProps) {
   const gridId = `ill-grid-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
   const [fresh] = useState(freshSeed);
   const face = seed ?? fresh;
-  const b = body(shape);
-  const foot = (fx: number): P[] => [
-    [fx, 41],
-    [fx + 10, 41],
-    [fx + 10.5, 47],
-    [fx + 8.5, FOOT],
-    [fx + 1.5, FOOT],
-    [fx - 0.5, 47],
-  ];
-  const feet = b.feet.map(foot);
-  const [sx, sy] = STEM[shape];
+  const turned = view === 'turned' && shape !== 'sphere';
+  const b = turned
+    ? turnedBody(shape)
+    : { ...body(shape), map: null as [[P, P, P], [P, P, P]] | null };
+  const q = (X: number, Y: number): P =>
+    turned ? proj3(TURNED, DEPTH[shape], X, Y, 0.03) : [X, Y];
+  const legOf = (i: number) => (Array.isArray(legs) ? (legs[i] ?? 0) : legs);
+  const foot = (fx: number, i: number): P[] => {
+    const L = legOf(i);
+    return [
+      q(fx, 41),
+      q(fx + 10, 41),
+      q(fx + 10.5, 47 + L),
+      q(fx + 8.5, FOOT + L),
+      q(fx + 1.5, FOOT + L),
+      q(fx - 0.5, 47 + L),
+    ];
+  };
+  const feet = withFeet ? b.feet.map(foot) : [];
+  const [sx, sy] = turned
+    ? proj3(TURNED, DEPTH[shape], ...STEM3[shape])
+    : STEM[shape];
   const antenna: P[] = [
     [sx, sy],
     [sx + 4 * lean, sy - 7.5],
     [sx + 8 * lean, sy - 12],
   ];
-  const bob = bobbleOf(shape, lean);
+  const bob: P = turned ? [sx + 9.5 * lean, sy - 15] : bobbleOf(shape, lean);
   const faces: { kind: string; part?: AvatarFace }[] = restFace
     ? [
         { kind: 'own', part: restFace },
@@ -276,32 +431,42 @@ export function Bot({
         {b.fills.map((fl, i) => (
           <path key={i} d={fl.d} className={fl.cls} />
         ))}
-        {faces.map(({ kind, part }) => (
-          <foreignObject
-            key={kind}
-            x={b.face.x}
-            y={b.face.y}
-            width={b.face.w}
-            height={b.face.h}
-            className={`m-ill__face m-ill__face--${kind} m-ill__face--on-${shape}`}
-            style={
-              {
-                '--img-x': `${b.face.ix - b.face.x}px`,
-                '--img-y': `${b.face.iy - b.face.y}px`,
-              } as CSSProperties
-            }
-          >
-            <SessionAvatar seed={face} face={part} size={b.face.img} faceOnly />
-          </foreignObject>
-        ))}
-        <FaceGrid
-          id={gridId}
-          front={b.face.front}
-          ix={b.face.ix}
-          iy={b.face.iy}
-          size={b.face.img}
-          box={b.face}
-        />
+        <g
+          transform={turned && b.map ? affineOf(b.map[0], b.map[1]) : undefined}
+          style={{ transformOrigin: '0px 0px' }}
+        >
+          {faces.map(({ kind, part }) => (
+            <foreignObject
+              key={kind}
+              x={b.face.x}
+              y={b.face.y}
+              width={b.face.w}
+              height={b.face.h}
+              className={`m-ill__face m-ill__face--${kind} m-ill__face--on-${shape}`}
+              style={
+                {
+                  '--img-x': `${b.face.ix - b.face.x}px`,
+                  '--img-y': `${b.face.iy - b.face.y}px`,
+                } as CSSProperties
+              }
+            >
+              <SessionAvatar
+                seed={face}
+                face={part}
+                size={b.face.img}
+                faceOnly
+              />
+            </foreignObject>
+          ))}
+          <FaceGrid
+            id={gridId}
+            front={b.face.front}
+            ix={b.face.ix}
+            iy={b.face.iy}
+            size={b.face.img}
+            box={b.face}
+          />
+        </g>
         {FRAMES.map((k) => {
           const r = rng(hand * 97 + k * 13 + 1);
           return (

@@ -1,0 +1,45 @@
+/* the cloud signup's corner: piles of session bricks, an agent on each;
+   they look about at rest and cheer and rock on hover */
+.m-stacks {
+  --ill-amp: 0.5;
+}
+
+.m-stacks__sit .m-ill__bot,
+.m-stacks__shade {
+  animation: m-ill-curious 3360ms steps(2, end) infinite;
+}
+.m-stacks__sit--1 .m-ill__bot,
+.m-stacks__shade--1 {
+  animation-delay: -1120ms;
+}
+.m-stacks__sit--2 .m-ill__bot,
+.m-stacks__shade--2 {
+  animation-delay: -2240ms;
+}
+
+.m-stacks.is-silly .m-ill__face--cheer {
+  opacity: 1;
+}
+.m-stacks.is-silly .m-stacks__sit .m-ill__bot,
+.m-stacks.is-silly .m-stacks__shade {
+  animation: m-stacks-kick 420ms steps(2, end) infinite;
+}
+.m-stacks.is-silly .m-stacks__sit--1 .m-ill__bot,
+.m-stacks.is-silly .m-stacks__shade--1 {
+  animation-delay: -140ms;
+}
+.m-stacks.is-silly .m-stacks__sit--2 .m-ill__bot,
+.m-stacks.is-silly .m-stacks__shade--2 {
+  animation-delay: -280ms;
+}
+@keyframes m-stacks-kick {
+  0% {
+    transform: rotate(-6deg);
+  }
+  50% {
+    transform: rotate(6deg) translate(0, -1px);
+  }
+  100% {
+    transform: rotate(-6deg);
+  }
+}
