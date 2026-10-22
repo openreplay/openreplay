@@ -865,7 +865,7 @@ def get_by_invitation_token(token, pass_token=None):
     return helper.dict_to_camel_case(r)
 
 
-def auth_exists(user_id, tenant_id, jwt_iat) -> bool:
+def auth_exists(user_id, tenant_id, jwt_iat, skip_iat: bool = False) -> bool:
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
@@ -883,6 +883,7 @@ def auth_exists(user_id, tenant_id, jwt_iat) -> bool:
         )
         r = cur.fetchone()
     return r is not None and (
+            skip_iat or
             r["service_account"]
             and not r["has_basic_auth"]
             or r.get("jwt_iat") is not None
