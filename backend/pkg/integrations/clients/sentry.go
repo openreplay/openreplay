@@ -86,7 +86,7 @@ func parseSentryConfig(credentials interface{}) (sentryConfig, error) {
 	if cfg.URL == "" {
 		cfg.URL = "https://sentry.io"
 	}
-	if err := validateExternalURL(cfg.URL); err != nil {
+	if err := ValidateExternalURL(cfg.URL); err != nil {
 		return cfg, fmt.Errorf("invalid sentry url: %w", err)
 	}
 	return cfg, nil

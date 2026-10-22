@@ -1,0 +1,9 @@
+root = "."
+tmp_dir = "tmp"
+
+[build]
+cmd = "go build -tags=dev -o ./tmp/tasks ./cmd/tasks"
+bin = "tmp/tasks"
+include_ext = ["go", "html"]
+exclude_dir = ["tmp", "vendor"]
+full_bin = "bash -c 'set -a; [ -f .env ] && . ./.env; set +a; exec ./tmp/tasks'"

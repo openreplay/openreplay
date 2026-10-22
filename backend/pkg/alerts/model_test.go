@@ -68,6 +68,50 @@ func TestAlertRequestParsing(t *testing.T) {
 			},
 			wantChange: "change",
 		},
+		{
+			name:      "property trigger with source",
+			body:      `{"name":"x","detectionMethod":"threshold","query":{"left":"properties.cart_total","operator":">","right":100,"source":" Events "},"options":{"currentPeriod":15}}`,
+			wantQuery: map[string]any{"left": "properties.cart_total", "right": float64(100), "operator": ">", "source": "events"},
+			wantOpts: map[string]any{
+				"message":          []any{},
+				"currentPeriod":    float64(15),
+				"previousPeriod":   float64(15),
+				"lastNotification": nil,
+				"renotifyInterval": float64(720),
+			},
+			wantChange: "change",
+		},
+		{
+			name:      "auto-captured property trigger on users",
+			body:      `{"name":"x","detectionMethod":"threshold","query":{"left":"$properties.seats","operator":">=","right":"3","source":"users"},"options":{"currentPeriod":15}}`,
+			wantQuery: map[string]any{"left": "$properties.seats", "right": float64(3), "operator": ">=", "source": "users"},
+			wantOpts: map[string]any{
+				"message":          []any{},
+				"currentPeriod":    float64(15),
+				"previousPeriod":   float64(15),
+				"lastNotification": nil,
+				"renotifyInterval": float64(720),
+			},
+			wantChange: "change",
+		},
+		{
+			name:      "source on a predefined column is not stored",
+			body:      `{"name":"x","detectionMethod":"threshold","query":{"left":"errors.backend.count","operator":">","right":1,"source":"users"},"options":{"currentPeriod":15}}`,
+			wantQuery: map[string]any{"left": "errors.backend.count", "right": float64(1), "operator": ">"},
+			wantOpts: map[string]any{
+				"message":          []any{},
+				"currentPeriod":    float64(15),
+				"previousPeriod":   float64(15),
+				"lastNotification": nil,
+				"renotifyInterval": float64(720),
+			},
+			wantChange: "change",
+		},
+		{name: "property trigger without source", body: `{"name":"x","detectionMethod":"threshold","query":{"left":"properties.cart_total","operator":">","right":1},"options":{"currentPeriod":15}}`, wantErr: true},
+		{name: "property trigger with null source", body: `{"name":"x","detectionMethod":"threshold","query":{"left":"$properties.ttfb","operator":">","right":1,"source":null},"options":{"currentPeriod":15}}`, wantErr: true},
+		{name: "property trigger with invalid source", body: `{"name":"x","detectionMethod":"threshold","query":{"left":"properties.x","operator":">","right":1,"source":"devices"},"options":{"currentPeriod":15}}`, wantErr: true},
+		{name: "property trigger with empty key", body: `{"name":"x","detectionMethod":"threshold","query":{"left":"properties.","operator":">","right":1,"source":"events"},"options":{"currentPeriod":15}}`, wantErr: true},
+		{name: "invalid source on predefined column", body: `{"name":"x","detectionMethod":"threshold","query":{"left":"errors.backend.count","operator":">","right":1,"source":"nope"},"options":{"currentPeriod":15}}`, wantErr: true},
 		{name: "unknown column", body: `{"name":"x","detectionMethod":"threshold","query":{"left":"foo","operator":">","right":1},"options":{"currentPeriod":15}}`, wantErr: true},
 		{name: "invalid period", body: `{"name":"x","detectionMethod":"threshold","query":{"left":"errors.backend.count","operator":">","right":1},"options":{"currentPeriod":16}}`, wantErr: true},
 		{name: "missing current period", body: `{"name":"x","detectionMethod":"threshold","query":{"left":"errors.backend.count","operator":">","right":1},"options":{}}`, wantErr: true},
@@ -155,4 +199,166 @@ func TestPredefinedTriggers(t *testing.T) {
 
 func intPtr(v int) *int {
 	return &v
+}
+
+func TestQueryUnmarshalRight(t *testing.T) {
+	cases := []struct {
+		raw     string
+		want    float64
+		wantErr bool
+	}{
+		{raw: `{"left":"a","right":12,"operator":">"}`, want: 12},
+		{raw: `{"left":"a","right":12.5,"operator":">"}`, want: 12.5},
+		{raw: `{"left":"a","right":"12","operator":">"}`, want: 12},
+		{raw: `{"left":"a","right":" 12.5 ","operator":">"}`, want: 12.5},
+		{raw: `{"left":"a","right":"abc","operator":">"}`, wantErr: true},
+		{raw: `{"left":"a","right":null,"operator":">"}`, wantErr: true},
+		{raw: `{"left":"a","right":true,"operator":">"}`, wantErr: true},
+	}
+	for _, tc := range cases {
+		var q QueryToExecute
+		err := json.Unmarshal([]byte(tc.raw), &q)
+		if tc.wantErr {
+			if err == nil {
+				t.Errorf("%s: want error", tc.raw)
+			}
+			continue
+		}
+		if err != nil {
+			t.Errorf("%s: %v", tc.raw, err)
+			continue
+		}
+		if float64(q.Right) != tc.want {
+			t.Errorf("%s: want %v got %v", tc.raw, tc.want, float64(q.Right))
+		}
+	}
+}
+
+func TestQueryValidate(t *testing.T) {
+	for _, op := range []string{"=", "<", ">", "<=", ">="} {
+		if err := (QueryToExecute{Left: "x", Operator: Operator(op)}).Validate(); err != nil {
+			t.Errorf("operator %q should be valid: %v", op, err)
+		}
+	}
+	for _, op := range []string{"!=", "; DROP TABLE alerts", "", "=="} {
+		if err := (QueryToExecute{Left: "x", Operator: Operator(op)}).Validate(); err == nil {
+			t.Errorf("operator %q should be rejected", op)
+		}
+	}
+	if err := (QueryToExecute{Left: "", Operator: OpGt}).Validate(); err == nil {
+		t.Error("empty left should be rejected")
+	}
+}
+
+func TestOperatorCompare(t *testing.T) {
+	cases := []struct {
+		op   Operator
+		v, r float64
+		want bool
+	}{
+		{OpEq, 1, 1, true}, {OpEq, 1, 2, false},
+		{OpLt, 1, 2, true}, {OpLt, 2, 2, false},
+		{OpGt, 3, 2, true}, {OpGt, 2, 2, false},
+		{OpLte, 2, 2, true}, {OpLte, 3, 2, false},
+		{OpGte, 2, 2, true}, {OpGte, 1, 2, false},
+		{Operator("!="), 1, 2, false},
+	}
+	for _, tc := range cases {
+		if got := tc.op.Compare(tc.v, tc.r); got != tc.want {
+			t.Errorf("%v %s %v: want %v got %v", tc.v, tc.op, tc.r, tc.want, got)
+		}
+	}
+}
+
+func TestOptionsUnmarshal(t *testing.T) {
+	var o OptionsToExecute
+	if err := json.Unmarshal([]byte(`{"message":[{"type":"slack","value":"3"}],"currentPeriod":15,"previousPeriod":15,"renotifyInterval":720}`), &o); err != nil {
+		t.Fatal(err)
+	}
+	if o.LastNotification != nil {
+		t.Error("missing lastNotification should be nil")
+	}
+	if len(o.Message) != 1 || o.Message[0].Type != "slack" || o.Message[0].Value != "3" {
+		t.Errorf("message not parsed: %+v", o.Message)
+	}
+	// legacy rows store webhook ids as integers
+	if err := json.Unmarshal([]byte(`{"message":[{"type":"slack","value":3}],"currentPeriod":15,"previousPeriod":15,"renotifyInterval":720}`), &o); err != nil {
+		t.Fatal(err)
+	}
+	if o.Message[0].Value != "3" {
+		t.Errorf("integer message value not normalised: %+v", o.Message)
+	}
+	if err := json.Unmarshal([]byte(`{"currentPeriod":15,"previousPeriod":15,"renotifyInterval":720,"lastNotification":null}`), &o); err != nil {
+		t.Fatal(err)
+	}
+	if o.LastNotification != nil {
+		t.Error("null lastNotification should be nil")
+	}
+	if err := json.Unmarshal([]byte(`{"currentPeriod":15,"previousPeriod":15,"renotifyInterval":720,"lastNotification":1700000000000}`), &o); err != nil {
+		t.Fatal(err)
+	}
+	if o.LastNotification == nil || *o.LastNotification != 1700000000000 {
+		t.Errorf("lastNotification not parsed: %v", o.LastNotification)
+	}
+}
+
+func TestQuerySourceAndProperty(t *testing.T) {
+	// source is optional and defaults to events
+	var q QueryToExecute
+	if err := json.Unmarshal([]byte(`{"left":"properties.cart_total","right":"10","operator":">"}`), &q); err != nil {
+		t.Fatal(err)
+	}
+	if q.EffectiveSource() != SourceEvents || !q.IsProperty() {
+		t.Errorf("default source/property: %+v", q)
+	}
+	if err := q.Validate(); err != nil {
+		t.Errorf("valid property query rejected: %v", err)
+	}
+	ref, err := q.Property()
+	if err != nil || ref.Column != PropertiesColumn || ref.Key != "cart_total" {
+		t.Errorf("property ref: %+v %v", ref, err)
+	}
+
+	// $properties, explicit source, case-insensitive, dotted keys keep everything after the first dot
+	q = QueryToExecute{Left: "$properties.load_event_time", Operator: OpGt, Source: " Users "}
+	if q.EffectiveSource() != SourceUsers {
+		t.Errorf("source normalisation: %q", q.EffectiveSource())
+	}
+	ref, err = q.Property()
+	if err != nil || ref.Column != AutoPropertiesColumn || ref.Key != "load_event_time" {
+		t.Errorf("$properties ref: %+v %v", ref, err)
+	}
+	ref, _ = (QueryToExecute{Left: "properties.a.b"}).Property()
+	if ref.Key != "a.b" {
+		t.Errorf("dotted key: %q", ref.Key)
+	}
+
+	// predefined metrics are not property paths and keep validating
+	q = QueryToExecute{Left: "performance.ttfb.average", Operator: OpGt}
+	if q.IsProperty() {
+		t.Error("predefined metric mistaken for a property")
+	}
+	if _, err := q.Property(); err == nil {
+		t.Error("Property() on a metric should error")
+	}
+	if err := q.Validate(); err != nil {
+		t.Errorf("predefined query rejected: %v", err)
+	}
+
+	bad := []QueryToExecute{
+		{Left: "properties.", Operator: OpGt},               // empty key
+		{Left: "$properties.  ", Operator: OpGt},            // blank key
+		{Left: "properties.x", Operator: OpGt, Source: "x"}, // unknown source
+		{Left: "errors.javascript.count", Operator: OpGt, Source: "devices"},
+	}
+	for _, b := range bad {
+		if err := b.Validate(); err == nil {
+			t.Errorf("%+v should be rejected", b)
+		}
+	}
+	for _, src := range []string{"", "events", "sessions", "users", "SESSIONS"} {
+		if err := (QueryToExecute{Left: "properties.x", Operator: OpGt, Source: src}).Validate(); err != nil {
+			t.Errorf("source %q should validate: %v", src, err)
+		}
+	}
 }

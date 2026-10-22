@@ -273,7 +273,7 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		return nil, err
 	}
 
-	alertsHandlers, err := alerts.NewHandlers(log, requestHandler, alerts.New(log, pgconn))
+	alertsHandlers, err := alerts.NewHandlers(log, requestHandler, alerts.New(log, pgconn, chconn))
 	if err != nil {
 		return nil, err
 	}
