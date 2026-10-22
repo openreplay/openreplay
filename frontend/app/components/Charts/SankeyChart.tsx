@@ -7,7 +7,6 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { defaultOptions, echarts } from './init';
-import { STEPS_PER_COLUMN, type TidyNode, tidyJourney } from './journeyTidy';
 import {
   SankeyLink,
   SankeyNode,
@@ -102,13 +101,8 @@ const EChartsSankey = (props: Props) => {
     if (!chartRef.current || data.nodes.length === 0 || data.links.length === 0)
       return;
 
-    // ids folded, columns capped, the shared path head named once
-    const tidy = tidyJourney(
-      data,
-      isUngrouped ? STEPS_PER_COLUMN.ungrouped : STEPS_PER_COLUMN.grouped,
-    );
-    const finalNodes: TidyNode[] = tidy.nodes;
-    const finalLinks = tidy.links;
+    const finalNodes = data.nodes;
+    const finalLinks = data.links;
 
     const chart = echarts.init(chartRef.current);
 
@@ -143,15 +137,9 @@ const EChartsSankey = (props: Props) => {
     const echartNodes = filteredNodes
       .map((n, i) => {
         let computedName = getNodeName(n.eventType || 'Minor Paths', n.name);
-        if (n.eventType === 'OTHER' || computedName === 'Other') {
+        if (computedName === 'Other') {
           computedName = 'Others';
         }
-        const display =
-          computedName === 'Others'
-            ? t('Other paths')
-            : tidy.head && n.name?.startsWith(tidy.head)
-              ? n.name.slice(tidy.head.length) || '/'
-              : computedName;
         if (n.id) {
           nodeValues[n.id] = 0;
         } else {
@@ -166,9 +154,6 @@ const EChartsSankey = (props: Props) => {
 
         return {
           name: computedName,
-          display,
-          variants: n.variants,
-          match: n.match,
           depth: n.depth,
           type: n.eventType,
           id: n.id,
@@ -270,7 +255,7 @@ const EChartsSankey = (props: Props) => {
                 : '0%';
 
               const safeName = fitMiddle(
-                params.data.display ?? params.name,
+                params.name,
                 lane - ICON_W - 4,
                 labelFont,
               );
@@ -294,13 +279,7 @@ const EChartsSankey = (props: Props) => {
             },
           },
           tooltip: {
-            formatter: sankeyTooltip(echartNodes, nodeValues, (d) =>
-              d.variants > 1
-                ? d.type === 'OTHER'
-                  ? t('{{n}} steps', { n: d.variants })
-                  : t('{{n}} pages', { n: d.variants })
-                : '',
-            ),
+            formatter: sankeyTooltip(echartNodes, nodeValues),
             backgroundColor: theme.raised,
             borderColor: theme.border,
             textStyle: { color: theme.text },
@@ -334,9 +313,7 @@ const EChartsSankey = (props: Props) => {
       if (!onChartClick) return;
       const unsupported = ['other', 'drop'];
 
-      const constructFilters = (
-        nodes: { type: string; name: string; match?: TidyNode['match'] }[],
-      ) => {
+      const constructFilters = (nodes: { type: string; name: string }[]) => {
         const filters: any = [];
         nodes.forEach((node) => {
           const type = node.type.toLowerCase();
@@ -350,9 +327,8 @@ const EChartsSankey = (props: Props) => {
           const filter = getFilter(filterName);
           const subFilter = getFilter(subFilterName);
           if (filter && subFilter) {
-            // a folded page filters by what its pages share
-            subFilter.operator = node.match?.operator ?? 'is';
-            subFilter.value = [node.match?.value ?? node.name];
+            subFilter.operator = 'is';
+            subFilter.value = [node.name];
             filter.filters.push(subFilter);
             filters.push(filter);
           }
@@ -371,8 +347,8 @@ const EChartsSankey = (props: Props) => {
         const linkIndex = params.dataIndex;
         const link = filteredLinks[linkIndex];
 
-        const firstNode = finalNodes.find((n) => n.id === link.source);
-        const lastNode = finalNodes.find((n) => n.id === link.target);
+        const firstNode = data.nodes.find((n) => n.id === link.source);
+        const lastNode = data.nodes.find((n) => n.id === link.target);
         if (firstNode && lastNode) {
           const filters = constructFilters([
             // @ts-ignore
@@ -399,7 +375,7 @@ const EChartsSankey = (props: Props) => {
       chart.dispose();
       ro.disconnect();
     };
-  }, [data, height, onChartClick, theme, isUngrouped]);
+  }, [data, height, onChartClick, theme]);
 
   React.useEffect(() => {
     if (!chartRef.current) return;

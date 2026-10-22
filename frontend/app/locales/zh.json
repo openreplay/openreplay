@@ -2746,8 +2746,6 @@
   "Discard changes": "放弃更改",
   "Your edits to {{subject}} are not saved. Leaving without saving drops them.": "你对 {{subject}} 的编辑尚未保存。不保存就离开会丢失这些编辑。",
   "Your edits are not saved. Leaving without saving drops them.": "你的编辑尚未保存。不保存就离开会丢失这些编辑。",
-  "Other paths": "其他路径",
-  "{{n}} steps": "{{n}} 个步骤",
   "A long window takes longer.": "时间范围越长，耗时越久。",
   "Use sample data": "使用样本数据",
   "Most common page": "最常见的页面",

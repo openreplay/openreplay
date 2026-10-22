@@ -2932,8 +2932,6 @@
   "Discard changes": "Не зберігати",
   "Your edits to {{subject}} are not saved. Leaving without saving drops them.": "Зміни в «{{subject}}» не збережено. Якщо піти без збереження, вони зникнуть.",
   "Your edits are not saved. Leaving without saving drops them.": "Зміни не збережено. Якщо піти без збереження, вони зникнуть.",
-  "Other paths": "Інші шляхи",
-  "{{n}} steps": "Кроків: {{n}}",
   "A long window takes longer.": "Довгий період завантажується довше.",
   "Use sample data": "Використати вибірку",
   "Most common page": "Найчастіша сторінка",

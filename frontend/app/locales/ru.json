@@ -2932,8 +2932,6 @@
   "Discard changes": "Не сохранять",
   "Your edits to {{subject}} are not saved. Leaving without saving drops them.": "Изменения в «{{subject}}» не сохранены. Если уйти без сохранения, они пропадут.",
   "Your edits are not saved. Leaving without saving drops them.": "Изменения не сохранены. Если уйти без сохранения, они пропадут.",
-  "Other paths": "Другие пути",
-  "{{n}} steps": "Шагов: {{n}}",
   "A long window takes longer.": "Длинный период загружается дольше.",
   "Use sample data": "Использовать выборку",
   "Most common page": "Самая частая страница",

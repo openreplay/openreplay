@@ -2746,8 +2746,6 @@
   "Discard changes": "변경 사항 버리기",
   "Your edits to {{subject}} are not saved. Leaving without saving drops them.": "{{subject}}의 변경 사항이 저장되지 않았습니다. 저장하지 않고 나가면 사라집니다.",
   "Your edits are not saved. Leaving without saving drops them.": "변경 사항이 저장되지 않았습니다. 저장하지 않고 나가면 사라집니다.",
-  "Other paths": "기타 경로",
-  "{{n}} steps": "{{n}}개 단계",
   "A long window takes longer.": "기간이 길수록 더 오래 걸립니다.",
   "Use sample data": "샘플 데이터 사용",
   "Most common page": "가장 많은 페이지",
