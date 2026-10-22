@@ -10,7 +10,6 @@ from starlette.exceptions import HTTPException
 
 import schemas
 from chalicelib.core import authorizers, users, spot
-from chalicelib.core.mcp import authorizers as mcp_authorizers
 
 logger = logging.getLogger(__name__)
 
@@ -58,14 +57,11 @@ class JWTAuth(HTTPBearer):
                     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                         detail="Invalid authentication scheme.")
                 jwt_payload = authorizers.jwt_authorizer(scheme=credentials.scheme, token=credentials.credentials)
-                skip_iat_check = jwt_payload is not None and jwt_payload.get("aud", "") == mcp_authorizers.AUDIENCE
                 auth_exists = jwt_payload is not None and users.auth_exists(user_id=jwt_payload.get("userId", -1),
-                                                                            jwt_iat=jwt_payload.get("iat", 100),
-                                                                            skip_iat=skip_iat_check)
-                if not skip_iat_check \
-                        and (jwt_payload is None \
-                             or jwt_payload.get("iat") is None or jwt_payload.get("aud") is None \
-                             or not auth_exists):
+                                                                            jwt_iat=jwt_payload.get("iat", 100))
+                if (jwt_payload is None \
+                        or jwt_payload.get("iat") is None or jwt_payload.get("aud") is None \
+                        or not auth_exists):
                     if jwt_payload is not None:
                         logger.debug(jwt_payload)
                         if jwt_payload.get("iat") is None:
