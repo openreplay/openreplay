@@ -50,7 +50,7 @@ function SpotConsole({ onClose }: { onClose: () => void }) {
       </BottomBlock.Header>
       <BottomBlock.Content>
         {filteredList.length === 0 ? (
-          <NoData hint={t('Nothing was logged at this level.')} />
+          <NoData mark="console" hint={t('Nothing was logged at this level.')} />
         ) : (
           <VList ref={_list} itemSize={25} data={filteredList}>
             {(log, index) => (

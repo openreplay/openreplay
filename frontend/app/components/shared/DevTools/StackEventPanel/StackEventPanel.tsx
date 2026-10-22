@@ -259,7 +259,7 @@ const EventsPanel = observer(
         </BottomBlock.Header>
         <BottomBlock.Content>
           {filteredList.length === 0 ? (
-            <NoData
+            <NoData mark="events"
               hint={
                 filter
                   ? t('No event matches that.')

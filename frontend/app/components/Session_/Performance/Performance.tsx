@@ -256,7 +256,7 @@ export const MobilePerformance = observer(() => {
         className={_data.length ? 'm-dt__charts' : undefined}
       >
         {_data.length === 0 ? (
-          <NoData hint={t('This recording has no performance data.')} />
+          <NoData mark="traces" hint={t('This recording has no performance data.')} />
         ) : (
           <>
             <PerformanceAreaChart

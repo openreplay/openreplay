@@ -1,5 +1,6 @@
 import { IconButton } from '@/ui/actions/IconButton';
 import { Button } from '@/ui/actions/button';
+import { EmptyState } from '@/ui/feedback/EmptyState';
 import { SimpleSelect } from '@/ui/inputs/select';
 import { Segmented, type SegmentedOption } from '@/ui/inputs/toggle-group';
 import { Modal } from '@/ui/overlays/modal';
@@ -94,8 +95,17 @@ function RunShot({ runId, name }: { runId: string; name: string }) {
   );
 }
 
-function DevEmpty({ text }: { text: string }) {
-  return <p className="m-rd__none">{text}</p>;
+// a large drawer's empty panel: contextual, drawn, no robot
+function DevEmpty({
+  state,
+  title,
+  hint,
+}: {
+  state: string;
+  title: string;
+  hint?: string;
+}) {
+  return <EmptyState large state={state} title={title} hint={hint} />;
 }
 
 /** Console output captured during the run — machine output, so mono; the level is
@@ -112,10 +122,12 @@ function ConsoleView({
   if (!logs || logs.length === 0)
     return (
       <DevEmpty
-        text={
+        state="run-logs"
+        title={running ? t('Nothing logged yet') : t('Nothing was logged')}
+        hint={
           running
-            ? t('Nothing yet.')
-            : t('No console output captured for this run.')
+            ? t('Console output shows here as the run goes.')
+            : t('The page wrote nothing to the console during this run.')
         }
       />
     );
@@ -159,11 +171,19 @@ function ScreenshotsView({
   if (run.status === 'running')
     return (
       <DevEmpty
-        text={t('Nothing yet. Screenshots appear as the run finishes.')}
+        state="run-capture"
+        title={t('Nothing was captured yet')}
+        hint={t('Screenshots appear here as the run finishes.')}
       />
     );
   if (shotSteps.length === 0)
-    return <DevEmpty text={t('No screenshots captured for this run.')} />;
+    return (
+      <DevEmpty
+        state="run-capture"
+        title={t('No screenshots were captured')}
+        hint={t('This run saved no screenshot of its steps.')}
+      />
+    );
 
   const cur = shotSteps[Math.min(stepPos, shotSteps.length - 1)];
   const curStep = run.steps[cur.i];

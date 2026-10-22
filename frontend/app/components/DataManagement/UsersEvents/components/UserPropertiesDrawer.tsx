@@ -1,4 +1,5 @@
 import { IconButton } from '@/ui/actions/IconButton';
+import { EmptyState } from '@/ui/feedback/EmptyState';
 import { EditableRow } from '@/ui/inputs/EditableRow';
 import { SearchField } from '@/ui/inputs/SearchField';
 import { EntityDrawer } from '@/ui/overlays/EntityDrawer';
@@ -109,7 +110,11 @@ function UserPropertiesDrawer({ open, onClose, user, onSave }: Props) {
         </div>
         <div className="m-uprops__list">
           {shown.length === 0 ? (
-            <p className="m-evd__none">{t('No property matches that.')}</p>
+            <EmptyState
+              mark="noMatch"
+              title={t('No property matches that')}
+              hint={t('Try another name, or clear the search.')}
+            />
           ) : (
             shown.map(([source, key, value]) => (
               <EditableRow

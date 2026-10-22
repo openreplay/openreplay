@@ -1,3 +1,4 @@
+import { EmptyState } from '@/ui/feedback/EmptyState';
 import { TYPES } from 'Types/session/event';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
@@ -35,7 +36,13 @@ function SpotActivity() {
   );
 
   if (events.length === 0) {
-    return <p className="m-spanel__none">{t('Nothing recorded yet.')}</p>;
+    return (
+      <EmptyState
+        mark="activity"
+        title={t('Nothing recorded yet')}
+        hint={t('Clicks, pages and events show here as the session plays.')}
+      />
+    );
   }
   const needle = q.trim().toLowerCase();
   const shown = needle
@@ -53,9 +60,11 @@ function SpotActivity() {
         find={{ value: q, onChange: setQ, placeholder: t('Find in activity') }}
       />
       {shown.length === 0 ? (
-        <p className="m-spanel__none">
-          {t('Nothing in the activity matches that.')}
-        </p>
+        <EmptyState
+          mark="noMatch"
+          title={t('Nothing in the activity matches that')}
+          hint={t('Try another word, or clear the search.')}
+        />
       ) : null}
       <div className="m-act__scroll">
         <div className="m-act__list overflow-y-auto" role="list">

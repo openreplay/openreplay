@@ -50,7 +50,7 @@ export const EMPTY_STATES: EmptyEntry[] = [
     area: 'Recordings',
     where: 'Sessions, a filter with no result',
     title: 'No sessions match',
-    size: 'compact',
+    size: 'page',
     subject: 'noMatch',
   },
   {
@@ -101,7 +101,7 @@ export const EMPTY_STATES: EmptyEntry[] = [
     area: 'CoBrowse',
     where: 'CoBrowse, a filter',
     title: 'No live sessions match this filter',
-    size: 'compact',
+    size: 'page',
     subject: 'noMatch',
   },
   {
@@ -109,7 +109,7 @@ export const EMPTY_STATES: EmptyEntry[] = [
     area: 'CoBrowse',
     where: 'CoBrowse, recorded videos',
     title: 'No videos have been recorded in your co-browsing sessions.',
-    size: 'compact',
+    size: 'page',
     subject: 'recordedVideos',
   },
 
@@ -126,7 +126,7 @@ export const EMPTY_STATES: EmptyEntry[] = [
     area: 'Spot',
     where: 'Spot, a date window',
     title: 'No Spots in this window',
-    size: 'compact',
+    size: 'page',
     subject: 'calendar',
   },
   {
@@ -134,7 +134,7 @@ export const EMPTY_STATES: EmptyEntry[] = [
     area: 'Spot',
     where: 'Spot, a filter',
     title: 'Nothing matches',
-    size: 'compact',
+    size: 'page',
     subject: 'noMatch',
   },
 
@@ -151,7 +151,7 @@ export const EMPTY_STATES: EmptyEntry[] = [
     area: 'Armada',
     where: 'Issues, filters',
     title: 'No issues match these filters',
-    size: 'compact',
+    size: 'page',
     subject: 'noMatch',
   },
   {
@@ -159,7 +159,7 @@ export const EMPTY_STATES: EmptyEntry[] = [
     area: 'Armada',
     where: 'Issues, Critical to me',
     title: 'Nothing is critical to you yet',
-    size: 'compact',
+    size: 'page',
     subject: 'critical',
   },
   {
@@ -175,7 +175,7 @@ export const EMPTY_STATES: EmptyEntry[] = [
     area: 'Armada',
     where: 'Synthetics, filters',
     title: 'No tests match these filters',
-    size: 'compact',
+    size: 'page',
     subject: 'noMatch',
   },
   {
@@ -183,7 +183,7 @@ export const EMPTY_STATES: EmptyEntry[] = [
     area: 'Armada',
     where: 'Synthetics, an empty tab',
     title: 'No tests here',
-    size: 'compact',
+    size: 'page',
     subject: 'tests',
   },
   {
@@ -191,7 +191,7 @@ export const EMPTY_STATES: EmptyEntry[] = [
     area: 'Armada',
     where: 'Synthetics, Runs',
     title: 'Nothing has run yet',
-    size: 'compact',
+    size: 'page',
     subject: 'runs',
   },
   {
@@ -199,7 +199,7 @@ export const EMPTY_STATES: EmptyEntry[] = [
     area: 'Armada',
     where: 'Synthetics, Runs filters',
     title: 'No runs match these filters',
-    size: 'compact',
+    size: 'page',
     subject: 'noMatch',
   },
   {
@@ -207,7 +207,7 @@ export const EMPTY_STATES: EmptyEntry[] = [
     area: 'Armada',
     where: 'Synthetics, Environments',
     title: 'No environments yet',
-    size: 'compact',
+    size: 'page',
     subject: 'environments',
   },
   {
@@ -223,7 +223,7 @@ export const EMPTY_STATES: EmptyEntry[] = [
     area: 'Armada',
     where: 'Audits, an empty tab',
     title: 'No audits here',
-    size: 'compact',
+    size: 'page',
     subject: 'audits',
   },
   {
@@ -231,7 +231,7 @@ export const EMPTY_STATES: EmptyEntry[] = [
     area: 'Armada',
     where: 'Audits, a search or a tab',
     title: 'No audits match your search',
-    size: 'compact',
+    size: 'page',
     subject: 'noMatch',
   },
 
@@ -248,7 +248,7 @@ export const EMPTY_STATES: EmptyEntry[] = [
     area: 'Product Analytics',
     where: 'Dashboards, a tab with none',
     title: 'No dashboards here yet',
-    size: 'compact',
+    size: 'page',
     subject: 'dashboards',
   },
   {
@@ -256,7 +256,7 @@ export const EMPTY_STATES: EmptyEntry[] = [
     area: 'Product Analytics',
     where: 'Dashboards, a search',
     title: 'No dashboards match your search',
-    size: 'compact',
+    size: 'page',
     subject: 'noMatch',
   },
   {
@@ -280,7 +280,7 @@ export const EMPTY_STATES: EmptyEntry[] = [
     area: 'Product Analytics',
     where: 'Cards, a category with none',
     title: 'No cards in this category',
-    size: 'compact',
+    size: 'page',
     subject: 'cards',
   },
   {
@@ -288,7 +288,7 @@ export const EMPTY_STATES: EmptyEntry[] = [
     area: 'Product Analytics',
     where: 'Cards, a search or a category',
     title: 'No cards match your search',
-    size: 'compact',
+    size: 'page',
     subject: 'noMatch',
   },
   {
@@ -306,6 +306,43 @@ export const EMPTY_STATES: EmptyEntry[] = [
     title: 'No data in this window',
     size: 'compact',
     subject: 'chart',
+  },
+  // the large drawers: drawn at the page size, contextual, no robot
+  {
+    id: 'run-capture',
+    robot: false,
+    area: 'Armada',
+    where: 'A Synthetics run, a step with no capture',
+    title: 'Nothing was captured yet',
+    size: 'page',
+    subject: 'runs',
+  },
+  {
+    id: 'run-requests',
+    robot: false,
+    area: 'Armada',
+    where: 'A Synthetics run, its network',
+    title: 'No requests were recorded',
+    size: 'page',
+    subject: 'webhooks',
+  },
+  {
+    id: 'run-logs',
+    robot: false,
+    area: 'Armada',
+    where: 'A Synthetics run, its console',
+    title: 'Nothing was logged',
+    size: 'page',
+    subject: 'activity',
+  },
+  {
+    id: 'drawer-nomatch',
+    robot: false,
+    area: 'Data Management',
+    where: 'An event or a person, a property search',
+    title: 'No property matches that',
+    size: 'page',
+    subject: 'noMatch',
   },
   {
     id: 'card-sessions',
@@ -328,7 +365,7 @@ export const EMPTY_STATES: EmptyEntry[] = [
     area: 'Product Analytics',
     where: 'Alerts, a search',
     title: 'No alerts match your search',
-    size: 'compact',
+    size: 'page',
     subject: 'noMatch',
   },
 
@@ -345,7 +382,7 @@ export const EMPTY_STATES: EmptyEntry[] = [
     area: 'Data Management',
     where: 'Activity, a search or filters',
     title: 'No events match these filters',
-    size: 'compact',
+    size: 'page',
     subject: 'noMatch',
   },
   {
@@ -361,7 +398,7 @@ export const EMPTY_STATES: EmptyEntry[] = [
     area: 'Data Management',
     where: 'Events, a kind with none',
     title: 'No events of this kind',
-    size: 'compact',
+    size: 'page',
     subject: 'events',
   },
   {
@@ -369,7 +406,7 @@ export const EMPTY_STATES: EmptyEntry[] = [
     area: 'Data Management',
     where: 'Events, a search or a kind',
     title: 'No events match your search',
-    size: 'compact',
+    size: 'page',
     subject: 'noMatch',
   },
   {
@@ -395,7 +432,7 @@ export const EMPTY_STATES: EmptyEntry[] = [
     area: 'Data Management',
     where: 'Features, a search',
     title: 'No features match your search',
-    size: 'compact',
+    size: 'page',
     subject: 'noMatch',
   },
   {
@@ -412,7 +449,7 @@ export const EMPTY_STATES: EmptyEntry[] = [
     area: 'Data Management',
     where: 'People, a search',
     title: 'No people match your search',
-    size: 'compact',
+    size: 'page',
     subject: 'noMatch',
   },
   {
@@ -445,7 +482,7 @@ export const EMPTY_STATES: EmptyEntry[] = [
     area: 'Data Management',
     where: 'Properties, a search',
     title: 'No properties match your search',
-    size: 'compact',
+    size: 'page',
     subject: 'noMatch',
   },
   {
@@ -513,7 +550,7 @@ export const EMPTY_STATES: EmptyEntry[] = [
     area: 'Preferences',
     where: 'Team, a search',
     title: 'Nobody matches',
-    size: 'compact',
+    size: 'page',
     subject: 'noMatch',
   },
   {
@@ -522,7 +559,7 @@ export const EMPTY_STATES: EmptyEntry[] = [
     area: 'Preferences',
     where: 'Armada, journey tags, every default removed',
     title: 'No tags left in OpenReplay’s set',
-    size: 'compact',
+    size: 'page',
     subject: 'tags',
   },
   {
@@ -531,7 +568,7 @@ export const EMPTY_STATES: EmptyEntry[] = [
     area: 'Preferences',
     where: 'Armada, journey tags',
     title: 'No tags of your own yet',
-    size: 'compact',
+    size: 'page',
     subject: 'tags',
   },
   {
@@ -539,7 +576,7 @@ export const EMPTY_STATES: EmptyEntry[] = [
     area: 'Preferences',
     where: 'Armada, critical descriptions',
     title: 'You have not described anything yet',
-    size: 'compact',
+    size: 'page',
     subject: 'critical',
   },
   {
@@ -547,7 +584,7 @@ export const EMPTY_STATES: EmptyEntry[] = [
     area: 'Preferences',
     where: 'Armada, critical descriptions, all removed',
     title: 'Nothing is described as critical yet',
-    size: 'compact',
+    size: 'page',
     subject: 'critical',
   },
 
@@ -556,7 +593,7 @@ export const EMPTY_STATES: EmptyEntry[] = [
     area: 'Everywhere',
     where: 'Any search or filter with no result',
     title: 'Nothing matches',
-    size: 'compact',
+    size: 'page',
     subject: 'noMatch',
   },
   {

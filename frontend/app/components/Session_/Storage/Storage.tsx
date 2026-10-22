@@ -277,7 +277,7 @@ function Storage() {
         </BottomBlock.Header>
         <BottomBlock.Content className="flex">
           {list.length === 0 ? (
-            <NoData
+            <NoData mark="layers"
               title={t('Nothing to display yet')}
               hint={
                 !hintIsHidden ? (
@@ -345,7 +345,7 @@ function Storage() {
             <>
               <div className="ph-10 scroll-y" style={{ width: '25%' }}>
                 {list.length === 0 ? (
-                  <NoData title={t('Empty state.')} />
+                  <NoData mark="layers" title={t('Empty state.')} />
                 ) : (
                   <JSONTree collapsed={2} src={stateObject} />
                 )}

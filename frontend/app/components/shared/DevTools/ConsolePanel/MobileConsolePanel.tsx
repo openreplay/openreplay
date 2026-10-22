@@ -173,7 +173,7 @@ function MobileConsolePanel() {
       </BottomBlock.Header>
       <BottomBlock.Content>
         {filteredList.length === 0 ? (
-          <NoData
+          <NoData mark="console"
             hint={
               filter
                 ? t('Nothing in the logs matches that.')

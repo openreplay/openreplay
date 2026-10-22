@@ -517,7 +517,7 @@ function WidgetSessions() {
         ) : filteredSessions.sessions.length === 0 ? (
           <EmptyState
             className="m-cardp__none"
-            state="card-sessions"
+            mark="calendar"
             title={t('No sessions {{window}}', {
               window: windowPhrase(t, dashboardStore.drillDownPeriod),
             })}

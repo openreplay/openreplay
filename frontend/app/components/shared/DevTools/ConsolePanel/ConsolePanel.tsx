@@ -288,7 +288,7 @@ function ConsolePanel({ isLive }: { isLive?: boolean }) {
       </BottomBlock.Header>
       <BottomBlock.Content>
         {filteredList.length === 0 ? (
-          <NoData
+          <NoData mark="console"
             hint={
               filter
                 ? t('Nothing in the console matches that.')

@@ -84,7 +84,7 @@ function ExceptionsList({
       </BottomBlock.Header>
       <BottomBlock.Content>
         {filtered.length === 0 ? (
-          <NoData
+          <NoData mark="console"
             hint={
               filter
                 ? t('No exception matches that.')

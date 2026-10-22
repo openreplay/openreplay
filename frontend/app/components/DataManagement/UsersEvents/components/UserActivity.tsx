@@ -157,6 +157,7 @@ function UserActivity({ userId, name }: { userId: string; name: string }) {
         <SkeletonRows rows={6} columns={[15, 85]} />
       ) : events.length === 0 ? (
         <EmptyState
+          mark="calendar"
           title={t('No events in this window')}
           hint={
             hidden.length

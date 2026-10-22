@@ -118,7 +118,7 @@ function LongTaskPanel() {
       </BottomBlock.Header>
       <BottomBlock.Content>
         {filteredList.length === 0 ? (
-          <NoData hint={t('No long animation frames were recorded.')} />
+          <NoData mark="traces" hint={t('No long animation frames were recorded.')} />
         ) : (
           <VList ref={_list} itemSize={25} data={rows}>
             {(task) => (

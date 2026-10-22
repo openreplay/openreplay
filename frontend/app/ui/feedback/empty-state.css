@@ -89,3 +89,31 @@
     animation: none;
   }
 }
+
+/* the quiet tier: a block's emptiness on a busy page; a quiet mark, two
+   lines, centred, the same air in every block */
+.m-empty--quiet {
+  justify-content: center;
+  gap: var(--m-space-2);
+  padding: var(--m-space-9) var(--m-space-6);
+}
+.m-empty__mark {
+  margin-bottom: var(--m-space-2);
+}
+.m-empty--quiet .m-empty__title {
+  font-size: var(--m-text-sm);
+}
+.m-empty--quiet .m-empty__hint {
+  max-width: 40ch;
+  font-size: var(--m-text-xs);
+}
+.m-empty--quiet .m-empty__action {
+  margin-top: var(--m-space-3);
+}
+.m-empty--quiet.is-tight {
+  padding: var(--m-space-6) var(--m-space-5);
+  gap: var(--m-space-1);
+}
+.m-empty--quiet.is-tight .m-empty__mark {
+  margin-bottom: var(--m-space-1);
+}

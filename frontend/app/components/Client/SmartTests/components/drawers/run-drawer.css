@@ -525,3 +525,34 @@
 .m-rd__thumb {
   flex: none;
 }
+
+/* an empty panel fits under the steps, then centres in what is left of the
+   drawer: the body becomes a column, the section and panel take the rest */
+.m-drawer__body:has(.m-rd__panel > .m-empty) {
+  display: flex;
+  flex-direction: column;
+}
+.m-drawer__body:has(.m-rd__panel > .m-empty) > * {
+  flex: none;
+}
+.m-drawer__body:has(.m-rd__panel > .m-empty) > :has(.m-rd__panel > .m-empty),
+.m-dsec:has(.m-rd__panel > .m-empty) {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+.m-rd__panel:has(> .m-empty) {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.m-rd__panel > .m-empty--page {
+  padding: var(--m-space-6) 0;
+}
+.m-rd__panel > .m-empty--page .m-ill {
+  width: 150px !important;
+}
+.m-rd__panel > .m-empty--page .m-empty__illustration {
+  margin-bottom: var(--m-space-3);
+}

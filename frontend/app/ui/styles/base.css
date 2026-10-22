@@ -223,3 +223,19 @@ svg {
     animation: none;
   }
 }
+
+/* the inline empty tier: inside a popover, a menu or a picker a drawing
+   would be bigger than the list, so emptiness is one muted line */
+.m-fm__none,
+.m-mselect__none,
+.m-brk__none,
+.m-addcard__none,
+.m-pick__none,
+.m-vp__none {
+  margin: 0;
+  padding: var(--m-space-3) var(--m-space-4);
+  font-size: var(--m-text-xs);
+  line-height: var(--m-leading-snug);
+  color: var(--m-content-muted);
+  text-align: left;
+}

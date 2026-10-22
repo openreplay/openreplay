@@ -745,9 +745,9 @@ export const NetworkPanelComp = observer(
           </div>
 
           {isLoading ? (
-            <NoData title={t('Processing network data…')} />
+            <NoData mark="network" title={t('Processing network data…')} />
           ) : displayedItems.length === 0 ? (
-            <NoData
+            <NoData mark="network"
               hint={
                 showOnlyErrors
                   ? t('No request failed in this session.')

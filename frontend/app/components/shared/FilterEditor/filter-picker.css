@@ -28,13 +28,6 @@
   }
 }
 
-.m-pick__none {
-  padding: var(--m-space-6) var(--m-space-3);
-  color: var(--m-content-muted);
-  font-size: var(--m-text-sm);
-  text-align: center;
-}
-
 .m-pick__note {
   margin: 0;
   padding: var(--m-space-2) var(--m-space-4) var(--m-space-3);

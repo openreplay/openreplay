@@ -1,5 +1,6 @@
 import { Button } from '@/ui/actions/button';
 import { StatTile } from '@/ui/data/StatTile';
+import { EmptyState } from '@/ui/feedback/EmptyState';
 import { FilterStrip } from '@/ui/filters/FilterStrip';
 import { useToast } from '@/ui/overlays/toast';
 import { Tooltip } from '@/ui/overlays/tooltip';
@@ -301,11 +302,16 @@ function NetworkPanel({
 
   if (!reqs || reqs.length === 0)
     return (
-      <p className="m-rd__none">
-        {running
-          ? t('Nothing yet.')
-          : t('No network activity captured for this run.')}
-      </p>
+      <EmptyState
+        large
+        state="run-requests"
+        title={running ? t('No requests yet') : t('No requests were recorded')}
+        hint={
+          running
+            ? t('Network calls show here as the run goes.')
+            : t('The page made no network call during this run.')
+        }
+      />
     );
 
   const cur = selected != null ? reqs[selected] : null;

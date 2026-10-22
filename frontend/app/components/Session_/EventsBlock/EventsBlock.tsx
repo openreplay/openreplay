@@ -1,4 +1,5 @@
 import { IconButton } from '@/ui/actions/IconButton';
+import { EmptyState } from '@/ui/feedback/EmptyState';
 import { mergeEventLists, sortEvents } from 'Types/session';
 import { ListFilter } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
@@ -168,11 +169,19 @@ function EventsBlock(_props: IProps) {
         )}
       </PanelBar>
       {usedEvents.length === 0 ? (
-        <p className="m-spanel__none">
-          {query || searchedOnly
-            ? t('Nothing in the activity matches that.')
-            : t('Nothing recorded yet.')}
-        </p>
+        query || searchedOnly ? (
+          <EmptyState
+            mark="noMatch"
+            title={t('Nothing in the activity matches that')}
+            hint={t('Try another word, or clear the search.')}
+          />
+        ) : (
+          <EmptyState
+            mark="activity"
+            title={t('Nothing recorded yet')}
+            hint={t('Clicks, pages and events show here as the session plays.')}
+          />
+        )
       ) : (
         <div
           className="m-act__scroll"

@@ -1,4 +1,5 @@
 import { SessionAvatar } from '@/ui/data/SessionAvatar';
+import { EmptyState } from '@/ui/feedback/EmptyState';
 import { Input } from '@/ui/inputs/input';
 import { useToast } from '@/ui/overlays/toast';
 import { Tooltip } from '@/ui/overlays/tooltip';
@@ -47,6 +48,13 @@ function CommentsSection() {
               : t('{{count}} comments', { count: comments.length })
         }
       />
+      {comments.length === 0 && (
+        <EmptyState
+          mark="comments"
+          title={t('No comments yet')}
+          hint={t('Leave a note at a moment in the recording for your team.')}
+        />
+      )}
       <ul className="m-spanel__list m-rs__comments">
         {comments.map((c) => (
           <li key={c.createdAt} className="m-spanel__row m-rs__comment">

@@ -162,12 +162,6 @@
   }
 }
 
-.m-spanel__none {
-  padding: var(--m-space-5) var(--m-space-4);
-  color: var(--m-content-muted);
-  font-size: var(--m-text-xs);
-}
-
 @media (prefers-reduced-motion: reduce) {
   .m-spanel__row,
   .m-spanel__verb {

@@ -1,3 +1,4 @@
+import { EmptyState } from '@/ui/feedback/EmptyState';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -59,20 +60,21 @@ function ClickMapCard() {
     metricStore.includeClickRage,
   ]);
 
-  // a page was asked for and the window holds no recording of it
+  // a page was asked for and the window holds no recording of it; a group
+  // property alone says whose clicks, not where
   const asked = metricStore.instance.series.some((s: any) =>
-    (s.filter?.filters ?? []).some(hasRuleValue),
+    (s.filter?.filters ?? []).some((f: any) => f.isEvent && hasRuleValue(f)),
   );
   if (!metricStore.instance.data.domURL && asked) {
     return <NoDataInWindow />;
   }
   if (!metricStore.instance.data.domURL || insights.length === 0) {
     return (
-      <p className="m-funnel__empty">
-        {t(
-          'Set a start point to visualize the heatmap. If set, try adjusting filters.',
-        )}
-      </p>
+      <EmptyState
+        mark="heatmap"
+        title={t('Select a page to start seeing the heatmap')}
+        hint={t('Add the page in the definition.')}
+      />
     );
   }
 

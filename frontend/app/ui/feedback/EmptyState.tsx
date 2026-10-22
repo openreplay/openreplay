@@ -1,4 +1,5 @@
 import { Illustration } from '@/ui/illustrations/Illustration';
+import { Mark, type MarkKind } from '@/ui/illustrations/Mark';
 import { stateById, stateByTitle } from '@/ui/illustrations/states';
 import { SUBJECTS, type SubjectKind } from '@/ui/illustrations/subjects';
 import type { ReactNode } from 'react';
@@ -23,6 +24,13 @@ export interface EmptyStateProps {
   badge?: ReactNode;
 
   children?: ReactNode;
+  /** the quiet tier: a quiet mark for a block on a busy page (a card's
+   *  preview, a widget, a panel); wins over the list */
+  mark?: MarkKind;
+  /** the quiet tier with less air, for a block with little height */
+  tight?: boolean;
+  /** a large drawer: the state's drawing at the page size, no matter its entry */
+  large?: boolean;
   className?: string;
 }
 
@@ -35,9 +43,23 @@ export function EmptyState({
   illustration,
   badge,
   children,
+  mark,
+  tight,
+  large,
   className,
 }: EmptyStateProps) {
   const { t, i18n } = useTranslation();
+  if (mark)
+    return (
+      <div
+        className={`m-empty m-empty--quiet${tight ? ' is-tight' : ''}${className ? ` ${className}` : ''}`}
+      >
+        <Mark kind={mark} width={tight ? 44 : 56} className="m-empty__mark" />
+        <p className="m-empty__title">{title}</p>
+        {hint && <p className="m-empty__hint">{hint}</p>}
+        {action && <div className="m-empty__action">{action}</div>}
+      </div>
+    );
   const entry = state
     ? stateById(state)
     : (stateByTitle(title, (s) => t(s), i18n.language) ??
@@ -54,14 +76,14 @@ export function EmptyState({
         pose={entry.pose}
         side={entry.side}
         aura={entry.aura ?? true}
-        size={entry.size}
-        width={entry.size === 'page' ? 220 : 132}
+        size={large ? 'page' : entry.size}
+        width={large || entry.size === 'page' ? 220 : 132}
         variant={entry.id}
       />
     ) : null);
   const page =
     drawn != null
-      ? illustration != null || entry?.size === 'page'
+      ? illustration != null || large || entry?.size === 'page'
       : art != null;
   return (
     <div

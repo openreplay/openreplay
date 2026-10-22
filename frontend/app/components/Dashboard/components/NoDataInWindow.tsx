@@ -9,9 +9,8 @@ import { windowPhrase } from 'App/utils/windowPhrase';
 import '../charts.css';
 
 /**
- * A card with nothing in its window, the same on every kind. In the builder
- * the preview is the page, so it gets the page's empty state; a widget gets
- * two lines and is as tall as they are.
+ * A card with nothing in its window, the same on every kind: the quiet tier,
+ * a block on a busy page; tight in a widget.
  */
 function NoDataInWindow({
   inGrid = false,
@@ -30,14 +29,15 @@ function NoDataInWindow({
   return inGrid ? (
     <EmptyState
       className="m-nodata is-compact"
-      state="card-nodata-small"
+      mark="calendar"
+      tight
       title={title}
       hint={t('Widen the window above.')}
     />
   ) : (
     <EmptyState
-      art="window"
-      state="card-nodata"
+      className="m-nodata"
+      mark="calendar"
       title={title}
       hint={
         list

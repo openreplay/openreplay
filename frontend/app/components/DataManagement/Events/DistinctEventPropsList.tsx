@@ -108,6 +108,7 @@ function DistinctEventPropsList({ eventName }: { eventName: string }) {
         <SkeletonRows rows={4} columns={[26, 24, 50]} />
       ) : shown.length === 0 ? (
         <EmptyState
+          large
           title={
             scope === 'custom'
               ? t('No properties of your own on this event')

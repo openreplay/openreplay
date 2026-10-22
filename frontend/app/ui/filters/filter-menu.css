@@ -79,13 +79,6 @@
   color: var(--m-content-muted);
 }
 
-.m-fm__none {
-  padding: var(--m-space-6) var(--m-space-4);
-  font-size: var(--m-text-sm);
-  color: var(--m-content-muted);
-  text-align: center;
-}
-
 .m-fm__foot {
   display: flex;
   align-items: center;

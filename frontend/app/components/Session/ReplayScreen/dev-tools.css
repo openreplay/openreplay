@@ -370,21 +370,13 @@
   background: var(--m-mark-danger);
 }
 
-.m-dt__nodata {
-  padding: var(--m-space-8) var(--m-space-6);
-  text-align: center;
-}
-.m-dt__nodata-title {
-  margin: 0 0 var(--m-space-2);
-  font-size: var(--m-text-sm);
-  color: var(--m-content-secondary);
-}
-.m-dt__nodata-hint {
-  margin: 0 auto;
+.m-dt__nodata .m-empty__hint {
   max-width: 34rem;
-  font-size: var(--m-text-xs);
-  line-height: var(--m-leading-relaxed);
-  color: var(--m-content-muted);
+}
+/* centred in what is left under the tab's bar: the body is a column, the
+   state takes the rest of it */
+.m-dt__nodata.m-empty--quiet {
+  flex: 1 1 auto;
 }
 
 .m-dt__rowopen {

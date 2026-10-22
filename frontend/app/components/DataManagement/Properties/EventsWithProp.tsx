@@ -90,6 +90,7 @@ function EventsWithProp({ propName }: { propName: string }) {
         <SkeletonRows rows={4} columns={[26, 24, 50]} />
       ) : events.length === 0 ? (
         <EmptyState
+          large
           title={t('No event sends this property')}
           hint={t(
             'Attach it to an event from your code and the event will be listed here.',

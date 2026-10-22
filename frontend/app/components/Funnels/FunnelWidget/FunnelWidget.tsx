@@ -1,4 +1,5 @@
 import { useStore } from '@/mstore';
+import { EmptyState } from '@/ui/feedback/EmptyState';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import type { TFunction } from 'i18next';
 import { observer } from 'mobx-react-lite';
@@ -135,9 +136,12 @@ function FunnelWidget({
 
   if (stages.length === 0) {
     return noEvents ? (
-      <p className="m-funnel__empty">
-        {t('Select an event to start seeing the funnel.')}
-      </p>
+      <EmptyState
+        mark="funnel"
+        tight={isWidget}
+        title={t('Select an event to start seeing the funnel')}
+        hint={t('Add the first step in the definition.')}
+      />
     ) : (
       <NoDataInWindow inGrid={isWidget} />
     );

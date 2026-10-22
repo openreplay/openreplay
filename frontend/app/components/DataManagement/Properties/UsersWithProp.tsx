@@ -38,7 +38,15 @@ function UsersWithProp({ propName }: { propName: string }) {
         query=""
         propName={propName}
         onOpen={open}
-        empty={<EmptyState title={t('Nobody carries this property yet')} />}
+        empty={
+          <EmptyState
+            large
+            title={t('Nobody carries this property yet')}
+            hint={t(
+              'Send it on a user from your code and the people who carry it will be listed here.',
+            )}
+          />
+        }
       />
     </PagePanel>
   );

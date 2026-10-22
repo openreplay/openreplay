@@ -5,7 +5,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/ui/actions/dropdown-menu';
+import { EmptyState } from '@/ui/feedback/EmptyState';
 import { FilterStrip, type StripItem } from '@/ui/filters/FilterStrip';
+import type { MarkKind } from '@/ui/illustrations/Mark';
 import { SearchField } from '@/ui/inputs/SearchField';
 import { Switch } from '@/ui/inputs/switch';
 import { MoreHorizontal } from 'lucide-react';
@@ -110,19 +112,25 @@ export function useMultiTab(): boolean {
   return Object.keys(store?.get().tabStates ?? {}).length > 1;
 }
 
+/** A tab with nothing to show: the quiet tier, tight, the tab's own mark. */
 export function NoData({
   title,
   hint,
+  mark = 'noMatch',
 }: {
-  title?: ReactNode;
+  title?: string;
   hint?: ReactNode;
+  mark?: MarkKind;
 }) {
   const { t } = useTranslation();
   return (
-    <div className="m-dt__nodata">
-      <p className="m-dt__nodata-title">{title ?? t('No data')}</p>
-      {hint && <p className="m-dt__nodata-hint">{hint}</p>}
-    </div>
+    <EmptyState
+      className="m-dt__nodata"
+      mark={mark}
+      tight
+      title={title ?? t('No data')}
+      hint={hint}
+    />
   );
 }
 

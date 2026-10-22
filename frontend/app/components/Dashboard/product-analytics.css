@@ -651,12 +651,6 @@
   font-weight: var(--m-weight-medium);
   color: var(--m-content-muted);
 }
-.m-brk__none {
-  margin: 0;
-  padding: var(--m-space-3) var(--m-space-4);
-  font-size: var(--m-text-xs);
-  color: var(--m-content-placeholder);
-}
 .m-jrny {
   display: flex;
   flex-direction: column;
@@ -837,13 +831,6 @@
   flex-direction: column;
   gap: 2px;
 }
-.m-addcard__none {
-  margin: 0;
-  padding: var(--m-space-2) var(--m-space-3);
-  font-size: var(--m-text-xs);
-  color: var(--m-content-placeholder);
-}
-
 .m-dash__widget {
   grid-column: span 1;
 }
@@ -936,4 +923,21 @@
 }
 :root[data-viewport='phone'] .m-cardp--right > :first-child {
   order: 0;
+}
+
+/* an empty widget is as big as its neighbour: it has no content to end on,
+   so it takes the row's height and centres its quiet state */
+.m-dash__widget:has(.m-nodata, .m-empty--quiet) {
+  align-self: stretch;
+}
+.m-dash__widget:has(.m-nodata, .m-empty--quiet) > :last-child {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+/* the two empty blocks of a card page are one shape */
+.m-cardp__none.m-empty--quiet {
+  padding: var(--m-space-9) var(--m-space-6);
+  min-height: 260px;
 }

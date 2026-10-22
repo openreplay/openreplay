@@ -189,7 +189,12 @@ function EventDetailsDrawer({ eventId, onClose }: Props) {
               onCopied={() => toast.success(t('JSON copied'))}
             />
           ) : rows.length === 0 ? (
-            <p className="m-evd__none">{t('No property matches that.')}</p>
+            <EmptyState
+              large
+              state="drawer-nomatch"
+              title={t('No property matches that')}
+              hint={t('Try another name, or clear the search.')}
+            />
           ) : (
             <ul className="m-evd__list">
               {rows.map(([key, value]) => {

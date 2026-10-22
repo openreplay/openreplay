@@ -111,7 +111,7 @@ function UserSessionsDrawer({ open, onClose, userId, name }: Props) {
         <SkeletonRows rows={4} columns={[70, 30]} />
       ) : sessions.length === 0 ? (
         <EmptyState
-          art="range"
+          mark="recordings"
           title={t('No recordings found')}
           hint={t('Nothing from this person in the window. Widen it.')}
         />

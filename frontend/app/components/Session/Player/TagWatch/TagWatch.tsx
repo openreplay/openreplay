@@ -1,5 +1,6 @@
 import { IconButton } from '@/ui/actions/IconButton';
 import { Button } from '@/ui/actions/button';
+import { EmptyState } from '@/ui/feedback/EmptyState';
 import { CheckRow } from '@/ui/inputs/CheckRow';
 import { Field } from '@/ui/inputs/Field';
 import { Input } from '@/ui/inputs/input';
@@ -119,13 +120,21 @@ function TagWatch() {
         />
       </PanelBar>
       {rows.length === 0 ? (
-        <p className="m-spanel__none">
-          {onPages.length === 0
-            ? t(
-                'Tag an element in the recording to watch how many people use it.',
-              )
-            : t('No feature matches that.')}
-        </p>
+        onPages.length === 0 ? (
+          <EmptyState
+            mark="features"
+            title={t('No features yet')}
+            hint={t(
+              'Tag an element in the recording to watch how many people use it.',
+            )}
+          />
+        ) : (
+          <EmptyState
+            mark="noMatch"
+            title={t('No feature matches that')}
+            hint={t('Try another word, or clear the search.')}
+          />
+        )
       ) : (
         <ul className="m-spanel__list" aria-label={t('Features')}>
           {rows.map((tag) => (

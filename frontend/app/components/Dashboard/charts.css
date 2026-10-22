@@ -291,16 +291,6 @@
 .m-vitals__tile.is-bad {
   --m-vital: var(--m-mark-danger);
 }
-.m-nodata.is-compact {
-  gap: var(--m-space-1);
-  padding: var(--m-space-6) var(--m-space-5);
-}
-.m-nodata.is-compact .m-empty__title {
-  font-size: var(--m-text-sm);
-}
-.m-nodata.is-compact .m-empty__hint {
-  font-size: var(--m-text-xs);
-}
 .m-top {
   display: flex;
   flex-direction: column;

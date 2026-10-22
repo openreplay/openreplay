@@ -72,7 +72,7 @@ const GraphQLComponent = ({
         </BottomBlock.Header>
         <BottomBlock.Content>
           {filteredList.length === 0 ? (
-            <NoData hint={t('No GraphQL operation matches that.')} />
+            <NoData mark="network" hint={t('No GraphQL operation matches that.')} />
           ) : (
             <TimeTable
               rows={filteredList}

@@ -837,3 +837,13 @@
     transition: none !important;
   }
 }
+
+/* the quiet marks: the same ink, lighter and still */
+.m-ill--mark {
+  --ill-w: 1.7px;
+  --ill-w-thick: 2.3px;
+  --ill-w-hair: 1.1px;
+}
+.m-ill--mark .m-ill__frame {
+  animation: none;
+}

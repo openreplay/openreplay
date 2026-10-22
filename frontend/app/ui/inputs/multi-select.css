@@ -9,9 +9,3 @@
   overflow-y: auto;
   padding: var(--m-space-2);
 }
-.m-mselect__none {
-  margin: 0;
-  padding: var(--m-space-3) var(--m-space-4);
-  font-size: var(--m-text-xs);
-  color: var(--m-content-placeholder);
-}

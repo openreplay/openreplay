@@ -65,13 +65,6 @@
 }
 .m-evd__name { flex: none; width: 9.5rem; color: var(--m-content-secondary); }
 .m-evd__value { flex: 1; min-width: 0; color: var(--m-content-primary); }
-.m-evd__none {
-  margin: 0;
-  padding: var(--m-space-4);
-  font-size: var(--m-text-xs);
-  color: var(--m-content-placeholder);
-}
-
 .m-ditem__pill {
   display: inline-flex;
   align-items: center;

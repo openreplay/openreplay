@@ -84,7 +84,7 @@ function WSPanel({ socketMsgList, onClose }: Props) {
         {msg ? (
           <pre className="m-ws__payload m-mono">{msg.data}</pre>
         ) : list.length === 0 ? (
-          <NoData hint={t('No frame matches that.')} />
+          <NoData mark="network" hint={t('No frame matches that.')} />
         ) : (
           <>
             <div className="m-ws__row m-ws__head">
