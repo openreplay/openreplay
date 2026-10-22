@@ -95,6 +95,36 @@ describe('APIClient URL Replacer Logic', () => {
       path: '/dashboards',
       expectedUrl: 'https://api.openreplay.com/v2/2/dashboards',
     },
+    {
+      description: 'Alerts endpoint with site ID',
+      edp: 'https://example.com/api',
+      path: '/alerts/triggers',
+      expectedUrl: 'https://example.com/v2/api/2/alerts/triggers',
+    },
+    {
+      description: 'SaaS: alerts endpoint',
+      edp: 'https://api.openreplay.com',
+      path: '/alerts/5',
+      expectedUrl: 'https://api.openreplay.com/v2/2/alerts/5',
+    },
+    {
+      description: 'Notifications endpoint without site ID',
+      edp: 'https://example.com/api',
+      path: '/notifications/count',
+      expectedUrl: 'https://example.com/v2/api/notifications/count',
+    },
+    {
+      description: 'SaaS: notifications view',
+      edp: 'https://api.openreplay.com',
+      path: '/notifications/view',
+      expectedUrl: 'https://api.openreplay.com/v2/notifications/view',
+    },
+    {
+      description: 'Agent notifications with explicit project ID',
+      edp: 'https://example.com/api',
+      path: '/2/notifications',
+      expectedUrl: 'https://example.com/v2/api/2/notifications',
+    },
   ];
 
   describe.each(testCases)('URL Construction', (testCase) => {

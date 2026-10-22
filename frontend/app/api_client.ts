@@ -49,6 +49,8 @@ const newApiUrls = [
   '/browser-tests',
   '/properties',
   '/filters',
+  '/alerts',
+  '/notifications',
 ];
 const except = [
   'integrations/slack/notify',
@@ -64,7 +66,6 @@ const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const SITE_ID_RE = new RegExp(`^(?:${siteIdRequiredPaths.map(escapeRe).join('|')})`);
 const NEW_API_RE = new RegExp(newApiUrls.map(escapeRe).join('|'));
 const EXCEPT_RE = new RegExp(except.map(escapeRe).join('|'));
-const AGENT_NOTIFICATIONS_RE = /^\/\d+\/notifications(\/|$)/;
 
 const SAAS_HOST = 'api.openreplay.com';
 
@@ -313,18 +314,13 @@ export default class APIClient {
     }
 
     let fullUrl = edp + _path;
-    if (useNewApi) {
-      // /{projectId}/notifications[/{agent}] — the agents' per-user notification
-      // routes are new-API (v2). Matched by shape rather than by adding
-      // `/notifications` to newApiUrls, because the legacy in-app notification
-      // centre lives at a bare `/notifications` and must stay on the old API.
-      if (
-        !edp.includes('/v2') &&
-        ((NEW_API_RE.test(_path) && !EXCEPT_RE.test(_path)) ||
-          AGENT_NOTIFICATIONS_RE.test(_path))
-      ) {
-        fullUrl = toV2(fullUrl, isSaas);
-      }
+    if (
+      useNewApi &&
+      !edp.includes('/v2') &&
+      NEW_API_RE.test(_path) &&
+      !EXCEPT_RE.test(_path)
+    ) {
+      fullUrl = toV2(fullUrl, isSaas);
     }
     const response = await window.fetch(fullUrl, init);
     if (response.status === 403) {
