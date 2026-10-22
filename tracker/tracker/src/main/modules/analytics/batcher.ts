@@ -93,7 +93,8 @@ class Batcher {
     }
     // keyed by type + user_id: the backend drops actions without a user_id, and merging
     // mutations aimed at different users would misattribute them
-    const uniqueEventsByType = new Map<string, PeopleEvent>()
+    const squashed = [] as PeopleEvent[]
+    const indexByType = new Map<string, number>()
 
     for (let i = 0; i < events.length; i++) {
       const event = events[i]
@@ -101,8 +102,11 @@ class Batcher {
       const eventKey = appendTypes.includes(event.type)
         ? `${event.type}|${i}`
         : `${event.type}|${event.user_id ?? ''}`
-      const prev = uniqueEventsByType.get(eventKey)
-      if (prev) {
+      const prevIndex = indexByType.get(eventKey)
+      // merging moves this mutation back to where the earlier one was queued, so skip it
+      // when something queued in between touches the same keys (set, increment, set)
+      if (prevIndex !== undefined && !this.touchedAfter(squashed, prevIndex, event)) {
+        const prev = squashed[prevIndex]
         if (event.type === 'increment_property') {
           const previousValues = Object.entries(prev.payload)
           const currentValues = Object.entries(event.payload)
@@ -113,12 +117,12 @@ class Batcher {
             const currValue = typeof event.payload[key] === 'number' ? event.payload[key] : 0
             mergedPayload[key] = prevValue + currValue
           })
-          uniqueEventsByType.set(eventKey, {
+          squashed[prevIndex] = {
             type: event.type,
             user_id: event.user_id,
             timestamp: event.timestamp,
             payload: mergedPayload,
-          })
+          }
           continue
         }
         // merge payloads, taking priority to the latest one; set_once is the
@@ -127,18 +131,36 @@ class Batcher {
           event.type === mutationTypes.setPropertyOnce
             ? { ...(event.payload ?? {}), ...(prev.payload ?? {}) }
             : { ...(prev.payload ?? {}), ...(event.payload ?? {}) }
-        uniqueEventsByType.set(eventKey, {
+        squashed[prevIndex] = {
           type: event.type,
           user_id: event.user_id,
           timestamp: event.timestamp,
           payload,
-        })
+        }
       } else {
-        uniqueEventsByType.set(eventKey, event)
+        indexByType.set(eventKey, squashed.length)
+        squashed.push(event)
       }
     }
 
-    return Array.from(uniqueEventsByType.values())
+    return squashed
+  }
+
+  private touchedAfter(events: PeopleEvent[], index: number, event: PeopleEvent) {
+    const keys = Object.keys(event.payload ?? {})
+    for (let i = index + 1; i < events.length; i++) {
+      const other = events[i]
+      if ((other.user_id ?? '') !== (event.user_id ?? '')) {
+        continue
+      }
+      if (
+        !other.payload ||
+        keys.some((key) => Object.prototype.hasOwnProperty.call(other.payload, key))
+      ) {
+        return true
+      }
+    }
+    return false
   }
 
   private sendBatch(
