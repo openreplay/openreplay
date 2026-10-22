@@ -5,26 +5,6 @@
   gap: var(--m-space-5);
   min-width: 0;
 }
-@media (max-width: 900px) {
-  .m-pref {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .m-pref > .m-panel:first-child {
-    position: static;
-    max-height: none;
-  }
-  .m-pref__groups {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: var(--m-space-5);
-  }
-  .m-pref__cluster {
-    flex: 1 1 10rem;
-  }
-  .m-pref__rule {
-    display: none;
-  }
-}
 /* The rail's panel is the grid item, so it is what sticks: the rail alone is exactly as
    tall as its panel and has nowhere to travel. Capped to the scroller so a long rail
    scrolls on its own. */
@@ -103,6 +83,52 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+@media (max-width: 900px) {
+  .m-pref {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .m-pref > .m-panel:first-child {
+    position: static;
+    max-height: none;
+  }
+  .m-pref__groups {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--m-space-5);
+  }
+  .m-pref__cluster {
+    flex: 1 1 10rem;
+  }
+  .m-pref__rule {
+    display: none;
+  }
+}
+:root[data-viewport='phone'] .m-pref {
+  gap: var(--m-space-4);
+}
+/* phone: the sections are one row that scrolls sideways, above the open one */
+:root[data-viewport='phone'] .m-pref__rail {
+  padding: var(--m-space-2);
+}
+:root[data-viewport='phone'] .m-pref__groups {
+  flex-wrap: nowrap;
+  gap: var(--m-space-1);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+:root[data-viewport='phone'] .m-pref__cluster,
+:root[data-viewport='phone'] .m-pref__group {
+  display: contents;
+}
+:root[data-viewport='phone'] .m-pref__group-label {
+  display: none;
+}
+:root[data-viewport='phone'] .m-pref__item {
+  width: auto;
+}
+:root[data-viewport='phone'] .m-pref__item-label {
+  overflow: visible;
 }
 .m-pref__section {
   min-width: 0;
@@ -294,6 +320,9 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+:root[data-viewport='phone'] .m-pref__list-sub {
+  white-space: normal;
 }
 .m-pref__list-control {
   margin-top: var(--m-space-3);

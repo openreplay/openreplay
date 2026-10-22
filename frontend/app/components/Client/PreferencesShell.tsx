@@ -1,7 +1,8 @@
 import { PageCard, PagePanel } from '@/ui/layout/PageCard';
+import { useViewport } from '@/ui/layout/use-viewport';
 import type { TFunction } from 'i18next';
 import { observer } from 'mobx-react-lite';
-import React, { type ReactNode, useMemo } from 'react';
+import React, { type ReactNode, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { PREFERENCES_MENU } from 'App/layout/data';
@@ -152,6 +153,17 @@ function PreferencesShell({ children }: { children: ReactNode }) {
     return out.filter((g) => g.rows.length > 0);
   }, [items, i18n.language]);
 
+  // phone: the sections are a sideways strip, so the open one is brought in
+  const phone = useViewport() === 'phone';
+  const activeItem = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (phone)
+      activeItem.current?.scrollIntoView({
+        block: 'nearest',
+        inline: 'center',
+      });
+  }, [phone, active]);
+
   const known = active ? LEDES(t)[active] : undefined;
   const head = known ?? {
     title: items.find((i) => i.key === active)?.label ?? t('Preferences'),
@@ -176,6 +188,7 @@ function PreferencesShell({ children }: { children: ReactNode }) {
                     {g.rows.map((r) => (
                       <button
                         key={r.key}
+                        ref={r.key === active ? activeItem : undefined}
                         type="button"
                         className={`m-pref__item m-hover${r.key === active ? ' is-active' : ''}`}
                         aria-current={r.key === active ? 'page' : undefined}

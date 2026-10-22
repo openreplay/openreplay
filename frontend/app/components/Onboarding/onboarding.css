@@ -40,11 +40,6 @@
   margin: 0 auto;
   padding: var(--m-space-6) var(--m-space-8) var(--m-space-11);
 }
-@media (max-width: 900px) {
-  .m-ob__body { grid-template-columns: minmax(0, 1fr); gap: var(--m-space-6); }
-  .m-ob__rail { position: static; }
-}
-
 .m-ob__rail {
   position: sticky;
   top: var(--m-space-6);
@@ -52,6 +47,10 @@
   flex-direction: column;
   gap: var(--m-space-6);
   padding-top: var(--m-space-3);
+}
+@media (max-width: 900px) {
+  .m-ob__body { grid-template-columns: minmax(0, 1fr); gap: var(--m-space-6); }
+  .m-ob__rail { position: static; }
 }
 .m-ob__project { display: flex; flex-direction: column; gap: var(--m-space-2); }
 .m-ob__project-label { font-size: var(--m-text-xs); color: var(--m-content-muted); }
