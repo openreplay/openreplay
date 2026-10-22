@@ -39,6 +39,8 @@ func New(log logger.Logger, cfg *config.Config, storage *Storage, batchJobs Batc
 		return nil, errors.New("logger is required")
 	case cfg == nil:
 		return nil, errors.New("config is required")
+	case cfg.ExportBucket == "":
+		return nil, errors.New("REPLAY_EXPORT_BUCKET is required when replay export is enabled")
 	case storage == nil:
 		return nil, errors.New("storage is required")
 	case batchJobs == nil:
@@ -173,7 +175,7 @@ func (s *sessionVideosImpl) DownloadSessionVideo(projectId int, userId uint64, s
 		return "", err
 	}
 
-	preSignedURL, err := s.objStorage.GetPreSignedDownloadUrl(video.FileURL)
+	preSignedURL, err := s.objStorage.GetPreSignedDownloadUrlFromBucket(s.cfg.ExportBucket, video.FileURL)
 	if err != nil {
 		s.log.Error(s.ctx, "Failed to generate pre-signed download URL", "error", err, "sessionId", sessionId, "fileURL", video.FileURL)
 		return "", ErrUnableToGenerateLink
