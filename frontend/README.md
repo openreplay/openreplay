@@ -2,7 +2,7 @@
 OpenReplay prototype UI
 
 On new icon addition:
-`yarn gen:icons`
+`bun run gen:icons`
 
 ## Documentation
 

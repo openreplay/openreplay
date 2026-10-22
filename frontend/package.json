@@ -12,17 +12,17 @@
   "scripts": {
     "writeCommitHash": "node ./scripts/getCommitHash/getHash.js",
     "dev": "vite",
-    "build": "yarn gen:icons && yarn gen:colors && vite build && yarn writeCommitHash",
+    "build": "bun run gen:icons && bun run gen:colors && vite build && bun run writeCommitHash",
     "preview": "vite preview --port 3333",
     "lint": "eslint app",
-    "tsc": "tsc --noEmit --w --incremental false",
+    "typecheck": "bun check",
     "gen:constants": "node ./scripts/constants.js",
     "gen:icons": "node ./scripts/icons.js",
     "gen:colors": "node ./scripts/colors.js",
-    "gen:static": "yarn gen:icons && yarn gen:colors",
+    "gen:static": "bun run gen:icons && bun run gen:colors",
     "test:ci": "jest --maxWorkers=50% --coverage",
     "test": "jest --watch",
-    "check-unimported": "npx unimported",
+    "check-unimported": "bunx unimported",
     "lint:fix": "eslint --fix app",
     "format": "prettier --write \"app/**/*.{ts,tsx,js,jsx,css,json}\"",
     "format:check": "prettier --check \"app/**/*.{ts,tsx,js,jsx,css,json}\"",
@@ -34,7 +34,7 @@
     "@dicebear/core": "10.7.0",
     "@medv/finder": "^4.0.2",
     "@neodrag/react": "^2.3.1",
-    "@openreplay/player": "portal:../player",
+    "@openreplay/player": "file:../player",
     "@radix-ui/react-checkbox": "^1.1.4",
     "@radix-ui/react-dialog": "^1.1.6",
     "@radix-ui/react-dropdown-menu": "^2.1.6",
@@ -149,12 +149,12 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.59.4",
-    "vite": "8.2.0",
+    "vite": "8.3.4",
     "vite-plugin-static-copy": "^4.1.1",
     "vite-tsconfig-paths": "^6.1.1"
   },
   "engines": {
     "node": ">=24.13.0"
   },
-  "packageManager": "yarn@4.7.0"
+  "packageManager": "bun@1.4.3"
 }

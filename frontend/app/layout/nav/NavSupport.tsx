@@ -1,5 +1,5 @@
 import { SUPPORT_GLYPHS } from '@/ui/brand/support-glyphs';
-import ENV from 'env';
+import ENV from 'ENV';
 import { ChevronRight, CircleHelp } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';

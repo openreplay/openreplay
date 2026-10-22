@@ -31,7 +31,7 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'yarn dev',
+    command: 'bun run dev',
     url: 'http://localhost:3333',
     timeout: 120 * 1000,
     reuseExistingServer: true,

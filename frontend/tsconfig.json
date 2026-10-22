@@ -2,6 +2,7 @@
   "compilerOptions": {
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
+    "strict": false,
     "noImplicitAny": false,
     "alwaysStrict": true,
     "strictNullChecks": true,
@@ -17,7 +18,7 @@
     "moduleResolution": "bundler",
     "noEmit": true,
     "jsx": "react-jsx",
-    "baseUrl": ".",
+    "types": ["node"],
     "paths": {
       "@/*": ["./app/*"],
       "App/*": ["./app/*"],

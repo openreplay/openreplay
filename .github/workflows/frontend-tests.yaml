@@ -42,24 +42,32 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version-file: frontend/.nvmrc
-          cache: yarn
-          cache-dependency-path: frontend/yarn.lock
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.3
+
+      - name: Cache bun install cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-frontend-bun-${{ hashFiles('frontend/bun.lock', 'player/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-frontend-bun-
 
       - name: Install player dependencies
         working-directory: player
-        # player is pinned by a committed player/yarn.lock and has no
-        # package-lock.json; this matches build-mcpb.yaml.
-        run: yarn install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Install dependencies
         working-directory: frontend
-        run: yarn --immutable
+        run: bun install --frozen-lockfile
 
       # Cobertura for diff-cover (lcov paths are relative to frontend/ and can't be
       # mapped back to the git diff); json-summary for the totals.
       - name: Run tests
         working-directory: frontend
-        run: yarn test:ci --coverageReporters=text --coverageReporters=cobertura --coverageReporters=json-summary
+        run: bun run test:ci --coverageReporters=text --coverageReporters=cobertura --coverageReporters=json-summary
 
       - name: Coverage report
         uses: ./.github/composite-actions/coverage-report

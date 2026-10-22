@@ -241,12 +241,10 @@ export default defineConfig(({ mode }) => {
           find: 'animations.css',
           replacement: path.resolve(STYLES_IMPORT_DIR, 'animations.css'),
         },
-        // Player package's deps that aren't installed in player/node_modules
-        // (yarn berry portal hoists deps to the consumer's node_modules, so
-        // when player files are loaded by their real path, node-style
-        // resolution from there fails to find these). Explicit aliases keep
-        // resolution working without enabling preserveSymlinks (which breaks
-        // HMR for node_modules-prefixed paths).
+        // Player files are loaded by their real path, so node-style resolution
+        // from there can pick player/node_modules or miss a dep entirely.
+        // Explicit aliases pin these to frontend's copy without enabling
+        // preserveSymlinks (which breaks HMR for node_modules-prefixed paths).
         {
           find: '@medv/finder',
           replacement: path.resolve(__dirname, 'node_modules/@medv/finder'),

@@ -1,2 +1,2 @@
 #!/bin/bash
-yarn
+bun install

@@ -17,15 +17,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.3
+
       - name: Cache node modules
         uses: actions/cache@v4
         with:
           path: |
             ${{ github.workspace }}/frontend/node_modules
-            ~/.yarn/berry/cache
-          key: ${{ runner.os }}-frontend-yarn-${{ hashFiles('frontend/yarn.lock') }}
+            ~/.bun/install/cache
+          key: ${{ runner.os }}-frontend-bun-${{ hashFiles('frontend/bun.lock', 'player/bun.lock') }}
           restore-keys: |
-            ${{ runner.os }}-frontend-yarn-
+            ${{ runner.os }}-frontend-bun-
 
       - uses: ./.github/composite-actions/update-keys
         with:
@@ -66,11 +70,14 @@ jobs:
           set -x
           cd frontend
           cp .env.sample .env
-          # @openreplay/player is a `portal:../player` dependency, so the sibling
+          # @openreplay/player is a `file:../player` dependency, so the sibling
           # player/ dir must be present inside the container at /home/<user>/../player.
           PLAYER_DIR=$(cd ../player && pwd)
+          # node:24-slim has no bun: mount the runner's (setup-bun) binary and install cache.
+          BUN_BIN=$(readlink -f "$(command -v bun)")
+          mkdir -p $HOME/.bun/install/cache
           # player is its own project: install its deps so its source imports (fflate, fzstd, …) resolve when frontend bundles it.
-          docker run --rm -v /etc/passwd:/etc/passwd -u `id -u`:`id -g` -v $(pwd):/home/${USER} -v ${PLAYER_DIR}:/home/player -w /home/${USER} --name node_build node:24-slim /bin/bash -c "cd /home/player && npm install --no-audit --no-fund && cd /home/${USER} && yarn --immutable && yarn build"
+          docker run --rm -v /etc/passwd:/etc/passwd -u `id -u`:`id -g` -v ${BUN_BIN}:/usr/local/bin/bun:ro -v $HOME/.bun/install/cache:/tmp/bun-cache -e BUN_INSTALL_CACHE_DIR=/tmp/bun-cache -v $(pwd):/home/${USER} -v ${PLAYER_DIR}:/home/player -w /home/${USER} --name node_build node:24-slim /bin/bash -c "cd /home/player && bun install --frozen-lockfile && cd /home/${USER} && bun install --frozen-lockfile && bun run build"
           # https://github.com/docker/cli/issues/1134#issuecomment-613516912
           # Build context is the repo root (..) so the Dockerfile can reach player/; -f is relative to cwd (frontend).
           DOCKER_BUILDKIT=1 docker build --target=cicd -f Dockerfile -t $DOCKER_REPO/frontend:${IMAGE_TAG} ..

@@ -39,21 +39,25 @@ jobs:
         with:
           node-version-file: frontend/.nvmrc
 
-      - name: Cache frontend yarn cache and modules
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.3
+
+      - name: Cache frontend bun cache and modules
         uses: actions/cache@v4
         with:
           path: |
-            ~/.yarn/berry/cache
+            ~/.bun/install/cache
             frontend/node_modules
-          key: ${{ runner.os }}-frontend-yarn-${{ hashFiles('frontend/yarn.lock') }}
+          key: ${{ runner.os }}-frontend-bun-${{ hashFiles('frontend/bun.lock', 'player/bun.lock') }}
           restore-keys: |
-            ${{ runner.os }}-frontend-yarn-
+            ${{ runner.os }}-frontend-bun-
 
       - name: Cache Playwright browsers
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('frontend/yarn.lock') }}
+          key: ${{ runner.os }}-playwright-${{ hashFiles('frontend/bun.lock') }}
           restore-keys: |
             ${{ runner.os }}-playwright-
 
@@ -75,25 +79,23 @@ jobs:
 
       - name: Install player dependencies
         working-directory: player
-        # player is pinned by a committed player/yarn.lock and has no
-        # package-lock.json; this matches build-mcpb.yaml.
-        run: yarn install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Setup packages
         run: |
           cd frontend
-          yarn --immutable
+          bun install --frozen-lockfile
 
       - name: Install Playwright browsers
         run: |
           cd frontend
-          yarn playwright install --with-deps chromium
+          bunx playwright install --with-deps chromium
 
-      # playwright.config.ts starts `yarn dev` on :3333 itself and waits for it
+      # playwright.config.ts starts `bun run dev` on :3333 itself and waits for it
       - name: Run E2E tests
         run: |
           cd frontend
-          yarn test:e2e
+          bun run test:e2e
         timeout-minutes: 15
 
       - name: Upload Debug

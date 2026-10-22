@@ -19,7 +19,7 @@
     "@neodrag/solid": "^2.3.1",
     "@openreplay/network-proxy": "^1.2.5",
     "@webext-core/messaging": "^3.0.3",
-    "solid-js": "^1.9.14",
+    "solid-js": "^1.9.17",
     "web-vitals": "^5.3.0"
   },
   "devDependencies": {
@@ -35,7 +35,10 @@
     "tailwindcss": "4.3.3",
     "typescript": "^5.9.3",
     "web-ext": "^10.5.0",
-    "wxt": "0.21.2"
+    "wxt": "0.21.4"
+  },
+  "overrides": {
+    "shell-quote": "^1.11.0"
   },
   "packageManager": "bun@1.2.7"
 }

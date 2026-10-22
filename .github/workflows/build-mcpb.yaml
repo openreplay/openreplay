@@ -62,9 +62,13 @@ jobs:
           cache: yarn
           cache-dependency-path: mcp_app/yarn.lock
 
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.3
+
       - name: Install player dependencies
         working-directory: player
-        run: yarn install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile

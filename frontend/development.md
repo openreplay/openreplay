@@ -2,4 +2,4 @@
 
 - [Vagrant](../scripts/vagrant/README.md)
 - Node Version 17
-- yarn
+- bun 1.4+

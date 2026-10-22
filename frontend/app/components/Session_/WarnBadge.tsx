@@ -1,6 +1,6 @@
 import { Banner, BannerAction, BannerItem } from '@/ui/feedback/Banner';
 import { Notice } from '@/ui/feedback/Notice';
-import ENV from 'env';
+import ENV from 'ENV';
 import { AlertTriangle, Info } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';

@@ -1,5 +1,5 @@
 # Variables
-YARN := $(shell which yarn)
+BUN := $(shell which bun)
 LOGS_DIR := logs
 ENV_FILE := .env
 
@@ -28,19 +28,19 @@ all: start
 # Target to start the frontend app
 .PHONY: start
 start:
-	@if [ -z "$(YARN)" ]; then \
-		echo "Error: yarn command not found. Please install yarn."; \
+	@if [ -z "$(BUN)" ]; then \
+		echo "Error: bun command not found. Please install bun."; \
 		exit 1; \
 	fi
-	@if pgrep -f "$(YARN) start" > /dev/null; then \
+	@if pgrep -f "$(BUN) run start" > /dev/null; then \
 		echo "Frontend app is already running"; \
 		echo "Running processes:"; \
-		ps -ef | grep "$(YARN) start" | grep -v grep; \
+		ps -ef | grep "$(BUN) run start" | grep -v grep; \
 	else \
 		echo "Starting frontend app with NODE_ENV=$(NODE_ENV) and API_EDP=$(API_EDP)"; \
 		mkdir -p $(LOGS_DIR); \
 		LOG_FILE=$(LOGS_DIR)/frontend-$(shell date +%Y%m%d%H%M%S).log; \
-		NODE_ENV=$(NODE_ENV) API_EDP=$(API_EDP) $(YARN) start > $$LOG_FILE 2>&1 & \
+		NODE_ENV=$(NODE_ENV) API_EDP=$(API_EDP) $(BUN) run start > $$LOG_FILE 2>&1 & \
 		echo "Frontend app started with PID: $$!"; \
 		echo "Logs are available in $$LOG_FILE"; \
 	fi
@@ -48,39 +48,39 @@ start:
 # Target to start the frontend app in foreground with visible logs
 .PHONY: start-fg
 start-fg:
-	@if [ -z "$(YARN)" ]; then \
-		echo "Error: yarn command not found. Please install yarn."; \
+	@if [ -z "$(BUN)" ]; then \
+		echo "Error: bun command not found. Please install bun."; \
 		exit 1; \
 	fi
-	@if pgrep -f "$(YARN) start" > /dev/null; then \
+	@if pgrep -f "$(BUN) run start" > /dev/null; then \
 		echo "Frontend app is already running"; \
 		echo "Running processes:"; \
-		ps -ef | grep "$(YARN) start" | grep -v grep; \
+		ps -ef | grep "$(BUN) run start" | grep -v grep; \
 	else \
 		echo "Starting frontend app with NODE_ENV=$(NODE_ENV) and API_EDP=$(API_EDP)"; \
 		mkdir -p $(LOGS_DIR); \
 		LOG_FILE=$(LOGS_DIR)/frontend-$(shell date +%Y%m%d%H%M%S).log; \
-		NODE_ENV=$(NODE_ENV) API_EDP=$(API_EDP) $(YARN) start 2>&1 | tee $$LOG_FILE; \
+		NODE_ENV=$(NODE_ENV) API_EDP=$(API_EDP) $(BUN) run start 2>&1 | tee $$LOG_FILE; \
 	fi
 
 # Target to stop the frontend app
 .PHONY: stop
 stop:
-	@if pgrep -f "yarn" > /dev/null; then \
-		echo "Stopping all yarn processes..."; \
-		pkill -f "yarn"; \
-		echo "All yarn processes have been stopped."; \
+	@if pgrep -f "bun" > /dev/null; then \
+		echo "Stopping all bun processes..."; \
+		pkill -f "bun"; \
+		echo "All bun processes have been stopped."; \
 	else \
-		echo "No yarn processes are currently running."; \
+		echo "No bun processes are currently running."; \
 	fi
 
 # Target to show status of the frontend app
 .PHONY: status
 status:
-	@if pgrep -f "$(YARN) start" > /dev/null; then \
+	@if pgrep -f "$(BUN) run start" > /dev/null; then \
 		echo "Frontend app is running"; \
 		echo "Running processes:"; \
-		ps -ef | grep "$(YARN) start" | grep -v grep; \
+		ps -ef | grep "$(BUN) run start" | grep -v grep; \
 	else \
 		echo "Frontend app is not running"; \
 	fi
@@ -112,7 +112,7 @@ prod-deploy:
 	echo "Deploying to production with NODE_ENV=$$NODE_ENV and API_EDP=$$API_EDP"; \
 	mkdir -p $(LOGS_DIR); \
 	LOG_FILE=$(LOGS_DIR)/production-deploy-$$(date +%Y%m%d%H%M%S).log; \
-	yes y | NODE_ENV=$$NODE_ENV API_EDP=$$API_EDP $(YARN) deploy:production 2>&1 | tee $$LOG_FILE;
+	yes y | NODE_ENV=$$NODE_ENV API_EDP=$$API_EDP $(BUN) run deploy:production 2>&1 | tee $$LOG_FILE;
 
 # Target to show help
 .PHONY: help
@@ -121,7 +121,7 @@ help:
 	@echo " make - Starts the frontend app in the background"
 	@echo " make start - Starts the frontend app in the background"
 	@echo " make start-fg - Starts the frontend app in the foreground with visible logs"
-	@echo " make stop - Stops all yarn processes"
+	@echo " make stop - Stops all bun processes"
 	@echo " make status - Shows the current status of the frontend app"
 	@echo " make logs - Shows available log files"
 	@echo " make prod-deploy - Deploys to production with NODE_ENV and API_EDP from .env.production"
