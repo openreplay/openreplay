@@ -6,7 +6,7 @@ from fastapi import Depends, Body, BackgroundTasks
 
 import schemas
 from chalicelib.core import projects, metadata, reset_password, log_tools, \
-    announcements, weekly_report, assist, mobile, tenants, boarding, notifications, webhook, users, tags
+    announcements, weekly_report, assist, mobile, tenants, boarding, webhook, users, tags
 from chalicelib.core.alerts import alerts
 from chalicelib.core.metrics import custom_metrics
 from chalicelib.core.collaborations.collaboration_msteams import MSTeams
@@ -603,31 +603,6 @@ def generate_new_tenant_token(context: schemas.CurrentContext = Depends(OR_conte
 def update_user_module(context: schemas.CurrentContext = Depends(OR_context),
                        data: schemas.ModuleStatus = Body(...)):
     return {"data": users.update_user_module(context.user_id, data)}
-
-
-@app.get('/notifications', tags=['notifications'])
-def get_notifications(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": notifications.get_all(tenant_id=context.tenant_id, user_id=context.user_id)}
-
-
-@app.get('/notifications/count', tags=['notifications'])
-def get_notifications_count(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": notifications.get_all_count(tenant_id=context.tenant_id, user_id=context.user_id)}
-
-
-@app.get('/notifications/{notificationId}/view', tags=['notifications'])
-def view_notifications(notificationId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": notifications.view_notification(notification_ids=[notificationId], user_id=context.user_id)}
-
-
-@app.post('/notifications/view', tags=['notifications'])
-def batch_view_notifications(data: schemas.NotificationsViewSchema,
-                             context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": notifications.view_notification(notification_ids=data.ids,
-                                                    startTimestamp=data.startTimestamp,
-                                                    endTimestamp=data.endTimestamp,
-                                                    user_id=context.user_id,
-                                                    tenant_id=context.tenant_id)}
 
 
 @app.get('/boarding', tags=['boarding'])
