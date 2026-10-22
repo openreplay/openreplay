@@ -10,6 +10,7 @@ from starlette.exceptions import HTTPException
 
 import schemas
 from chalicelib.core import authorizers, users, spot
+from chalicelib.core.mcp import authorizers as mcp_authorizers
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +35,11 @@ def _get_current_auth_context(request: Request, jwt_payload: dict) -> schemas.Cu
     return request.state.currentContext
 
 
+def _allow_access_to_endpoint(request: Request, current_context: schemas.CurrentContext) -> bool:
+    return request.url.path not in ["/logout", "/api/logout", "/refresh", "/api/refresh",
+                                    "/spot/logout", "/api/spot/logout", "/spot/refresh", "/api/spot/refresh"]
+
+
 class JWTAuth(HTTPBearer):
     def __init__(self, auto_error: bool = True):
         super(JWTAuth, self).__init__(auto_error=auto_error)
@@ -52,11 +58,14 @@ class JWTAuth(HTTPBearer):
                     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                         detail="Invalid authentication scheme.")
                 jwt_payload = authorizers.jwt_authorizer(scheme=credentials.scheme, token=credentials.credentials)
+                skip_iat_check = jwt_payload is not None and jwt_payload.get("aud", "") == mcp_authorizers.AUDIENCE
                 auth_exists = jwt_payload is not None and users.auth_exists(user_id=jwt_payload.get("userId", -1),
-                                                                            jwt_iat=jwt_payload.get("iat", 100))
-                if jwt_payload is None \
-                        or jwt_payload.get("iat") is None or jwt_payload.get("aud") is None \
-                        or not auth_exists:
+                                                                            jwt_iat=jwt_payload.get("iat", 100),
+                                                                            skip_iat=skip_iat_check)
+                if not skip_iat_check \
+                        and (jwt_payload is None \
+                             or jwt_payload.get("iat") is None or jwt_payload.get("aud") is None \
+                             or not auth_exists):
                     if jwt_payload is not None:
                         logger.debug(jwt_payload)
                         if jwt_payload.get("iat") is None:
@@ -68,15 +77,10 @@ class JWTAuth(HTTPBearer):
 
                     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token or expired token.")
 
-                if jwt_payload.get("aud", "").startswith("spot") and not request.url.path.startswith("/spot"):
-                    # Allow access to spot endpoints only
-                    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                                        detail="Unauthorized access (spot).")
-                elif jwt_payload.get("aud", "").startswith("front") and request.url.path.startswith("/spot"):
-                    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                                        detail="Unauthorized access endpoint reserved for Spot only.")
-
-                return _get_current_auth_context(request=request, jwt_payload=jwt_payload)
+                ctx = _get_current_auth_context(request=request, jwt_payload=jwt_payload)
+                if not _allow_access_to_endpoint(request=request, current_context=ctx):
+                    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Unauthorized endpoint.")
+                return ctx
 
         logger.warning("Invalid authorization code.")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid authorization code.")
@@ -112,8 +116,10 @@ class JWTAuth(HTTPBearer):
                     or old_jwt_payload.get("userId") != jwt_payload.get("userId"):
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token or expired token.")
 
-            return _get_current_auth_context(request=request, jwt_payload=jwt_payload)
-
+            ctx = _get_current_auth_context(request=request, jwt_payload=jwt_payload)
+            if not _allow_access_to_endpoint(request=request, current_context=ctx):
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Unauthorized endpoint.")
+            return ctx
         logger.warning("Invalid authorization code (refresh logic).")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid authorization code for refresh.")
 
@@ -149,7 +155,10 @@ class JWTAuth(HTTPBearer):
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                                     detail="Invalid spot-token or expired token.")
 
-            return _get_current_auth_context(request=request, jwt_payload=jwt_payload)
+            ctx = _get_current_auth_context(request=request, jwt_payload=jwt_payload)
+            if not _allow_access_to_endpoint(request=request, current_context=ctx):
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Unauthorized endpoint.")
+            return ctx
 
         logger.warning("Invalid authorization code (spot-refresh logic).")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
