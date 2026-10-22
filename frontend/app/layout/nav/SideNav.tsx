@@ -47,7 +47,6 @@ import {
 import HealthStatus from 'Components/Header/HealthStatus';
 import SaasHeaderMenuItems from 'Components/Header/SaasHeaderMenuItems/SaasHeaderMenuItems';
 
-import GettingStartedProgress from 'Shared/GettingStarted/GettingStartedProgress';
 
 import AccountMenu from './AccountMenu';
 import { NavFlyout } from './NavFlyout';
@@ -337,9 +336,7 @@ function SideNav({ collapsed, onToggleCollapsed, onNavigated }: SideNavProps) {
       </div>
 
       <div className="m-nav__foot">
-        {!collapsed && <GettingStartedProgress />}
         <div className="m-nav__tools">
-          {collapsed && <GettingStartedProgress compact />}
           <Tooltip title={t('Preferences')} side="right">
             <button
               type="button"

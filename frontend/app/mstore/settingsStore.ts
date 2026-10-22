@@ -6,7 +6,6 @@ import { makeAutoObservable, observable, runInAction } from 'mobx';
 import { MENU_COLLAPSED } from 'App/constants/storageKeys';
 import { sessionService, webhookService } from 'App/services';
 
-import { GettingStarted } from './types/gettingStarted';
 import SessionSettings from './types/sessionSettings';
 
 interface CaptureConditions {
@@ -24,7 +23,6 @@ export default class SettingsStore {
   webhookInst = new Webhook();
   hooksLoading = false;
   saving: boolean = false;
-  gettingStarted: GettingStarted = new GettingStarted();
   menuCollapsed: boolean = localStorage.getItem(MENU_COLLAPSED) === 'true';
 
   constructor() {
