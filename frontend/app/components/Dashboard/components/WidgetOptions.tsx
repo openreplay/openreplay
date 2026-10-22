@@ -11,10 +11,8 @@ import {
   ChartColumnBig,
   ChartLine,
   ChartPie,
-  CircleDashed,
   Hash,
   Library,
-  Split,
   SquareActivity,
   Table,
   Users,
@@ -198,10 +196,8 @@ const VIEW_TYPES = (
     { value: 'metric', label: t('Metric'), icon: <Hash /> },
     { value: 'table', label: t('Table'), icon: <Table /> },
   ],
-  [USER_PATH]: [
-    { value: 'lineChart', label: t('Flow chart'), icon: <Split /> },
-    { value: 'sunburst', label: t('Sunburst'), icon: <CircleDashed /> },
-  ],
+  // the sunburst stays in the code, hidden until it has a design (OR-3862)
+  [USER_PATH]: [],
 });
 
 export default observer(WidgetOptions);

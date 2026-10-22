@@ -19,6 +19,8 @@ export interface SankeyLink {
 export function sankeyTooltip(
   echartNodes: any[],
   nodeValues: Record<string, number>,
+  /** one more line under a node, e.g. how many pages it folds */
+  noteOf: (data: any) => string = () => '',
 ) {
   return (params: any) => {
     if ('source' in params.data && 'target' in params.data) {
@@ -53,10 +55,12 @@ export function sankeyTooltip(
       `;
     }
     if ('name' in params.data) {
+      const note = noteOf(params.data);
       return `
       <div class="flex flex-col">
         <div class="font-semibold text-sm flex gap-1 items-center"><span class="text-base" style="color:var(--m-chart-1); font-family: sans-serif;">&#9632;&#xFE0E;</span> ${escapeHtml(params.data.name)}</div>
         <div class="text-sm" style="color:var(--m-content-primary)">${params.value} <span style="color:var(--m-content-muted)">Sessions</span></div>
+        ${note ? `<div class="text-xs" style="color:var(--m-content-muted)">${escapeHtml(note)}</div>` : ''}
       </div>
       `;
     }

@@ -43,7 +43,7 @@ import NoDataInWindow from 'Components/Dashboard/components/NoDataInWindow';
 
 import BugNumChart from '../../Widgets/CustomMetricsWidgets/BigNumChart';
 import { breakdownName } from '../BreakdownFilter/breakdownDimensions';
-import LongLoader from './LongLoader';
+import ChartLoading from './ChartLoading';
 
 // Only one of these renders per card, so each one is its own chunk; the
 // <Suspense> at the render site below covers them all.
@@ -872,11 +872,10 @@ function WidgetChart(props: Props) {
   return (
     <div ref={ref}>
       {loading ? (
-        stale ? (
-          <LongLoader onClick={loadSample} withSampling={showSampling} />
-        ) : (
-          <Loader loading={loading} style={{ height: '240px' }} />
-        )
+        <ChartLoading
+          slow={stale}
+          onSample={showSampling ? () => void loadSample() : undefined}
+        />
       ) : (
         <div>
           <Suspense fallback={<Loader loading style={{ height: '240px' }} />}>

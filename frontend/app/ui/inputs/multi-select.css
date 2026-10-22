@@ -1,0 +1,17 @@
+/* a searchable multi-select: the popover's search on top, check rows
+   scrolling under it; wide enough for a page path */
+.m-mselect--search {
+  width: max(var(--radix-popover-trigger-width), 18rem);
+  overflow: hidden;
+}
+.m-mselect__list {
+  max-height: 16rem;
+  overflow-y: auto;
+  padding: var(--m-space-2);
+}
+.m-mselect__none {
+  margin: 0;
+  padding: var(--m-space-3) var(--m-space-4);
+  font-size: var(--m-text-xs);
+  color: var(--m-content-placeholder);
+}

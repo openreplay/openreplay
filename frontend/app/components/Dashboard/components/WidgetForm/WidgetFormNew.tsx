@@ -2,11 +2,11 @@ import { IconButton } from '@/ui/actions/IconButton';
 import { Button } from '@/ui/actions/button';
 import { Notice } from '@/ui/feedback/Notice';
 import { MultiSelect } from '@/ui/inputs/multi-select';
-import { InlineSelect } from '@/ui/inputs/select';
+import { InlineSelect, SimpleSelect } from '@/ui/inputs/select';
 import { Tooltip } from '@/ui/overlays/tooltip';
-import { FilterCategory } from 'Types/filter/filterType';
+import { FilterCategory, FilterKey } from 'Types/filter/filterType';
 import { eventKeys } from 'Types/filter/newFilter';
-import { ChevronsDownUp, ChevronsUpDown, Plus } from 'lucide-react';
+import { ChevronsDownUp, ChevronsUpDown, Plus, X } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -23,17 +23,8 @@ import {
   WEBVITALS,
 } from 'App/constants/card';
 import { issueCategories } from 'App/constants/filterOptions';
-import { projectStore, useStore } from 'App/mstore';
+import { filterStore, projectStore, useStore } from 'App/mstore';
 import FilterSeries from 'Components/Dashboard/components/FilterSeries/FilterSeries';
-
-import {
-  SingleRule,
-  buildFilterEditor,
-  useCatalogue,
-} from 'Shared/FilterEditor';
-import type { FilterTarget } from 'Shared/FilterEditor';
-
-import ExcludeFilters from '../FilterSeries/ExcludeFilters';
 
 export const supportsBreakdown = (metric: { metricType: string }) =>
   [TIMESERIES, FUNNEL, TABLE].includes(metric.metricType);
@@ -231,39 +222,41 @@ const FilterSection = observer(
             </div>
           )}
         </div>
-        {isPathAnalysis && <ExcludeFilters metric={metric} />}
       </>
     );
   },
 );
 
-const noop = () => {};
+const AUTO = '__auto';
 
-/** The journey's anchor: one event rule, replaceable among the journey's events. */
-const StartPoint = observer(({ metric }: { metric: any }) => {
-  const all = useCatalogue();
-  const target: FilterTarget = {
-    filters: [metric.startPoint],
-    eventsOrder: 'then',
-    add: noop,
-    update: (_, f) => metric.updateStartPoint(f),
-    remove: noop,
-    move: noop,
-    setEventsOrder: noop,
-    clear: noop,
+/** a page rule's pages: its default property's values, else its own */
+const pagesOf = (rule: any): string[] =>
+  (
+    (rule?.filters ?? []).find((p: any) => p.value?.some(Boolean))?.value ??
+    rule?.value ??
+    []
+  ).filter(Boolean);
+
+/** a LOCATION rule for `pages`, the value on its default property (url_path) */
+async function pageRule(pages: string[]) {
+  const ev: any = filterStore.findEvent({
+    name: FilterKey.LOCATION,
+    autoCaptured: true,
+  });
+  if (!ev) return null;
+  const props = await filterStore.getEventFilters(ev.id);
+  const path = (props ?? []).find((p: any) => p.defaultProperty);
+  return {
+    ...ev,
+    operator: 'is',
+    value: path ? [] : pages,
+    filters: path
+      ? [{ ...path, operator: 'is', value: pages, eventName: ev.name }]
+      : [],
   };
-  const editor = buildFilterEditor(target);
-  const rule = editor.events[0] ?? editor.properties[0];
-  if (!rule) return null;
-  return (
-    <SingleRule
-      filter={rule}
-      editor={editor}
-      entries={all.filter((e) => e.isEvent)}
-    />
-  );
-});
+}
 
+/** One sentence read down a column: Starts at, Showing, Leaving out. */
 const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
   const { t } = useTranslation();
   const metricValueOptions = [
@@ -273,12 +266,61 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
     { value: 'input', label: t('Inputs') },
     { value: 'custom', label: t('Events') },
   ];
+  const fromEnd = metric.startType === 'end';
+  // the pages this journey draws, in column order
+  const nodes: any[] = metric.data?.nodes ?? [];
+  const steps = useMemo(
+    () => [
+      ...new Set(
+        nodes
+          .filter((n) => n.eventType === 'LOCATION' && n.name)
+          .sort((a, b) => (a.depth ?? 0) - (b.depth ?? 0))
+          .map((n) => n.name as string),
+      ),
+    ],
+    [nodes],
+  );
+  const start = pagesOf(metric.startPoint)[0] ?? null;
+  const auto = nodes.find((n) => n.startingNode && n.name)?.name;
+  const excluded = [
+    ...new Set<string>(metric.excludes.flatMap((r: any) => pagesOf(r))),
+  ];
+
+  const setStart = async (v?: string) => {
+    if (!v || v === AUTO) {
+      metric.updateKey('startPoint', null);
+      metric.updateKey('hasChanged', true);
+      return;
+    }
+    const rule = await pageRule([v]);
+    if (rule) metric.updateStartPoint(rule);
+  };
+  const setExcluded = async (next: string[]) => {
+    if (!next.length) return metric.updateExcludes([]);
+    const rule = await pageRule(next);
+    if (rule) metric.updateExcludes([rule]);
+  };
+
+  const startOptions = [
+    { value: AUTO, label: t('Most common page') },
+    ...(start && !steps.includes(start) ? [start, ...steps] : steps).map(
+      (p) => ({ value: p, label: p }),
+    ),
+  ];
+  const leaveOptions = [
+    ...excluded.filter((p) => !steps.includes(p)),
+    ...steps,
+  ].map((p) => ({
+    value: p,
+    label: <span className="m-mono m-truncate">{p}</span>,
+    text: p,
+  }));
 
   return (
     <div className="m-jrny">
-      <div className="m-jrny__row">
-        <span className="m-jrny__word">{t('Journeys with')}</span>
+      <div className="m-jrny__grid">
         <InlineSelect<'start' | 'end'>
+          className="m-jrny__lead"
           value={metric.startType || 'start'}
           onChange={(value) =>
             writeOption({ name: 'startType', value: { value } })
@@ -287,38 +329,88 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
           options={[
             {
               value: 'start',
-              label: t('start point'),
+              label: t('Starts at'),
               hint: t('Where sessions go from here'),
             },
             {
               value: 'end',
-              label: t('end point'),
+              label: t('Ends at'),
               hint: t('How sessions arrived here'),
             },
           ]}
         />
-        <span className="m-jrny__word">{t('showing')}</span>
-        <MultiSelect<string>
-          className="m-jrny__showing"
-          value={metric.metricValue || []}
-          onChange={(value) =>
-            writeOption({
-              name: 'metricValue',
-              value: value.length ? value : ['location'],
-            })
-          }
-          ariaLabel={t('What the steps are')}
-          options={metricValueOptions}
-        />
-      </div>
-      {metric.startPoint ? (
-        <div className="m-jrny__row">
-          <span className="m-jrny__word">
-            {metric.startType === 'end' ? t('End point') : t('Start point')}
-          </span>
-          <StartPoint metric={metric} />
+        <div className="m-jrny__ctl">
+          <SimpleSelect<string>
+            className="m-jrny__field"
+            value={start ?? AUTO}
+            onChange={(v) => void setStart(v)}
+            ariaLabel={fromEnd ? t('End page') : t('Start page')}
+            options={startOptions}
+          />
+          {start == null && auto ? (
+            <p className="m-jrny__note">
+              {fromEnd
+                ? t('Most sessions end on {{page}}', { page: auto })
+                : t('Most sessions start on {{page}}', { page: auto })}
+            </p>
+          ) : null}
         </div>
-      ) : null}
+
+        <span className="m-jrny__word">{t('Showing')}</span>
+        <div className="m-jrny__ctl">
+          <MultiSelect<string>
+            className="m-jrny__field"
+            value={metric.metricValue || []}
+            onChange={(value) =>
+              writeOption({
+                name: 'metricValue',
+                value: value.length ? value : ['location'],
+              })
+            }
+            ariaLabel={t('What the steps are')}
+            options={metricValueOptions}
+          />
+        </div>
+
+        <span className="m-jrny__word">{t('Leaving out')}</span>
+        <div className="m-jrny__ctl">
+          <MultiSelect<string>
+            className="m-jrny__field"
+            value={excluded}
+            onChange={(next) => void setExcluded(next)}
+            ariaLabel={t('Pages to leave out of the journey')}
+            placeholder={t('Nothing')}
+            options={leaveOptions}
+            searchable={{
+              placeholder: t('Search pages'),
+              empty: t('No page matches that.'),
+            }}
+          />
+          {excluded.length > 0 && (
+            <ul className="m-jrny__out" aria-label={t('Pages left out')}>
+              {excluded.map((p) => (
+                <li key={p}>
+                  <span className="m-jrny__outname m-mono m-truncate">{p}</span>
+                  <Tooltip title={t('Put this page back')}>
+                    <button
+                      type="button"
+                      className="m-jrny__outx"
+                      aria-label={t('Put {{page}} back in the journey', {
+                        page: p,
+                      })}
+                      onClick={() =>
+                        void setExcluded(excluded.filter((x) => x !== p))
+                      }
+                    >
+                      <X size={11} aria-hidden="true" />
+                    </button>
+                  </Tooltip>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
     </div>
   );
 });
@@ -327,19 +419,21 @@ const InsightsFilter = observer(({ metric, writeOption }: any) => {
   const { t } = useTranslation();
   return (
     <div className="m-jrny">
-      <div className="m-jrny__row">
+      <div className="m-jrny__grid">
         <span className="m-jrny__word">{t('Issue categories')}</span>
-        <MultiSelect<string>
-          className="m-jrny__showing"
-          value={metric.metricValue || []}
-          onChange={(value) => writeOption({ name: 'metricValue', value })}
-          ariaLabel={t('Issue categories')}
-          placeholder={t('All categories')}
-          options={issueCategories.map((c: any) => ({
-            value: c.value,
-            label: c.label,
-          }))}
-        />
+        <div className="m-jrny__ctl">
+          <MultiSelect<string>
+            className="m-jrny__field"
+            value={metric.metricValue || []}
+            onChange={(value) => writeOption({ name: 'metricValue', value })}
+            ariaLabel={t('Issue categories')}
+            placeholder={t('All categories')}
+            options={issueCategories.map((c: any) => ({
+              value: c.value,
+              label: c.label,
+            }))}
+          />
+        </div>
       </div>
     </div>
   );

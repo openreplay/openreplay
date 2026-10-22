@@ -272,7 +272,8 @@ export default class Widget {
       }
 
       if (this.metricType === USER_PATH) {
-        if (json.viewType === 'chart') {
+        // the sunburst is hidden (OR-3862): a saved one opens as a flow chart
+        if (json.viewType === 'chart' || json.viewType === 'sunburst') {
           this.viewType = 'lineChart';
         }
         this.hideExcess = json.hideExcess;
