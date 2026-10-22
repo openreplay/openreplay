@@ -347,7 +347,7 @@ func PredefinedTriggers() []Trigger {
 		if strings.HasSuffix(string(c), ".count") {
 			unit = "count"
 		}
-		triggers = append(triggers, Trigger{Name: string(c), Value: string(c), Unit: unit, Predefined: true})
+		triggers = append(triggers, Trigger{Name: string(c), Value: string(c), Unit: unit, Predefined: true, Source: "predefined"})
 	}
 	return triggers
 }
