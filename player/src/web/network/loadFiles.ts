@@ -139,7 +139,26 @@ async function requestEFSMobFile(filename: string, signal?: AbortSignal) {
   if (res.status >= 400) {
     throw NO_BACKUP_FILE;
   }
-  return await processAPIStreamResponse(res, false);
+  const data = new Uint8Array(await res.arrayBuffer());
+  if (isErrorPayload(res, data)) {
+    throw NO_BACKUP_FILE;
+  }
+  return data;
+}
+
+/**
+ * The API can answer a missing file with 200 and `{"errors": [...]}`. A mob
+ * file is binary, so only a small body that is JSON with `errors` counts.
+ */
+export function isErrorPayload(res: Response, data: Uint8Array): boolean {
+  const json = res.headers.get('content-type')?.includes('application/json');
+  if (!json && (data.length > 4096 || data[0] !== 0x7b)) return false;
+  try {
+    const body = JSON.parse(new TextDecoder().decode(data));
+    return Array.isArray(body?.errors) || !!json;
+  } catch {
+    return !!json;
+  }
 }
 
 async function processAPIStreamResponse(response: Response, skippable: boolean) {
