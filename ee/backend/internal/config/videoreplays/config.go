@@ -16,6 +16,7 @@ type Config struct {
 	common.HTTP
 	common.RateLimiter
 	objectstorage.ObjectsConfig
+	ExportBucket            string        `env:"REPLAY_EXPORT_BUCKET"` // S3 bucket for exported videos; must differ from the sessions bucket in BUCKET_NAME
 	TopicSessionVideoReplay string        `env:"TOPIC_VIDEO_REPLAY,default=video-replays"`
 	GroupSessionVideoReplay string        `env:"GROUP_VIDEO_REPLAY,default=video-consumer"`
 	AWSRegion               string        `env:"AWS_REGION,default=eu-central-1"`
