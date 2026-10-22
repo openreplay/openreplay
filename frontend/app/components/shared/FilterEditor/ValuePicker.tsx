@@ -3,7 +3,7 @@ import { CheckRow } from '@/ui/inputs/CheckRow';
 import { Input } from '@/ui/inputs/input';
 import { PopoverPanel } from '@/ui/overlays/popover';
 import { Tooltip } from '@/ui/overlays/tooltip';
-import { CornerDownLeft } from 'lucide-react';
+import { ArrowRightToLine, CornerDownLeft } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -32,6 +32,12 @@ function ValuePicker({ filter, value, onChange, live }: ValuePickerProps) {
 
   const toggle = (v: string) =>
     onChange(value.includes(v) ? value.filter((x) => x !== v) : [...value, v]);
+
+  const acceptFirst = () => {
+    const first = options[0].value;
+    if (!value.includes(first)) onChange([...value, first]);
+    setQuery('');
+  };
 
   const commitTyped = () => {
     const typed = query
@@ -66,10 +72,13 @@ function ValuePicker({ filter, value, onChange, live }: ValuePickerProps) {
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Escape') return setOpen(false);
+            if (e.key === 'Tab' && !e.shiftKey && options.length) {
+              e.preventDefault();
+              return acceptFirst();
+            }
             if (e.key !== 'Enter') return;
-            if (options.length === 1 && !query.includes(','))
-              return toggle(options[0].value);
-            if (freeText) commitTyped();
+            if (freeText) return commitTyped();
+            if (options.length === 1) toggle(options[0].value);
           }}
           aria-label={t('Values for {{name}}', { name })}
         />
@@ -107,11 +116,19 @@ function ValuePicker({ filter, value, onChange, live }: ValuePickerProps) {
           </p>
         )}
 
-        {options.map((o) => (
+        {options.map((o, i) => (
           <CheckRow
             key={o.value}
             on={value.includes(o.value)}
             onToggle={() => toggle(o.value)}
+            meta={
+              i === 0 ? (
+                <kbd className="m-vp__key" aria-hidden="true">
+                  <ArrowRightToLine size={10} />
+                  Tab
+                </kbd>
+              ) : undefined
+            }
           >
             {o.share != null ? (
               <Tooltip

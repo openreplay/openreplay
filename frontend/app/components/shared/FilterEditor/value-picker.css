@@ -101,6 +101,19 @@
   transition: width var(--m-duration-slow) var(--m-ease-out);
 }
 
+.m-vp__key {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 var(--m-space-1);
+  font-family: var(--m-font-num);
+  font-size: var(--m-text-2xs);
+  line-height: 1.5;
+  color: var(--m-content-placeholder);
+  border: var(--m-border-width) solid var(--m-border-subtle);
+  border-radius: var(--m-radius-chip);
+}
+
 .m-vp__typed {
   font-size: var(--m-text-2xs);
   color: var(--m-content-muted);
