@@ -394,6 +394,10 @@ function SegmentsListPage() {
         segment={editing}
         source="dm"
         onClose={() => setDrawerOpen(false)}
+        onUse={() => {
+          const s = editing && all.find((x) => x.id === editing.id);
+          if (s) use(s);
+        }}
         onSaved={() =>
           queryClient.invalidateQueries({ queryKey: ['segments-list'] })
         }

@@ -29,6 +29,16 @@
   min-width: 0;
   max-width: 32rem;
 }
+/* the person's tags read with the name; the name truncates first */
+.m-rs__name-line {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-3);
+  min-width: 0;
+}
+.m-rs__name-line > .m-ss__meta {
+  flex: none;
+}
 .m-rs__name {
   font-size: var(--m-text-sm);
   font-weight: var(--m-weight-medium);
@@ -67,14 +77,12 @@
   position: relative;
 }
 
-/* notices about the recording sit in the main column on the stage's inset,
-   and the stage starts under them */
+/* notices about the recording are banners across the top of the main
+   column, edge to edge; the stage starts under them */
 .m-rs__notice {
   display: flex;
   flex-direction: column;
-  gap: var(--m-space-2);
   flex: none;
-  padding: var(--m-space-4) var(--m-space-6) 0;
 }
 .m-rs__notice:empty {
   display: none;
@@ -256,9 +264,6 @@
   margin-left: 0;
   padding-left: var(--m-space-2);
 }
-:root[data-viewport='phone'] .m-rs__notice {
-  padding: var(--m-space-3) var(--m-space-3) 0;
-}
 :root[data-viewport='phone'] .m-jrn {
   display: flex;
   position: fixed;
@@ -278,8 +283,18 @@
     transform: translateY(100%);
   }
 }
+/* and it goes back down the way it came, a step quicker */
+:root[data-viewport='phone'] .m-jrn.is-leaving {
+  animation: m-sheet-down var(--m-duration-normal) var(--m-ease-in) forwards;
+}
+@keyframes m-sheet-down {
+  to {
+    transform: translateY(100%);
+  }
+}
 @media (prefers-reduced-motion: reduce) {
-  :root[data-viewport='phone'] .m-jrn {
+  :root[data-viewport='phone'] .m-jrn,
+  :root[data-viewport='phone'] .m-jrn.is-leaving {
     animation: none;
   }
 }

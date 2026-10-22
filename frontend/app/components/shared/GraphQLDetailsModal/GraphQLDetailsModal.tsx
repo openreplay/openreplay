@@ -1,4 +1,4 @@
-import { JSONTree } from '@/ui/data/JSONTree';
+import { JsonTree } from '@/ui/data/json-tree';
 import { DrawerHeader, Section } from '@/ui/overlays/EntityDrawer';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -41,14 +41,14 @@ function GraphQLDetailsModal({ resource }: { resource: any }) {
           {vars === undefined ? (
             <p className="m-mono text-content-primary">{variables}</p>
           ) : (
-            <JSONTree src={vars} />
+            <JsonTree value={vars} copyable />
           )}
         </Section>
         <Section title={t('Response')}>
           {res === undefined ? (
             <p className="m-mono text-content-primary">{response}</p>
           ) : (
-            <JSONTree src={res} />
+            <JsonTree value={res} copyable />
           )}
         </Section>
       </div>

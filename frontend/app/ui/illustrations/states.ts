@@ -560,6 +560,17 @@ export const EMPTY_STATES: EmptyEntry[] = [
     subject: 'noMatch',
   },
   {
+    id: 'no-access',
+    area: 'Everywhere',
+    where: 'Any section your role cannot open',
+    title: 'Your role has no access here',
+    size: 'page',
+    subject: 'noAccess',
+    pose: 'wait',
+    side: 'left',
+    prop: null,
+  },
+  {
     id: 'larger-screen',
     robot: false,
     area: 'Everywhere',

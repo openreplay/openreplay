@@ -1,5 +1,5 @@
 import { Button } from '@/ui/actions/button';
-import { Icon } from '@/ui/icons/Icon';
+import { EmptyState } from '@/ui/feedback/EmptyState';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -11,8 +11,6 @@ import {
   withSiteId,
 } from 'App/routes';
 import { RouteComponentProps, withRouter } from 'App/routing';
-
-import stl from './NoSessionPermission.module.css';
 
 const SESSIONS_ROUTE = sessionsRoute();
 const ASSIST_ROUTE = assistRoute();
@@ -49,26 +47,24 @@ function NoSessionPermission(props: Props) {
   };
 
   return (
-    <div className={stl.wrapper}>
-      <Icon name="shield-lock" size="50" className="py-16" />
-      <div className={stl.title}>{t('Not allowed')}</div>
-      {session.isLive ? (
-        <span>
-          {t(
-            'This session is still live, and you don’t have the necessary permissions to access this feature. Please check with your admin.',
-          )}
-        </span>
-      ) : (
-        <span>
-          {t(
-            'You don’t have the necessary permissions to access this feature. Please check with your admin.',
-          )}
-        </span>
-      )}
-      <Button variant="primary" onClick={backHandler} className="mt-6">
-        {t('Go back')}
-      </Button>
-    </div>
+    <EmptyState
+      state="no-access"
+      title={t('Your role has no access here')}
+      hint={
+        session.isLive
+          ? t(
+              'This session is still live, and your role cannot watch live sessions. Ask an admin to add it in Team.',
+            )
+          : t(
+              'An admin sets what each role can open, in Team. Ask one to add this to yours.',
+            )
+      }
+      action={
+        <Button variant="primary" onClick={backHandler}>
+          {t('Go back')}
+        </Button>
+      }
+    />
   );
 }
 

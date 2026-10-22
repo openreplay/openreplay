@@ -8,6 +8,13 @@
   border-left: 1px solid var(--m-border-default);
 }
 
+/* the session's journey tags, the Details tab's last section */
+.m-jrn__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--m-space-2);
+}
+
 .m-jrn__answers {
   display: flex;
   flex-direction: column;

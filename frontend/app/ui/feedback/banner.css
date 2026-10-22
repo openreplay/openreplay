@@ -20,6 +20,11 @@
   --m-banner-edge: var(--m-status-danger-border);
   --m-banner-ink: var(--m-content-danger);
 }
+.m-banner--warning {
+  --m-banner-bg: var(--m-status-warning-bg);
+  --m-banner-edge: var(--m-status-warning-border);
+  --m-banner-ink: var(--m-status-warning-fg);
+}
 .m-banner--info {
   --m-banner-bg: var(--m-status-info-bg);
   --m-banner-edge: var(--m-status-info-border);

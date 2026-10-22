@@ -234,7 +234,9 @@ button.m-fchip__seg:focus-visible {
 .m-fchip .m-vp__trigger,
 .m-fchip .m-vp__trigger:hover {
   height: var(--m-fchip-seg-h);
-  max-width: min(26rem, 100%);
+  /* a length, not a percentage: the grid measures the cell by it, so the
+     chip hugs the truncated value */
+  max-width: 26rem;
   padding-inline: var(--m-space-3);
   border: 0;
   border-radius: 0;

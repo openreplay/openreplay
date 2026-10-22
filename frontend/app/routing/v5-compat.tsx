@@ -40,8 +40,9 @@ export type RouteComponentProps<
 
 type PromptMessage = string | ((location: Location) => string | boolean);
 
-/** Asked before an in-app navigation; false keeps the current page. */
-const blockers = new Set<(next: Location) => boolean>();
+/** Asked before an in-app navigation; false keeps the current page.
+ *  `proceed` makes the held navigation later, past every blocker. */
+const blockers = new Set<(next: Location, proceed: () => void) => boolean>();
 
 /* BrowserRouter's history in react-router 7 has no block(), so Prompt wraps
    its push / replace (what Link, useNavigate and useHistory end in) once.
@@ -53,7 +54,8 @@ function guardNavigator(navigator: any) {
     const navigate = navigator[key].bind(navigator);
     navigator[key] = (to: To, ...rest: unknown[]) => {
       const next = navigator.encodeLocation(to) as Location;
-      for (const allow of blockers) if (!allow(next)) return;
+      const proceed = () => navigate(to, ...rest);
+      for (const allow of blockers) if (!allow(next, proceed)) return;
       navigate(to, ...rest);
     };
   }
@@ -97,6 +99,54 @@ export function Prompt({
   );
 
   return null;
+}
+
+/**
+ * Holds an in-app navigation while `when`, for a dialog to decide on:
+ * `leave()` makes it, `stay()` drops it. `allowTo` lets some destinations
+ * through unasked. A reload or a closed tab gets the browser's own prompt.
+ */
+export function useLeaveGuard(
+  when: boolean,
+  allowTo?: (next: Location) => boolean,
+) {
+  const { navigator } = React.useContext(UNSAFE_NavigationContext) as any;
+  const [pending, setPending] = React.useState<(() => void) | null>(null);
+  const allowRef = React.useRef(allowTo);
+  allowRef.current = allowTo;
+
+  React.useEffect(() => {
+    if (!when || !navigator) return;
+    guardNavigator(navigator);
+    const allow = (next: Location, proceed: () => void) => {
+      if (allowRef.current?.(next)) return true;
+      setPending(() => proceed);
+      return false;
+    };
+    blockers.add(allow);
+    return () => {
+      blockers.delete(allow);
+    };
+  }, [navigator, when]);
+
+  useBeforeUnload(
+    React.useCallback(
+      (e: BeforeUnloadEvent) => {
+        if (when) e.preventDefault();
+      },
+      [when],
+    ),
+  );
+
+  return {
+    open: pending != null,
+    leave: () => {
+      const go = pending;
+      setPending(null);
+      go?.();
+    },
+    stay: () => setPending(null),
+  };
 }
 
 type PathInput =

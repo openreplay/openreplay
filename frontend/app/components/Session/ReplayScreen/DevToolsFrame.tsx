@@ -1,3 +1,4 @@
+import { useExit } from '@/lib/use-exit';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import { ChevronDown } from 'lucide-react';
 import React, { type ReactNode } from 'react';
@@ -45,6 +46,10 @@ export function DevToolsFrame<K extends string | number>({
 }: Props<K>) {
   const { t } = useTranslation();
   const box = React.useRef<HTMLDivElement>(null);
+  // the body slides down as it rose, drawing the last panel on the way
+  const { shown, leaving, onAnimationEnd } = useExit(open || null);
+  const lastChildren = React.useRef(children);
+  if (open) lastChildren.current = children;
   // ends an in-flight resize; also run on unmount so the listeners can't outlive the strip
   const endDrag = React.useRef<(() => void) | null>(null);
   React.useEffect(() => () => endDrag.current?.(), []);
@@ -121,10 +126,15 @@ export function DevToolsFrame<K extends string | number>({
           ) : null}
         </span>
       </div>
-      {open ? (
-        <div className="m-dt__body" role="tabpanel" style={{ height }}>
+      {shown ? (
+        <div
+          className={`m-dt__body m-dock-bottom${leaving ? ' is-leaving' : ''}`}
+          role="tabpanel"
+          style={{ height }}
+          onAnimationEnd={onAnimationEnd}
+        >
           <PanelHostContext.Provider value={OWNS_CLOSE}>
-            {children}
+            {open ? children : lastChildren.current}
           </PanelHostContext.Provider>
         </div>
       ) : null}

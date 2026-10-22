@@ -1,9 +1,11 @@
 .m-flyout-root {
-  padding: var(--m-space-2) var(--m-space-2) var(--m-space-2) 6px;
+  padding: var(--m-space-2) var(--m-space-2) var(--m-space-2)
+    calc(var(--m-space-5) + var(--m-space-3));
 }
 
 .m-flyout {
-  width: 11rem;
+  width: 12.5rem;
+  padding: var(--m-space-3);
   border-radius: var(--m-radius-surface);
   border: 1px solid var(--m-border-subtle);
   background: var(--m-surface-raised);
@@ -15,8 +17,8 @@
   display: flex;
   align-items: center;
   gap: var(--m-space-4);
-  height: 1.75rem;
-  padding-inline: var(--m-space-3);
+  height: var(--m-control-height-md);
+  padding-inline: var(--m-space-4);
 }
 
 .m-flyout__name {
@@ -27,19 +29,21 @@
   color: var(--m-content-primary);
 }
 
-.m-flyout__count {
-  font-family: var(--m-font-num);
-  flex: none;
-  font-size: var(--m-text-xs);
-  color: var(--m-content-muted);
-  font-variant-numeric: tabular-nums;
-}
-
 .m-flyout__sections {
   display: flex;
   flex-direction: column;
-  gap: 1px;
-  margin-top: var(--m-space-2);
-  padding-top: var(--m-space-2);
+  gap: var(--m-space-1);
+  margin-top: var(--m-space-3);
+  padding-top: var(--m-space-3);
   border-top: 1px solid var(--m-border-subtle);
+}
+
+/* the dropdown's row height, not the rail's nested one */
+.m-flyout .m-nav-item.is-nested {
+  height: var(--m-control-height-md);
+}
+/* no row expands in here, so the caret slot would only push the figures off
+   the card's edge */
+.m-flyout .m-nav-item__caret.is-empty {
+  display: none;
 }

@@ -7,6 +7,7 @@ import {
   DropdownMenuTrigger,
 } from '@/ui/actions/dropdown-menu';
 import '@/ui/data/code-block.css';
+import { JsonTree } from '@/ui/data/json-tree';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/ui/layout/tabs';
 import { useToast } from '@/ui/overlays/toast';
 import { Tooltip } from '@/ui/overlays/tooltip';
@@ -15,13 +16,12 @@ import {
   ArrowLeft,
   ArrowRight,
   ChevronDown,
-  ChevronRight,
   HelpCircle,
   X,
 } from 'lucide-react';
 import { DateTime } from 'luxon';
 import { observer } from 'mobx-react-lite';
-import React, { type ReactNode, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useStore } from 'App/mstore';
@@ -335,98 +335,7 @@ function Body({ value }: { value: unknown | null }) {
   if (typeof value !== 'object') {
     return <pre className="m-rq__json m-mono m-rq__raw">{String(value)}</pre>;
   }
-  return (
-    <div className="m-rq__json m-mono" role="tree">
-      <JsonNode value={value} depth={0} last />
-    </div>
-  );
-}
-
-function JsonNode({
-  name,
-  value,
-  depth,
-  last,
-}: {
-  name?: string;
-  value: unknown;
-  depth: number;
-  last: boolean;
-}) {
-  const { t } = useTranslation();
-  const [open, setOpen] = useState(depth < 2);
-  const comma = last ? '' : ',';
-  const key =
-    name != null ? (
-      <>
-        <span className="m-rq__key">{name}</span>
-        <span className="m-code__t-punct">: </span>
-      </>
-    ) : null;
-
-  if (value != null && typeof value === 'object') {
-    const isArr = Array.isArray(value);
-    const entries = isArr
-      ? (value as unknown[]).map((v, i) => [String(i), v] as const)
-      : Object.entries(value as Record<string, unknown>);
-    const [o, c] = isArr ? ['[', ']'] : ['{', '}'];
-    return (
-      <div className="m-rq__node" role="treeitem" aria-expanded={open}>
-        <button
-          type="button"
-          className="m-rq__fold"
-          onClick={() => setOpen((v) => !v)}
-          aria-label={open ? t('Collapse') : t('Expand')}
-        >
-          {key}
-          <span className="m-code__t-punct">{o}</span>
-          {!open && <span className="m-rq__ellip">{entries.length}</span>}
-          {!open && (
-            <span className="m-code__t-punct">
-              {c}
-              {comma}
-            </span>
-          )}
-          <span className="m-rq__caret" aria-hidden="true">
-            {open ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
-          </span>
-        </button>
-        {open && (
-          <div className="m-rq__children" role="group">
-            {entries.map(([k, v], i) => (
-              <JsonNode
-                key={k}
-                name={isArr ? undefined : k}
-                value={v}
-                depth={depth + 1}
-                last={i === entries.length - 1}
-              />
-            ))}
-            <div>
-              <span className="m-code__t-punct">
-                {c}
-                {comma}
-              </span>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  let tok: ReactNode;
-  if (typeof value === 'string')
-    tok = <span className="m-code__t-string">"{value}"</span>;
-  else if (typeof value === 'number')
-    tok = <span className="m-code__t-number">{value}</span>;
-  else tok = <span className="m-code__t-keyword">{String(value)}</span>;
-  return (
-    <div className="m-rq__leaf" role="treeitem">
-      {key}
-      {tok}
-      <span className="m-code__t-punct">{comma}</span>
-    </div>
-  );
+  return <JsonTree value={value} copyable />;
 }
 
 const PHASES = [

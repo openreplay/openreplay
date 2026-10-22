@@ -108,7 +108,7 @@ function IssueActions({
         >
           <span>
             <IconButton
-              icon={<LinearIcon size={15} />}
+              icon={<LinearIcon />}
               label={t('Create a Linear ticket')}
               variant="primary"
               disabled={!linear || issuesStore.ticketPending === issue.id}

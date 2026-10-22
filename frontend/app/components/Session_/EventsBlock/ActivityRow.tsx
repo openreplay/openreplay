@@ -1,14 +1,12 @@
 import { formatVital, vitalStatus } from '@/lib/vitals';
-import { IconButton } from '@/ui/actions/IconButton';
+import { CopyButton } from '@/ui/actions/CopyButton';
 import { Chip } from '@/ui/data/Chip';
 import { TYPES } from 'Types/session/event';
-import copy from 'copy-to-clipboard';
 import type { TFunction } from 'i18next';
 import {
   AlertTriangle,
   ArrowLeftRight,
   ArrowRight,
-  Copy,
   Hourglass,
   Keyboard,
   ListChecks,
@@ -257,12 +255,7 @@ function ActivityRow({ event, now, ahead, isFirst, onSeek }: Props) {
       </button>
       {d.copy && (
         <span className="m-spanel__verb">
-          <IconButton
-            icon={<Copy size={12} />}
-            label={d.copy.label}
-            variant="ghost"
-            onClick={() => copy(d.copy!.text)}
-          />
+          <CopyButton variant="ghost" text={d.copy.text} label={d.copy.label} />
         </span>
       )}
     </div>

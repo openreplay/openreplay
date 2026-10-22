@@ -1221,4 +1221,100 @@ export const SUBJECTS_B = {
       ];
     },
   },
+  // the page stands closed with a padlock on it; on hover the lock jiggles
+  noAccess: {
+    label: 'No access',
+    prop: 'key',
+    draw: () => {
+      const page = rrect(10, 8, 58, 56, 4);
+      const body = rrect(54, 38, 26, 22, 3);
+      const shackle: P[] = Array.from({ length: 9 }, (_, i) => {
+        const a = Math.PI + (i / 8) * Math.PI;
+        return [67 + Math.cos(a) * 8, 38 + Math.sin(a) * 9] as P;
+      });
+      return [
+        {
+          fill: (
+            <>
+              {shadow(46, 40)}
+              <path d={poly(page)} className={PAPER} />
+            </>
+          ),
+          line: (r) => (
+            <>
+              <path d={inked(page, true, r, 0.55)} />
+              <path
+                d={inked(
+                  [
+                    [18, 20],
+                    [50, 20],
+                  ],
+                  false,
+                  r,
+                  0.4,
+                )}
+                className="m-ill__soft"
+              />
+              <path
+                d={inked(
+                  [
+                    [18, 28],
+                    [42, 28],
+                  ],
+                  false,
+                  r,
+                  0.4,
+                )}
+                className="m-ill__soft"
+              />
+              <path
+                d={inked(
+                  [
+                    [18, 36],
+                    [46, 36],
+                  ],
+                  false,
+                  r,
+                  0.4,
+                )}
+                className="m-ill__soft m-ill__dash"
+              />
+            </>
+          ),
+        },
+        {
+          fill: <path d={poly(body)} className={ACCENT} />,
+          line: (r) => (
+            <>
+              <path
+                d={inked(
+                  [[59, 38], ...shackle.slice(1, -1), [75, 38]],
+                  false,
+                  r,
+                  0.3,
+                )}
+                className="m-ill__thick"
+              />
+              <path d={inked(body, true, r, 0.35)} />
+              <path d={ring(67, 46, 2.4, r, 0.15)} className="m-ill__hair" />
+              <path
+                d={inked(
+                  [
+                    [67, 48.5],
+                    [67, 53],
+                  ],
+                  false,
+                  r,
+                  0.2,
+                )}
+                className="m-ill__hair"
+              />
+            </>
+          ),
+          move: 'tilt',
+          origin: [67, 30],
+        },
+      ];
+    },
+  },
 } satisfies Record<string, SubjectDef>;

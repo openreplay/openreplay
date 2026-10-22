@@ -4,6 +4,7 @@ import React from 'react';
 import { numberWithCommas } from 'App/utils';
 
 import '../../charts.css';
+import { RowMark } from './SessionsBy';
 
 interface BreakdownNode {
   key: string;
@@ -64,7 +65,7 @@ interface Props {
 }
 
 function SessionsByWithBreakdown(props: Props) {
-  const { data = { values: [] } } = props;
+  const { data = { values: [] }, metric } = props;
 
   const flatList = React.useMemo(() => {
     const items: FlatItem[] = [];
@@ -108,9 +109,12 @@ function SessionsByWithBreakdown(props: Props) {
         if (item.type === 'main') {
           return (
             <div key={item.key} className="m-vlist__row is-main">
-              {item.icon ? (
-                <img className="m-vlist__icon" src={item.icon} alt="" />
-              ) : null}
+              <span className="m-vlist__icon" aria-hidden="true">
+                <RowMark
+                  dimension={metric?.metricOf}
+                  row={{ name: item.label, icon: item.icon }}
+                />
+              </span>
               <div className="m-vlist__body">
                 <div className="m-vlist__line">
                   <span>{item.displayName}</span>

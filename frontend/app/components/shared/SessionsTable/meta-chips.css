@@ -5,12 +5,6 @@
   min-width: 0;
 }
 
-.m-ss__more {
-  flex: none;
-  color: var(--m-content-muted);
-  font-size: var(--m-text-2xs);
-}
-
 .m-ss__meta-chip {
   display: inline-block;
   max-width: 7rem;

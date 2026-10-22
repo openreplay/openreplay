@@ -1,6 +1,7 @@
-import { ExternalLink } from '@/ui/actions/ExternalLink';
+import { Banner, BannerAction, BannerItem } from '@/ui/feedback/Banner';
 import { Notice } from '@/ui/feedback/Notice';
 import ENV from 'env';
+import { AlertTriangle, Info } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -115,50 +116,58 @@ const WarnBadge = React.memo(
     if (!warnings.some((el) => el === true)) return null;
 
     const learnMore = (href: string) => (
-      <ExternalLink href={href}>{t('Learn more')}</ExternalLink>
+      <BannerAction href={href}>{t('Learn more')}</BannerAction>
     );
 
+    // full-width banners across the top of the recording they are about
     return (
       <>
         {warnings[WARNINGS.LOCALHOST] ? (
-          <Notice
-            kind="info"
-            action={learnMore(DOCS_LOCALHOST)}
+          <Banner
+            tone="info"
+            label={t('Recorded on localhost')}
+            icon={<Info size={14} />}
             onDismiss={() => closeWarning(WARNINGS.LOCALHOST)}
           >
-            {t('Recorded on localhost: some assets may not load.')}
-          </Notice>
+            <BannerItem action={learnMore(DOCS_LOCALHOST)}>
+              {t('Recorded on localhost: some assets may not load.')}
+            </BannerItem>
+          </Banner>
         ) : null}
         {warnings[WARNINGS.TRACKER_VERSION] ? (
-          <Notice
-            kind="warning"
-            action={learnMore(DOCS_TRACKER)}
+          <Banner
+            tone="warning"
+            label={t('Tracker version')}
+            icon={<AlertTriangle size={14} />}
             onDismiss={() => closeWarning(WARNINGS.TRACKER_VERSION)}
           >
-            {t(
-              'Recorded with tracker {{version}}, newer than the {{current}} this app plays. Parts of it may not play back right.',
-              { version, current: trackerVersion },
-            )}
-          </Notice>
+            <BannerItem action={learnMore(DOCS_TRACKER)}>
+              {t(
+                'Recorded with tracker {{version}}, newer than the {{current}} this app plays. Parts of it may not play back right.',
+                { version, current: trackerVersion },
+              )}
+            </BannerItem>
+          </Banner>
         ) : null}
         {warnings[WARNINGS.VIRTUAL_ELS_FAIL] ? (
-          <Notice
-            kind="info"
-            action={
-              <button
-                type="button"
-                className="m-notice__link"
-                onClick={onVMode}
-              >
-                {t('Turn on Virtual Mode')}
-              </button>
-            }
+          <Banner
+            tone="info"
+            label={t('Virtual Mode')}
+            icon={<Info size={14} />}
             onDismiss={() => closeWarning(WARNINGS.VIRTUAL_ELS_FAIL)}
           >
-            {t(
-              'Custom HTML elements (e.g. Lightning Web Components) may not display.',
-            )}
-          </Notice>
+            <BannerItem
+              action={
+                <BannerAction onClick={onVMode}>
+                  {t('Turn on Virtual Mode')}
+                </BannerAction>
+              }
+            >
+              {t(
+                'Custom HTML elements (e.g. Lightning Web Components) may not display.',
+              )}
+            </BannerItem>
+          </Banner>
         ) : null}
       </>
     );

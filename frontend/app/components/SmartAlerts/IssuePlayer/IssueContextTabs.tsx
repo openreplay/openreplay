@@ -38,7 +38,7 @@ export default function IssueContextTabs({
       {view === 'journey' ? (
         <JourneyView card={card} />
       ) : (
-        <DetailsView issue={issue} />
+        <DetailsView issue={issue} tags={card?.tags} />
       )}
     </div>
   );

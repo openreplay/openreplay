@@ -1,3 +1,4 @@
+import { useExit } from '@/lib/use-exit';
 import { IconButton } from '@/ui/actions/IconButton';
 import { Button } from '@/ui/actions/button';
 import { CountSuffix } from '@/ui/data/CountSuffix';
@@ -56,8 +57,14 @@ export function ReplayScreen({
   children,
 }: ReplayScreenProps) {
   const { t } = useTranslation();
-  const tabbed = panels.find((p) => p.key === panel) ?? null;
   const open = panel != null && renderPanel != null;
+  // the panel slides out as it slid in, so it stays drawn for the exit
+  const {
+    shown: drawn,
+    leaving,
+    onAnimationEnd,
+  } = useExit(open ? panel : null);
+  const tabbed = panels.find((p) => p.key === drawn) ?? null;
   const firstPanel = panels[0]?.key;
 
   // F toggles the side panel (Shift+F stays fullscreen in the players)
@@ -116,11 +123,19 @@ export function ReplayScreen({
           {notice ? <div className="m-rs__notice">{notice}</div> : null}
           {children}
         </div>
-        {open && (
+        {drawn != null && renderPanel && (
           <aside
-            className="m-jrn"
-            style={panelWidth ? { width: panelWidth } : undefined}
-            aria-label={tabbed?.label ?? panel ?? undefined}
+            className={`m-jrn m-dock-side${leaving ? ' is-leaving' : ''}`}
+            style={
+              panelWidth
+                ? ({
+                    width: panelWidth,
+                    '--m-dock-size': `${panelWidth}px`,
+                  } as React.CSSProperties)
+                : undefined
+            }
+            aria-label={tabbed?.label ?? drawn ?? undefined}
+            onAnimationEnd={onAnimationEnd}
           >
             {tabbed && onPanel && (
               <div className="m-rs__aside-head">
@@ -144,7 +159,7 @@ export function ReplayScreen({
                 </Tabs>
               </div>
             )}
-            <div className="m-jrn__scroll">{renderPanel(panel)}</div>
+            <div className="m-jrn__scroll">{renderPanel(drawn)}</div>
           </aside>
         )}
       </div>

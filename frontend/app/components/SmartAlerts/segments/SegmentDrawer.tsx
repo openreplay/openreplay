@@ -33,9 +33,18 @@ interface Props {
   source: 'issues' | 'dm';
   onClose: () => void;
   onSaved?: () => void;
+  /** applies the segment to the sessions list */
+  onUse?: () => void;
 }
 
-function SegmentDrawer({ open, segment, source, onClose, onSaved }: Props) {
+function SegmentDrawer({
+  open,
+  segment,
+  source,
+  onClose,
+  onSaved,
+  onUse,
+}: Props) {
   const { t } = useTranslation();
   const toast = useToast();
   const { issuesStore } = useStore();
@@ -144,6 +153,11 @@ function SegmentDrawer({ open, segment, source, onClose, onSaved }: Props) {
             </span>
           )
         }
+        headerActions={
+          segment && onUse ? (
+            <Button onClick={onUse}>{t('Use segment')}</Button>
+          ) : undefined
+        }
         footer={
           <div className="m-sd__foot">
             {segment && segment.mine ? (
@@ -224,36 +238,38 @@ function SegmentDrawer({ open, segment, source, onClose, onSaved }: Props) {
               'The agent reviews sessions matching this segment and reports what it finds on the Issues page. Anyone on the team can switch it off.',
             )}
           >
-            <label className="m-sd__row">
-              <Switch
-                checked={captureNow}
-                disabled={readOnly || !publicNow}
-                onCheckedChange={setCapture}
-              />
-              <span>{t('Identify issues in this segment')}</span>
-            </label>
-            {!publicNow && (
-              <p className="m-sd__note">
-                {t('Private. Make it team-visible to enable the agent.')}
-              </p>
-            )}
-            {captureNow && !hasRules && (
-              <p className="m-sd__note">
-                {t(
-                  'Add events or filters to narrow the segment. Right now it matches all traffic.',
-                )}
-              </p>
-            )}
-            <Textarea
-              rows={3}
-              maxLength={500}
-              disabled={readOnly}
-              placeholder={t(
-                'Extra context for the agent, e.g. "pay special attention to coupon and card-validation errors"',
+            <div className="m-sd__agent">
+              <label className="m-sd__row">
+                <Switch
+                  checked={captureNow}
+                  disabled={readOnly || !publicNow}
+                  onCheckedChange={setCapture}
+                />
+                <span>{t('Identify issues in this segment')}</span>
+              </label>
+              {!publicNow && (
+                <p className="m-sd__note">
+                  {t('Private. Make it team-visible to enable the agent.')}
+                </p>
               )}
-              value={instructions}
-              onChange={(e) => setInstructions(e.target.value)}
-            />
+              {captureNow && !hasRules && (
+                <p className="m-sd__note">
+                  {t(
+                    'Add events or filters to narrow the segment. Right now it matches all traffic.',
+                  )}
+                </p>
+              )}
+              <Textarea
+                rows={3}
+                maxLength={500}
+                disabled={readOnly}
+                placeholder={t(
+                  'Extra context for the agent, e.g. "pay special attention to coupon and card-validation errors"',
+                )}
+                value={instructions}
+                onChange={(e) => setInstructions(e.target.value)}
+              />
+            </div>
           </Section>
         )}
       </EntityDrawer>

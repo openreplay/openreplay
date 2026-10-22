@@ -1,3 +1,4 @@
+import { MoreCount } from '@/ui/data/MoreCount';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -48,16 +49,7 @@ export function MetaChips({
           </span>
         ),
       )}
-      {pairs.length > max && (
-        <Tooltip
-          title={pairs
-            .slice(max)
-            .map(([k, v]) => `${k}: ${v}`)
-            .join('\n')}
-        >
-          <span className="m-ss__more">+{pairs.length - max}</span>
-        </Tooltip>
-      )}
+      <MoreCount hidden={pairs.slice(max).map(([k, v]) => `${k}: ${v}`)} />
     </span>
   );
 }

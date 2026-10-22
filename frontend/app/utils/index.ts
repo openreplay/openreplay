@@ -426,7 +426,7 @@ export const getInitials = (name = '') => {
 };
 export function getTimelinePosition(value: any, scale: any) {
   const pos = value * scale;
-  return pos > 100 ? 100 : pos;
+  return Math.min(100, Math.max(0, pos));
 }
 
 export function millisToMinutesAndSeconds(millis: any) {

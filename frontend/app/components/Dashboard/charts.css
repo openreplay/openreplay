@@ -767,12 +767,18 @@
 .m-vlist__row.is-main:hover {
   background: var(--m-surface-hover);
 }
+/* the mark the same card draws without a breakdown (RowMark) */
 .m-vlist__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex: none;
   width: 1.75rem;
   height: 1.75rem;
-  border-radius: var(--m-radius-full);
-  object-fit: contain;
+  color: var(--m-content-secondary);
+}
+.m-vlist__icon:empty {
+  display: none;
 }
 .m-vlist__body {
   flex: 1;

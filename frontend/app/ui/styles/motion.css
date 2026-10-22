@@ -282,6 +282,48 @@
     animation: m-sheet-out var(--m-duration-normal) var(--m-ease-in) both;
   }
 
+  /* a docked panel takes its room in the layout: the side panel grows in from
+     the right edge, the dev tools body rises under its strip. `backwards` on
+     the way in, so the dragged height is not pinned by the fill */
+  @keyframes m-dock-side-in {
+    from {
+      margin-inline-end: calc(-1 * var(--m-dock-size, 18.5rem));
+    }
+  }
+  @keyframes m-dock-side-out {
+    to {
+      margin-inline-end: calc(-1 * var(--m-dock-size, 18.5rem));
+    }
+  }
+  @keyframes m-dock-bottom-in {
+    from {
+      height: 0;
+    }
+  }
+  @keyframes m-dock-bottom-out {
+    to {
+      height: 0;
+    }
+  }
+  .m-dock-side {
+    animation: m-dock-side-in var(--m-duration-slow) var(--m-ease-out)
+      backwards;
+  }
+  .m-dock-side.is-leaving {
+    animation: m-dock-side-out var(--m-duration-normal) var(--m-ease-in)
+      forwards;
+    pointer-events: none;
+  }
+  .m-dock-bottom {
+    animation: m-dock-bottom-in var(--m-duration-slow) var(--m-ease-out)
+      backwards;
+  }
+  .m-dock-bottom.is-leaving {
+    animation: m-dock-bottom-out var(--m-duration-normal) var(--m-ease-in)
+      forwards;
+    pointer-events: none;
+  }
+
   @keyframes m-toast-in {
     from {
       opacity: 0;
@@ -353,7 +395,9 @@
     .m-dialog,
     .m-sheet,
     .m-toast,
-    .m-mark {
+    .m-mark,
+    .m-dock-side,
+    .m-dock-bottom {
       animation: none !important;
       opacity: 1;
     }

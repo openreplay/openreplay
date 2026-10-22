@@ -1,0 +1,72 @@
+.m-json {
+  font-size: var(--m-text-xs);
+  line-height: 1.65;
+  color: var(--m-content-primary);
+}
+.m-json__node,
+.m-json__leaf {
+  min-width: 0;
+}
+.m-json__children {
+  padding-left: var(--m-space-5);
+}
+.m-json__fold {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+.m-json__fold:hover .m-json__key {
+  text-decoration: underline;
+}
+.m-json__key {
+  color: var(--m-code-keyword);
+}
+.m-json__ellip {
+  padding-inline: var(--m-space-1);
+  color: var(--m-content-disabled);
+}
+.m-json__caret {
+  display: inline-flex;
+  margin-left: 2px;
+  color: var(--m-content-decorative);
+}
+.m-json__text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* the copy sits right after what it takes, on the line under the pointer,
+   and never grows the line */
+.m-json__line {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--m-space-1);
+  min-width: 0;
+}
+.m-json__copy {
+  flex: none;
+  margin-block: calc((1.65em - var(--m-control-height-xs)) / 2);
+  opacity: 0;
+  transition: opacity var(--m-duration-instant) var(--m-ease-out);
+}
+.m-json__line:hover > .m-json__copy,
+.m-json__line:focus-within > .m-json__copy {
+  opacity: 1;
+}
+@media (hover: none) {
+  .m-json__copy {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .m-json__copy {
+    transition: none;
+  }
+}

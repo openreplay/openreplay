@@ -1,3 +1,4 @@
+import { SessionAvatar } from '@/ui/data/SessionAvatar';
 import { Truncated } from '@/ui/data/truncated';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import {
@@ -21,7 +22,6 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { SessionAvatar } from '@/ui/data/SessionAvatar';
 import { MetaChips } from 'Shared/SessionsTable/MetaChips';
 
 import { type QueuedSession, onLanding } from './openSessions';
@@ -45,6 +45,8 @@ const HOLD = 900;
 const PEEK = 1400;
 /** Tabs in view at once; the arrows reach the rest. */
 const IN_VIEW = 4;
+// the fewest in view when the recording's column is narrow (a side panel open)
+const IN_VIEW_MIN = 2;
 
 /* pinned open, and its own theme over a white recording: both remembered */
 const PREFS_KEY = '__or_dock_prefs';
@@ -178,21 +180,32 @@ export function SessionsDock({
      open panel; without one (fullscreen) just above the recording's foot ── */
   const zone = useRef<HTMLDivElement>(null);
   const [lift, setLift] = useState(0);
+  // centred on the recording's column, so an open side panel is never under it
+  const [column, setColumn] = useState<{ cx: number; w: number } | null>(null);
   useLayoutEffect(() => {
-    if (!overReplay) return undefined;
+    if (!overReplay) {
+      setColumn(null);
+      return undefined;
+    }
     const measure = () => {
       const stage = document.querySelector('[data-replay-stage]');
       const host = zone.current?.offsetParent as HTMLElement | null;
       if (!stage || !host) return;
+      const hostBox = host.getBoundingClientRect();
       const line = document.querySelector('[data-replay-dockline]');
       const row = line?.getBoundingClientRect();
       const foot =
         row && row.height
           ? row.top - STRIP_GAP
           : stage.getBoundingClientRect().bottom - STAGE_GAP;
-      setLift(
-        Math.max(0, Math.round(host.getBoundingClientRect().bottom - foot)),
-      );
+      setLift(Math.max(0, Math.round(hostBox.bottom - foot)));
+      const col = (
+        stage.closest('.m-work__main') ?? stage
+      ).getBoundingClientRect();
+      setColumn({
+        cx: Math.round(col.left + col.width / 2 - hostBox.left),
+        w: Math.round(col.width),
+      });
     };
     const ro = new ResizeObserver(measure);
     if (zone.current?.offsetParent) ro.observe(zone.current.offsetParent);
@@ -207,6 +220,8 @@ export function SessionsDock({
         ro.observe(stage);
         const line = document.querySelector('[data-replay-dockline]');
         if (line) ro.observe(line);
+        const col = stage.closest('.m-work__main');
+        if (col) ro.observe(col);
         measure();
       }
       if (stage || tries > 120) window.clearInterval(poll);
@@ -250,18 +265,21 @@ export function SessionsDock({
   const [stripMax, setStripMax] = useState<number | null>(null);
   useLayoutEffect(() => {
     const s = strip.current;
-    if (!s) return;
+    const b = body.current;
+    if (!s || !b) return;
     const tabs = [...s.querySelectorAll<HTMLElement>('.m-sdock__tab')];
-    if (tabs.length <= IN_VIEW) {
-      setStripMax(null);
-      return;
-    }
     const gap = parseFloat(getComputedStyle(s).columnGap) || 0;
-    setStripMax(
-      tabs.slice(0, IN_VIEW).reduce((w, tab) => w + tab.offsetWidth, 0) +
-        gap * (IN_VIEW - 1),
-    );
-  }, [rows]);
+    const widthOf = (n: number) =>
+      tabs.slice(0, n).reduce((w, tab) => w + tab.offsetWidth, 0) +
+      gap * (n - 1);
+    // as many of the first four as the body's room holds, never under two
+    const room =
+      (parseFloat(getComputedStyle(b).maxWidth) || Infinity) -
+      (b.offsetWidth - s.offsetWidth);
+    let n = Math.min(IN_VIEW, tabs.length);
+    while (n > IN_VIEW_MIN && widthOf(n) > room) n -= 1;
+    setStripMax(n < tabs.length ? widthOf(n) : null);
+  }, [rows, column?.w]);
   const [hiddenLeft, setHiddenLeft] = useState(0);
   const [canRight, setCanRight] = useState(false);
   const readScroll = useCallback(() => {
@@ -343,7 +361,15 @@ export function SessionsDock({
         className={`m-sdock-zone${open ? ' is-open' : ''}${overReplay ? ' is-over-replay' : ''}`}
         style={
           overReplay
-            ? ({ '--m-sdock-lift': `${lift}px` } as CSSProperties)
+            ? ({
+                '--m-sdock-lift': `${lift}px`,
+                ...(column
+                  ? {
+                      '--m-sdock-cx': `${column.cx}px`,
+                      '--m-sdock-room': `${column.w}px`,
+                    }
+                  : {}),
+              } as CSSProperties)
             : undefined
         }
         onPointerEnter={enter}

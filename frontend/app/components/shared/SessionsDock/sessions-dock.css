@@ -38,6 +38,9 @@
    and the timeline. */
 .m-sdock-anchor > .m-sdock-zone.is-over-replay {
   padding-bottom: var(--m-sdock-lift, 0px);
+  /* centred on the recording's column (measured), the plane's centre until then */
+  left: var(--m-sdock-cx, 50%);
+  max-width: calc(var(--m-sdock-room, 100%) - 2 * var(--m-space-6));
 }
 .m-sdock-zone.is-over-replay .m-sdock-reach {
   padding-bottom: 0;
@@ -121,7 +124,15 @@
   align-items: center;
   gap: var(--m-space-1);
   width: max-content;
-  max-width: calc(100vw - var(--m-nav-width) - 2 * var(--m-space-8));
+  /* never wider than the plane, or over a replay than its column less the
+     zone's and the reach's own air */
+  max-width: min(
+    calc(100vw - var(--m-nav-width) - 2 * var(--m-space-8)),
+    calc(
+      var(--m-sdock-room, 100vw) -
+        2 * (var(--m-space-6) + var(--m-space-8) + var(--m-space-7))
+    )
+  );
   padding: var(--m-space-1);
   opacity: 0;
 }

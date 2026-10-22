@@ -133,19 +133,24 @@ function ReplayLead({ width, height }: { width?: number; height?: number }) {
         <SessionAvatar seed={seedFor(session as any)} size={28} />
       )}
       <div className="m-rs__names">
-        {userId && !iframe ? (
-          <Tooltip title={t('All sessions of this user')} delay={500}>
-            <button
-              type="button"
-              className="m-rs__name m-rs__name--link m-truncate"
-              onClick={openUser}
-            >
-              {userDisplayName}
-            </button>
-          </Tooltip>
-        ) : (
-          <span className="m-rs__name m-truncate">{userDisplayName}</span>
-        )}
+        <span className="m-rs__name-line">
+          {userId && !iframe ? (
+            <Tooltip title={t('All sessions of this user')} delay={500}>
+              <button
+                type="button"
+                className="m-rs__name m-rs__name--link m-truncate"
+                onClick={openUser}
+              >
+                {userDisplayName}
+              </button>
+            </Tooltip>
+          ) : (
+            <span className="m-rs__name m-truncate">{userDisplayName}</span>
+          )}
+          {Object.keys(shownMeta).length > 0 && (
+            <MetaChips metadata={shownMeta} max={2} />
+          )}
+        </span>
         <span className="m-rs__meta m-truncate">
           <span>{tech}</span>
           {place && <span>· {place}</span>}
@@ -175,9 +180,6 @@ function ReplayLead({ width, height }: { width?: number; height?: number }) {
           </PopoverPanel>
         </span>
       </div>
-      {Object.keys(shownMeta).length > 0 && (
-        <MetaChips metadata={shownMeta} max={2} />
-      )}
       {userId && userSessionsUsed && (
         <React.Suspense fallback={null}>
           <UserSessionsDrawer

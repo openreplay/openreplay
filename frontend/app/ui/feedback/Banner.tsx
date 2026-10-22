@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import './banner.css';
 
-export type BannerTone = 'danger' | 'info' | 'neutral';
+export type BannerTone = 'danger' | 'warning' | 'info' | 'neutral';
 
 export interface BannerProps {
   tone?: BannerTone;

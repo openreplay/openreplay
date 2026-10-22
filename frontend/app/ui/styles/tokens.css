@@ -20,8 +20,8 @@
   --m-action-secondary-border: #e2ebf8;
   --m-action-secondary-fg: #091524;
   --m-action-subtle-bg: transparent;
-  --m-action-subtle-bg-active: #dfe6f0;
-  --m-action-subtle-bg-hover: #e7edf5;
+  --m-action-subtle-bg-active: rgb(30 58 110 / 0.14);
+  --m-action-subtle-bg-hover: rgb(30 58 110 / 0.09);
   --m-action-subtle-fg: #233144;
   --m-armada: #007378;
   --m-border-accent: #3c4ef9;
@@ -215,8 +215,8 @@
   --m-action-secondary-bg-hover: #232a2d;
   --m-action-secondary-border: #272e30;
   --m-action-secondary-fg: #eff2f4;
-  --m-action-subtle-bg-active: #232a2d;
-  --m-action-subtle-bg-hover: #1a2023;
+  --m-action-subtle-bg-active: rgb(255 255 255 / 0.11);
+  --m-action-subtle-bg-hover: rgb(255 255 255 / 0.07);
   --m-action-subtle-fg: #d7dcdd;
   --m-armada: #4fb7bc;
   --m-border-accent: #3c4ef9;
@@ -341,8 +341,8 @@
   --m-action-secondary-bg-hover: #232a2d;
   --m-action-secondary-border: #272e30;
   --m-action-secondary-fg: #eff2f4;
-  --m-action-subtle-bg-active: #232a2d;
-  --m-action-subtle-bg-hover: #1a2023;
+  --m-action-subtle-bg-active: rgb(255 255 255 / 0.11);
+  --m-action-subtle-bg-hover: rgb(255 255 255 / 0.07);
   --m-action-subtle-fg: #d7dcdd;
   --m-armada: #4fb7bc;
   --m-border-accent: #3c4ef9;
@@ -441,8 +441,8 @@
   --m-action-secondary-bg-hover: #f4f9ff;
   --m-action-secondary-border: #e2ebf8;
   --m-action-secondary-fg: #091524;
-  --m-action-subtle-bg-active: #dfe6f0;
-  --m-action-subtle-bg-hover: #e7edf5;
+  --m-action-subtle-bg-active: rgb(30 58 110 / 0.14);
+  --m-action-subtle-bg-hover: rgb(30 58 110 / 0.09);
   --m-action-subtle-fg: #233144;
   --m-armada: #007378;
   --m-border-accent: #3c4ef9;

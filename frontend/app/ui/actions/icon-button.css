@@ -46,7 +46,7 @@
   color: var(--m-content-muted);
 }
 .m-iconbtn--ghost:hover {
-  background: var(--m-surface-hover);
+  background: var(--m-action-subtle-bg-hover);
   color: var(--m-content-primary);
 }
 
@@ -123,4 +123,12 @@
 .m-iconbtn--primary:active {
   background: var(--m-action-primary-bg-active);
   border-color: var(--m-action-primary-bg-active);
+}
+/* disabled primary keeps its fill at half strength, like Button */
+.m-iconbtn--primary:disabled,
+.m-iconbtn--primary:disabled:hover {
+  background: var(--m-action-primary-bg);
+  border-color: var(--m-action-primary-bg);
+  color: var(--m-action-primary-fg);
+  opacity: 0.5;
 }

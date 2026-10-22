@@ -26,6 +26,20 @@
   color: var(--m-content-muted);
 }
 
+/* the Issues Agent block: switch, note and box a toggle step apart */
+.m-sd__agent {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--m-space-4);
+}
+.m-sd__agent > .m-sd__note {
+  margin: 0;
+}
+.m-sd__agent > [data-slot='textarea'] {
+  align-self: stretch;
+}
+
 /* beside the order word: informs in the info tint, never a warning */
 .m-sd__ordernote {
   display: inline-flex;

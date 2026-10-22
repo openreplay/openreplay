@@ -1,4 +1,4 @@
-import { JSONTree } from '@/ui/data/JSONTree';
+import { JsonTree } from '@/ui/data/json-tree';
 import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
 import { DrawerHeader, Section } from '@/ui/overlays/EntityDrawer';
 import { useQuery } from '@tanstack/react-query';
@@ -45,7 +45,7 @@ function StackEventModal({ event }: { event: any }) {
 
 function Payload({ data }: { data: any }) {
   if (data && typeof data === 'object' && !Array.isArray(data)) {
-    return <JSONTree src={data} collapsed={false} />;
+    return <JsonTree value={data} copyable />;
   }
   if (Array.isArray(data)) {
     const [head, rest] = data;
@@ -56,7 +56,7 @@ function Payload({ data }: { data: any }) {
             {typeof head === 'string' ? head : JSON.stringify(head)}
           </p>
         )}
-        <JSONTree src={data.length > 1 ? rest : head} collapsed={false} />
+        <JsonTree value={data.length > 1 ? rest : head} copyable />
       </>
     );
   }
@@ -90,7 +90,7 @@ function SentryEvent({ event }: { event: any }) {
   if (!values) {
     return (
       <Section title={t('Payload')}>
-        <JSONTree src={isError ? event : data} />
+        <JsonTree value={isError ? event : data} copyable />
       </Section>
     );
   }

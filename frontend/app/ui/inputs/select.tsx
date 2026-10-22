@@ -63,7 +63,10 @@ export function SelectContent({
         )}
         {...props}
       >
-        <S.Viewport>{props.children}</S.Viewport>
+        {/* six and a half rows: the half row says the list goes on */}
+        <S.Viewport className="max-h-[min(14rem,var(--radix-select-content-available-height))] overflow-y-auto">
+          {props.children}
+        </S.Viewport>
       </S.Content>
     </S.Portal>
   );

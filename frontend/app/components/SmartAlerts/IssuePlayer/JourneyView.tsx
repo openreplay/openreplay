@@ -1,4 +1,3 @@
-import { Chip } from '@/ui/data/Chip';
 import { Play } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
@@ -73,9 +72,8 @@ const JourneyView = observer(({ card }: { card?: IssueSessionCard }) => {
   const jump = React.useCallback((ms: number) => player?.jump(ms), [player]);
   const steps = card?.journeySteps ?? [];
   const journey = card?.journey?.trim();
-  const tags = card?.tags ?? [];
 
-  if (steps.length === 0 && !journey && tags.length === 0)
+  if (steps.length === 0 && !journey)
     return (
       <p className="px-6 py-5 text-xs text-content-muted">
         {t('No journey recorded for this session.')}
@@ -111,15 +109,6 @@ const JourneyView = observer(({ card }: { card?: IssueSessionCard }) => {
           </section>
         </div>
       ) : null}
-      {tags.length > 0 && (
-        <div className="flex flex-wrap gap-2 px-6">
-          {tags.map((tag) => (
-            <Chip key={tag} kind="tag">
-              {tag}
-            </Chip>
-          ))}
-        </div>
-      )}
     </div>
   );
 });

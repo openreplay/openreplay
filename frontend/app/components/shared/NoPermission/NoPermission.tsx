@@ -1,20 +1,17 @@
-import { Icon } from '@/ui/icons/Icon';
+import { EmptyState } from '@/ui/feedback/EmptyState';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import stl from './noPermission.module.css';
-
-interface Props {}
-function NoPermission(props: Props) {
+function NoPermission() {
   const { t } = useTranslation();
   return (
-    <div className={stl.wrapper}>
-      <Icon name="shield-lock" size="50" className="py-16" />
-      <div className={stl.title}>{t('Not allowed')}</div>
-      {t(
-        'You don’t have the necessary permissions to access this feature. Please check with your admin.',
+    <EmptyState
+      state="no-access"
+      title={t('Your role has no access here')}
+      hint={t(
+        'An admin sets what each role can open, in Team. Ask one to add this to yours.',
       )}
-    </div>
+    />
   );
 }
 

@@ -17,6 +17,7 @@ import { PageCard, PagePanel } from '@/ui/layout/PageCard';
 import { useViewport } from '@/ui/layout/use-viewport';
 import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
 import { RenameDialog } from '@/ui/overlays/RenameDialog';
+import { UnsavedChangesDialog } from '@/ui/overlays/UnsavedChangesDialog';
 import { Modal } from '@/ui/overlays/modal';
 import { useToast } from '@/ui/overlays/toast';
 import { Tooltip } from '@/ui/overlays/tooltip';
@@ -50,7 +51,7 @@ import {
 import { useStore } from 'App/mstore';
 import Widget from 'App/mstore/types/widget';
 import { dashboardMetricDetails, metricDetails, withSiteId } from 'App/routes';
-import { Prompt, useHistory, useLocation } from 'App/routing';
+import { useHistory, useLeaveGuard, useLocation } from 'App/routing';
 import { mobileScreen } from 'App/utils/isMobile';
 import AlertFormModal from 'Components/Alerts/AlertFormModal/AlertFormModal';
 import { CARD_LIST, type CardType } from 'Components/Dashboard/cardPresets';
@@ -345,9 +346,28 @@ function WidgetView({
     });
   };
 
-  const save = () => {
+  const saveDraft = () => {
     if (widget.metricType === USER_PATH) widget.hideExcess = true;
-    void onSave();
+    return onSave();
+  };
+  const save = () => {
+    void saveDraft();
+  };
+
+  // leaving the builder with a draft asks first; moving between cards does not
+  const leaving = useLeaveGuard(
+    hasChanged,
+    (loc) =>
+      loc.pathname.includes('/metrics/') || loc.pathname.includes('/metric/'),
+  );
+  const saveAndLeave = async () => {
+    try {
+      await saveDraft();
+      leaving.leave();
+    } catch {
+      leaving.stay();
+      toast.error(t('Failed to save the card'));
+    }
   };
 
   const KindIcon = cardIcon(widget.metricType, widget.metricOf);
@@ -385,14 +405,12 @@ function WidgetView({
 
   return (
     <Loader loading={loading || !cardReady || metricNotFound}>
-      <Prompt
-        when={hasChanged}
-        message={(loc: any) =>
-          loc?.pathname?.includes('/metrics/') ||
-          loc?.pathname?.includes('/metric/')
-            ? true
-            : t('You have unsaved changes. Are you sure you want to leave?')
-        }
+      <UnsavedChangesDialog
+        open={leaving.open}
+        subject={widget.name}
+        onCancel={leaving.stay}
+        onDiscard={leaving.leave}
+        onSave={() => void saveAndLeave()}
       />
       <PageCard
         back={back}

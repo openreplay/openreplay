@@ -279,7 +279,8 @@ const rowCount = (r: any) =>
 const pct = (x: number) =>
   x >= 0.1 ? `${Math.round(x * 10) / 10}%` : x > 0 ? '<0.1%' : '0%';
 
-function RowMark({ dimension, row }: { dimension: string; row: any }) {
+/** A row's mark: avatar, browser, device, flag; shared with breakdown rows. */
+export function RowMark({ dimension, row }: { dimension: string; row: any }) {
   const label = String(row.name ?? '');
   switch (dimension) {
     case FilterKey.USER_BROWSER:

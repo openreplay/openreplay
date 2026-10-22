@@ -1,6 +1,6 @@
 import { Popover, PopoverAnchor, PopoverContent } from '@/ui/overlays/popover';
 import { Tooltip } from '@/ui/overlays/tooltip';
-import { type ReactElement, useRef, useState } from 'react';
+import { type ReactElement, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { NavItem } from './NavItem';
@@ -53,7 +53,6 @@ export function NavFlyout({
   return (
     <SectionFlyout
       label={label}
-      count={count}
       badge={badge}
       sections={sections}
       active={active}
@@ -66,7 +65,6 @@ export function NavFlyout({
 
 function SectionFlyout({
   label,
-  count = 0,
   badge,
   sections,
   active,
@@ -75,6 +73,25 @@ function SectionFlyout({
 }: Omit<NavFlyoutProps, 'enabled'>) {
   const [open, setOpen] = useState(false);
   const timer = useRef<number | undefined>(undefined);
+  // the head's text sits on the hovered glyph's centre line at any density;
+  // Radix places the card a frame after mount, so measure once it has
+  const anchorRef = useRef<HTMLDivElement>(null);
+  const headRef = useRef<HTMLDivElement>(null);
+  const [nudge, setNudge] = useState(0);
+  useLayoutEffect(() => {
+    if (!open) return undefined;
+    const raf = requestAnimationFrame(() => {
+      const a = (
+        anchorRef.current?.querySelector('.m-nav-item__icon') ??
+        anchorRef.current
+      )?.getBoundingClientRect();
+      const h = headRef.current?.getBoundingClientRect();
+      if (!a || !h) return;
+      const d = a.top + a.height / 2 - (h.top + h.height / 2);
+      if (Math.abs(d) > 0.5) setNudge((n) => n + d);
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [open, nudge]);
 
   const openAfter = (ms: number) => {
     window.clearTimeout(timer.current);
@@ -89,6 +106,7 @@ function SectionFlyout({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverAnchor asChild>
         <div
+          ref={anchorRef}
           onMouseEnter={() => openAfter(220)}
           onMouseLeave={() => closeAfter(240)}
           onFocusCapture={() => setOpen(true)}
@@ -100,18 +118,19 @@ function SectionFlyout({
       <PopoverContent
         side="right"
         align="start"
-        sideOffset={-6}
-        alignOffset={-3}
+        // the root's left padding bridges the rail and clears it by 8px;
+        // -13 lifts the head level with its row: root inset, border, card inset
+        sideOffset={0}
+        alignOffset={-13 + nudge}
         className="m-flyout-root border-0 bg-transparent p-0 shadow-none"
         onOpenAutoFocus={(e) => e.preventDefault()}
         onMouseEnter={() => window.clearTimeout(timer.current)}
         onMouseLeave={() => closeAfter(240)}
       >
         <div className="m-flyout">
-          <div className="m-flyout__head">
+          <div ref={headRef} className="m-flyout__head">
             <span className="m-flyout__name m-truncate">{label}</span>
             {badge && <span className="m-nav-item__badge">{badge}</span>}
-            {count > 0 && <span className="m-flyout__count">{count}</span>}
           </div>
           <div className="m-flyout__sections">
             {sections?.map((s) => (

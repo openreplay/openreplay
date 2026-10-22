@@ -29,7 +29,7 @@ function ProfileSettings() {
       {account.hasPassword ? <Password /> : null}
       <Language />
       <ApiKey />
-      {isEnterprise && isAdmin ? (
+      {isEnterprise && isAdmin && account.tenantKey ? (
         <PrefBlock
           title={t('Tenant key')}
           hint={t('For SSO (SAML). Your identity provider asks for this one.')}
@@ -252,6 +252,16 @@ const ApiKey = observer(() => {
   const toast = useToast();
   const { userStore } = useStore();
   const [confirming, setConfirming] = React.useState(false);
+  // the account endpoint sends the key to owners and admins only
+  if (!userStore.account.apiKey)
+    return (
+      <PrefBlock
+        title={t('Organization API key')}
+        hint={t(
+          'Only owners and admins can see this key. Ask one of them if a script needs it.',
+        )}
+      />
+    );
   return (
     <PrefBlock
       title={t('Organization API key')}
@@ -262,10 +272,7 @@ const ApiKey = observer(() => {
       <PrefField
         note={t('Regenerating breaks every script using the old key.')}
       >
-        <SecretValue
-          value={userStore.account.apiKey ?? ''}
-          label={t('API key')}
-        />
+        <SecretValue value={userStore.account.apiKey} label={t('API key')} />
       </PrefField>
       <div className="m-pref__row">
         <Button
