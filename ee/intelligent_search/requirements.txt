@@ -2,10 +2,10 @@
 pydantic==2.3.0
 requests==2.31.0
 python-decouple==3.8
-certifi==2023.7.22
+certifi==2026.10.19
 
 # AWS utils
-awscli==1.29.53
+awscli==1.45.28
 
 # ML modules
 # torch==2.0.1
@@ -22,4 +22,4 @@ uvicorn==0.23.2
 traceloop-sdk==0.0.37
 
 # Test
-pytest==7.4.2
+pytest==9.1.1
