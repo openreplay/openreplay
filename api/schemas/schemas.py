@@ -162,12 +162,6 @@ class _TimedSchema(BaseModel):
         return self
 
 
-class NotificationsViewSchema(_TimedSchema):
-    ids: List[int] = Field(default_factory=list)
-    startTimestamp: Optional[int] = Field(default=None)
-    endTimestamp: Optional[int] = Field(default=None)
-
-
 class IssueTrackingIntegration(BaseModel):
     token: str = Field(...)
 

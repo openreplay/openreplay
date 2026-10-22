@@ -494,40 +494,6 @@ def errors_merge(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": False}
 
 
-@app.post('/{projectId}/alerts', tags=["alerts"])
-def create_alert(projectId: int, data: schemas.AlertSchema = Body(...),
-                 context: schemas.CurrentContext = Depends(OR_context)):
-    return alerts.create(project_id=projectId, data=data)
-
-
-@app.get('/{projectId}/alerts', tags=["alerts"])
-def get_all_alerts(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": alerts.get_all(project_id=projectId)}
-
-
-@app.get('/{projectId}/alerts/triggers', tags=["alerts", "customMetrics"])
-def get_alerts_triggers(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": alerts.get_predefined_values()
-                    + custom_metrics.get_series_for_alert(project_id=projectId, user_id=context.user_id)}
-
-
-@app.get('/{projectId}/alerts/{alertId}', tags=["alerts"])
-def get_alert(projectId: int, alertId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": alerts.get(project_id=projectId, id=alertId)}
-
-
-@app.post('/{projectId}/alerts/{alertId}', tags=["alerts"])
-def update_alert(projectId: int, alertId: int, data: schemas.AlertSchema = Body(...),
-                 context: schemas.CurrentContext = Depends(OR_context)):
-    return alerts.update(project_id=projectId, id=alertId, data=data)
-
-
-@app.delete('/{projectId}/alerts/{alertId}', tags=["alerts"])
-def delete_alert(projectId: int, alertId: int, _=Body(None),
-                 context: schemas.CurrentContext = Depends(OR_context)):
-    return alerts.delete(project_id=projectId, alert_id=alertId)
-
-
 @app_apikey.put('/{projectKey}/sourcemaps/', tags=["sourcemaps"])
 @app_apikey.put('/{projectKey}/sourcemaps', tags=["sourcemaps"])
 def sign_sourcemap_for_upload(projectKey: str, data: schemas.SourcemapUploadPayloadSchema = Body(...),
