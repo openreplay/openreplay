@@ -116,3 +116,22 @@ type RateLimiter struct {
 	CleanupInterval time.Duration `env:"RT_CLEANUP_INTERVAL,default=1m"` // interval for cleaning up unused limiters
 	MaxIdleTime     time.Duration `env:"RT_MAX_IDLE_TIME,default=5m"`    // how long a limiter can remain unused before being removed
 }
+
+// SMTP holds the outgoing e-mail settings. Env names match the Python API/alerts services
+// and the helm `global.email.*` values.
+type SMTP struct {
+	Host     string `env:"EMAIL_HOST,default="`
+	Port     int    `env:"EMAIL_PORT,default=587"`
+	User     string `env:"EMAIL_USER,default="`
+	Password string `env:"EMAIL_PASSWORD,default="`
+	UseTLS   bool   `env:"EMAIL_USE_TLS,default=true"`  // STARTTLS after connecting
+	UseSSL   bool   `env:"EMAIL_USE_SSL,default=false"` // implicit TLS on connect
+	SSLKey   string `env:"EMAIL_SSL_KEY,default="`
+	SSLCert  string `env:"EMAIL_SSL_CERT,default="`
+	From     string `env:"EMAIL_FROM,default=OpenReplay<do-not-reply@openreplay.com>"`
+}
+
+// Configured reports whether an SMTP host is set (mirrors the Python `has_smtp`).
+func (cfg *SMTP) Configured() bool {
+	return strings.TrimSpace(cfg.Host) != ""
+}

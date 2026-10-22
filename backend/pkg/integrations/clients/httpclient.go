@@ -101,7 +101,7 @@ var SafeHTTPClient = &http.Client{
 	},
 }
 
-func validateExternalURL(raw string) error {
+func ValidateExternalURL(raw string) error {
 	if raw == "" {
 		return nil
 	}

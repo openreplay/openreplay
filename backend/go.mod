@@ -30,6 +30,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.25.0
 	github.com/redis/go-redis/v9 v9.23.0
+	github.com/robfig/cron/v3 v3.0.1
 	github.com/rs/xid v1.6.0
 	github.com/sethvargo/go-envconfig v1.4.3
 	github.com/tomasen/realip v0.0.0-20180522021738-f0c99a92ddce
@@ -38,6 +39,7 @@ require (
 	golang.org/x/net v0.59.0
 	gopkg.in/yaml.v3 v3.0.1
 )
+
 
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.13.0 // indirect

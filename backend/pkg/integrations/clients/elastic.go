@@ -44,7 +44,7 @@ func (e *elasticsearchClient) FetchSessionData(credentials interface{}, sessionI
 			cfg.Indexes = val
 		}
 	}
-	if err := validateExternalURL(cfg.URL); err != nil {
+	if err := ValidateExternalURL(cfg.URL); err != nil {
 		return nil, fmt.Errorf("invalid elasticsearch url: %w", err)
 	}
 	clientCfg := elasticsearch.Config{
