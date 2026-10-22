@@ -51,7 +51,9 @@
         "socket.io-client": "^4.8.3",
       },
       "devDependencies": {
+        "@jest/globals": "^30.4.1",
         "@openreplay/tracker": "workspace:*",
+        "@types/node": "^26.4.1",
         "@typescript-eslint/eslint-plugin": "^8.65.0",
         "@typescript-eslint/parser": "^8.65.0",
         "eslint": "^9.39.5",
