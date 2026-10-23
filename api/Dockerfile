@@ -9,7 +9,8 @@ COPY requirements.txt ./requirements.txt
 #RUN uv pip install --no-cache-dir --upgrade pip setuptools wheel --system
 RUN pip install --no-cache-dir --upgrade uv && \
   export UV_SYSTEM_PYTHON=true && \
-  uv pip install --no-cache-dir --upgrade -r requirements.txt
+  uv pip install --no-cache-dir --upgrade -r requirements.txt && \
+  pip uninstall -y uv
 
 FROM python:3.13-alpine
 ARG GIT_SHA

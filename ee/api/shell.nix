@@ -10,7 +10,6 @@ let
     
     # Tools
     pip
-    virtualenv
   ]);
 in
 pkgs.mkShell {

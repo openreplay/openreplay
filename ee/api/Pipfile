@@ -5,6 +5,7 @@ name = "pypi"
 
 [packages]
 cryptography = "==50.0.2"
+certifi = "==2026.10.19"
 urllib3 = "==2.8.0"
 requests = "==2.34.2"
 boto3 = "==1.43.118"
