@@ -22,6 +22,10 @@ bash() {
   echo "$(basename $PWD)|$*|$IMAGE_TAG|$ARCH" >>$CALLS
   [[ $1 != build_crons.sh || $2 == ee ]] || return 100 # mirrors api/build_crons.sh
 }
+env() { # newer workflows wrap builds as `run_build env K=V bash ...`
+  while [[ $1 == *=* ]]; do export "$1"; shift; done
+  "$@"
+}
 git() { :; }
 cp() { :; }
 EOF
