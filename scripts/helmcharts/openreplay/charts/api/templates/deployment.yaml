@@ -83,6 +83,8 @@ spec:
               value: '{{- include "openreplay.s3Endpoint" . }}'
             - name: AWS_REGION
               value: '{{ .Values.global.s3.region }}'
+            - name: REPLAY_EXPORT_BUCKET
+              value: {{ .Values.global.s3.replayExporterBucket }}
             - name: BUCKET_NAME
               value: {{ .Values.global.s3.recordingsBucket }}
             - name: CH_USERNAME
