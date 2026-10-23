@@ -12,9 +12,9 @@ import {
   StableRoutes,
   useHistory,
   useLocation,
-  useParams,
 } from 'App/routing';
 import { CLIENT_TABS } from 'App/utils/routeUtils';
+import OnboardingGate from 'Components/Onboarding/OnboardingGate';
 
 import { apiClient } from './api_client';
 import { useStore } from './mstore';
@@ -131,16 +131,6 @@ const NearestProjectRedirect = observer(({ route }: { route: string }) => {
     return <Navigate to={routes.client(CLIENT_TABS.SITES)} replace />;
   }
   return <Loader loading className="flex-1" />;
-});
-
-const OnboardingRoute = observer(() => {
-  const { projectsStore } = useStore();
-  const { siteId } = useParams();
-  return projectsStore.list.some((s) => s.id === siteId) ? (
-    <enhancedComponents.Onboarding />
-  ) : (
-    <NearestProjectRedirect route={routes.sessions()} />
-  );
 });
 
 function PrivateRoutes() {
@@ -320,7 +310,11 @@ function PrivateRoutes() {
         />
         <Route
           path={withSiteId(`${ONBOARDING_PATH}/*`, siteIdList)}
-          element={<OnboardingRoute />}
+          element={
+            <OnboardingGate>
+              <enhancedComponents.Onboarding />
+            </OnboardingGate>
+          }
         />
         <Route
           path={SPOTS_LIST_PATH}
