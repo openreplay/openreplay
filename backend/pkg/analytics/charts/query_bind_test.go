@@ -93,9 +93,10 @@ func TestAllBuildersPlaceholdersBound(t *testing.T) {
 		t.Fatalf("heatmap: %v", err)
 	}
 	checkBindable(t, q, params)
-	q, params, err = hm.buildClickRageQuery(p)
+	p.MetricPayload.IncludeClickRage = true
+	q, params, err = hm.buildQuery(p)
 	if err != nil {
-		t.Fatalf("heatmap clickrage: %v", err)
+		t.Fatalf("heatmap with click rage: %v", err)
 	}
 	checkBindable(t, q, params)
 

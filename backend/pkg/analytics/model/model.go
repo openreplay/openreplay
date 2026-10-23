@@ -117,6 +117,7 @@ type MetricPayload struct {
 	SortBy           string      `json:"sortBy"`
 	SortOrder        string      `json:"sortOrder"`
 	IncludeClickRage bool        `json:"includeClickRage"`
+	HeatmapSeed      uint32      `json:"heatmapSeed,omitempty"`
 	StartType        string      `json:"startType" validate:"omitempty,oneof=start end"`
 	HideExcess       bool        `json:"hideExcess" default:"true"`
 	SampleRate       int         `json:"sampleRate,omitempty" validate:"omitempty,min=0,max=100"`
