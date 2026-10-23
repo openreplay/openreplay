@@ -17,7 +17,7 @@ function OnboardingGate({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation();
   const { projectsStore, userStore } = useStore();
   const { list, sitesLoading } = projectsStore;
-  const { siteId, '*': tab } = useParams();
+  const { siteId, activeTab } = useParams();
 
   const fetchProjects = () =>
     projectsStore.fetchList(undefined, userStore.account.tenantId);
@@ -35,7 +35,7 @@ function OnboardingGate({ children }: { children: React.ReactNode }) {
   if (nearest) {
     return (
       <Navigate
-        to={withSiteId(onboarding(tab || OB_DEFAULT_TAB), nearest.id)}
+        to={withSiteId(onboarding(activeTab || OB_DEFAULT_TAB), nearest.id)}
         replace
       />
     );
