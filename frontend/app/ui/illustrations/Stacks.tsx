@@ -199,7 +199,10 @@ export function Stacks({ className, silly }: StacksProps) {
           const bx = top[0] + ox + (BRICK.w * TURNED.ax) / 2 - mid;
           return (
             <g key={i} className="m-stacks__pile">
-              <Inked drawing={drawing} rough={rough} hand={11 + i} />
+              {/* the bricks alone take the dark recipe (stacks.css) */}
+              <g className="m-stacks__bricks">
+                <Inked drawing={drawing} rough={rough} hand={11 + i} />
+              </g>
               <g className={`m-stacks__sit m-stacks__sit--${i}`}>
                 <Bot
                   x={bx}

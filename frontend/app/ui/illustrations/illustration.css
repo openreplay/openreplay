@@ -847,3 +847,40 @@
 .m-ill--mark .m-ill__frame {
   animation: none;
 }
+
+/* robots in the dark are drawn as in light mode, with light mode's values as
+   fixed colours; what a robot holds and its aura keep the dark ink */
+:root.dark .m-ill__bot {
+  --ill-ink: #00030e;
+  --ill-soft: #405063;
+  --ill-paper: #f7fafd;
+  --ill-front: #dfe6f0;
+}
+:root.dark .m-ill__bot :is(.m-ill__held, .m-ill__bot-aura) {
+  --ill-ink: var(--m-content-primary);
+  --ill-soft: var(--m-content-muted);
+  --ill-paper: var(--m-surface-raised);
+  --ill-front: var(--m-surface-active);
+}
+:root.dark .m-ill__bot .m-savatar__img.is-light {
+  display: block;
+}
+:root.dark .m-ill__bot .m-savatar__img.is-dark {
+  display: none;
+}
+:root.dark .m-ill__bot .m-ill__grid-cell {
+  fill-opacity: 0.14;
+}
+/* one colour, face and body: top and side take the face's hue at half its
+   chroma, a step darker each; the face, lit, near white */
+.m-ill__bot .m-savatar,
+:root.dark .m-ill__bot .m-savatar {
+  --m-avatar-l: 0.99;
+  --m-avatar-c: 0.04;
+}
+.m-ill__bot > .m-ill__fill-top {
+  fill: oklch(0.91 0.024 var(--bot-hue));
+}
+.m-ill__bot > .m-ill__fill-side {
+  fill: oklch(0.81 0.026 var(--bot-hue));
+}

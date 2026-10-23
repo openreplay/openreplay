@@ -1,5 +1,5 @@
 import { SessionAvatar } from '@/ui/data/SessionAvatar';
-import type { AvatarFace } from '@/ui/data/avatar';
+import { type AvatarFace, hueIndexFor } from '@/ui/data/avatar';
 import { type CSSProperties, type ReactNode, useId, useState } from 'react';
 
 import { FRAMES, type P, inked, poly, ring, rng } from './ink';
@@ -111,15 +111,19 @@ const circle = (cx: number, cy: number, rad: number, n = 24): P[] =>
     return [cx + Math.cos(a) * rad, cy + Math.sin(a) * rad] as P;
   });
 
+// the sphere's fills stop under its hand-drawn ring, which wobbles inward
+const SPHERE_FILL = 23.5;
+
 function crescent(): P[] {
   const out: P[] = [];
+  const rad = SPHERE_FILL;
   for (let i = 0; i <= 12; i++) {
     const a = -Math.PI / 2 + (i / 12) * Math.PI;
-    out.push([28 + Math.cos(a) * 25, 19 + Math.sin(a) * 25]);
+    out.push([28 + Math.cos(a) * rad, 19 + Math.sin(a) * rad]);
   }
   for (let i = 12; i >= 0; i--) {
     const a = -Math.PI / 2 + (i / 12) * Math.PI;
-    out.push([28 + Math.cos(a) * 13, 19 + Math.sin(a) * 25]);
+    out.push([28 + Math.cos(a) * rad * 0.52, 19 + Math.sin(a) * rad]);
   }
   return out;
 }
@@ -150,7 +154,7 @@ function body(shape: BotShape) {
   if (shape === 'sphere') {
     return {
       fills: [
-        { d: poly(circle(28, 19, 25)), cls: 'm-ill__fill-front' },
+        { d: poly(circle(28, 19, SPHERE_FILL)), cls: 'm-ill__fill-front' },
         { d: poly(crescent()), cls: 'm-ill__fill-side' },
       ],
       outline: null as P[] | null,
@@ -249,8 +253,7 @@ function turnedBody(shape: BotShape) {
         },
       ],
       outline: [q(44, 42, 0), q(0, 42, 0), q(0, 42, 1), q(...apex)] as
-        | P[]
-        | null,
+        P[] | null,
       edges: [[q(0, 42, 0), q(...apex)]] as P[][],
       face: {
         x: 0,
@@ -423,7 +426,13 @@ export function Bot({
       )}
       <g
         className={`m-ill__bot m-ill__bot--${beat} m-ill__bot--${shape}`}
-        style={{ transformOrigin: `28px ${FOOT}px` }}
+        style={
+          {
+            transformOrigin: `28px ${FOOT}px`,
+            // the body takes its face's hue
+            '--bot-hue': `${hueIndexFor(face) * 30}deg`,
+          } as CSSProperties
+        }
       >
         {feet.map((p, i) => (
           <path key={i} d={poly(p)} className="m-ill__fill-side" />
@@ -493,7 +502,7 @@ export function Bot({
           );
         })}
         {held && <g className="m-ill__held">{held}</g>}
-        {aura}
+        {aura && <g className="m-ill__bot-aura">{aura}</g>}
       </g>
     </g>
   );

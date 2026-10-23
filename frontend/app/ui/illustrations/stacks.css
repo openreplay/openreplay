@@ -43,3 +43,13 @@
     transform: rotate(-6deg);
   }
 }
+
+/* in the dark the bricks are drawn as in light mode, like the robots on them */
+:root.dark .m-stacks__bricks {
+  --ill-ink: #00030e;
+  --ill-soft: #405063;
+  --ill-paper: #f7fafd;
+  --ill-top: #eff3f9;
+  --ill-side: color-mix(in srgb, #dfe6f0 60%, #8c99aa);
+  --ill-front: #dfe6f0;
+}
