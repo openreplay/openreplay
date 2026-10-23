@@ -12,6 +12,7 @@ import {
   useHistory,
   useLocation,
 } from 'App/routing';
+import OnboardingGate from 'Components/Onboarding/OnboardingGate';
 import { Loader } from 'UI';
 
 import { apiClient } from './api_client';
@@ -283,7 +284,11 @@ function PrivateRoutes() {
         />
         <Route
           path={withSiteId(`${ONBOARDING_PATH}/*`, siteIdList)}
-          element={<enhancedComponents.Onboarding />}
+          element={
+            <OnboardingGate>
+              <enhancedComponents.Onboarding />
+            </OnboardingGate>
+          }
         />
         <Route
           path={SPOTS_LIST_PATH}
