@@ -1,6 +1,6 @@
 urllib3==2.8.0
 requests==2.34.2
-boto3==1.43.117
+boto3==1.43.118
 pyjwt==2.15.1
 psycopg2-binary==2.9.13
 psycopg[pool,binary]==3.3.6
@@ -9,7 +9,7 @@ elasticsearch==9.5.1
 jira==3.10.5
 cachetools==7.2.4
 
-fastapi==0.159.1
+fastapi==0.161.1
 uvicorn[standard]==0.54.0
 python-decouple==3.8
 pydantic[email]==2.14.1
