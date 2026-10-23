@@ -267,7 +267,7 @@ export function SessionsDock({
     const s = strip.current;
     const b = body.current;
     if (!s || !b) return;
-    const tabs = [...s.querySelectorAll<HTMLElement>('.m-sdock__tab')];
+    const tabs = Array.from(s.querySelectorAll<HTMLElement>('.m-sdock__tab'));
     const gap = parseFloat(getComputedStyle(s).columnGap) || 0;
     const widthOf = (n: number) =>
       tabs.slice(0, n).reduce((w, tab) => w + tab.offsetWidth, 0) +

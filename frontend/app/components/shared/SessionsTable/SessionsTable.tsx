@@ -13,6 +13,7 @@ import {
   ListPlus,
   type LucideIcon,
   Monitor,
+  MonitorSmartphone,
   Smartphone,
   SquareTerminal,
   Tablet,
@@ -25,8 +26,10 @@ import {
 import { useTranslation } from 'react-i18next';
 
 import { countries } from 'App/constants/countries';
+import { projectStore } from 'App/mstore';
 
 import { MetaChips } from './MetaChips';
+import { deviceKindOf, osName } from './device';
 import './session-table.css';
 
 export type SessionField =
@@ -59,6 +62,7 @@ const DEVICE_ICONS: Record<string, LucideIcon> = {
   mobile: Smartphone,
   tablet: Tablet,
   console: SquareTerminal,
+  unknown: MonitorSmartphone,
 };
 
 export function formatDuration(sec: number): string {
@@ -177,7 +181,8 @@ export function SessionsTable({
       mobile: t('Phone'),
       tablet: t('Tablet'),
       console: t('Console'),
-    })[type] ?? t('Other');
+    })[type] ?? t('Device unknown');
+  const mobileProject = projectStore.isMobile;
 
   const columns: Column<Session>[] = [
     {
@@ -342,12 +347,19 @@ export function SessionsTable({
             priority: 3 as const,
             align: 'center' as const,
             render: (s: Session) => {
-              const Glyph = DEVICE_ICONS[s.userDeviceType] ?? Monitor;
-              const label = t('{{browser}} on {{os}} · {{device}}', {
-                browser: s.userBrowser,
-                os: s.userOs,
-                device: deviceWord(s.userDeviceType),
-              });
+              const kind = deviceKindOf(s, mobileProject);
+              const Glyph = DEVICE_ICONS[kind];
+              const os = osName(s.userOs);
+              const browser = s.userBrowser;
+              // "{browser} on {os} · {device}", any empty part left out
+              const label = [
+                browser && os
+                  ? t('{{browser}} on {{os}}', { browser, os })
+                  : browser || os,
+                deviceWord(kind),
+              ]
+                .filter(Boolean)
+                .join(' · ');
               return (
                 <Tooltip title={label}>
                   <span className="m-ss__dev" role="img" aria-label={label}>

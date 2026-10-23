@@ -3,7 +3,7 @@ import type { MenuItem } from '@/ui/actions/dropdown-menu';
 import { Icon } from '@/ui/icons/Icon';
 import { toast } from '@/ui/overlays/toast';
 import copy from 'copy-to-clipboard';
-import { Link2 } from 'lucide-react';
+import { Link2, ScanLine } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 
@@ -12,6 +12,7 @@ import { useStore } from 'App/mstore';
 import {
   CONSOLE,
   NETWORK,
+  OVERVIEW,
   PERFORMANCE,
   STACKEVENTS,
   STORAGE,
@@ -28,18 +29,25 @@ interface Props {
   isClickmap?: boolean;
 }
 
+// the dev tools strip's order
 enum ItemKey {
-  Console = '1',
-  Network = '2',
-  Performance = '3',
-  Events = '4',
-  State = '5',
-  AddNote = '6',
-  CopySessionUrl = '7',
-  CopySessionUrlTs = '8',
+  XRay = '1',
+  Console = '2',
+  Network = '3',
+  Performance = '4',
+  Events = '5',
+  State = '6',
+  AddNote = '7',
+  CopySessionUrl = '8',
+  CopySessionUrlTs = '9',
 }
 
 const menuItems: MenuItem[] = [
+  {
+    key: ItemKey.XRay,
+    label: 'X-Ray',
+    icon: <ScanLine size={14} strokeWidth={1.5} />,
+  },
   {
     key: ItemKey.Console,
     label: 'Console',
@@ -110,6 +118,9 @@ function Overlay({ nextId, isClickmap }: Props) {
 
   const onClick = ({ key }: { key: string }) => {
     switch (key) {
+      case ItemKey.XRay:
+        toggleBottomBlock(OVERVIEW);
+        break;
       case ItemKey.Console:
         toggleBottomBlock(CONSOLE);
         break;
