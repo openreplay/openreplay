@@ -1,6 +1,6 @@
 import { Button } from '@/ui/actions/button';
 import { ArrowLeft } from 'lucide-react';
-import { type ReactNode, useEffect, useRef } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 
 import './page-card.css';
 
@@ -101,10 +101,36 @@ export function PagePanel({
     // the observer follows the head's size; only its presence matters here
   }, [!!head]);
 
+  // once the panel's top has scrolled away, the pinned head draws it
+  const sentinel = useRef<HTMLDivElement>(null);
+  const [stuck, setStuck] = useState(false);
+  useEffect(() => {
+    const el = sentinel.current;
+    if (!el) return undefined;
+    // measured against the box that scrolls, not the window
+    let root: HTMLElement | null = el.parentElement;
+    while (root && !/(auto|scroll)/.test(getComputedStyle(root).overflowY))
+      root = root.parentElement;
+    const io = new IntersectionObserver(
+      ([e]) =>
+        setStuck(
+          !!e &&
+            !e.isIntersecting &&
+            e.boundingClientRect.top < (e.rootBounds?.top ?? 0) + 1,
+        ),
+      { root, threshold: 0 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [!!head]);
+
   return (
     <section className={`m-panel${spills ? ' is-spilling' : ''}`} ref={box}>
       {head && (
-        <div className="m-panel__head" ref={bar}>
+        <div className="m-panel__sentinel" ref={sentinel} aria-hidden="true" />
+      )}
+      {head && (
+        <div className={`m-panel__head${stuck ? ' is-stuck' : ''}`} ref={bar}>
           {head}
         </div>
       )}

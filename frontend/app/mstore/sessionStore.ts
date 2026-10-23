@@ -399,6 +399,8 @@ export default class SessionStore {
   };
 
   fetchSessionData = async (sessionId: string, isLive = false) => {
+    // a new link (or a retry) starts clean, not on the last one's failure
+    this.fetchFailed = false;
     try {
       const data = await sessionService.getSessionInfo(sessionId, isLive);
 

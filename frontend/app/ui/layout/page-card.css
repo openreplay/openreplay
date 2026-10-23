@@ -24,7 +24,6 @@
 
 .m-page__back {
   flex: none;
-  margin-top: 1px;
   margin-inline-start: calc(var(--m-space-2) * -1);
   color: var(--m-content-muted);
 }
@@ -45,16 +44,58 @@
 
 .m-page__titlerow {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   flex-wrap: wrap;
   gap: var(--m-space-2) var(--m-space-3);
   min-width: 0;
 }
 
 .m-page__meta {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--m-space-2);
   font-size: var(--m-text-sm);
   color: var(--m-content-muted);
   font-variant-numeric: tabular-nums;
+}
+/* the meta shares the title's baseline; a button or chip in it stays centred */
+.m-page__meta button,
+.m-page__meta .m-chip {
+  align-self: center;
+}
+
+/* a page with a way back: the link alone on the first row, the title where
+   every other page's title starts, its verbs at the end; the top inset comes
+   down a step so the title does not sink below its neighbours' */
+.m-page__head:has(> .m-page__back) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'back back' 'lead actions';
+  align-items: center;
+  row-gap: var(--m-space-3);
+  padding-top: var(--m-space-4);
+}
+.m-page__head:has(> .m-page__back) > .m-page__back {
+  grid-area: back;
+  justify-self: start;
+}
+.m-page__head:has(> .m-page__back) > .m-page__lead {
+  grid-area: lead;
+}
+.m-page__head:has(> .m-page__back) > .m-page__actions {
+  grid-area: actions;
+  justify-self: end;
+  margin-left: 0;
+}
+/* phone: a nav bar's grammar, the way back and the verbs on the top row */
+:root[data-viewport='phone'] .m-page__head:has(> .m-page__back) {
+  grid-template-areas: 'back actions' 'lead lead';
+  column-gap: var(--m-space-3);
+}
+:root[data-viewport='phone']
+  .m-page__head:has(> .m-page__back)
+  > .m-page__actions {
+  flex-wrap: nowrap;
 }
 
 .m-page__actions {
@@ -180,4 +221,38 @@
 :root[data-viewport='phone'] .m-panel__head {
   position: static;
   padding-inline: var(--m-space-4);
+}
+
+/* a pinned head draws the panel's top once that has scrolled away: the page
+   ground behind its two corners, then the panel's rounded top, edge and fill;
+   the clip margin lets it reach over the panel's side borders */
+.m-panel {
+  overflow-clip-margin: 1px;
+}
+.m-panel__sentinel {
+  height: 0;
+}
+.m-panel__head.is-stuck {
+  background: transparent;
+  margin-inline: -1px;
+  padding-inline: calc(var(--m-space-5) + 1px);
+}
+.m-panel__head.is-stuck::before,
+.m-panel__head.is-stuck::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+}
+.m-panel__head.is-stuck::before {
+  inset: 0 0 auto 0;
+  height: var(--m-radius-surface);
+  background: var(--m-surface-canvas);
+}
+.m-panel__head.is-stuck::after {
+  inset: 0;
+  border: 1px solid var(--m-border-subtle);
+  border-bottom: 0;
+  border-radius: var(--m-radius-surface) var(--m-radius-surface) 0 0;
+  background: var(--m-surface-default);
 }

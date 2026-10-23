@@ -54,6 +54,15 @@ export const EMPTY_STATES: EmptyEntry[] = [
     subject: 'noMatch',
   },
   {
+    id: 'session-not-found',
+    area: 'Recordings',
+    where: 'A session link that resolves to nothing',
+    title: 'This session is not here',
+    size: 'page',
+    subject: 'noMatch',
+    pose: 'wait',
+  },
+  {
     id: 'segments-none',
     robot: false,
     area: 'Recordings',

@@ -1,0 +1,69 @@
+.m-snf__id {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-2);
+}
+.m-snf__id-value {
+  font-family: var(--m-font-mono);
+  font-size: var(--m-text-xs);
+  color: var(--m-content-muted);
+}
+.m-snf__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--m-space-4);
+}
+.m-snf__reasons {
+  display: grid;
+  width: min(34rem, 100%);
+  margin: var(--m-space-7) auto 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+  border: var(--m-border-width) solid var(--m-border-subtle);
+  border-radius: var(--m-radius-surface);
+}
+.m-snf__reason {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-5);
+  padding: var(--m-space-4) var(--m-space-5);
+}
+.m-snf__reason + .m-snf__reason {
+  border-top: var(--m-border-width) solid var(--m-border-subtle);
+}
+.m-snf__reason .m-ill {
+  flex: none;
+}
+.m-snf__reason-text {
+  display: grid;
+  gap: var(--m-space-1);
+  flex: 1;
+  min-width: 0;
+}
+.m-snf__reason-title {
+  font-size: var(--m-text-sm);
+  color: var(--m-content-primary);
+}
+.m-snf__reason-detail {
+  font-size: var(--m-text-xs);
+  line-height: var(--m-leading-snug);
+  color: var(--m-content-muted);
+}
+
+/* a short budget: the buttons right under the words, then the reasons */
+.m-snf.m-empty {
+  padding-block: var(--m-space-7);
+}
+.m-snf .m-empty__body {
+  display: grid;
+  justify-items: center;
+  gap: 0;
+}
+/* the panel fills the plane's height with the state in its middle; on a
+   short window it is as tall as its content and the page scrolls */
+.m-page__body:has(> .m-panel .m-snf) > .m-panel {
+  flex: 1 0 auto;
+  justify-content: center;
+}

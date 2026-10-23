@@ -1,6 +1,5 @@
 import { trackerInstance } from '@/init/openreplay';
 import { Loader } from '@/ui/feedback/Loader';
-import { NoContent } from '@/ui/feedback/NoContent';
 import withPermissions from 'HOCs/withPermissions';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
@@ -9,12 +8,12 @@ import { useTranslation } from 'react-i18next';
 import { clearLogs } from 'App/dev/console';
 import usePageTitle from 'App/hooks/usePageTitle';
 import { useStore } from 'App/mstore';
-import { sessions as sessionsRoute } from 'App/routes';
+import { sessions as sessionsRoute, withSiteId } from 'App/routes';
+import { useHistory } from 'App/routing';
 import MobilePlayer from 'Components/Session/MobilePlayer';
 
-import Link from 'Shared/Link/Link';
-
 import PhoneHorizontalWarn from './Player/SharedComponents/PhoneHorizontal';
+import SessionNotFound from './SessionNotFound';
 import WebPlayer from './WebPlayer';
 
 const SESSIONS_ROUTE = sessionsRoute();
@@ -28,7 +27,8 @@ function Session({
 }) {
   const { t } = useTranslation();
   usePageTitle('OpenReplay Session Player');
-  const { sessionStore } = useStore();
+  const { sessionStore, projectsStore } = useStore();
+  const history = useHistory();
   const hasErrors = sessionStore.fetchFailed;
   const session = sessionStore.current;
   const fetchV2 = sessionStore.fetchSessionData;
@@ -52,26 +52,25 @@ function Session({
   }, []);
 
   const player = session.isMobileNative ? <MobilePlayer /> : <WebPlayer />;
+  if (hasErrors)
+    return (
+      <SessionNotFound
+        id={String(sessionId)}
+        onBack={() =>
+          history.push(withSiteId(SESSIONS_ROUTE, projectsStore.siteId!))
+        }
+        onRetry={() => void fetchV2(sessionId)}
+      />
+    );
   return (
-    <NoContent
-      show={hasErrors}
-      title={t('Session not found.')}
-      subtext={
-        <span>
-          {'Please check your data retention plan, or try '}
-          <Link to={SESSIONS_ROUTE} className="link">
-            {t('another one')}
-          </Link>
-        </span>
-      }
-    >
+    <>
       <PhoneHorizontalWarn />
       <Loader className="flex-1" loading={!session.sessionId}>
         <div className="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden">
           {player}
         </div>
       </Loader>
-    </NoContent>
+    </>
   );
 }
 

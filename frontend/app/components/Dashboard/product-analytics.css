@@ -307,31 +307,6 @@
   display: flex;
   flex-direction: column;
 }
-.m-page:has(> .m-page__body > .m-cardp) > .m-page__head,
-.m-page:has(> .m-page__body .m-dash__grid) > .m-page__head {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-areas: 'back back' 'lead actions';
-  align-items: center;
-  row-gap: var(--m-space-3);
-  padding-top: var(--m-space-4);
-}
-.m-page:has(> .m-page__body > .m-cardp) > .m-page__head > .m-page__back,
-.m-page:has(> .m-page__body .m-dash__grid) > .m-page__head > .m-page__back {
-  grid-area: back;
-  justify-self: start;
-  margin-top: 0;
-}
-.m-page:has(> .m-page__body > .m-cardp) > .m-page__head > .m-page__lead,
-.m-page:has(> .m-page__body .m-dash__grid) > .m-page__head > .m-page__lead {
-  grid-area: lead;
-}
-.m-page:has(> .m-page__body > .m-cardp) > .m-page__head > .m-page__actions,
-.m-page:has(> .m-page__body .m-dash__grid) > .m-page__head > .m-page__actions {
-  grid-area: actions;
-  justify-self: end;
-  margin-left: 0;
-}
 .m-cardp__chart {
   padding: var(--m-space-5);
 }
@@ -896,27 +871,7 @@
   border-top: 1px solid var(--m-border-subtle);
 }
 
-/* phone: a nav bar's grammar, the way back and the verbs on the top row, the
-   title with its kind under them; the card page is one column */
-:root[data-viewport='phone']
-  .m-page:has(> .m-page__body > .m-cardp)
-  > .m-page__head,
-:root[data-viewport='phone']
-  .m-page:has(> .m-page__body .m-dash__grid)
-  > .m-page__head {
-  grid-template-areas: 'back actions' 'lead lead';
-  column-gap: var(--m-space-3);
-}
-:root[data-viewport='phone']
-  .m-page:has(> .m-page__body > .m-cardp)
-  > .m-page__head
-  > .m-page__actions,
-:root[data-viewport='phone']
-  .m-page:has(> .m-page__body .m-dash__grid)
-  > .m-page__head
-  > .m-page__actions {
-  flex-wrap: nowrap;
-}
+/* phone: the card page is one column */
 :root[data-viewport='phone'] .m-cardp--left,
 :root[data-viewport='phone'] .m-cardp--right {
   grid-template-columns: minmax(0, 1fr);
