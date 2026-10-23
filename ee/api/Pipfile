@@ -26,7 +26,7 @@ scim2-filter-parser = "==0.7.0"
 werkzeug = "==3.1.9"
 redis = "==8.1.0"
 azure-storage-blob = "==12.31.0"
-psycopg = {extras = ["pool", "binary"], version = "==3.3.6"}
+psycopg = {extras = ["binary", "pool"], version = "==3.3.6"}
 uvicorn = {extras = ["standard"], version = "==0.54.0"}
 pydantic = {extras = ["email"], version = "==2.14.1"}
 
