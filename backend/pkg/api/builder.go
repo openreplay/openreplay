@@ -9,6 +9,7 @@ import (
 	"github.com/go-playground/validator/v10"
 
 	config "openreplay/backend/internal/config/api"
+	"openreplay/backend/pkg/accounts"
 	"openreplay/backend/pkg/alerts"
 	"openreplay/backend/pkg/analytics/cards"
 	"openreplay/backend/pkg/analytics/charts"
@@ -80,6 +81,7 @@ type serviceBuilder struct {
 	alertsAPI          api.Handlers
 	notificationsAPI   api.Handlers
 	projectsAdminAPI   api.Handlers
+	accountsAPI        api.Handlers
 	extraHandlers      []api.Handlers
 	workers            []Worker
 	wg                 sync.WaitGroup
@@ -87,7 +89,7 @@ type serviceBuilder struct {
 
 func (b *serviceBuilder) Handlers() []api.Handlers {
 	handlers := []api.Handlers{b.sessionAPI, b.eventAPI, b.filtersCatalogAPI, b.analyticsEventsAPI, b.favoriteAPI, b.noteAPI, b.replayAPI, b.apiKeyAPI, b.conditionsAPI,
-		b.chartsAPI, b.dashboardsAPI, b.cardsAPI, b.searchAPI, b.savedSearchesAPI, b.usersAPI, b.lexiconAPI, b.tagsAdminAPI, b.integrationsAPI, b.alertsAPI, b.notificationsAPI, b.projectsAdminAPI}
+		b.chartsAPI, b.dashboardsAPI, b.cardsAPI, b.searchAPI, b.savedSearchesAPI, b.usersAPI, b.lexiconAPI, b.tagsAdminAPI, b.integrationsAPI, b.alertsAPI, b.notificationsAPI, b.projectsAdminAPI, b.accountsAPI}
 	return append(handlers, b.extraHandlers...)
 }
 
@@ -290,6 +292,11 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		return nil, err
 	}
 
+	accountsHandlers, err := accounts.NewHandlers(log, cfg, requestHandler, accounts.New(log, cfg, pgconn))
+	if err != nil {
+		return nil, err
+	}
+
 	extraHandlers, workers, err := eeServices(eeDeps{
 		log:        log,
 		cfg:        cfg,
@@ -328,6 +335,7 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		alertsAPI:          alertsHandlers,
 		notificationsAPI:   notificationsHandlers,
 		projectsAdminAPI:   projectsAdminHandlers,
+		accountsAPI:        accountsHandlers,
 		extraHandlers:      extraHandlers,
 		workers:            workers,
 	}, nil

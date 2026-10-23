@@ -19,6 +19,7 @@ type Config struct {
 	objectstorage.ObjectsConfig
 	common.HTTP
 	common.RateLimiter
+	common.SMTP
 	FSDir                 string        `env:"FS_DIR,required"`
 	SpotsDir              string        `env:"SPOTS_DIR,default=spots"`
 	ProjectExpiration     time.Duration `env:"PROJECT_EXPIRATION,default=10m"`
@@ -37,6 +38,7 @@ type Config struct {
 	AssistJwtExpiration   int64         `env:"ASSIST_JWT_EXPIRATION,default=144000"`
 	AssistSecret          string        `env:"ASSIST_SECRET"`
 	AssistTTL             int           `env:"ASSIST_TTL,default=48"`
+	IceServers            string        `env:"ICE_SERVERS"`
 	AssistCacheTTL        time.Duration `env:"REDIS_CACHE_TTL,default=5s"`
 	AssistBatchSize       int           `env:"REDIS_BATCH_SIZE,default=1000"`
 	AssistScanSize        int64         `env:"REDIS_SCAN_SIZE,default=1000"`

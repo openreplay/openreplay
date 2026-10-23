@@ -35,6 +35,8 @@ type response struct {
 
 var periodicOnce sync.Once
 
+var errRejected = errors.New("license server rejected the license")
+
 func CheckLicense() {
 	license := env.String("LICENSE_KEY")
 	lic, err := validate(license, time.Now())
@@ -60,36 +62,40 @@ func validate(license string, now time.Time) (*License, error) {
 	if IsToken(license) {
 		return Verify(license, now, publicKeys)
 	}
-	return nil, validateRemote(license)
+	_, err := validateRemote(license)
+	return nil, err
 }
 
-func validateRemote(license string) error {
+func validateRemote(license string) (int64, error) {
 	requestBody, err := json.Marshal(request{License: license})
 	if err != nil {
-		return fmt.Errorf("can not form a license check request: %v", err)
+		return 0, fmt.Errorf("can not form a license check request: %v", err)
 	}
 	client := &http.Client{Timeout: licenseServerTimeout}
 	resp, err := client.Post(licenseServerURL, "application/json", bytes.NewReader(requestBody))
 	if err != nil {
-		return fmt.Errorf("error while checking license: %v", err)
+		return 0, fmt.Errorf("error while checking license: %v", err)
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode >= 400 && resp.StatusCode < 500 {
+		return 0, fmt.Errorf("license check request returned status %d: %w", resp.StatusCode, errRejected)
+	}
 	if resp.StatusCode != 200 {
-		return fmt.Errorf("license check request returned status %d", resp.StatusCode)
+		return 0, fmt.Errorf("license check request returned status %d", resp.StatusCode)
 	}
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("error while reading license check response: %v", err)
+		return 0, fmt.Errorf("error while reading license check response: %v", err)
 	}
 	respJson := new(response)
 	if err = json.Unmarshal(body, respJson); err != nil {
-		return fmt.Errorf("error while parsing license check response: %v", err)
+		return 0, fmt.Errorf("error while parsing license check response: %v", err)
 	}
 	if !respJson.Data.IsValid {
-		return errors.New("license server rejected the license")
+		return 0, errRejected
 	}
-	return nil
+	return respJson.Data.ExpirationTimestamp, nil
 }
 
 func warnIfExpiring(lic *License, now time.Time) {

@@ -1,11 +1,6 @@
 package api_key
 
 import (
-	"crypto/hmac"
-	"crypto/rand"
-	"crypto/sha1"
-	"encoding/base64"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -23,37 +18,6 @@ func (h *handlersImpl) assistHandlers(req api.RequestHandler) []*api.Description
 	}
 }
 
-type temporaryCredentials struct {
-	Username   string `json:"username"`
-	Credential string `json:"credential"`
-}
-
-func generateSalt() string {
-	b := make([]byte, 16)
-	rand.Read(b)
-	return hex.EncodeToString(b)
-}
-
-func (h *handlersImpl) getTemporaryCredentials() (*temporaryCredentials, error) {
-	secret := h.cfg.AssistSecret
-	if secret == "" {
-		return nil, fmt.Errorf("secret not defined")
-	}
-
-	ttl := h.cfg.AssistTTL * 3600
-	timestamp := time.Now().Unix() + int64(ttl)
-	username := fmt.Sprintf("%d:%s", timestamp, generateSalt())
-
-	mac := hmac.New(sha1.New, []byte(secret))
-	mac.Write([]byte(username))
-	credential := base64.StdEncoding.EncodeToString(mac.Sum(nil))
-
-	return &temporaryCredentials{
-		Username:   username,
-		Credential: credential,
-	}, nil
-}
-
 func unwrapAssistData(resp interface{}) interface{} {
 	if m, ok := resp.(map[string]interface{}); ok {
 		if inner, ok := m["data"]; ok {
@@ -64,7 +28,7 @@ func unwrapAssistData(resp interface{}) interface{} {
 }
 
 func (h *handlersImpl) getAssistCredentials(r *api.RequestContext) (any, int, error) {
-	creds, err := h.getTemporaryCredentials()
+	creds, err := assist.NewTurnCredentials(h.cfg.AssistSecret, h.cfg.AssistTTL, time.Now())
 	if err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
