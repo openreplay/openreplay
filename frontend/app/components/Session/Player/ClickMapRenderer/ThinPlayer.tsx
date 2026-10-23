@@ -15,114 +15,70 @@ import {
 } from '../../playerContext';
 import PlayerContent from './ThinPlayerContent';
 
+/** Mounted once per heatmap session (the card keys it by sessionId). */
 function WebPlayer(props: any) {
-  const { sessionStore, filterStore, dashboardStore } = useStore();
-  const { insights } = sessionStore;
-  const { session, jumpTimestamp } = props;
+  const { filterStore, dashboardStore } = useStore();
+  const { session, jumpTimestamp, points } = props;
   // @ts-ignore
   const [contextValue, setContextValue] =
     useState<IPlayerContext>(defaultContextValue);
-  const playerRef = React.useRef<any>(null);
-  const appliedRef = React.useRef<{
-    insights: any;
-    jump: number;
-    sessionId: string;
-  } | null>(null);
+  const appliedRef = React.useRef<{ points: any; jump: number } | null>(null);
 
   useEffect(() => {
-    const init = () => {
-      const [WebPlayerInst, PlayerStore] = createClickMapPlayer(
-        session,
-        wrapPlayerStore,
-        toast,
+    const [player, store] = createClickMapPlayer(
+      session,
+      wrapPlayerStore,
+      toast,
+    );
+    player.setOnCluster((coords) => {
+      const click = filterStore.findEvent({ name: FilterKey.CLICK });
+      const projectFilters = filterStore.getCurrentProjectFilters();
+      const normalizedXFilter = projectFilters.find(
+        (f) => f.name === 'normalizedX',
       );
-      playerRef.current = WebPlayerInst;
-      setContextValue({ player: WebPlayerInst, store: PlayerStore });
-      WebPlayerInst.setOnCluster((coords) => {
-        const click = filterStore.findEvent({ name: FilterKey.CLICK });
-        const projectFilters = filterStore.getCurrentProjectFilters();
-        const normalizedXFilter = projectFilters.find(
-          (f) => f.name === 'normalizedX',
-        );
-        const normalizedYFilter = projectFilters.find(
-          (f) => f.name === 'normalizedY',
-        );
-        if (normalizedXFilter && normalizedYFilter) {
-          // [x1, y1], [x2, y2]
-          coords.forEach((set, i) => {
-            click.filters?.push(
-              // @ts-ignore
-              {
-                ...normalizedXFilter,
-                value: [set[0]],
-                operator: i === 0 ? '>' : '<',
-              },
-              {
-                ...normalizedYFilter,
-                value: [set[1]],
-                operator: i === 0 ? '>' : '<',
-              },
-            );
-          });
-        }
-        const existingFilter = dashboardStore.drillDownFilter.filters.findIndex(
-          (f) => f.name === 'CLICK',
-        );
-        if (existingFilter > -1) {
-          dashboardStore.drillDownFilter.removeFilter(existingFilter);
-        }
-        dashboardStore.drillDownFilter.replaceFilters([click]);
-      });
-    };
+      const normalizedYFilter = projectFilters.find(
+        (f) => f.name === 'normalizedY',
+      );
+      if (normalizedXFilter && normalizedYFilter) {
+        // [x1, y1], [x2, y2]
+        coords.forEach((set, i) => {
+          click.filters?.push(
+            // @ts-ignore
+            {
+              ...normalizedXFilter,
+              value: [set[0]],
+              operator: i === 0 ? '>' : '<',
+            },
+            {
+              ...normalizedYFilter,
+              value: [set[1]],
+              operator: i === 0 ? '>' : '<',
+            },
+          );
+        });
+      }
+      dashboardStore.drillDownFilter.replaceFilters([click]);
+    });
+    // sync the created player into context (same bootstrap as WebPlayer.tsx)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setContextValue({ player, store });
+    return () => player.clean();
+  }, []);
 
-    if (!playerRef.current) {
-      init();
-    } else {
-      playerRef.current.clean();
-      playerRef.current = null;
-      setContextValue(defaultContextValue);
-      init();
-    }
-  }, [session.sessionId]);
+  const state = contextValue.store?.get();
+  // the jump target may sit in a later file, and the frozen frame is never redrawn
+  const isPlayerReady = state?.ready && !state?.domLoading;
 
-  React.useEffect(
-    () => () => {
-      playerRef.current && playerRef.current.clean();
-      playerRef.current = null;
-      // @ts-ignore
-      setContextValue(defaultContextValue);
-    },
-    [],
-  );
-
-  const isPlayerReady = contextValue.store?.get().ready;
-
-  React.useEffect(() => {
-    contextValue.player && contextValue.player.play();
+  useEffect(() => {
+    const { player } = contextValue;
+    if (!player || !isPlayerReady || !points?.length) return;
     const applied = appliedRef.current;
-    // `ready` flips while files load, so dedupe on the inputs themselves;
-    // comparing only insights.length missed path switches that hit the
-    // backend's 500-click cap both times
-    const isApplied =
-      applied?.insights === insights &&
-      applied?.jump === jumpTimestamp &&
-      applied?.sessionId === session.sessionId;
-    if (isPlayerReady && insights.length > 0 && jumpTimestamp && !isApplied) {
-      appliedRef.current = {
-        insights,
-        jump: jumpTimestamp,
-        sessionId: session.sessionId,
-      };
-      setTimeout(() => {
-        contextValue.player.pause();
-        contextValue.player.jump(jumpTimestamp);
-        setTimeout(() => {
-          contextValue.player.scale();
-          contextValue.player.showClickmap(insights);
-        }, 250);
-      }, 250);
-    }
-  }, [insights, isPlayerReady, jumpTimestamp, session.sessionId]);
+    if (applied?.points === points && applied?.jump === jumpTimestamp) return;
+    appliedRef.current = { points, jump: jumpTimestamp };
+    player.pause();
+    player.jump(jumpTimestamp);
+    player.showClickmap(points);
+  }, [contextValue, points, isPlayerReady, jumpTimestamp]);
 
   if (!contextValue.player || !session) return null;
 

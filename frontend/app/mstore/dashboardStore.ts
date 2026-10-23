@@ -1,5 +1,5 @@
 import { calculateGranularities } from '@/components/Dashboard/components/WidgetDateRange/RangeGranularity';
-import { HEATMAP } from '@/constants/card';
+import { HEATMAP, HEATMAP_CLICKS } from '@/constants/card';
 import { CUSTOM_RANGE } from '@/dateRange';
 import { toast } from '@/ui/overlays/toast';
 import Period, { LAST_24_HOURS } from 'Types/app/period';
@@ -607,6 +607,21 @@ export default class DashboardStore {
       }
 
       try {
+        const isHeatmap = metric.metricType === HEATMAP && !isComparison;
+        // clicks don't depend on the picked session, so they load alongside it
+        const points = isHeatmap
+          ? metricService
+              .getMetricChartData(
+                metric,
+                { ...params, metricType: HEATMAP_CLICKS },
+                false,
+                abortSignal,
+              )
+              .catch((e) => {
+                if (!abortSignal?.aborted) console.error(e);
+                return [];
+              })
+          : null;
         const data = await metricService.getMetricChartData(
           metric,
           params,
@@ -614,7 +629,7 @@ export default class DashboardStore {
           abortSignal,
         );
 
-        if (metric.metricType === HEATMAP && data.sessionId) {
+        if (isHeatmap && data.sessionId) {
           const sessionResp = await sessionStore.fetchSessionInfo(
             data.sessionId,
             abortSignal,
@@ -624,6 +639,10 @@ export default class DashboardStore {
           // the player reads a headerless (pre-v18 tracker) file by this version
           data.trackerVersion = sessionResp?.trackerVersion;
           data.events = [];
+        }
+        if (points) {
+          const loaded = await points;
+          data.points = Array.isArray(loaded) ? loaded : [];
         }
 
         const res = metric.setData(

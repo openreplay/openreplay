@@ -86,7 +86,7 @@ export default class WebPlayer extends Player {
       wpState.update({ mobsFetched: true });
     }
 
-    this.targetMarker = new TargetMarker(this.screen);
+    this.targetMarker = new TargetMarker(this.screen, () => this.scale());
     this.inspectorController = new InspectorController(screen, wpState);
 
     const endTime = session.duration?.valueOf() || 0;
@@ -171,7 +171,7 @@ export default class WebPlayer extends Player {
     void this.messageLoader.loadFiles();
 
     this.targetMarker.destroy();
-    this.targetMarker = new TargetMarker(this.screen);
+    this.targetMarker = new TargetMarker(this.screen, () => this.scale());
     this.inspectorController = new InspectorController(
       this.screen,
       this.wpState,
@@ -260,6 +260,8 @@ export default class WebPlayer extends Player {
   showClickmap = (...args: Parameters<TargetMarker['injectTargets']>) => {
     this.screen?.overlay?.remove?.(); // hack. TODO: 1.split Screen functionalities (overlay, mounter) 2. separate ClickMapPlayer class that does not create overlay
     this.freeze().then(() => {
+      // sized only once the frozen frame and its stylesheets are in place
+      this.scale();
       this.targetMarker.injectTargets(...args);
     });
   };

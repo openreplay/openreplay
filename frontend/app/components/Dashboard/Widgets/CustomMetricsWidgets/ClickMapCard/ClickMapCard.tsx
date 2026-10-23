@@ -9,92 +9,37 @@ import { useStore } from 'App/mstore';
 import { hasRuleValue } from 'App/utils/hasRuleValue';
 import NoDataInWindow from 'Components/Dashboard/components/NoDataInWindow';
 
+import { heatmapJumpTime } from './heatmapJumpTime';
+
 function ClickMapCard() {
   const { t } = useTranslation();
-  const [customSession, setCustomSession] = React.useState<any>(null);
-  const { metricStore, dashboardStore, sessionStore } = useStore();
-  const { fetchInsights } = sessionStore;
-  const { insights } = sessionStore;
+  const { metricStore } = useStore();
+  const { data } = metricStore.instance;
+  const { sessionId } = data;
 
-  const onMarkerClick = (s: string, innerText: string) => {
-    metricStore.changeClickMapSearch(s, innerText);
-  };
-
-  const { sessionId } = metricStore.instance.data;
-
-  React.useEffect(() => () => setCustomSession(null), []);
-
-  React.useEffect(() => {
-    if (
-      metricStore.instance.data.domURL &&
-      sessionId &&
-      sessionId !== customSession?.sessionId
-    ) {
-      setCustomSession(null);
-      setTimeout(() => {
-        // snapshot: metric.data is mutated in place on every refetch, so keeping
-        // the reference would make the sessionId check above always false
-        setCustomSession({ ...metricStore.instance.data });
-      }, 100);
-    }
-  }, [metricStore.instance, sessionId]);
-
-  React.useEffect(() => {
-    if (!sessionId) return;
-
-    const metric = metricStore.instance;
-    const payload = {
-      ...metric.toJson(),
-      ...dashboardStore.drillDownPeriod.toTimestamps(),
-      metricType: 'heatmaps_session',
-      limit: 200,
-      density: 200,
-    };
-
-    void fetchInsights(metric, payload);
-  }, [
-    sessionId,
-    dashboardStore.drillDownPeriod.start,
-    dashboardStore.drillDownPeriod.end,
-    dashboardStore.drillDownPeriod.rangeValue,
-    metricStore.includeClickRage,
-  ]);
+  // metric.data is mutated in place on every refetch; the player keeps this copy
+  const session = React.useMemo(() => ({ ...data }), [sessionId]);
 
   // a page was asked for and the window holds no recording of it; a group
   // property alone says whose clicks, not where
   const asked = metricStore.instance.series.some((s: any) =>
     (s.filter?.filters ?? []).some((f: any) => f.isEvent && hasRuleValue(f)),
   );
-  if (!metricStore.instance.data.domURL && asked) {
+  if (!data.domURL && asked) {
     return <NoDataInWindow />;
   }
-  if (!metricStore.instance.data.domURL || insights.length === 0) {
-    return (
-      <EmptyState
-        mark="heatmap"
-        title={t('Select a page to start seeing the heatmap')}
-        hint={t('Add the page in the definition.')}
-      />
-    );
-  }
-
-  if (!metricStore.instance.data?.sessionId || !customSession) {
+  const empty = (
+    <EmptyState
+      mark="heatmap"
+      title={t('Select a page to start seeing the heatmap')}
+      hint={t('Add the page in the definition.')}
+    />
+  );
+  if (!data.domURL) return empty;
+  if (!sessionId) {
     return <p className="m-funnel__empty">{t('Loading session…')}</p>;
   }
-
-  const jumpToEvent = {
-    timestamp:
-      metricStore.instance.data.eventTimestamp ||
-      metricStore.instance.data.startTs,
-    domBuildingTime: metricStore.instance.data.domBuildingTime || 0,
-  };
-  const ts = jumpToEvent.timestamp ?? metricStore.instance.data.startTs;
-  const domTime = jumpToEvent.domBuildingTime ?? 0;
-  // player timeline is zeroed on the session's real start, not on the
-  // second-truncated startTs the heatmap query returns
-  const sessionStart =
-    metricStore.instance.data.startedAt ?? metricStore.instance.data.startTs;
-  const jumpTimestamp = Math.max(0, ts - sessionStart + domTime + 10);
+  if (!data.points?.length) return empty;
 
   return (
     <div
@@ -103,9 +48,10 @@ function ClickMapCard() {
       style={{ transformStyle: 'flat' }}
     >
       <ClickMapRenderer
-        session={customSession}
-        jumpTimestamp={jumpTimestamp}
-        onMarkerClick={onMarkerClick}
+        key={sessionId}
+        session={session}
+        jumpTimestamp={heatmapJumpTime(data)}
+        points={data.points}
       />
     </div>
   );

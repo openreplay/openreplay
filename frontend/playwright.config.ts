@@ -25,7 +25,14 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+      testIgnore: /mocked\//,
       dependencies: ['setup'],
+    },
+    /* API fully mocked with page.route: no backend, no credentials */
+    {
+      name: 'mocked',
+      use: { ...devices['Desktop Chrome'] },
+      testMatch: /mocked\/.*\.spec\.ts/,
     },
   ],
 

@@ -9,7 +9,7 @@ import { action, makeAutoObservable, observable, runInAction } from 'mobx';
 
 import { getDateRangeFromValue } from 'App/dateRange';
 import { filterMap } from 'App/mstore/searchStore';
-import { metricService, sessionService } from 'App/services';
+import { sessionService } from 'App/services';
 import {
   cleanSessionFilters,
   compareJsonObjects,
@@ -603,20 +603,6 @@ export default class SessionStore {
 
   setTimezone = (tz: string) => {
     this.timezone = tz;
-  };
-
-  fetchInsights = async (metric, params = {}, isSaved = false) => {
-    try {
-      // const data = await sessionService.getClickMap(params);
-      const data = await metricService.getMetricChartData(
-        metric,
-        params,
-        isSaved,
-      );
-      this.insights = data.sort((a: any, b: any) => b.count - a.count);
-    } catch (e) {
-      console.error(e);
-    }
   };
 
   setTimelineTooltip = (tp: {

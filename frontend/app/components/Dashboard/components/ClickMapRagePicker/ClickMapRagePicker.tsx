@@ -35,13 +35,16 @@ function ClickMapRagePicker() {
     metricStore.instance.updateKey('hasChanged', true);
   };
 
+  // the backend picks the session by hash; a new seed picks another candidate
+  const seed = React.useRef(0);
   const refreshHeatmapSession = async () => {
     const oldData = metricStore.instance.toJson();
     metricStore.instance.updateKey('data', { sessionId: null, domURL: [] });
+    seed.current += 1;
     try {
       await dashboardStore.fetchMetricChartData(
         metricStore.instance,
-        oldData,
+        { ...oldData, heatmapSeed: seed.current },
         false,
         dashboardStore.drillDownPeriod,
       );

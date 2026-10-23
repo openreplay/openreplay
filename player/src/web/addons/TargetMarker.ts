@@ -1,6 +1,7 @@
 import type Screen from '../Screen/Screen';
 import { clickmapStyles } from './clickmapStyles';
 import SimpleHeatmap from './simpleHeatmap';
+import { watchDocumentHeight } from './watchDocumentHeight';
 
 // Past these the browser either refuses to allocate the canvas (blank heatmap)
 // or every colorize pass costs hundreds of MB, so tall pages render downscaled.
@@ -20,87 +21,108 @@ export function getCanvasDownscale(width: number, height: number): number {
 /** Normalized (percent, 2 decimals) cluster corners: [[x1, y1], [x2, y2]]. */
 export type ClusterCoords = string[][];
 
+/** A heatmap cell: normalized percent coordinates and how many clicks landed there. */
+export interface ClickPoint {
+  normalizedX: number;
+  normalizedY: number;
+  count?: number;
+}
+
 export default class TargetMarker {
   private clickMapOverlay: HTMLCanvasElement | null = null;
   private heatmap: SimpleHeatmap | null = null;
   private onCluster?: (coords: ClusterCoords) => void = undefined;
+  private unwatchLayout?: () => void;
 
-  constructor(private readonly screen: Screen) {}
+  /** @param rescale fits the screen to the document's current height */
+  constructor(
+    private readonly screen: Screen,
+    private readonly rescale?: () => void,
+  ) {}
 
   setOnCluster = (onCluster: (coords: ClusterCoords) => void) => {
     this.onCluster = onCluster;
   };
 
-  injectTargets(clicks: { normalizedX: number; normalizedY: number }[] | null) {
-    if (clicks && this.screen.document) {
+  injectTargets(clicks: ClickPoint[] | null) {
+    this.unwatchLayout?.();
+    this.unwatchLayout = undefined;
+    this.removeClickMap();
+    const doc = this.screen.document;
+    if (!clicks || !doc) return;
+    this.drawClickMap(clicks);
+    this.unwatchLayout = watchDocumentHeight(doc, () => {
+      this.rescale?.();
       this.removeClickMap();
-      const overlay = document.createElement('canvas');
-      const scrollHeight =
-        this.screen.document?.documentElement.scrollHeight || 0;
-      const scrollWidth =
-        this.screen.document?.documentElement.scrollWidth || 0;
+      this.drawClickMap(clicks);
+    });
+  }
 
-      Object.assign(
-        overlay.style,
-        clickmapStyles.overlayStyle({
-          height: `${scrollHeight}px`,
-          width: `${scrollWidth}px`,
-        }),
-      );
+  private drawClickMap(clicks: ClickPoint[]) {
+    const overlay = document.createElement('canvas');
+    const scrollHeight =
+      this.screen.document?.documentElement.scrollHeight || 0;
+    const scrollWidth = this.screen.document?.documentElement.scrollWidth || 0;
 
-      this.clickMapOverlay = overlay;
-      this.screen.addToScreen(overlay);
-      // if we want to inject overlay inside the replay itself:
-      // this.screen.document.body.appendChild(overlay);
+    Object.assign(
+      overlay.style,
+      clickmapStyles.overlayStyle({
+        height: `${scrollHeight}px`,
+        width: `${scrollWidth}px`,
+      }),
+    );
 
-      // Backing store may be smaller than the CSS size; everything below works in backing pixels.
-      const k = getCanvasDownscale(scrollWidth, scrollHeight);
-      overlay.width = Math.max(1, Math.round(scrollWidth * k));
-      overlay.height = Math.max(1, Math.round(scrollHeight * k));
+    this.clickMapOverlay = overlay;
+    this.screen.addToScreen(overlay);
+    // if we want to inject overlay inside the replay itself:
+    // this.screen.document.body.appendChild(overlay);
 
-      const pointMap: Record<string, { times: number; data: number[] }> = {};
-      let maxIntensity = 0;
+    // Backing store may be smaller than the CSS size; everything below works in backing pixels.
+    const k = getCanvasDownscale(scrollWidth, scrollHeight);
+    overlay.width = Math.max(1, Math.round(scrollWidth * k));
+    overlay.height = Math.max(1, Math.round(scrollHeight * k));
 
-      clicks.forEach((point) => {
-        const y = roundToSecond(point.normalizedY);
-        const x = roundToSecond(point.normalizedX);
-        const key = `${y}-${x}`;
-        if (pointMap[key]) {
-          pointMap[key].times += 1;
-        } else {
-          pointMap[key] = {
-            times: 1,
-            data: [(x / 100) * overlay.width, (y / 100) * overlay.height],
-          };
-        }
-        maxIntensity = Math.max(maxIntensity, pointMap[key].times);
-      });
+    const pointMap: Record<string, { times: number; data: number[] }> = {};
+    let maxIntensity = 0;
 
-      const heatmapData: number[][] = [];
-      for (const key in pointMap) {
-        const { data, times } = pointMap[key];
-        heatmapData.push([...data, times]);
+    clicks.forEach((point) => {
+      const y = roundToSecond(point.normalizedY);
+      const x = roundToSecond(point.normalizedX);
+      const key = `${y}-${x}`;
+      const clickCount = point.count ?? 1;
+      if (pointMap[key]) {
+        pointMap[key].times += clickCount;
+      } else {
+        pointMap[key] = {
+          times: clickCount,
+          data: [(x / 100) * overlay.width, (y / 100) * overlay.height],
+        };
       }
+      maxIntensity = Math.max(maxIntensity, pointMap[key].times);
+    });
 
-      const setToNormalized = (coords: number[]) => [
-        `${roundToSecond((coords[0] / overlay.width) * 100)}`,
-        `${roundToSecond((coords[1] / overlay.height) * 100)}`,
-      ];
-
-      const onClusterSelect = (coords: number[][]) => {
-        this.onCluster?.(coords.map(setToNormalized));
-      };
-      this.heatmap = new SimpleHeatmap()
-        .setCanvas(overlay)
-        .setData(heatmapData)
-        .setRadius(15 * k, 10 * k)
-        .setMax(maxIntensity)
-        .resize()
-        .draw()
-        .enableInteractions(onClusterSelect);
-    } else {
-      this.removeClickMap();
+    const heatmapData: number[][] = [];
+    for (const key in pointMap) {
+      const { data, times } = pointMap[key];
+      heatmapData.push([...data, times]);
     }
+
+    const setToNormalized = (coords: number[]) => [
+      `${roundToSecond((coords[0] / overlay.width) * 100)}`,
+      `${roundToSecond((coords[1] / overlay.height) * 100)}`,
+    ];
+
+    const onClusterSelect = (coords: number[][]) => {
+      this.onCluster?.(coords.map(setToNormalized));
+    };
+    this.heatmap = new SimpleHeatmap()
+      .setCanvas(overlay)
+      .setData(heatmapData)
+      .setRadius(15 * k, 10 * k)
+      .setMax(maxIntensity)
+      .resize()
+      .draw()
+      .enableInteractions(onClusterSelect);
   }
 
   private removeClickMap() {
@@ -111,6 +133,8 @@ export default class TargetMarker {
   }
 
   destroy() {
+    this.unwatchLayout?.();
+    this.unwatchLayout = undefined;
     this.removeClickMap();
     this.onCluster = undefined;
   }
