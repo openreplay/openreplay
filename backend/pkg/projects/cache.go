@@ -18,6 +18,7 @@ type Cache interface {
 	Set(project *Project) error
 	GetByID(projectID uint32) (*Project, error)
 	GetByKey(projectKey string) (*Project, error)
+	Delete(projectID uint32, projectKey string) error
 }
 
 type cacheImpl struct {
@@ -49,6 +50,19 @@ func (c *cacheImpl) Set(project *Project) error {
 	}
 	c.metrics.RecordRedisRequestDuration(float64(time.Now().Sub(start).Milliseconds()), "set", "project")
 	c.metrics.IncreaseRedisRequests("set", "project")
+	return nil
+}
+
+func (c *cacheImpl) Delete(projectID uint32, projectKey string) error {
+	if c.db == nil {
+		return ErrDisabledCache
+	}
+	start := time.Now()
+	if err := c.db.Redis.Del(context.Background(), fmt.Sprintf("project:id:%d", projectID), fmt.Sprintf("project:key:%s", projectKey)).Err(); err != nil {
+		return err
+	}
+	c.metrics.RecordRedisRequestDuration(float64(time.Now().Sub(start).Milliseconds()), "del", "project")
+	c.metrics.IncreaseRedisRequests("del", "project")
 	return nil
 }
 

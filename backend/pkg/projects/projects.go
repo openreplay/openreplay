@@ -3,6 +3,7 @@ package projects
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"openreplay/backend/pkg/cache"
@@ -20,6 +21,7 @@ type Projects interface {
 	ListProjectsByTenantID(tenantID int) ([]*Project, error)
 	ExistsByName(name string, tenantID int) (bool, error)
 	CreateProject(tenantID int, name string, platform string) (*Project, error)
+	Invalidate(projectID uint32, projectKey string, tenantID int)
 }
 
 type projectsImpl struct {
@@ -99,4 +101,14 @@ func (c *projectsImpl) GetProjectNotDeleted(projectID uint32) (*Project, error) 
 		c.log.Error(ctx, "failed to cache project: %s", err)
 	}
 	return p, nil
+}
+
+func (c *projectsImpl) Invalidate(projectID uint32, projectKey string, tenantID int) {
+	c.projectsByID.Delete(projectID)
+	c.projectsByKeys.Delete(projectKey)
+	c.projectsByKeys.Delete(fmt.Sprintf("%s:%d", projectKey, tenantID))
+	if err := c.cache.Delete(projectID, projectKey); err != nil && !errors.Is(err, ErrDisabledCache) {
+		ctx := context.WithValue(context.Background(), "projectID", projectID)
+		c.log.Error(ctx, "failed to invalidate project cache: %s", err)
+	}
 }

@@ -9,7 +9,7 @@ import (
 
 func getUserFromDB(conn pool.Pool, userID, tenantID int, tokenType TokenType) (*User, error) {
 	query := fmt.Sprintf(`
-		SELECT user_id, users.tenant_id, users.name, email, EXTRACT(epoch FROM %s)::BIGINT AS jwt_iat, roles.permissions,
+		SELECT user_id, users.tenant_id, users.name, email, users.role::text, EXTRACT(epoch FROM %s)::BIGINT AS jwt_iat, roles.permissions,
 		       (users.service_account = true AND NOT EXISTS (SELECT 1 FROM public.basic_authentication WHERE user_id = users.user_id)) AS service_account,
 		       roles.all_projects,
 		       ARRAY(SELECT roles_projects.project_id FROM public.roles_projects WHERE roles_projects.role_id = roles.role_id) AS project_ids
@@ -24,7 +24,7 @@ func getUserFromDB(conn pool.Pool, userID, tenantID int, tokenType TokenType) (*
 	var allProjects bool
 	var projectIDs []uint32
 	if err := conn.QueryRow(query, userID, tenantID).
-		Scan(&user.ID, &user.TenantID, &user.Name, &user.Email, &jwtIat, &permissions, &user.ServiceAccount,
+		Scan(&user.ID, &user.TenantID, &user.Name, &user.Email, &user.Role, &jwtIat, &permissions, &user.ServiceAccount,
 			&allProjects, &projectIDs); err != nil {
 		return nil, fmt.Errorf("user not found", err)
 	}

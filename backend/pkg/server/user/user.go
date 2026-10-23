@@ -31,6 +31,7 @@ type User struct {
 	Name           string          `json:"name"`
 	Email          string          `json:"email"`
 	TenantID       uint64          `json:"tenantId"`
+	Role           string          `json:"role"`
 	JwtIat         int             `json:"jwtIat"`
 	Permissions    map[string]bool `json:"permissions"`
 	ServiceAccount bool            `json:"serviceAccount"`
@@ -45,6 +46,10 @@ func (u *User) HasPermission(perm string) bool {
 	}
 	_, ok := u.Permissions[perm]
 	return ok
+}
+
+func (u *User) IsAdmin() bool {
+	return u.Role == "owner" || u.Role == "admin"
 }
 
 func (u *User) CanAccessProject(projectID uint32) bool {

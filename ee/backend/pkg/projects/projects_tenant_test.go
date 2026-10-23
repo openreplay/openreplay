@@ -18,6 +18,11 @@ type fakeTenantCache struct {
 	byKey map[string]*Project
 }
 
+func (f *fakeTenantCache) Delete(projectID uint32, projectKey string) error {
+	delete(f.byKey, projectKey)
+	return nil
+}
+
 func (f *fakeTenantCache) Set(project *Project) error { return nil }
 
 func (f *fakeTenantCache) GetByID(projectID uint32) (*Project, error) {
@@ -104,5 +109,33 @@ func TestGetProjectByKeyAndTenant_CacheTenantMatch(t *testing.T) {
 	}
 	if got.ProjectID != 7 {
 		t.Fatalf("expected the cached project for the matching tenant, got %d", got.ProjectID)
+	}
+}
+
+func TestInvalidate_ClearsTenantScopedCaches(t *testing.T) {
+	const key = "shared-key"
+	redisCache := &fakeTenantCache{byKey: map[string]*Project{
+		key: {ProjectID: 7, ProjectKey: key, TenantID: 1},
+	}}
+	c := &projectsImpl{
+		cache:          redisCache,
+		projectsByID:   cache.New(time.Minute, time.Minute),
+		projectsByKeys: cache.New(time.Minute, time.Minute),
+		db:             &fakePool{row: fakeRow{projectID: 8}},
+	}
+
+	if got, _ := c.GetProjectByKeyAndTenant(key, 1); got.ProjectID != 7 {
+		t.Fatalf("expected the cached project 7, got %d", got.ProjectID)
+	}
+	c.Invalidate(7, key, 1)
+
+	if _, ok := c.projectsByKeys.Get(key + ":1"); ok {
+		t.Fatalf("expected the tenant-scoped in-memory entry to be removed")
+	}
+	if _, ok := redisCache.byKey[key]; ok {
+		t.Fatalf("expected the redis entry to be removed")
+	}
+	if got, _ := c.GetProjectByKeyAndTenant(key, 1); got.ProjectID != 8 {
+		t.Fatalf("expected a fresh DB read after invalidation, got project %d", got.ProjectID)
 	}
 }

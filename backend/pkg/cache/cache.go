@@ -9,6 +9,7 @@ type Cache interface {
 	Set(key, value interface{})
 	Get(key interface{}) (interface{}, bool)
 	GetAndRefresh(key interface{}) (interface{}, bool)
+	Delete(key interface{})
 	SetCache(sessID uint64, data map[string]string) error
 	GetCache(sessID uint64) (map[string]string, error)
 }
@@ -68,6 +69,12 @@ func (c *cacheImpl) Get(key interface{}) (interface{}, bool) {
 		return v.data, ok
 	}
 	return nil, false
+}
+
+func (c *cacheImpl) Delete(key interface{}) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	delete(c.items, key)
 }
 
 func (c *cacheImpl) GetAndRefresh(key interface{}) (interface{}, bool) {

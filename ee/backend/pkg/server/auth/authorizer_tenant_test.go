@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/projects"
 	"openreplay/backend/pkg/server/user"
 )
@@ -48,6 +49,8 @@ func (f *fakeProjects) ExistsByName(name string, tenantID int) (bool, error) {
 func (f *fakeProjects) CreateProject(tenantID int, name string, platform string) (*projects.Project, error) {
 	return nil, nil
 }
+
+func (f *fakeProjects) Invalidate(projectID uint32, projectKey string, tenantID int) {}
 
 func newRequest(t *testing.T, pathVar, value string) *http.Request {
 	t.Helper()
@@ -150,5 +153,47 @@ func TestValidateProjectAccessNoProjectsService(t *testing.T) {
 	r := newRequest(t, "projectId", "+5")
 	if err := a.validateProjectAccess(r, &user.User{TenantID: 2}); err != nil {
 		t.Fatalf("expected nil when projects service is not configured, got: %s", err)
+	}
+}
+
+type staticUsers struct{ u *user.User }
+
+func (s staticUsers) Get(string, string, user.TokenType) (*user.User, error) { return s.u, nil }
+func (s staticUsers) GetServiceAccount(uint64) (*user.User, error)           { return s.u, nil }
+
+func TestMiddlewareDeniedProjectIsUnauthorized(t *testing.T) {
+	fp := &fakeProjects{byID: map[uint32]*projects.Project{
+		5: {ProjectID: 5, TenantID: 1},
+	}}
+	cases := []struct {
+		name        string
+		u           *user.User
+		target      string
+		wantCode    int
+		wantReached bool
+	}{
+		{"own tenant", &user.User{TenantID: 1}, "/projects/5", http.StatusOK, true},
+		{"cross tenant", &user.User{TenantID: 2}, "/projects/5", http.StatusUnauthorized, false},
+		{"deleted project", &user.User{TenantID: 1}, "/projects/6", http.StatusUnauthorized, false},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			a := &authImpl{log: logger.New(), users: staticUsers{c.u}, projects: fp}
+			reached := false
+			router := mux.NewRouter()
+			router.Use(a.Middleware)
+			router.HandleFunc("/projects/{projectId}", func(w http.ResponseWriter, r *http.Request) { reached = true })
+			req := httptest.NewRequest(http.MethodGet, c.target, nil)
+			req.Header.Set("Authorization", "Bearer token")
+			rec := httptest.NewRecorder()
+			router.ServeHTTP(rec, req)
+
+			if rec.Code != c.wantCode || reached != c.wantReached {
+				t.Fatalf("got %d reached=%v, want %d reached=%v", rec.Code, reached, c.wantCode, c.wantReached)
+			}
+			if c.wantCode == http.StatusUnauthorized && rec.Body.String() != `{"errors":["unauthorized project."]}` {
+				t.Fatalf("unexpected body: %s", rec.Body.String())
+			}
+		})
 	}
 }

@@ -48,6 +48,7 @@ import (
 	"openreplay/backend/pkg/notifications"
 	"openreplay/backend/pkg/objectstorage"
 	"openreplay/backend/pkg/projects"
+	projectsAdmin "openreplay/backend/pkg/projects/admin"
 	replayAPI "openreplay/backend/pkg/replays/api"
 	"openreplay/backend/pkg/replays/service"
 	"openreplay/backend/pkg/server/api"
@@ -78,6 +79,7 @@ type serviceBuilder struct {
 	integrationsAPI    api.Handlers
 	alertsAPI          api.Handlers
 	notificationsAPI   api.Handlers
+	projectsAdminAPI   api.Handlers
 	extraHandlers      []api.Handlers
 	workers            []Worker
 	wg                 sync.WaitGroup
@@ -85,7 +87,7 @@ type serviceBuilder struct {
 
 func (b *serviceBuilder) Handlers() []api.Handlers {
 	handlers := []api.Handlers{b.sessionAPI, b.eventAPI, b.filtersCatalogAPI, b.analyticsEventsAPI, b.favoriteAPI, b.noteAPI, b.replayAPI, b.apiKeyAPI, b.conditionsAPI,
-		b.chartsAPI, b.dashboardsAPI, b.cardsAPI, b.searchAPI, b.savedSearchesAPI, b.usersAPI, b.lexiconAPI, b.tagsAdminAPI, b.integrationsAPI, b.alertsAPI, b.notificationsAPI}
+		b.chartsAPI, b.dashboardsAPI, b.cardsAPI, b.searchAPI, b.savedSearchesAPI, b.usersAPI, b.lexiconAPI, b.tagsAdminAPI, b.integrationsAPI, b.alertsAPI, b.notificationsAPI, b.projectsAdminAPI}
 	return append(handlers, b.extraHandlers...)
 }
 
@@ -283,6 +285,11 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		return nil, err
 	}
 
+	projectsAdminHandlers, err := projectsAdmin.NewHandlers(log, requestHandler, projectsAdmin.New(log, pgconn, projects))
+	if err != nil {
+		return nil, err
+	}
+
 	extraHandlers, workers, err := eeServices(eeDeps{
 		log:        log,
 		cfg:        cfg,
@@ -320,6 +327,7 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		integrationsAPI:    integrationsHandlers,
 		alertsAPI:          alertsHandlers,
 		notificationsAPI:   notificationsHandlers,
+		projectsAdminAPI:   projectsAdminHandlers,
 		extraHandlers:      extraHandlers,
 		workers:            workers,
 	}, nil
