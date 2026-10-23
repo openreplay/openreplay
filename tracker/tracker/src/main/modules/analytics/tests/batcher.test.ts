@@ -257,6 +257,35 @@ describe('Batcher', () => {
     ])
   })
 
+  test('squashing does not move a mutation ahead of a different one on the same key', () => {
+    batcher.addEvent(makePeopleEvent('set_property', 1, { plan: 'free', count: 1 }, 'u1'))
+    batcher.addEvent(makePeopleEvent('increment_property', 2, { count: 2 }, 'u1'))
+    batcher.addEvent(makePeopleEvent('set_property', 3, { count: 0 }, 'u1'))
+    batcher.addEvent(makePeopleEvent('increment_property', 4, { count: 5 }, 'u1'))
+
+    expect(batcher.getBatches().data[categories.people]).toEqual([
+      { type: 'set_property', user_id: 'u1', timestamp: 1, payload: { plan: 'free', count: 1 } },
+      { type: 'increment_property', user_id: 'u1', timestamp: 2, payload: { count: 2 } },
+      { type: 'set_property', user_id: 'u1', timestamp: 3, payload: { count: 0 } },
+      { type: 'increment_property', user_id: 'u1', timestamp: 4, payload: { count: 5 } },
+    ])
+  })
+
+  test('squashing still merges past mutations on other keys or users', () => {
+    batcher.addEvent(makePeopleEvent('set_property', 1, { plan: 'free' }, 'u1'))
+    batcher.addEvent(makePeopleEvent('increment_property', 2, { count: 2 }, 'u1'))
+    batcher.addEvent(makePeopleEvent('append_property', 3, { tags: 'a' }, 'u1'))
+    batcher.addEvent(makePeopleEvent('set_property', 4, { plan: 'x' }, 'u2'))
+    batcher.addEvent(makePeopleEvent('set_property', 5, { plan: 'pro' }, 'u1'))
+
+    expect(batcher.getBatches().data[categories.people]).toEqual([
+      { type: 'set_property', user_id: 'u1', timestamp: 5, payload: { plan: 'pro' } },
+      { type: 'increment_property', user_id: 'u1', timestamp: 2, payload: { count: 2 } },
+      { type: 'append_property', user_id: 'u1', timestamp: 3, payload: { tags: 'a' } },
+      { type: 'set_property', user_id: 'u2', timestamp: 4, payload: { plan: 'x' } },
+    ])
+  })
+
   test('sendBatch called via flush posts all events and then clears batches', () => {
     const pe = makePeopleEvent('set_property', 1, { a: 1 })
     const ev = makeEventsEvent('evt', 2, { x: 'y' })
