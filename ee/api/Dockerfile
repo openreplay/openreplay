@@ -57,6 +57,16 @@ RUN PYTHON_BIN=$(find /nix/store -path "*/bin/python3.13" -type f 2>/dev/null | 
   echo "ERROR: Python not found in /nix/store"; exit 1; \
   fi
 
+# pip is only needed at build time; its vendored libs (msgpack, setuptools, urllib3) are listed
+# in pip/_vendor/bom.cdx.json and get flagged by image scanners. Drop its store path, the
+# pip-related symlinks the Nix python env points at it, and any ensurepip bundle.
+RUN rm -rf /nix/store/*-python3.13-pip-* \
+  /nix/store/*/lib/python3.13/ensurepip \
+  /usr/local/lib/python3.13/site-packages/pip \
+  /usr/local/lib/python3.13/site-packages/pip-*.dist-info \
+  /usr/local/bin/pip /usr/local/bin/pip3 /usr/local/bin/pip3.* && \
+  find -L /nix/store -type l -delete
+
 # Copy application code
 COPY . .
 RUN mv env.default .env
