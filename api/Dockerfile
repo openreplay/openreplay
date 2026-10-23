@@ -28,6 +28,12 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 WORKDIR /work
 COPY . .
 RUN apk add --no-cache tini && mv env.default .env
+# pip is not needed at runtime; its vendored libs (msgpack, setuptools, urllib3) are listed
+# in pip/_vendor/bom.cdx.json and get flagged by image scanners
+RUN rm -rf /usr/local/lib/python3.13/site-packages/pip \
+  /usr/local/lib/python3.13/site-packages/pip-*.dist-info \
+  /usr/local/lib/python3.13/ensurepip \
+  /usr/local/bin/pip /usr/local/bin/pip3 /usr/local/bin/pip3.*
 
 ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["./entrypoint.sh"]

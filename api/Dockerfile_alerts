@@ -18,9 +18,15 @@ WORKDIR /work
 COPY requirements-alerts.txt ./requirements.txt
 # removed this to solve vulnerability https://github.com/advisories/GHSA-58pv-8j8x-9vj2
 #RUN uv pip install --no-cache-dir --upgrade pip setuptools wheel --system
+# pip is not needed at runtime; its vendored libs (msgpack, setuptools, urllib3) are listed
+# in pip/_vendor/bom.cdx.json and get flagged by image scanners
 RUN pip install --no-cache-dir --upgrade uv && \
   uv pip install --no-cache-dir --upgrade -r requirements.txt --system && \
-  pip uninstall -y uv
+  pip uninstall -y uv && \
+  rm -rf /usr/local/lib/python3.13/site-packages/pip \
+  /usr/local/lib/python3.13/site-packages/pip-*.dist-info \
+  /usr/local/lib/python3.13/ensurepip \
+  /usr/local/bin/pip /usr/local/bin/pip3 /usr/local/bin/pip3.*
 
 COPY . .
 RUN mv env.default .env && mv app_alerts.py app.py && mv entrypoint_alerts.sh entrypoint.sh
