@@ -9,6 +9,7 @@ import {
 
 import Screen, { ScaleMode } from '../../../player/src/web/Screen/Screen';
 import TargetMarker from '../../../player/src/web/addons/TargetMarker';
+import { watchDocumentHeight } from '../../../player/src/web/addons/watchDocumentHeight';
 
 const heatmapCalls: { data?: number[][]; max?: number } = {};
 jest.mock('../../../player/src/web/addons/simpleHeatmap', () => {
@@ -53,13 +54,19 @@ beforeEach(() => {
     observe() {}
     disconnect = disconnect;
   };
+  frames = [];
   jest
     .spyOn(globalThis, 'requestAnimationFrame')
-    .mockImplementation((cb: FrameRequestCallback) => {
-      cb(0);
-      return 1;
-    });
+    .mockImplementation((cb: FrameRequestCallback) => frames.push(cb));
+  jest.spyOn(globalThis, 'cancelAnimationFrame').mockImplementation(() => {});
 });
+
+let frames: FrameRequestCallback[] = [];
+function nextFrame() {
+  const due = frames;
+  frames = [];
+  due.forEach((cb) => cb(0));
+}
 
 afterEach(() => {
   jest.restoreAllMocks();
@@ -108,38 +115,60 @@ describe('TargetMarker', () => {
     expect(heatmapCalls.max).toBe(5);
   });
 
-  test('re-fits the overlay when the frozen document grows', () => {
+  test("redraws at the document's new size", () => {
     const { doc, setHeight } = replayDoc(1000);
     const { host, screen } = fakeScreen(doc);
-    const rescale = jest.fn();
-    const marker = new TargetMarker(screen as any, rescale);
+    const marker = new TargetMarker(screen as any);
     marker.injectTargets([{ normalizedX: 50, normalizedY: 50, count: 1 }]);
     expect(overlayHeight(host)).toBe('1000px');
 
     setHeight(3000);
-    doc.dispatchEvent(new Event('load')); // a late <img>, caught on capture
-    expect(rescale).toHaveBeenCalledTimes(1);
+    marker.redraw();
     expect(host.querySelectorAll('canvas')).toHaveLength(1);
     expect(overlayHeight(host)).toBe('3000px');
-
-    // resize callbacks without a height change don't redraw
-    resizeCallbacks.forEach((cb) => cb());
-    expect(rescale).toHaveBeenCalledTimes(1);
+    expect(marker.canvas).toBe(host.querySelector('canvas'));
   });
 
-  test('stops watching once removed', () => {
-    const { doc, setHeight } = replayDoc(1000);
+  test('a scroll map clears the click layer', () => {
+    const { doc } = replayDoc(1000);
     const { host, screen } = fakeScreen(doc);
-    const rescale = jest.fn();
-    const marker = new TargetMarker(screen as any, rescale);
+    const marker = new TargetMarker(screen as any);
     marker.injectTargets([{ normalizedX: 50, normalizedY: 50, count: 1 }]);
-    marker.destroy();
-    expect(disconnect).toHaveBeenCalled();
-
-    setHeight(3000);
-    doc.dispatchEvent(new Event('load'));
-    expect(rescale).not.toHaveBeenCalled();
+    marker.setTargets(null);
+    marker.redraw();
     expect(host.querySelector('canvas')).toBeNull();
+    expect(marker.canvas).toBeNull();
+  });
+});
+
+describe('watchDocumentHeight', () => {
+  test('reports height changes from late loads and resizes, once each', () => {
+    const { doc, setHeight } = replayDoc(1000);
+    const onChange = jest.fn();
+    const unwatch = watchDocumentHeight(doc, onChange);
+
+    resizeCallbacks.forEach((cb) => cb());
+    nextFrame();
+    expect(onChange).not.toHaveBeenCalled();
+
+    // several signals in one frame are one check
+    setHeight(3000);
+    doc.dispatchEvent(new Event('load')); // a late <img>, caught on capture
+    resizeCallbacks.forEach((cb) => cb());
+    nextFrame();
+    expect(onChange).toHaveBeenCalledTimes(1);
+
+    setHeight(3200);
+    resizeCallbacks.forEach((cb) => cb());
+    nextFrame();
+    expect(onChange).toHaveBeenCalledTimes(2);
+
+    unwatch();
+    expect(disconnect).toHaveBeenCalled();
+    setHeight(4000);
+    doc.dispatchEvent(new Event('load'));
+    nextFrame();
+    expect(onChange).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -159,9 +188,18 @@ describe('Screen in clickmap mode', () => {
       get: () => 2384, // body misses its own margins
     });
 
+    Object.defineProperty(parent, 'offsetWidth', {
+      configurable: true,
+      get: () => 640,
+    });
     screen.scale({ width: 1280, height: 800 });
     const iframe = parent.querySelector('iframe') as HTMLIFrameElement;
     expect(iframe.style.height).toBe('2400px');
+    // the parent is the card's fixed window; labels read the scale back
+    expect(parent.style.height).toBe('');
+    expect(screen.screenElement.style.getPropertyValue('--m-screen-k')).toBe(
+      '0.5',
+    );
 
     // short pages still fill the recorded viewport
     Object.defineProperty(docEl, 'scrollHeight', {

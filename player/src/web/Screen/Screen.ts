@@ -172,6 +172,11 @@ export default class Screen {
     return this.iframe.contentDocument;
   }
 
+  /** The scaled element holding the iframe; overlays added to it share the page's coordinates. */
+  get screenElement(): HTMLDivElement {
+    return this.screen;
+  }
+
   get iframeStylesRef(): CSSStyleDeclaration {
     return this.iframe.style;
   }
@@ -277,7 +282,9 @@ export default class Screen {
     }
 
     if (this.scaleMode === ScaleMode.AdjustParentHeight) {
-      this.parentElement.style.height = `${this.scaleRatio * height}px`;
+      // the parent is a fixed window the page scrolls in; overlay labels
+      // divide by this to stay at text size
+      this.screen.style.setProperty('--m-screen-k', String(this.scaleRatio));
     }
 
     Object.assign(this.screen.style, posStyles, {

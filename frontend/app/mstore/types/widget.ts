@@ -774,6 +774,7 @@ export default class Widget {
         mobsUrl: [],
         path: '',
         points: [],
+        scroll: null,
         projectId: 0,
         sessionId: null,
         startTs: 0,

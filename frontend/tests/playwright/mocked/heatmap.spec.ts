@@ -12,7 +12,8 @@ const LAST_CLICK_TS = recording.startTs + 14440;
 
 const HOT = { x: 50, y: 10 };
 // TargetMarker's canvas; the screen also holds the mouse-trail canvas
-const OVERLAY = '#clickmap-render canvas:not(#openreplay-mouse-trail)';
+const OVERLAY =
+  '#clickmap-render .m-cmap__window canvas:not(#openreplay-mouse-trail)';
 
 const card = {
   metricId: 10,
@@ -74,14 +75,29 @@ function points() {
   return pts;
 }
 
+// sessions by the deepest point they saw; everyone sees the first 30%
+const SCROLL_DATA = {
+  sessions: 1200,
+  fold: 30,
+  depths: [
+    { depth: 30, sessions: 200 },
+    { depth: 45, sessions: 250 },
+    { depth: 60, sessions: 300 },
+    { depth: 80, sessions: 250 },
+    { depth: 100, sessions: 200 },
+  ],
+};
+
 async function setup(page: any, baseURL: string) {
   const api = await mockApi(page, baseURL);
   const chartRequests: any[] = [];
   api.on('GET', /\/cards\/10$/, () => ({ data: card }));
   const chart = (_req: any, body: any) => {
     chartRequests.push(body);
+    if (body?.metricType !== 'heatmaps_session')
+      return { data: heatmapSession };
     return {
-      data: body?.metricType === 'heatmaps_session' ? points() : heatmapSession,
+      data: body.metricOf === 'scrollMapUrl' ? SCROLL_DATA : points(),
     };
   };
   api.on('POST', /\/cards\/10\/chart$/, chart);
@@ -258,7 +274,10 @@ test.describe('heatmap card', () => {
     await page.goto(`/${PROJECT_ID}/metrics/10`);
     await waitForOverlay(page);
 
-    await page.getByRole('switch', { name: 'Include rage clicks' }).click();
+    const rage = page.getByRole('button', { name: 'Include rage clicks' });
+    await expect(rage).toHaveAttribute('aria-pressed', 'false');
+    await rage.click();
+    await expect(rage).toHaveAttribute('aria-pressed', 'true');
     await expect
       .poll(() =>
         chartRequests.some(
@@ -287,5 +306,106 @@ test.describe('heatmap card', () => {
           .map((b) => b.heatmapSeed ?? 0),
       )
       .toEqual([0, 1]);
+  });
+
+  test('scroll map tints the page by reach, with the fold and reach lines', async ({
+    page,
+    baseURL,
+  }) => {
+    const { api, chartRequests } = await setup(page, baseURL!);
+    await page.goto(`/${PROJECT_ID}/metrics/10`);
+    await waitForOverlay(page);
+
+    await page.getByRole('button', { name: 'Heatmap' }).click();
+    await page.getByRole('menuitemradio', { name: 'Scroll map' }).click();
+
+    const layer = page.locator(
+      '#clickmap-render .m-cmap__window .m-cmap__layer',
+    );
+    await expect(layer.locator('.m-cmap__reach')).toBeVisible();
+    await expect(layer.getByText('Fold')).toBeVisible();
+    for (const share of [75, 50, 25]) {
+      await expect(layer.getByText(`${share}% reached`)).toBeVisible();
+    }
+    // 50% of sessions saw at least 60% of the page
+    await expect(page.locator('.m-cmap__legend')).toContainText(
+      '1,200 sessions',
+    );
+    await expect(page.locator('.m-cmap__legend')).toContainText(
+      'Half reach 61% of the page',
+    );
+    // the click layer is gone, the rage toggle too
+    await expect(page.locator(OVERLAY)).toHaveCount(0);
+    await expect(
+      page.getByRole('button', { name: 'Include rage clicks' }),
+    ).toHaveCount(0);
+    expect(
+      chartRequests.some(
+        (b) =>
+          b.metricType === 'heatmaps_session' && b.metricOf === 'scrollMapUrl',
+      ),
+    ).toBe(true);
+    // same session: the replay stays mounted
+    expect(api.mobRequests).toEqual(['dom1.mobs', 'dom2.mobe']);
+
+    // labels keep their size inside the scaled page
+    const labelHeight = await layer
+      .getByText('Fold')
+      .evaluate((el) => el.getBoundingClientRect().height);
+    expect(labelHeight).toBeGreaterThan(12);
+  });
+
+  test('the minimap moves the window through a long page', async ({
+    page,
+    baseURL,
+  }) => {
+    await setup(page, baseURL!);
+    await page.goto(`/${PROJECT_ID}/metrics/10`);
+    await waitForOverlay(page);
+    await page.evaluate(() => {
+      const iframe = document.querySelector(
+        '#clickmap-render iframe',
+      ) as HTMLIFrameElement;
+      const tall = iframe.contentDocument!.createElement('div');
+      tall.style.height = '6000px';
+      iframe.contentDocument!.body.appendChild(tall);
+    });
+    const win = page.locator('#clickmap-render .m-cmap__window');
+    await expect
+      .poll(() => win.evaluate((w) => w.scrollHeight > w.clientHeight * 2))
+      .toBe(true);
+
+    const mini = page.getByRole('scrollbar', { name: /Page overview/ });
+    const box = (await mini.boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + 4);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height - 4, {
+      steps: 5,
+    });
+    await page.mouse.up();
+
+    const scrolled = await win.evaluate((w) => w.scrollTop / w.scrollHeight);
+    expect(scrolled).toBeGreaterThan(0.5);
+    const viewTop = await page
+      .locator('.m-cmap__view')
+      .evaluate((el) => parseFloat((el as HTMLElement).style.top));
+    expect(viewTop).toBeCloseTo(scrolled * 100, 0);
+  });
+
+  test('a card collapses the side menu and leaving restores it', async ({
+    page,
+    baseURL,
+  }) => {
+    const api = await mockApi(page, baseURL!);
+    api.on('GET', /\/cards\/10$/, () => ({ data: card }));
+    api.on('GET', /\/cards$/, () => ({ data: { list: [card], total: 1 } }));
+    await login(page);
+
+    await page.goto(`/${PROJECT_ID}/metrics`);
+    await expect(page.locator('.m-nav')).not.toHaveClass(/is-collapsed/);
+    await page.goto(`/${PROJECT_ID}/metrics/10`);
+    await expect(page.locator('.m-nav')).toHaveClass(/is-collapsed/);
+    await page.goBack();
+    await expect(page.locator('.m-nav')).not.toHaveClass(/is-collapsed/);
   });
 });

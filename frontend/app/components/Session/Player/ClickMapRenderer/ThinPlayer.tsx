@@ -13,16 +13,16 @@ import {
   PlayerContext,
   defaultContextValue,
 } from '../../playerContext';
-import PlayerContent from './ThinPlayerContent';
+import HeatmapViewer from './HeatmapViewer';
 
 /** Mounted once per heatmap session (the card keys it by sessionId). */
 function WebPlayer(props: any) {
   const { filterStore, dashboardStore } = useStore();
-  const { session, jumpTimestamp, points } = props;
+  const { session, jumpTimestamp, points, reach } = props;
   // @ts-ignore
   const [contextValue, setContextValue] =
     useState<IPlayerContext>(defaultContextValue);
-  const appliedRef = React.useRef<{ points: any; jump: number } | null>(null);
+  const appliedRef = React.useRef<{ data: any; jump: number } | null>(null);
 
   useEffect(() => {
     const [player, store] = createClickMapPlayer(
@@ -69,22 +69,25 @@ function WebPlayer(props: any) {
   // the jump target may sit in a later file, and the frozen frame is never redrawn
   const isPlayerReady = state?.ready && !state?.domLoading;
 
+  // a scroll map has its depths, a click map its cells
+  const data = reach ?? (points?.length ? points : null);
   useEffect(() => {
     const { player } = contextValue;
-    if (!player || !isPlayerReady || !points?.length) return;
+    if (!player || !isPlayerReady || !data) return;
     const applied = appliedRef.current;
-    if (applied?.points === points && applied?.jump === jumpTimestamp) return;
-    appliedRef.current = { points, jump: jumpTimestamp };
+    if (applied?.data === data && applied?.jump === jumpTimestamp) return;
+    appliedRef.current = { data, jump: jumpTimestamp };
     player.pause();
     player.jump(jumpTimestamp);
-    player.showClickmap(points);
-  }, [contextValue, points, isPlayerReady, jumpTimestamp]);
+    if (reach) void player.showScrollmap();
+    else void player.showClickmap(points);
+  }, [contextValue, data, isPlayerReady, jumpTimestamp]);
 
   if (!contextValue.player || !session) return null;
 
   return (
     <PlayerContext.Provider value={contextValue}>
-      <PlayerContent />
+      <HeatmapViewer reach={reach ?? null} />
     </PlayerContext.Provider>
   );
 }

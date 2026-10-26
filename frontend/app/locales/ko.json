@@ -2799,5 +2799,20 @@
   "A project’s type can’t change. To record another platform, add a new project.": "프로젝트 유형은 변경할 수 없습니다. 다른 플랫폼을 녹화하려면 새 프로젝트를 추가하세요.",
   "The one value the tracker needs. It is not a secret, it ships in your page.": "트래커에 필요한 유일한 값입니다. 비밀이 아니며 페이지에 포함됩니다.",
   "How to send the values": "값을 보내는 방법",
-  "Hide how to send the values": "값을 보내는 방법 숨기기"
+  "Hide how to send the values": "값을 보내는 방법 숨기기",
+  "No scroll depth recorded on this page yet": "No scroll depth recorded on this page yet",
+  "Scroll maps come from sessions recorded with scroll tracking.": "Scroll maps come from sessions recorded with scroll tracking.",
+  "Half reach {{depth}}% of the page": "Half reach {{depth}}% of the page",
+  "few reached": "few reached",
+  "all reached": "all reached",
+  "fewer": "fewer",
+  "more": "more",
+  "Click map": "Click map",
+  "Scroll map": "Scroll map",
+  "Rage clicks shown": "Rage clicks shown",
+  "Show rage clicks": "Show rage clicks",
+  "Page overview: drag to move through the page": "Page overview: drag to move through the page",
+  "The page": "The page",
+  "Fold": "Fold",
+  "{{share}}% reached": "{{share}}% reached"
 }

@@ -8,7 +8,8 @@ import MessageLoader from './MessageLoader';
 import MessageManager from './MessageManager';
 import Screen, { ScaleMode } from './Screen/Screen';
 import InspectorController from './addons/InspectorController';
-import TargetMarker from './addons/TargetMarker';
+import TargetMarker, { type ClickPoint } from './addons/TargetMarker';
+import { watchDocumentHeight } from './addons/watchDocumentHeight';
 
 export default class WebPlayer extends Player {
   static readonly INITIAL_STATE = {
@@ -26,6 +27,8 @@ export default class WebPlayer extends Player {
   protected readonly messageManager: MessageManager;
   protected readonly messageLoader: MessageLoader;
   private targetMarker: TargetMarker;
+  private unwatchPage?: () => void;
+  private onPageFit?: () => void;
   private scaleFrame = 0;
   private readonly globalJumpToTime = (time: number, silent?: boolean) =>
     this.jump(time, silent);
@@ -86,7 +89,7 @@ export default class WebPlayer extends Player {
       wpState.update({ mobsFetched: true });
     }
 
-    this.targetMarker = new TargetMarker(this.screen, () => this.scale());
+    this.targetMarker = new TargetMarker(this.screen);
     this.inspectorController = new InspectorController(screen, wpState);
 
     const endTime = session.duration?.valueOf() || 0;
@@ -171,7 +174,7 @@ export default class WebPlayer extends Player {
     void this.messageLoader.loadFiles();
 
     this.targetMarker.destroy();
-    this.targetMarker = new TargetMarker(this.screen, () => this.scale());
+    this.targetMarker = new TargetMarker(this.screen);
     this.inspectorController = new InspectorController(
       this.screen,
       this.wpState,
@@ -228,6 +231,7 @@ export default class WebPlayer extends Player {
     if (!this.screen) return;
     const { width, height } = this.wpState.get();
     this.screen.scale({ width, height });
+    this.onPageFit?.();
   };
 
   // delayed message decoding for state plugins
@@ -257,14 +261,45 @@ export default class WebPlayer extends Player {
     this.inspectorController.markBySelector(selector);
   };
 
-  showClickmap = (...args: Parameters<TargetMarker['injectTargets']>) => {
-    this.screen?.overlay?.remove?.(); // hack. TODO: 1.split Screen functionalities (overlay, mounter) 2. separate ClickMapPlayer class that does not create overlay
-    this.freeze().then(() => {
-      // sized only once the frozen frame and its stylesheets are in place
-      this.scale();
-      this.targetMarker.injectTargets(...args);
-    });
+  showClickmap = (points: ClickPoint[] | null) => this.showPage(points);
+
+  /** The frozen page alone, fitted like a clickmap; the card draws the scroll layer over it. */
+  showScrollmap = () => this.showPage(null);
+
+  /** Called after every fit of a heatmap page: first draw, window resize, late reflow. */
+  setOnPageFit = (cb?: () => void) => {
+    this.onPageFit = cb;
   };
+
+  /** The heatmap page as drawn: its replay document, the scaled element holding it, the click layer. */
+  getHeatmapPage() {
+    if (!this.screen?.document) return null;
+    return {
+      document: this.screen.document,
+      element: this.screen.screenElement,
+      scale: this.screen.getScale(),
+      clicks: this.targetMarker.canvas,
+    };
+  }
+
+  private showPage(points: ClickPoint[] | null) {
+    this.screen?.overlay?.remove?.(); // hack. TODO: 1.split Screen functionalities (overlay, mounter) 2. separate ClickMapPlayer class that does not create overlay
+    return this.freeze().then(() => {
+      if (!this.screen) return;
+      this.unwatchPage?.();
+      // sized only once the frozen frame and its stylesheets are in place
+      const fit = () => {
+        const { width, height } = this.wpState.get();
+        this.screen.scale({ width, height });
+        this.targetMarker.redraw();
+        this.onPageFit?.();
+      };
+      this.targetMarker.setTargets(points);
+      fit();
+      const doc = this.screen.document;
+      this.unwatchPage = doc ? watchDocumentHeight(doc, fit) : undefined;
+    });
+  }
 
   toggleUserName = (name?: string) => {
     this.screen.cursor.showTag(name);
@@ -284,6 +319,8 @@ export default class WebPlayer extends Player {
     cancelAnimationFrame(this.scaleFrame);
     this.messageLoader.clean();
     super.clean();
+    this.unwatchPage?.();
+    this.onPageFit = undefined;
     this.targetMarker?.destroy();
     this.screen?.clean?.();
     // @ts-ignore

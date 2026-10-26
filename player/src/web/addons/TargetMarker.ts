@@ -1,7 +1,6 @@
 import type Screen from '../Screen/Screen';
 import { clickmapStyles } from './clickmapStyles';
 import SimpleHeatmap from './simpleHeatmap';
-import { watchDocumentHeight } from './watchDocumentHeight';
 
 // Past these the browser either refuses to allocate the canvas (blank heatmap)
 // or every colorize pass costs hundreds of MB, so tall pages render downscaled.
@@ -32,30 +31,33 @@ export default class TargetMarker {
   private clickMapOverlay: HTMLCanvasElement | null = null;
   private heatmap: SimpleHeatmap | null = null;
   private onCluster?: (coords: ClusterCoords) => void = undefined;
-  private unwatchLayout?: () => void;
+  private clicks: ClickPoint[] | null = null;
 
-  /** @param rescale fits the screen to the document's current height */
-  constructor(
-    private readonly screen: Screen,
-    private readonly rescale?: () => void,
-  ) {}
+  constructor(private readonly screen: Screen) {}
 
   setOnCluster = (onCluster: (coords: ClusterCoords) => void) => {
     this.onCluster = onCluster;
   };
 
+  /** The drawn heat layer, in page pixels (possibly downscaled), for the minimap. */
+  get canvas(): HTMLCanvasElement | null {
+    return this.clickMapOverlay;
+  }
+
+  /** Clicks to draw on the next redraw(). */
+  setTargets(clicks: ClickPoint[] | null) {
+    this.clicks = clicks;
+  }
+
   injectTargets(clicks: ClickPoint[] | null) {
-    this.unwatchLayout?.();
-    this.unwatchLayout = undefined;
+    this.setTargets(clicks);
+    this.redraw();
+  }
+
+  /** Draws the current clicks again, sized to the document's current size. */
+  redraw() {
     this.removeClickMap();
-    const doc = this.screen.document;
-    if (!clicks || !doc) return;
-    this.drawClickMap(clicks);
-    this.unwatchLayout = watchDocumentHeight(doc, () => {
-      this.rescale?.();
-      this.removeClickMap();
-      this.drawClickMap(clicks);
-    });
+    if (this.clicks && this.screen.document) this.drawClickMap(this.clicks);
   }
 
   private drawClickMap(clicks: ClickPoint[]) {
@@ -133,8 +135,7 @@ export default class TargetMarker {
   }
 
   destroy() {
-    this.unwatchLayout?.();
-    this.unwatchLayout = undefined;
+    this.clicks = null;
     this.removeClickMap();
     this.onCluster = undefined;
   }

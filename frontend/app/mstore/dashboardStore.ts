@@ -1,5 +1,6 @@
+import { isScrollMapData } from '@/components/Dashboard/Widgets/CustomMetricsWidgets/ClickMapCard/scrollReach';
 import { calculateGranularities } from '@/components/Dashboard/components/WidgetDateRange/RangeGranularity';
-import { HEATMAP, HEATMAP_CLICKS } from '@/constants/card';
+import { HEATMAP, HEATMAP_CLICKS, HEATMAP_SCROLL_MAP } from '@/constants/card';
 import { CUSTOM_RANGE } from '@/dateRange';
 import { toast } from '@/ui/overlays/toast';
 import Period, { LAST_24_HOURS } from 'Types/app/period';
@@ -642,7 +643,10 @@ export default class DashboardStore {
         }
         if (points) {
           const loaded = await points;
-          data.points = Array.isArray(loaded) ? loaded : [];
+          // one request answers both: cells for a click map, depths for a scroll map
+          const scrollMap = metric.metricOf === HEATMAP_SCROLL_MAP;
+          data.points = !scrollMap && Array.isArray(loaded) ? loaded : [];
+          data.scroll = scrollMap && isScrollMapData(loaded) ? loaded : null;
         }
 
         const res = metric.setData(
