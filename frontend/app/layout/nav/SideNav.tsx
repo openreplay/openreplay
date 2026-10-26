@@ -47,7 +47,6 @@ import {
 import HealthStatus from 'Components/Header/HealthStatus';
 import SaasHeaderMenuItems from 'Components/Header/SaasHeaderMenuItems/SaasHeaderMenuItems';
 
-
 import AccountMenu from './AccountMenu';
 import { NavFlyout } from './NavFlyout';
 import { NavItem } from './NavItem';
@@ -55,6 +54,7 @@ import { NavSections } from './NavSections';
 import NavSupport from './NavSupport';
 import { ThemeToggle } from './ThemeToggle';
 import UserMenu from './UserMenu';
+import { monogramOf } from './monogram';
 import { prefetchRoute } from './prefetchRoutes';
 import { activeMenuKey, menuAliases, menuRoutes } from './routes';
 import './side-nav.css';
@@ -259,7 +259,7 @@ function SideNav({ collapsed, onToggleCollapsed, onNavigated }: SideNavProps) {
           data-test-id="project-dropdown"
         >
           <span className="m-nav__account-badge" aria-hidden="true">
-            {org.charAt(0).toUpperCase()}
+            {monogramOf(showCurrent && activeSite ? activeSite.host : org)}
           </span>
           <span className="m-nav__account-text">
             <span className="m-nav__account-name m-truncate">

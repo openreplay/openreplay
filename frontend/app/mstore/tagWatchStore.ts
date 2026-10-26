@@ -37,7 +37,7 @@ export default class TagWatchStore {
       const resp = await tagWatchService.getTags(
         pid!,
         this.page,
-        getRowsPerPage(),
+        getRowsPerPage('features'),
       );
       this.setTags(resp.tags || []);
       this.total = resp.total || 0;

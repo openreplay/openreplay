@@ -200,7 +200,7 @@ export default class AnalyticsStore {
     try {
       const data: EventsResponse = await analyticsService.getEvents({
         ...this.payloadFilters,
-        limit: getRowsPerPage(),
+        limit: getRowsPerPage('activity'),
         columns: eventListColumns,
       });
       this.setEvents(
@@ -240,13 +240,13 @@ export default class AnalyticsStore {
   private usersSeq = 0;
 
   /** Typing outruns the API: only the latest query's answer is applied. */
-  fetchUsers = async (query: string, propName?: string) => {
+  fetchUsers = async (query: string, propName?: string, list?: string) => {
     const seq = ++this.usersSeq;
     this.setLoading(true);
     try {
       const fullFilters = {
         ...this.usersPayloadFilters,
-        limit: getRowsPerPage(),
+        limit: getRowsPerPage(list),
         query,
       };
       if (propName) {

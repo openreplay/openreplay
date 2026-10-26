@@ -64,7 +64,7 @@ export default class RecordingsStore {
   async fetchRecordings() {
     const filter = {
       page: this.page,
-      limit: getRowsPerPage(),
+      limit: getRowsPerPage('recordings'),
       order: this.order,
       query: this.search,
       startTimestamp: this.period.start,

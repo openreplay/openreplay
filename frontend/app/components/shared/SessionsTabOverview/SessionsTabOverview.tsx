@@ -122,7 +122,7 @@ function SessionsTabOverview() {
   const { list, total, lastPlayedSessionIds } = sessionStore;
   const loading = sessionStore.loadingSessions;
   const { currentPage, activeTags } = searchStore;
-  const pageSize = useRowsPerPage();
+  const pageSize = useRowsPerPage('sessions');
   const { sort, order, startDate, endDate, rangeValue } = searchStore.instance;
   const orderKey = `${sort}-${order}` as OrderKey;
   const platform = projectsStore.active?.platform || 'web';
@@ -607,6 +607,7 @@ function SessionsTabOverview() {
               queue={queue}
             />
             <ListFooter
+              fit="sessions"
               page={currentPage}
               pageSize={pageSize}
               total={total}

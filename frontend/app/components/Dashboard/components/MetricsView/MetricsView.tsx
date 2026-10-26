@@ -48,7 +48,7 @@ function MetricsView({ siteId }: { siteId: string }) {
   const history = useHistory();
   const { metricStore } = useStore();
   const { filter, page, total, isLoading } = metricStore;
-  const pageSize = useRowsPerPage();
+  const pageSize = useRowsPerPage('cards');
   const cards = metricStore.filteredCards;
   const [query, setQuery] = React.useState<string>(filter.query ?? '');
   const [loaded, setLoaded] = React.useState(false);
@@ -308,6 +308,7 @@ function MetricsView({ siteId }: { siteId: string }) {
             ariaLabel={t('Cards')}
           />
           <ListFooter
+            fit="cards"
             page={page}
             pageSize={pageSize}
             total={total}

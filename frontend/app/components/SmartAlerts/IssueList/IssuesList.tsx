@@ -83,7 +83,7 @@ const MINE = '__mine__';
 
 function IssuesList() {
   const { issuesStore, projectsStore } = useStore();
-  const pageSize = useRowsPerPage();
+  const pageSize = useRowsPerPage('issues');
   const { t } = useTranslation();
   const toast = useToast();
   const siteId = projectsStore.activeSiteId;
@@ -678,6 +678,7 @@ function IssuesList() {
             ariaLabel={t('Issues')}
           />
           <ListFooter
+            fit="issues"
             page={issuesStore.page}
             pageSize={pageSize}
             total={issuesStore.total}

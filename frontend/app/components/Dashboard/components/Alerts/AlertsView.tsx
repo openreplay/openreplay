@@ -37,7 +37,7 @@ function AlertsView({ siteId }: { siteId: string }) {
   const location = useLocation();
   const { alertsStore, settingsStore } = useStore();
   const { alerts, alertsSearch, page } = alertsStore;
-  const pageSize = useRowsPerPage();
+  const pageSize = useRowsPerPage('alerts');
   const { webhooks } = settingsStore;
   const [loaded, setLoaded] = React.useState(false);
   const [deleting, setDeleting] = React.useState<Alert | null>(null);
@@ -201,6 +201,7 @@ function AlertsView({ siteId }: { siteId: string }) {
             ariaLabel={t('Alerts')}
           />
           <ListFooter
+            fit="alerts"
             page={page}
             pageSize={pageSize}
             total={list.length}

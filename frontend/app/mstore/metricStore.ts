@@ -410,7 +410,7 @@ export default class MetricStore {
     this.setLoading(true);
     const params: Record<string, any> = {
       page: this.page,
-      limit: getRowsPerPage(),
+      limit: getRowsPerPage('cards'),
       sortField: this.sort.field,
       sortOrder: this.sort.order === 'ascend' ? 'asc' : 'desc',
       name: this.filter.query,

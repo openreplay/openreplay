@@ -54,7 +54,6 @@ import {
   makeIssueSessionCard,
 } from 'App/components/SmartAlerts/factories';
 import { summarize } from 'App/components/SmartAlerts/segments/segmentUtils';
-import type { EventsOrder } from 'App/components/shared/FilterEditor/types';
 import {
   CAT_ORDER,
   type CategoryName,
@@ -63,6 +62,7 @@ import {
   type MatchMode,
   type SortMode,
 } from 'App/components/SmartAlerts/shared/model';
+import type { EventsOrder } from 'App/components/shared/FilterEditor/types';
 import { filterStore, searchStore, userStore } from 'App/mstore';
 import type FilterItem from 'App/mstore/types/filterItem';
 
@@ -371,7 +371,7 @@ export default class IssuesStore {
     this.loading = true;
     try {
       const { rows, total, categoryCounts } = await getIssues(this.projectId, {
-        limit: getRowsPerPage(),
+        limit: getRowsPerPage('issues'),
         page: this.page,
         journeyLabels: this.labels,
         journeyLabelsMatch: toLabelsMatch(this.match),

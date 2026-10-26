@@ -680,7 +680,7 @@ export default class SessionStore {
       const data = await sessionService.getAutoplayList({
         ...filter,
         page,
-        limit: getRowsPerPage(),
+        limit: getRowsPerPage('sessions'),
       });
       const ids = data
         .map((i: any) => `${i.sessionId}`)
@@ -736,7 +736,7 @@ export default class SessionStore {
       this.setBookmarksLoading(true);
       const params = {
         page: this.bookmarks.page,
-        limit: getRowsPerPage(),
+        limit: getRowsPerPage('bookmarks'),
         bookmarked: true,
       };
       const data = await sessionService.getSessions(params);

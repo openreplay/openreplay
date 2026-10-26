@@ -86,7 +86,7 @@ function ActivityPage() {
   );
 
   const { page, sortBy, sortOrder } = analyticsStore.payloadFilters;
-  const pageSize = useRowsPerPage();
+  const pageSize = useRowsPerPage('activity');
   const list = analyticsStore.events.events;
   const total = analyticsStore.events.total;
   const loading = analyticsStore.loading;
@@ -369,6 +369,7 @@ function ActivityPage() {
               ariaLabel={t('Activity log')}
             />
             <ListFooter
+              fit="activity"
               page={page}
               pageSize={pageSize}
               total={total}

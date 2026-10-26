@@ -59,6 +59,8 @@ class SearchStoreLive {
   total: number = 0;
   loadingFilterSearch = false;
   loading = false;
+  /** the Fit list the page size comes from: the CoBrowse page, not the multiview picker */
+  rowsList: string | undefined = undefined;
 
   constructor() {
     makeAutoObservable(this);
@@ -228,6 +230,10 @@ class SearchStoreLive {
     this.loading = val;
   };
 
+  setRowsList = (list?: string) => {
+    this.rowsList = list;
+  };
+
   private fetchSeq = 0;
 
   /** Unforced calls (the poll) skip while a request is in flight; forced ones
@@ -243,7 +249,7 @@ class SearchStoreLive {
         {
           ...this.instance.toSearch(),
           page: this.currentPage,
-          limit: getRowsPerPage(),
+          limit: getRowsPerPage(this.rowsList),
         },
         () => seq !== this.fetchSeq,
       );

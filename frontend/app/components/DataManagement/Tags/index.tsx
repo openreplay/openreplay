@@ -31,7 +31,7 @@ function TagsPage() {
   const { t } = useTranslation();
   const history = useHistory();
   const { tagWatchStore, projectsStore } = useStore();
-  const pageSize = useRowsPerPage();
+  const pageSize = useRowsPerPage('features');
   const siteId = projectsStore.siteId;
   const list = tagWatchStore.tags;
   const [openId, setOpenId] = React.useState<number | null>(null);
@@ -127,6 +127,7 @@ function TagsPage() {
             ariaLabel={t('Features')}
           />
           <ListFooter
+            fit="features"
             page={tagWatchStore.page}
             pageSize={pageSize}
             total={tagWatchStore.total}

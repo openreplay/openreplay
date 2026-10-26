@@ -140,7 +140,7 @@ function RunsTab() {
   );
   const [sortBy, setSortBy] = useState<TableSort>(NEWEST);
   const [page, setPage] = useState(1);
-  const pageSize = useRowsPerPage();
+  const pageSize = useRowsPerPage('runs');
 
   // adopt a cross-tab handoff exactly once when handoffId bumps — this pane stays
   // mounted between visits, so a fresh id is the signal
@@ -547,6 +547,7 @@ function RunsTab() {
             onRowClick={(run) => setOpenKey(run.key, true)}
           />
           <ListFooter
+            fit="runs"
             page={page}
             pageSize={pageSize}
             total={total}

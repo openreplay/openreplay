@@ -11,6 +11,7 @@ import { useModal } from 'Components/ModalContext';
 
 import { NavItem } from './NavItem';
 import './account-menu.css';
+import { monogramOf } from './monogram';
 
 const ProjectForm = React.lazy(
   () => import('Components/Client/Projects/ProjectForm'),
@@ -71,7 +72,7 @@ function AccountMenu({
     <div className="m-account-menu">
       <div className="m-account-menu__head">
         <span className="m-nav__account-badge" aria-hidden="true">
-          {org.charAt(0).toUpperCase()}
+          {monogramOf(org)}
         </span>
         <span className="m-nav__account-text">
           <span className="m-nav__account-name m-truncate">{org}</span>

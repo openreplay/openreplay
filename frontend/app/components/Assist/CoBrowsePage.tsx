@@ -199,7 +199,9 @@ export const LiveSection = observer(
     const total = sessionStore.totalLiveSessions;
     const loading = sessionStore.loadingLiveSessions;
     const { currentPage } = searchStoreLive;
-    const pageSize = useRowsPerPage();
+    const rowsList = onPick ? undefined : 'live';
+    const pageSize = useRowsPerPage(rowsList);
+    React.useEffect(() => searchStoreLive.setRowsList(rowsList), [rowsList]);
     const { sort, order } = searchStoreLive.instance;
     const noRules = editor.properties.length === 0;
 
@@ -370,6 +372,7 @@ export const LiveSection = observer(
                 rowDisabled={isPicked}
               />
               <ListFooter
+                fit={rowsList}
                 page={currentPage}
                 pageSize={pageSize}
                 total={total}
@@ -397,7 +400,7 @@ export const RecordingsSection = observer(() => {
   const { recordingsStore, settingsStore } = useStore();
   const { timezone } = settingsStore.sessionSettings;
   const { recordings, page, total, loading } = recordingsStore;
-  const pageSize = useRowsPerPage();
+  const pageSize = useRowsPerPage('recordings');
   const [query, setQuery] = React.useState(recordingsStore.search);
   const [renaming, setRenaming] = React.useState<IRecord | null>(null);
   const [deleting, setDeleting] = React.useState<IRecord | null>(null);
@@ -604,6 +607,7 @@ export const RecordingsSection = observer(() => {
             ariaLabel={t('Recorded calls')}
           />
           <ListFooter
+            fit="recordings"
             page={page}
             pageSize={pageSize}
             total={total}

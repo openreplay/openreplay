@@ -53,7 +53,7 @@ function ListPage() {
   const siteId = projectsStore.activeSiteId;
   const [query, setQuery] = React.useState('');
   const [page, setPage] = React.useState(1);
-  const pageSize = useRowsPerPage();
+  const pageSize = useRowsPerPage('properties');
   const [showHidden, setShowHidden] = React.useState(readShowHidden);
   const toggleHidden = (v: boolean) => {
     setShowHidden(v);
@@ -291,6 +291,7 @@ function ListPage() {
             ariaLabel={t('Properties')}
           />
           <ListFooter
+            fit="properties"
             page={page}
             pageSize={pageSize}
             total={visible.length}

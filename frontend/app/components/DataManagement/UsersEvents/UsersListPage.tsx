@@ -125,6 +125,7 @@ function UsersListPage() {
       >
         <PeopleTable
           query=""
+          fit="people"
           hidden={hidden}
           onOpen={open}
           empty={<NoPeople filtered={!noRules} />}

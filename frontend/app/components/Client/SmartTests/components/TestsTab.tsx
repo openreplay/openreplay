@@ -143,7 +143,7 @@ function TestsTab() {
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<TableSort | null>(null);
   const [page, setPage] = useState(1);
-  const pageSize = useRowsPerPage();
+  const pageSize = useRowsPerPage('tests');
   const [hidden, setHidden] = useState<string[]>(readHidden);
   const [deleteKeys, setDeleteKeys] = useState<string[]>([]);
   // the opened test drawer IS the ?test= param — open iff present. No separate state, so
@@ -1051,6 +1051,7 @@ function TestsTab() {
             onRowClick={(tc) => openRow(tc)}
           />
           <ListFooter
+            fit="tests"
             page={page}
             pageSize={pageSize}
             total={total}

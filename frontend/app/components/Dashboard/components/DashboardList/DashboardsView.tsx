@@ -61,7 +61,7 @@ function DashboardsView() {
   const [accessFor, setAccessFor] = React.useState<Dashboard | null>(null);
   const [deleting, setDeleting] = React.useState<Dashboard | null>(null);
   const [page, setPage] = React.useState(1);
-  const pageSize = useRowsPerPage();
+  const pageSize = useRowsPerPage('dashboards');
 
   const { query, showMine } = dashboardStore.filter;
   const list = dashboardStore.filteredList;
@@ -274,6 +274,7 @@ function DashboardsView() {
             ariaLabel={t('Dashboards')}
           />
           <ListFooter
+            fit="dashboards"
             page={page}
             pageSize={pageSize}
             total={list.length}

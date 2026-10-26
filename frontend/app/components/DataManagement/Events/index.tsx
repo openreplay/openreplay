@@ -54,7 +54,7 @@ function EventsListPage() {
   const [filter, setFilter] = React.useState<EventFilter>(readFilter);
   const [query, setQuery] = React.useState('');
   const [page, setPage] = React.useState(1);
-  const pageSize = useRowsPerPage();
+  const pageSize = useRowsPerPage('events');
   const {
     data = { events: [], total: 0 },
     isPending,
@@ -280,6 +280,7 @@ function EventsListPage() {
             ariaLabel={t('Events')}
           />
           <ListFooter
+            fit="events"
             page={page}
             pageSize={pageSize}
             total={visible.length}

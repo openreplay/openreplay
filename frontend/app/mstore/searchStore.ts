@@ -774,7 +774,7 @@ class SearchStore {
         {
           ...pickSearchRequestFields(filter),
           page: this.currentPage,
-          limit: getRowsPerPage(),
+          limit: getRowsPerPage('sessions'),
           bookmarked: bookmarked ? true : undefined,
         },
         // SessionStore skips a search whose filters match the persisted ones —

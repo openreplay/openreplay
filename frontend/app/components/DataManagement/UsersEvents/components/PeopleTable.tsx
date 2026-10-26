@@ -32,18 +32,27 @@ interface Props {
   hidden?: readonly string[];
   onOpen: (userId: string, e: React.MouseEvent) => void;
   empty: React.ReactNode;
+  /** the full-page list: rows per page offers Fit */
+  fit?: string;
 }
 
-function PeopleTable({ query, propName, hidden = [], onOpen, empty }: Props) {
+function PeopleTable({
+  query,
+  propName,
+  hidden = [],
+  onOpen,
+  empty,
+  fit,
+}: Props) {
   const { t } = useTranslation();
   const { analyticsStore, settingsStore } = useStore();
   const timezone = settingsStore.sessionSettings.timezone?.value;
   const { page, sortBy, sortOrder } = analyticsStore.usersPayloadFilters;
-  const pageSize = useRowsPerPage();
+  const pageSize = useRowsPerPage(fit);
   const { total, users } = analyticsStore.users;
 
   React.useEffect(() => {
-    void analyticsStore.fetchUsers(query, propName);
+    void analyticsStore.fetchUsers(query, propName, fit);
   }, [
     analyticsStore.usersPayloadFilters,
     analyticsStore.usersPayloadFilters.filters,
@@ -137,6 +146,7 @@ function PeopleTable({ query, propName, hidden = [], onOpen, empty }: Props) {
         ariaLabel={t('People')}
       />
       <ListFooter
+        fit={fit}
         page={page}
         pageSize={pageSize}
         total={total}

@@ -56,7 +56,7 @@ function SegmentsListPage() {
   const [fields, setFields] = React.useState<SegField[]>(ALL_FIELDS);
   const [query, setQuery] = React.useState('');
   const [page, setPage] = React.useState(1);
-  const pageSize = useRowsPerPage();
+  const pageSize = useRowsPerPage('segments');
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<SavedSegment | null>(null);
   const { segmentId } = useParams<{ segmentId?: string }>();
@@ -375,6 +375,7 @@ function SegmentsListPage() {
               onRowClick={openSegment}
             />
             <ListFooter
+              fit="segments"
               page={page}
               pageSize={pageSize}
               total={shown.length}

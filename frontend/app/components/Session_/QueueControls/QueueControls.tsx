@@ -36,7 +36,7 @@ function QueueControls(props: Props) {
   // prev/next point around the loaded session, so redo this on every hop
   useEffect(() => {
     setAutoplayValues();
-    const perPage = getRowsPerPage();
+    const perPage = getRowsPerPage('sessions');
     const totalPages = Math.ceil(total / perPage);
     const index = sessionIds.indexOf(sessionId);
 

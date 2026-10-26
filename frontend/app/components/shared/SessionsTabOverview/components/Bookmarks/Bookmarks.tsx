@@ -20,7 +20,7 @@ function Bookmarks() {
   const queue = useSessionQueue(String(projectsStore.activeSiteId ?? ''));
   const { isEnterprise } = userStore;
   const { bookmarks, lastPlayedSessionIds } = sessionStore;
-  const pageSize = useRowsPerPage();
+  const pageSize = useRowsPerPage('bookmarks');
   const { open, hover } = useOpenSession();
 
   usePageTitle(`${isEnterprise ? 'Vault' : 'Bookmarks'} - OpenReplay`);
@@ -70,6 +70,7 @@ function Bookmarks() {
             timezone={settingsStore.sessionSettings.timezone?.value}
           />
           <ListFooter
+            fit="bookmarks"
             page={bookmarks.page}
             pageSize={pageSize}
             total={bookmarks.total}
