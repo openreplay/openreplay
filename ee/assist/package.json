@@ -10,17 +10,15 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@fastify/deepmerge": "^3.0.0",
-    "@maxmind/geoip2-node": "^6.0.0",
+    "@fastify/deepmerge": "^3.2.4",
+    "@maxmind/geoip2-node": "^7.1.0",
     "async-mutex": "^0.5.0",
-    "express": "^4.22.2",
-    "ioredis": "^5.9.2",
-    "jsonwebtoken": "^9.0.2",
-    "redis": "^5.10.0",
-    "socket.io": "^4.8.1",
-    "socket.io-client": "^4.8.1",
+    "ioredis": "^6.0.0",
+    "jsonwebtoken": "^9.0.3",
+    "socket.io": "^4.8.4",
+    "socket.io-client": "^4.8.4",
     "ua-parser-js": "^2.0.10",
-    "uWebSockets.js": "https://github.com/uNetworking/uWebSockets.js.git#v20.57.0",
-    "winston": "^3.17.0"
+    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.71.0",
+    "winston": "^3.19.0"
   }
 }
