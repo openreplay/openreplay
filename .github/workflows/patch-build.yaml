@@ -222,6 +222,9 @@ jobs:
 
                 local foss_build_args="" ee_build_args="" build_script="$BUILD_SCRIPT_NAME"
                 local is_ee_only=false
+                # crons is EE-only and versioned in the utilities chart
+                local chart=$service
+                [[ $service == crons ]] && chart=utilities && is_ee_only=true
 
                 # Determine build configuration based on service type
                 if grep -qx "$service" "$BACKEND_SERVICES_FILE"; then
@@ -257,7 +260,7 @@ jobs:
 
                 # Get version and build
                 local version
-                version=$(image_version "$service")
+                version=$(image_version "$chart")
 
                 # Build FOSS and EE versions (skip FOSS for EE-only services)
                 if [[ $is_ee_only == false ]]; then
@@ -278,7 +281,7 @@ jobs:
                     ;;
                 esac
                 # Update chart and commit
-                update_chart_version "$service" "$version"
+                update_chart_version "$chart" "$version"
             done
             cd "$WORKING_DIR"
 
