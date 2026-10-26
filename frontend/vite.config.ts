@@ -21,7 +21,8 @@ const PLAYER_DIR = path.resolve(__dirname, '../player');
 const PLAYER_SRC_DIR = path.resolve(PLAYER_DIR, 'src');
 const STYLES_IMPORT_DIR = path.resolve(__dirname, 'app/styles/import');
 
-const COMPRESSIBLE_RE = /\.(js|css|html|json|svg|map)$/;
+// Sourcemaps skipped: only DevTools fetches them, not worth the q11 brotli pass.
+const COMPRESSIBLE_RE = /\.(js|css|html|json|svg)$/;
 const COMPRESS_MIN_BYTES = 1024;
 
 /* Emits .gz/.br next to every asset for nginx `gzip_static` / `brotli_static`,
