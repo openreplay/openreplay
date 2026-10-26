@@ -39,15 +39,16 @@ jobs:
 
     - name: Validate tag commits are in branch
       run: |
-        set -e
+        set -eo pipefail
         BRANCH_NAME=${{ github.event.inputs.branch }}
         TAG_NAME=${{ github.event.inputs.tag }}
         
         # Fetch the branch to ensure we have the latest
-        git fetch origin $BRANCH_NAME
+        # Explicit refspec: branch and tag can share a name (e.g. v1.27.0)
+        git fetch origin "refs/heads/$BRANCH_NAME:refs/remotes/origin/$BRANCH_NAME"
         
         # Check if tag has commits not in the branch using git cherry
-        UNMERGED_COMMITS=$(git cherry origin/$BRANCH_NAME $TAG_NAME | grep '^+' | wc -l)
+        UNMERGED_COMMITS=$(git cherry origin/$BRANCH_NAME $TAG_NAME | { grep '^+' || true; } | wc -l)
         
         if [ $UNMERGED_COMMITS -gt 0 ]; then
           echo "Error: Tag '$TAG_NAME' has commits not present in branch '$BRANCH_NAME'"
