@@ -1,4 +1,4 @@
-const client = require('prom-client')
+const client = require('@prometheus-io/client')
 
 // Create a Registry which registers the metrics
 const register = new client.Registry()
