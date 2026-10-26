@@ -44,16 +44,16 @@ jobs:
         TAG_NAME=${{ github.event.inputs.tag }}
         
         # Fetch the branch to ensure we have the latest
-        # Explicit refspec: branch and tag can share a name (e.g. v1.27.0)
-        git fetch origin "refs/heads/$BRANCH_NAME:refs/remotes/origin/$BRANCH_NAME"
+        # BRANCH_NAME may be a branch or a tag (e.g. v1.27.0); compare FETCH_HEAD
+        git fetch origin "$BRANCH_NAME"
         
         # Check if tag has commits not in the branch using git cherry
-        UNMERGED_COMMITS=$(git cherry origin/$BRANCH_NAME $TAG_NAME | { grep '^+' || true; } | wc -l)
+        UNMERGED_COMMITS=$(git cherry FETCH_HEAD $TAG_NAME | { grep '^+' || true; } | wc -l)
         
         if [ $UNMERGED_COMMITS -gt 0 ]; then
           echo "Error: Tag '$TAG_NAME' has commits not present in branch '$BRANCH_NAME'"
           echo "Unmerged commits:"
-          git cherry origin/$BRANCH_NAME $TAG_NAME | grep '^+'
+          git cherry FETCH_HEAD $TAG_NAME | grep '^+'
           exit 1
         fi
         
