@@ -1,4 +1,4 @@
-FROM node:25-alpine
+FROM node:26-alpine
 LABEL Maintainer="Zavorotynskiy Alexander <zavorotynskiy@pm.me>"
 RUN apk add --no-cache tini
 

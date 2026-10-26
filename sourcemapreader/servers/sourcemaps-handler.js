@@ -1,5 +1,4 @@
 'use strict';
-const fs = require('fs');
 const sourceMap = require('source-map');
 const {S3Client, GetObjectCommand} = require("@aws-sdk/client-s3");
 const {BlobServiceClient, StorageSharedKeyCredential} = require("@azure/storage-blob");
@@ -8,7 +7,6 @@ const http = require('http');
 const https = require('https');
 const dns = require('dns');
 const net = require('net');
-const wasm = fs.readFileSync(process.env.MAPPING_WASM || '/mappings.wasm');
 
 const FETCH_TIMEOUT_MS = parseInt(process.env.SOURCEMAP_FETCH_TIMEOUT_MS) || 15000;
 const MAX_SOURCEMAP_SIZE_BYTES = (parseInt(process.env.SOURCEMAP_MAX_SIZE_MB) || 100) * 1024 * 1024;
@@ -72,12 +70,6 @@ function safeLookup(hostname, options, callback) {
         return callback(null, addresses[0].address, addresses[0].family);
     });
 }
-sourceMap.SourceMapConsumer.initialize({
-    "lib/mappings.wasm": wasm
-});
-
-console.log(`>sourceMap initialised using ${process.env.MAPPING_WASM || '/mappings.wasm'}`);
-
 function parseSourcemap(sourcemap, event, options, resolve, reject) {
     const getObjectEnd = Date.now();
     try {
