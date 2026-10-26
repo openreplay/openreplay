@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Dry-run the "Build" step of .github/workflows/patch-build-old.yaml with
 # build scripts and git stubbed out; asserts which scripts get called.
-# Usage: bash .github/tests/patch-build-old.sh
+# Usage: bash .github/tests/patch-build-old.sh [workflow file, default patch-build-old.yaml]
 set -euo pipefail
+wf=${1:-patch-build-old.yaml}
 SERVICES=chalice,alerts,crons,frontend
 root=$(git rev-parse --show-toplevel)
 tmp=$(mktemp -d)
@@ -20,7 +21,7 @@ mkdir -p $tmp/msaas/openreplay/{api,frontend,backend}
 cat >$tmp/run.sh <<'EOF'
 bash() {
   echo "$(basename $PWD)|$*|$IMAGE_TAG|$ARCH" >>$CALLS
-  [[ $1 != build_crons.sh || $2 == ee ]] || return 100 # mirrors api/build_crons.sh
+  [[ $1 != build_crons.sh || ${2:-} == ee ]] || return 100 # mirrors api/build_crons.sh
 }
 env() { # newer workflows wrap builds as `run_build env K=V bash ...`
   while [[ $1 == *=* ]]; do export "$1"; shift; done
@@ -29,10 +30,10 @@ env() { # newer workflows wrap builds as `run_build env K=V bash ...`
 git() { :; }
 cp() { :; }
 EOF
-yq '.jobs.*.steps[] | select(.name == "Build") | .run' $root/.github/workflows/patch-build-old.yaml |
+yq '.jobs.*.steps[] | select(.name == "Build") | .run' $root/.github/workflows/$wf |
   sed 's/\${{ github.event.inputs.services }}/'"$SERVICES"'/' >>$tmp/run.sh
 
-export CALLS=$tmp/calls MSAAS_REPO_FOLDER=$tmp/msaas
+export CALLS=$tmp/calls MSAAS_REPO_FOLDER=$tmp/msaas SERVICES_INPUT=$SERVICES BRANCH_NAME=test DOCKER_REPO_OSS=oss DOCKER_REPO_ARM=arm
 (cd $tmp/repo && /bin/bash $tmp/run.sh >/dev/null 2>$tmp/err) ||
   { echo "FAIL: build step exited non-zero"; tail -3 $tmp/err; cat $CALLS; exit 1; }
 
