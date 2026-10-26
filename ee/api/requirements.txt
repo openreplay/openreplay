@@ -27,11 +27,6 @@ apscheduler==3.11.3
 python3-saml==1.16.0
 python-multipart==0.0.32
 
-# SCIM packages for user/group provisioning
-scim2-models==0.12.2
-scim2-server==0.8.2
-scim2-filter-parser==0.7.0
-werkzeug==3.1.9
 
 redis==8.1.0
 #confluent-kafka==2.1.0
