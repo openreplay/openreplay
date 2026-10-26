@@ -1,16 +1,9 @@
 'use strict';
-const fs = require('fs');
 const sourceMap = require('source-map');
 const {S3Client, GetObjectCommand} = require("@aws-sdk/client-s3");
 const {BlobServiceClient, StorageSharedKeyCredential} = require("@azure/storage-blob");
 const URL = require('url');
 const http = require('http');
-const wasm = fs.readFileSync(process.env.MAPPING_WASM || '/mappings.wasm');
-sourceMap.SourceMapConsumer.initialize({
-    "lib/mappings.wasm": wasm
-});
-
-console.log(`>sourceMap initialised using ${process.env.MAPPING_WASM || '/mappings.wasm'}`);
 
 function parseSourcemap(sourcemap, event, options, resolve, reject) {
     const getObjectEnd = Date.now();
