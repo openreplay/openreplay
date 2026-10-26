@@ -177,8 +177,7 @@ def is_scim_configured():
 
 
 def is_scim_available():
-    return is_scim_configured() \
-        and __scim_helpers.is_scim_available()
+    return False
 
 
 def group_name_to_role_name(group_name: str) -> str:

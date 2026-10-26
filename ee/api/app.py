@@ -19,6 +19,7 @@ from chalicelib.core import traces
 from chalicelib.utils import events_queue
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client, ch_client
+from chalicelib.utils.log import sanitize
 from crons import core_crons, ee_crons, core_dynamic_crons
 from routers import core, core_dynamic
 from routers import ee
@@ -35,8 +36,6 @@ from routers.subs import v1_api_ee
 
 if config("ENABLE_SSO", cast=bool, default=True):
     from routers import saml
-    from routers.scim import api as scim
-    from routers.scim.middlewares import PrefixMiddleware
     from chalicelib.utils import SAML2_helper
 
 loglevel = config("LOGLEVEL", default=logging.WARNING)
@@ -125,11 +124,11 @@ IGNORE_ENDPOINT_LOG = ["/"]
 
 @app.middleware("http")
 async def log_all_requests(request: Request, call_next):
-    method = request.method
-    endpoint = request.url.path
+    method = sanitize(request.method, max_length=16)
+    endpoint = sanitize(request.url.path)
     response: Response = await call_next(request)
     # Log all endpoints except health check
-    if endpoint not in IGNORE_ENDPOINT_LOG or response.status_code != 200:
+    if request.url.path not in IGNORE_ENDPOINT_LOG or response.status_code != 200:
         logger.info(f"{method}:{endpoint} {response.status_code}")
     return response
 
@@ -149,16 +148,17 @@ async def or_middleware(request: Request, call_next):
     try:
         response: StreamingResponse = await call_next(request)
     except:
-        logging.error(f"{request.method}: {request.url.path} FAILED!")
+        logging.error(f"{sanitize(request.method, max_length=16)}: {sanitize(request.url.path)} FAILED!")
         raise
     if response.status_code // 100 != 2:
-        logging.warning(f"{request.method}:{request.url.path} {response.status_code}!")
+        logging.warning(
+            f"{sanitize(request.method, max_length=16)}:{sanitize(request.url.path)} {response.status_code}!")
     if helper.TRACK_TIME:
         now = time.time() - now
         if now > 2:
             now = round(now, 2)
             logging.warning(
-                f"Execution time: {now} s for {request.method}: {request.url.path}"
+                f"Execution time: {now} s for {sanitize(request.method, max_length=16)}: {sanitize(request.url.path)}"
             )
     response.headers["x-robots-tag"] = "noindex, nofollow"
     return response
@@ -208,11 +208,3 @@ if config("ENABLE_SSO", cast=bool, default=True):
     app.include_router(saml.public_app)
     app.include_router(saml.app)
     app.include_router(saml.app_apikey)
-    app.include_router(scim.public_app)
-    app.include_router(scim.app)
-    app.include_router(scim.app_apikey)
-
-    if SAML2_helper.is_scim_configured():
-        logger.info("SCIM configured, mounting endpoints...")
-        SCIM_MOUNT_PATH = "/sso/scim/v2"
-        app.mount(SCIM_MOUNT_PATH, WSGIMiddleware(PrefixMiddleware(scim.scim_app, SCIM_MOUNT_PATH)))

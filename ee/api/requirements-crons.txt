@@ -1,18 +1,23 @@
-urllib3==2.6.3
-requests==2.32.5
-boto3==1.42.36
-pyjwt==2.10.1
-psycopg2-binary==2.9.11
-psycopg[pool,binary]==3.3.2
-clickhouse-connect==0.10.0
-elasticsearch==9.2.1
+#these dependencies are used to solve vulnerabilities, to be removed in the future
+certifi==2026.10.19
+
+#required dependencies
+urllib3==2.8.0
+requests==2.34.2
+boto3==1.43.118
+pyjwt==2.15.1
+cryptography==50.0.2
+psycopg2-binary==2.9.13
+psycopg[pool,binary]==3.3.6
+clickhouse-connect==1.11.0
+elasticsearch==9.5.1
 jira==3.10.5
-cachetools==6.2.6
+cachetools==7.2.4
 
-fastapi==0.128.0
+fastapi==0.161.1
 python-decouple==3.8
-pydantic[email]==2.12.5
-apscheduler==3.11.2
+pydantic[email]==2.14.1
+apscheduler==3.11.3
 
-redis==7.1.0
-azure-storage-blob==12.28.0
+redis==8.1.0
+azure-storage-blob==12.31.0
