@@ -12,14 +12,21 @@ import (
 	"openreplay/backend/pkg/server/api"
 	"openreplay/backend/pkg/server/user"
 	"openreplay/backend/pkg/sessions"
+	"openreplay/backend/pkg/trails"
 	vapi "openreplay/backend/pkg/videoreplays/api"
 	vsvc "openreplay/backend/pkg/videoreplays/service"
 )
 
 func eeServices(d eeDeps) ([]api.Handlers, []Worker, error) {
+	requestHandler := api.NewRequestHandler(d.log, api.NewResponser(d.webMetrics), d.cfg.JsonSizeLimit)
+	trailsHandlers, err := trails.NewHandlers(d.log, requestHandler, trails.New(d.pgconn))
+	if err != nil {
+		return nil, nil, err
+	}
+
 	if !d.cfg.ReplayExportEnabled {
 		d.log.Info(context.Background(), "replay export disabled, skipping video-replays setup")
-		return nil, nil, nil
+		return []api.Handlers{trailsHandlers}, nil, nil
 	}
 
 	vcfg := videoConfig.New(d.log)
@@ -65,5 +72,5 @@ func eeServices(d eeDeps) ([]api.Handlers, []Worker, error) {
 		return nil, nil, err
 	}
 
-	return []api.Handlers{handlers}, []Worker{newConsumerWorker(d.log, consumer)}, nil
+	return []api.Handlers{trailsHandlers, handlers}, []Worker{newConsumerWorker(d.log, consumer)}, nil
 }
