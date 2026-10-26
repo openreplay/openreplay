@@ -83,6 +83,7 @@ func (t *tracerImpl) logRequest(r *http.Request, bodyBytes []byte, statusCode in
 			params[key] = values[0]
 		}
 	}
+	redactValue(params)
 	jsonData, err := json.Marshal(params)
 	if err != nil {
 		t.log.Error(r.Context(), "failed to marshal query parameters: %s", err)
@@ -92,7 +93,7 @@ func (t *tracerImpl) logRequest(r *http.Request, bodyBytes []byte, statusCode in
 		Method:     r.Method,
 		PathFormat: pathTemplate,
 		Endpoint:   r.URL.Path,
-		Payload:    bodyBytes,
+		Payload:    redactPayload(bodyBytes),
 		Parameters: jsonData,
 		Status:     statusCode,
 	}
