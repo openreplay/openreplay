@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -52,10 +53,12 @@ import (
 	projectsAdmin "openreplay/backend/pkg/projects/admin"
 	replayAPI "openreplay/backend/pkg/replays/api"
 	"openreplay/backend/pkg/replays/service"
+	"openreplay/backend/pkg/senders"
 	"openreplay/backend/pkg/server/api"
 	"openreplay/backend/pkg/session"
 	sessionAPI "openreplay/backend/pkg/session/api"
 	tagAdmin "openreplay/backend/pkg/tags/admin"
+	"openreplay/backend/pkg/team"
 	"openreplay/backend/pkg/views"
 	"openreplay/backend/pkg/webhooks"
 )
@@ -84,6 +87,7 @@ type serviceBuilder struct {
 	projectsAdminAPI   api.Handlers
 	accountsAPI        api.Handlers
 	webhooksAPI        api.Handlers
+	teamAPI            api.Handlers
 	extraHandlers      []api.Handlers
 	workers            []Worker
 	wg                 sync.WaitGroup
@@ -91,7 +95,7 @@ type serviceBuilder struct {
 
 func (b *serviceBuilder) Handlers() []api.Handlers {
 	handlers := []api.Handlers{b.sessionAPI, b.eventAPI, b.filtersCatalogAPI, b.analyticsEventsAPI, b.favoriteAPI, b.noteAPI, b.replayAPI, b.apiKeyAPI, b.conditionsAPI,
-		b.chartsAPI, b.dashboardsAPI, b.cardsAPI, b.searchAPI, b.savedSearchesAPI, b.usersAPI, b.lexiconAPI, b.tagsAdminAPI, b.integrationsAPI, b.alertsAPI, b.notificationsAPI, b.projectsAdminAPI, b.accountsAPI, b.webhooksAPI}
+		b.chartsAPI, b.dashboardsAPI, b.cardsAPI, b.searchAPI, b.savedSearchesAPI, b.usersAPI, b.lexiconAPI, b.tagsAdminAPI, b.integrationsAPI, b.alertsAPI, b.notificationsAPI, b.projectsAdminAPI, b.accountsAPI, b.webhooksAPI, b.teamAPI}
 	return append(handlers, b.extraHandlers...)
 }
 
@@ -304,6 +308,17 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		return nil, err
 	}
 
+	var mailer team.Mailer
+	if email, err := senders.NewEmail(cfg.SMTP); err != nil {
+		log.Warn(context.Background(), "invitation emails disabled: %s", err)
+	} else {
+		mailer = email
+	}
+	teamHandlers, err := team.NewHandlers(log, requestHandler, team.New(log, cfg, pgconn, mailer))
+	if err != nil {
+		return nil, err
+	}
+
 	extraHandlers, workers, err := eeServices(eeDeps{
 		log:        log,
 		cfg:        cfg,
@@ -344,6 +359,7 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		projectsAdminAPI:   projectsAdminHandlers,
 		accountsAPI:        accountsHandlers,
 		webhooksAPI:        webhooksHandlers,
+		teamAPI:            teamHandlers,
 		extraHandlers:      extraHandlers,
 		workers:            workers,
 	}, nil
