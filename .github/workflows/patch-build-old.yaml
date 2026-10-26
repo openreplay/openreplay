@@ -180,18 +180,18 @@ jobs:
           [[ $SERVICE == 'crons' ]] && chart=utilities && is_ee_only=true
           foss_build_args=""
           # Check if service is backend (FOSS)
-          if grep -q $SERVICE /tmp/backend.txt; then 
+          if grep -qx $SERVICE /tmp/backend.txt; then 
             cd backend 
             foss_build_args="nil $SERVICE"
             ee_build_args="ee $SERVICE"
           # Check if service is EE-only backend
-          elif grep -q $SERVICE /tmp/ee_backend.txt; then
+          elif grep -qx $SERVICE /tmp/ee_backend.txt; then
             cd backend
             foss_build_args="nil $SERVICE"
             ee_build_args="ee $SERVICE"
             # EE-only services (not in backend/cmd) - skip FOSS build
             # These include: video-replays, connector
-            if ! grep -q $SERVICE /tmp/backend.txt; then
+            if ! grep -qx $SERVICE /tmp/backend.txt; then
               is_ee_only=true
             fi
           else 
