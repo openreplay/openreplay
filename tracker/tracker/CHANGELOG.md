@@ -1,3 +1,7 @@
+## 19.0.2
+
+- keep people actions in order when squashing a batch (by [@RaphaelFakhri](https://github.com/RaphaelFakhri) #5046)
+
 ## 19.0.1
 
 - fix squashing order for analytics batcher to prevent dropping original values by "set_once" actions (by [@samrah-rup](https://github.com/sarmah-rup) fixes #4941)
