@@ -79,7 +79,7 @@ func TestEEAccountJSON(t *testing.T) {
 }
 
 func TestOptionalSettingsDoNotExit(t *testing.T) {
-	for _, key := range []string{"SAML2_MD_URL", "idp_entityId", "idp_sso_url", "idp_x509cert", "iceServers", "assist_secret", "assist_ttl", "ASSIST_TTL"} {
+	for _, key := range []string{"SAML2_MD_URL", "idp_entityId", "idp_sso_url", "idp_x509cert", "iceServers", "assist_secret", "assist_ttl"} {
 		t.Setenv(key, "")
 	}
 	if saml2Available() {
@@ -88,8 +88,8 @@ func TestOptionalSettingsDoNotExit(t *testing.T) {
 	if got := withLegacy("", "iceServers"); got != "" {
 		t.Fatalf("got %q, want empty", got)
 	}
-	if got := assistTTL(48); got != 48 {
-		t.Fatalf("got %d, want 48", got)
+	if got := assistTTL(0); got != 48 {
+		t.Fatalf("an unset ttl must default to 48, got %d", got)
 	}
 
 	t.Setenv("idp_entityId", "e")
@@ -109,7 +109,14 @@ func TestLegacyAssistSettings(t *testing.T) {
 	if got := withLegacy("turn:new.example.com", "iceServers"); got != "turn:new.example.com" {
 		t.Fatalf("the Go setting must win, got %q", got)
 	}
-	if got := assistTTL(48); got != 12 {
+	if got := assistTTL(0); got != 12 {
 		t.Fatalf("legacy assist_ttl must apply when ASSIST_TTL is unset, got %d", got)
+	}
+	if got := assistTTL(24); got != 24 {
+		t.Fatalf("a configured ASSIST_TTL must win over assist_ttl, got %d", got)
+	}
+	t.Setenv("assist_ttl", "0")
+	if got := assistTTL(0); got != 48 {
+		t.Fatalf("a non-positive assist_ttl must fall back to 48, got %d", got)
 	}
 }

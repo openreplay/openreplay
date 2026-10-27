@@ -117,6 +117,34 @@ func (r *AccountRequest) Normalize() error {
 	return nil
 }
 
+type accountChanges struct {
+	renameUser   bool
+	renameTenant bool
+	changeOptOut bool
+}
+
+func (r *AccountRequest) changes(current *AccountInfo, isAdmin bool) (accountChanges, error) {
+	c := accountChanges{
+		renameUser:   r.Name != nil && *r.Name != "" && *r.Name != current.Name,
+		renameTenant: r.TenantName != nil && *r.TenantName != "" && *r.TenantName != current.TenantName,
+		changeOptOut: r.OptOut != nil && *r.OptOut != current.OptOut,
+	}
+	if (c.renameTenant || c.changeOptOut) && !isAdmin {
+		return c, ErrUnauthorized
+	}
+	if c.renameUser {
+		if err := validateAccountName("name", *r.Name); err != nil {
+			return c, ValidationError{err}
+		}
+	}
+	if c.renameTenant {
+		if err := validateAccountName("tenantName", *r.TenantName); err != nil {
+			return c, ValidationError{err}
+		}
+	}
+	return c, nil
+}
+
 type AccountInfo struct {
 	Name       string `json:"name"`
 	TenantName string `json:"tenantName"`

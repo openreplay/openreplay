@@ -3,7 +3,6 @@ package accounts
 import (
 	"errors"
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -136,13 +135,13 @@ func withLegacy(value, legacyKey string) string {
 }
 
 func assistTTL(configured int) int {
-	if v, ok := os.LookupEnv("ASSIST_TTL"); ok && v != "" {
+	if configured > 0 {
 		return configured
 	}
-	if legacy, err := strconv.Atoi(env.StringOptional("assist_ttl")); err == nil {
+	if legacy, err := strconv.Atoi(env.StringOptional("assist_ttl")); err == nil && legacy > 0 {
 		return legacy
 	}
-	return configured
+	return assist.DefaultTurnTTLHours
 }
 
 func (h *handlersImpl) getAssistCredentials(r *api.RequestContext) (any, int, error) {

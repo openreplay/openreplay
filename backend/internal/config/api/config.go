@@ -37,7 +37,7 @@ type Config struct {
 	AssistJwtIssuer       string        `env:"JWT_ISSUER,default=openreplay"`
 	AssistJwtExpiration   int64         `env:"ASSIST_JWT_EXPIRATION,default=144000"`
 	AssistSecret          string        `env:"ASSIST_SECRET"`
-	AssistTTL             int           `env:"ASSIST_TTL,default=48"`
+	AssistTTL             int           `env:"ASSIST_TTL"`
 	IceServers            string        `env:"ICE_SERVERS"`
 	SiteURL               string        `env:"SITE_URL"`
 	InvitationLink        string        `env:"INVITATION_LINK,default=/api/users/invitation?token=%s"`

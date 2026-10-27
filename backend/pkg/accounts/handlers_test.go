@@ -105,7 +105,7 @@ func TestUpdateAccount(t *testing.T) {
 
 	svc.updateErr = ValidationError{errors.New("name contains invalid characters")}
 	if _, code, err := h.updateAccount(newRequest(&user.User{Role: "member"}, `{"name":"<b>"}`)); code != http.StatusBadRequest || err.Error() != "name contains invalid characters" {
-		t.Fatalf("invalid name must be rejected with 400, got %d %v", code, err)
+		t.Fatalf("a service ValidationError must map to 400 with its message, got %d %v", code, err)
 	}
 	svc.updateErr = nil
 	if _, code, _ := h.updateAccount(newRequest(&user.User{Role: "member"}, `{"name":`)); code != http.StatusBadRequest {

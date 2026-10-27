@@ -2,6 +2,7 @@ package accounts
 
 import (
 	"encoding/json"
+	"errors"
 	"reflect"
 	"strings"
 	"testing"
@@ -53,6 +54,49 @@ func TestValidateAccountName(t *testing.T) {
 		if err := validateAccountName("name", bad); err == nil {
 			t.Fatalf("%q must be rejected", bad)
 		}
+	}
+}
+
+func TestAccountChanges(t *testing.T) {
+	current := &AccountInfo{Name: "Go API test (OSS)", TenantName: "Acme (EU)", OptOut: false}
+	tests := []struct {
+		name    string
+		req     AccountRequest
+		isAdmin bool
+		want    accountChanges
+		wantErr error
+	}{
+		{"unchanged invalid names are kept", AccountRequest{Name: strPtr("Go API test (OSS)"), TenantName: strPtr("Acme (EU)"), OptOut: boolPtr(false)}, false, accountChanges{}, nil},
+		{"empty names are no-ops", AccountRequest{Name: strPtr(""), TenantName: strPtr("")}, false, accountChanges{}, nil},
+		{"member renames self", AccountRequest{Name: strPtr("Ana María")}, false, accountChanges{renameUser: true}, nil},
+		{"changed invalid name", AccountRequest{Name: strPtr("<b>")}, false, accountChanges{renameUser: true}, ValidationError{}},
+		{"member renames tenant", AccountRequest{TenantName: strPtr("Acme")}, false, accountChanges{renameTenant: true}, ErrUnauthorized},
+		{"member flips optOut", AccountRequest{OptOut: boolPtr(true)}, false, accountChanges{changeOptOut: true}, ErrUnauthorized},
+		{"admin renames tenant and flips optOut", AccountRequest{TenantName: strPtr("Acme & Co"), OptOut: boolPtr(true)}, true, accountChanges{renameTenant: true, changeOptOut: true}, nil},
+		{"admin sets invalid tenant name", AccountRequest{TenantName: strPtr("Acme (US)")}, true, accountChanges{renameTenant: true}, ValidationError{}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.req.changes(current, tt.isAdmin)
+			switch tt.wantErr.(type) {
+			case nil:
+				if err != nil {
+					t.Fatalf("unexpected error: %s", err)
+				}
+			case ValidationError:
+				var invalid ValidationError
+				if !errors.As(err, &invalid) {
+					t.Fatalf("got %v, want a ValidationError", err)
+				}
+			default:
+				if !errors.Is(err, tt.wantErr) {
+					t.Fatalf("got %v, want %v", err, tt.wantErr)
+				}
+			}
+			if got != tt.want {
+				t.Fatalf("got %+v, want %+v", got, tt.want)
+			}
+		})
 	}
 }
 

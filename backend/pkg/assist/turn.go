@@ -11,6 +11,8 @@ import (
 	"time"
 )
 
+const DefaultTurnTTLHours = 48
+
 var (
 	ErrNoTurnSecret   = errors.New("secret not defined")
 	ErrInvalidTurnTTL = errors.New("assist ttl must be positive")

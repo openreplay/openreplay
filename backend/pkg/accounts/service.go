@@ -142,24 +142,12 @@ func (s *serviceImpl) Update(ctx context.Context, tenantID, userID uint64, isAdm
 		return nil, fmt.Errorf("get user: %s", err)
 	}
 
-	renameTenant := req.TenantName != nil && *req.TenantName != "" && *req.TenantName != current.TenantName
-	changeOptOut := req.OptOut != nil && *req.OptOut != current.OptOut
-	renameUser := req.Name != nil && *req.Name != "" && *req.Name != current.Name
-	if (renameTenant || changeOptOut) && !isAdmin {
-		return nil, ErrUnauthorized
-	}
-	if renameUser {
-		if err := validateAccountName("name", *req.Name); err != nil {
-			return nil, ValidationError{err}
-		}
-	}
-	if renameTenant {
-		if err := validateAccountName("tenantName", *req.TenantName); err != nil {
-			return nil, ValidationError{err}
-		}
+	changes, err := req.changes(current, isAdmin)
+	if err != nil {
+		return nil, err
 	}
 
-	if renameUser {
+	if changes.renameUser {
 		args["name"] = *req.Name
 		if err := tx.TxExec(`
 			UPDATE public.users
@@ -170,13 +158,13 @@ func (s *serviceImpl) Update(ctx context.Context, tenantID, userID uint64, isAdm
 			return nil, fmt.Errorf("update user name: %s", err)
 		}
 	}
-	if renameTenant || changeOptOut {
+	if changes.renameTenant || changes.changeOptOut {
 		args["tenantName"] = current.TenantName
 		args["optOut"] = current.OptOut
-		if renameTenant {
+		if changes.renameTenant {
 			args["tenantName"] = *req.TenantName
 		}
-		if changeOptOut {
+		if changes.changeOptOut {
 			args["optOut"] = *req.OptOut
 		}
 		if err := tx.TxExec(`

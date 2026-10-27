@@ -28,7 +28,11 @@ func unwrapAssistData(resp interface{}) interface{} {
 }
 
 func (h *handlersImpl) getAssistCredentials(r *api.RequestContext) (any, int, error) {
-	creds, err := assist.NewTurnCredentials(h.cfg.AssistSecret, h.cfg.AssistTTL, time.Now())
+	ttl := h.cfg.AssistTTL
+	if ttl <= 0 {
+		ttl = assist.DefaultTurnTTLHours
+	}
+	creds, err := assist.NewTurnCredentials(h.cfg.AssistSecret, ttl, time.Now())
 	if err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
