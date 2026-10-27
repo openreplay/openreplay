@@ -150,10 +150,11 @@ func (s *teamImpl) createOrRestore(tx *pool.Tx, m *newMember) (int64, error) {
 		return userID, nil
 	case err == nil:
 		if err := tx.TxExec(`
-			DELETE FROM public.users
+			UPDATE public.users
+			SET email = 'deleted-' || users.user_id || '-' || users.email
 			WHERE users.user_id = @userId
 			  AND users.deleted_at IS NOT NULL`, pgx.NamedArgs{"userId": userID}); err != nil {
-			return 0, fmt.Errorf("remove deleted user from another tenant: %s", err)
+			return 0, fmt.Errorf("release email of deleted user from another tenant: %s", err)
 		}
 	case !errors.Is(err, pgx.ErrNoRows):
 		return 0, fmt.Errorf("find deleted user: %s", err)
