@@ -77,7 +77,9 @@ const (
 	MsgNetworkRequest                     = 83
 	MsgWSChannel                          = 84
 	MsgResourceTiming                     = 85
+	MsgScrollDepth                        = 86
 	MsgIncident                           = 87
+	MsgPageHeight                         = 88
 	MsgLongAnimationTask                  = 89
 	MsgInputChange                        = 112
 	MsgSelectionChange                    = 113
@@ -2115,6 +2117,27 @@ func (msg *ResourceTiming) TypeID() int {
 	return 85
 }
 
+type ScrollDepth struct {
+	message
+	Percent uint64
+}
+
+func (msg *ScrollDepth) Encode() []byte {
+	buf := make([]byte, 11)
+	buf[0] = 86
+	p := 1
+	p = WriteUint(msg.Percent, buf, p)
+	return buf[:p]
+}
+
+func (msg *ScrollDepth) Decode() Message {
+	return msg
+}
+
+func (msg *ScrollDepth) TypeID() int {
+	return 86
+}
+
 type Incident struct {
 	message
 	Label     string
@@ -2138,6 +2161,29 @@ func (msg *Incident) Decode() Message {
 
 func (msg *Incident) TypeID() int {
 	return 87
+}
+
+type PageHeight struct {
+	message
+	Height         uint64
+	ViewportHeight uint64
+}
+
+func (msg *PageHeight) Encode() []byte {
+	buf := make([]byte, 21)
+	buf[0] = 88
+	p := 1
+	p = WriteUint(msg.Height, buf, p)
+	p = WriteUint(msg.ViewportHeight, buf, p)
+	return buf[:p]
+}
+
+func (msg *PageHeight) Decode() Message {
+	return msg
+}
+
+func (msg *PageHeight) TypeID() int {
+	return 88
 }
 
 type LongAnimationTask struct {

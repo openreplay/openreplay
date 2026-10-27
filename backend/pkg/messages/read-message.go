@@ -1314,6 +1314,15 @@ func DecodeResourceTiming(reader *bytesReaderImpl) (Message, error) {
 	return msg, err
 }
 
+func DecodeScrollDepth(reader *bytesReaderImpl) (Message, error) {
+	var err error = nil
+	msg := &ScrollDepth{}
+	if msg.Percent, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
 func DecodeIncident(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &Incident{}
@@ -1324,6 +1333,18 @@ func DecodeIncident(reader *bytesReaderImpl) (Message, error) {
 		return nil, err
 	}
 	if msg.EndTime, err = reader.ReadInt(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
+func DecodePageHeight(reader *bytesReaderImpl) (Message, error) {
+	var err error = nil
+	msg := &PageHeight{}
+	if msg.Height, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.ViewportHeight, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
 	return msg, err
@@ -2195,8 +2216,12 @@ func ReadMessage(t uint64, reader *bytesReaderImpl) (Message, error) {
 		return DecodeWSChannel(reader)
 	case 85:
 		return DecodeResourceTiming(reader)
+	case 86:
+		return DecodeScrollDepth(reader)
 	case 87:
 		return DecodeIncident(reader)
+	case 88:
+		return DecodePageHeight(reader)
 	case 89:
 		return DecodeLongAnimationTask(reader)
 	case 112:

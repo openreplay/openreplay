@@ -743,6 +743,13 @@ class ResourceTiming(Message):
         self.stalled = stalled
 
 
+class ScrollDepth(Message):
+    __id__ = 86
+
+    def __init__(self, percent):
+        self.percent = percent
+
+
 class Incident(Message):
     __id__ = 87
 
@@ -750,6 +757,14 @@ class Incident(Message):
         self.label = label
         self.start_time = start_time
         self.end_time = end_time
+
+
+class PageHeight(Message):
+    __id__ = 88
+
+    def __init__(self, height, viewport_height):
+        self.height = height
+        self.viewport_height = viewport_height
 
 
 class LongAnimationTask(Message):

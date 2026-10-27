@@ -465,10 +465,22 @@ message 85, 'ResourceTiming', :replayer => :devtools, :pipeline => 'd' do
   uint 'Stalled'
 end
 
+# Scroll maps. Player stream (no pipeline) so they stay ordered with SetPageLocation.
+# Deepest point of the page seen so far, % of its height, sent on each new 5% step.
+message 86, 'ScrollDepth', :replayer => false do
+  uint 'Percent'
+end
+
 message 87, 'Incident', :replayer => :devtools, :pipeline => 'd' do
   string 'Label'
   int 'StartTime'
   int 'EndTime'
+end
+
+# Scroll maps: once per page load.
+message 88, 'PageHeight', :replayer => false do
+  uint 'Height'
+  uint 'ViewportHeight'
 end
 
 message 89, 'LongAnimationTask', :replayer => :devtools, :pipeline => 'd' do
@@ -583,4 +595,4 @@ message 127, 'SessionSearch', :tracker => false, :replayer => false  do
   uint 'Partition'
 end
 
-# FREE 2, 34, 35, 36, 65, 85, 86, 87, 88
+# FREE 2, 25, 26, 37, 38, 39, 59, 62, 67, 80, 82 (all once used by removed messages; none below 128 is unused)

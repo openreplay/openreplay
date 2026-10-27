@@ -778,11 +778,22 @@ cdef class MessageCodec:
                 stalled=self.read_uint(reader)
             )
 
+        if message_id == 86:
+            return ScrollDepth(
+                percent=self.read_uint(reader)
+            )
+
         if message_id == 87:
             return Incident(
                 label=self.read_string(reader),
                 start_time=self.read_int(reader),
                 end_time=self.read_int(reader)
+            )
+
+        if message_id == 88:
+            return PageHeight(
+                height=self.read_uint(reader),
+                viewport_height=self.read_uint(reader)
             )
 
         if message_id == 89:

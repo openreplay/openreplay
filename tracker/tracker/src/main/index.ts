@@ -20,6 +20,7 @@ import Mouse from './modules/mouse.js'
 import Timing from './modules/timing.js'
 import Performance from './modules/performance.js'
 import Scroll from './modules/scroll.js'
+import ScrollDepth from './modules/scrollDepth.js'
 import Viewport from './modules/viewport.js'
 import CSSRules from './modules/cssrules.js'
 import Focus from './modules/focus.js'
@@ -45,6 +46,7 @@ import type { MouseHandlerOptions } from './modules/mouse.js'
 import type { SessionInfo } from './app/session.js'
 import type { CssRulesOptions } from './modules/cssrules.js'
 import type { LATOptions } from './modules/longAnimationTask.js'
+import type { Options as ScrollDepthOptions } from './modules/scrollDepth.js'
 import type { Options as WapOptions } from './modules/webAnimations.js'
 import type { Options as ViewportOptions } from './modules/viewport.js'
 
@@ -59,7 +61,8 @@ export type Options = Partial<
     InputOptions &
     PerformanceOptions &
     TimingOptions &
-    LATOptions
+    LATOptions &
+    ScrollDepthOptions
 > & {
   projectID?: number // For the back compatibility only (deprecated)
   projectKey: string
@@ -233,6 +236,9 @@ export default class API {
     if (!this.crossdomainMode) {
       // no need to send iframe viewport data since its a node for us
       Viewport(app, options.urls)
+      if (!options.disableScrollmaps) {
+        ScrollDepth(app)
+      }
       // calculated in main window
       Connection(app)
       // while we can calculate it here, trying to compute it for all parts is hard
