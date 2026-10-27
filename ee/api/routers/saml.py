@@ -78,9 +78,7 @@ async def __process_assertion(request: Request, tenant_key=None) -> Response | d
         logger.info("Using tenant key from ACS-URL")
         tenant_key = [tenant_key]
 
-    logger.debug(f"received nameId: {email}  tenant_key: {tenant_key}")
-    logger.debug(">user_data:")
-    logger.debug(user_data)
+    logger.debug(f"> nameId: {email} user_data: {user_data}")
     if len(tenant_key) == 0:
         logger.error("tenantKey not present in assertion, please check your SP-assertion-configuration")
         return {"errors": ["tenantKey not present in assertion, please check your SP-assertion-configuration"]}
