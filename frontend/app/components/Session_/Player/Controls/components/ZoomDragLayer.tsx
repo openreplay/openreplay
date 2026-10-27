@@ -168,6 +168,8 @@ function DraggableMarkers({
         left: 0,
         top: centering,
         zIndex: 100,
+        // outside the window the timeline still seeks; mid-drag the layer takes the moves
+        pointerEvents: dragging ? 'auto' : 'none',
       }}
     >
       <div
@@ -180,6 +182,7 @@ function DraggableMarkers({
           top: topPadding,
           background: dragging && dragging !== 'start' ? '#c2970a' : '#FCC100',
           cursor: 'ew-resize',
+          pointerEvents: 'auto',
           borderTopLeftRadius: 3,
           borderBottomLeftRadius: 3,
           zIndex: 100,
@@ -235,6 +238,7 @@ function DraggableMarkers({
           borderTop: `1px solid ${dragging ? '#c2970a' : '#FCC100'}`,
           borderBottom: `1px solid ${dragging ? '#c2970a' : '#FCC100'}`,
           cursor: 'grab',
+          pointerEvents: 'auto',
           zIndex: 100,
           opacity: dragging ? 0.8 : 1,
         }}
@@ -249,6 +253,7 @@ function DraggableMarkers({
           top: topPadding,
           background: dragging && dragging !== 'end' ? '#c2970a' : '#FCC100',
           cursor: 'ew-resize',
+          pointerEvents: 'auto',
           borderTopRightRadius: 3,
           borderBottomRightRadius: 3,
           zIndex: 100,

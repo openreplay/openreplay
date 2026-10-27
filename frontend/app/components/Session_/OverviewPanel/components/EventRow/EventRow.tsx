@@ -14,7 +14,10 @@ interface Props {
   title: string;
   message?: string;
   className?: string;
+  startTime?: number;
   endTime?: number;
+  /** the lanes are zoomed into the focus window */
+  focused?: boolean;
   renderElement?: (item: any, isGrouped: boolean) => React.ReactNode;
   isGraph?: boolean;
   zIndex?: number;
@@ -29,13 +32,14 @@ const EventRow = React.memo((props: Props) => {
     title,
     className,
     list = [],
+    startTime = 0,
     endTime = 0,
     isGraph = false,
     message = '',
     disabled,
   } = props;
   const { t } = useTranslation();
-  const scale = 100 / endTime;
+  const scale = 100 / (endTime - startTime);
   const _list = React.useMemo<
     { isGrouped: boolean; items: any[]; left: number }[]
   >(() => {
@@ -49,7 +53,7 @@ const EventRow = React.memo((props: Props) => {
     for (let i = 0; i < list.length; i++) {
       const item = list[i];
       const spread = item.toJS ? { ...item.toJS() } : item;
-      const left: number = getTimelinePosition(item.time, scale);
+      const left: number = getTimelinePosition(item.time - startTime, scale);
       const itemWithLeft = { ...spread, left };
 
       if (currentGroup.length === 0) {
@@ -101,7 +105,7 @@ const EventRow = React.memo((props: Props) => {
     }
 
     return groupedItems;
-  }, [isGraph, list, scale]);
+  }, [isGraph, list, scale, startTime]);
 
   return (
     <div className={cn('m-dt__lane', `is-${title.toLowerCase()}`, className)}>
@@ -121,7 +125,9 @@ const EventRow = React.memo((props: Props) => {
               <div
                 key={i}
                 className="m-dt__mark-slot"
-                style={{ left: `${getTimelinePosition(m.time, scale)}%` }}
+                style={{
+                  left: `${getTimelinePosition(m.time - startTime, scale)}%`,
+                }}
               >
                 {props.renderMark?.(m)}
               </div>
@@ -145,7 +151,9 @@ const EventRow = React.memo((props: Props) => {
             ),
           )
         ) : (
-          <span className="m-dt__lane-none">{t('None captured.')}</span>
+          <span className="m-dt__lane-none">
+            {props.focused ? t('None in this window') : t('None captured.')}
+          </span>
         )}
       </div>
     </div>

@@ -549,10 +549,44 @@
   width: 0;
   height: 0;
 }
-.m-dt__xray > .m-dt__xray-head {
-  left: calc(
-    var(--m-space-5) + 7rem + (100% - 7rem - 2 * var(--m-space-5)) * var(--p, 0)
-  );
+/* the rows share one track after the title column; the head and the hover
+   line are drawn over all of them, however far the lanes are scrolled */
+.m-dt__xray-rows {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: none;
+}
+.m-dt__xray.is-focused {
+  overscroll-behavior-x: none;
+}
+.m-dt__xray-rows > :is(.m-dt__xray-head, .m-dt__hover-line, .m-dt__hover-time) {
+  left: calc(7rem + (100% - 7rem) * var(--p, 0));
+}
+.m-dt__hover-line {
+  position: absolute;
+  top: 1.25rem;
+  bottom: 0;
+  width: 1px;
+  background: var(--m-content-secondary);
+  opacity: 0.4;
+  pointer-events: none;
+}
+.m-dt__hover-time {
+  position: absolute;
+  top: 0.625rem;
+  z-index: 1;
+  translate: -50% -50%;
+  padding: 0 var(--m-space-2);
+  border-radius: var(--m-radius-control);
+  background: var(--m-content-primary);
+  color: var(--m-content-inverse);
+  font-size: var(--m-text-2xs);
+  font-weight: var(--m-weight-medium);
+  font-variant-numeric: tabular-nums;
+  line-height: 1rem;
+  white-space: nowrap;
+  pointer-events: none;
 }
 .m-dt__content.m-dt__charts {
   padding-block: var(--m-space-2);

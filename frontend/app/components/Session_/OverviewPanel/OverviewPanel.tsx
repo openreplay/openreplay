@@ -18,6 +18,7 @@ import EventRow from './components/EventRow';
 import FeatureSelection, {
   HELP_MESSAGE,
 } from './components/FeatureSelection/FeatureSelection';
+import FocusFollow from './components/FocusFollow';
 import OverviewPanelContainer from './components/OverviewPanelContainer';
 import TimelinePointer from './components/TimelinePointer';
 import TimelineScale from './components/TimelineScale';
@@ -117,6 +118,7 @@ function MobileOverviewPanelCont() {
       summaryChecked={aiSummaryStore.toggleSummary}
       setZoomTab={setZoomTab}
       zoomTab={zoomTab}
+      view={zoomEnabled ? { start: zoomStartTs, end: zoomEndTs } : null}
     />
   );
 }
@@ -244,6 +246,7 @@ function WebOverviewPanelCont() {
       setZoomTab={setZoomTab}
       zoomTab={zoomTab}
       showSingleTab={showSingleTab}
+      view={zoomEnabled ? { start: zoomStartTs, end: zoomEndTs } : null}
     />
   );
 }
@@ -299,6 +302,7 @@ function PanelComponent({
   onClose,
   showSingleTab,
   jump,
+  view,
 }: any) {
   const { t } = useTranslation();
   const counts = Object.fromEntries(
@@ -328,7 +332,9 @@ function PanelComponent({
           isSpot={isSpot}
         />
       )}
-      endTime={isSpot ? spotEndTime : endTime}
+      startTime={view?.start}
+      endTime={view?.end ?? (isSpot ? spotEndTime : endTime)}
+      focused={!!view}
       message={HELP_MESSAGE(t)[feature]}
     />
   );
@@ -379,8 +385,11 @@ function PanelComponent({
       <BottomBlock.Content>
         <div className="flex flex-col min-h-0">
           {summaryChecked ? <SummaryBlock sessionId={sessionId} /> : null}
-          <OverviewPanelContainer endTime={endTime}>
-            <TimelineScale endTime={endTime} />
+          <OverviewPanelContainer endTime={endTime} view={view}>
+            <TimelineScale
+              startTime={view?.start}
+              endTime={view?.end ?? endTime}
+            />
             {selectedFeatures.length === 0 ? (
               <p className="m-dt__nodata-hint m-dt__xray-empty">
                 {t('Select a lane to visualize on the timeline.')}
@@ -404,7 +413,10 @@ function PanelComponent({
             {isSpot ? (
               <VerticalPointerLineComp time={spotTime} endTime={spotEndTime} />
             ) : (
-              <VerticalPointerLine />
+              <>
+                <VerticalPointerLine view={view} />
+                <FocusFollow />
+              </>
             )}
           </OverviewPanelContainer>
         </div>
