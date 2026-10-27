@@ -328,7 +328,14 @@ jobs:
         curl -X POST -H "Authorization: Bearer $SLACK_BOT_TOKEN" -H 'Content-type: application/json' --data "$PAYLOAD" https://slack.com/api/chat.postMessage > /dev/null
 
         # Upload the file to Slack
-        curl -F file=@"$FILE_PATH" -F channels="$SLACK_CHANNEL" -F token="$SLACK_BOT_TOKEN" https://slack.com/api/files.upload > /dev/null
+        FILE_NAME=$(basename "$FILE_PATH")
+        FILE_LENGTH=$(stat -c%s "$FILE_PATH")
+        UPLOAD_DATA=$(curl -s -H "Authorization: Bearer $SLACK_BOT_TOKEN" --data-urlencode filename="$FILE_NAME" --data-urlencode length="$FILE_LENGTH" https://slack.com/api/files.getUploadURLExternal)
+        UPLOAD_URL=$(echo "$UPLOAD_DATA" | jq -r '.upload_url')
+        FILE_ID=$(echo "$UPLOAD_DATA" | jq -r '.file_id')
+        curl -X POST -H "Authorization: Bearer $SLACK_BOT_TOKEN" -H 'Content-type: application/octet-stream' --data-binary @"$FILE_PATH" "$UPLOAD_URL" > /dev/null
+        FILES=$(jq -nc --arg id "$FILE_ID" --arg title "$FILE_NAME" '[{id: $id, title: $title}]')
+        curl -X POST -H "Authorization: Bearer $SLACK_BOT_TOKEN" --data-urlencode files="$FILES" --data-urlencode channel_id="$SLACK_CHANNEL" https://slack.com/api/files.completeUploadExternal > /dev/null
 
     # - name: Cleanup
     #   if: always()
