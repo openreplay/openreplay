@@ -76,7 +76,9 @@ func (a *authImpl) Middleware(next http.Handler) http.Handler {
 
 		if err := a.validateProjectAccess(r, user); err != nil {
 			a.log.Warn(r.Context(), "Unauthorized request, project access denied: %s", err)
-			w.WriteHeader(http.StatusForbidden)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte(`{"errors":["unauthorized project."]}`))
 			return
 		}
 
