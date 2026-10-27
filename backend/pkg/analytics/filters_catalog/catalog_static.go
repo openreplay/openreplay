@@ -105,6 +105,7 @@ var PredefinedEventsMobileOrder = []string{
 var ExcludedEvents = map[string]struct{}{
 	"CUSTOM":      {},
 	"TAG_TRIGGER": {},
+	"SCROLL":      {},
 }
 
 // PredefinedProperty holds metadata for a built-in event property.

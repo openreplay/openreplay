@@ -122,8 +122,10 @@ func distinctEventsSubquery(projID uint32, propertyName *string) (string, []inte
 	              AND ae.auto_captured = ep.auto_captured_event`
 	}
 
+	// scroll depth feeds scroll maps only, it isn't an event to pick or browse
 	subquery += `
-	          WHERE ae.project_id = ?`
+	          WHERE ae.project_id = ?
+	            AND NOT (ae.event_name = 'SCROLL' AND ae.auto_captured)`
 
 	if propertyName != nil {
 		subquery += ` AND ep.property_name = ?`

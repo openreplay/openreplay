@@ -43,6 +43,7 @@ func (e *eventsImpl) buildSearchQueryParams(projID uint32, req *model.EventsSear
 		"e.created_at >= @startDate",
 		"e.created_at <= @endDate",
 		`e."$event_name" != 'TAG_TRIGGER'`,
+		`NOT (e."$event_name" = 'SCROLL' AND e."$auto_captured")`,
 	}
 
 	if len(hiddenEvents) > 0 {
