@@ -29,9 +29,12 @@ export function scrollReach(
   data: ScrollMapData | null | undefined,
 ): ScrollReach | null {
   if (!data) return null;
+  const fold = Math.max(0, Math.min(100, data.fold));
   const atDepth = new Array<number>(101).fill(0);
   for (const { depth, sessions } of data.depths) {
-    const d = Math.max(0, Math.min(100, Math.floor(depth)));
+    // depths come in 5% steps rounded down, the fold isn't: a session that
+    // never scrolled still saw the whole fold
+    const d = Math.max(Math.floor(fold), Math.min(100, Math.floor(depth)));
     atDepth[d] += sessions;
   }
   const total = atDepth.reduce((a, n) => a + n, 0);
@@ -53,7 +56,7 @@ export function scrollReach(
   });
   return {
     sessions: data.sessions || total,
-    fold: Math.max(0, Math.min(100, data.fold)),
+    fold,
     reach,
     median: fallsTo(50) ?? 100,
     marks,

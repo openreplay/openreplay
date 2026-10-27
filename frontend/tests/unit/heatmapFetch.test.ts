@@ -208,6 +208,20 @@ describe('scrollReach', () => {
     expect(r.median).toBe(61);
   });
 
+  it('counts everyone as having seen the fold', () => {
+    // 5% steps round a no-scroll session at a 23% fold down to 20
+    const r = scrollReach({
+      sessions: 10,
+      fold: 23,
+      depths: [
+        { depth: 20, sessions: 4 },
+        { depth: 60, sessions: 6 },
+      ],
+    })!;
+    expect(r.reach[23]).toBe(100);
+    expect(r.reach[24]).toBe(60);
+  });
+
   it('omits a line nobody stops before', () => {
     const r = scrollReach({
       sessions: 4,
