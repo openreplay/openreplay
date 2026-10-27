@@ -781,6 +781,15 @@
 .m-cmap__mini-page:active {
   cursor: grabbing;
 }
+.m-cmap__mini-frame {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border: none;
+  background: white;
+  transform-origin: 0 0;
+  pointer-events: none;
+}
 .m-cmap__mini-canvas {
   position: absolute;
   inset: 0;

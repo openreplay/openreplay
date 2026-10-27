@@ -362,18 +362,52 @@ test.describe('heatmap card', () => {
     await setup(page, baseURL!);
     await page.goto(`/${PROJECT_ID}/metrics/10`);
     await waitForOverlay(page);
+    // what the player applies outside the markup, then growth to copy it again
     await page.evaluate(() => {
       const iframe = document.querySelector(
-        '#clickmap-render iframe',
+        '#clickmap-render .m-cmap__window iframe',
       ) as HTMLIFrameElement;
-      const tall = iframe.contentDocument!.createElement('div');
+      const doc = iframe.contentDocument!;
+      const style = doc.createElement('style');
+      doc.head.appendChild(style);
+      style.sheet!.insertRule('.e2e-cssom { color: rgb(1, 2, 3); }');
+      const adopted = new (doc.defaultView as any).CSSStyleSheet();
+      adopted.replaceSync('.e2e-adopted { background-color: rgb(4, 5, 6); }');
+      (doc as any).adoptedStyleSheets = [
+        ...(doc as any).adoptedStyleSheets,
+        adopted,
+      ];
+      const tall = doc.createElement('div');
+      tall.className = 'e2e-cssom e2e-adopted';
       tall.style.height = '6000px';
-      iframe.contentDocument!.body.appendChild(tall);
+      tall.attachShadow({ mode: 'open' }).innerHTML =
+        '<span class="e2e-shadow">inside</span>';
+      doc.body.appendChild(tall);
     });
     const win = page.locator('#clickmap-render .m-cmap__window');
     await expect
       .poll(() => win.evaluate((w) => w.scrollHeight > w.clientHeight * 2))
       .toBe(true);
+
+    const copy = () =>
+      page.locator('.m-cmap__mini-frame').evaluate((f: HTMLIFrameElement) => {
+        const doc = f.contentDocument!;
+        const css = doc.querySelector('.e2e-cssom');
+        const adopted = doc.querySelector('.e2e-adopted');
+        return {
+          cssom: css && getComputedStyle(css).color,
+          adopted: adopted && getComputedStyle(adopted).backgroundColor,
+          shadow:
+            css?.shadowRoot?.querySelector('.e2e-shadow')?.textContent ?? null,
+          height: doc.documentElement.scrollHeight,
+        };
+      });
+    await expect.poll(copy).toMatchObject({
+      cssom: 'rgb(1, 2, 3)',
+      adopted: 'rgb(4, 5, 6)',
+      shadow: 'inside',
+    });
+    expect((await copy()).height).toBeGreaterThan(6000);
 
     const mini = page.getByRole('scrollbar', { name: /Page overview/ });
     const box = (await mini.boundingBox())!;

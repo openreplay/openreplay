@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type { ScrollReach } from 'Components/Dashboard/Widgets/CustomMetricsWidgets/ClickMapCard/scrollReach';
 
 import { ScrollLayer } from './ScrollLayer';
-import { drawWireframe, pageBlocks, wireframeInk } from './pageBlocks';
+import { copyPage } from './pageCopy';
 
 export interface HeatmapPage {
   document: Document;
@@ -47,17 +47,28 @@ export function windowView(w: {
   };
 }
 
+interface Box {
+  width: number;
+  height: number;
+  /** Page pixels to minimap pixels. */
+  k: number;
+  docHeight: number;
+  frameWidth: number;
+  frameHeight: number;
+}
+
 /**
- * The whole page small beside the window (a wireframe of the frozen replay and
- * its heat), with a box for what the window shows. Press or drag on it and the
+ * The whole page small beside the window (a copy of the frozen replay and its
+ * heat), with a box for what the window shows. Press or drag on it and the
  * window follows.
  */
 export function HeatmapMinimap({ windowRef, page, fit, reach }: Props) {
   const { t } = useTranslation();
   const columnRef = React.useRef<HTMLDivElement>(null);
   const pageRef = React.useRef<HTMLDivElement>(null);
+  const frameRef = React.useRef<HTMLIFrameElement>(null);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
-  const [box, setBox] = React.useState<{ width: number; height: number }>();
+  const [box, setBox] = React.useState<Box>();
   const [view, setView] = React.useState({ top: 0, size: 1 });
 
   const doc = page?.document;
@@ -67,15 +78,23 @@ export function HeatmapMinimap({ windowRef, page, fit, reach }: Props) {
     const win = windowRef.current;
     const column = columnRef.current;
     const root = doc?.documentElement;
-    if (!win || !column || !root?.scrollWidth || !root.scrollHeight) return;
-    setBox(
-      minimapBox(
-        column.clientWidth,
-        win.clientHeight,
-        root.scrollWidth,
-        root.scrollHeight,
-      ),
+    const replay = doc?.defaultView;
+    if (!win || !column || !replay || !root?.scrollWidth || !root.scrollHeight)
+      return;
+    const size = minimapBox(
+      column.clientWidth,
+      win.clientHeight,
+      root.scrollWidth,
+      root.scrollHeight,
     );
+    setBox({
+      ...size,
+      k: size.width / root.scrollWidth,
+      docHeight: root.scrollHeight,
+      // the replay's own viewport, so vh units and media queries match
+      frameWidth: replay.innerWidth,
+      frameHeight: replay.innerHeight,
+    });
     setView(windowView(win));
   }, [doc]);
 
@@ -94,20 +113,25 @@ export function HeatmapMinimap({ windowRef, page, fit, reach }: Props) {
     };
   }, [measure]);
 
-  const blocks = React.useMemo(() => (doc ? pageBlocks(doc) : []), [doc, fit]);
+  // the paused page only changes as late assets land, which the copy loads
+  // itself; a new height is the one thing worth copying again for
+  const docHeight = box?.docHeight;
+  React.useEffect(() => {
+    const target = frameRef.current?.contentDocument;
+    if (doc && target && docHeight) copyPage(doc, target);
+  }, [doc, docHeight]);
 
   React.useEffect(() => {
     const canvas = canvasRef.current;
-    const docWidth = doc?.documentElement.scrollWidth;
-    if (!canvas || !box || !docWidth) return;
+    if (!canvas || !box) return;
     const dpr = window.devicePixelRatio || 1;
     canvas.width = Math.max(1, Math.round(box.width * dpr));
     canvas.height = Math.max(1, Math.round(box.height * dpr));
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    drawWireframe(ctx, blocks, canvas.width / docWidth, wireframeInk(canvas));
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (clicks) ctx.drawImage(clicks, 0, 0, canvas.width, canvas.height);
-  }, [box, blocks, clicks, doc]);
+  }, [box, clicks, fit]);
 
   const goTo = (clientY: number) => {
     const win = windowRef.current;
@@ -143,6 +167,20 @@ export function HeatmapMinimap({ windowRef, page, fit, reach }: Props) {
           aria-valuemax={100}
           aria-valuenow={Math.round(view.top * 100)}
         >
+          <iframe
+            ref={frameRef}
+            className="m-cmap__mini-frame"
+            sandbox="allow-same-origin"
+            title={t('Page overview')}
+            data-openreplay-obscured
+            inert
+            aria-hidden
+            style={{
+              width: box.frameWidth,
+              height: box.frameHeight,
+              transform: `scale(${box.k})`,
+            }}
+          />
           <canvas ref={canvasRef} className="m-cmap__mini-canvas" />
           {reach && <ScrollLayer reach={reach} labels={false} />}
           <span
