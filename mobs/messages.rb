@@ -133,6 +133,14 @@ message 24, 'PageRenderTiming', :replayer => false, :pipeline => 'b' do
   uint 'VisuallyComplete'
   uint 'TimeToInteractive'
 end
+# Built by the db service from ScrollDepth/PageHeight: one per page view (26 was IntegrationEvent, also backend-only).
+message 26, 'ScrollEvent', :tracker => false, :replayer => false do
+  uint 'MessageID'
+  uint 'Timestamp'
+  uint 'Percent'
+  uint 'PageHeight'
+  uint 'ViewportHeight'
+end
 message 27, 'CustomEvent', :replayer => false, :pipeline => 'b' do
   string 'Name'
   string 'Payload'
@@ -595,4 +603,4 @@ message 127, 'SessionSearch', :tracker => false, :replayer => false  do
   uint 'Partition'
 end
 
-# FREE 2, 25, 26, 37, 38, 39, 59, 62, 67, 80, 82 (all once used by removed messages; none below 128 is unused)
+# FREE 2, 25, 37, 38, 39, 59, 62, 67, 80, 82 (all once used by removed messages; none below 128 is unused)

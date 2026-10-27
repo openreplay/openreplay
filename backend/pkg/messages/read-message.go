@@ -390,6 +390,27 @@ func DecodePageRenderTiming(reader *bytesReaderImpl) (Message, error) {
 	return msg, err
 }
 
+func DecodeScrollEvent(reader *bytesReaderImpl) (Message, error) {
+	var err error = nil
+	msg := &ScrollEvent{}
+	if msg.MessageID, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Timestamp, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Percent, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.PageHeight, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.ViewportHeight, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
 func DecodeCustomEvent(reader *bytesReaderImpl) (Message, error) {
 	var err error = nil
 	msg := &CustomEvent{}
@@ -2114,6 +2135,8 @@ func ReadMessage(t uint64, reader *bytesReaderImpl) (Message, error) {
 		return DecodePageLoadTiming(reader)
 	case 24:
 		return DecodePageRenderTiming(reader)
+	case 26:
+		return DecodeScrollEvent(reader)
 	case 27:
 		return DecodeCustomEvent(reader)
 	case 28:

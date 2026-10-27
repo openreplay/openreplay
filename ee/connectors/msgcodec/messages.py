@@ -231,6 +231,17 @@ class PageRenderTiming(Message):
         self.time_to_interactive = time_to_interactive
 
 
+class ScrollEvent(Message):
+    __id__ = 26
+
+    def __init__(self, message_id, timestamp, percent, page_height, viewport_height):
+        self.message_id = message_id
+        self.timestamp = timestamp
+        self.percent = percent
+        self.page_height = page_height
+        self.viewport_height = viewport_height
+
+
 class CustomEvent(Message):
     __id__ = 27
 

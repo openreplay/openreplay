@@ -26,6 +26,7 @@ const (
 	MsgConsoleLog                         = 22
 	MsgPageLoadTiming                     = 23
 	MsgPageRenderTiming                   = 24
+	MsgScrollEvent                        = 26
 	MsgCustomEvent                        = 27
 	MsgUserID                             = 28
 	MsgUserAnonymousID                    = 29
@@ -734,6 +735,35 @@ func (msg *PageRenderTiming) Decode() Message {
 
 func (msg *PageRenderTiming) TypeID() int {
 	return 24
+}
+
+type ScrollEvent struct {
+	message
+	MessageID      uint64
+	Timestamp      uint64
+	Percent        uint64
+	PageHeight     uint64
+	ViewportHeight uint64
+}
+
+func (msg *ScrollEvent) Encode() []byte {
+	buf := make([]byte, 51)
+	buf[0] = 26
+	p := 1
+	p = WriteUint(msg.MessageID, buf, p)
+	p = WriteUint(msg.Timestamp, buf, p)
+	p = WriteUint(msg.Percent, buf, p)
+	p = WriteUint(msg.PageHeight, buf, p)
+	p = WriteUint(msg.ViewportHeight, buf, p)
+	return buf[:p]
+}
+
+func (msg *ScrollEvent) Decode() Message {
+	return msg
+}
+
+func (msg *ScrollEvent) TypeID() int {
+	return 26
 }
 
 type CustomEvent struct {
