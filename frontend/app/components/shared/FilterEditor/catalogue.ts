@@ -253,6 +253,48 @@ export function describeFilter(t: TFunction, f: SearchFilter): string {
   return f.value.length ? `${name} ${op} ${valueText(f)}` : `${name} ${op}…`;
 }
 
+/** A rule as the collapsed filter's pill shows it: the name, and the operator
+    and value apart so only the value is cut. */
+export function ruleParts(
+  t: TFunction,
+  f: SearchFilter,
+): { name: string; rest: string } {
+  const { entry } = f;
+  const name = entry.displayName;
+  if (entry.category === 'segments') return { name: t('In'), rest: name };
+  if (entry.category === 'features') return { name, rest: t('is on') };
+  if (entry.dataType === 'duration') {
+    const lo = f.min ?? 0;
+    const hi = f.max ?? 0;
+    if (!lo && !hi) return { name, rest: t('is any') };
+    if (lo && hi)
+      return {
+        name,
+        rest: t('{{from}} to {{to}}', {
+          from: formatDuration(lo),
+          to: formatDuration(hi),
+        }),
+      };
+    return {
+      name,
+      rest: t('over {{value}}', { value: formatDuration(lo || hi) }),
+    };
+  }
+  const op = operatorLabel(f);
+  const value = f.value.length
+    ? `${op} ${valueText(f)}`
+    : !entry.isEvent && isNullary(f.operator)
+      ? op
+      : '';
+  const n = entry.isEvent ? (f.properties?.length ?? 0) : 0;
+  const props = n
+    ? n === 1
+      ? t('1 condition')
+      : t('{{count}} conditions', { count: n })
+    : '';
+  return { name, rest: [value, props].filter(Boolean).join(' · ') };
+}
+
 export function describeRules(
   t: TFunction,
   events: readonly SearchFilter[],
@@ -281,25 +323,4 @@ export function describeFilters(
     views.filter((v) => !v.isEvent),
     order,
   );
-}
-
-export function summariseRules(
-  t: TFunction,
-  events: readonly SearchFilter[],
-  properties: readonly SearchFilter[],
-): string {
-  const parts: string[] = [];
-  if (events.length)
-    parts.push(
-      events.length === 1
-        ? t('1 filter')
-        : t('{{count}} filters', { count: events.length }),
-    );
-  if (properties.length)
-    parts.push(
-      properties.length === 1
-        ? t('1 group property')
-        : t('{{count}} group properties', { count: properties.length }),
-    );
-  return parts.join(' · ');
 }

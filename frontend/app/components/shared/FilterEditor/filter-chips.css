@@ -881,7 +881,10 @@ span.m-fchip__said {
 }
 
 .m-fchips__summary {
-  flex: none;
+  display: inline-flex;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
   font-size: var(--m-text-sm);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -901,7 +904,9 @@ span.m-fchip__said {
 }
 .m-fchips__expand {
   display: inline-flex;
+  flex: 0 1 auto;
   align-items: center;
+  min-width: 0;
   min-height: var(--m-fchip-h);
   padding: 0;
   border: 0;
@@ -921,6 +926,43 @@ span.m-fchip__said {
 .m-fchips__expand:focus-visible::after {
   outline: 2px solid var(--m-focus-ring);
   outline-offset: -2px;
+}
+.m-rulesum {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-3);
+  min-width: 0;
+}
+/* a long value is cut inside its own pill, never pushing the others off */
+.m-rulesum__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  min-width: 0;
+  max-width: 18rem;
+  height: 1.375rem;
+  padding-inline: var(--m-space-3);
+  border: var(--m-border-width) solid var(--m-border-default);
+  border-radius: var(--m-radius-control);
+  background: var(--m-surface-default);
+  font-size: var(--m-text-xs);
+  white-space: nowrap;
+}
+.m-rulesum__name {
+  flex: none;
+  font-weight: var(--m-weight-medium);
+  color: var(--m-content-primary);
+}
+.m-rulesum__rest {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--m-content-secondary);
+}
+.m-rulesum__more {
+  flex: none;
+  font-size: var(--m-text-xs);
+  color: var(--m-content-muted);
 }
 .m-fchips.is-collapsed .m-fchips__trailing {
   position: relative;

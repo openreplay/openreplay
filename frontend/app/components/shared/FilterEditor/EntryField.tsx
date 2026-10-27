@@ -22,6 +22,8 @@ export interface EntryFieldProps {
   placeholder?: string;
   /** controls at the right end of the field's line */
   trailing?: ReactNode;
+  /** right after the field, on its line */
+  after?: ReactNode;
 }
 
 /** The search field under a page title; typing opens the catalogue. */
@@ -32,6 +34,7 @@ export function EntryField({
   hasRules,
   placeholder,
   trailing,
+  after,
 }: EntryFieldProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -128,6 +131,7 @@ export function EntryField({
           anchorRef={wrap}
         />
       </div>
+      {after}
       {trailing && <span className="m-recs__entry-trailing">{trailing}</span>}
     </div>
   );

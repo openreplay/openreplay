@@ -52,12 +52,15 @@ import { useLocation, useNavigate } from 'App/routing';
 import { presetReaching, windowPhrase } from 'App/utils/windowPhrase';
 
 import {
+  type CatalogueEntry,
   EntryField,
   FilterBar,
   buildFilterEditor,
   describeFilters,
+  isNullary,
   searchTarget,
   useCatalogue,
+  viewOf,
 } from 'Shared/FilterEditor';
 import NoSessionsMessage from 'Shared/NoSessionsMessage/NoSessionsMessage';
 import SaveSearchModal from 'Shared/SaveSearchModal/SaveSearchModal';
@@ -70,6 +73,8 @@ import {
 } from 'Shared/SessionsTable/SessionsTable';
 import { useOpenSession } from 'Shared/SessionsTable/useOpenSession';
 
+import SearchShortcuts from './components/SearchShortcuts';
+import { countUse, rememberSearch, rememberSegment } from './searchMemory';
 import './sessions-page.css';
 
 const AUTO_REFRESH_INTERVAL = 5 * 60 * 1000;
@@ -85,10 +90,7 @@ const ISSUE_ICONS: Record<string, React.ReactNode> = {
 };
 
 type OrderKey =
-  | 'startTs-desc'
-  | 'startTs-asc'
-  | 'eventsCount-desc'
-  | 'eventsCount-asc';
+  'startTs-desc' | 'startTs-asc' | 'eventsCount-desc' | 'eventsCount-asc';
 const DEFAULT_ORDER: OrderKey = 'startTs-desc';
 
 const readFields = (): SessionField[] => {
@@ -114,7 +116,15 @@ function SessionsTabOverview() {
     userStore,
   } = useStore();
   const entries = useCatalogue(['sessions']);
-  const editor = buildFilterEditor(searchTarget(searchStore));
+  const memoryScope = `${userStore.account.id}:${projectsStore.activeSiteId}`;
+  const built = buildFilterEditor(searchTarget(searchStore));
+  const editor = {
+    ...built,
+    onAdd: (entry: CatalogueEntry) => {
+      countUse(memoryScope, entry.id);
+      built.onAdd(entry);
+    },
+  };
   const { open, hover } = useOpenSession();
   const [saving, setSaving] = useState(false);
   const [fields, setFields] = useState<SessionField[]>(readFields);
@@ -214,6 +224,32 @@ function SessionsTabOverview() {
     if (fresh) searchStore.applySavedSearch(fresh);
     else searchStore.detachSegment();
   };
+
+  const { filters: searchFilters, eventsOrder: searchOrder } =
+    searchStore.instance;
+  const usedSegment = searchStore.activeSegmentId;
+  useEffect(() => {
+    if (!searchStore.urlParsed) return;
+    if (usedSegment) {
+      rememberSegment(memoryScope, usedSegment);
+      return;
+    }
+    const complete = searchFilters.filter((f, i) => {
+      const v = viewOf(f, String(i));
+      return (
+        v.isEvent ||
+        v.value.length > 0 ||
+        v.min != null ||
+        v.max != null ||
+        isNullary(v.operator)
+      );
+    });
+    rememberSearch(
+      memoryScope,
+      complete.map((f) => new FilterItem(f as any).toJson()),
+      searchOrder,
+    );
+  }, [searchFilters, searchOrder, usedSegment, memoryScope]);
 
   useEffect(() => {
     trackerInstance.event('session_list_viewed');
@@ -403,6 +439,15 @@ function SessionsTabOverview() {
         taken={editor.properties.map((f) => f.entry.id)}
         onPick={editor.onAdd}
         hasRules={!noRules}
+        after={
+          noRules ? (
+            <SearchShortcuts
+              scope={memoryScope}
+              entries={entries}
+              onAdd={editor.onAdd}
+            />
+          ) : undefined
+        }
       />
 
       {segment ? (

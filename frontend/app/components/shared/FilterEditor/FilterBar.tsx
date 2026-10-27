@@ -41,13 +41,13 @@ import {
   PickerPopover,
   entryIcon,
 } from './FilterPicker';
+import { RuleSummary } from './RuleSummary';
 import ValuePicker from './ValuePicker';
 import {
   categoryLabel,
   describeRules,
   isNullary,
   operatorsFor,
-  summariseRules,
 } from './catalogue';
 import { useEventProperties } from './data';
 import './filter-chips.css';
@@ -218,11 +218,11 @@ function FilterBar({
                 className="m-fchips__expand"
                 onClick={collapse.toggle}
                 aria-label={t('Expand the filter: {{rules}}', {
-                  rules: summariseRules(t, events, properties),
+                  rules: describeRules(t, events, properties, eventsOrder),
                 })}
               >
                 <span className="m-fchips__summary">
-                  {summariseRules(t, events, properties)}
+                  <RuleSummary rules={[...events, ...properties]} />
                 </span>
               </button>
             </Tooltip>

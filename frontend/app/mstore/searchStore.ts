@@ -246,6 +246,15 @@ class SearchStore {
     this.segmentRules = this.rulesKey;
   }
 
+  /** Rules kept from an earlier search, back as editable chips. */
+  restoreRules(filters: any[], eventsOrder: string) {
+    this.detachSegment();
+    this.edit({
+      filters: filterStore.processFiltersFromData(filters) as any,
+      eventsOrder,
+    });
+  }
+
   fetchSavedSearchList(
     page: number = 1,
     limit: number = SAVED_SEARCH_PAGE_SIZE,
