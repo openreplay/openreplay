@@ -24,15 +24,22 @@ interface Props {
   children: React.ReactNode;
   /** Replay-like routes: the menu folds to its rail and the page gets the full plane. */
   immersive?: boolean;
+  /** The menu folds to its rail without the page taking the full plane. */
+  needsRoom?: boolean;
   /** No menu at all (iframe embeds, MCP authorize). */
   bare?: boolean;
 }
 
-function Layout({ children, immersive = false, bare = false }: Props) {
+function Layout({
+  children,
+  immersive = false,
+  needsRoom = false,
+  bare = false,
+}: Props) {
   const { userStore, notificationStore } = useStore();
   const { account, initialDataFetched } = userStore;
   const { t } = useTranslation();
-  const { collapsed, toggle } = useNavCollapse(immersive, !bare);
+  const { collapsed, toggle } = useNavCollapse(immersive || needsRoom, !bare);
   // at phone the rail is a sheet behind the bar's menu button
   const phone = useViewportAttribute() === 'phone';
   const [mobileOpen, setMobileOpen] = useState(false);

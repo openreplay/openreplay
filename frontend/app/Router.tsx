@@ -212,6 +212,8 @@ const Router: React.FC = () => {
     pathname.includes('multiview') ||
     pathname.includes('/view-spot/') ||
     pathname.includes('/spots/');
+  // Preferences has its own rail: the menu folds while it is open
+  const needsRoom = pathname.startsWith('/client/');
   const bare =
     pathname.includes('/mcp/authorize') || pathname.includes('/onboarding/');
   if (isIframe) {
@@ -225,7 +227,7 @@ const Router: React.FC = () => {
       <ModalProvider>
         <Loader loading={loading} className="flex-1">
           <Tracker />
-          <Layout immersive={immersive} bare={bare}>
+          <Layout immersive={immersive} needsRoom={needsRoom} bare={bare}>
             <PrivateRoutes />
           </Layout>
         </Loader>
