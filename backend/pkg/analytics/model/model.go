@@ -62,7 +62,7 @@ var ViewTypeOther []string = []string{"chart", "columnChart", "metric", "table",
 var MetricOfTimeseries []string = []string{"sessionCount", "userCount", "eventCount"}
 var MetricOfTable []string = []string{"userBrowser", "userDevice", "userCountry", "userId", "ISSUE", "LOCATION", "sessions", "jsException", "referrer", "REQUEST", "screenResolution"}
 var MetricOfFunnel []string = []string{"sessionCount", "userCount", "eventCount"}
-var MetricOfHeatMap []string = []string{"heatMapUrl"}
+var MetricOfHeatMap []string = []string{"heatMapUrl", "scrollMapUrl"}
 var MetricOfPathAnalysis []string = []string{"sessionCount"}
 var MetricOfWebVital []string = []string{"webVitalUrl"}
 
@@ -100,7 +100,7 @@ type MetricPayload struct {
 	StartTimestamp   uint64      `json:"startTimestamp" validate:"required,min=946684800000"`
 	EndTimestamp     uint64      `json:"endTimestamp" validate:"required,min=946684800000,gtfield=StartTimestamp"`
 	Density          int         `json:"density" validate:"required,min=1,max=720"`
-	MetricOf         string      `json:"metricOf" validate:"required,oneof=sessionCount userCount eventCount LOCATION userBrowser userDevice userCountry userId ISSUE sessions jsException referrer REQUEST screenResolution heatMapUrl webVitalUrl"`
+	MetricOf         string      `json:"metricOf" validate:"required,oneof=sessionCount userCount eventCount LOCATION userBrowser userDevice userCountry userId ISSUE sessions jsException referrer REQUEST screenResolution heatMapUrl scrollMapUrl webVitalUrl"`
 	MetricType       MetricType  `json:"metricType"`
 	MetricValue      []string    `json:"metricValue"`
 	MetricFormat     string      `json:"metricFormat" validate:"oneof=sessionCount userCount screenResolution eventCount"`

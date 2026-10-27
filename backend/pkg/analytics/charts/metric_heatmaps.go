@@ -47,12 +47,12 @@ func (h *HeatmapQueryBuilder) Execute(ctx context.Context, p *Payload, conn driv
 	return pts, nil
 }
 
-// buildMatchingSessionsClause returns an "e.session_id IN (...)" clause that
+// heatmapMatchingSessions returns an "e.session_id IN (...)" clause that
 // restricts the outer query to sessions matching the card filters. Session
 // filters with an events-table equivalent are applied directly on the events
 // scan; experimental.sessions is only joined for session-only filters.
 // Parameter values accumulate in qp.
-func (h *HeatmapQueryBuilder) buildMatchingSessionsClause(p *Payload, qp *Params) string {
+func heatmapMatchingSessions(p *Payload, qp *Params) string {
 	filter := p.MetricPayload.Series[0].Filter
 
 	eventsWhere, filtersWhere, _, sessionsWhere := BuildWhere(filter.Filters, string(filter.EventsOrder), "l", "ls", qp, true)
@@ -101,7 +101,7 @@ func (h *HeatmapQueryBuilder) buildQuery(p *Payload) (string, map[string]any, er
 		base = append(base, "e.sample_key < @sampleRate")
 	}
 	base = append(base, buildLocationConditions(filter.Filters, "e", qp)...)
-	base = append(base, h.buildMatchingSessionsClause(p, qp))
+	base = append(base, heatmapMatchingSessions(p, qp))
 
 	var clicks string
 	if p.IncludeClickRage {

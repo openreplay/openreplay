@@ -55,9 +55,10 @@ func (h *HeatmapSessionQueryBuilder) Execute(ctx context.Context, p *Payload, co
 const minRenderableSessionMs = 5000
 
 // heatmapSessionTemplate picks the session the heatmap is drawn on: one of the shortest
-// renderable sessions with clicks on the page, chosen by hash so a card keeps showing the
-// same replay until the seed changes ("get a new image"). The event timestamp is the
-// session's last click on the page, when the page is the most complete.
+// renderable sessions with clicks (scroll depth, on a scroll map) on the page, chosen by
+// hash so a card keeps showing the same replay until the seed changes ("get a new
+// image"). The event timestamp is the session's last such event on the page, when the
+// page is the most complete.
 const heatmapSessionTemplate = `%s
 SELECT session_id, startTs, duration, eventTs, url_path
 FROM (
@@ -138,7 +139,11 @@ func (h *HeatmapSessionQueryBuilder) buildQuery(p *Payload) (string, map[string]
 	eventsWhere := []string{
 		"e.project_id = @projectId",
 		"e.created_at BETWEEN toDateTime(@startSec) AND toDateTime(@endSec)",
-		"e.`$event_name` = 'CLICK'",
+	}
+	if p.MetricOf == MetricOfScrollMap {
+		eventsWhere = append(eventsWhere, "e.`$event_name` = 'SCROLL'", "e.`$auto_captured`")
+	} else {
+		eventsWhere = append(eventsWhere, "e.`$event_name` = 'CLICK'")
 	}
 	if p.SampleRate > 0 && p.SampleRate < 100 {
 		eventsWhere = append(eventsWhere, "e.sample_key < @sampleRate")
