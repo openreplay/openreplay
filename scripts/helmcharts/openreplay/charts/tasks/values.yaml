@@ -2,6 +2,8 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+# Keep at 1: tasks has no distributed lock, extra pods duplicate cron runs
+# (e.g. alert notifications). Deployment uses Recreate for the same reason.
 replicaCount: 1
 
 image:
@@ -62,20 +64,6 @@ serviceMonitor:
       scheme: http
       scrapeTimeout: 10s
 
-ingress:
-  enabled: false
-  className: "{{ .Values.global.ingress.controller.ingressClassResource.name }}"
-  annotations: {}
-  hosts:
-    - host: chart-example.local
-      paths:
-        - path: /
-          pathType: ImplementationSpecific
-  tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
-
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
@@ -87,13 +75,6 @@ resources: {}
   # requests:
   #   cpu: 100m
   #   memory: 128Mi
-
-autoscaling:
-  enabled: false
-  minReplicas: 1
-  maxReplicas: 5
-  targetCPUUtilizationPercentage: 80
-  # targetMemoryUtilizationPercentage: 80
 
 env:
   ch_db: default
