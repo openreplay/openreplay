@@ -1,6 +1,7 @@
 package accounts
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -52,6 +53,10 @@ func (h *handlersImpl) fail(r *api.RequestContext, action string, err error) (an
 	case errors.Is(err, ErrUnauthorized):
 		return nil, http.StatusUnauthorized, err
 	}
+	var invalid ValidationError
+	if errors.As(err, &invalid) {
+		return nil, http.StatusBadRequest, invalid.error
+	}
 	h.log.Error(r.Request.Context(), "failed to %s: %s", action, err)
 	return nil, http.StatusInternalServerError, errInternal
 }
@@ -92,7 +97,8 @@ func (h *handlersImpl) updateAccount(r *api.RequestContext) (any, int, error) {
 }
 
 func decodeRequired(r *api.RequestContext, dest any) error {
-	if len(r.Body) == 0 {
+	body := bytes.TrimSpace(r.Body)
+	if len(body) == 0 || bytes.Equal(body, []byte("null")) {
 		return errInvalidBody
 	}
 	return decode(r, dest)
@@ -143,8 +149,12 @@ func (h *handlersImpl) updateWeeklyReport(r *api.RequestContext) (any, int, erro
 	if err := decodeRequired(r, req); err != nil {
 		return nil, http.StatusBadRequest, err
 	}
+	enabled, err := req.Value()
+	if err != nil {
+		return nil, http.StatusBadRequest, err
+	}
 	u := api.GetUser(r.Request)
-	res, err := h.service.UpdateWeeklyReport(r.Request.Context(), u.TenantID, u.ID, req.Value())
+	res, err := h.service.UpdateWeeklyReport(r.Request.Context(), u.TenantID, u.ID, enabled)
 	if err != nil {
 		return h.fail(r, "update weekly report", err)
 	}

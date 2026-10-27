@@ -1,6 +1,7 @@
 package accounts
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"regexp"
@@ -100,24 +101,18 @@ type AccountRequest struct {
 	OptOut     *bool   `json:"optOut"`
 }
 
+type ValidationError struct {
+	error
+}
+
 func (r *AccountRequest) Normalize() error {
 	if r.Name != nil {
 		name := normalizeSpaces(*r.Name)
 		r.Name = &name
-		if name != "" {
-			if err := validateAccountName("name", name); err != nil {
-				return err
-			}
-		}
 	}
 	if r.TenantName != nil {
 		tenantName := normalizeSpaces(*r.TenantName)
 		r.TenantName = &tenantName
-		if tenantName != "" {
-			if err := validateAccountName("tenantName", tenantName); err != nil {
-				return err
-			}
-		}
 	}
 	return nil
 }
@@ -134,7 +129,7 @@ type ScopeRequest struct {
 
 func (r *ScopeRequest) Value() (int, error) {
 	if r.Scope == nil {
-		return scopeSpotOnly, nil
+		return 0, errors.New("scope is required")
 	}
 	if *r.Scope != scopeSpotOnly && *r.Scope != scopeFull {
 		return 0, errors.New("scope must be 1 or 2")
@@ -151,11 +146,18 @@ type WeeklyReport struct {
 }
 
 type WeeklyReportRequest struct {
-	WeeklyReport *bool `json:"weeklyReport"`
+	WeeklyReport json.RawMessage `json:"weeklyReport"`
 }
 
-func (r *WeeklyReportRequest) Value() bool {
-	return r.WeeklyReport == nil || *r.WeeklyReport
+func (r *WeeklyReportRequest) Value() (bool, error) {
+	if r.WeeklyReport == nil {
+		return true, nil
+	}
+	var enabled *bool
+	if err := json.Unmarshal(r.WeeklyReport, &enabled); err != nil || enabled == nil {
+		return false, errors.New("weeklyReport must be true or false")
+	}
+	return *enabled, nil
 }
 
 type ModuleRequest struct {

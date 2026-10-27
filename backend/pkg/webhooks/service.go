@@ -94,20 +94,25 @@ func (s *webhooksImpl) Save(ctx context.Context, tenantID uint64, req *WebhookRe
 		return nil, ErrNameExists
 	}
 
-	args := pgx.NamedArgs{"tenantId": tenantID, "endpoint": req.Endpoint, "authHeader": req.AuthHeader, "name": req.Name}
+	args := pgx.NamedArgs{"tenantId": tenantID, "endpoint": req.Endpoint, "authHeader": req.authHeader(), "name": req.Name}
 	if req.ID() == nil {
 		w, err := scanWebhook(s.pgconn.QueryRow(insertWebhook+`
 		RETURNING `+webhookColumns, args))
 		if err != nil {
 			return nil, fmt.Errorf("create webhook: %s", err)
 		}
+		w.redact()
 		return w, nil
 	}
 
+	headerSet := ``
+	if req.action != keepAuthHeader {
+		headerSet = `, auth_header = @authHeader`
+	}
 	args["webhookId"] = *req.ID()
 	w, err := scanWebhook(s.pgconn.QueryRow(`
 		UPDATE public.webhooks
-		SET endpoint = @endpoint, auth_header = @authHeader, name = @name
+		SET endpoint = @endpoint, name = @name`+headerSet+`
 		WHERE webhooks.webhook_id = @webhookId
 		  AND webhooks.deleted_at IS NULL
 		  AND webhooks.type = 'webhook'
@@ -119,6 +124,7 @@ func (s *webhooksImpl) Save(ctx context.Context, tenantID uint64, req *WebhookRe
 		}
 		return nil, fmt.Errorf("update webhook: %s", err)
 	}
+	w.redact()
 	return w, nil
 }
 

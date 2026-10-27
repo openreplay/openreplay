@@ -86,3 +86,33 @@ func TestStatusCacheRetriesQuicklyAfterFailure(t *testing.T) {
 		t.Fatalf("expected a retry after the short interval, got %+v after %d calls", s, calls)
 	}
 }
+
+func TestCurrentStatusWithoutLicenseKey(t *testing.T) {
+	t.Setenv("LICENSE_KEY", "")
+	c := &statusCache{status: Status{ExpirationDate: -1}, resolve: current.resolve}
+	if s := c.get(time.Now()); s.Valid || s.ExpirationDate != -1 {
+		t.Fatalf("a missing license key must read as invalid, got %+v", s)
+	}
+}
+
+func TestFirstStatusWaitsForResolution(t *testing.T) {
+	now := time.UnixMilli(1_800_000_000_000)
+	release := make(chan struct{})
+	c := &statusCache{
+		status: Status{ExpirationDate: -1},
+		resolve: func(time.Time) (Status, bool) {
+			<-release
+			return Status{ExpirationDate: now.Add(time.Hour).UnixMilli()}, true
+		},
+	}
+	results := make(chan Status, 2)
+	go func() { results <- c.get(now) }()
+	go func() { results <- c.get(now) }()
+	time.Sleep(20 * time.Millisecond)
+	close(release)
+	for i := 0; i < 2; i++ {
+		if s := <-results; !s.Valid {
+			t.Fatalf("callers must wait for the first license check, got %+v", s)
+		}
+	}
+}

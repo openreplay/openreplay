@@ -11,7 +11,10 @@ import (
 	"time"
 )
 
-var ErrNoTurnSecret = errors.New("secret not defined")
+var (
+	ErrNoTurnSecret   = errors.New("secret not defined")
+	ErrInvalidTurnTTL = errors.New("assist ttl must be positive")
+)
 
 type TurnCredentials struct {
 	Username   string `json:"username"`
@@ -21,6 +24,9 @@ type TurnCredentials struct {
 func NewTurnCredentials(secret string, ttlHours int, now time.Time) (*TurnCredentials, error) {
 	if secret == "" {
 		return nil, ErrNoTurnSecret
+	}
+	if ttlHours <= 0 {
+		return nil, ErrInvalidTurnTTL
 	}
 	salt := make([]byte, 16)
 	if _, err := rand.Read(salt); err != nil {

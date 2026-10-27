@@ -40,6 +40,7 @@ func TestSearchParams(t *testing.T) {
 		"zero limit":  {Limit: intPtr(0)},
 		"huge limit":  {Limit: intPtr(maxLimit + 1)},
 		"zero page":   {Page: intPtr(0)},
+		"huge page":   {Page: intPtr(1 << 40)},
 		"sql in sort": {Order: strPtr("desc; drop table traces")},
 	} {
 		if _, err := req.params(now); err == nil {

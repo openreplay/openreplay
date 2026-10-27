@@ -3,6 +3,8 @@ package accounts
 import (
 	"errors"
 	"fmt"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -35,10 +37,10 @@ type accountExtra struct {
 }
 
 func saml2Available() bool {
-	if env.String("SAML2_MD_URL") != "" {
+	if env.StringOptional("SAML2_MD_URL") != "" {
 		return true
 	}
-	return env.String("idp_entityId") != "" && env.String("idp_sso_url") != "" && env.String("idp_x509cert") != ""
+	return env.StringOptional("idp_entityId") != "" && env.StringOptional("idp_sso_url") != "" && env.StringOptional("idp_x509cert") != ""
 }
 
 func accountExtras() accountExtra {
@@ -126,8 +128,26 @@ func (h *handlersImpl) editionHandlers(req api.RequestHandler) []*api.Descriptio
 	}
 }
 
+func withLegacy(value, legacyKey string) string {
+	if value != "" {
+		return value
+	}
+	return env.StringOptional(legacyKey)
+}
+
+func assistTTL(configured int) int {
+	if v, ok := os.LookupEnv("ASSIST_TTL"); ok && v != "" {
+		return configured
+	}
+	if legacy, err := strconv.Atoi(env.StringOptional("assist_ttl")); err == nil {
+		return legacy
+	}
+	return configured
+}
+
 func (h *handlersImpl) getAssistCredentials(r *api.RequestContext) (any, int, error) {
-	servers, err := iceServers(h.cfg.IceServers, h.cfg.AssistSecret, h.cfg.AssistTTL, time.Now())
+	servers, err := iceServers(withLegacy(h.cfg.IceServers, "iceServers"), withLegacy(h.cfg.AssistSecret, "assist_secret"),
+		assistTTL(h.cfg.AssistTTL), time.Now())
 	if err != nil {
 		return h.fail(r, "build assist credentials", err)
 	}

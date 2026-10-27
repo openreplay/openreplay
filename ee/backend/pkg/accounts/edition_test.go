@@ -77,3 +77,39 @@ func TestEEAccountJSON(t *testing.T) {
 		t.Fatalf("tenantId must come from the tenant: %s", body)
 	}
 }
+
+func TestOptionalSettingsDoNotExit(t *testing.T) {
+	for _, key := range []string{"SAML2_MD_URL", "idp_entityId", "idp_sso_url", "idp_x509cert", "iceServers", "assist_secret", "assist_ttl", "ASSIST_TTL"} {
+		t.Setenv(key, "")
+	}
+	if saml2Available() {
+		t.Fatalf("saml2 must be unavailable without settings")
+	}
+	if got := withLegacy("", "iceServers"); got != "" {
+		t.Fatalf("got %q, want empty", got)
+	}
+	if got := assistTTL(48); got != 48 {
+		t.Fatalf("got %d, want 48", got)
+	}
+
+	t.Setenv("idp_entityId", "e")
+	t.Setenv("idp_sso_url", "u")
+	t.Setenv("idp_x509cert", "c")
+	if !saml2Available() {
+		t.Fatalf("saml2 must be available with idp settings")
+	}
+}
+
+func TestLegacyAssistSettings(t *testing.T) {
+	t.Setenv("iceServers", "stun:legacy.example.com")
+	t.Setenv("assist_ttl", "12")
+	if got := withLegacy("", "iceServers"); got != "stun:legacy.example.com" {
+		t.Fatalf("legacy iceServers must be used as a fallback, got %q", got)
+	}
+	if got := withLegacy("turn:new.example.com", "iceServers"); got != "turn:new.example.com" {
+		t.Fatalf("the Go setting must win, got %q", got)
+	}
+	if got := assistTTL(48); got != 12 {
+		t.Fatalf("legacy assist_ttl must apply when ASSIST_TTL is unset, got %d", got)
+	}
+}

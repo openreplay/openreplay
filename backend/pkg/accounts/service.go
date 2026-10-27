@@ -129,13 +129,37 @@ func (s *serviceImpl) Update(ctx context.Context, tenantID, userID uint64, isAdm
 		return nil, fmt.Errorf("get tenant: %s", err)
 	}
 
+	if err := tx.TxQueryRow(`
+		SELECT users.name
+		FROM public.users
+		WHERE users.user_id = @userId
+		  AND users.deleted_at IS NULL
+		  AND `+userScope+`
+		FOR UPDATE`, args).Scan(&current.Name); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrUserNotFound
+		}
+		return nil, fmt.Errorf("get user: %s", err)
+	}
+
 	renameTenant := req.TenantName != nil && *req.TenantName != "" && *req.TenantName != current.TenantName
 	changeOptOut := req.OptOut != nil && *req.OptOut != current.OptOut
+	renameUser := req.Name != nil && *req.Name != "" && *req.Name != current.Name
 	if (renameTenant || changeOptOut) && !isAdmin {
 		return nil, ErrUnauthorized
 	}
+	if renameUser {
+		if err := validateAccountName("name", *req.Name); err != nil {
+			return nil, ValidationError{err}
+		}
+	}
+	if renameTenant {
+		if err := validateAccountName("tenantName", *req.TenantName); err != nil {
+			return nil, ValidationError{err}
+		}
+	}
 
-	if req.Name != nil && *req.Name != "" {
+	if renameUser {
 		args["name"] = *req.Name
 		if err := tx.TxExec(`
 			UPDATE public.users

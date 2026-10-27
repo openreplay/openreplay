@@ -18,7 +18,8 @@ func TestRoleRequestNormalize(t *testing.T) {
 	}{
 		{"defaults to all projects", RoleRequest{Name: "  Support  team ", Permissions: []string{"SESSION_REPLAY", "SESSION_REPLAY"}}, ""},
 		{"missing permissions", RoleRequest{Name: "a"}, "permissions is required"},
-		{"unknown permission", RoleRequest{Name: "a", Permissions: []string{"BROWSER_TESTS"}}, `unknown permission "BROWSER_TESTS"`},
+		{"unknown permission", RoleRequest{Name: "a", Permissions: []string{"AUDITS"}}, `unknown permission "AUDITS"`},
+		{"browser tests allowed", RoleRequest{Name: "Support team", Permissions: []string{"BROWSER_TESTS"}}, ""},
 		{"service permission rejected", RoleRequest{Name: "a", Permissions: []string{"SERVICE_SESSION_REPLAY"}}, `unknown permission "SERVICE_SESSION_REPLAY"`},
 		{"empty name", RoleRequest{Name: "  ", Permissions: []string{}}, "name must be between 1 and 40 characters"},
 		{"long name", RoleRequest{Name: strings.Repeat("r", 41), Permissions: []string{}}, "name must be between 1 and 40 characters"},

@@ -27,7 +27,7 @@ type statusCache struct {
 var current = &statusCache{
 	status: Status{ExpirationDate: -1},
 	resolve: func(now time.Time) (Status, bool) {
-		return resolveStatus(env.String("LICENSE_KEY"), now, validateRemote)
+		return resolveStatus(env.StringOptional("LICENSE_KEY"), now, validateRemote)
 	},
 }
 
@@ -36,9 +36,6 @@ func CurrentStatus() Status {
 }
 
 func (c *statusCache) due(now time.Time) bool {
-	if c.checkedAt.IsZero() {
-		return true
-	}
 	interval := recheckInterval
 	if c.failed || c.status.ExpirationDate <= now.UnixMilli() {
 		interval = invalidRecheckInterval
@@ -46,9 +43,21 @@ func (c *statusCache) due(now time.Time) bool {
 	return now.Sub(c.checkedAt) >= interval
 }
 
+func (c *statusCache) refresh(now time.Time) {
+	s, ok := c.resolve(now)
+	if ok {
+		c.status = s
+	}
+	c.failed = !ok
+	c.checkedAt = now
+}
+
 func (c *statusCache) get(now time.Time) Status {
 	c.mu.Lock()
-	if c.due(now) && !c.refreshing {
+	switch {
+	case c.checkedAt.IsZero():
+		c.refresh(now)
+	case c.due(now) && !c.refreshing:
 		c.refreshing = true
 		c.mu.Unlock()
 		s, ok := c.resolve(now)

@@ -38,7 +38,7 @@ const (
 
 var rolePermissions = []string{
 	api.SESSION_REPLAY, api.SESSION_EXPORT, api.DEV_TOOLS, api.METRICS, api.ASSIST_LIVE, api.ASSIST_CALL,
-	api.SPOT, api.SPOT_PUBLIC, api.DATA_MANAGEMENT,
+	api.SPOT, api.SPOT_PUBLIC, api.DATA_MANAGEMENT, "BROWSER_TESTS",
 }
 
 type Role struct {

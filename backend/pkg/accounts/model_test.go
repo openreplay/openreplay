@@ -22,8 +22,6 @@ func TestAccountRequestNormalize(t *testing.T) {
 		{"collapses whitespace", AccountRequest{Name: strPtr("  Ana   María "), TenantName: strPtr(" Acme  & Co ")}, "Ana María", "Acme & Co", false},
 		{"unicode letters", AccountRequest{Name: strPtr("Zoë O'Brien-Łukasz"), TenantName: strPtr("株式会社")}, "Zoë O'Brien-Łukasz", "株式会社", false},
 		{"empty strings are no-ops", AccountRequest{Name: strPtr("  "), TenantName: strPtr("")}, "", "", false},
-		{"rejects markup", AccountRequest{Name: strPtr("<img src=x>")}, "", "", true},
-		{"rejects long tenant", AccountRequest{TenantName: strPtr(strings.Repeat("a", maxNameLength+1))}, "", "", true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -45,13 +43,26 @@ func TestAccountRequestNormalize(t *testing.T) {
 	}
 }
 
+func TestValidateAccountName(t *testing.T) {
+	for _, ok := range []string{"Ana María", "Zoë O'Brien-Łukasz", "株式会社", "Acme & Co", "a.b@c"} {
+		if err := validateAccountName("name", ok); err != nil {
+			t.Fatalf("%q must be accepted: %s", ok, err)
+		}
+	}
+	for _, bad := range []string{"<img src=x>", "Go API (OSS)", strings.Repeat("a", maxNameLength+1)} {
+		if err := validateAccountName("name", bad); err == nil {
+			t.Fatalf("%q must be rejected", bad)
+		}
+	}
+}
+
 func TestScopeRequest(t *testing.T) {
 	tests := []struct {
 		req     ScopeRequest
 		want    int
 		wantErr bool
 	}{
-		{ScopeRequest{}, 1, false},
+		{ScopeRequest{}, 0, true},
 		{ScopeRequest{Scope: intPtr(2)}, 2, false},
 		{ScopeRequest{Scope: intPtr(0)}, 0, true},
 		{ScopeRequest{Scope: intPtr(3)}, 0, true},
@@ -64,12 +75,27 @@ func TestScopeRequest(t *testing.T) {
 	}
 }
 
-func TestWeeklyReportDefaultsToEnabled(t *testing.T) {
-	if !(&WeeklyReportRequest{}).Value() {
-		t.Fatalf("a missing weeklyReport must default to true")
+func TestWeeklyReportValue(t *testing.T) {
+	tests := []struct {
+		body    string
+		want    bool
+		wantErr bool
+	}{
+		{`{}`, true, false},
+		{`{"weeklyReport":false}`, false, false},
+		{`{"weeklyReport":true}`, true, false},
+		{`{"weeklyReport":null}`, false, true},
+		{`{"weeklyReport":"yes"}`, false, true},
 	}
-	if (&WeeklyReportRequest{WeeklyReport: boolPtr(false)}).Value() {
-		t.Fatalf("an explicit false must be kept")
+	for _, tt := range tests {
+		req := &WeeklyReportRequest{}
+		if err := json.Unmarshal([]byte(tt.body), req); err != nil {
+			t.Fatalf("%s: unmarshal: %s", tt.body, err)
+		}
+		got, err := req.Value()
+		if (err != nil) != tt.wantErr || got != tt.want {
+			t.Fatalf("%s: got (%v, %v), want %v wantErr %v", tt.body, got, err, tt.want, tt.wantErr)
+		}
 	}
 }
 

@@ -408,9 +408,26 @@ func (s *teamImpl) ResetInvitation(ctx context.Context, tenantID uint64, memberI
 	if err != nil {
 		return nil, fmt.Errorf("generate invitation token: %s", err)
 	}
-	if err := s.inTx(ctx, func(tx *pool.Tx) error {
-		return setInvitation(tx, memberID, token)
-	}); err != nil {
+	var reset int64
+	err = s.pgconn.QueryRow(`
+		UPDATE public.basic_authentication
+		SET invitation_token     = @token,
+		    invited_at           = timezone('utc'::text, now()),
+		    change_pwd_expire_at = NULL,
+		    change_pwd_token     = NULL
+		FROM public.users
+		WHERE basic_authentication.user_id = users.user_id
+		  AND users.user_id = @userId
+		  AND users.deleted_at IS NULL
+		  AND users.role != 'owner'
+		  AND NOT `+memberJoined+`
+		  AND `+userScope+`
+		RETURNING basic_authentication.user_id`,
+		pgx.NamedArgs{"tenantId": tenantID, "userId": memberID, "token": token}).Scan(&reset)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, badRequest("unauthorized")
+		}
 		return nil, fmt.Errorf("reset invitation: %s", err)
 	}
 	return &InvitationLink{InvitationLink: s.invitationLink(token)}, nil

@@ -78,7 +78,8 @@ func validateRemote(license string) (int64, error) {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode >= 400 && resp.StatusCode < 500 {
+	if resp.StatusCode >= 400 && resp.StatusCode < 500 &&
+		resp.StatusCode != http.StatusRequestTimeout && resp.StatusCode != http.StatusTooManyRequests {
 		return 0, fmt.Errorf("license check request returned status %d: %w", resp.StatusCode, errRejected)
 	}
 	if resp.StatusCode != 200 {

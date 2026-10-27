@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"strings"
 	"time"
 )
@@ -55,6 +56,9 @@ func (r *SearchRequest) params(now time.Time) (*searchParams, error) {
 			return nil, errors.New("page must be greater than 0")
 		}
 		page = *r.Page
+	}
+	if page-1 > math.MaxInt32/p.limit {
+		return nil, errors.New("page is too large")
 	}
 	p.offset = (page - 1) * p.limit
 	if r.StartDate != nil {

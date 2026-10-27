@@ -2,6 +2,7 @@ package webhooks
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
@@ -36,11 +37,19 @@ type Webhook struct {
 }
 
 func (w *Webhook) redact() {
+	w.AuthHeader = ""
 	if w.Type != typeWebhook {
 		w.Endpoint = ""
-		w.AuthHeader = ""
 	}
 }
+
+type headerAction int
+
+const (
+	keepAuthHeader headerAction = iota
+	setAuthHeader
+	clearAuthHeader
+)
 
 type webhookID struct {
 	value *int64
@@ -67,10 +76,19 @@ func (id *webhookID) UnmarshalJSON(data []byte) error {
 }
 
 type WebhookRequest struct {
-	WebhookID  webhookID `json:"webhookId"`
-	Endpoint   string    `json:"endpoint"`
-	AuthHeader *string   `json:"authHeader"`
-	Name       string    `json:"name"`
+	WebhookID  webhookID       `json:"webhookId"`
+	Endpoint   string          `json:"endpoint"`
+	AuthHeader json.RawMessage `json:"authHeader"`
+	Name       string          `json:"name"`
+	header     string
+	action     headerAction
+}
+
+func (r *WebhookRequest) authHeader() *string {
+	if r.action == setAuthHeader {
+		return &r.header
+	}
+	return nil
 }
 
 func (r *WebhookRequest) ID() *int64 {
@@ -101,8 +119,30 @@ func (r *WebhookRequest) Normalize() error {
 		return errors.New("endpoint must be a valid http or https URL")
 	}
 
-	if r.AuthHeader != nil && len(*r.AuthHeader) > maxAuthHeaderLength {
+	return r.normalizeAuthHeader()
+}
+
+func (r *WebhookRequest) normalizeAuthHeader() error {
+	r.action = keepAuthHeader
+	if r.AuthHeader == nil {
+		return nil
+	}
+	if bytes.Equal(bytes.TrimSpace(r.AuthHeader), []byte("null")) {
+		r.action = clearAuthHeader
+		return nil
+	}
+	if err := json.Unmarshal(r.AuthHeader, &r.header); err != nil {
+		return errors.New("authHeader must be a string")
+	}
+	if r.header == "" {
+		return nil
+	}
+	if len(r.header) > maxAuthHeaderLength {
 		return fmt.Errorf("authHeader must be at most %d characters", maxAuthHeaderLength)
 	}
+	if strings.ContainsAny(r.header, "\r\n") {
+		return errors.New("authHeader contains invalid characters")
+	}
+	r.action = setAuthHeader
 	return nil
 }

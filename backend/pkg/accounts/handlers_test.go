@@ -103,9 +103,11 @@ func TestUpdateAccount(t *testing.T) {
 		t.Fatalf("expected a normalized member update, got admin=%v name=%q", svc.gotIsAdmin, *svc.updatedName)
 	}
 
-	if _, code, _ := h.updateAccount(newRequest(&user.User{Role: "member"}, `{"name":"<b>"}`)); code != http.StatusBadRequest {
-		t.Fatalf("invalid name must be rejected with 400, got %d", code)
+	svc.updateErr = ValidationError{errors.New("name contains invalid characters")}
+	if _, code, err := h.updateAccount(newRequest(&user.User{Role: "member"}, `{"name":"<b>"}`)); code != http.StatusBadRequest || err.Error() != "name contains invalid characters" {
+		t.Fatalf("invalid name must be rejected with 400, got %d %v", code, err)
 	}
+	svc.updateErr = nil
 	if _, code, _ := h.updateAccount(newRequest(&user.User{Role: "member"}, `{"name":`)); code != http.StatusBadRequest {
 		t.Fatalf("invalid json must be rejected with 400, got %d", code)
 	}
@@ -150,8 +152,10 @@ func TestSettingsHandlers(t *testing.T) {
 	if _, code, _ := h.updateScope(newRequest(admin, `{"scope":5}`)); code != http.StatusBadRequest {
 		t.Fatalf("invalid scope must be 400, got %d", code)
 	}
-	if _, code, _ := h.updateScope(newRequest(admin, ``)); code != http.StatusBadRequest {
-		t.Fatalf("an empty body must not downgrade the scope, got %d", code)
+	for _, body := range []string{``, `null`, `{}`, `{"scope":null}`} {
+		if _, code, _ := h.updateScope(newRequest(admin, body)); code != http.StatusBadRequest {
+			t.Fatalf("body %q must not downgrade the scope, got %d", body, code)
+		}
 	}
 	if _, code, _ := h.updateWeeklyReport(newRequest(u, ``)); code != http.StatusBadRequest {
 		t.Fatalf("an empty weekly report body must be 400, got %d", code)

@@ -1,10 +1,22 @@
 package tracer
 
 import (
+	"bytes"
 	"encoding/json"
 	"reflect"
 	"testing"
 )
+
+func decodeExact(t *testing.T, data []byte) any {
+	t.Helper()
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.UseNumber()
+	var v any
+	if err := dec.Decode(&v); err != nil {
+		t.Fatalf("invalid json %s: %s", data, err)
+	}
+	return v
+}
 
 func TestRedactPayload(t *testing.T) {
 	tests := []struct {
@@ -28,12 +40,7 @@ func TestRedactPayload(t *testing.T) {
 				}
 				return
 			}
-			var gotV, wantV any
-			if err := json.Unmarshal(got, &gotV); err != nil {
-				t.Fatalf("invalid output %s: %s", got, err)
-			}
-			_ = json.Unmarshal([]byte(tt.want), &wantV)
-			if !reflect.DeepEqual(gotV, wantV) {
+			if !reflect.DeepEqual(decodeExact(t, got), decodeExact(t, []byte(tt.want))) {
 				t.Fatalf("got %s, want %s", got, tt.want)
 			}
 		})
