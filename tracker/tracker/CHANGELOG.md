@@ -1,3 +1,7 @@
+## 19.0.3
+
+- images keep their `src`/`srcset` in replay before they load (lazy images no longer collapse layouts, e.g. `sizes="auto"` sliders), `<picture>` `<source srcset>` is recorded, masked images no longer leak real URLs on `src`/`srcset` changes or runtime masking (fixes #5062)
+
 ## 19.0.2
 
 - keep people actions in order when squashing a batch (by [@RaphaelFakhri](https://github.com/RaphaelFakhri) #5046)
