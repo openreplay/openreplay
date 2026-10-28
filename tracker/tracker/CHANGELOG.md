@@ -1,3 +1,7 @@
+##
+
+- flush pending messages in forceFlushBatch, add flushInterval (#5082 by [@josh08h](https://github.com/josh08h))
+
 ## 19.0.3
 
 - images keep their `src`/`srcset` in replay before they load (lazy images no longer collapse layouts, e.g. `sizes="auto"` sliders), `<picture>` `<source srcset>` is recorded, masked images no longer leak real URLs on `src`/`srcset` changes or runtime masking (fixes #5062)
