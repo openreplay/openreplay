@@ -239,18 +239,13 @@ jobs:
                 else
                     # Non-backend service
                     case "$service" in
-                    chalice | alerts | crons)
+                    chalice)
                         cd "$WORKING_DIR/api"
                         ;;
                     *)
                         cd "$service"
                         ;;
                     esac
-
-                    # Special build scripts for alerts/crons
-                    if [[ $service == 'alerts' || $service == 'crons' ]]; then
-                        build_script="build_${service}.sh"
-                    fi
 
                     ee_build_args="ee"
                 fi

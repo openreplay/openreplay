@@ -191,32 +191,6 @@ services:
           echo "clickhouse is up - executing command"
           clickhouse-client -h clickhouse-openreplay-clickhouse.db.svc.cluster.local --user default --port 9000 --multiquery < /tmp/init_schema.sql || true
   
-  alerts-openreplay:
-    image: public.ecr.aws/p1t3u8a3/alerts:${ALERTS_VERSION}
-    domainname: app.svc.cluster.local
-    container_name: alerts
-    networks:
-      openreplay-net:
-        aliases:
-          - alerts-openreplay
-          - alerts-openreplay.app.svc.cluster.local
-    volumes:
-      - shared-volume:/mnt/efs
-    env_file:
-      - docker-envs/alerts.env
-    depends_on:
-      postgresql:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      clickhouse:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
-    environment: {}  # Fallback empty environment if env_file is missing
-    restart: unless-stopped
-  
-  
   api-openreplay:
     image: public.ecr.aws/p1t3u8a3/api:${API_VERSION}
     domainname: app.svc.cluster.local
