@@ -65,7 +65,7 @@ ingress-nginx:
   enabled: true
   controller:
     image:
-      tag: 5.7-alpine
+      tag: 5.8-alpine
     enableSnippets: true
     ingressClass:
       name: openreplay
