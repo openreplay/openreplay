@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v5"
 
 	analyticsModel "openreplay/backend/pkg/analytics/model"
 	"openreplay/backend/pkg/db/postgres/pool"
