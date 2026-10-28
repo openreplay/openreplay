@@ -108,7 +108,7 @@ func (s *serviceImpl) GetReplay(projectID uint32, sessionID uint64, userID strin
 	    s.user_state,
 	    s.pages_count,
 	    s.events_count,
-	    s.issue_types,
+	    s.issue_types::text AS issue_types,
 	    s.utm_source,
 	    s.utm_medium,
 	    s.utm_campaign,
