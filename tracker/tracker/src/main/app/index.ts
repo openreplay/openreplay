@@ -1817,6 +1817,7 @@ export default class App {
       url: document.URL,
       connAttemptCount: this.options.connAttemptCount,
       connAttemptGap: this.options.connAttemptGap,
+      flushInterval: this.options.flushInterval,
       tabId: this.session.getTabId(),
       localDebug: this.options.__local_debug,
     })
@@ -1929,6 +1930,7 @@ export default class App {
       url: document.URL,
       connAttemptCount: this.options.connAttemptCount,
       connAttemptGap: this.options.connAttemptGap,
+      flushInterval: this.options.flushInterval,
       tabId: this.session.getTabId(),
       localDebug: this.options.__local_debug,
     })
@@ -2251,6 +2253,18 @@ export default class App {
   }
 
   forceFlushBatch() {
+    // Hand over messages still waiting for the next commit first, so that
+    // event(); forceFlushBatch() includes the event.
+    if (
+      this.activityState === ActivityState.Active &&
+      !this.socketMode &&
+      !this.insideIframe &&
+      this.messages.length
+    ) {
+      this.messages.unshift(Timestamp(this.timestamp()), TabData(this.session.getTabId()))
+      this.postToWorker(this.messages)
+      this.messages.length = 0
+    }
     this.worker?.postMessage('forceFlushBatch')
   }
 
