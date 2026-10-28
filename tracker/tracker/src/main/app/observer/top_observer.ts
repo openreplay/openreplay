@@ -6,7 +6,7 @@ import ShadowRootObserver from './shadow_root_observer.js'
 import { initUntaintedDom } from '../untaintedDom.js'
 import IFrameOffsets, { Offset } from './iframe_offsets.js'
 
-import { CreateDocument, SetNodeAttribute } from '../messages.gen.js'
+import { CreateDocument } from '../messages.gen.js'
 import App from '../index.js'
 import { IN_BROWSER, hasOpenreplayAttribute, canAccessIframe } from '../../utils.js'
 
@@ -208,6 +208,7 @@ export default class TopObserver extends Observer {
 
   private shadowRootObservers: Map<ShadowRoot, ShadowRootObserver> = new Map()
   private handleShadowRoot(shRoot: ShadowRoot) {
+    if (this.app.isDisposed()) return
     this.shadowRootObservers.forEach((obs, root) => {
       if (root === shRoot || !root.host.isConnected) {
         obs.disconnect()
@@ -223,6 +224,7 @@ export default class TopObserver extends Observer {
   }
 
   observe(): void {
+    if (this.app.isDisposed()) return
     // Protection from several subsequent calls?
     initUntaintedDom()
 
@@ -251,12 +253,14 @@ export default class TopObserver extends Observer {
       window.document.documentElement,
     )
 
+    if (this.app.isDisposed()) return
+
     // Send before `orloaded` so it lands in the initial visual batch (see sendColorScheme).
     this.sendColorScheme()
 
     // "DOM parsed" signal: observeRoot sent the full initial tree synchronously above.
     // The worker keys on this attribute (BatchWriter) to finalize the visual batch.
-    this.app.send(SetNodeAttribute(0, 'orloaded', 'true'))
+    this.app.attributeSender.sendSetAttribute(0, 'orloaded', 'true', { generated: true })
 
     if (IN_BROWSER && window.matchMedia) {
       this.colorSchemeMQL = window.matchMedia('(prefers-color-scheme: dark)')
@@ -284,7 +288,9 @@ export default class TopObserver extends Observer {
       // resolve declared support against OS preference into the concrete used scheme
       used = declared.includes('dark') && (prefersDark || !declared.includes('light')) ? 'dark' : 'light'
     }
-    this.app.send(SetNodeAttribute(0, '__openreplay_color_scheme', used))
+    this.app.attributeSender.sendSetAttribute(0, '__openreplay_color_scheme', used, {
+      generated: true,
+    })
   }
 
   crossdomainObserve(rootNodeId: number, frameOder: number, frameLevel: number) {

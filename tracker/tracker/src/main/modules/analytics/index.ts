@@ -130,6 +130,9 @@ export default class Analytics {
       this.batcher.restart()
     }
   }
+  onDiscard = () => {
+    this.batcher.discard()
+  }
   onStop = () => {
     if (!this.standalone) {
       this.batcher.stop()

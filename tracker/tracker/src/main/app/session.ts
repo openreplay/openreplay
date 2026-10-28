@@ -190,6 +190,17 @@ export default class Session {
     }
   }
 
+  discard(): void {
+    this.token = undefined
+    this.metadata = {}
+    this.userID = null
+    this.sessionID = this.projectID = undefined
+    this.timestamp = 0
+    this.tabId = ''
+    this.userInfo = { userBrowser: '', userCity: '', userCountry: '', userDevice: '', userOS: '', userState: '' }
+    this.callbacks.length = 0
+  }
+
   reset(): void {
     this.app.sessionStorage.removeItem(this.options.session_token_key)
     this.token = undefined

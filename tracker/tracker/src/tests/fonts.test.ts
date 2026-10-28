@@ -9,6 +9,8 @@ class NativeFontFace {
 function createApp() {
   return {
     send: jest.fn(),
+    isDisposed: () => false,
+    attachStopCallback: jest.fn(),
     safe:
       (fn: any) =>
       (...args: any[]) => {

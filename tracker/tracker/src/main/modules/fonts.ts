@@ -1,3 +1,4 @@
+import { sanitizeCapture } from '../app/captureSanitizer.js'
 import type App from '../app/index.js'
 import { isDocument } from '../app/guards.js'
 import { LoadFontFace } from '../app/messages.gen.js'
@@ -9,14 +10,27 @@ export default function (app: App) {
     return
   }
 
+  const sanitise = (data: FFData): FFData | null => {
+    const fields = ['family', 'source', 'descriptors'] as const
+    const values = data.map((value, index) =>
+      sanitizeCapture(app.captureSanitizer, {
+        kind: 'font',
+        field: fields[index],
+        value,
+        node: null,
+      }),
+    )
+    return values.some((value) => value === null) ? null : (values as FFData)
+  }
   const docFonts: Map<Document, FFData[]> = new Map()
+  app.attachStopCallback(() => { if (app.isDisposed()) docFonts.clear() })
 
   const patchWindow = (wnd: typeof globalThis) => {
     // @ts-ignore
     class FontFaceInterceptor extends wnd.FontFace {
       constructor(...args: ConstructorParameters<typeof FontFace>) {
         //maybe do this on load(). In this case check if the document.fonts.load(...) function calls the font's load()
-        if (typeof args[1] === 'string') {
+        if (!app.isDisposed() && typeof args[1] === 'string') {
           app.safe(() => {
             let desc = ''
             if (args[2]) {
@@ -25,7 +39,8 @@ export default function (app: App) {
               })()
             }
 
-            const ffData: FFData = [args[0], args[1] as string, desc]
+            const ffData = sanitise([args[0], args[1] as string, desc])
+            if (app.isDisposed() || ffData === null) return
             const ffDataArr = docFonts.get(wnd.document) || []
             ffDataArr.push(ffData)
             docFonts.set(wnd.document, ffDataArr)
@@ -60,7 +75,10 @@ export default function (app: App) {
       }
 
       ffDataArr.forEach((ffData) => {
-        app.send(LoadFontFace(parentID, ...ffData))
+        const approved = sanitise(ffData)
+        // Revalidate revocation without transforming an already approved tuple a second time.
+        if (approved !== null && approved.every((value, i) => value === ffData[i]))
+          app.send(LoadFontFace(parentID, ...ffData))
       })
     }),
   )

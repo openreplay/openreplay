@@ -1,9 +1,7 @@
-import {
-  SetNodeAttributeDictGlobal,
-  SetNodeAttribute,
-  Type,
-} from '../../common/messages.gen.js'
+import { SetNodeAttributeDictGlobal, SetNodeAttribute, Type } from '../../common/messages.gen.js'
 import App from '../app/index.js'
+import { SetNodeAttributeURLBased, RemoveNodeAttribute } from '../app/messages.gen.js'
+import { sanitizeCapture, isGeneratedAttribute } from '../app/captureSanitizer.js'
 
 // Bounds tracker memory on long sessions with ever-changing attribute values.
 // Evicted strings get a fresh key and are re-sent if they show up again;
@@ -69,6 +67,8 @@ export class StringDictionary {
 }
 
 export default class AttributeSender {
+  private disposed = false
+  private emittedAttributes = new Map<number, Set<string>>()
   private dict: StringDictionary
   private readonly app: App
   private readonly isDictDisabled: boolean
@@ -78,8 +78,93 @@ export default class AttributeSender {
     this.dict = new StringDictionary()
   }
 
-  public sendSetAttribute = (id: number, name: string, value: string) => {
-    if (this.isDictDisabled) {
+  private attribute(id: number, name: string, value: string, generated = false): string | null {
+    if (this.disposed) return null
+    const node = this.app.nodes?.getNode(id)
+    const approved =
+      generated && isGeneratedAttribute(name, value)
+        ? value
+        : sanitizeCapture(this.app.captureSanitizer, {
+            kind: 'attribute',
+            name,
+            value,
+            node: node && node.nodeType === 1 ? (node as Element) : null,
+          })
+    if (this.disposed) return null
+    if (approved === null) this.removeAttribute(id, name)
+    return approved
+  }
+
+  public sendURLBasedAttribute = (
+    id: number,
+    name: string,
+    value: string,
+    options: {
+      generated?: boolean
+      emit?: (value: string) => void
+      resourceType?: 'image' | 'stylesheet' | 'svg'
+    } = {},
+  ) => {
+    const generated = Boolean(options.generated && isGeneratedAttribute(name, value))
+    let approved = this.attribute(id, name, value, generated)
+    if (approved === null) return
+    const node = this.app.nodes?.getNode(id)
+    const element = node && node.nodeType === 1 ? (node as Element) : null
+    if (!generated)
+      approved =
+        name === 'style'
+          ? sanitizeCapture(this.app.captureSanitizer, {
+              kind: 'css',
+              source: 'attribute',
+              value: approved,
+              node: element,
+            })
+          : sanitizeCapture(this.app.captureSanitizer, {
+              kind: 'resource',
+              resourceType: options.resourceType ?? 'image',
+              value: approved,
+              node: element,
+            })
+    if (this.disposed) return
+    if (approved === null) {
+      this.removeAttribute(id, name)
+      return
+    }
+    this.rememberAttribute(id, name)
+    if (options.emit) options.emit(approved)
+    else this.app.send(SetNodeAttributeURLBased(id, name, approved, this.app.getBaseHref()))
+  }
+
+  public sendSetAttribute = (
+    id: number,
+    name: string,
+    value: string,
+    options: { generated?: boolean; plain?: boolean; resourceType?: 'image' } = {},
+  ) => {
+    let approved = this.attribute(id, name, value, options.generated)
+    if (approved === null) return
+    if (options.resourceType) {
+      const node = this.app.nodes?.getNode(id)
+      approved = sanitizeCapture(this.app.captureSanitizer, {
+        kind: 'resource',
+        resourceType: options.resourceType,
+        value: approved,
+        node: node && node.nodeType === 1 ? (node as Element) : null,
+      })
+      if (this.disposed) return
+      if (approved === null) {
+        this.removeAttribute(id, name)
+        return
+      }
+    }
+    if (this.disposed) return
+    value = approved
+    this.rememberAttribute(id, name)
+    const plainGenerated =
+      options.generated &&
+      ['orloaded', '__openreplay_color_scheme', '__openreplay_dialog'].includes(name) &&
+      isGeneratedAttribute(name, value)
+    if (this.isDictDisabled || options.plain || plainGenerated) {
       const msg: SetNodeAttribute = [Type.SetNodeAttribute, id, name, value]
       return this.app.send(msg)
     } else {
@@ -93,6 +178,25 @@ export default class AttributeSender {
     }
   }
 
+  private rememberAttribute(id: number, name: string) {
+    if (this.app.captureSanitizer === undefined) return
+    const names = this.emittedAttributes.get(id) ?? new Set<string>()
+    names.add(name)
+    this.emittedAttributes.set(id, names)
+  }
+
+  public removeAttribute(id: number, name: string) {
+    // Never disclose a newly rejected attribute name in a removal message.
+    if (this.app.captureSanitizer !== undefined && !this.emittedAttributes.get(id)?.has(name))
+      return
+    this.emittedAttributes.get(id)?.delete(name)
+    this.app.send(RemoveNodeAttribute(id, name))
+  }
+
+  public forgetNode(id: number) {
+    this.emittedAttributes.delete(id)
+  }
+
   private applyDict(str: string): number {
     const [key, isNew] = this.dict.getKey(str)
     if (isNew) {
@@ -101,7 +205,13 @@ export default class AttributeSender {
     return key
   }
 
+  discard() {
+    this.disposed = true
+    this.clear()
+  }
+
   clear() {
+    this.emittedAttributes.clear()
     this.dict.clear()
   }
 }

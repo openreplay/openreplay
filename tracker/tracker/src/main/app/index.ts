@@ -4,6 +4,7 @@ import type {
   ToWorkerData,
 } from '../../common/interaction.js'
 import AttributeSender from '../modules/attributeSender.js'
+import { sanitizeCapture, type CaptureSanitizer } from './captureSanitizer.js'
 import ConditionsManager from '../modules/conditionsManager.js'
 import type { Options as NetworkOptions } from '../modules/network.js'
 import { deviceMemory, jsHeapSizeLimit } from '../modules/performance.js'
@@ -125,6 +126,7 @@ enum ActivityState {
 }
 
 type AppOptions = {
+  captureSanitizer?: CaptureSanitizer
   revID: string
   urls?: Partial<ViewportOptions>
   node_id: string
@@ -271,12 +273,32 @@ export default class App {
   private readonly startCallbacks: Array<StartCallback> = []
   private readonly stopCallbacks: Array<() => any> = []
   private readonly commitCallbacks: Array<CommitCallback> = []
+  public readonly captureSanitizer?: CaptureSanitizer
+  private captureBatchWarning = false
   public readonly options: Options
   public readonly networkOptions?: NetworkOptions
   private readonly revID: string
   private activityState: ActivityState = ActivityState.NotActive
   private readonly version = 'TRACKER_VERSION' // TODO: version compatability check inside each plugin.
   private worker?: TypedWorker
+  private disposed = false
+  private workerURL?: string
+  private readonly lifecycleAbort = new AbortController()
+  private readonly disposalWaits = new Set<() => void>()
+  private readonly timeouts = new Set<ReturnType<typeof setTimeout>>()
+
+  isDisposed(): boolean {
+    return this.disposed
+  }
+
+  private schedule(callback: () => void, ms = 0) {
+    const timer = setTimeout(() => {
+      this.timeouts.delete(timer)
+      if (!this.disposed) callback()
+    }, ms)
+    this.timeouts.add(timer)
+    return timer
+  }
 
   public attributeSender: AttributeSender
   public socketMode = false
@@ -309,6 +331,11 @@ export default class App {
     this.projectKey = projectKey
 
     this.networkOptions = options.network
+    const captureSanitizer = options.captureSanitizer
+    this.captureSanitizer =
+      captureSanitizer === undefined
+        ? undefined
+        : (data) => (this.disposed ? null : captureSanitizer(data))
 
     const defaultOptions: Options = {
       revID: '',
@@ -434,7 +461,7 @@ export default class App {
       window.addEventListener('message', this.crossDomainIframeListener)
       // Parent-only: once per minute, log an encoded snapshot of every tracked child
       // iframe and the freshness of our two-way comms, to debug iframes that go silent.
-      if (this.options.crossdomain?.enabled) {
+      if (this.options.crossdomain?.enabled && this.captureSanitizer === undefined) {
         if (this.xdomainDebugInterval) clearInterval(this.xdomainDebugInterval)
         this.xdomainDebugInterval = setInterval(this.emitCrossdomainDebug, 60_000)
       }
@@ -446,10 +473,11 @@ export default class App {
         context: this.contextId,
         projectKey: this.projectKey,
       })
-      this.startTimeout = setTimeout(() => {
+      this.startTimeout = this.schedule(() => {
         this.allowAppStart()
       }, 250)
       this.bc.onmessage = (ev: MessageEvent<RickRoll>) => {
+        if (this.disposed) return
         if (ev.data.context === this.contextId || this.projectKey !== ev.data.projectKey) {
           this.debug.log('same ctx event', ev)
           return
@@ -508,7 +536,7 @@ export default class App {
       this.childPollingInterval = null
     }
     // deferred: we are inside a commit that is still walking nodes
-    setTimeout(() => this.stop(false))
+    this.schedule(() => this.stop(false))
   }
   checkStatus = () => {
     return this.parentActive
@@ -567,6 +595,7 @@ export default class App {
     }
   }
   parentCrossDomainFrameListener = (event: MessageEvent) => {
+    if (this.disposed) return
     const { data } = event
     if (!data || event.source === window) return
     // Debug: remember the last time the parent talked to us.
@@ -810,9 +839,22 @@ export default class App {
     this.send(ConsoleLog('info', `[OR_XDOMAIN_DEBUG] ${encoded}`))
   }
   crossDomainIframeListener = (event: MessageEvent) => {
+    if (this.disposed) return
     if (event.source === window) return
     const { data } = event
     if (!data) return
+    if (
+      this.captureSanitizer !== undefined &&
+      (this.options.crossdomain?.enabled ||
+        data.line === proto.iframeBatch ||
+        data.line === proto.iframeDebug)
+    ) {
+      if (!this.captureBatchWarning) {
+        this.captureBatchWarning = true
+        this.debug.warn('OpenReplay: cross-domain child capture is disabled with captureSanitizer')
+      }
+      return
+    }
     // Debug: remember when we last heard *anything* from this context, and its domain.
     if (data.context) {
       this.frameAnyLastSeen.set(data.context, Date.now())
@@ -840,6 +882,7 @@ export default class App {
           return console.error('Couldnt connect to event.source for child iframe tracking')
         }
         const id = await this.checkNodeId(event.source)
+        if (this.disposed) return
         if (!id) {
           this.debug.log('Couldnt get node id for iframe', event.source)
           return
@@ -852,6 +895,7 @@ export default class App {
           }
           this.everTrackedFrames.add(data.context)
           await this.waitStarted()
+          if (this.disposed) return
           const token = this.session.getSessionToken(this.projectKey)
           // Persistent, collision-free order (NOT the shifting array index). A restart of the
           // same context keeps its order/id-block for continuity; distinct live frames at the
@@ -970,8 +1014,11 @@ export default class App {
         const message: Record<string, any> = { line: nextCommand }
         if (nextCommand === proto.startIframe) {
           message.token = this.session.getSessionToken(this.projectKey)
-          const targetFrame = this.pageFrames.find((f) => f.contentWindow === event.source)
-            || Array.from(document.querySelectorAll('iframe')).find((f) => f.contentWindow === event.source)
+          const targetFrame =
+            this.pageFrames.find((f) => f.contentWindow === event.source) ||
+            Array.from(document.querySelectorAll('iframe')).find(
+              (f) => f.contentWindow === event.source,
+            )
           if (targetFrame) {
             const nodeId = (targetFrame as any)[this.options.node_id]
             if (nodeId !== undefined) {
@@ -1011,6 +1058,7 @@ export default class App {
 
   public bootChildrenFrames = async () => {
     await this.waitStarted()
+    if (this.disposed) return
     this.addCommand(proto.startIframe)
   }
 
@@ -1019,6 +1067,7 @@ export default class App {
   }
 
   signalIframeTracker = () => {
+    if (this.disposed) return
     const thisTab = this.session.getTabId()
     window.parent.postMessage(
       {
@@ -1042,6 +1091,7 @@ export default class App {
     let stopAttempts = false
 
     const checkAndSendMessage = () => {
+      if (this.disposed) return
       if (stopAttempts || this.checkStatus()) {
         stopAttempts = true
         return
@@ -1065,7 +1115,7 @@ export default class App {
         break
       }
       cumulativeDelay += delay
-      setTimeout(() => {
+      this.schedule(() => {
         checkAndSendMessage()
       }, cumulativeDelay)
       delay *= 1.5
@@ -1074,6 +1124,7 @@ export default class App {
 
   startTimeout: ReturnType<typeof setTimeout> | null = null
   public allowAppStart() {
+    if (this.disposed) return
     this.canStart = true
     if (this.startTimeout) {
       clearTimeout(this.startTimeout)
@@ -1103,6 +1154,7 @@ export default class App {
      * */
     let tries = 0
     while (tries < 100) {
+      if (this.disposed) return null
       // @ts-ignore
       const potentialId = targetFrame[this.options.node_id]
       if (potentialId !== undefined) {
@@ -1119,9 +1171,8 @@ export default class App {
 
   private initWorker() {
     try {
-      this.worker = new Worker(
-        URL.createObjectURL(new Blob([workerBodyFn], { type: 'text/javascript' })),
-      )
+      this.workerURL = URL.createObjectURL(new Blob([workerBodyFn], { type: 'text/javascript' }))
+      this.worker = new Worker(this.workerURL)
       this.worker.onerror = (e) => {
         this._debug('webworker_error', e)
       }
@@ -1135,7 +1186,7 @@ export default class App {
           return
         }
         closing = true
-        setTimeout(() => {
+        this.schedule(() => {
           closing = false
         }, 500)
 
@@ -1179,20 +1230,24 @@ export default class App {
   }
 
   private restart = (forceNew = false) => {
+    if (this.disposed) return
     this.stop(false)
     this.waitStatus(ActivityState.NotActive).then(() => {
+      if (this.disposed) return
       this.allowAppStart()
       // Force a brand-new session when asked (e.g. a stale bfcache restore) without
       // letting forceNew leak into later restarts through prevOpts.
       const startOpts = forceNew ? { ...this.prevOpts, forceNew: true } : this.prevOpts
       this.start(startOpts, true)
         .then((r) => {
+          if (this.disposed) return
           if (forceNew) {
             this.prevOpts = { ...this.prevOpts, forceNew: false }
           }
           this.debug.info('Session restart', r)
         })
         .catch((e) => {
+          if (this.disposed) return
           this.debug.error('Session restart failed', e)
         })
     })
@@ -1226,17 +1281,21 @@ export default class App {
   }
 
   private handleWorkerMsg(data: FromWorkerData) {
+    if (this.disposed) return
     // handling 401 auth restart (new token assignment)
     if (data === 'a_stop') {
       this.stop(false)
     } else if (data === 'a_start') {
       this.waitStatus(ActivityState.NotActive).then(() => {
+        if (this.disposed) return
         this.allowAppStart()
         this.start(this.prevOpts, true)
           .then((r) => {
+            if (this.disposed) return
             this.debug.info('Worker restart, session too long', r)
           })
           .catch((e) => {
+            if (this.disposed) return
             this.debug.error('Worker restart failed', e)
           })
       })
@@ -1260,9 +1319,11 @@ export default class App {
   }
 
   private _debug(context: string, e: any) {
+    if (this.disposed) return
     if (this.options.__debug_report_edp !== null) {
       void fetch(this.options.__debug_report_edp, {
         method: 'POST',
+        signal: this.lifecycleAbort.signal,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           context,
@@ -1281,6 +1342,7 @@ export default class App {
   }
 
   send = (message: Message, urgent = false): void => {
+    if (this.disposed) return
     if (this.activityState === ActivityState.NotActive) {
       return
     }
@@ -1313,6 +1375,7 @@ export default class App {
    * every ~30ms
    * */
   private _nCommit(): void {
+    if (this.disposed) return
     if (this.socketMode) {
       this.messages.unshift(Timestamp(this.timestamp()), TabData(this.session.getTabId()))
       this.commitCallbacks.forEach((cb) => cb(this.messages))
@@ -1373,9 +1436,10 @@ export default class App {
   }
 
   private onCommitError = (e: unknown) => {
+    if (this.disposed) return
     this._debug('worker_commit', e)
     this.stop(true)
-    setTimeout(() => {
+    this.schedule(() => {
       void this.start()
     }, 500)
   }
@@ -1389,6 +1453,7 @@ export default class App {
    * but in turn we don't overload batch writer on session start with 1000 batches
    * */
   private _cStartCommit(): void {
+    if (this.disposed) return
     this.coldStartCommitN += 1
     if (this.coldStartCommitN === 2) {
       const payload = [Timestamp(this.timestamp()), TabData(this.session.getTabId())]
@@ -1399,6 +1464,7 @@ export default class App {
   }
 
   private commit(): void {
+    if (this.disposed) return
     if (this.activityState === ActivityState.ColdStart) {
       this._cStartCommit()
     } else {
@@ -1407,6 +1473,7 @@ export default class App {
   }
 
   private postToWorker(messages: Array<Message>) {
+    if (this.disposed) return
     this.worker?.postMessage(messages)
     this.commitCallbacks.forEach((cb) => cb(messages))
   }
@@ -1547,23 +1614,26 @@ export default class App {
   }
 
   getBaseHref(): string {
-    if (typeof this.options.resourceBaseHref === 'string') {
-      return this.options.resourceBaseHref
-    } else if (typeof this.options.resourceBaseHref === 'object') {
-      //TODO: switch between types
-    }
-    if (document.baseURI) {
-      return document.baseURI
-    }
-    // IE only
+    const value =
+      typeof this.options.resourceBaseHref === 'string'
+        ? this.options.resourceBaseHref
+        : document.baseURI ||
+          document.head?.getElementsByTagName('base')[0]?.getAttribute('href') ||
+          location.origin + location.pathname
     return (
-      document.head?.getElementsByTagName('base')[0]?.getAttribute('href') ||
-      location.origin + location.pathname
+      sanitizeCapture(this.captureSanitizer, {
+        kind: 'resource',
+        resourceType: 'base',
+        value,
+        node: null,
+      }) ?? ''
     )
   }
 
-  resolveResourceURL(resourceURL: string): string {
-    const base = new URL(this.getBaseHref())
+  resolveResourceURL(resourceURL: string): string | null {
+    const baseHref = this.getBaseHref()
+    if (!baseHref) return null
+    const base = new URL(baseHref)
     base.pathname += '/' + new URL(resourceURL).pathname
     base.pathname.replace(/\/+/g, '/')
     return base.toString()
@@ -1631,13 +1701,16 @@ export default class App {
    * and we will then send buffered batch, so it won't get lost
    * */
   public async coldStart(startOpts: StartOptions = {}, conditional?: boolean) {
+    if (this.disposed) return
     this.singleBuffer = false
     const second = 1000
     const isNewSession = this.checkSessionToken(startOpts.forceNew)
     if (conditional) {
       await this.setupConditionalStart(startOpts)
+      if (this.disposed) return
     }
     const cycle = () => {
+      if (this.disposed) return
       this.orderNumber += 1
       adjustTimeOrigin()
       this.coldStartTs = now()
@@ -1668,6 +1741,7 @@ export default class App {
         this.send(TabChange(this.session.getTabId()))
       }
       this.observer.observe()
+      if (this.disposed) return
       this.ticker.start()
     }
     this.coldInterval = setInterval(() => {
@@ -1677,9 +1751,11 @@ export default class App {
   }
 
   private async setupConditionalStart(startOpts: StartOptions) {
+    if (this.disposed) return
     this.conditionsManager = new ConditionsManager(this, startOpts)
     const r = await fetch(this.options.ingestPoint + '/v1/web/start', {
       method: 'POST',
+      signal: this.lifecycleAbort.signal,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -1697,6 +1773,7 @@ export default class App {
         height: window.screen.height,
       }),
     })
+    if (this.disposed) return
     const {
       // this token is needed to fetch conditions and flags,
       // but it can't be used to record a session
@@ -1709,6 +1786,7 @@ export default class App {
       userState,
       projectID,
     } = await r.json()
+    if (this.disposed) return
     this.session.assign({ projectID })
     this.session.setUserInfo({
       userBrowser,
@@ -1719,8 +1797,12 @@ export default class App {
       userState,
     })
     const onStartInfo = { sessionToken: token, userUUID: '', sessionID: '' }
-    this.startCallbacks.forEach((cb) => cb(onStartInfo))
+    for (const cb of this.startCallbacks) {
+      cb(onStartInfo)
+      if (this.disposed) return
+    }
     await this.conditionsManager?.fetchConditions(projectID as string, token as string)
+    if (this.disposed) return
     await this.tagWatcher.fetchTags(this.options.ingestPoint, token as string)
   }
 
@@ -1734,6 +1816,7 @@ export default class App {
    * @param {Function} onSessionSent - callback that will be called once session is fully sent
    * */
   public offlineRecording(startOpts: StartOptions = {}, onSessionSent: () => void) {
+    if (this.disposed) return
     this.onSessionSent = onSessionSent
     this.singleBuffer = true
     const isNewSession = this.checkSessionToken(startOpts.forceNew)
@@ -1759,12 +1842,16 @@ export default class App {
       metadata: startOpts.metadata,
     })
     const onStartInfo = { sessionToken: '', userUUID: '', sessionID: '' }
-    this.startCallbacks.forEach((cb) => cb(onStartInfo))
+    for (const cb of this.startCallbacks) {
+      cb(onStartInfo)
+      if (this.disposed) return
+    }
     if (!isNewSession) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       this.send(TabChange(this.session.getTabId()))
     }
     this.observer.observe()
+    if (this.disposed) return
     this.ticker.start()
 
     return {
@@ -1782,6 +1869,7 @@ export default class App {
    * Keeping the size of local storage reasonable is up to the end users of this library
    * */
   public saveBuffer() {
+    if (this.disposed) return
     this.localStorage.setItem(bufferStorageKey, JSON.stringify(this.bufferedMessages1))
   }
 
@@ -1796,6 +1884,7 @@ export default class App {
    * Used to set a buffer with messages array
    * */
   public setBuffer(buffer: Message[]) {
+    if (this.disposed) return
     this.bufferedMessages1 = buffer
   }
 
@@ -1807,6 +1896,7 @@ export default class App {
    * @reject {string} - error message
    * */
   public async uploadOfflineRecording() {
+    if (this.disposed) return
     this.stop(false)
     const timestamp = now()
     this.worker?.postMessage({
@@ -1822,6 +1912,7 @@ export default class App {
     })
     const r = await fetch(this.options.ingestPoint + '/v1/web/start', {
       method: 'POST',
+      signal: this.lifecycleAbort.signal,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -1837,6 +1928,7 @@ export default class App {
         timezone: getTimezone(),
       }),
     })
+    if (this.disposed) return
     const {
       token,
       userBrowser,
@@ -1849,6 +1941,7 @@ export default class App {
       projectID,
       protocolVersion: offlineProtocolVersion,
     } = await r.json()
+    if (this.disposed) return
     this.worker?.postMessage({
       type: 'auth',
       token,
@@ -1866,6 +1959,7 @@ export default class App {
     })
     while (this.bufferedMessages1.length > 0) {
       await this.flushBuffer(this.bufferedMessages1)
+      if (this.disposed) return
     }
     this.postToWorker([[-1]] as unknown as Message[])
     this.clearBuffers()
@@ -1878,6 +1972,7 @@ export default class App {
     resetByWorker = false,
     conditionName?: string,
   ): Promise<StartPromiseReturn> {
+    if (this.disposed) return UnsuccessfulStart('Tracker discarded')
     if (Object.keys(startOpts).length !== 0) {
       this.prevOpts = startOpts
     }
@@ -1946,6 +2041,7 @@ export default class App {
     try {
       const r = await window.fetch(this.options.ingestPoint + '/v1/web/start', {
         method: 'POST',
+        signal: this.lifecycleAbort.signal,
         headers: {
           'Content-Type': 'application/json',
         },
@@ -1966,8 +2062,10 @@ export default class App {
           referrer: this.sanitizeReferrer(document.referrer),
         }),
       })
+      if (this.disposed) return UnsuccessfulStart('Tracker discarded')
       if (r.status !== 200) {
         const error = await r.text()
+        if (this.disposed) return UnsuccessfulStart('Tracker discarded')
         const reason = error === CANCELED ? CANCELED : `Server error: ${r.status}. ${error}`
         return UnsuccessfulStart(reason)
       }
@@ -1998,6 +2096,7 @@ export default class App {
         assistOnly: socketOnly,
         protocolVersion,
       } = await r.json()
+      if (this.disposed) return UnsuccessfulStart('Tracker discarded')
       if (
         typeof token !== 'string' ||
         typeof userUUID !== 'string' ||
@@ -2063,9 +2162,13 @@ export default class App {
       const onStartInfo = { sessionToken: token, userUUID, sessionID }
       // TODO: start as early as possible (before receiving the token)
       /** after start */
-      this.startCallbacks.forEach((cb) => cb(onStartInfo)) // MBTODO: callbacks after DOM "mounted" (observed)
+      for (const cb of this.startCallbacks) {
+        cb(onStartInfo)
+        if (this.disposed) return UnsuccessfulStart('Tracker discarded')
+      }
       if (this.userStartCallback) {
         this.userStartCallback(SuccessfulStart(onStartInfo))
+        if (this.disposed) return UnsuccessfulStart('Tracker discarded')
       }
       this.activityState = ActivityState.Active
       if (this.options.crossdomain?.enabled) {
@@ -2093,6 +2196,7 @@ export default class App {
             : this.bufferedMessages2
         while (biggestBuffer.length > 0) {
           await this.flushBuffer(biggestBuffer)
+          if (this.disposed) return UnsuccessfulStart('Tracker discarded')
         }
         this.clearBuffers()
         this.commit()
@@ -2103,12 +2207,16 @@ export default class App {
       } else {
         this.observer.observe()
       }
+      if (this.disposed) return UnsuccessfulStart('Tracker discarded')
       this.ticker.start()
+      if (this.disposed) return UnsuccessfulStart('Tracker discarded')
       this.canvasRecorder?.startTracking()
+      if (this.disposed) return UnsuccessfulStart('Tracker discarded')
       void this.tagWatcher.fetchTags(this.options.ingestPoint, token)
 
       return SuccessfulStart(onStartInfo)
     } catch (reason) {
+      if (this.disposed) return UnsuccessfulStart('Tracker discarded')
       this.stop()
       this.session.reset()
       if (!reason) {
@@ -2129,6 +2237,7 @@ export default class App {
   }
 
   restartCanvasTracking = () => {
+    if (this.disposed) return
     this.canvasRecorder?.restartTracking()
   }
 
@@ -2141,6 +2250,7 @@ export default class App {
   }
 
   resanitize = (el?: Element): void => {
+    if (this.disposed) return
     const root = el ?? (IN_BROWSER ? document.documentElement : undefined)
     if (!root) {
       return
@@ -2157,6 +2267,7 @@ export default class App {
   }
 
   flushBuffer = async (buffer: Message[]) => {
+    if (this.disposed) return
     return new Promise((res, reject) => {
       if (buffer.length === 0) {
         res(null)
@@ -2171,6 +2282,7 @@ export default class App {
 
       requestIdleCb(() => {
         try {
+          if (this.disposed) { res(null); return }
           const messagesBatch = buffer.splice(0, endIndex)
 
           // Cast out potential proxy objects (produced from vue.js deep reactivity, for example) to a regular array.
@@ -2185,15 +2297,27 @@ export default class App {
     })
   }
 
-  async waitStart() {
+  private waitUntil(predicate: () => boolean, ms: number): Promise<boolean> {
     return new Promise((resolve) => {
-      const int = setInterval(() => {
-        if (this.canStart) {
-          clearInterval(int)
-          resolve(true)
-        }
-      }, 100)
+      let timer: ReturnType<typeof setTimeout> | undefined
+      const finish = (value: boolean) => {
+        clearTimeout(timer)
+        this.disposalWaits.delete(cancel)
+        resolve(value)
+      }
+      const cancel = () => finish(false)
+      const check = () => {
+        if (this.disposed) finish(false)
+        else if (predicate()) finish(true)
+        else timer = setTimeout(check, ms)
+      }
+      this.disposalWaits.add(cancel)
+      check()
     })
+  }
+
+  async waitStart() {
+    return this.waitUntil(() => this.canStart, 100)
   }
 
   async waitStarted() {
@@ -2201,16 +2325,7 @@ export default class App {
   }
 
   async waitStatus(status: ActivityState) {
-    return new Promise((resolve) => {
-      const check = () => {
-        if (this.activityState === status) {
-          resolve(true)
-        } else {
-          setTimeout(check, 25)
-        }
-      }
-      check()
-    })
+    return this.waitUntil(() => this.activityState === status, 25)
   }
 
   /**
@@ -2218,6 +2333,7 @@ export default class App {
    * and here we just apply 10ms delay just in case
    * */
   async start(...args: Parameters<App['_start']>): Promise<StartPromiseReturn> {
+    if (this.disposed) return UnsuccessfulStart('Tracker discarded')
     if (
       this.activityState === ActivityState.Active ||
       this.activityState === ActivityState.Starting
@@ -2241,9 +2357,15 @@ export default class App {
             await this.waitStart()
             // eslint-disable-next-line
             document.removeEventListener('visibilitychange', onVisibilityChange)
+            this.disposalWaits.delete(cancel)
             resolve(this._start(...args))
           }
         }
+        const cancel = () => {
+          document.removeEventListener('visibilitychange', onVisibilityChange)
+          resolve(UnsuccessfulStart('Tracker discarded'))
+        }
+        this.disposalWaits.add(cancel)
         // eslint-disable-next-line
         document.addEventListener('visibilitychange', onVisibilityChange)
       })
@@ -2251,6 +2373,7 @@ export default class App {
   }
 
   forceFlushBatch() {
+    if (this.disposed) return
     this.worker?.postMessage('forceFlushBatch')
   }
 
@@ -2283,7 +2406,61 @@ export default class App {
     }
   }
 
+  discard(): void {
+    if (this.disposed) return
+    this.disposed = true
+    this.activityState = ActivityState.NotActive
+    const detach = (fn: () => void) => { try { fn() } catch { /* continue owned teardown */ } }
+    detach(() => this.lifecycleAbort.abort())
+    detach(() => this.tagWatcher.discard())
+    const worker = this.worker
+    this.worker = undefined
+    if (worker) {
+      detach(() => { worker.onmessage = null })
+      detach(() => { worker.onerror = null })
+      detach(() => worker.terminate())
+    }
+    this.messages.length = 0
+    for (const buffer of [this.bufferedMessages1, this.bufferedMessages2]) {
+      detach(() => { buffer.length = 0 })
+    }
+    detach(() => this.session.discard())
+    this.prevOpts = {}
+    this.userStartCallback = undefined
+    this.conditionsManager = null
+    if (this.workerURL) detach(() => URL.revokeObjectURL(this.workerURL!))
+    this.workerURL = undefined
+    this.timeouts.forEach(clearTimeout)
+    this.timeouts.clear()
+    for (const timer of [this.startTimeout, this.coldInterval, this.childPollingInterval,
+      this.iframeDebugInterval, this.xdomainDebugInterval]) {
+      if (timer !== null) clearInterval(timer)
+    }
+    this.startTimeout = this.coldInterval = this.childPollingInterval = null
+    this.iframeDebugInterval = this.xdomainDebugInterval = null
+    this.disposalWaits.forEach((finish) => detach(finish))
+    this.disposalWaits.clear()
+    detach(() => window.removeEventListener('message', this.crossDomainIframeListener))
+    detach(() => window.removeEventListener('message', this.parentCrossDomainFrameListener))
+    if (this.bc) {
+      this.bc.onmessage = null
+      detach(() => this.bc!.close())
+    }
+    for (const key of [this.options.session_token_key, this.options.session_pageno_key,
+      this.options.session_tabid_key, this.options.session_reset_key, this.sessionVersionKey,
+      '__or__watched_tags__']) detach(() => this.sessionStorage.removeItem(key))
+    detach(() => this.localStorage.removeItem(this.options.local_uuid_key))
+    for (const fn of [() => this.observer.disconnect(), () => this.ticker.stop(),
+      () => this.nodes.clear(), () => this.sanitizer.clear(), () => this.attributeSender.discard(),
+      () => this.canvasRecorder?.clear(), ...this.stopCallbacks]) detach(fn)
+    this.startCallbacks.length = this.stopCallbacks.length = this.commitCallbacks.length = 0
+    this.resanitizeCallbacks.length = 0
+    this.parentActive = false
+    this.pageFrames = []
+  }
+
   stop(stopWorker = true): void {
+    if (this.disposed) return
     if (this.activityState !== ActivityState.NotActive) {
       try {
         if (this.options.crossdomain?.enabled) {

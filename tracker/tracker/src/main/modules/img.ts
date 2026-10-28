@@ -1,6 +1,7 @@
+import { PLACEHOLDER_SRC, sanitizeCapture } from '../app/captureSanitizer.js'
 import type App from '../app/index.js'
 import { isURL, IS_FIREFOX, MAX_STR_LEN, createMutationObserver } from '../utils.js'
-import { ResourceTiming, SetNodeAttributeURLBased } from '../app/messages.gen.js'
+import { ResourceTiming } from '../app/messages.gen.js'
 import { hasTag } from '../app/guards.js'
 
 function resolveURL(url: string, location: Location = document.location) {
@@ -24,17 +25,16 @@ function isSVGInFireFox(url: string) {
   return IS_FIREFOX && (url.startsWith('data:image/svg+xml') || url.match(/.svg$|/i))
 }
 
-const PLACEHOLDER_SRC = 'https://static.openreplay.com/tracker/placeholder.jpeg'
-
 export default function (app: App): void {
   function sendPlaceholder(id: number, node: HTMLImageElement): void {
-    app.attributeSender.sendSetAttribute(id, 'src', PLACEHOLDER_SRC)
+    app.attributeSender.removeAttribute(id, 'srcset')
+    app.attributeSender.sendSetAttribute(id, 'src', PLACEHOLDER_SRC, { generated: true, resourceType: 'image' })
     const { width, height } = node.getBoundingClientRect()
     if (!node.hasAttribute('width')) {
-      app.attributeSender.sendSetAttribute(id, 'width', String(width))
+      app.attributeSender.sendSetAttribute(id, 'width', String(width), { generated: true })
     }
     if (!node.hasAttribute('height')) {
-      app.attributeSender.sendSetAttribute(id, 'height', String(height))
+      app.attributeSender.sendSetAttribute(id, 'height', String(height), { generated: true })
     }
   }
 
@@ -47,20 +47,48 @@ export default function (app: App): void {
       .split(srcset.match(/,\s+/) ? /,\s+/ : ',')
       .map((str) => resolveURL(str))
       .join(', ')
-    app.attributeSender.sendSetAttribute(id, 'srcset', resolvedSrcset)
+    app.attributeSender.sendSetAttribute(id, 'srcset', resolvedSrcset, { resourceType: 'image' })
   }
 
   const sendSrc = function (id: number, img: HTMLImageElement): void {
     if (img.src.length > MAX_STR_LEN) {
       sendPlaceholder(id, img)
+      return
     }
-    app.send(SetNodeAttributeURLBased(id, 'src', img.src, app.getBaseHref()))
+    app.attributeSender.sendURLBasedAttribute(id, 'src', img.src)
   }
 
   const sendImgError = app.safe(function (img: HTMLImageElement): void {
-    const resolvedSrc = resolveURL(img.src || '') // Src type is null sometimes. - is it true?
-    if (isURL(resolvedSrc)) {
-      app.send(ResourceTiming(app.timestamp(), 0, 0, 0, 0, 0, resolvedSrc, 'img', 0, false, 0, 0, 0, 0, 0, 0, 0))
+    const id = app.nodes.getID(img)
+    if (id === undefined || app.sanitizer.isHidden(id) || app.sanitizer.isObscured(id)) return
+    const resolvedSrc = sanitizeCapture(app.captureSanitizer, {
+      kind: 'resource',
+      resourceType: 'timing',
+      value: resolveURL(img.src || ''),
+      node: img,
+    }) // Src type is null sometimes. - is it true?
+    if (resolvedSrc !== null && isURL(resolvedSrc)) {
+      app.send(
+        ResourceTiming(
+          app.timestamp(),
+          0,
+          0,
+          0,
+          0,
+          0,
+          resolvedSrc,
+          'img',
+          0,
+          false,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+        ),
+      )
     }
   })
 
@@ -72,10 +100,10 @@ export default function (app: App): void {
     if (!img.complete) {
       return
     }
-    if (img.naturalHeight === 0 && img.naturalWidth === 0 && !isSVGInFireFox(img.src)) {
-      sendImgError(img)
-    } else if (app.sanitizer.isHidden(id) || app.sanitizer.isObscured(id)) {
+    if (app.sanitizer.isHidden(id) || app.sanitizer.isObscured(id)) {
       sendPlaceholder(id, img)
+    } else if (img.naturalHeight === 0 && img.naturalWidth === 0 && !isSVGInFireFox(img.src)) {
+      sendImgError(img)
     } else {
       sendSrc(id, img)
       sendSrcset(id, img)
@@ -88,6 +116,10 @@ export default function (app: App): void {
           const target = mutation.target as HTMLImageElement
           const id = app.nodes.getID(target)
           if (id === undefined) {
+            continue
+          }
+          if (app.sanitizer.isHidden(id) || app.sanitizer.isObscured(id)) {
+            sendPlaceholder(id, target)
             continue
           }
           if (mutation.attributeName === 'src') {

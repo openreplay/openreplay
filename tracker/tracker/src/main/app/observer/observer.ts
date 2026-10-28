@@ -1,8 +1,7 @@
+import { sanitizeCapture } from '../captureSanitizer.js'
 import { createMutationObserver, throttleWithTrailing } from '../../utils.js'
 import {
   CreateDocument,
-  RemoveNodeAttribute,
-  SetNodeAttributeURLBased,
   SetCSSDataURLBased,
   SetNodeData,
   CreateTextNode,
@@ -10,7 +9,6 @@ import {
   MoveNode,
   RemoveNode,
   UnbindNodes,
-  SetNodeAttribute,
   AdoptedSSInsertRuleURLBased,
   AdoptedSSAddOwner,
   SetNodeSlot,
@@ -38,9 +36,11 @@ export async function parseUseEl(
   useElement: SVGUseElement,
   mode: 'inline' | 'dataurl' | 'svgtext',
   domParser: DOMParser,
+  approvedHref?: string,
 ) {
   try {
-    const href = useElement.getAttribute('xlink:href') || useElement.getAttribute('href')
+    const href =
+      approvedHref ?? (useElement.getAttribute('xlink:href') || useElement.getAttribute('href'))
     if (!href) {
       console.debug('Openreplay: xlink:href or href not found on <use>.')
       return
@@ -170,7 +170,8 @@ export async function parseUseEl(
     }
     console.debug(`Openreplay: Unknown mode: ${mode}. Use "inline" or "dataurl".`)
   } catch (error) {
-    console.error('Openreplay: Error processing <use> element:', error)
+    if (approvedHref !== undefined) console.error('OpenReplay: failed to capture SVG sprite')
+    else console.error('Openreplay: Error processing <use> element:', error)
   }
 }
 
@@ -384,7 +385,8 @@ export default abstract class Observer {
         while (walker.nextNode()) {
           if (!contentDocument.contains(walker.currentNode)) {
             removed += 1
-            nodesUnregister(walker.currentNode)
+            const removedId = nodesUnregister(walker.currentNode)
+            if (removedId !== undefined) this.app.attributeSender.forgetNode(removedId)
           }
         }
 
@@ -402,19 +404,36 @@ export default abstract class Observer {
         name = name.substring(6)
       }
       if (value === null) {
-        this.app.send(RemoveNodeAttribute(id, name))
+        this.app.attributeSender.removeAttribute(id, name)
         return
       }
 
       if (isUseElement(node) && name === 'href' && !this.disableSprites) {
-        parseUseEl(node, 'svgtext', this.domParser)
+        ;(() => {
+          const href = sanitizeCapture(this.app.captureSanitizer, {
+            kind: 'resource',
+            resourceType: 'svg',
+            value: value!,
+            node,
+          })
+          return href === null
+            ? Promise.resolve(undefined)
+            : parseUseEl(node, 'svgtext', this.domParser, this.app.captureSanitizer === undefined ? undefined : href)
+        })()
           .then((svgData) => {
             if (svgData) {
-              this.app.send(SetNodeAttribute(id, name, `_$OPENREPLAY_SPRITE$_${svgData}`))
+              this.app.attributeSender.sendSetAttribute(
+                id,
+                name,
+                `_$OPENREPLAY_SPRITE$_${svgData}`,
+                { plain: true },
+              )
             }
           })
           .catch((e: any) => {
-            console.error('Openreplay: Error parsing <use> element:', e)
+            if (this.app.captureSanitizer === undefined)
+              console.error('Openreplay: Error parsing <use> element:', e)
+            else console.error('OpenReplay: failed to capture SVG sprite')
           })
         return
       }
@@ -423,7 +442,7 @@ export default abstract class Observer {
         if (value!.length > 1e5) {
           value = ''
         }
-        this.app.send(SetNodeAttributeURLBased(id, name, value!, this.app.getBaseHref()))
+        this.app.attributeSender.sendURLBasedAttribute(id, name, value!, { resourceType: 'svg' })
       } else {
         this.app.attributeSender.sendSetAttribute(id, name, value!)
       }
@@ -444,7 +463,9 @@ export default abstract class Observer {
         }
         mode = isModal ? 'modal' : 'nonmodal'
       }
-      this.app.send(SetNodeAttribute(id, '__openreplay_dialog', mode))
+      this.app.attributeSender.sendSetAttribute(id, '__openreplay_dialog', mode, {
+        generated: true,
+      })
     }
     if (
       name === 'src' ||
@@ -460,39 +481,53 @@ export default abstract class Observer {
       return
     }
     if (value === null) {
-      this.app.send(RemoveNodeAttribute(id, name))
+      this.app.attributeSender.removeAttribute(id, name)
       return
     }
     if (name === 'style' || (name === 'href' && hasTag(node, 'link'))) {
-      if ('rel' in node && node.rel === 'stylesheet' && this.inlineRemoteCss) {
-        const gen = this.generation
-        setTimeout(() => {
-          inlineRemoteCss(
-            // @ts-ignore
-            node,
-            id,
-            this.app.getBaseHref(),
-            nextID,
-            (id: number, cssText: string, index: number, baseHref: string) => {
-              if (this.generation !== gen) return
-              this.app.send(AdoptedSSInsertRuleURLBased(id, cssText, index, baseHref))
-            },
-            (sheetId: number, ownerId: number) => {
-              if (this.generation !== gen) return
-              this.app.send(AdoptedSSAddOwner(sheetId, ownerId))
-            },
-            this.inlinerOptions?.forceFetch,
-            this.inlinerOptions?.forcePlain,
-            (cssText: string, fakeTextId: number) => {
-              if (this.generation !== gen) return
-              this.app.send(CreateTextNode(fakeTextId, id, 0))
-              this.app.send(SetCSSDataURLBased(fakeTextId, cssText, this.app.getBaseHref()))
-            },
-          )
-        }, 0)
-        return
-      }
-      this.app.send(SetNodeAttributeURLBased(id, name, value, this.app.getBaseHref()))
+      // Truncation/masking precede the additional policy, including special URL/CSS paths.
+      if (this.app.captureSanitizer !== undefined && value.length > 1e5) value = ''
+      const generated = name === 'style' && this.app.sanitizer.isHidden(id)
+      const original = value
+      const gen = this.generation
+      this.app.attributeSender.sendURLBasedAttribute(id, name, value, {
+        generated,
+        resourceType: 'stylesheet',
+        emit:
+          'rel' in node && node.rel === 'stylesheet' && this.inlineRemoteCss
+            ? (href) => {
+                setTimeout(() => {
+                  if (this.generation !== gen) return
+                  inlineRemoteCss(
+                    node as HTMLLinkElement,
+                    id,
+                    this.app.getBaseHref(),
+                    nextID,
+                    (sheetId, cssText, index, baseHref) => {
+                      if (this.generation === gen)
+                        this.app.send(
+                          AdoptedSSInsertRuleURLBased(sheetId, cssText, index, baseHref),
+                        )
+                      return []
+                    },
+                    (sheetId, ownerId) => {
+                      if (this.generation === gen)
+                        this.app.send(AdoptedSSAddOwner(sheetId, ownerId))
+                      return []
+                    },
+                    this.inlinerOptions?.forceFetch,
+                    this.inlinerOptions?.forcePlain,
+                    (cssText, fakeTextId) => {
+                      if (this.generation !== gen) return
+                      this.app.send(CreateTextNode(fakeTextId, id, 0))
+                      this.app.send(SetCSSDataURLBased(fakeTextId, cssText, this.app.getBaseHref()))
+                    },
+                    { sanitizer: this.app.captureSanitizer, href, original },
+                  )
+                }, 0)
+              }
+            : undefined,
+      })
       return
     }
     if (name === 'href' || value.length > 1e5) {
@@ -512,7 +547,13 @@ export default abstract class Observer {
 
   private sendNodeData(id: number, parentElement: Element, data: string): void {
     if (hasTag(parentElement, 'style')) {
-      this.app.send(SetCSSDataURLBased(id, data, this.app.getBaseHref()))
+      const approved = sanitizeCapture(this.app.captureSanitizer, {
+        kind: 'css',
+        source: 'text',
+        value: data,
+        node: parentElement,
+      })
+      if (approved !== null) this.app.send(SetCSSDataURLBased(id, approved, this.app.getBaseHref()))
       return
     }
     data = this.app.sanitizer.sanitize(id, data)
@@ -573,6 +614,7 @@ export default abstract class Observer {
     }
     if (id !== undefined && this.recents.get(id) === RecentsType.Removed) {
       // Sending RemoveNode only for parent to maintain
+      this.app.attributeSender.forgetNode(id)
       this.app.send(RemoveNode(id))
 
       // Unregistering all the children in order to clear the memory
@@ -594,7 +636,8 @@ export default abstract class Observer {
 
       while (walker.nextNode()) {
         removed += 1
-        this.app.nodes.unregisterNode(walker.currentNode)
+        const removedId = this.app.nodes.unregisterNode(walker.currentNode)
+        if (removedId !== undefined) this.app.attributeSender.forgetNode(removedId)
       }
 
       const removedPercent = Math.floor((removed / totalBeforeRemove) * 100)

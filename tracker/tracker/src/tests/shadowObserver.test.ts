@@ -1,3 +1,4 @@
+import AttributeSender from '../main/modules/attributeSender.js'
 import { describe, expect, test, beforeEach, afterEach, jest } from '@jest/globals'
 import TopObserver from '../main/app/observer/top_observer.js'
 import Nodes from '../main/app/nodes/index.js'
@@ -14,6 +15,7 @@ function makeApp() {
     options: { forceNgOff: true },
     safe: (f: any) => f,
     send: (msg: any) => sent.push(msg),
+    isDisposed: () => false,
     getBaseHref: () => 'http://localhost/',
     debug: { log: jest.fn(), warn: jest.fn(), info: jest.fn(), error: jest.fn() },
   }
@@ -23,10 +25,7 @@ function makeApp() {
     maintainer: { enabled: false },
   })
   a.sanitizer = new Sanitizer({ app: a, options: { obscureTextEmails: false } })
-  a.attributeSender = {
-    sendSetAttribute: (id: number, name: string, value: string) =>
-      a.send([Type.SetNodeAttribute, id, name, value]),
-  }
+  a.attributeSender = new AttributeSender({ app: a, isDictDisabled: true })
   return a
 }
 
