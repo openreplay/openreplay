@@ -1,3 +1,4 @@
+import AttributeSender from '../main/modules/attributeSender.js'
 import { describe, expect, test, jest, afterEach } from '@jest/globals'
 import { shouldSkipValueAttribute } from '../main/app/observer/observer.js'
 import TopObserver from '../main/app/observer/top_observer.js'
@@ -57,15 +58,13 @@ describe('value attribute wiring', () => {
       options: { forceNgOff: true },
       safe: (f: any) => f,
       send: (msg: any) => sent.push(msg),
-      getBaseHref: () => 'http://localhost/',
+      isDisposed: () => false,
+    getBaseHref: () => 'http://localhost/',
       debug: { log: jest.fn(), warn: jest.fn(), info: jest.fn(), error: jest.fn() },
     }
     app.nodes = new Nodes({ node_id: '__openreplay_id', forceNgOff: true, maintainer: { enabled: false } })
     app.sanitizer = new Sanitizer({ app, options: { obscureTextEmails: false } })
-    app.attributeSender = {
-      sendSetAttribute: (id: number, name: string, value: string) =>
-        app.send([Type.SetNodeAttribute, id, name, value]),
-    }
+    app.attributeSender = new AttributeSender({ app: app, isDictDisabled: true })
     document.documentElement.innerHTML =
       '<head></head><body><input type="checkbox" value="duck"><input type="text" value="secret"></body>'
     const [checkbox, text] = Array.from(document.querySelectorAll('input'))

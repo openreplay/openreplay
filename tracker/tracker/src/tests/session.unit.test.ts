@@ -52,6 +52,21 @@ describe('Session', () => {
     jest.clearAllMocks()
   })
 
+  test('terminal discard clears owned memory identity without writing storage or firing updates', () => {
+    session.assign({userID:'synthetic',metadata:{synthetic:'private'},sessionID:'session',projectID:'2',timestamp:1})
+    session.setSessionToken('synthetic-token','synthetic-project')
+    const callback = jest.fn()
+    session.attachUpdateCallback(callback)
+    mockSessionStorage.setItem.mockClear()
+    expect(typeof session.discard).toBe('function')
+    session.discard()
+    expect(session.token).toBeUndefined()
+    expect(session.getInfo()).toEqual({sessionID:undefined,metadata:{},userID:null,timestamp:0,projectID:undefined})
+    expect(session.tabId).toBe('')
+    expect(mockSessionStorage.setItem).not.toHaveBeenCalled()
+    expect(callback).not.toHaveBeenCalled()
+  })
+
   test('creates a new Session with default values', () => {
     expect(session.getInfo()).toEqual({
       sessionID: undefined,

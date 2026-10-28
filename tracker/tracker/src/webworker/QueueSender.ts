@@ -138,6 +138,37 @@ export default class QueueSender {
     )
   }
 
+  // Dispose of successful acknowledgements without aborting them or delaying the queue.
+  private async drainAck(body: ReadableStream<Uint8Array> | null | undefined): Promise<void> {
+    let reader: ReadableStreamDefaultReader<Uint8Array> | undefined
+    let timer: ReturnType<typeof setTimeout> | undefined
+    try {
+      if (!body) return
+      const ackReader = body.getReader()
+      reader = ackReader
+      await Promise.race([
+        (async () => {
+          let bytes = 0
+          while (true) {
+            const chunk = await ackReader.read()
+            if (chunk.done) return
+            bytes += chunk.value.byteLength
+            if (bytes > 4096) throw new Error()
+          }
+        })(),
+        new Promise<never>((_, reject) => {
+          timer = setTimeout(() => reject(new Error()), 5000)
+        }),
+      ])
+    } catch {
+      try { void reader?.cancel().catch(() => {}) } catch {}
+    } finally {
+      clearTimeout(timer)
+      // Older engines may reject releasing a lock with an outstanding read.
+      try { reader?.releaseLock() } catch {}
+    }
+  }
+
   // would be nice to use Beacon API, but it is not available in WebWorker
   private dispatch(entry: QueueEntry, body: Uint8Array, isCompressed: boolean, retrySuffix = ''): void {
     if (body.length === 0) {
@@ -209,7 +240,8 @@ export default class QueueSender {
     })
       .then((r: Record<string, any>) => {
         releaseKeepalive()
-        r.body?.cancel().catch(() => {})
+        if (r.status < 400) void this.drainAck(r.body).catch(() => {})
+        else r.body?.cancel().catch(() => {})
         if (r.status === 401) {
           // TODO: continuous session ?
           // The line stays stopped: onUnauthorised restarts the session with a new

@@ -48,6 +48,7 @@ export default class ConditionsManager {
   }
 
   async fetchConditions(projectId: string, token: string) {
+    if (this.app.isDisposed()) return
     try {
       const r = await fetch(`${this.app.options.ingestPoint}/v1/web/conditions/${projectId}`, {
         method: 'GET',
@@ -55,7 +56,9 @@ export default class ConditionsManager {
           Authorization: `Bearer ${token}`,
         },
       })
+      if (this.app.isDisposed()) return
       const { conditions } = (await r.json()) as { conditions: ApiResponse[] }
+      if (this.app.isDisposed()) return
       const mappedConditions: Condition[] = []
       conditions.forEach((c) => {
         const filters = c.filters
@@ -88,7 +91,7 @@ export default class ConditionsManager {
       })
       this.conditions = mappedConditions
     } catch (e) {
-      this.app.debug.error('Critical: cannot fetch start conditions')
+      if (!this.app.isDisposed()) this.app.debug.error('Critical: cannot fetch start conditions')
     }
   }
 
@@ -100,6 +103,7 @@ export default class ConditionsManager {
   }
 
   trigger(conditionName: string) {
+    if (this.app.isDisposed()) return
     if (this.hasStarted) return
     try {
       this.hasStarted = true
@@ -155,6 +159,7 @@ export default class ConditionsManager {
   }
 
   processDuration(durationMs: number, condName: string) {
+    if (this.app.isDisposed()) return
     // Track each interval independently: with more than one duration condition a
     // single shared field would leak every interval but the last, and the timer
     // would keep firing after it triggered.

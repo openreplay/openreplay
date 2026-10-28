@@ -9,3 +9,12 @@ export type CjsOptions = Partial<Options>
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 import cjsEntry = require('@openreplay/tracker/cjs')
 export const cjsSubpath: typeof cjsEntry.default = cjsEntry.default
+
+import type { CaptureSanitizer } from '@openreplay/tracker'
+export const policy: CaptureSanitizer = (data) => (data.kind === 'css' ? data.value : null)
+export const policyOptions: CjsOptions = { captureSanitizer: policy }
+
+export function discardType(instance: InstanceType<typeof tracker>): void {
+  const result: void = instance.discard()
+  return result
+}

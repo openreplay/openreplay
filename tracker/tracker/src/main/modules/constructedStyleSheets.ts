@@ -1,3 +1,4 @@
+import { sanitizeCapture } from '../app/captureSanitizer.js'
 import type App from '../app/index.js'
 import {
   AdoptedSSReplaceURLBased,
@@ -34,6 +35,16 @@ export default function (app: App | null) {
     return
   }
 
+  const sendRule = (sheetID: number, value: string, index: number) => {
+    const approved = sanitizeCapture(app.captureSanitizer, {
+      kind: 'css',
+      source: 'adopted',
+      value,
+      node: null,
+    })
+    if (approved !== null)
+      app.send(AdoptedSSInsertRuleURLBased(sheetID, approved, index, app.getBaseHref()))
+  }
   const adoptedStyleSheetsOwnings: Map<number, number[]> = new Map()
 
   const sendAdoptedStyleSheetsUpdate = (root: StyleSheetOwner) =>
@@ -66,9 +77,7 @@ export default function (app: App | null) {
             try {
               const rules = s.cssRules
               for (let i = 0; i < rules.length; i++) {
-                app.send(
-                  AdoptedSSInsertRuleURLBased(sheetID, rules[i].cssText, i, app.getBaseHref()),
-                )
+                sendRule(sheetID, rules[i].cssText, i)
               }
             } catch (e) {
               app.debug.log('Couldnt access adopted stylesheet', e)
@@ -133,7 +142,14 @@ export default function (app: App | null) {
       return replace.call(this, text).then((sheet: CSSStyleSheet) => {
         const sheetID = styleSheetIDMap.get(this)
         if (sheetID) {
-          app.send(AdoptedSSReplaceURLBased(sheetID, text, app.getBaseHref()))
+          const approved = sanitizeCapture(app.captureSanitizer, {
+            kind: 'css',
+            source: 'adopted',
+            value: text,
+            node: null,
+          })
+          if (approved !== null)
+            app.send(AdoptedSSReplaceURLBased(sheetID, approved, app.getBaseHref()))
         }
         return sheet
       })
@@ -142,7 +158,14 @@ export default function (app: App | null) {
     context.CSSStyleSheet.prototype.replaceSync = function (text: string) {
       const sheetID = styleSheetIDMap.get(this)
       if (sheetID) {
-        app.send(AdoptedSSReplaceURLBased(sheetID, text, app.getBaseHref()))
+        const approved = sanitizeCapture(app.captureSanitizer, {
+          kind: 'css',
+          source: 'adopted',
+          value: text,
+          node: null,
+        })
+        if (approved !== null)
+          app.send(AdoptedSSReplaceURLBased(sheetID, approved, app.getBaseHref()))
       }
       return replaceSync.call(this, text)
     }

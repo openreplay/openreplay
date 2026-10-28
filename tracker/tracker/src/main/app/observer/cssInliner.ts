@@ -1,3 +1,4 @@
+import { sanitizeCapture, type CaptureSanitizer } from '../captureSanitizer.js'
 let fakeIdHolder = 1000000 * 99;
 
 export function inlineRemoteCss(
@@ -10,20 +11,38 @@ export function inlineRemoteCss(
   forceFetch?: boolean,
   sendPlain?: boolean,
   onPlain?: (cssText: string, id: number) => void,
+  capture?: { sanitizer: CaptureSanitizer | undefined; href: string; original: string },
 ) {
+  const isCurrent = () => !capture || node.getAttribute('href') === capture.original
+  if (!isCurrent()) return
+  const href = capture?.href ?? node.href
+  const deliver = (cssText: string) => {
+    if (!isCurrent()) return
+    const approved = sanitizeCapture(capture?.sanitizer, {
+      kind: 'css',
+      source: 'text',
+      value: cssText,
+      node,
+    })
+    if (approved === null) return
+    if (sendPlain && onPlain) onPlain(approved, fakeIdHolder++)
+    else processCssText(approved)
+  }
   const sheetId = sendPlain ? null : getNextID();
   if (!sendPlain) {
     addOwner(sheetId!, id);
   }
 
-  const sheet = node.sheet;
+  // The observer already approved this raw href; unchanged relative URLs retain sheet access.
+  const mayReadSheet = !capture || capture.href === capture.original
+  const sheet = mayReadSheet && isCurrent() ? node.sheet : null
 
   if (sheet && !forceFetch) {
     try {
       const cssText = stringifyStylesheet(sheet);
 
       if (cssText) {
-        processCssText(cssText);
+        deliver(cssText)
         return;
       }
     } catch (e) {
@@ -32,8 +51,8 @@ export function inlineRemoteCss(
   }
 
   // Fall back to fetching if we couldn't get or stringify the sheet
-  if (node.href) {
-    fetch(node.href)
+  if (href && isCurrent()) {
+    fetch(mayReadSheet ? node.href : href)
       .then(response => {
         if (!response.ok) {
           throw new Error(`response status ${response.status}`);
@@ -41,14 +60,12 @@ export function inlineRemoteCss(
         return response.text();
       })
       .then(cssText => {
-        if (sendPlain && onPlain) {
-          onPlain(cssText, fakeIdHolder++);
-        } else {
-          processCssText(cssText);
-        }
+        deliver(cssText)
       })
       .catch(error => {
-        console.error(`OpenReplay: Failed to fetch CSS from ${node.href}:`, error);
+        if (capture?.sanitizer !== undefined)
+          console.error('OpenReplay: failed to capture stylesheet')
+        else console.error(`OpenReplay: Failed to fetch CSS from ${node.href}:`, error);
         // Fetch failed (likely CORS) — retry via load event + sheet access
         retryViaLoadEvent();
       });
@@ -57,17 +74,15 @@ export function inlineRemoteCss(
   }
 
   function retryViaLoadEvent() {
+    if (!mayReadSheet || !isCurrent()) return
     const trySheet = () => {
+      if (!isCurrent()) return
       const loadedSheet = node.sheet;
       if (loadedSheet) {
         try {
           const cssText = stringifyStylesheet(loadedSheet);
           if (cssText) {
-            if (sendPlain && onPlain) {
-              onPlain(cssText, fakeIdHolder++);
-            } else {
-              processCssText(cssText);
-            }
+            deliver(cssText)
             return;
           }
         } catch (e) {

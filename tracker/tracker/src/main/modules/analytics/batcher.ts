@@ -30,6 +30,8 @@ class Batcher {
   }
   private intervalId: any = null
   private stopped = false
+  private discarded = false
+  private readonly retryTimers = new Set<ReturnType<typeof setTimeout>>()
 
   constructor(
     private readonly backendUrl: string,
@@ -50,6 +52,7 @@ class Batcher {
   }
 
   addEvent(event: any) {
+    if (this.discarded) return
     this.batch[event.category].push(event.data)
   }
 
@@ -175,6 +178,7 @@ class Batcher {
     const sentBatch = batch
     let attempts = 0
     const send = () => {
+      if (this.discarded) return
       const token = this.getToken()
       if (!token) {
         // No token yet: keep the events so they go out once one is available.
@@ -192,8 +196,10 @@ class Batcher {
         body: JSON.stringify(sentBatch),
       })
         .then(async (response) => {
+          if (this.discarded) return
           if (response.status === 401) {
             const body = await response.json().catch(() => null)
+            if (this.discarded) return
             if (!this.standalone && body?.error === 'token expired') {
               this.stop()
               return
@@ -220,8 +226,13 @@ class Batcher {
           }
         })
         .catch(() => {
+          if (this.discarded) return
           if (attempts < this.retryLimit) {
-            setTimeout(() => void send(), this.retryTimeout)
+            const timer = setTimeout(() => {
+              this.retryTimers.delete(timer)
+              void send()
+            }, this.retryTimeout)
+            this.retryTimers.add(timer)
           } else {
             onTerminalFailure?.()
           }
@@ -244,6 +255,7 @@ class Batcher {
   }
 
   startAutosend() {
+    if (this.discarded) return
     if (this.intervalId) {
       clearInterval(this.intervalId)
     }
@@ -257,6 +269,7 @@ class Batcher {
   }
 
   flush(keepalive = false) {
+    if (this.discarded) return
     const cats = Object.keys(this.batch)
     const isEmpty = cats.every((category) => this.batch[category].length === 0)
     if (isEmpty) {
@@ -292,6 +305,18 @@ class Batcher {
     ]
   }
 
+  discard() {
+    this.discarded = true
+    this.stopped = true
+    if (this.intervalId) clearInterval(this.intervalId)
+    this.intervalId = null
+    document.removeEventListener('visibilitychange', this.onVisibilityChange)
+    this.retryTimers.forEach(clearTimeout)
+    this.retryTimers.clear()
+    this.batch[categories.people] = []
+    this.batch[categories.events] = []
+  }
+
   stop() {
     this.flush()
     if (this.intervalId) {
@@ -303,6 +328,7 @@ class Batcher {
   }
 
   restart() {
+    if (this.discarded) return
     this.stopped = false
     this.startAutosend()
   }

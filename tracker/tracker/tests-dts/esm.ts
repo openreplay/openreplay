@@ -11,3 +11,14 @@ export type EsmApp = App
 export type EsmAnalytics = Analytics
 export type EsmOptions = Partial<Options>
 export type EsmTrackerClass = TrackerClass
+
+// The optional policy and semantic contexts must survive published entrypoint bundling.
+import type { CaptureData, CaptureSanitizer } from '@openreplay/tracker'
+export const policy: CaptureSanitizer = (data: CaptureData) =>
+  data.kind === 'attribute' && data.name === 'class' ? data.value : null
+export const policyOptions: EsmOptions = { captureSanitizer: policy }
+
+export function discardType(instance: TrackerClass): void {
+  const result: void = instance.discard()
+  return result
+}

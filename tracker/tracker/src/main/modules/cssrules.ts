@@ -1,3 +1,4 @@
+import { sanitizeCapture } from '../app/captureSanitizer.js'
 import type App from '../app/index.js'
 import {
   AdoptedSSInsertRuleURLBased,
@@ -37,12 +38,22 @@ export default function (app: App, opts: CssRulesOptions) {
     app.send(TechnicalInfo('no_stylesheet_prototype_in_window', ''))
     return
   }
+  const sendRule = (sheetID: number, value: string, index: number) => {
+    const approved = sanitizeCapture(app.captureSanitizer, {
+      kind: 'css',
+      source: 'rule',
+      value,
+      node: null,
+    })
+    if (approved !== null)
+      app.send(AdoptedSSInsertRuleURLBased(sheetID, approved, index, app.getBaseHref()))
+  }
   const options = { ...defaults, ...opts }
 
   //  sheetID:index -> ruleText
   const ruleSnapshots = new Map<string, string>()
   let checkInterval: number | null = null
-  const trackedSheets: Set<CSSStyleSheet> = new Set();
+  const trackedSheets: Set<CSSStyleSheet> = new Set()
   const checkIntervalMs = options.checkCssInterval || 200
   let checkIterations: Record<number, number> = {}
 
@@ -73,10 +84,10 @@ export default function (app: App, opts: CssRulesOptions) {
               if (oldText !== undefined) {
                 // Rule is changed
                 app.send(AdoptedSSDeleteRule(sheetID, j))
-                app.send(AdoptedSSInsertRuleURLBased(sheetID, newText, j, app.getBaseHref()))
+                sendRule(sheetID, newText, j)
               } else {
                 // Rule added
-                app.send(AdoptedSSInsertRuleURLBased(sheetID, newText, j, app.getBaseHref()))
+                sendRule(sheetID, newText, j)
               }
               ruleSnapshots.set(key, newText)
             }
@@ -112,7 +123,7 @@ export default function (app: App, opts: CssRulesOptions) {
     if (!sheetID) return
 
     if (typeof rule === 'string') {
-      app.send(AdoptedSSInsertRuleURLBased(sheetID, rule, index, app.getBaseHref()))
+      sendRule(sheetID, rule, index)
       if (isRuleEmpty(rule)) {
         ruleSnapshots.set(`${sheetID}:${index}`, rule)
         trackedSheets.add(sheet)
@@ -139,7 +150,7 @@ export default function (app: App, opts: CssRulesOptions) {
     const idx = Array.from(sheet.cssRules).indexOf(topmostRule)
 
     if (idx >= 0) {
-      app.send(AdoptedSSInsertRuleURLBased(sheetID, cssText, idx, app.getBaseHref()))
+      sendRule(sheetID, cssText, idx)
       app.send(AdoptedSSDeleteRule(sheetID, idx + 1))
       if (isRuleEmpty(cssText)) {
         ruleSnapshots.set(`${sheetID}:${idx}`, cssText)
@@ -220,7 +231,7 @@ export default function (app: App, opts: CssRulesOptions) {
   })
 
   function startChecking() {
-    if (checkInterval || !options.scanInMemoryCSS) return
+    if (app.isDisposed() || checkInterval || !options.scanInMemoryCSS) return
     checkInterval = window.setInterval(checkRuleChanges, checkIntervalMs)
   }
 

@@ -338,6 +338,20 @@ describe('Batcher', () => {
     expect(flushSpy).toHaveBeenCalledTimes(2)
   })
 
+  test('terminal discard drops queued events and fences delayed retries', async () => {
+    fetchMock.mockRejectedValueOnce(Error('synthetic network error'))
+    batcher.sendImmediately(makeEventsEvent('synthetic',1,{}))
+    await Promise.resolve(); await Promise.resolve()
+    batcher.addEvent(makeEventsEvent('queued',2,{}))
+    expect(typeof batcher.discard).toBe('function')
+    batcher.discard()
+    await jest.runAllTimersAsync()
+    batcher.restart()
+    batcher.sendImmediately(makeEventsEvent('late',3,{}))
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(batcher.getBatches()).toEqual({data:{user_actions:[],events:[]}})
+  })
+
   test('stop flushes then clears interval', () => {
     const flushSpy = jest.spyOn(batcher, 'flush').mockImplementation(() => {})
 

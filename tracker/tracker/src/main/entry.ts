@@ -1,3 +1,4 @@
+export type { CaptureData, CaptureSanitizer } from './app/captureSanitizer.js'
 import TrackerClass from './index'
 
 export { default as App } from './app/index'

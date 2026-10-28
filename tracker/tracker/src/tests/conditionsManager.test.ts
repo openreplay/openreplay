@@ -36,6 +36,7 @@ describe('ConditionsManager', () => {
     stopCallbacks = []
     appMock = {
       start: jest.fn(),
+      isDisposed: () => false,
       debug: { error: jest.fn() },
       options: { ingestPoint: 'https://example.com' },
       attachStopCallback: jest.fn((cb) => stopCallbacks.push(cb)),
@@ -98,6 +99,26 @@ describe('ConditionsManager', () => {
       },
       { type: 'exception', operator: 'is', value: ['err msg'], key: '', name: 'Condition Set' },
     ])
+  })
+
+  test('late conditions cannot create duration timers or restart a discarded App', async () => {
+    jest.useFakeTimers()
+    let disposed = false
+    appMock.isDisposed = () => disposed
+    let resolve
+    globalThis.fetch = jest.fn(() => new Promise((r) => { resolve = r }))
+    const manager = make()
+    const pending = manager.fetchConditions('synthetic', 'synthetic')
+    disposed = true
+    resolve({json: async () => ({conditions: [{name:'synthetic',filters:[{
+      type:'session_duration',operator:'is',value:[0],filters:[],
+    }]}]})})
+    await pending
+    expect(manager.conditions).toEqual([])
+    expect(manager.durationInts).toEqual([])
+    manager.trigger('synthetic')
+    expect(appMock.start).not.toHaveBeenCalled()
+    jest.useRealTimers()
   })
 
   test('fetchConditions logs instead of throwing on a failed request', async () => {
