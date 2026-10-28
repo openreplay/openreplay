@@ -176,9 +176,7 @@ jobs:
         for SERVICE in "${SERVICES[@]}"; do
           BUILD_SCRIPT_NAME="build.sh"
           is_ee_only=false
-          # crons is EE-only and versioned by the utilities chart
           chart=$SERVICE
-          [[ $SERVICE == 'crons' ]] && chart=utilities && is_ee_only=true
           foss_build_args=""
           # Check if service is backend (FOSS)
           if grep -qx $SERVICE /tmp/backend.txt; then 
@@ -196,8 +194,7 @@ jobs:
               is_ee_only=true
             fi
           else 
-            [[ $SERVICE == 'chalice' || $SERVICE == 'alerts' || $SERVICE == 'crons' ]] && cd $working_dir/api || cd $SERVICE
-            [[ $SERVICE == 'alerts' || $SERVICE == 'crons' ]] && BUILD_SCRIPT_NAME="build_${SERVICE}.sh"
+            [[ $SERVICE == 'chalice' ]] && cd $working_dir/api || cd $SERVICE
             ee_build_args="ee"
           fi  
           version=$(image_version $chart)

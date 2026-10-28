@@ -5,6 +5,7 @@ import (
 
 	"openreplay/backend/internal/config/common"
 	"openreplay/backend/internal/config/configurator"
+	"openreplay/backend/internal/config/objectstorage"
 	"openreplay/backend/pkg/logger"
 )
 
@@ -13,6 +14,7 @@ type Config struct {
 	common.Postgres
 	common.Clickhouse
 	common.SMTP
+	objectstorage.ObjectsConfig
 	// CronSchedules overrides a cron's default schedule. Comma-separated "<name> <cron expr>"
 	// pairs, e.g. "alerts * * * * *, other 0 5 * * 1". Unknown names are warned and ignored;
 	// invalid expressions are fatal. Because "," separates entries, list syntax inside an
@@ -28,6 +30,13 @@ type Config struct {
 	AlertsCHTimeout           time.Duration `env:"ALERTS_CH_TIMEOUT,default=30s"`
 	AlertsRunTimeout          time.Duration `env:"ALERTS_RUN_TIMEOUT,default=55s"`
 	MetadataCacheTTL          int           `env:"METADATA_CACHE_TTL,default=300"`
+
+	// Telemetry cron settings.
+	TelemetryURL string `env:"TELEMETRY_URL,default=https://api.openreplay.com/os/telemetry"`
+
+	// Scheduled-jobs cron settings: value of the to_delete_in_days tag put on the replay
+	// files of deleted sessions (matches the Python SCH_DELETE_DAYS).
+	SchDeleteDays string `env:"SCH_DELETE_DAYS,default=7"`
 }
 
 func New(log logger.Logger) *Config {

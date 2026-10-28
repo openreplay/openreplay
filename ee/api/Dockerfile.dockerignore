@@ -6,12 +6,6 @@
 **/*deploy.sh
 Dockerfile*
 
-app_crons.py
-app_alerts.py
-requirements-crons.txt
-requirements-alerts.txt
-entrypoint_crons.sh
-entrypoint_alerts.sh
 
 # dev / local artifacts — must not ship in the image
 .venv/

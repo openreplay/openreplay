@@ -178,12 +178,9 @@ README/*
 Pipfile.lock
 
 .local/*
-/app_alerts.py
 /auth/__init__.py
 /auth/auth_apikey.py
 /build.sh
-/build_alerts.sh
-/build_crons.sh
 /chalicelib/core/announcements.py
 /chalicelib/core/assist.py
 /chalicelib/core/authorizers.py
@@ -234,8 +231,6 @@ Pipfile.lock
 /chalicelib/utils/storage/interface.py
 /chalicelib/utils/storage/s3.py
 /chalicelib/utils/TimeUTC.py
-/crons/__init__.py
-/crons/core_crons.py
 /db_changes.sql
 /Dockerfile_bundle
 /entrypoint.bundle.sh
@@ -246,7 +241,6 @@ Pipfile.lock
 /routers/subs/__init__.py
 /routers/subs/v1_api.py
 /routers/subs/mcp.py
-/run-alerts-dev.sh
 /run-dev.sh
 /schemas/overrides.py
 /schemas/schemas.py
@@ -267,10 +261,6 @@ Pipfile.lock
 /chalicelib/utils/ch_client_exp.py
 /chalicelib/core/alerts/__init__.py
 /chalicelib/core/alerts/alerts.py
-/chalicelib/core/alerts/alerts_processor.py
-/chalicelib/core/alerts/alerts_processor_ch.py
-/chalicelib/core/alerts/alerts_listener.py
-/chalicelib/core/alerts/modules/helpers.py
 /chalicelib/core/errors/
 /chalicelib/core/notes.py
 /chalicelib/utils/contextual_validators.py

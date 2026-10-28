@@ -12,7 +12,6 @@ on:
     paths:
       - "api/**"
       - "!api/.gitignore"
-      - "!api/app_alerts.py"
       - "!api/*-dev.sh"
       - "!api/requirements-*.txt"
 

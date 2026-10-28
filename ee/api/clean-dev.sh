@@ -1,11 +1,8 @@
 #!/bin/bash
 
-rm -rf ./app_alerts.py
 rm -rf ./auth/__init__.py
 rm -rf ./auth/auth_apikey.py
 rm -rf ./build.sh
-rm -rf ./build_alerts.sh
-rm -rf ./build_crons.sh
 rm -rf ./chalicelib/core/announcements.py
 rm -rf ./chalicelib/core/assist.py
 rm -rf ./chalicelib/core/authorizers.py
@@ -59,8 +56,6 @@ rm -rf ./chalicelib/utils/storage/generators.py
 rm -rf ./chalicelib/utils/storage/interface.py
 rm -rf ./chalicelib/utils/storage/s3.py
 rm -rf ./chalicelib/utils/TimeUTC.py
-rm -rf ./crons/__init__.py
-rm -rf ./crons/core_crons.py
 rm -rf ./db_changes.sql
 rm -rf ./Dockerfile_bundle
 rm -rf ./entrypoint.bundle.sh
@@ -70,7 +65,6 @@ rm -rf ./routers/base.py
 rm -rf ./routers/core.py
 rm -rf ./routers/subs/__init__.py
 rm -rf ./routers/subs/v1_api.py
-rm -rf ./run-alerts-dev.sh
 rm -rf ./run-dev.sh
 rm -rf ./run-db_init-dev.sh
 rm -rf ./schemas/overrides.py
@@ -87,10 +81,6 @@ rm -rf ./chalicelib/utils/ch_client.py
 rm -rf ./chalicelib/utils/ch_client_exp.py
 rm -rf ./chalicelib/core/alerts/__init__.py
 rm -rf ./chalicelib/core/alerts/alerts.py
-rm -rf ./chalicelib/core/alerts/alerts_processor.py
-rm -rf ./chalicelib/core/alerts/alerts_processor_ch.py
-rm -rf ./chalicelib/core/alerts/alerts_listener.py
-rm -rf ./chalicelib/core/alerts/modules/helpers.py
 rm -rf ./chalicelib/core/errors
 rm -rf ./chalicelib/core/notes.py
 rm -rf ./chalicelib/utils/contextual_validators.py

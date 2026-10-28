@@ -1,8 +1,11 @@
 package jobs
 
 import (
+	"context"
+
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
+	"openreplay/backend/pkg/objectstorage"
 )
 
 type Jobs interface {
@@ -11,14 +14,36 @@ type Jobs interface {
 	Get(jobID int, projectID uint32) (*Job, error)
 	GetAll(projectID uint32, limit int, page int) ([]*Job, error)
 	Cancel(jobID int, projectID uint32) (*Job, error)
-	ExecuteScheduledJobs() error // TODO: currently executed by Python cron (app_crons.py JOB), wire to Go scheduler when Python API is retired
+	// ExecuteScheduledJobs runs every due job once; it is driven by the run_scheduled_jobs
+	// cron of the tasks service (see cron.go).
+	ExecuteScheduledJobs(ctx context.Context) error
 }
 
 type jobsImpl struct {
 	log logger.Logger
 	db  pool.Pool
+	// objStore, when set, is used to tag the deleted sessions' replay files for removal
+	// (the Python sessions_mobs/sessions_devtool.delete_mobs step). Nil in the API, which
+	// only creates and cancels jobs.
+	objStore    objectstorage.ObjectStorage
+	deleteInDay string
 }
 
-func New(log logger.Logger, db pool.Pool) Jobs {
-	return &jobsImpl{log: log, db: db}
+type Option func(*jobsImpl)
+
+// WithMobDeletion enables tagging replay files of deleted sessions with
+// to_delete_in_days=<days>, picked up by the bucket lifecycle rule.
+func WithMobDeletion(store objectstorage.ObjectStorage, days string) Option {
+	return func(j *jobsImpl) {
+		j.objStore = store
+		j.deleteInDay = days
+	}
+}
+
+func New(log logger.Logger, db pool.Pool, opts ...Option) Jobs {
+	j := &jobsImpl{log: log, db: db}
+	for _, o := range opts {
+		o(j)
+	}
+	return j
 }
