@@ -37,6 +37,8 @@ type TagTypeMap = {
   html: HTMLHtmlElement
   body: HTMLBodyElement
   img: HTMLImageElement
+  picture: HTMLPictureElement
+  source: HTMLSourceElement
   input: HTMLInputElement
   textarea: HTMLTextAreaElement
   select: HTMLSelectElement
