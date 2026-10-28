@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jackc/pgconn"
 	"github.com/jackc/pgerrcode"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 
 	"openreplay/backend/pkg/analytics/filters"
 	"openreplay/backend/pkg/analytics/lexicon/model"

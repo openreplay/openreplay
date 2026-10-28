@@ -1,4 +1,4 @@
-FROM golang:1.25-alpine AS build
+FROM golang:1.26.10-alpine AS build
 RUN apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community git openssh openssl-dev pkgconf gcc g++ make libc-dev bash librdkafka-dev cyrus-sasl cyrus-sasl-gssapiv2 krb5;
 WORKDIR /root
 
@@ -16,13 +16,13 @@ COPY internal internal
 ARG SERVICE_NAME
 RUN CGO_ENABLED=1 GOOS=linux GOARCH=$ARCH go build -o service -tags dynamic openreplay/backend/cmd/$SERVICE_NAME
 
-FROM alpine AS entrypoint
+FROM alpine:3.24.3 AS entrypoint
 ARG GIT_SHA
 ARG GSSAPI=false
 LABEL GIT_SHA=$GIT_SHA
 LABEL GSSAPI=$GSSAPI
 
-RUN apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community ca-certificates librdkafka-dev cyrus-sasl cyrus-sasl-gssapiv2 krb5
+RUN apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community ca-certificates librdkafka-dev cyrus-sasl cyrus-sasl-gssapiv2 krb5 "brotli-libs>=1.2.1-r0" "libcurl>=8.23.0-r0"
 RUN adduser -u 1001 openreplay -D
 
 ARG SERVICE_NAME
