@@ -389,12 +389,17 @@ export async function fetchProjects() {
     }
 
     // The Go api accepts MCP tokens; chalice's /projects doesn't. Older
-    // instances don't have the Go route yet, so fall back to chalice there.
+    // instances don't have the Go route yet (404, or index.html instead of
+    // JSON), so fall back to chalice there. Anything else is a real failure.
     let data;
     try {
         ({data} = await makeApiRequest("/v2/api/projects"));
     } catch (error) {
-        console.error(`[SERVER] /v2/api/projects failed, falling back to /projects: ${error}`);
+        const message = String(error);
+        if (!message.includes("failed: 404 ") && !message.includes("instead of JSON")) {
+            throw error;
+        }
+        console.error(`[SERVER] /v2/api/projects not found, falling back to /projects: ${error}`);
         ({data} = await makeApiRequest("/projects"));
     }
     console.error(`[SERVER] Found ${data.length || 0} projects`);
