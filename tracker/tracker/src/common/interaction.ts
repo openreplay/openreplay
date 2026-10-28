@@ -5,6 +5,9 @@ export type DataType = 'player' | 'assets' | 'devtools' | 'analytics' | 'visual'
 export interface Options {
   connAttemptCount?: number
   connAttemptGap?: number
+  /** How often (ms) the worker uploads what it has buffered. Defaults to 30 000. Anything
+   *  still buffered is lost if the page is unloaded without entering the bfcache. */
+  flushInterval?: number
 }
 
 type Start = {
