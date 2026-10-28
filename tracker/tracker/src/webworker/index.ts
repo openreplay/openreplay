@@ -189,7 +189,9 @@ self.onmessage = ({ data }: { data: ToWorkerData }): any => {
     detectors = new Detectors((msg) => writer?.writeMessage(msg), data.localDebug ?? false)
     detectorsTimestamp = 0
     if (sendIntervalID === null) {
-      sendIntervalID = setInterval(finalize, AUTO_SEND_INTERVAL)
+      const flushInterval =
+        data.flushInterval && data.flushInterval > 0 ? data.flushInterval : AUTO_SEND_INTERVAL
+      sendIntervalID = setInterval(finalize, flushInterval)
     }
     return (workerStatus = WorkerStatus.Active)
   }
