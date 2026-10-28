@@ -77,6 +77,12 @@
   overflow-y: auto;
   padding: var(--m-space-2);
 }
+.m-vp__body:empty {
+  display: none;
+}
+.m-vp__search:has(+ .m-vp__body:empty) {
+  border-bottom: 0;
+}
 
 /* the share line hangs under the label out of flow, so the row's checkbox
    centres on the value text rather than on text plus line */

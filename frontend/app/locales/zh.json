@@ -2454,7 +2454,6 @@
   "Values for {{name}}": "{{name}} 的值",
   "use “{{value}}”": "使用“{{value}}”",
   "typed": "手动输入",
-  "Type a {{name}} to filter by it.": "Type a {{name}} to filter by it.",
   "{{pct}}% of sessions": "{{pct}}% 的会话",
   "in {{name}}": "在 {{name}} 中",
   "{{name}} is on": "{{name}} 已开启",

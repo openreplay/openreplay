@@ -2454,7 +2454,6 @@
   "Values for {{name}}": "{{name}} 값",
   "use “{{value}}”": "“{{value}}” 사용",
   "typed": "입력값",
-  "Type a {{name}} to filter by it.": "Type a {{name}} to filter by it.",
   "{{pct}}% of sessions": "세션의 {{pct}}%",
   "in {{name}}": "{{name}}에 포함",
   "{{name}} is on": "{{name}} 켜짐",

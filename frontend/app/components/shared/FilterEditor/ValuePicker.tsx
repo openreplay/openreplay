@@ -104,15 +104,9 @@ function ValuePicker({ filter, value, onChange, live }: ValuePickerProps) {
             </CheckRow>
           ))}
 
-        {options.length === 0 && (
+        {options.length === 0 && (loading || !freeText) && (
           <p className="m-vp__none">
-            {loading
-              ? t('Loading…')
-              : freeText
-                ? t('Type a {{name}} to filter by it.', {
-                    name: name.toLowerCase(),
-                  })
-                : t('Nothing matches that.')}
+            {loading ? t('Loading…') : t('Nothing matches that.')}
           </p>
         )}
 
