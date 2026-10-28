@@ -388,7 +388,15 @@ export async function fetchProjects() {
         throw new Error("AUTH_ERROR: Not authenticated");
     }
 
-    const {data} = await makeApiRequest("/projects");
+    // The Go api accepts MCP tokens; chalice's /projects doesn't. Older
+    // instances don't have the Go route yet, so fall back to chalice there.
+    let data;
+    try {
+        ({data} = await makeApiRequest("/v2/api/projects"));
+    } catch (error) {
+        console.error(`[SERVER] /v2/api/projects failed, falling back to /projects: ${error}`);
+        ({data} = await makeApiRequest("/projects"));
+    }
     console.error(`[SERVER] Found ${data.length || 0} projects`);
 
     // Store projects in state
