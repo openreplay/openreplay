@@ -42,8 +42,11 @@
 }
 
 .m-nav__brand {
-  --m-brand: calc(var(--m-text-lg) * var(--m-display-scale));
+  --m-brand: calc(1.1875rem * var(--m-display-scale));
   gap: calc(var(--m-brand) * 0.24);
+}
+.m-nav.is-collapsed .m-nav__brand {
+  --m-brand: calc(1.375rem * var(--m-display-scale));
 }
 .m-nav__mark {
   height: var(--m-brand);

@@ -1,15 +1,23 @@
+import usePageTitle from '@/hooks/usePageTitle';
 import { useStore } from '@/mstore';
 import Project from '@/mstore/types/project';
 import { IconButton } from '@/ui/actions/IconButton';
 import { Button } from '@/ui/actions/button';
+import { Chip } from '@/ui/data/Chip';
 import { SearchField } from '@/ui/inputs/SearchField';
 import { Input } from '@/ui/inputs/input';
-import { Segmented } from '@/ui/inputs/toggle-group';
 import { Tabs, TabsList, TabsTrigger } from '@/ui/layout/tabs';
 import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
 import { useToast } from '@/ui/overlays/toast';
 import { Tooltip } from '@/ui/overlays/tooltip';
-import { Globe, Plus, Smartphone, Trash2 } from 'lucide-react';
+import {
+  ChevronDown,
+  Globe,
+  Info,
+  Plus,
+  Smartphone,
+  Trash2,
+} from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -180,11 +188,15 @@ function Projects() {
                       </TabsTrigger>
                     </TabsList>
                   </Tabs>
-                  <span
-                    className="m-pref__scope"
-                    style={{ marginLeft: 'auto' }}
-                  >
-                    {project.platform === 'web' ? t('Web') : t('Mobile')}
+                  <span style={{ marginLeft: 'auto' }}>
+                    <Chip>
+                      {project.platform === 'web' ? (
+                        <Globe size={12} aria-hidden="true" />
+                      ) : (
+                        <Smartphone size={12} aria-hidden="true" />
+                      )}
+                      {project.platform === 'web' ? t('Web') : t('Mobile')}
+                    </Chip>
                   </span>
                   <IconButton
                     icon={<Trash2 size={14} />}
@@ -199,29 +211,7 @@ function Projects() {
                 </div>
               </PrefBlock>
               {current === 'installation' ? (
-                <>
-                  <ThisProject key={project.projectId} project={project} />
-                  <PrefBlock
-                    title={t('Project key')}
-                    hint={t(
-                      'The one value the tracker needs. It is not a secret - it ships in your page.',
-                    )}
-                  >
-                    <PrefField>
-                      <SecretValue
-                        value={project.projectKey ?? ''}
-                        secret={false}
-                        label={t('project key')}
-                      />
-                    </PrefField>
-                  </PrefBlock>
-                  <PrefBlock
-                    title={t('Install the tracker')}
-                    hint={t('The steps, in order.')}
-                  >
-                    <ProjectTabTracking project={project} />
-                  </PrefBlock>
-                </>
+                <ThisProject key={project.projectId} project={project} />
               ) : current === 'captureRate' ? (
                 <>
                   <ProjectCaptureRate project={project} />
@@ -268,18 +258,20 @@ function Blocked({
 }
 
 const ThisProject = observer(({ project }: { project: Project }) => {
+  usePageTitle('Installation - OpenReplay Preferences');
   const { t } = useTranslation();
   const toast = useToast();
   const { projectsStore, userStore } = useStore();
   const [name, setName] = React.useState(project.name);
-  const [platform, setPlatform] = React.useState(project.platform);
-  const dirty = name.trim() !== project.name || platform !== project.platform;
-  // the fields lead nowhere without the right to save them
+  const [showInstall, setShowInstall] = React.useState(false);
   const locked = !userStore.isAdmin;
 
   const save = () =>
     projectsStore
-      .updateProject(project.id!, { name: name.trim(), platform })
+      .updateProject(project.id!, {
+        name: name.trim(),
+        platform: project.platform,
+      })
       .then(() => toast.success(t('Project updated successfully')))
       .catch((e: Error) =>
         toast.error(
@@ -288,64 +280,105 @@ const ThisProject = observer(({ project }: { project: Project }) => {
       );
 
   return (
-    <PrefBlock
-      title={t('This project')}
-      hint={
-        locked
-          ? t('Only an admin can rename the project or change its type.')
-          : t(
-              'The name is yours and changes nothing; the key never changes at all.',
-            )
-      }
-    >
-      <PrefField label={t('Project name')} htmlFor="pref-project-name">
-        <Input
-          id="pref-project-name"
-          value={name}
-          maxLength={40}
-          disabled={locked}
-          onChange={(e) => setName(e.target.value)}
-        />
-      </PrefField>
-      <PrefField
-        label={t('Project type')}
-        note={t(
-          'It decides which tracker you install. Changing it changes the steps below.',
-        )}
-      >
-        <Segmented<string>
-          value={platform}
-          onChange={setPlatform}
-          ariaLabel={t('Project type')}
-          options={[
-            { value: 'web', label: t('Web'), disabled: locked },
-            { value: 'ios', label: t('Mobile'), disabled: locked },
-          ]}
-        />
-      </PrefField>
-      <div className="m-pref__row">
-        <Blocked
-          reason={
-            userStore.isAdmin
-              ? undefined
-              : t('You don’t have the permissions to perform this action.')
+    <>
+      <PrefBlock>
+        <PrefField label={t('Project name')} htmlFor="pref-project-name">
+          <div className="m-pref__row">
+            <Input
+              id="pref-project-name"
+              value={name}
+              maxLength={40}
+              disabled={locked}
+              className="m-pref__grow"
+              onChange={(e) => setName(e.target.value)}
+            />
+            <Blocked
+              reason={
+                locked
+                  ? t('You don’t have the permissions to perform this action.')
+                  : undefined
+              }
+            >
+              <Button
+                variant="primary"
+                disabled={
+                  locked ||
+                  name.trim() === project.name ||
+                  !name.trim() ||
+                  projectsStore.loading
+                }
+                onClick={() => void save()}
+              >
+                {t('Save')}
+              </Button>
+            </Blocked>
+          </div>
+        </PrefField>
+        <PrefField
+          label={
+            <span className="m-pref__label-tip">
+              {t('Project type')}
+              <Tooltip
+                title={t(
+                  'A project’s type can’t change. To record another platform, add a new project.',
+                )}
+              >
+                <span
+                  className="m-pref__tip"
+                  tabIndex={0}
+                  aria-label={t('Why can’t I change this?')}
+                >
+                  <Info size={13} aria-hidden="true" />
+                </span>
+              </Tooltip>
+            </span>
           }
         >
+          <Input
+            value={project.platform === 'web' ? t('Web') : t('Mobile')}
+            readOnly
+            className="m-pref__readonly"
+            aria-label={t('Project type')}
+          />
+        </PrefField>
+        <PrefField
+          label={t('Project key')}
+          note={t(
+            'The one value the tracker needs. It is not a secret, it ships in your page.',
+          )}
+        >
+          <SecretValue
+            value={project.projectKey ?? ''}
+            secret={false}
+            label={t('project key')}
+          />
+        </PrefField>
+        <div>
           <Button
-            variant="primary"
-            disabled={
-              !userStore.isAdmin ||
-              !dirty ||
-              !name.trim() ||
-              projectsStore.loading
-            }
-            onClick={() => void save()}
+            variant="subtle"
+            aria-expanded={showInstall}
+            onClick={() => setShowInstall((v) => !v)}
           >
-            {t('Save')}
+            <ChevronDown
+              size={14}
+              aria-hidden="true"
+              className={`m-pref__disclose${showInstall ? ' is-open' : ''}`}
+            />
+            {showInstall
+              ? t('Hide the install steps')
+              : t('See how to install the tracker')}
           </Button>
-        </Blocked>
-      </div>
-    </PrefBlock>
+        </div>
+      </PrefBlock>
+      {showInstall && (
+        <PrefBlock
+          title={t('Install the tracker')}
+          hint={t('The steps, in order.')}
+        >
+          <ProjectTabTracking project={project} />
+        </PrefBlock>
+      )}
+    </>
   );
 });
 

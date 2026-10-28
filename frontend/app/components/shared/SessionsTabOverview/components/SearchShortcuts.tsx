@@ -18,8 +18,8 @@ interface Props {
   onAdd: (entry: CatalogueEntry) => void;
 }
 
-/** Beside an empty search: the last search, the last segment and the
-    filters this person adds most. Nothing applies by itself. */
+/** Beside an empty search: the filters this person adds most, then the last
+    search and the last segment. Nothing applies by itself. */
 function SearchShortcuts({ scope, entries, onAdd }: Props) {
   const { t } = useTranslation();
   const { searchStore, filterStore } = useStore();
@@ -48,10 +48,29 @@ function SearchShortcuts({ scope, entries, onAdd }: Props) {
       role="group"
       aria-label={t('Search shortcuts')}
     >
+      {usual.length > 0 && (
+        <span className="m-recs__shortcut-pills">
+          {usual.map((e) => (
+            <Button
+              key={e.id}
+              className="m-recs__shortcut"
+              onClick={() => onAdd(e)}
+              aria-label={t('Add a {{name}} filter', { name: e.displayName })}
+            >
+              <Plus size={12} aria-hidden="true" />
+              {e.displayName}
+            </Button>
+          ))}
+        </span>
+      )}
+      {usual.length > 0 && (last || segment) && (
+        <span className="m-recs__shortcut-sep" aria-hidden="true" />
+      )}
       {last && (
         <Tooltip title={lastSentence}>
           <Button
-            className="m-recs__shortcut"
+            variant="subtle"
+            className="m-recs__shortcut-back"
             onClick={() =>
               searchStore.restoreRules(last.filters, last.eventsOrder)
             }
@@ -64,7 +83,8 @@ function SearchShortcuts({ scope, entries, onAdd }: Props) {
       {segment && (
         <Tooltip title={t('The segment you used last')}>
           <Button
-            className="m-recs__shortcut"
+            variant="subtle"
+            className="m-recs__shortcut-back"
             onClick={() => searchStore.applySavedSearch(segment)}
           >
             <Layers size={12} aria-hidden="true" />
@@ -72,17 +92,6 @@ function SearchShortcuts({ scope, entries, onAdd }: Props) {
           </Button>
         </Tooltip>
       )}
-      {usual.map((e) => (
-        <Button
-          key={e.id}
-          className="m-recs__shortcut"
-          onClick={() => onAdd(e)}
-          aria-label={t('Add a {{name}} filter', { name: e.displayName })}
-        >
-          <Plus size={12} aria-hidden="true" />
-          {e.displayName}
-        </Button>
-      ))}
     </div>
   );
 }

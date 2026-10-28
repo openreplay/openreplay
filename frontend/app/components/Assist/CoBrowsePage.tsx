@@ -274,7 +274,7 @@ export const LiveSection = observer(
           taken={editor.properties.map((f) => f.entry.id)}
           onPick={editor.onAdd}
           hasRules={!noRules}
-          placeholder={t('Filter the live sessions')}
+          placeholder={t('Search live sessions')}
           trailing={
             <IconButton
               icon={<RefreshCw size={14} />}

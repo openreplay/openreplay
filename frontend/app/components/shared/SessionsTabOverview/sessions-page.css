@@ -19,17 +19,46 @@
   text-decoration: underline;
 }
 
-/* one line always: a pill that doesn't fit wraps out of the clipped box whole */
 .m-recs__shortcuts {
   display: flex;
   flex: 1 1 0;
-  flex-wrap: wrap;
   align-items: center;
   gap: var(--m-space-3);
   min-width: 0;
   height: var(--m-control-height-sm);
   padding-left: var(--m-space-4);
+}
+/* one line always: a pill that doesn't fit wraps out of the clipped box whole,
+   so the pills give way before Last search does */
+.m-recs__shortcut-pills {
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--m-space-3);
+  min-width: 0;
+  height: 100%;
   overflow: hidden;
+}
+.m-recs__shortcut-sep {
+  flex: none;
+  width: var(--m-border-width);
+  height: var(--m-space-6);
+  margin-inline: var(--m-space-2);
+  background: var(--m-border-default);
+}
+.m-recs__shortcut-back {
+  flex: none;
+  max-width: 14rem;
+  gap: var(--m-space-2);
+  padding-inline: var(--m-space-2);
+  color: var(--m-content-muted);
+}
+.m-recs__shortcut-back:hover {
+  color: var(--m-content-primary);
+}
+.m-recs__shortcut-back svg {
+  flex: none;
 }
 .m-recs__shortcut {
   max-width: 16rem;

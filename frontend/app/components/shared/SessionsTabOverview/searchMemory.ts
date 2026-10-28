@@ -69,16 +69,16 @@ export function countUse(scope: string, entryId: string) {
 
 const DEFAULT_USUAL: ((e: CatalogueEntry) => boolean)[] = [
   (e) => !e.isEvent && e.name === 'userId',
-  (e) => e.category === 'metadata',
   (e) => e.isEvent && e.name === 'LOCATION',
 ];
+const MAX_METADATA = 3;
 
-/** The entries this person adds most, topped up with User ID, the first
-    metadata key and Page. */
+/** The entries this person adds most, topped up with User ID, Page and the
+    project's metadata keys, never more than three of those. */
 export function usualEntries(
   m: SearchMemory,
   entries: readonly CatalogueEntry[],
-  n = 3,
+  n = 5,
 ): CatalogueEntry[] {
   const byId = new Map(entries.map((e) => [e.id, e]));
   const mine = Object.entries(m.uses)
@@ -88,5 +88,9 @@ export function usualEntries(
   const defaults = DEFAULT_USUAL.map((is) => entries.find(is)).filter(
     (e): e is CatalogueEntry => e != null,
   );
-  return [...new Set([...mine, ...defaults])].slice(0, n);
+  const metadata = entries.filter((e) => e.category === 'metadata');
+  let meta = 0;
+  return [...new Set([...mine, ...defaults, ...metadata])]
+    .filter((e) => e.category !== 'metadata' || ++meta <= MAX_METADATA)
+    .slice(0, n);
 }

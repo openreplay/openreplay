@@ -9,7 +9,7 @@ import { Input } from '@/ui/inputs/input';
 import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
 import { RenameDialog } from '@/ui/overlays/RenameDialog';
 import { useToast } from '@/ui/overlays/toast';
-import { Pencil, Trash2 } from 'lucide-react';
+import { ChevronDown, Pencil, Trash2 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -47,6 +47,7 @@ function CustomFields() {
   const [key, setKey] = useState('');
   const [renaming, setRenaming] = useState<any | null>(null);
   const [deleting, setDeleting] = useState<any | null>(null);
+  const [showHow, setShowHow] = useState(false);
 
   useEffect(() => {
     void store.fetchList(project?.id ?? undefined);
@@ -171,15 +172,32 @@ function CustomFields() {
             ))}
           </PrefList>
         )}
+        {fields.length > 0 ? (
+          <button
+            type="button"
+            className="m-pref__quiet-link"
+            aria-expanded={showHow}
+            onClick={() => setShowHow((v) => !v)}
+          >
+            <ChevronDown
+              size={12}
+              aria-hidden="true"
+              className={`m-pref__disclose${showHow ? ' is-open' : ''}`}
+            />
+            {showHow
+              ? t('Hide how to send the values')
+              : t('How to send the values')}
+          </button>
+        ) : null}
       </PrefBlock>
 
-      {fields.length > 0 ? (
+      {fields.length === 0 || showHow ? (
         <PrefBlock
           title={t('Send the values')}
           hint={t('Call this after the tracker starts, once per key.')}
         >
           <CodeBlock
-            code={snippetFor(platform, keys)}
+            code={snippetFor(platform, keys.length ? keys : ['plan'])}
             language={platform === 'web' ? 'JavaScript' : 'Swift'}
             caption={t('After the tracker starts')}
           />

@@ -129,6 +129,17 @@ function InstallGuide({
               {t('Install with a script tag')}
             </label>
           )}
+          {full && isWeb && (
+            <label className="m-ob__switch">
+              <Switch
+                checked={assist}
+                onCheckedChange={setAssist}
+                aria-label={t('Enable CoBrowse')}
+              />
+              {t('Enable CoBrowse')}{' '}
+              <span className="m-ob__muted">{t('(optional)')}</span>
+            </label>
+          )}
         </div>
       )}
 
@@ -253,55 +264,25 @@ function InstallGuide({
         )}
       </Step>
 
-      {full && isWeb && (
-        <Step
-          n={next()}
-          title={
-            <>
-              {t('Enable Assist')}{' '}
-              <span className="m-ob__muted">{t('optional')}</span>
-            </>
-          }
-          aside={
-            method === 'script' ? (
-              <label className="m-ob__switch">
-                <Switch
-                  checked={assist}
-                  onCheckedChange={setAssist}
-                  aria-label={t('Enable Assist')}
-                />
-                {t('Include Assist in the snippet')}
-              </label>
-            ) : undefined
-          }
-        >
-          {method === 'npm' ? (
-            <>
-              <CodeBlock
-                code={ASSIST_INSTALL}
-                inline
-                copyLabel={t('Copy command')}
-              />
-              <CodeBlock
-                code={ASSIST_USE}
-                language="JavaScript"
-                caption={
-                  <>
-                    {t('Then enable it with your tracker.')}{' '}
-                    <ExternalLink className="m-ob__link" href={DOCS.assist}>
-                      {t('Options')}
-                    </ExternalLink>
-                  </>
-                }
-              />
-            </>
-          ) : (
-            <p className="m-ob__muted text-xs">
-              {t(
-                'Assist lets you see a user’s live screen and call them, with no screen-sharing software on their side.',
-              )}
-            </p>
-          )}
+      {full && isWeb && assist && method === 'npm' && (
+        <Step n={next()} title={t('Enable CoBrowse')}>
+          <CodeBlock
+            code={ASSIST_INSTALL}
+            inline
+            copyLabel={t('Copy command')}
+          />
+          <CodeBlock
+            code={ASSIST_USE}
+            language="JavaScript"
+            caption={
+              <>
+                {t('Then enable it with your tracker.')}{' '}
+                <ExternalLink className="m-ob__link" href={DOCS.assist}>
+                  {t('Options')}
+                </ExternalLink>
+              </>
+            }
+          />
         </Step>
       )}
 

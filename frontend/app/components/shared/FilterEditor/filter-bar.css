@@ -61,10 +61,15 @@
 }
 [data-trigger='bar'] .m-fbar__filter {
   width: 100%;
-  height: var(--m-control-height-sm);
-  padding-inline: var(--m-space-3) var(--m-space-2);
-  font-size: var(--m-text-xs);
+  height: calc(var(--m-control-height-sm) * 1.3);
+  padding-inline: var(--m-space-4) var(--m-space-3);
+  gap: var(--m-space-4);
+  font-size: var(--m-text-sm);
   cursor: text;
+}
+[data-trigger='bar'] .m-fbar__filter-glyph {
+  width: 16px;
+  height: 16px;
 }
 [data-trigger='bar'] .m-fbar__key {
   margin-inline-start: auto;
@@ -182,6 +187,7 @@
 /* the field under a page title, and what sits at the end of its line */
 .m-recs__entryfield {
   display: flex;
+  align-items: center;
   min-width: 0;
 }
 .m-recs__entryfield .m-fbar__triggerwrap {

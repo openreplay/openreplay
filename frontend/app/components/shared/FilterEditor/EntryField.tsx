@@ -48,7 +48,7 @@ export function EntryField({
   };
   const lead = hasRules
     ? t('Add to the filter')
-    : (placeholder ?? t('Filter the recordings'));
+    : (placeholder ?? t('Search recordings'));
 
   useEffect(() => {
     if (hasRules) return undefined;
