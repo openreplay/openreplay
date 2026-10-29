@@ -894,17 +894,11 @@
   height: 10px;
   border-radius: var(--m-radius-full);
 }
-.m-cmap__scale.is-scroll i {
-  background: var(--m-chart-heat-low);
-}
-.m-cmap__scale.is-scroll b {
-  background: var(--m-chart-heat-high);
-}
-/* the click layer's own ramp (simpleHeatmap's gradient ends) */
-.m-cmap__scale.is-click i {
+/* the click layer's own ramp (simpleHeatmap's gradient ends), the scroll tint's too */
+.m-cmap__scale i {
   background: rgb(0 0 255);
 }
-.m-cmap__scale.is-click b {
+.m-cmap__scale b {
   background: rgb(255 0 0);
 }
 .m-cmap__thumb {

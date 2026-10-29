@@ -63,14 +63,33 @@ export function scrollReach(
   };
 }
 
-/** The page tint: warm ink where everyone looked, cool where few did. */
+// the click layer's ramp, spread so the 75/50/25% lines fall on yellow/lime/cyan
+const REACH_RAMP: [number, [number, number, number]][] = [
+  [0, [0, 0, 255]],
+  [25, [0, 255, 255]],
+  [50, [0, 255, 0]],
+  [75, [255, 255, 0]],
+  [100, [255, 0, 0]],
+];
+
+export function reachColor(share: number): string {
+  const r = Math.max(0, Math.min(100, share));
+  const i = Math.max(
+    1,
+    REACH_RAMP.findIndex(([at]) => at >= r),
+  );
+  const [a, ca] = REACH_RAMP[i - 1];
+  const [b, cb] = REACH_RAMP[i];
+  const k = (r - a) / (b - a);
+  const c = ca.map((v, j) => Math.round(v + (cb[j] - v) * k));
+  return `rgb(${c.join(' ')})`;
+}
+
+/** The page tint: warm where everyone looked, cool where few did. */
 export function reachGradient(reach: number[], step = 2): string {
   const stops: string[] = [];
   for (let d = 0; d <= 100; d += step) {
-    const r = Math.round(reach[d]);
-    stops.push(
-      `color-mix(in oklch, var(--m-chart-heat-high) ${r}%, var(--m-chart-heat-low)) ${d}%`,
-    );
+    stops.push(`${reachColor(reach[d])} ${d}%`);
   }
   return `linear-gradient(to bottom, ${stops.join(', ')})`;
 }

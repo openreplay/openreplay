@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 
 import { heatmapJumpTime } from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/ClickMapCard/heatmapJumpTime';
-import { scrollReach } from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/ClickMapCard/scrollReach';
+import {
+  reachColor,
+  scrollReach,
+} from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/ClickMapCard/scrollReach';
 import {
   minimapBox,
   windowView,
@@ -268,6 +271,15 @@ describe('scrollReach', () => {
     })!;
     expect(r.marks).toEqual([]);
     expect(r.median).toBe(100);
+  });
+
+  it('tints by the click ramp, the reach lines on its bands', () => {
+    expect(reachColor(100)).toBe('rgb(255 0 0)');
+    expect(reachColor(75)).toBe('rgb(255 255 0)');
+    expect(reachColor(50)).toBe('rgb(0 255 0)');
+    expect(reachColor(25)).toBe('rgb(0 255 255)');
+    expect(reachColor(0)).toBe('rgb(0 0 255)');
+    expect(reachColor(87.5)).toBe('rgb(255 128 0)');
   });
 
   it('has nothing to draw without sessions', () => {
