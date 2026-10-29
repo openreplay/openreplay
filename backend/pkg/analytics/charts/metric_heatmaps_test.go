@@ -79,8 +79,13 @@ func TestHeatmapPointsCollapsesClickRageBursts(t *testing.T) {
 		"r.issue_type = 'click_rage'",
 		"groupArray(toUnixTimestamp64Milli(r.created_at)) AS rage_ts",
 		"abs(toUnixTimestamp64Milli(e.created_at) - t) <= @clickRageWindowMs",
-		"LIMIT 1 BY burst_key",
+		// a burst keeps its first click, the same one on every load
+		"(e.created_at, e.event_id) AS ord",
+		"argMin(normalized_x, ord) AS normalized_x",
+		"argMin(normalized_y, ord) AS normalized_y",
+		"GROUP BY burst_key",
 	)
+	mustNotContain(t, q, "LIMIT 1 BY")
 }
 
 func TestHeatmapSessionQuery(t *testing.T) {
@@ -94,8 +99,9 @@ func TestHeatmapSessionQuery(t *testing.T) {
 		mustContain(t, q,
 			"toUInt64(toUnixTimestamp64Milli(e.last_click)) AS eventTs",
 			"max(e.created_at) AS last_click",
-			"ORDER BY s.duration < @minRenderableSessionMs, s.duration ASC",
-			"ORDER BY cityHash64(session_id, @heatmapSeed)",
+			// equal durations can't swap the candidates, and a renderable one wins over a bounce
+			"ORDER BY s.duration < @minRenderableSessionMs, s.duration ASC, s.session_id ASC",
+			"ORDER BY duration < @minRenderableSessionMs, cityHash64(session_id, @heatmapSeed)",
 		)
 		mustNotContain(t, q, "rand()", "toUnixTimestamp(e.created_at)")
 		if path == "" {
@@ -106,7 +112,7 @@ func TestHeatmapSessionQuery(t *testing.T) {
 	}
 }
 
-func TestHeatmapSessionSeedPicksAnotherCandidate(t *testing.T) {
+func TestHeatmapSessionSeedIsBound(t *testing.T) {
 	hs := &HeatmapSessionQueryBuilder{Logger: logger.New()}
 	p := heatmapPayload("/pricing")
 	_, params, _ := hs.buildQuery(p)

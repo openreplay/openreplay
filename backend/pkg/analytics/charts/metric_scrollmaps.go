@@ -79,7 +79,8 @@ func (s *ScrollmapQueryBuilder) buildQuery(p *Payload) (string, map[string]any, 
 	base = append(base, buildLocationConditions(filter.Filters, "e", qp)...)
 	base = append(base, heatmapMatchingSessions(p, qp))
 
-	// sumMap gives the histogram as two arrays, depths ascending; both halves are one aggregate
+	// sumMap gives the histogram as two arrays, depths ascending; both halves are one aggregate.
+	// The insert drops zero properties, so a missing fold_pct is a fold of 0.
 	q := fmt.Sprintf(`
 SELECT count() AS sessions,
        toUInt8(ifNotFinite(round(median(fold)), 0)) AS fold,
@@ -92,7 +93,7 @@ FROM (
     FROM (
         SELECT e.session_id AS session_id,
                least(100, ifNull(accurateCastOrNull(e."$properties".depth_pct, 'UInt8'), 0)) AS d,
-               least(100, ifNull(accurateCastOrNull(e."$properties".fold_pct, 'UInt8'), 100)) AS f
+               least(100, ifNull(accurateCastOrNull(e."$properties".fold_pct, 'UInt8'), 0)) AS f
         FROM product_analytics.events AS e
         WHERE %s
     ) AS e

@@ -23,7 +23,8 @@ func TestScrollmapHistogramQuery(t *testing.T) {
 		"e.`$event_name` = 'SCROLL'",
 		"e.`$auto_captured`",
 		`accurateCastOrNull(e."$properties".depth_pct, 'UInt8')`,
-		`accurateCastOrNull(e."$properties".fold_pct, 'UInt8')`,
+		// a zero fold isn't stored, so missing reads as 0, not as the whole page
+		`ifNull(accurateCastOrNull(e."$properties".fold_pct, 'UInt8'), 0)`,
 		// one count per session, at its deepest page view
 		"max(d) AS depth",
 		"argMax(f, d) AS fold",

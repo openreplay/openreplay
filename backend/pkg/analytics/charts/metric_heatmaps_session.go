@@ -79,10 +79,10 @@ FROM (
     ) AS e
     INNER JOIN experimental.sessions AS s ON s.session_id = e.session_id
     WHERE %s
-    ORDER BY s.duration < @minRenderableSessionMs, s.duration ASC
+    ORDER BY s.duration < @minRenderableSessionMs, s.duration ASC, s.session_id ASC
     LIMIT 10
 ) AS candidates
-ORDER BY cityHash64(session_id, @heatmapSeed)
+ORDER BY duration < @minRenderableSessionMs, cityHash64(session_id, @heatmapSeed)
 LIMIT 1;`
 
 func (h *HeatmapSessionQueryBuilder) buildQuery(p *Payload) (string, map[string]any, error) {

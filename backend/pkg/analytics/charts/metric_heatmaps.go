@@ -126,7 +126,8 @@ const heatmapClickColumns = `round(accurateCastOrNull(e."$properties".normalized
 		round(accurateCastOrNull(e."$properties".normalized_y, 'Float64'), 2) AS normalized_y`
 
 // buildBurstCollapsedClicks gives every click near a click_rage issue of its session the
-// same burst key, so each click-rage burst contributes one click.
+// same burst key, so each click-rage burst contributes one click: its first, so a burst
+// spread over several cells lands in the same one on every load.
 func (h *HeatmapQueryBuilder) buildBurstCollapsedClicks(p *Payload, qp *Params, base []string) string {
 	rageWhere := []string{
 		"r.project_id = @projectId",
@@ -139,9 +140,10 @@ func (h *HeatmapQueryBuilder) buildBurstCollapsedClicks(p *Payload, qp *Params, 
 	}
 	qp.Set("clickRageWindowMs", clickRageWindowMs)
 
-	return fmt.Sprintf(`SELECT normalized_x, normalized_y
+	return fmt.Sprintf(`SELECT argMin(normalized_x, ord) AS normalized_x, argMin(normalized_y, ord) AS normalized_y
 	FROM (
 		SELECT %s,
+			(e.created_at, e.event_id) AS ord,
 			arrayFirst(t -> abs(toUnixTimestamp64Milli(e.created_at) - t) <= @clickRageWindowMs, rage.rage_ts) AS rage_at,
 			if(rage_at = 0, toString(e.event_id), concat(toString(e.session_id), '-', toString(rage_at))) AS burst_key
 		FROM product_analytics.events AS e
@@ -152,6 +154,6 @@ func (h *HeatmapQueryBuilder) buildBurstCollapsedClicks(p *Payload, qp *Params, 
 			GROUP BY r.session_id
 		) AS rage ON e.session_id = rage.session_id
 		WHERE %s
-		LIMIT 1 BY burst_key
-	)`, heatmapClickColumns, strings.Join(rageWhere, "\n\t\t\tAND "), strings.Join(base, "\n\t\tAND "))
+	)
+	GROUP BY burst_key`, heatmapClickColumns, strings.Join(rageWhere, "\n\t\t\tAND "), strings.Join(base, "\n\t\tAND "))
 }

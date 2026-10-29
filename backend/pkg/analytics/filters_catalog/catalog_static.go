@@ -100,8 +100,9 @@ var PredefinedEventsMobileOrder = []string{
 	"TAP", "INPUT", "SWIPE", "REQUEST", "CRASH", "ISSUE",
 }
 
-// ExcludedEvents holds event-type keys that must never appear in the
-// /pa/{projectId}/filters response (port of EXCLUDED_EVENTS from events.py).
+// ExcludedEvents holds auto-captured event-type keys left out of the
+// /pa/{projectId}/filters response (port of EXCLUDED_EVENTS from events.py);
+// a custom event with the same name still appears.
 var ExcludedEvents = map[string]struct{}{
 	"CUSTOM":      {},
 	"TAG_TRIGGER": {},
