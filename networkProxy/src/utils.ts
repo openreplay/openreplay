@@ -1,3 +1,5 @@
+import { obscureFormFields, obscureParam } from './sanitizers'
+
 export const genResponseByType = (
   responseType: XMLHttpRequest['responseType'],
   response: any,
@@ -69,23 +71,27 @@ export const genStringBody = (body?: BodyInit) => {
   let result: string
   try {
     if (typeof body === 'string') {
-      if (body[0] === '{' || body[0] === '[') {
-        result = body
-      }
-      // 'a=1&b=2' => try to parse as query
-      const arr = body.split('&')
-      if (arr.length === 1) {
-        // not a query, parse as original string
+      const first = body.trimStart()[0]
+      if (first === '{' || first === '[') {
+        // JSON may contain '&' in its values
         result = body
       } else {
-        // 'a=1&b=2&c' => parse as query
-        result = arr.join(',')
+        // 'a=1&b=2' => try to parse as query; masked here, filterBody can't split 'a=1,b=2' safely
+        const masked = obscureFormFields(body)
+        const arr = masked.split('&')
+        if (arr.length === 1) {
+          // not a query, or a single field
+          result = masked
+        } else {
+          // 'a=1&b=2&c' => parse as query
+          result = arr.join(',')
+        }
       }
     } else if (isIterable(body)) {
       // FormData or URLSearchParams or Array
       const arr = []
       for (const [key, value] of <FormData | URLSearchParams>body) {
-        arr.push(`${key}=${typeof value === 'string' ? value : '[object Object]'}`)
+        arr.push(`${key}=${typeof value === 'string' ? obscureParam(key, value) : '[object Object]'}`)
       }
       result = arr.join(',')
     } else if (
@@ -199,14 +205,14 @@ export function formatByteSize(bytes: number) {
   return `${bytes}B`
 }
 
-export const getURL = (urlString: string) => {
+export const getURL = (urlString: string, base: string = window.location.href) => {
   if (urlString.startsWith('//')) {
-    const baseUrl = new URL(window.location.href)
+    const baseUrl = new URL(base)
     urlString = `${baseUrl.protocol}${urlString}`
   }
   if (urlString.startsWith('http')) {
     return new URL(urlString)
   } else {
-    return new URL(urlString, window.location.href)
+    return new URL(urlString, base)
   }
 }

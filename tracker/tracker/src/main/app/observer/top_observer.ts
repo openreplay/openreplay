@@ -23,7 +23,7 @@ export enum InlineCssMode {
 }
 const localhostStylesDoc = 'https://docs.openreplay.com/en/troubleshooting/localhost/'
 
-function getInlineOptions(mode: InlineCssMode, logger: (args: any) => void) {
+export function getInlineOptions(mode: InlineCssMode, logger: (args: any) => void) {
   switch (mode) {
     case InlineCssMode.Inline:
       return {
@@ -99,6 +99,25 @@ export interface Options {
   disableThrottling?: boolean
 }
 
+/** Send resolved used color-scheme ('dark'|'light'|'normal') for the player to force on replay. */
+export function sendColorScheme(app: App): void {
+  if (!IN_BROWSER) return
+  const root = document.documentElement
+  let declared = getComputedStyle(root).colorScheme
+  if (!declared || declared === 'normal') {
+    const meta = document.querySelector('meta[name="color-scheme" i]')
+    const content = meta && meta.getAttribute('content')
+    if (content) declared = content
+  }
+  let used = 'normal'
+  if (declared && declared !== 'normal') {
+    const prefersDark = !!window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+    // resolve declared support against OS preference into the concrete used scheme
+    used = declared.includes('dark') && (prefersDark || !declared.includes('light')) ? 'dark' : 'light'
+  }
+  app.send(SetNodeAttribute(0, '__openreplay_color_scheme', used))
+}
+
 type Context = Window & typeof globalThis
 type ContextCallback = (context: Context) => void
 
@@ -131,7 +150,9 @@ export default class TopObserver extends Observer {
       if (
         hasTag(node, 'iframe') &&
         ((this.options.captureIFrames && !hasOpenreplayAttribute(node, 'obscured')) ||
-          hasOpenreplayAttribute(node, 'capture'))
+          hasOpenreplayAttribute(node, 'capture')) &&
+        // a hidden iframe (or one under a hidden ancestor) is a placeholder: skip its document
+        !this.app.sanitizer.isHidden(this.app.nodes.getID(node) ?? -1)
       ) {
         this.handleIframe(node)
       }
@@ -166,7 +187,8 @@ export default class TopObserver extends Observer {
     const handle = this.app.safe(() =>
       setTimeout(() => {
         const id = this.app.nodes.getID(iframe)
-        if (id === undefined || !canAccessIframe(iframe)) return
+        // also on a later load: the iframe may have been hidden since
+        if (id === undefined || this.app.sanitizer.isHidden(id) || !canAccessIframe(iframe)) return
         const currentWin = iframe.contentWindow
         const currentDoc = iframe.contentDocument
         if (!currentDoc) {
@@ -206,6 +228,29 @@ export default class TopObserver extends Observer {
     handle()
   }
 
+  protected releaseFrame(iframe: HTMLIFrameElement): void {
+    const observer = this.iframeObservers.get(iframe)
+    if (!observer) return
+    observer.disconnect()
+    this.iframeObservers.delete(iframe)
+    this.iframeObserversArr = this.iframeObserversArr.filter((o) => o !== observer)
+    const doc = canAccessIframe(iframe) ? iframe.contentDocument : null
+    if (doc && this.docObservers.get(doc) === observer) {
+      this.docObservers.delete(doc)
+      // its nodes stop being polled or re-sent (inputs, nested iframes)
+      this.clearSubtreeRegistration(doc)
+    }
+  }
+
+  protected releaseShadow(host: Element): void {
+    const root = host.shadowRoot
+    const observer = root && this.shadowRootObservers.get(root)
+    if (!root || !observer) return
+    observer.disconnect()
+    this.shadowRootObservers.delete(root)
+    this.clearSubtreeRegistration(root)
+  }
+
   private shadowRootObservers: Map<ShadowRoot, ShadowRootObserver> = new Map()
   private handleShadowRoot(shRoot: ShadowRoot) {
     this.shadowRootObservers.forEach((obs, root) => {
@@ -214,6 +259,9 @@ export default class TopObserver extends Observer {
         this.shadowRootObservers.delete(root)
       }
     })
+    const hostId = this.app.nodes.getID(shRoot.host)
+    // a hidden host is a placeholder: its shadow root is not recorded
+    if (hostId !== undefined && this.app.sanitizer.isHidden(hostId)) return
     const observer = new ShadowRootObserver(this.app, false, {
       disableSprites: this.options.disableSprites,
       ...getInlineOptions(this.options.inlineCss, console.warn),
@@ -252,7 +300,7 @@ export default class TopObserver extends Observer {
     )
 
     // Send before `orloaded` so it lands in the initial visual batch (see sendColorScheme).
-    this.sendColorScheme()
+    sendColorScheme(this.app)
 
     // "DOM parsed" signal: observeRoot sent the full initial tree synchronously above.
     // The worker keys on this attribute (BatchWriter) to finalize the visual batch.
@@ -260,7 +308,7 @@ export default class TopObserver extends Observer {
 
     if (IN_BROWSER && window.matchMedia) {
       this.colorSchemeMQL = window.matchMedia('(prefers-color-scheme: dark)')
-      this.colorSchemeListener = this.app.safe(() => this.sendColorScheme())
+      this.colorSchemeListener = this.app.safe(() => sendColorScheme(this.app))
       this.colorSchemeMQL.addEventListener?.('change', this.colorSchemeListener)
     }
   }
@@ -268,24 +316,6 @@ export default class TopObserver extends Observer {
   private colorSchemeMQL: MediaQueryList | null = null
   private colorSchemeListener: ((e: MediaQueryListEvent) => void) | null = null
 
-  /** Send resolved used color-scheme ('dark'|'light'|'normal') for the player to force on replay. */
-  private sendColorScheme(): void {
-    if (!IN_BROWSER) return
-    const root = document.documentElement
-    let declared = getComputedStyle(root).colorScheme
-    if (!declared || declared === 'normal') {
-      const meta = document.querySelector('meta[name="color-scheme" i]')
-      const content = meta && meta.getAttribute('content')
-      if (content) declared = content
-    }
-    let used = 'normal'
-    if (declared && declared !== 'normal') {
-      const prefersDark = !!window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
-      // resolve declared support against OS preference into the concrete used scheme
-      used = declared.includes('dark') && (prefersDark || !declared.includes('light')) ? 'dark' : 'light'
-    }
-    this.app.send(SetNodeAttribute(0, '__openreplay_color_scheme', used))
-  }
 
   crossdomainObserve(rootNodeId: number, frameOder: number, frameLevel: number) {
     initUntaintedDom()

@@ -44,3 +44,20 @@ createNetworkProxy(
 // to stop it, you can save this.fetch/other apis before appliying the proxy
 // and then restore them
 ```
+
+axios instances with a custom adapter (native HTTP bridge, mock, `env.fetch`) never reach
+the global XHR/fetch, hook them explicitly. Requests that went through the proxies are
+skipped, so hooking an instance with the default adapter records nothing twice:
+```
+import { hookAxios } from '@openreplay/network-proxy';
+
+hookAxios(
+  api, // axios.create(...)
+  options.ignoreHeaders,
+  setSessionTokenHeader,
+  sanitize,
+  (message) => app.send(message),
+  (url) => app.isServiceURL(url),
+  options.tokenUrlMatcher,
+)
+```

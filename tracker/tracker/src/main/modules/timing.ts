@@ -193,6 +193,8 @@ export default function (app: App, opts: Partial<Options>): void {
   }
 
   let prevSessionID: string | undefined
+  // web-vitals reporters can't be removed; registering on every start duplicates every metric
+  let vitalsRegistered = false
   app.attachStartCallback(function ({ sessionID }) {
     if (sessionID !== prevSessionID) {
       prevSessionID = sessionID
@@ -206,10 +208,13 @@ export default function (app: App, opts: Partial<Options>): void {
     // onLCP(): Chromium, Firefox
     // onTTFB(): Chromium, Firefox, Safari
 
-    onCLS(onVitalsSignal)
-    onINP(onVitalsSignal)
-    onLCP(onVitalsSignal)
-    onTTFB(onVitalsSignal)
+    if (!vitalsRegistered) {
+      vitalsRegistered = true
+      onCLS(onVitalsSignal)
+      onINP(onVitalsSignal)
+      onLCP(onVitalsSignal)
+      onTTFB(onVitalsSignal)
+    }
   })
 
   app.attachStopCallback(function () {

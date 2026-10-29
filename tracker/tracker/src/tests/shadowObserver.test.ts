@@ -14,6 +14,7 @@ function makeApp() {
     options: { forceNgOff: true },
     safe: (f: any) => f,
     send: (msg: any) => sent.push(msg),
+    callResanitizeCallbacks: jest.fn(),
     getBaseHref: () => 'http://localhost/',
     debug: { log: jest.fn(), warn: jest.fn(), info: jest.fn(), error: jest.fn() },
   }
@@ -31,6 +32,11 @@ function makeApp() {
 }
 
 const flush = () => Promise.resolve().then(() => undefined)
+const allData = () =>
+  sent
+    .filter((m) => m[0] === Type.SetNodeData)
+    .map((m) => m[2])
+    .join('|')
 const shadowObservers = () => (observer as any).shadowRootObservers as Map<ShadowRoot, any>
 
 async function addHost(): Promise<[HTMLElement, ShadowRoot]> {
@@ -110,5 +116,55 @@ describe('TopObserver shadow root observers', () => {
     expect(moDisconnect).toHaveBeenCalledTimes(3)
     expect(shadowObservers().size).toBe(0)
     expect(Element.prototype.attachShadow).toBe(nativeAttachShadow)
+  })
+
+  test('shadow content inherits a masked host; a hidden host gets no shadow root', async () => {
+    const masked = document.createElement('div')
+    masked.setAttribute('data-openreplay-obscured', '')
+    const hidden = document.createElement('div')
+    hidden.setAttribute('data-openreplay-hidden', '')
+    document.body.append(masked, hidden)
+    await flush()
+    masked.attachShadow({ mode: 'open' }).innerHTML = '<span>card 4111</span>'
+    const hiddenShadow = hidden.attachShadow({ mode: 'open' })
+    hiddenShadow.innerHTML = '<span>secret</span>'
+    await flush()
+    hiddenShadow.append('more 6011')
+    await flush()
+
+    expect(allData()).toContain('****')
+    expect(allData()).not.toContain('4111')
+    expect(allData()).not.toContain('secret')
+    expect(allData()).not.toContain('6011')
+    expect(shadowObservers().has(hiddenShadow)).toBe(false)
+  })
+
+  test('resanitize re-levels shadow content: masked, hidden, then recorded again', async () => {
+    const [host, shadow] = await addHost()
+    await flush()
+    const text = shadow.querySelector('span')!.firstChild as Text
+
+    host.setAttribute('data-openreplay-obscured', '')
+    observer.resanitizeSubtree(host)
+    expect(sent[sent.length - 1]).toEqual([Type.SetNodeData, nodes.getID(text), '**'])
+
+    host.removeAttribute('data-openreplay-obscured')
+    host.setAttribute('data-openreplay-hidden', '')
+    observer.resanitizeSubtree(host)
+    expect(nodes.getID(text)).toBeUndefined()
+    expect(shadowObservers().has(shadow)).toBe(false)
+    let before = sent.length
+    text.data = 'card 5500'
+    shadow.append('more 6011')
+    await flush()
+    expect(JSON.stringify(sent.slice(before))).not.toMatch(/5500|6011/)
+
+    host.removeAttribute('data-openreplay-hidden')
+    before = sent.length
+    observer.resanitizeSubtree(host)
+    await flush()
+    const after = sent.slice(before)
+    expect(after).toContainEqual([Type.CreateIFrameDocument, nodes.getID(host), nodes.getID(shadow)])
+    expect(JSON.stringify(after)).toContain('card 5500')
   })
 })

@@ -236,6 +236,15 @@ export function generateRandomId(len?: number) {
   return Array.from(arr, dec2hex).join('')
 }
 
+/** e.g. `UTC+05:30` */
+export function getTimezone() {
+  const offset = new Date().getTimezoneOffset() * -1
+  const sign = offset >= 0 ? '+' : '-'
+  const hours = Math.floor(Math.abs(offset) / 60)
+  const minutes = Math.abs(offset) % 60
+  return `UTC${sign}${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
+}
+
 export function inIframe() {
   try {
     return window.self && window.top && window.self !== window.top
@@ -334,9 +343,23 @@ export function deleteEventListener(
 class FIFOTaskScheduler {
   taskQueue: any[]
   isRunning: boolean
+  /** the step waiting for an animation frame, if any */
+  private pendingStep: (() => void) | null = null
+  private watchingVisibility = false
   constructor() {
     this.taskQueue = []
     this.isRunning = false
+  }
+
+  // rAF never fires in a background tab: a step already waiting for one when the tab
+  // gets hidden would hold the queue (and every commit) until it is shown again
+  private watchVisibility() {
+    if (this.watchingVisibility || typeof document === 'undefined') return
+    this.watchingVisibility = true
+    document.addEventListener('visibilitychange', () => {
+      const step = this.pendingStep
+      if (document.hidden && step) setTimeout(step, 0)
+    })
   }
 
   // Adds a task to the queue
@@ -364,7 +387,22 @@ class FIFOTaskScheduler {
       // for the lifetime of the page, and since commits run through here that
       // silently ends the recording. See #4836.
       const { task, onError } = this.taskQueue.shift()
-      const scheduleNext = () => requestAnimationFrame(() => executeNextTask(false))
+      const scheduleNext = () => {
+        let done = false
+        const step = () => {
+          if (done) return
+          done = true
+          if (this.pendingStep === step) this.pendingStep = null
+          executeNextTask(false)
+        }
+        if (typeof document !== 'undefined' && document.hidden) {
+          setTimeout(step, 0)
+        } else {
+          this.pendingStep = step
+          this.watchVisibility()
+          requestAnimationFrame(step)
+        }
+      }
       let result: any
       try {
         result = task()

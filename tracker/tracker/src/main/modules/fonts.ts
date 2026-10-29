@@ -4,12 +4,25 @@ import { LoadFontFace } from '../app/messages.gen.js'
 
 type FFData = [string, string, string]
 
+// the player builds the FontFace in its own document, so relative sources must be resolved here
+function absoluteSources(source: string, base: string): string {
+  // case-insensitive; a quoted url runs to its closing quote, so it may hold parens or the other quote
+  return source.replace(/url\(\s*(['"]?)([\s\S]+?)\1\s*\)/gi, (match, _q, url: string) => {
+    if (url.startsWith('data:')) return match
+    try {
+      return `url("${new URL(url, base).href}")`
+    } catch (e) {
+      return match
+    }
+  })
+}
+
 export default function (app: App) {
   if (!window.FontFace) {
     return
   }
 
-  const docFonts: Map<Document, FFData[]> = new Map()
+  const docFonts: WeakMap<Document, FFData[]> = new WeakMap()
 
   const patchWindow = (wnd: typeof globalThis) => {
     // @ts-ignore
@@ -25,7 +38,7 @@ export default function (app: App) {
               })()
             }
 
-            const ffData: FFData = [args[0], args[1] as string, desc]
+            const ffData: FFData = [args[0], absoluteSources(args[1] as string, wnd.document.baseURI), desc]
             const ffDataArr = docFonts.get(wnd.document) || []
             ffDataArr.push(ffData)
             docFonts.set(wnd.document, ffDataArr)
