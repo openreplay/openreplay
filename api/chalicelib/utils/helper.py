@@ -183,16 +183,6 @@ def is_alphabet_space_dash(word):
     return r.match(word) is not None
 
 
-def merge_lists_by_key(l1, l2, key):
-    merged = {}
-    for item in l1 + l2:
-        if item[key] in merged:
-            merged[item[key]].update(item)
-        else:
-            merged[item[key]] = item
-    return [val for (_, val) in merged.items()]
-
-
 def flatten_nested_dicts(obj):
     if obj is None:
         return None
@@ -260,63 +250,8 @@ def get_issue_title(issue_type):
             "mouse_thrashing": "Mouse Thrashing"}.get(issue_type, issue_type)
 
 
-def __progress(old_val, new_val):
-    return ((old_val - new_val) / new_val) * 100 if new_val > 0 else 0 if old_val == 0 else 100
-
-
-def __decimal_limit(value, limit):
-    factor = pow(10, limit)
-    value = math.floor(value * factor)
-    if value % factor == 0:
-        return value // factor
-    return value / factor
-
-
-def old_search_payload_to_flat(values):
-    # in case the old search body was passed
-    if values.get("events") is not None:
-        for v in values["events"]:
-            v["isEvent"] = True
-        for v in values.get("filters", []):
-            v["isEvent"] = False
-        values["filters"] = values.pop("events") + values.get("filters", [])
-    return values
-
-
-def custom_alert_to_front(values):
-    # to support frontend format for payload
-    if values.get("seriesId") is not None and values["query"]["left"] == schemas.AlertColumn.CUSTOM:
-        values["query"]["left"] = values["seriesId"]
-        values["seriesId"] = None
-    return values
-
-
-def __time_value(row):
-    row["unit"] = schemas.TemplatePredefinedUnits.MILLISECOND
-    factor = 1
-    if row["value"] > TimeUTC.MS_MINUTE:
-        row["value"] = row["value"] / TimeUTC.MS_MINUTE
-        row["unit"] = schemas.TemplatePredefinedUnits.MINUTE
-        factor = TimeUTC.MS_MINUTE
-    elif row["value"] > 1 * 1000:
-        row["value"] = row["value"] / 1000
-        row["unit"] = schemas.TemplatePredefinedUnits.SECOND
-        factor = 1000
-
-    if "chart" in row and factor > 1:
-        for r in row["chart"]:
-            r["value"] /= factor
-
-
 def is_saml2_available():
     return config("hastSAML2", default=False, cast=bool)
-
-
-def get_domain():
-    _url = config("SITE_URL")
-    if not _url.startswith("http"):
-        _url = "http://" + _url
-    return '.'.join(urlparse(_url).netloc.split(".")[-2:])
 
 
 def obfuscate(text, keep_last: int = 4):
@@ -341,9 +276,3 @@ def cast_session_id_to_string(data):
             for key in keys:
                 data[key] = cast_session_id_to_string(data[key])
     return data
-
-
-def string_to_id(s: str):
-    if s is None:
-        return None
-    return str(int(hashlib.md5(s.encode()).hexdigest(), 16))

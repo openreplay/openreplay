@@ -195,9 +195,7 @@ Pipfile.lock
 /chalicelib/core/metrics/dashboards.py
 /chalicelib/core/metrics/funnels.py
 /chalicelib/core/metrics/heatmaps
-/chalicelib/core/events*
 /chalicelib/core/issue_tracking/*
-/chalicelib/core/issues/
 /chalicelib/core/jobs.py
 /chalicelib/core/log_tools/*
 /chalicelib/core/mcp/__init__.py
@@ -259,8 +257,6 @@ Pipfile.lock
 /.dev/
 /chalicelib/utils/ch_client.py
 /chalicelib/utils/ch_client_exp.py
-/chalicelib/core/alerts/__init__.py
-/chalicelib/core/alerts/alerts.py
 /chalicelib/core/errors/
 /chalicelib/core/notes.py
 /chalicelib/utils/contextual_validators.py

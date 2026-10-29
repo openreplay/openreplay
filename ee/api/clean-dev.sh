@@ -16,10 +16,8 @@ rm -rf ./chalicelib/core/metrics/custom_metrics.py
 rm -rf ./chalicelib/core/metrics/funnels.py
 rm -rf ./chalicelib/core/metrics/dashboards.py
 rm -rf ./chalicelib/core/metrics/heatmaps
-rm -rf ./chalicelib/core/events
 rm -rf ./chalicelib/core/issue_tracking
 rm -rf ./chalicelib/core/integrations_manager.py
-rm -rf ./chalicelib/core/issues
 rm -rf ./chalicelib/core/jobs.py
 rm -rf ./chalicelib/core/log_tools
 find ./chalicelib/core/mcp -maxdepth 1 -name "*.py" ! -name "authorizers.py" -delete
@@ -79,8 +77,6 @@ rm -rf ./routers/subs/health.py
 rm -rf ./chalicelib/core/spot.py
 rm -rf ./chalicelib/utils/ch_client.py
 rm -rf ./chalicelib/utils/ch_client_exp.py
-rm -rf ./chalicelib/core/alerts/__init__.py
-rm -rf ./chalicelib/core/alerts/alerts.py
 rm -rf ./chalicelib/core/errors
 rm -rf ./chalicelib/core/notes.py
 rm -rf ./chalicelib/utils/contextual_validators.py

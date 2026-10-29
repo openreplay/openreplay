@@ -35,7 +35,6 @@ async def lifespan(app: FastAPI):
 
     await pg_client.init()
     await ch_client.init()
-    app.schedule.start()
 
     database = {
         "host": config("pg_host", default="localhost"),
