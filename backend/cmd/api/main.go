@@ -10,6 +10,7 @@ import (
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
 	"openreplay/backend/pkg/health"
+	"openreplay/backend/pkg/license"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/metrics"
 	assistMetrics "openreplay/backend/pkg/metrics/assist"
@@ -27,6 +28,7 @@ func main() {
 	ctx := context.Background()
 	log := logger.New()
 	cfg := sessionConfig.New(log)
+	license.CheckLicense()
 
 	h := health.New()
 
