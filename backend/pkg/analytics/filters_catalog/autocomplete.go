@@ -51,7 +51,7 @@ func (s *filtersCatalogImpl) SearchEventsAutocomplete(ctx context.Context, proje
 		return rows, nil
 	}
 
-	constraints := []string{"project_id = ?"}
+	constraints := []string{"project_id = ?", "value != 'SCROLL'"}
 	args := []any{projectID}
 	if q != "" {
 		constraints = append(constraints, "value ILIKE ?")

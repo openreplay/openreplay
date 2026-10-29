@@ -492,6 +492,7 @@ func (u *usersImpl) GetUserActivity(ctx context.Context, projID uint32, userID s
 		"e.created_at >= @startDate",
 		"e.created_at <= @endDate",
 		`e."$event_name" != 'TAG_TRIGGER'`,
+		`NOT (e."$event_name" = 'SCROLL' AND e."$auto_captured")`,
 	}
 
 	if len(req.HideEvents) > 0 {
