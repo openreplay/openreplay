@@ -37,6 +37,8 @@ export default class NetworkMessage {
   duration = 0
   getData: { [key: string]: string } = {}
   requestData: string | null = null
+  /** set by the proxy when it added the session token header to the request itself */
+  sessionTokenSent = false
 
   constructor(
     private readonly ignoredHeaders: boolean | string[] = [],
@@ -47,7 +49,7 @@ export default class NetworkMessage {
   getMessage(): INetworkMessage | null {
     const { reqHs, resHs } = this.writeHeaders()
     const reqBody = this.method === 'GET'
-                    ? JSON.stringify(sanitizeObject(this.getData)) : filterBody(this.requestData)
+                    ? JSON.stringify(sanitizeObject(this.getData)) : filterBody(this.requestData, true)
     const request = {
       headers: filterHeaders(reqHs),
       body: reqBody,
@@ -94,9 +96,11 @@ export default class NetworkMessage {
       if (this.isHeaderIgnored(key)) return
       reqHs[key] = value
     })
-    this.setSessionTokenHeader((name, value) => {
-      reqHs[name] = value
-    })
+    if (this.sessionTokenSent) {
+      this.setSessionTokenHeader((name, value) => {
+        if (!this.isHeaderIgnored(name)) reqHs[name] = value
+      })
+    }
     const resHs: Record<string, string> = {}
     Object.entries(this.header).forEach(([key, value]) => {
       if (this.isHeaderIgnored(key)) return
