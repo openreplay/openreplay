@@ -125,6 +125,66 @@ describe('APIClient URL Replacer Logic', () => {
       path: '/2/notifications',
       expectedUrl: 'https://example.com/v2/api/2/notifications',
     },
+    {
+      description: 'Projects list',
+      edp: 'https://example.com/api',
+      path: '/projects',
+      expectedUrl: 'https://example.com/v2/api/projects',
+    },
+    {
+      description: 'SaaS: project gdpr',
+      edp: 'https://api.openreplay.com',
+      path: '/5/gdpr',
+      expectedUrl: 'https://api.openreplay.com/v2/5/gdpr',
+    },
+    {
+      description: 'Metadata with implicit site ID',
+      edp: 'https://example.com/api',
+      path: '/metadata',
+      expectedUrl: 'https://example.com/v2/api/2/metadata',
+    },
+    {
+      description: 'Metadata rename with explicit project ID',
+      edp: 'https://example.com/api',
+      path: '/5/metadata/1',
+      expectedUrl: 'https://example.com/v2/api/5/metadata/1',
+    },
+    {
+      description: 'Account scope',
+      edp: 'https://example.com/api',
+      path: '/account/scope',
+      expectedUrl: 'https://example.com/v2/api/account/scope',
+    },
+    {
+      description: 'Account password stays on chalice',
+      edp: 'https://example.com/api',
+      path: '/account/password',
+      expectedUrl: 'https://example.com/api/account/password',
+    },
+    {
+      description: 'User modules',
+      edp: 'https://example.com/api',
+      path: '/users/modules',
+      expectedUrl: 'https://example.com/v2/api/users/modules',
+    },
+    {
+      description: 'SaaS: team member ownership',
+      edp: 'https://api.openreplay.com',
+      path: '/client/members/3/owner',
+      expectedUrl: 'https://api.openreplay.com/v2/client/members/3/owner',
+    },
+    {
+      description: 'Assist credentials without site ID',
+      edp: 'https://example.com/api',
+      path: '/assist/credentials',
+      expectedUrl: 'https://example.com/v2/api/assist/credentials',
+    },
+    {
+      description: 'Audit trail actions',
+      edp: 'https://example.com/api',
+      path: '/trails/actions',
+      expectedUrl: 'https://example.com/v2/api/trails/actions',
+    },
   ];
 
   describe.each(testCases)('URL Construction', (testCase) => {
@@ -138,5 +198,16 @@ describe('APIClient URL Replacer Logic', () => {
         expect.any(Object)
       );
     });
+  });
+
+  test('SaaS: account deletion stays on chalice', async () => {
+    ENV.API_EDP = 'https://api.openreplay.com';
+
+    await client.fetch('/client/members', undefined, 'DELETE');
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.openreplay.com/client/members',
+      expect.any(Object)
+    );
   });
 });
