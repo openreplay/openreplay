@@ -225,6 +225,34 @@ test.describe('heatmap card', () => {
       .toEqual({ grew: true, canvasFits: true, iframeFits: true });
   });
 
+  test('a 100vh section does not keep growing the page', async ({
+    page,
+    baseURL,
+  }) => {
+    await setup(page, baseURL!);
+    await page.goto(`/${PROJECT_ID}/metrics/10`);
+    await waitForOverlay(page);
+    const iframe = page.locator('#clickmap-render .m-cmap__window iframe');
+    const height = () =>
+      iframe.evaluate((f: HTMLIFrameElement) => parseFloat(f.style.height));
+    const before = await height();
+
+    // a full-screen hero with more page after it, as landing pages have
+    await iframe.evaluate((f: HTMLIFrameElement) => {
+      const doc = f.contentDocument!;
+      const hero = doc.createElement('div');
+      hero.style.height = '100vh';
+      const rest = doc.createElement('div');
+      rest.style.height = '2000px';
+      doc.body.append(hero, rest);
+    });
+
+    await expect.poll(height).toBeGreaterThan(before + 2000);
+    const fitted = await height();
+    await page.waitForTimeout(500);
+    expect(await height()).toBe(fitted);
+  });
+
   test('clicking a cluster drills down into sessions with clicks there', async ({
     page,
     baseURL,
@@ -271,8 +299,24 @@ test.describe('heatmap card', () => {
     baseURL,
   }) => {
     const { api, chartRequests } = await setup(page, baseURL!);
+    // the rage-click points are held until the test lets them through
+    let release!: () => void;
+    const held = new Promise<void>((r) => (release = r));
+    api.on('POST', /\/cards\/try$/, async (_req: any, body: any) => {
+      chartRequests.push(body);
+      if (body?.metricType !== 'heatmaps_session')
+        return { data: heatmapSession };
+      if (body.includeClickRage) await held;
+      return { data: points() };
+    });
     await page.goto(`/${PROJECT_ID}/metrics/10`);
     await waitForOverlay(page);
+    // a change to the frozen page that leaves its height alone
+    await page
+      .locator('#clickmap-render .m-cmap__window iframe')
+      .evaluate((f: HTMLIFrameElement) => {
+        f.contentDocument!.body.dataset.e2eMoment = 'next';
+      });
 
     const rage = page.getByRole('button', { name: 'Include rage clicks' });
     await expect(rage).toHaveAttribute('aria-pressed', 'false');
@@ -285,9 +329,26 @@ test.describe('heatmap card', () => {
         ),
       )
       .toBe(true);
+    // the old heatmap stays under a loader while the new clicks load
+    const veil = page.locator('[aria-busy="true"] > .m-chart-refetch__veil');
+    await expect(veil).toBeVisible();
+    await expect(page.locator(OVERLAY)).toBeVisible();
+    release();
+    await expect(veil).toHaveCount(0);
     await expect(page.locator(OVERLAY)).toBeVisible();
     // the same session comes back, so the mounted replay is reused
     expect(api.mobRequests).toEqual(['dom1.mobs', 'dom2.mobe']);
+    // and the minimap copies the page again for the new moment
+    await expect
+      .poll(() =>
+        page
+          .locator('.m-cmap__mini-frame')
+          .evaluate(
+            (f: HTMLIFrameElement) =>
+              f.contentDocument!.body?.dataset.e2eMoment ?? null,
+          ),
+      )
+      .toBe('next');
   });
 
   test('"Get a new image" asks for another session', async ({
@@ -409,7 +470,8 @@ test.describe('heatmap card', () => {
     });
     expect((await copy()).height).toBeGreaterThan(6000);
 
-    const mini = page.getByRole('scrollbar', { name: /Page overview/ });
+    const mini = page.locator('.m-cmap__mini-page');
+    await expect(mini).toHaveAttribute('title', /Page overview/);
     const box = (await mini.boundingBox())!;
     await page.mouse.move(box.x + box.width / 2, box.y + 4);
     await page.mouse.down();

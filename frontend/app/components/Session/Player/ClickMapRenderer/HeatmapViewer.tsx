@@ -37,6 +37,7 @@ function HeatmapViewer({ reach }: { reach: ScrollReach | null }) {
           className="m-cmap__window"
           data-openreplay-obscured
           tabIndex={0}
+          role="region"
           aria-label={t('The page')}
         />
       </div>

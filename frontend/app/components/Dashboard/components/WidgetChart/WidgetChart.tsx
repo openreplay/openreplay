@@ -874,6 +874,7 @@ function WidgetChart(props: Props) {
   // the same session, so its replay doesn't have to download again
   const keepHeatmap =
     _metric.metricType === HEATMAP && !!_metric.data?.sessionId;
+  const refetching = loading && keepHeatmap;
 
   return (
     <div ref={ref}>
@@ -883,7 +884,10 @@ function WidgetChart(props: Props) {
           onSample={showSampling ? () => void loadSample() : undefined}
         />
       ) : (
-        <div>
+        <div
+          className={refetching ? 'm-chart-refetch' : undefined}
+          aria-busy={refetching || undefined}
+        >
           <Suspense fallback={<Loader loading style={{ height: '240px' }} />}>
             {nothingInWindow(_metric, data) ? (
               <NoDataInWindow inGrid={!props.isPreview} />
@@ -901,6 +905,15 @@ function WidgetChart(props: Props) {
               />
             ) : null}
           </Suspense>
+          {refetching ? (
+            <div className="m-chart-refetch__veil">
+              <ChartLoading
+                height={0}
+                slow={stale}
+                onSample={showSampling ? () => void loadSample() : undefined}
+              />
+            </div>
+          ) : null}
         </div>
       )}
     </div>

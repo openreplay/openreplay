@@ -748,6 +748,23 @@
   overflow: clip;
   background: var(--m-surface-sunken);
 }
+/* a heatmap refetching keeps its replay mounted; the loader sits over it.
+   Isolating the chart keeps its own overlays (z-50) under the veil. */
+.m-chart-refetch {
+  position: relative;
+}
+.m-chart-refetch > :not(.m-chart-refetch__veil) {
+  isolation: isolate;
+}
+.m-chart-refetch__veil {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--m-surface-default) 60%, transparent);
+}
 .m-cmap__window {
   position: relative;
   height: min(34rem, 62vh);
@@ -809,9 +826,10 @@
    brings lines and labels back to their own size. The page under it is the
    recorded site, light in either theme (m-scheme-light), so it multiplies. */
 .m-cmap__layer {
+  /* no z-index: a stacking context here would isolate the reach tint's
+     multiply from the page; coming after the replay already paints it on top */
   position: absolute;
   inset: 0;
-  z-index: 2;
   pointer-events: none;
 }
 .m-cmap__reach {

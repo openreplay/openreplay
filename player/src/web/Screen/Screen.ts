@@ -267,7 +267,10 @@ export default class Screen {
       case ScaleMode.AdjustParentHeight:
         // full document height so the clickmap scrolls; documentElement is what
         // the tracker normalizes clicks against (body misses its margins and
-        // anything positioned outside it)
+        // anything positioned outside it). Measured at the recorded viewport
+        // height: 100vh is the iframe's height, so measuring a fitted page
+        // would grow a 100vh section by the rest of the page on every fit
+        this.iframe.style.height = `${height}px`;
         const docHeight = this.document?.documentElement.scrollHeight ?? 0;
         this.scaleRatio = offsetWidth / width;
         translate = 'translate(-50%, 0)';

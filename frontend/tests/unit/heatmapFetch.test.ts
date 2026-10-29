@@ -89,18 +89,26 @@ describe('heatmap card data', () => {
 
   it('keeps the session when the clicks request fails', async () => {
     const error = jest.spyOn(console, 'error').mockImplementation(() => {});
-    getMetricChartData.mockImplementation((_m, params: any) =>
-      params.metricType === HEATMAP_CLICKS
-        ? Promise.reject(new Error('boom'))
-        : Promise.resolve(session),
-    );
-    fetchSessionInfo.mockResolvedValue({ domURL: ['dom.mobs'] });
+    try {
+      getMetricChartData.mockImplementation((_m, params: any) =>
+        params.metricType === HEATMAP_CLICKS
+          ? Promise.reject(new Error('boom'))
+          : Promise.resolve(session),
+      );
+      fetchSessionInfo.mockResolvedValue({ domURL: ['dom.mobs'] });
 
-    const metric = heatmapWidget();
-    await new DashboardStore().fetchMetricChartData(metric, {}, false, period);
-    expect(metric.data.sessionId).toBe('42');
-    expect(metric.data.points).toEqual([]);
-    error.mockRestore();
+      const metric = heatmapWidget();
+      await new DashboardStore().fetchMetricChartData(
+        metric,
+        {},
+        false,
+        period,
+      );
+      expect(metric.data.sessionId).toBe('42');
+      expect(metric.data.points).toEqual([]);
+    } finally {
+      error.mockRestore();
+    }
   });
 
   it('refetches clicks on every load even when the same session comes back', async () => {

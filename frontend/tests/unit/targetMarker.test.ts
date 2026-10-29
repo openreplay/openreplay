@@ -210,4 +210,27 @@ describe('Screen in clickmap mode', () => {
     expect(iframe.style.height).toBe('800px');
     parent.remove();
   });
+
+  test('a 100vh section does not grow the page on every fit', () => {
+    const screen = new Screen(false, ScaleMode.AdjustParentHeight);
+    const parent = document.createElement('div');
+    document.body.appendChild(parent);
+    screen.attach(parent);
+    const iframe = parent.querySelector('iframe') as HTMLIFrameElement;
+    // a 100vh hero (as tall as the iframe) above 3000px of content
+    Object.defineProperty(screen.document!.documentElement, 'scrollHeight', {
+      configurable: true,
+      get: () => (parseFloat(iframe.style.height) || 800) + 3000,
+    });
+    Object.defineProperty(parent, 'offsetWidth', {
+      configurable: true,
+      get: () => 640,
+    });
+
+    screen.scale({ width: 1280, height: 800 });
+    expect(iframe.style.height).toBe('3800px');
+    screen.scale({ width: 1280, height: 800 });
+    expect(iframe.style.height).toBe('3800px');
+    parent.remove();
+  });
 });

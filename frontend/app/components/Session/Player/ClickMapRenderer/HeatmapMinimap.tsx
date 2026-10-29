@@ -10,6 +10,8 @@ export interface HeatmapPage {
   document: Document;
   /** The click layer as drawn over the page, or null on a scroll map. */
   clicks: HTMLCanvasElement | null;
+  /** Bumped by the player each time it freezes a new moment of the page. */
+  frame: number;
 }
 
 interface Props {
@@ -73,6 +75,7 @@ export function HeatmapMinimap({ windowRef, page, fit, reach }: Props) {
 
   const doc = page?.document;
   const clicks = page?.clicks ?? null;
+  const frame = page?.frame;
 
   const measure = React.useCallback(() => {
     const win = windowRef.current;
@@ -113,13 +116,13 @@ export function HeatmapMinimap({ windowRef, page, fit, reach }: Props) {
     };
   }, [measure]);
 
-  // the paused page only changes as late assets land, which the copy loads
-  // itself; a new height is the one thing worth copying again for
+  // a frozen moment only changes as late assets land, which the copy loads
+  // itself; a new height or a new moment is worth copying again for
   const docHeight = box?.docHeight;
   React.useEffect(() => {
     const target = frameRef.current?.contentDocument;
     if (doc && target && docHeight) copyPage(doc, target);
-  }, [doc, docHeight]);
+  }, [doc, docHeight, frame]);
 
   React.useEffect(() => {
     const canvas = canvasRef.current;
@@ -160,12 +163,9 @@ export function HeatmapMinimap({ windowRef, page, fit, reach }: Props) {
           style={{ width: box.width, height: box.height }}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
-          role="scrollbar"
-          aria-label={t('Page overview: drag to move through the page')}
-          aria-orientation="vertical"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={Math.round(view.top * 100)}
+          // pointer only; the window itself scrolls from the keyboard
+          title={t('Page overview: drag to move through the page')}
+          aria-hidden
         >
           <iframe
             ref={frameRef}

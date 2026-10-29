@@ -29,6 +29,7 @@ export default class WebPlayer extends Player {
   private targetMarker: TargetMarker;
   private unwatchPage?: () => void;
   private onPageFit?: () => void;
+  private pageFrame = 0;
   private scaleFrame = 0;
   private readonly globalJumpToTime = (time: number, silent?: boolean) =>
     this.jump(time, silent);
@@ -279,6 +280,8 @@ export default class WebPlayer extends Player {
       element: this.screen.screenElement,
       scale: this.screen.getScale(),
       clicks: this.targetMarker.canvas,
+      // a jump to another moment keeps the same document
+      frame: this.pageFrame,
     };
   }
 
@@ -286,6 +289,7 @@ export default class WebPlayer extends Player {
     this.screen?.overlay?.remove?.(); // hack. TODO: 1.split Screen functionalities (overlay, mounter) 2. separate ClickMapPlayer class that does not create overlay
     return this.freeze().then(() => {
       if (!this.screen) return;
+      this.pageFrame++;
       this.unwatchPage?.();
       // sized only once the frozen frame and its stylesheets are in place
       const fit = () => {

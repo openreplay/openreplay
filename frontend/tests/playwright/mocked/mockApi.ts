@@ -135,7 +135,8 @@ export async function mockApi(page: Page, baseURL: string): Promise<MockApi> {
     } catch {
       body = undefined;
     }
-    return route.fulfill({ json: rule.handler(req, body) });
+    // a handler may return a promise to hold its response
+    return route.fulfill({ json: await rule.handler(req, body) });
   });
 
   return api;
