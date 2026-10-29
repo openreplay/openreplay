@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "es2022",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    "strictNullChecks": true,
+    "noImplicitAny": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "types": [],
+    "paths": {
+      "@tracker/*": ["../tracker/src/*"]
+    }
+  },
+  "include": ["src/**/*.ts"],
+  // the replay bundle type-checks with the player, not here
+  "exclude": ["src/replay"]
+}

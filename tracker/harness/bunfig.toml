@@ -1,0 +1,3 @@
+[install]
+# Supply-chain cooldown: only resolve versions published at least 7 days ago.
+minimumReleaseAge = 604800
