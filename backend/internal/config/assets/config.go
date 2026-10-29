@@ -35,6 +35,7 @@ type Config struct {
 	AssetsWorkerCount    int               `env:"ASSETS_WORKER_COUNT,default=64"`
 	AssetsHTTPTimeout    int               `env:"ASSETS_HTTP_TIMEOUT,default=6"` // seconds
 	AssetsQueueSize      int               `env:"ASSETS_QUEUE_SIZE,default=128"`
+	AssetsDenyHosts      string            `env:"ASSETS_DENY_HOSTS"` // comma-separated; "x.com", ".x.com" or "*.x.com"
 	InsecureSkipVerify   bool              `env:"INSECURE_SKIP_VERIFY,default=true"`
 	ProducerCloseTimeout int               `env:"PRODUCER_CLOSE_TIMEOUT,default=15000"`
 	UseProfiler          bool              `env:"PROFILER_ENABLED,default=false"`

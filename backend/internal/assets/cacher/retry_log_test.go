@@ -4,25 +4,60 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"strings"
+	"sync"
 	"testing"
+	"time"
 
 	config "openreplay/backend/internal/config/assets"
 	"openreplay/backend/pkg/metrics/assets"
 	"openreplay/backend/pkg/objectstorage"
 )
 
-type recLog struct{ debug []string }
+// recLog records debug lines and, separately, every warn/error line; safe for worker goroutines.
+type recLog struct {
+	mu     sync.Mutex
+	debug  []string
+	issues []string
+}
 
 func (l *recLog) Debug(_ context.Context, m string, a ...interface{}) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
 	l.debug = append(l.debug, fmt.Sprintf(m, a...))
 }
-func (l *recLog) Info(context.Context, string, ...interface{})  {}
-func (l *recLog) Warn(context.Context, string, ...interface{})  {}
-func (l *recLog) Error(context.Context, string, ...interface{}) {}
-func (l *recLog) Fatal(context.Context, string, ...interface{}) {}
+func (l *recLog) issue(m string, a ...interface{}) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.issues = append(l.issues, fmt.Sprintf(m, a...))
+}
+func (l *recLog) Info(context.Context, string, ...interface{})        {}
+func (l *recLog) Warn(_ context.Context, m string, a ...interface{})  { l.issue(m, a...) }
+func (l *recLog) Error(_ context.Context, m string, a ...interface{}) { l.issue(m, a...) }
+func (l *recLog) Fatal(context.Context, string, ...interface{})       {}
+
+// waitIssue polls until a warn/error line containing want appears.
+func (l *recLog) waitIssue(want string, d time.Duration) bool {
+	for end := time.Now().Add(d); time.Now().Before(end); time.Sleep(10 * time.Millisecond) {
+		l.mu.Lock()
+		for _, s := range l.issues {
+			if strings.Contains(s, want) {
+				l.mu.Unlock()
+				return true
+			}
+		}
+		l.mu.Unlock()
+	}
+	return false
+}
 
 type nopStore struct{ objectstorage.ObjectStorage }
+
+func (nopStore) GetCreationTime(string) *time.Time { return nil }
+func (nopStore) Upload(io.Reader, string, string, string, objectstorage.CompressionType) error {
+	return nil
+}
 
 // Non-final failures are retried silently at Info level; with DEBUG=true each attempt must be visible.
 func TestRetryLogsEachAttemptAtDebug(t *testing.T) {

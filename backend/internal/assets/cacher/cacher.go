@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	stderrors "errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -32,6 +33,7 @@ const hostDeferDelay = 250 * time.Millisecond
 
 type cacher struct {
 	log            logger.Logger
+	denyHosts      []string                    // ASSETS_DENY_HOSTS: never fetched or resolved
 	timeoutMap     *timeoutMap                 // Concurrency implemented
 	objStorage     objectstorage.ObjectStorage // AWS Docs: "These clients are safe to use concurrently."
 	httpClient     *http.Client                // Docs: "Clients are safe for concurrent use by multiple goroutines."
@@ -95,12 +97,23 @@ func NewCacher(log logger.Logger, cfg *config.Config, store objectstorage.Object
 
 	}
 
+	denyHosts := assets.ParseHostList(cfg.AssetsDenyHosts)
 	c := &cacher{
+		denyHosts:  denyHosts,
 		log:        log,
 		timeoutMap: newTimeoutMap(),
 		objStorage: store,
 		httpClient: &http.Client{
 			Timeout: time.Duration(cfg.AssetsHTTPTimeout) * time.Second,
+			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				if isDenied(req.URL.Hostname(), denyHosts) {
+					return errDeniedHost
+				}
+				if len(via) >= 10 { // net/http default
+					return errors.New("stopped after 10 redirects")
+				}
+				return nil
+			},
 			Transport: &http.Transport{
 				Proxy:           http.ProxyFromEnvironment,
 				TLSClientConfig: tlsConfig,
@@ -140,6 +153,12 @@ func (c *cacher) CacheFile(task *Task) {
 func (c *cacher) cacheURL(t *Task) {
 	ctx := context.WithValue(context.Background(), "sessionID", t.sessionID)
 
+	// Denied hosts are never contacted, not even resolved.
+	if isDenied(t.host, c.denyHosts) {
+		c.permanent(ctx, t, "denied_host", errDeniedHost)
+		return
+	}
+
 	// Per-host throttle: this is NOT a retry — the attempt counter is untouched.
 	if !c.hosts.tryAcquire(t.host) {
 		c.scheduleThrottle(ctx, t)
@@ -158,6 +177,10 @@ func (c *cacher) cacheURL(t *Task) {
 		req.Header.Set(k, v)
 	}
 	res, err := c.httpClient.Do(req)
+	if errors.Is(err, errDeniedHost) {
+		c.permanent(ctx, t, "denied_host", err)
+		return
+	}
 	if err != nil {
 		c.retry(ctx, t, 0, "network", err)
 		return
@@ -326,6 +349,17 @@ func parseRetryAfter(h string) (time.Duration, bool) {
 		return 0, true
 	}
 	return 0, false
+}
+
+var errDeniedHost = stderrors.New("host is in ASSETS_DENY_HOSTS")
+
+func isDenied(host string, deny []string) bool {
+	for _, p := range deny {
+		if assets.MatchesHost(host, p) {
+			return true
+		}
+	}
+	return false
 }
 
 func hostOf(rawURL string) string {
