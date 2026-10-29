@@ -87,6 +87,36 @@ describe('heatmap card data', () => {
     expect(metric.data.startedAt).toBe(1700000000321);
   });
 
+  it("sends a saved card's definition with its clicks request", async () => {
+    getMetricChartData.mockImplementation((_m, params: any) =>
+      Promise.resolve(params.metricType === HEATMAP_CLICKS ? [] : session),
+    );
+    fetchSessionInfo.mockResolvedValue({ domURL: ['dom.mobs'] });
+    const metric = heatmapWidget();
+    metric.metricOf = HEATMAP_SCROLL_MAP;
+    metric.includeClickRage = true;
+
+    // a dashboard passes only paging: the saved card is loaded server side
+    await new DashboardStore().fetchMetricChartData(
+      metric,
+      { density: 20 },
+      true,
+      period,
+    );
+    const clicks = getMetricChartData.mock.calls.find(
+      (c: any[]) => c[1].metricType === HEATMAP_CLICKS,
+    )![1];
+    expect(clicks).toMatchObject({
+      metricOf: HEATMAP_SCROLL_MAP,
+      metricFormat: metric.metricFormat,
+      viewType: metric.viewType,
+      includeClickRage: true,
+      startTimestamp: 1,
+      endTimestamp: 2,
+    });
+    expect(Array.isArray(clicks.series)).toBe(true);
+  });
+
   it('keeps the session when the clicks request fails', async () => {
     const error = jest.spyOn(console, 'error').mockImplementation(() => {});
     try {

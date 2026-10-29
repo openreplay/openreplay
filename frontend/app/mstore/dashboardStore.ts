@@ -609,12 +609,13 @@ export default class DashboardStore {
 
       try {
         const isHeatmap = metric.metricType === HEATMAP && !isComparison;
-        // clicks don't depend on the picked session, so they load alongside it
+        // clicks don't depend on the picked session, so they load alongside it;
+        // a saved card's params carry no definition, /cards/try needs it
         const points = isHeatmap
           ? metricService
               .getMetricChartData(
                 metric,
-                { ...params, metricType: HEATMAP_CLICKS },
+                { ...metric.toJson(), ...params, metricType: HEATMAP_CLICKS },
                 false,
                 abortSignal,
               )
