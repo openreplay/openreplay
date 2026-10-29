@@ -3,7 +3,6 @@ package sessions
 import (
 	"fmt"
 
-	"github.com/jackc/pgtype"
 	"github.com/lib/pq"
 
 	"openreplay/backend/pkg/db/postgres/pool"
@@ -67,7 +66,7 @@ func (s *storageImpl) Add(sess *Session) error {
 func (s *storageImpl) Get(sessionID uint64) (*Session, error) {
 	sess := &Session{SessionID: sessionID}
 	var revID, userOSVersion, userBrowser, userBrowserVersion, userState, userCity *string
-	var issueTypes pgtype.EnumArray
+	var issueTypes []string
 	if err := s.db.QueryRow(`
 		SELECT platform,
 			duration, project_id, start_ts, timezone,
@@ -109,7 +108,7 @@ func (s *storageImpl) Get(sessionID uint64) (*Session, error) {
 	if revID != nil {
 		sess.RevID = *revID
 	}
-	issueTypes.AssignTo(&sess.IssueTypes)
+	sess.IssueTypes = issueTypes
 	if userState != nil {
 		sess.UserState = *userState
 	}

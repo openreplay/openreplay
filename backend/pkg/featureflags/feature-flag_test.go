@@ -10,18 +10,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jackc/pgtype"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func TestNumArrayToIntSlice(t *testing.T) {
 	// Test case 1: Valid array
-	arr1 := &pgtype.EnumArray{
-		Elements: []pgtype.GenericText{
+	arr1 := &pgtype.Array[pgtype.Text]{
+		Elements: []pgtype.Text{
 			{String: "10"},
 			{String: "20"},
 			{String: "30"},
 		},
-		Dimensions: []pgtype.ArrayDimension{{Length: 3}},
+		Dims: []pgtype.ArrayDimension{{Length: 3}},
 	}
 	expected1 := []int{10, 20, 30}
 
@@ -31,9 +31,9 @@ func TestNumArrayToIntSlice(t *testing.T) {
 	}
 
 	// Test case 2: Empty array
-	arr2 := &pgtype.EnumArray{
-		Elements:   []pgtype.GenericText{},
-		Dimensions: []pgtype.ArrayDimension{{Length: 0}},
+	arr2 := &pgtype.Array[pgtype.Text]{
+		Elements: []pgtype.Text{},
+		Dims:     []pgtype.ArrayDimension{{Length: 0}},
 	}
 	expected2 := []int{}
 
@@ -43,14 +43,14 @@ func TestNumArrayToIntSlice(t *testing.T) {
 	}
 
 	// Test case 3: Invalid number
-	arr3 := &pgtype.EnumArray{
-		Elements: []pgtype.GenericText{
+	arr3 := &pgtype.Array[pgtype.Text]{
+		Elements: []pgtype.Text{
 			{String: "10"},
 			{String: "20"},
 			{String: "invalid"},
 			{String: "30"},
 		},
-		Dimensions: []pgtype.ArrayDimension{{Length: 4}},
+		Dims: []pgtype.ArrayDimension{{Length: 4}},
 	}
 	expected3 := []int{10, 20, 0, 30}
 
@@ -76,19 +76,19 @@ func TestNumArrayToIntSlice(t *testing.T) {
 
 func TestParseFlagConditions(t *testing.T) {
 	// Test case 1: Valid conditions
-	conditions1 := &pgtype.TextArray{
+	conditions1 := &pgtype.Array[pgtype.Text]{
 		Elements: []pgtype.Text{
 			{String: `[{"type": "userCountry", "operator": "is", "source": "source1", "value": ["value1"]}]`},
 			{String: `[{"type": "userCity", "operator": "contains", "source": "source2", "value": ["value2", "value3"]}]`},
 		},
-		Dimensions: []pgtype.ArrayDimension{{Length: 2}},
+		Dims: []pgtype.ArrayDimension{{Length: 2}},
 	}
-	rolloutPercentages1 := &pgtype.EnumArray{
-		Elements: []pgtype.GenericText{
+	rolloutPercentages1 := &pgtype.Array[pgtype.Text]{
+		Elements: []pgtype.Text{
 			{String: "50"},
 			{String: "30"},
 		},
-		Dimensions: []pgtype.ArrayDimension{{Length: 2}},
+		Dims: []pgtype.ArrayDimension{{Length: 2}},
 	}
 	expected1 := []*FeatureFlagCondition{
 		{
@@ -124,13 +124,13 @@ func TestParseFlagConditions(t *testing.T) {
 	}
 
 	// Test case 2: Empty conditions array
-	conditions2 := &pgtype.TextArray{
-		Elements:   []pgtype.Text{},
-		Dimensions: []pgtype.ArrayDimension{{Length: 0}},
+	conditions2 := &pgtype.Array[pgtype.Text]{
+		Elements: []pgtype.Text{},
+		Dims:     []pgtype.ArrayDimension{{Length: 0}},
 	}
-	rolloutPercentages2 := &pgtype.EnumArray{
-		Elements:   []pgtype.GenericText{},
-		Dimensions: []pgtype.ArrayDimension{{Length: 0}},
+	rolloutPercentages2 := &pgtype.Array[pgtype.Text]{
+		Elements: []pgtype.Text{},
+		Dims:     []pgtype.ArrayDimension{{Length: 0}},
 	}
 	expected2 := []*FeatureFlagCondition{}
 
@@ -143,18 +143,18 @@ func TestParseFlagConditions(t *testing.T) {
 	}
 
 	// Test case 3: Mismatched number of elements
-	conditions3 := &pgtype.TextArray{
+	conditions3 := &pgtype.Array[pgtype.Text]{
 		Elements: []pgtype.Text{
 			{String: `[{"type": "userCountry", "operator": "is", "source": "source1", "value": ["value1"]}]`},
 			{String: `[{"type": "userCity", "operator": "contains", "source": "source2", "value": ["value2", "value3"]}]`},
 		},
-		Dimensions: []pgtype.ArrayDimension{{Length: 2}},
+		Dims: []pgtype.ArrayDimension{{Length: 2}},
 	}
-	rolloutPercentages3 := &pgtype.EnumArray{
-		Elements: []pgtype.GenericText{
+	rolloutPercentages3 := &pgtype.Array[pgtype.Text]{
+		Elements: []pgtype.Text{
 			{String: "50"},
 		},
-		Dimensions: []pgtype.ArrayDimension{{Length: 1}},
+		Dims: []pgtype.ArrayDimension{{Length: 1}},
 	}
 	expectedErrorMsg := "error: len(conditions.Elements) != len(percents)"
 	if _, err3 := parseFlagConditions(conditions3, rolloutPercentages3); err3 == nil || err3.Error() != expectedErrorMsg {
@@ -164,29 +164,29 @@ func TestParseFlagConditions(t *testing.T) {
 
 func TestParseFlagVariants(t *testing.T) {
 	// Test case 1: Valid variants
-	values1 := &pgtype.TextArray{
+	values1 := &pgtype.Array[pgtype.Text]{
 		Elements: []pgtype.Text{
 			{String: "variant1"},
 			{String: "variant2"},
 			{String: "variant3"},
 		},
-		Dimensions: []pgtype.ArrayDimension{{Length: 3}},
+		Dims: []pgtype.ArrayDimension{{Length: 3}},
 	}
-	payloads1 := &pgtype.TextArray{
+	payloads1 := &pgtype.Array[pgtype.Text]{
 		Elements: []pgtype.Text{
 			{String: "payload1"},
 			{String: "payload2"},
 			{String: "payload3"},
 		},
-		Dimensions: []pgtype.ArrayDimension{{Length: 3}},
+		Dims: []pgtype.ArrayDimension{{Length: 3}},
 	}
-	variantRollout1 := &pgtype.EnumArray{
-		Elements: []pgtype.GenericText{
+	variantRollout1 := &pgtype.Array[pgtype.Text]{
+		Elements: []pgtype.Text{
 			{String: "50"},
 			{String: "30"},
 			{String: "20"},
 		},
-		Dimensions: []pgtype.ArrayDimension{{Length: 3}},
+		Dims: []pgtype.ArrayDimension{{Length: 3}},
 	}
 	expected1 := []*FeatureFlagVariant{
 		{Value: "variant1", Payload: "payload1", RolloutPercentage: 50},
@@ -203,17 +203,17 @@ func TestParseFlagVariants(t *testing.T) {
 	}
 
 	// Test case 2: Empty values array
-	values2 := &pgtype.TextArray{
-		Elements:   []pgtype.Text{},
-		Dimensions: []pgtype.ArrayDimension{{Length: 0}},
+	values2 := &pgtype.Array[pgtype.Text]{
+		Elements: []pgtype.Text{},
+		Dims:     []pgtype.ArrayDimension{{Length: 0}},
 	}
-	payloads2 := &pgtype.TextArray{
-		Elements:   []pgtype.Text{},
-		Dimensions: []pgtype.ArrayDimension{{Length: 0}},
+	payloads2 := &pgtype.Array[pgtype.Text]{
+		Elements: []pgtype.Text{},
+		Dims:     []pgtype.ArrayDimension{{Length: 0}},
 	}
-	variantRollout2 := &pgtype.EnumArray{
-		Elements:   []pgtype.GenericText{},
-		Dimensions: []pgtype.ArrayDimension{{Length: 0}},
+	variantRollout2 := &pgtype.Array[pgtype.Text]{
+		Elements: []pgtype.Text{},
+		Dims:     []pgtype.ArrayDimension{{Length: 0}},
 	}
 	expected2 := []*FeatureFlagVariant{}
 
@@ -226,27 +226,27 @@ func TestParseFlagVariants(t *testing.T) {
 	}
 
 	// Test case 3: Mismatched number of elements
-	values3 := &pgtype.TextArray{
+	values3 := &pgtype.Array[pgtype.Text]{
 		Elements: []pgtype.Text{
 			{String: "variant1"},
 			{String: "variant2"},
 		},
-		Dimensions: []pgtype.ArrayDimension{{Length: 2}},
+		Dims: []pgtype.ArrayDimension{{Length: 2}},
 	}
-	payloads3 := &pgtype.TextArray{
+	payloads3 := &pgtype.Array[pgtype.Text]{
 		Elements: []pgtype.Text{
 			{String: "payload1"},
 			{String: "payload2"},
 			{String: "payload3"},
 		},
-		Dimensions: []pgtype.ArrayDimension{{Length: 3}},
+		Dims: []pgtype.ArrayDimension{{Length: 3}},
 	}
-	variantRollout3 := &pgtype.EnumArray{
-		Elements: []pgtype.GenericText{
+	variantRollout3 := &pgtype.Array[pgtype.Text]{
+		Elements: []pgtype.Text{
 			{String: "50"},
 			{String: "30"},
 		},
-		Dimensions: []pgtype.ArrayDimension{{Length: 2}},
+		Dims: []pgtype.ArrayDimension{{Length: 2}},
 	}
 
 	result3, err3 := parseFlagVariants(values3, payloads3, variantRollout3)
@@ -267,11 +267,11 @@ func TestParseFeatureFlag(t *testing.T) {
 		FlagType:           "single",
 		IsPersist:          true,
 		Payload:            nil,
-		RolloutPercentages: pgtype.EnumArray{},
-		Filters:            pgtype.TextArray{},
-		Values:             pgtype.TextArray{},
-		Payloads:           pgtype.TextArray{},
-		VariantRollout:     pgtype.EnumArray{},
+		RolloutPercentages: pgtype.Array[pgtype.Text]{},
+		Filters:            pgtype.Array[pgtype.Text]{},
+		Values:             pgtype.Array[pgtype.Text]{},
+		Payloads:           pgtype.Array[pgtype.Text]{},
+		VariantRollout:     pgtype.Array[pgtype.Text]{},
 	}
 	expectedFlag1 := &FeatureFlag{
 		FlagID:     1,
@@ -298,32 +298,32 @@ func TestParseFeatureFlag(t *testing.T) {
 		FlagType:  "multi",
 		IsPersist: false,
 		Payload:   nil,
-		RolloutPercentages: pgtype.EnumArray{
-			Elements: []pgtype.GenericText{
+		RolloutPercentages: pgtype.Array[pgtype.Text]{
+			Elements: []pgtype.Text{
 				{String: "70"},
 				{String: "90"},
 			},
 		},
-		Filters: pgtype.TextArray{
+		Filters: pgtype.Array[pgtype.Text]{
 			Elements: []pgtype.Text{
 				{String: `[{"type":"userCountry","operator":"is","source":"","value":["US"]},{"type":"userCity","operator":"startsWith","source":"cookie","value":["New York"]},{"type":"referrer","operator":"contains","source":"header","value":["google.com"]},{"type":"metadata","operator":"is","source":"","value":["some_value"]}]`},
 				{String: `[{"type":"userCountry","operator":"is","source":"","value":["CA"]}]`},
 			},
 		},
-		Values: pgtype.TextArray{
+		Values: pgtype.Array[pgtype.Text]{
 			Elements: []pgtype.Text{
 				{String: "value1"},
 				{String: "value2"},
 			},
 		},
-		Payloads: pgtype.TextArray{
+		Payloads: pgtype.Array[pgtype.Text]{
 			Elements: []pgtype.Text{
 				{String: "payload1"},
 				{String: "payload2"},
 			},
 		},
-		VariantRollout: pgtype.EnumArray{
-			Elements: []pgtype.GenericText{
+		VariantRollout: pgtype.Array[pgtype.Text]{
+			Elements: []pgtype.Text{
 				{String: "50"},
 				{String: "50"},
 			},

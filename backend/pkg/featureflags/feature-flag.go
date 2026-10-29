@@ -10,7 +10,7 @@ import (
 
 	"openreplay/backend/pkg/db/postgres/pool"
 
-	"github.com/jackc/pgtype"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type FeatureFlagsRequest struct {
@@ -99,11 +99,11 @@ type FeatureFlagPG struct {
 	FlagType           string
 	IsPersist          bool
 	Payload            *string
-	RolloutPercentages pgtype.EnumArray
-	Filters            pgtype.TextArray
-	Values             pgtype.TextArray
-	Payloads           pgtype.TextArray
-	VariantRollout     pgtype.EnumArray
+	RolloutPercentages pgtype.Array[pgtype.Text]
+	Filters            pgtype.Array[pgtype.Text]
+	Values             pgtype.Array[pgtype.Text]
+	Payloads           pgtype.Array[pgtype.Text]
+	VariantRollout     pgtype.Array[pgtype.Text]
 }
 
 type flagInfo struct {
@@ -113,7 +113,7 @@ type flagInfo struct {
 	Payload   string      `json:"payload"`
 }
 
-func numArrayToIntSlice(arr *pgtype.EnumArray) []int {
+func numArrayToIntSlice(arr *pgtype.Array[pgtype.Text]) []int {
 	slice := make([]int, 0, len(arr.Elements))
 	for i := range arr.Elements {
 		num, err := strconv.Atoi(arr.Elements[i].String)
@@ -126,7 +126,7 @@ func numArrayToIntSlice(arr *pgtype.EnumArray) []int {
 	return slice
 }
 
-func parseFlagConditions(conditions *pgtype.TextArray, rolloutPercentages *pgtype.EnumArray) ([]*FeatureFlagCondition, error) {
+func parseFlagConditions(conditions *pgtype.Array[pgtype.Text], rolloutPercentages *pgtype.Array[pgtype.Text]) ([]*FeatureFlagCondition, error) {
 	percents := numArrayToIntSlice(rolloutPercentages)
 	if len(conditions.Elements) != len(percents) {
 		return nil, fmt.Errorf("error: len(conditions.Elements) != len(percents)")
@@ -150,7 +150,7 @@ func parseFlagConditions(conditions *pgtype.TextArray, rolloutPercentages *pgtyp
 	return conds, nil
 }
 
-func parseFlagVariants(values *pgtype.TextArray, payloads *pgtype.TextArray, variantRollout *pgtype.EnumArray) ([]*FeatureFlagVariant, error) {
+func parseFlagVariants(values *pgtype.Array[pgtype.Text], payloads *pgtype.Array[pgtype.Text], variantRollout *pgtype.Array[pgtype.Text]) ([]*FeatureFlagVariant, error) {
 	percents := numArrayToIntSlice(variantRollout)
 	variants := make([]*FeatureFlagVariant, 0, len(values.Elements))
 	if len(values.Elements) != len(payloads.Elements) || len(values.Elements) != len(percents) {
@@ -364,10 +364,10 @@ func ComputeFeatureFlags(flags []*FeatureFlag, sessInfo *FeatureFlagsRequest) ([
 
 func (f *featureFlagsImpl) GetFeatureFlags(projectID uint32) ([]*FeatureFlag, error) {
 	rows, err := f.db.Query(`
-		SELECT ff.flag_id, ff.flag_key, ff.flag_type, ff.is_persist, ff.payload, ff.rollout_percentages, ff.filters,
-       		ARRAY_AGG(fv.value) as values,
-       		ARRAY_AGG(fv.payload) as payloads,
-       		ARRAY_AGG(fv.rollout_percentage) AS variants_percentages
+		SELECT ff.flag_id, ff.flag_key, ff.flag_type, ff.is_persist, ff.payload, ff.rollout_percentages::text[], ff.filters::text[],
+       		ARRAY_AGG(fv.value)::text[] as values,
+       		ARRAY_AGG(fv.payload)::text[] as payloads,
+       		ARRAY_AGG(fv.rollout_percentage)::text[] AS variants_percentages
 		FROM (
 			SELECT ff.feature_flag_id AS flag_id, ff.flag_key AS flag_key, ff.flag_type, ff.is_persist, ff.payload,
 				ARRAY_AGG(fc.rollout_percentage) AS rollout_percentages,
