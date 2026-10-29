@@ -14,12 +14,15 @@ import {
   genStringBody,
   getStringResponseByType,
 } from "./utils";
+import { proxiedRequests } from "./proxied";
 
 export class XHRProxyHandler<T extends XMLHttpRequest>
   implements ProxyHandler<T>
 {
   public XMLReq: XMLHttpRequest;
   public item: NetworkMessage;
+  private sent = false;
+  private reported = false;
 
   constructor(
     XMLReq: XMLHttpRequest,
@@ -44,12 +47,18 @@ export class XHRProxyHandler<T extends XMLHttpRequest>
     this.XMLReq.ontimeout = () => {
       this.onTimeout();
     };
-    this.item = new NetworkMessage(
-      ignoredHeaders,
-      setSessionTokenHeader,
-      sanitize,
-    );
-    this.item.requestType = "xhr";
+    // once per request, after load / error / abort / timeout
+    this.XMLReq.addEventListener("loadend", () => {
+      // not DONE: re-opened from an earlier handler, open() reported this request
+      if (this.XMLReq.readyState === RequestState.DONE) this.report();
+    });
+    this.item = this.newItem();
+  }
+
+  private newItem() {
+    const item = new NetworkMessage(this.ignoredHeaders, this.setSessionTokenHeader, this.sanitize);
+    item.requestType = "xhr";
+    return item;
   }
 
   public get(target: T, key: string) {
@@ -63,7 +72,13 @@ export class XHRProxyHandler<T extends XMLHttpRequest>
               return;
             }
           }
-          if (target.readyState === 1) target.setRequestHeader(name, value);
+          // already set by the app or the axios hook: a second call would join the values
+          const lower = name.toLowerCase();
+          if (Object.keys(this.item.requestHeader).some((k) => k.toLowerCase() === lower)) return;
+          if (target.readyState === 1) {
+            target.setRequestHeader(name, value);
+            this.item.sessionTokenSent = true;
+          }
         });
         return this.getSend(target);
       case "setRequestHeader":
@@ -100,45 +115,39 @@ export class XHRProxyHandler<T extends XMLHttpRequest>
     this.item.endTime = performance.now();
     this.item.duration = this.item.endTime - this.item.startTime;
     this.updateItemByReadyState();
+  }
 
-    const rt = this.item.responseType || "";
-    if (rt === "" || rt === "text" || rt === "json") {
-      setTimeout(() => {
-        this.item.response = getStringResponseByType(rt, this.XMLReq.response);
-      }, 0);
-    }
-
-    if (this.XMLReq.readyState === RequestState.DONE) {
-      const msg = this.item.getMessage();
-      if (msg) {
-        this.sendMessage(msg);
-      }
+  private report() {
+    if (this.reported) return;
+    this.reported = true;
+    if (this.item.url && this.isServiceUrl(this.item.url)) return;
+    const msg = this.item.getMessage();
+    if (msg) {
+      this.sendMessage(msg);
     }
   }
 
   public onAbort() {
     this.item.cancelState = 1;
     this.item.statusText = "Abort";
-
-    const msg = this.item.getMessage();
-    if (msg) {
-      this.sendMessage(msg);
-    }
   }
 
   public onTimeout() {
     this.item.cancelState = 3;
     this.item.statusText = "Timeout";
-
-    const msg = this.item.getMessage();
-    if (msg) {
-      this.sendMessage(msg);
-    }
   }
 
   protected getOpen(target: T) {
     const targetFunction = Reflect.get(target, "open");
     return (...args: any[]) => {
+      // open() drops a request in flight without events
+      if (this.sent && !this.reported) {
+        if (this.XMLReq.readyState !== RequestState.DONE) this.onAbort();
+        this.report();
+      }
+      this.item = this.newItem();
+      this.sent = false;
+      this.reported = false;
       const method = args[0];
       const url = args[1];
       this.item.method = method ? method.toUpperCase() : "GET";
@@ -155,6 +164,7 @@ export class XHRProxyHandler<T extends XMLHttpRequest>
     return (...args: any[]) => {
       const data: XMLHttpRequestBodyInit = args[0];
       this.item.requestData = genStringBody(data);
+      this.sent = true;
       return targetFunction.apply(target, args);
     };
   }
@@ -266,7 +276,7 @@ export class XHRProxyHandler<T extends XMLHttpRequest>
         const resp = this.XMLReq.response as any;
         const respType = this.XMLReq.responseType || "";
         if (respType === "" || respType === "text" || respType === "json") {
-          this.item.response = resp;
+          this.item.response = getStringResponseByType(respType, resp);
         }
 
         if (resp) {
@@ -300,11 +310,13 @@ export default class XHRProxy {
     sendMessage: (data: INetworkMessage) => void,
     isServiceUrl: (url: string) => boolean,
     tokenUrlMatcher?: (url: string) => boolean,
+    // the context's own constructor: wrapping this module's global breaks iframes
+    target: typeof XMLHttpRequest = XMLHttpRequest,
   ) {
-    return new Proxy(XMLHttpRequest, {
+    return new Proxy(target, {
       construct(original: any) {
         const XMLReq = new original();
-        return new Proxy(
+        const proxy = new Proxy(
           XMLReq,
           new XHRProxyHandler(
             XMLReq as XMLHttpRequest,
@@ -316,6 +328,8 @@ export default class XHRProxy {
             tokenUrlMatcher,
           ),
         );
+        proxiedRequests.add(proxy);
+        return proxy;
       },
     });
   }

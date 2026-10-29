@@ -8,7 +8,7 @@ export const sensitiveParams = new Set([
   "jwt",
   "api_key",
   "api-key",
-  "apiKey",
+  "apikey",
   "secret",
   "ssn",
   "zip",
@@ -64,7 +64,8 @@ export function filterHeaders(headers: Record<string, string> | { name: string; 
   return filteredHeaders;
 }
 
-export function filterBody(body: any): string {
+/** `formMasked`: request bodies come from genStringBody, already masked and joined with ',' */
+export function filterBody(body: any, formMasked = false): string {
   if (!body) {
     return body;
   }
@@ -82,27 +83,33 @@ export function filterBody(body: any): string {
   if (isJSON) {
     obscureSensitiveData(parsedBody);
     return JSON.stringify(parsedBody);
+  } else if (!formMasked && typeof body === "string" && body.includes("=")) {
+    return obscureFormFields(body);
   } else {
-    const isUrlSearch = typeof body === "string" && body.includes("?") && body.includes("=");
-    if (isUrlSearch) {
-      try {
-        const params = new URLSearchParams(body);
-        for (const key of params.keys()) {
-          if (sensitiveParams.has(key.toLowerCase())) {
-            const value = obscure(params.get(key))
-            params.set(key, value);
-          }
-        }
-        return params.toString();
-      } catch (e) {
-        // not url query ?
-        return body;
-      }
-    } else {
-      // not json or url query
-      return body;
-    }
+    return body;
   }
+}
+
+function isSensitiveKey(key: string) {
+  try {
+    key = decodeURIComponent(key);
+  } catch (e) {
+    // malformed escape, check the raw key
+  }
+  return sensitiveParams.has(key.toLowerCase());
+}
+
+export function obscureParam(key: string, value: string) {
+  return isSensitiveKey(key) ? obscure(value) : value;
+}
+
+// key=value pairs of a url-encoded body or query, rewritten in place to keep the original text
+const formField = /(^|[?&])([^=&?\s]+)=([^&]*)/g;
+
+export function obscureFormFields(body: string) {
+  return body.replace(formField, (field, sep, key, value) =>
+    isSensitiveKey(key) ? `${sep}${key}=${obscure(value)}` : field,
+  );
 }
 
 export function sanitizeObject(obj: Record<string, any>) {

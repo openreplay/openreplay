@@ -74,7 +74,21 @@ describe('NetworkMessage', () => {
       expect(result).toBeDefined();
       expect(result.reqHs).toEqual({ 'Content-Type': 'application/json' });
       expect(result.resHs).toEqual({ 'Content-Type': 'application/json' });
-      expect(setSessionTokenHeader).toHaveBeenCalledTimes(1);
+      expect(setSessionTokenHeader).not.toHaveBeenCalled();
+    });
+
+    it('adds the session token header only when the proxy sent it, unless headers are ignored', () => {
+      const token = (cb: (n: string, v: string) => void) => cb('X-OpenReplay-SessionToken', 't');
+      // @ts-ignore
+      const networkMessage = new NetworkMessage(ignoredHeaders, token, sanitize);
+      expect(networkMessage.writeHeaders().reqHs).toEqual({});
+      networkMessage.sessionTokenSent = true;
+      expect(networkMessage.writeHeaders().reqHs).toEqual({ 'X-OpenReplay-SessionToken': 't' });
+
+      // @ts-ignore
+      const ignoringAll = new NetworkMessage(true, token, sanitize);
+      ignoringAll.sessionTokenSent = true;
+      expect(ignoringAll.writeHeaders().reqHs).toEqual({});
     });
   });
 

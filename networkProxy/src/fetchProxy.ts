@@ -7,55 +7,55 @@
  * */
 import NetworkMessage from "./networkMessage";
 import { INetworkMessage, RequestResponseData } from "./types";
-import {
-  formatByteSize,
-  genStringBody,
-  getStringResponseByType,
-  getURL,
-} from "./utils";
+import { formatByteSize, genStringBody, getURL } from "./utils";
+import { proxiedRequests } from "./proxied";
 
-export class ResponseProxyHandler<T extends Response> implements ProxyHandler<T> {
-  public resp: Response;
-  public item: NetworkMessage;
+// Requests may come from another realm, so no instanceof
+const isRequest = (x: unknown): x is Request =>
+  !!x && typeof x === "object" && typeof (x as Request).url === "string" && typeof (x as Request).clone === "function";
+const TEXTUAL = /json|text\/|xml|javascript|urlencoded|graphql/i;
+// end only when the app stops reading: a copy being read would keep the connection open
+const STREAMING = /event-stream|ndjson|jsonl|json-seq|stream\+json|x-mixed-replace/i;
+// a larger body would not fit in a batch anyway
+const BODY_LIMIT = 1_000_000;
 
-  constructor(resp: T, item: NetworkMessage) {
-    this.resp = resp;
-    this.item = item;
+// what fetch reads from init, getters included (a Request or class instance passed as init)
+const INIT_KEYS = ["body", "cache", "credentials", "duplex", "integrity", "keepalive", "method", "mode",
+  "priority", "redirect", "referrer", "referrerPolicy", "signal", "window"];
+
+/** init as fetch would read it; own extra members (e.g. Next.js `next`) are kept */
+function copyInit(init: RequestInit): RequestInit & Record<string, any> {
+  const copy: Record<string, any> = { ...init };
+  for (const key of INIT_KEYS) {
+    if (!(key in copy) && key in init) copy[key] = (init as any)[key];
   }
+  return copy;
+}
 
-  public set(target: T, key: string, value: (args: any[]) => any) {
-    return Reflect.set(target, key, value);
-  }
+interface Body {
+  text: string;
+  size: number;
+}
 
-  public get(target: T, key: string) {
-    const value = Reflect.get(target, key);
-
-    if (key === "arrayBuffer" || key === "blob") {
-      return typeof value === "function" ? value.bind(target) : value;
-    }
-
-    switch (key) {
-      case "formData":
-      case "json":
-      case "text":
-        return () => {
-          this.item.responseType = <any>key.toLowerCase();
-          // @ts-ignore
-          return value.apply(target).then((resp: any) => {
-            this.item.response = getStringResponseByType(
-              this.item.responseType,
-              resp,
-            );
-            return resp;
-          });
-        };
-    }
-    if (typeof value === "function") {
-      return value.bind(target);
-    } else {
-      return value;
-    }
-  }
+/** Reads a body copy as text; past the limit, lets go of the copy and resolves null. */
+function readCapped(body: ReadableStream<Uint8Array> | null): Promise<Body | null> {
+  if (!body) return Promise.resolve({ text: "", size: 0 });
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
+  let text = "";
+  let size = 0;
+  const pump = (): Promise<Body | null> =>
+    reader.read().then(({ done, value }) => {
+      if (done) return { text: text + decoder.decode(), size };
+      size += value.byteLength;
+      if (size > BODY_LIMIT) {
+        reader.cancel().catch(() => {});
+        return null;
+      }
+      text += decoder.decode(value, { stream: true });
+      return pump();
+    });
+  return pump();
 }
 
 export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T> {
@@ -70,6 +70,7 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
     private readonly sendMessage: (item: INetworkMessage) => void,
     private readonly isServiceUrl: (url: string) => boolean,
     private readonly tokenUrlMatcher?: (url: string) => boolean,
+    private readonly context: typeof globalThis = window,
   ) {}
 
   public apply(
@@ -79,21 +80,24 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
   ) {
     const input = argsList[0];
     const init = argsList[1];
+    if (isRequest(input)) proxiedRequests.add(input);
+    // URL objects may come from another realm, so no instanceof
+    const isURLObject = !!input && typeof input === "object" && typeof (input as any).href === "string" && !("url" in input);
     if (
       !input ||
       // @ts-ignore
-      (typeof input !== "string" && !input?.url)
+      (typeof input !== "string" && !isURLObject && !input?.url)
     ) {
-      return <ReturnType<T>>target.apply(window, argsList);
+      return <ReturnType<T>>target.apply(this.context, argsList);
     }
 
     const isORUrl =
-      input instanceof URL || typeof input === "string"
+      isURLObject || typeof input === "string"
         ? this.isServiceUrl(String(input))
-        : this.isServiceUrl(String(input.url));
+        : this.isServiceUrl(String((input as Request).url));
 
     if (isORUrl) {
-      return target.apply(window, argsList);
+      return target.apply(this.context, argsList);
     }
 
     const item = new NetworkMessage(
@@ -101,10 +105,10 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
       this.setSessionTokenHeader,
       this.sanitize,
     );
-    this.beforeFetch(item, input as RequestInfo, init);
+    const requestBodyRead = this.beforeFetch(item, isURLObject ? String(input) : (input as RequestInfo), init);
 
     const signal =
-      (argsList[0] instanceof Request ? (argsList[0] as Request).signal : undefined) ||
+      (isRequest(argsList[0]) ? argsList[0].signal : undefined) ||
       (argsList[1]?.signal as AbortSignal | undefined);
     // guard to avoid double-send
     let abortedNotified = false;
@@ -133,27 +137,37 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
           return;
         }
       }
-      if (argsList[1] === undefined && argsList[0] instanceof Request) {
-        return argsList[0].headers.append(name, value);
+      // init.headers replaces the Request's headers entirely, so only add it there if it's already set
+      if (argsList[1]?.headers === undefined && isRequest(argsList[0])) {
+        // already set by the app or the axios hook: append would join the values
+        if (!argsList[0].headers.has(name)) {
+          argsList[0].headers.append(name, value);
+          item.sessionTokenSent = true;
+        }
+        return;
       } else {
-        if (!argsList[1]) argsList[1] = {};
-        if (argsList[1].headers === undefined) {
-          argsList[1] = { ...argsList[1], headers: {} };
-        }
-        if (argsList[1].headers instanceof Headers) {
-          argsList[1].headers.append(name, value);
-        } else if (Array.isArray(argsList[1].headers)) {
-          argsList[1].headers.push([name, value]);
+        // copies, not the app's own headers: it may reuse them for a url that must not get the token
+        const init = argsList[1] || {};
+        const headers = new Headers(init.headers);
+        if (headers.has(name)) return;
+        const copy = copyInit(init);
+        // tag check: an iframe's fetch gets that realm's Headers
+        if (Object.prototype.toString.call(init.headers) === "[object Headers]") {
+          headers.append(name, value);
+          copy.headers = headers;
+        } else if (Array.isArray(init.headers)) {
+          copy.headers = [...init.headers, [name, value]];
         } else {
-          // @ts-ignore
-          argsList[1].headers[name] = value;
+          copy.headers = { ...init.headers, [name]: value };
         }
+        argsList[1] = copy;
+        item.sessionTokenSent = true;
       }
     });
-    return (<ReturnType<T>>target.apply(window, argsList))
+    return (<ReturnType<T>>target.apply(this.context, argsList))
       .then(this.afterFetch(item, () => {
         abortedNotified = true;
-      }))
+      }, requestBodyRead))
       .catch((e) => {
         item.endTime = performance.now();
         item.duration = item.endTime - (item.startTime || item.endTime);
@@ -183,12 +197,12 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
     if (typeof input === "string") {
       // when `input` is a string
       method = init?.method || "GET";
-      url = getURL(input);
+      url = getURL(input, this.context.location?.href);
       requestHeader = init?.headers || {};
     } else {
       // when `input` is a `Request` object
       method = input.method || "GET";
-      url = getURL(input.url);
+      url = getURL(input.url, this.context.location?.href);
       requestHeader = input.headers;
     }
 
@@ -205,9 +219,9 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
       item.startTime = performance.now();
     }
 
-    if (Object.prototype.toString.call(requestHeader) === "[object Headers]") {
+    if (Object.prototype.toString.call(requestHeader) === "[object Headers]" || Array.isArray(requestHeader)) {
       item.requestHeader = {};
-      for (const [key, value] of <Headers>requestHeader) {
+      for (const [key, value] of <Headers | [string, string][]>requestHeader) {
         item.requestHeader[key] = value;
       }
     } else {
@@ -225,90 +239,80 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
     // save POST data
     if (init?.body) {
       item.requestData = genStringBody(init.body);
+    } else if (
+      typeof input !== "string" &&
+      method !== "GET" &&
+      method !== "HEAD" &&
+      TEXTUAL.test(input.headers.get("content-type") || "")
+    ) {
+      // the body is inside the Request; read a copy before fetch consumes it
+      try {
+        return readCapped(input.clone().body).then(
+          (body) => {
+            if (body) item.requestData = genStringBody(body.text);
+          },
+          () => {},
+        );
+      } catch {}
     }
   }
 
-  protected afterFetch(item: NetworkMessage, onResolved?: () => void) {
+  protected afterFetch(item: NetworkMessage, onResolved?: () => void, requestBodyRead?: Promise<void>) {
     return (resp: Response) => {
       if (onResolved) onResolved?.();
       item.endTime = performance.now();
       item.duration = item.endTime - (item.startTime || item.endTime);
       item.status = resp.status;
       item.statusText = String(resp.status);
+      item.readyState = 4;
 
-      let isChunked = false;
       item.header = {};
       for (const [key, value] of resp.headers) {
         item.header[key] = value;
-        isChunked =
-          value.toLowerCase().indexOf("chunked") > -1 ? true : isChunked;
       }
 
-      if (isChunked) {
-        // when `transfer-encoding` is chunked, the response is a stream which is under loading,
-        // so the `readyState` should be 3 (Loading),
-        // and the response should NOT be `clone()` which will affect stream reading.
-        item.readyState = 3;
-      } else {
-        // Otherwise, not chunked, the response is not a stream,
-        // so it's completed and can be cloned for `text()` calling.
-        item.readyState = 4;
+      Promise.all([this.handleResponseBody(resp, item), requestBodyRead])
+        .then(([body]) => {
+          item.responseSize = body.size;
+          item.responseSizeText = formatByteSize(body.size);
+          item.response = body.text;
 
-        this.handleResponseBody(resp.clone(), item)
-          .then((responseValue: string | ArrayBuffer) => {
-            item.responseSize =
-              typeof responseValue === "string"
-                ? responseValue.length
-                : responseValue.byteLength;
-            item.responseSizeText = formatByteSize(item.responseSize);
-            item.response = getStringResponseByType(
-              item.responseType,
-              responseValue,
-            );
-
+          const msg = item.getMessage();
+          if (msg) {
+            this.sendMessage(msg);
+          }
+        })
+        .catch((e) => {
+          // other errors (a stream broken mid-body) are the app's to see on its own copy
+          if (e.name === "AbortError") {
+            item.status = 0;
+            item.statusText = "Aborted";
+            item.readyState = 0;
             const msg = item.getMessage();
-            if (msg) {
-              this.sendMessage(msg);
-            }
-          })
-          .catch((e) => {
-            if (e.name === "AbortError") {
-              item.status = 0;
-              item.statusText = "Aborted";
-              item.readyState = 0;
-              const msg = item.getMessage();
-              if (msg) this.sendMessage(msg);
-            } else {
-              throw e;
-            }
-          });
-      }
+            if (msg) this.sendMessage(msg);
+          }
+        });
 
-      const ct = (resp.headers.get("content-type") || "").toLowerCase();
-      const isTextLike =
-        ct.includes("application/json") || ct.startsWith("text/");
-      return isTextLike
-        ? new Proxy(resp, new ResponseProxyHandler(resp, item))
-        : resp;
+      // the real Response: a Proxy fails brand checks (cache.put, structuredClone, instanceof
+      // across realms); the body is already captured from the clone above
+      return resp;
     };
   }
 
-  protected handleResponseBody(resp: Response, item: NetworkMessage) {
-    // parse response body by Content-Type
-    const contentType = resp.headers.get("content-type");
-    if (contentType && contentType.includes("application/json")) {
-      item.responseType = "json";
-      return resp.text();
-    } else if (
-      contentType &&
-      (contentType.includes("text/html") || contentType.includes("text/plain"))
-    ) {
+  protected handleResponseBody(resp: Response, item: NetworkMessage): Promise<Body> {
+    const contentType = resp.headers.get("content-type") || "";
+    const declaredSize = Number(resp.headers.get("content-length")) || 0;
+    if (STREAMING.test(contentType)) {
       item.responseType = "text";
-      return resp.text();
-    } else {
-      item.responseType = "arraybuffer";
-      return resp.arrayBuffer();
+      return Promise.resolve({ text: "", size: 0 });
     }
+    if (contentType && !TEXTUAL.test(contentType)) {
+      // binary bodies are recorded by size only
+      item.responseType = "arraybuffer";
+      return Promise.resolve({ text: "", size: declaredSize });
+    }
+    item.responseType = contentType.includes("json") ? "json" : "text";
+    return readCapped(resp.clone().body).then((body) => body ?? { text: "", size: declaredSize });
   }
 }
 
@@ -320,9 +324,12 @@ export default class FetchProxy {
     sendMessage: (item: INetworkMessage) => void,
     isServiceUrl: (url: string) => boolean,
     tokenUrlMatcher?: (url: string) => boolean,
+    // the context's own fetch and global: wrapping this module's globals breaks iframes
+    target: typeof fetch = fetch,
+    context: typeof globalThis = window,
   ) {
     return new Proxy(
-      fetch,
+      target,
       new FetchProxyHandler(
         ignoredHeaders,
         setSessionTokenHeader,
@@ -330,6 +337,7 @@ export default class FetchProxy {
         sendMessage,
         isServiceUrl,
         tokenUrlMatcher,
+        context,
       ),
     );
   }
