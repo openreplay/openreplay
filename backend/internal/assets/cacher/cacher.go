@@ -6,6 +6,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	stderrors "errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -35,6 +36,7 @@ const hostDeferDelay = 250 * time.Millisecond
 
 type cacher struct {
 	log            logger.Logger
+	denyHosts      []string                    // ASSETS_DENY_HOSTS: never fetched or resolved
 	timeoutMap     *timeoutMap                 // Concurrency implemented
 	objStorage     objectstorage.ObjectStorage // AWS Docs: "These clients are safe to use concurrently."
 	httpClient     *http.Client                // Docs: "Clients are safe for concurrent use by multiple goroutines."
@@ -122,7 +124,9 @@ func NewCacher(log logger.Logger, cfg *config.Config, store objectstorage.Object
 		exempt = proxyAddrs(proxyCfg)
 	}
 
+	denyHosts := assets.ParseHostList(cfg.AssetsDenyHosts)
 	c := &cacher{
+		denyHosts:  denyHosts,
 		log:        log,
 		timeoutMap: newTimeoutMap(),
 		objStorage: store,
@@ -187,6 +191,12 @@ func (c *cacher) CacheFile(task *Task) {
 func (c *cacher) cacheURL(t *Task) {
 	ctx := context.WithValue(context.Background(), "sessionID", t.sessionID)
 
+	// Denied hosts are never contacted, not even resolved.
+	if isDenied(t.host, c.denyHosts) {
+		c.permanent(ctx, t, "denied_host", errDeniedHost)
+		return
+	}
+
 	// Per-host throttle: this is NOT a retry — the attempt counter is untouched.
 	if !c.hosts.tryAcquire(t.host) {
 		c.scheduleThrottle(ctx, t)
@@ -234,6 +244,10 @@ func (c *cacher) cacheURL(t *Task) {
 		return
 	}
 	res, err := c.httpClient.Do(req)
+	if errors.Is(err, errDeniedHost) {
+		c.permanent(ctx, t, "denied_host", err)
+		return
+	}
 	if err != nil {
 		var blocked *blockedAddrError
 		var origin *originNotAllowedError
@@ -530,6 +544,17 @@ func gzipBytes(data []byte) ([]byte, error) {
 		return nil, err
 	}
 	return buf.Bytes(), nil
+}
+
+var errDeniedHost = stderrors.New("host is in ASSETS_DENY_HOSTS")
+
+func isDenied(host string, deny []string) bool {
+	for _, p := range deny {
+		if assets.MatchesHost(host, p) {
+			return true
+		}
+	}
+	return false
 }
 
 func hostOf(rawURL string) string {

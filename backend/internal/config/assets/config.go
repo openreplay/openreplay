@@ -45,6 +45,7 @@ type Config struct {
 	AssetsAllowPrivate   bool              `env:"ASSETS_ALLOW_PRIVATE_NETWORKS,default=false"`
 	AssetsAllowedOrigins string            `env:"ASSETS_ALLOWED_GLOBAL_ORIGINS,default="` // comma-separated scheme://host[:port]; empty = any origin
 	AssetsQueueSize      int               `env:"ASSETS_QUEUE_SIZE,default=128"`
+	AssetsDenyHosts      string            `env:"ASSETS_DENY_HOSTS"` // comma-separated; "x.com", ".x.com" or "*.x.com"
 	InsecureSkipVerify   bool              `env:"INSECURE_SKIP_VERIFY,default=true"`
 	ProducerCloseTimeout int               `env:"PRODUCER_CLOSE_TIMEOUT,default=15000"`
 	UseProfiler          bool              `env:"PROFILER_ENABLED,default=false"`

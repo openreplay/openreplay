@@ -161,6 +161,9 @@ func guardedDialer(allowPrivate bool, exempt map[string]struct{}) dialFunc {
 }
 
 func (c *cacher) checkRedirect(req *http.Request, via []*http.Request) error {
+	if isDenied(req.URL.Hostname(), c.denyHosts) {
+		return errDeniedHost
+	}
 	if len(via) >= 10 {
 		return errors.New("stopped after 10 redirects")
 	}
