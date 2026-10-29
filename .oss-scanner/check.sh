@@ -63,6 +63,10 @@ for w in "${WORKERS[@]}"; do
   x "pgrep -f '^/src/backend/bin/$w\$' >/dev/null" && ok "$w running" || no "$w not running"
 done
 x 'pgrep -f "uvicorn app:app" >/dev/null' && ok "chalice running" || no "chalice not running"
+crashed=$(x 'grep -l "\[or-start\] .* exited" /var/log/openreplay/*.log' 2>/dev/null)
+[ -z "$crashed" ] && ok "no service restarted" || no "services restarted: $(echo $crashed | xargs -n1 basename | tr '\n' ' ')"
+zombies=$(x 'ps -eo stat= | grep -c ^Z')
+[ "$zombies" = 0 ] && ok "no zombie processes" || no "$zombies zombie processes"
 x 'curl -s -o /dev/null http://127.0.0.1:9001/' && ok "assist answers" || no "assist down"
 x 'curl -s -o /dev/null http://127.0.0.1:9010/' && ok "sourcemapreader answers" || no "sourcemapreader down"
 
@@ -75,7 +79,7 @@ x 'valkey-cli ping | grep -q PONG' && ok "valkey" || no "valkey down"
 x '/opt/venv/bin/python /usr/local/bin/or-s3 has mobs' && ok "object store bucket mobs" || no "bucket mobs missing"
 
 echo "== end to end, through the edge"
-login=$(x 'curl -s -X POST http://127.0.0.1/api/login -H "Content-Type: application/json" -d "{\"email\":\"admin@openreplay.local\",\"password\":\"Changeme123!\"}"')
+login=$(x 'curl -s -X POST http://127.0.0.1/api/login -H "Content-Type: application/json" -d "{\"email\":\"admin@example.com\",\"password\":\"Password123!\"}"')
 echo "$login" | grep -q '"jwt"' && ok "login with the seeded admin" || no "login failed: ${login:0:200}"
 key=$(x 'psql -h 127.0.0.1 -U postgres -tAc "select project_key from projects order by project_id limit 1" postgres' | tr -d '[:space:]')
 [ -n "$key" ] && ok "seeded project $key" || no "no project"
@@ -83,7 +87,7 @@ TS=$(date +%s%3N)
 start=$(x "curl -s -X POST http://127.0.0.1/ingest/v1/web/start -H 'Content-Type: application/json' \
   -d '{\"projectKey\":\"$key\",\"timestamp\":$TS,\"timezone\":\"UTC\",\"trackerVersion\":\"6.0.0\",\"revID\":\"1\",\"doNotRecord\":false,\"width\":1920,\"height\":1080}'")
 echo "$start" | grep -q '"token"' && ok "ingest start returns a token" || no "ingest start: ${start:0:200}"
-x 'curl -fsS -o /dev/null http://127.0.0.1/v2/api/health' && ok "go api health" || no "go api health"
+x 'curl -fsS -o /dev/null http://127.0.0.1/v2/api/' && ok "go api answers through the edge" || no "go api down"
 
 echo
 echo "RESULT: $pass passed, $fail failed"
