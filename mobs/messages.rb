@@ -603,4 +603,4 @@ message 127, 'SessionSearch', :tracker => false, :replayer => false  do
   uint 'Partition'
 end
 
-# FREE 2, 25, 37, 38, 39, 59, 62, 67, 80, 82 (all once used by removed messages; none below 128 is unused)
+# FREE 2, 25, 37, 38, 39, 59, 62, 67, 80, 82 (each once used by a removed message; every other id below 128 is taken, 90-111 by iOS)
