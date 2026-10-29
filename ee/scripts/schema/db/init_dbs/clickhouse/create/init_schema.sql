@@ -866,6 +866,7 @@ FROM experimental.sessions
          ('user_state', user_state, TRUE),
          ('user_city', user_city, TRUE),
          ('user_device', user_device, TRUE),
+         ('user_os', user_os, TRUE),
          ('rev_id', rev_id, TRUE),
          ('referrer', referrer, TRUE),
          ('utm_source', utm_source, TRUE),
