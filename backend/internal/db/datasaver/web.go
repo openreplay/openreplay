@@ -49,6 +49,8 @@ func (s *saverImpl) handleWebMessage(session *sessions.Session, msg messages.Mes
 			return err
 		}
 		return s.sessions.UpdateEventsStats(session.SessionID, 1, 0)
+	case *messages.ScrollEvent:
+		return s.ch.InsertWebScrollEvent(session, m)
 	case *messages.PageEvent:
 		if err := s.ch.InsertWebPageEvent(session, m); err != nil {
 			return err
