@@ -7,8 +7,6 @@ from fastapi import Depends, Body, BackgroundTasks
 import schemas
 from chalicelib.core import projects, metadata, reset_password, log_tools, \
     announcements, weekly_report, assist, mobile, tenants, boarding, webhook, users, tags
-from chalicelib.core.alerts import alerts
-from chalicelib.core.metrics import custom_metrics
 from chalicelib.core.collaborations.collaboration_msteams import MSTeams
 from chalicelib.core.collaborations.collaboration_slack import Slack
 from chalicelib.core.issue_tracking import github, integrations_global, integrations_manager, \
