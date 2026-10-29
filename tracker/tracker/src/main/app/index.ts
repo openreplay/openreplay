@@ -33,9 +33,11 @@ import Message, {
   WSChannel,
 } from './messages.gen.js'
 import Nodes from './nodes/index.js'
+import NextNodes from './nodes/next_nodes.js'
 import { MASK_ORDER } from './nodes/idSeq.js'
 import type { Options as ObserverOptions } from './observer/top_observer.js'
 import Observer, { InlineCssMode } from './observer/top_observer.js'
+import NextObserver from './observer/next_observer.js'
 import type { Options as SanitizerOptions } from './sanitizer.js'
 import Sanitizer, { SanitizeLevel, stringWiper } from './sanitizer.js'
 import { defaultUrlSanitizer } from '../modules/viewport.js'
@@ -204,6 +206,13 @@ type AppOptions = {
   nodes?: {
     maintainer: Partial<MaintainerOptions>
   }
+  /**
+   * Experimental DOM core: tracks node liveness structurally instead of with an id map and
+   * a periodic Maintainer, uses a single MutationObserver for all documents and shadow roots.
+   * Same recording format; meant for gradual testing.
+   * @default false
+   * */
+  nextObserver?: boolean
 } & WebworkerOptions &
   SessOptions
 
@@ -373,8 +382,15 @@ export default class App {
       // ids are never reused, so a removed node's level would otherwise stay forever
       onUnregister: (id: number) => this.sanitizer.setLevel(id, SanitizeLevel.Plain),
     }
-    this.nodes = new Nodes(nodesOptions)
-    this.observer = new Observer({ app: this, options })
+    // the next core indexes nodes and listeners through WeakRef; without it, the default core
+    if (this.options.nextObserver && typeof WeakRef === 'function') {
+      // same public surface as Nodes/TopObserver, see next_observer.ts
+      this.nodes = new NextNodes(nodesOptions) as unknown as Nodes
+      this.observer = new NextObserver({ app: this, options }) as unknown as Observer
+    } else {
+      this.nodes = new Nodes(nodesOptions)
+      this.observer = new Observer({ app: this, options })
+    }
     if (IN_BROWSER && !this.options.canvas.disableCanvas) {
       // WebGL canvases are captured on draw; that needs their contexts from creation on
       watchCanvasContexts(window)
