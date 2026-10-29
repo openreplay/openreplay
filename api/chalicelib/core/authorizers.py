@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_supported_audience():
-    return [users.AUDIENCE, spot.AUDIENCE]
+    return [users.AUDIENCE, spot.AUDIENCE, "mcp:OpenReplay"]
 
 
 def is_spot_token(token: str) -> bool:
