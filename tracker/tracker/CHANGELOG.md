@@ -1,4 +1,4 @@
-##
+## 19.0.4
 
 - flush pending messages in forceFlushBatch, add flushInterval (#5082 by [@josh08h](https://github.com/josh08h))
 
