@@ -20,10 +20,18 @@ export function getCanvasDownscale(width: number, height: number): number {
 /** Normalized (percent, 2 decimals) cluster corners: [[x1, y1], [x2, y2]]. */
 export type ClusterCoords = string[][];
 
+/** A heatmap cell: normalized percent coordinates and how many clicks landed there. */
+export interface ClickPoint {
+  normalizedX: number;
+  normalizedY: number;
+  count?: number;
+}
+
 export default class TargetMarker {
   private clickMapOverlay: HTMLCanvasElement | null = null;
   private heatmap: SimpleHeatmap | null = null;
   private onCluster?: (coords: ClusterCoords) => void = undefined;
+  private clicks: ClickPoint[] | null = null;
 
   constructor(private readonly screen: Screen) {}
 
@@ -31,76 +39,92 @@ export default class TargetMarker {
     this.onCluster = onCluster;
   };
 
-  injectTargets(clicks: { normalizedX: number; normalizedY: number }[] | null) {
-    if (clicks && this.screen.document) {
-      this.removeClickMap();
-      const overlay = document.createElement('canvas');
-      const scrollHeight =
-        this.screen.document?.documentElement.scrollHeight || 0;
-      const scrollWidth =
-        this.screen.document?.documentElement.scrollWidth || 0;
+  /** The drawn heat layer, in page pixels (possibly downscaled), for the minimap. */
+  get canvas(): HTMLCanvasElement | null {
+    return this.clickMapOverlay;
+  }
 
-      Object.assign(
-        overlay.style,
-        clickmapStyles.overlayStyle({
-          height: `${scrollHeight}px`,
-          width: `${scrollWidth}px`,
-        }),
-      );
+  /** Clicks to draw on the next redraw(). */
+  setTargets(clicks: ClickPoint[] | null) {
+    this.clicks = clicks;
+  }
 
-      this.clickMapOverlay = overlay;
-      this.screen.addToScreen(overlay);
-      // if we want to inject overlay inside the replay itself:
-      // this.screen.document.body.appendChild(overlay);
+  injectTargets(clicks: ClickPoint[] | null) {
+    this.setTargets(clicks);
+    this.redraw();
+  }
 
-      // Backing store may be smaller than the CSS size; everything below works in backing pixels.
-      const k = getCanvasDownscale(scrollWidth, scrollHeight);
-      overlay.width = Math.max(1, Math.round(scrollWidth * k));
-      overlay.height = Math.max(1, Math.round(scrollHeight * k));
+  /** Draws the current clicks again, sized to the document's current size. */
+  redraw() {
+    this.removeClickMap();
+    if (this.clicks && this.screen.document) this.drawClickMap(this.clicks);
+  }
 
-      const pointMap: Record<string, { times: number; data: number[] }> = {};
-      let maxIntensity = 0;
+  private drawClickMap(clicks: ClickPoint[]) {
+    const overlay = document.createElement('canvas');
+    const scrollHeight =
+      this.screen.document?.documentElement.scrollHeight || 0;
+    const scrollWidth = this.screen.document?.documentElement.scrollWidth || 0;
 
-      clicks.forEach((point) => {
-        const y = roundToSecond(point.normalizedY);
-        const x = roundToSecond(point.normalizedX);
-        const key = `${y}-${x}`;
-        if (pointMap[key]) {
-          pointMap[key].times += 1;
-        } else {
-          pointMap[key] = {
-            times: 1,
-            data: [(x / 100) * overlay.width, (y / 100) * overlay.height],
-          };
-        }
-        maxIntensity = Math.max(maxIntensity, pointMap[key].times);
-      });
+    Object.assign(
+      overlay.style,
+      clickmapStyles.overlayStyle({
+        height: `${scrollHeight}px`,
+        width: `${scrollWidth}px`,
+      }),
+    );
 
-      const heatmapData: number[][] = [];
-      for (const key in pointMap) {
-        const { data, times } = pointMap[key];
-        heatmapData.push([...data, times]);
+    this.clickMapOverlay = overlay;
+    this.screen.addToScreen(overlay);
+    // if we want to inject overlay inside the replay itself:
+    // this.screen.document.body.appendChild(overlay);
+
+    // Backing store may be smaller than the CSS size; everything below works in backing pixels.
+    const k = getCanvasDownscale(scrollWidth, scrollHeight);
+    overlay.width = Math.max(1, Math.round(scrollWidth * k));
+    overlay.height = Math.max(1, Math.round(scrollHeight * k));
+
+    const pointMap: Record<string, { times: number; data: number[] }> = {};
+    let maxIntensity = 0;
+
+    clicks.forEach((point) => {
+      const y = roundToSecond(point.normalizedY);
+      const x = roundToSecond(point.normalizedX);
+      const key = `${y}-${x}`;
+      const clickCount = point.count ?? 1;
+      if (pointMap[key]) {
+        pointMap[key].times += clickCount;
+      } else {
+        pointMap[key] = {
+          times: clickCount,
+          data: [(x / 100) * overlay.width, (y / 100) * overlay.height],
+        };
       }
+      maxIntensity = Math.max(maxIntensity, pointMap[key].times);
+    });
 
-      const setToNormalized = (coords: number[]) => [
-        `${roundToSecond((coords[0] / overlay.width) * 100)}`,
-        `${roundToSecond((coords[1] / overlay.height) * 100)}`,
-      ];
-
-      const onClusterSelect = (coords: number[][]) => {
-        this.onCluster?.(coords.map(setToNormalized));
-      };
-      this.heatmap = new SimpleHeatmap()
-        .setCanvas(overlay)
-        .setData(heatmapData)
-        .setRadius(15 * k, 10 * k)
-        .setMax(maxIntensity)
-        .resize()
-        .draw()
-        .enableInteractions(onClusterSelect);
-    } else {
-      this.removeClickMap();
+    const heatmapData: number[][] = [];
+    for (const key in pointMap) {
+      const { data, times } = pointMap[key];
+      heatmapData.push([...data, times]);
     }
+
+    const setToNormalized = (coords: number[]) => [
+      `${roundToSecond((coords[0] / overlay.width) * 100)}`,
+      `${roundToSecond((coords[1] / overlay.height) * 100)}`,
+    ];
+
+    const onClusterSelect = (coords: number[][]) => {
+      this.onCluster?.(coords.map(setToNormalized));
+    };
+    this.heatmap = new SimpleHeatmap()
+      .setCanvas(overlay)
+      .setData(heatmapData)
+      .setRadius(15 * k, 10 * k)
+      .setMax(maxIntensity)
+      .resize()
+      .draw()
+      .enableInteractions(onClusterSelect);
   }
 
   private removeClickMap() {
@@ -111,6 +135,7 @@ export default class TargetMarker {
   }
 
   destroy() {
+    this.clicks = null;
     this.removeClickMap();
     this.onCluster = undefined;
   }

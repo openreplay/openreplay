@@ -876,6 +876,15 @@ export function ResourceTiming(
   ]
 }
 
+export function ScrollDepth(
+  percent: number,
+): Messages.ScrollDepth {
+  return [
+    Messages.Type.ScrollDepth,
+    percent,
+  ]
+}
+
 export function Incident(
   label: string,
   startTime: number,
@@ -886,6 +895,17 @@ export function Incident(
     label,
     startTime,
     endTime,
+  ]
+}
+
+export function PageHeight(
+  height: number,
+  viewportHeight: number,
+): Messages.PageHeight {
+  return [
+    Messages.Type.PageHeight,
+    height,
+    viewportHeight,
   ]
 }
 

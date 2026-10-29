@@ -1,3 +1,4 @@
+import { HEATMAP_SCROLL_MAP } from '@/constants/card';
 import { EmptyState } from '@/ui/feedback/EmptyState';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
@@ -9,105 +10,123 @@ import { useStore } from 'App/mstore';
 import { hasRuleValue } from 'App/utils/hasRuleValue';
 import NoDataInWindow from 'Components/Dashboard/components/NoDataInWindow';
 
+import { heatmapJumpTime } from './heatmapJumpTime';
+import { type ScrollReach, scrollReach } from './scrollReach';
+
 function ClickMapCard() {
   const { t } = useTranslation();
-  const [customSession, setCustomSession] = React.useState<any>(null);
-  const { metricStore, dashboardStore, sessionStore } = useStore();
-  const { fetchInsights } = sessionStore;
-  const { insights } = sessionStore;
+  const { metricStore } = useStore();
+  const metric = metricStore.instance;
+  const { data } = metric;
+  const { sessionId } = data;
+  const scrollMap = metric.metricOf === HEATMAP_SCROLL_MAP;
 
-  const onMarkerClick = (s: string, innerText: string) => {
-    metricStore.changeClickMapSearch(s, innerText);
-  };
-
-  const { sessionId } = metricStore.instance.data;
-
-  React.useEffect(() => () => setCustomSession(null), []);
-
-  React.useEffect(() => {
-    if (
-      metricStore.instance.data.domURL &&
-      sessionId &&
-      sessionId !== customSession?.sessionId
-    ) {
-      setCustomSession(null);
-      setTimeout(() => {
-        // snapshot: metric.data is mutated in place on every refetch, so keeping
-        // the reference would make the sessionId check above always false
-        setCustomSession({ ...metricStore.instance.data });
-      }, 100);
-    }
-  }, [metricStore.instance, sessionId]);
-
-  React.useEffect(() => {
-    if (!sessionId) return;
-
-    const metric = metricStore.instance;
-    const payload = {
-      ...metric.toJson(),
-      ...dashboardStore.drillDownPeriod.toTimestamps(),
-      metricType: 'heatmaps_session',
-      limit: 200,
-      density: 200,
-    };
-
-    void fetchInsights(metric, payload);
-  }, [
-    sessionId,
-    dashboardStore.drillDownPeriod.start,
-    dashboardStore.drillDownPeriod.end,
-    dashboardStore.drillDownPeriod.rangeValue,
-    metricStore.includeClickRage,
-  ]);
+  // metric.data is mutated in place on every refetch; the player keeps this copy
+  const session = React.useMemo(() => ({ ...data }), [sessionId]);
+  const reach = React.useMemo(() => scrollReach(data.scroll), [data.scroll]);
 
   // a page was asked for and the window holds no recording of it; a group
   // property alone says whose clicks, not where
-  const asked = metricStore.instance.series.some((s: any) =>
+  const asked = metric.series.some((s: any) =>
     (s.filter?.filters ?? []).some((f: any) => f.isEvent && hasRuleValue(f)),
   );
-  if (!metricStore.instance.data.domURL && asked) {
+  if (!data.domURL && asked) {
     return <NoDataInWindow />;
   }
-  if (!metricStore.instance.data.domURL || insights.length === 0) {
-    return (
+  const empty = (
+    <EmptyState
+      mark="heatmap"
+      title={t('Select a page to start seeing the heatmap')}
+      hint={t('Add the page in the definition.')}
+    />
+  );
+  if (!data.domURL) return empty;
+  if (!sessionId) {
+    return <p className="m-funnel__empty">{t('Loading session…')}</p>;
+  }
+  // drawn from the data at hand: after a Click/Scroll switch the previous map
+  // stays until the other one's data arrives
+  const points = reach ? null : data.points?.length ? data.points : null;
+  if (!reach && !points) {
+    return scrollMap ? (
       <EmptyState
         mark="heatmap"
-        title={t('Select a page to start seeing the heatmap')}
-        hint={t('Add the page in the definition.')}
+        title={t('No scroll depth recorded on this page yet')}
+        hint={t(
+          'Scroll maps come from sessions recorded with scroll tracking.',
+        )}
       />
+    ) : (
+      empty
     );
   }
 
-  if (!metricStore.instance.data?.sessionId || !customSession) {
-    return <p className="m-funnel__empty">{t('Loading session…')}</p>;
-  }
-
-  const jumpToEvent = {
-    timestamp:
-      metricStore.instance.data.eventTimestamp ||
-      metricStore.instance.data.startTs,
-    domBuildingTime: metricStore.instance.data.domBuildingTime || 0,
-  };
-  const ts = jumpToEvent.timestamp ?? metricStore.instance.data.startTs;
-  const domTime = jumpToEvent.domBuildingTime ?? 0;
-  // player timeline is zeroed on the session's real start, not on the
-  // second-truncated startTs the heatmap query returns
-  const sessionStart =
-    metricStore.instance.data.startedAt ?? metricStore.instance.data.startTs;
-  const jumpTimestamp = Math.max(0, ts - sessionStart + domTime + 10);
+  const url =
+    data.urlPath ??
+    metric.series[0]?.filter.filters
+      .find((f: any) => f.isEvent)
+      ?.filters?.find((f: any) => f.name === 'url_path')?.value?.[0];
 
   return (
-    <div
-      id="clickmap-render"
-      className="isolate"
-      style={{ transformStyle: 'flat' }}
-    >
+    <div id="clickmap-render" className="m-cmap isolate">
       <ClickMapRenderer
-        session={customSession}
-        jumpTimestamp={jumpTimestamp}
-        onMarkerClick={onMarkerClick}
+        key={sessionId}
+        session={session}
+        jumpTimestamp={heatmapJumpTime(data)}
+        points={points}
+        reach={reach}
       />
+      <HeatmapLegend url={url} points={points} reach={reach} />
     </div>
+  );
+}
+
+function HeatmapLegend({
+  url,
+  points,
+  reach,
+}: {
+  url?: string;
+  points: { count?: number }[] | null;
+  reach: ScrollReach | null;
+}) {
+  const { t } = useTranslation();
+  const clicks = points?.reduce((n, p) => n + (p.count ?? 1), 0) ?? 0;
+  return (
+    <p className="m-cmap__legend">
+      {url && <span className="m-cmap__url m-mono">{url}</span>}
+      {reach ? (
+        <>
+          <span>
+            {t('{{n}} sessions', {
+              count: reach.sessions,
+              n: reach.sessions.toLocaleString(),
+            })}
+          </span>
+          <span>
+            {t('Half reach {{depth}}% of the page', { depth: reach.median })}
+          </span>
+          <span
+            className="m-cmap__scale is-scroll m-scheme-light"
+            aria-hidden="true"
+          >
+            <i /> {t('few reached')} <b /> {t('all reached')}
+          </span>
+        </>
+      ) : (
+        <>
+          <span>
+            {t('{{n}} clicks', {
+              count: clicks,
+              n: clicks.toLocaleString(),
+            })}
+          </span>
+          <span className="m-cmap__scale is-click" aria-hidden="true">
+            <i /> {t('fewer')} <b /> {t('more')}
+          </span>
+        </>
+      )}
+    </p>
   );
 }
 

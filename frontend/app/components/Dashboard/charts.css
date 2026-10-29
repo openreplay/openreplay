@@ -728,6 +728,185 @@
   color: var(--m-content-muted);
   padding: var(--m-space-2) var(--m-space-4);
 }
+/* Heatmap: the replayed page scrolls in a fixed window, the minimap beside it
+   draws the whole page small; a scroll map tints the page by reach. */
+.m-cmap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-space-3);
+  padding: var(--m-space-4) var(--m-space-5);
+}
+.m-cmap__viewer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 4.5rem;
+  gap: var(--m-space-4);
+}
+.m-cmap__stage {
+  position: relative;
+  min-width: 0;
+  border-radius: var(--m-radius-control);
+  overflow: clip;
+  background: var(--m-surface-sunken);
+}
+/* a heatmap refetching keeps its replay mounted; the loader sits over it.
+   Isolating the chart keeps its own overlays (z-50) under the veil. */
+.m-chart-refetch {
+  position: relative;
+}
+.m-chart-refetch > :not(.m-chart-refetch__veil) {
+  isolation: isolate;
+}
+.m-chart-refetch__veil {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--m-surface-default) 60%, transparent);
+}
+.m-cmap__window {
+  position: relative;
+  height: min(34rem, 62vh);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+.m-cmap__window::-webkit-scrollbar {
+  display: none;
+}
+.m-cmap__window:focus-visible {
+  outline: 2px solid var(--m-focus-ring);
+  outline-offset: -2px;
+}
+.m-cmap__mini {
+  align-self: start;
+  display: flex;
+  justify-content: center;
+}
+.m-cmap__mini-page {
+  position: relative;
+  flex: none;
+  border-radius: var(--m-radius-control);
+  overflow: hidden;
+  border: var(--m-border-width) solid var(--m-border-subtle);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.m-cmap__mini-page:active {
+  cursor: grabbing;
+}
+.m-cmap__mini-frame {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border: none;
+  background: white;
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+.m-cmap__mini-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.m-cmap__view {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border: 1.5px solid var(--m-content-accent);
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--m-content-accent) 10%, transparent);
+  pointer-events: none;
+}
+/* In the replay's screen the layer is scaled with the page: --m-screen-k
+   brings lines and labels back to their own size. The page under it is the
+   recorded site, light in either theme (m-scheme-light), so it multiplies. */
+.m-cmap__layer {
+  /* no z-index: a stacking context here would isolate the reach tint's
+     multiply from the page; coming after the replay already paints it on top */
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.m-cmap__reach {
+  position: absolute;
+  inset: 0;
+  opacity: 0.42;
+  mix-blend-mode: multiply;
+}
+.m-cmap__mark {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: calc(1.5px / var(--m-screen-k, 1)) dashed
+    color-mix(in srgb, var(--m-content-primary) 55%, transparent);
+}
+.m-cmap__mark.is-fold {
+  border-top-style: solid;
+  border-top-color: var(--m-content-accent);
+}
+.m-cmap__mark-label {
+  position: absolute;
+  right: calc(var(--m-space-3) / var(--m-screen-k, 1));
+  top: 0;
+  transform-origin: right top;
+  transform: scale(calc(1 / var(--m-screen-k, 1))) translateY(-50%);
+  padding: 1px var(--m-space-3);
+  border-radius: var(--m-radius-full);
+  background: var(--m-surface-raised);
+  border: var(--m-border-width) solid var(--m-border-subtle);
+  font-size: var(--m-text-2xs);
+  color: var(--m-content-secondary);
+  white-space: nowrap;
+}
+.m-cmap__mark.is-fold .m-cmap__mark-label {
+  left: calc(var(--m-space-3) / var(--m-screen-k, 1));
+  right: auto;
+  transform-origin: left top;
+  color: var(--m-content-accent);
+}
+.m-cmap__legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--m-space-2) var(--m-space-4);
+  margin: 0;
+  font-size: var(--m-text-xs);
+  color: var(--m-content-muted);
+}
+.m-cmap__url {
+  color: var(--m-content-secondary);
+}
+.m-cmap__scale {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-2);
+}
+.m-cmap__scale i,
+.m-cmap__scale b {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: var(--m-radius-full);
+}
+.m-cmap__scale.is-scroll i {
+  background: var(--m-chart-heat-low);
+}
+.m-cmap__scale.is-scroll b {
+  background: var(--m-chart-heat-high);
+}
+/* the click layer's own ramp (simpleHeatmap's gradient ends) */
+.m-cmap__scale.is-click i {
+  background: rgb(0 0 255);
+}
+.m-cmap__scale.is-click b {
+  background: rgb(255 0 0);
+}
 .m-cmap__thumb {
   height: 14rem;
   overflow: hidden;

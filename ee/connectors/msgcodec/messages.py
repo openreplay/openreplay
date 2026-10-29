@@ -231,6 +231,17 @@ class PageRenderTiming(Message):
         self.time_to_interactive = time_to_interactive
 
 
+class ScrollEvent(Message):
+    __id__ = 26
+
+    def __init__(self, message_id, timestamp, percent, page_height, viewport_height):
+        self.message_id = message_id
+        self.timestamp = timestamp
+        self.percent = percent
+        self.page_height = page_height
+        self.viewport_height = viewport_height
+
+
 class CustomEvent(Message):
     __id__ = 27
 
@@ -743,6 +754,13 @@ class ResourceTiming(Message):
         self.stalled = stalled
 
 
+class ScrollDepth(Message):
+    __id__ = 86
+
+    def __init__(self, percent):
+        self.percent = percent
+
+
 class Incident(Message):
     __id__ = 87
 
@@ -750,6 +768,14 @@ class Incident(Message):
         self.label = label
         self.start_time = start_time
         self.end_time = end_time
+
+
+class PageHeight(Message):
+    __id__ = 88
+
+    def __init__(self, height, viewport_height):
+        self.height = height
+        self.viewport_height = viewport_height
 
 
 class LongAnimationTask(Message):

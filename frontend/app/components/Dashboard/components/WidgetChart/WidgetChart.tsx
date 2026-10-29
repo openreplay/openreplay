@@ -418,6 +418,7 @@ function WidgetChart(props: Props) {
     _metric.stepsBefore,
     _metric.stepsAfter,
     _metric.breakdowns,
+    _metric.includeClickRage,
     inView,
   ]);
   useEffect(loadPage, [_metric.page]);
@@ -869,15 +870,24 @@ function WidgetChart(props: Props) {
     }
   }, [mergedBreakdownData, metricStore.breakdownLevelTopN]);
 
+  // a loaded heatmap stays mounted while it refetches: the same definition picks
+  // the same session, so its replay doesn't have to download again
+  const keepHeatmap =
+    _metric.metricType === HEATMAP && !!_metric.data?.sessionId;
+  const refetching = loading && keepHeatmap;
+
   return (
     <div ref={ref}>
-      {loading ? (
+      {loading && !keepHeatmap ? (
         <ChartLoading
           slow={stale}
           onSample={showSampling ? () => void loadSample() : undefined}
         />
       ) : (
-        <div>
+        <div
+          className={refetching ? 'm-chart-refetch' : undefined}
+          aria-busy={refetching || undefined}
+        >
           <Suspense fallback={<Loader loading style={{ height: '240px' }} />}>
             {nothingInWindow(_metric, data) ? (
               <NoDataInWindow inGrid={!props.isPreview} />
@@ -895,6 +905,15 @@ function WidgetChart(props: Props) {
               />
             ) : null}
           </Suspense>
+          {refetching ? (
+            <div className="m-chart-refetch__veil">
+              <ChartLoading
+                height={0}
+                slow={stale}
+                onSample={showSampling ? () => void loadSample() : undefined}
+              />
+            </div>
+          ) : null}
         </div>
       )}
     </div>

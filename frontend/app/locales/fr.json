@@ -2919,5 +2919,21 @@
   "A project’s type can’t change. To record another platform, add a new project.": "Le type d’un projet ne peut pas changer. Pour enregistrer une autre plateforme, ajoutez un nouveau projet.",
   "The one value the tracker needs. It is not a secret, it ships in your page.": "La seule valeur dont le tracker a besoin. Ce n’est pas un secret, elle est livrée avec votre page.",
   "How to send the values": "Comment envoyer les valeurs",
-  "Hide how to send the values": "Masquer comment envoyer les valeurs"
+  "Hide how to send the values": "Masquer comment envoyer les valeurs",
+  "No scroll depth recorded on this page yet": "Aucune profondeur de défilement enregistrée sur cette page pour l’instant",
+  "Scroll maps come from sessions recorded with scroll tracking.": "Les cartes de défilement proviennent des sessions enregistrées avec le suivi du défilement.",
+  "Half reach {{depth}}% of the page": "La moitié atteint {{depth}} % de la page",
+  "few reached": "peu l’ont atteint",
+  "all reached": "tous l’ont atteint",
+  "fewer": "moins",
+  "more": "plus",
+  "Click map": "Carte des clics",
+  "Scroll map": "Carte de défilement",
+  "Rage clicks shown": "Clics de rage affichés",
+  "Show rage clicks": "Afficher les clics de rage",
+  "Page overview: drag to move through the page": "Aperçu de la page : faites glisser pour parcourir la page",
+  "The page": "La page",
+  "Fold": "Ligne de flottaison",
+  "{{share}}% reached": "{{share}} % l’ont atteint",
+  "Page overview": "Aperçu de la page"
 }

@@ -2859,5 +2859,21 @@
   "A project’s type can’t change. To record another platform, add a new project.": "A project’s type can’t change. To record another platform, add a new project.",
   "The one value the tracker needs. It is not a secret, it ships in your page.": "The one value the tracker needs. It is not a secret, it ships in your page.",
   "How to send the values": "How to send the values",
-  "Hide how to send the values": "Hide how to send the values"
+  "Hide how to send the values": "Hide how to send the values",
+  "No scroll depth recorded on this page yet": "No scroll depth recorded on this page yet",
+  "Scroll maps come from sessions recorded with scroll tracking.": "Scroll maps come from sessions recorded with scroll tracking.",
+  "Half reach {{depth}}% of the page": "Half reach {{depth}}% of the page",
+  "few reached": "few reached",
+  "all reached": "all reached",
+  "fewer": "fewer",
+  "more": "more",
+  "Click map": "Click map",
+  "Scroll map": "Scroll map",
+  "Rage clicks shown": "Rage clicks shown",
+  "Show rage clicks": "Show rage clicks",
+  "Page overview: drag to move through the page": "Page overview: drag to move through the page",
+  "The page": "The page",
+  "Fold": "Fold",
+  "{{share}}% reached": "{{share}}% reached",
+  "Page overview": "Page overview"
 }

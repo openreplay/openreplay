@@ -2979,5 +2979,21 @@
   "A project’s type can’t change. To record another platform, add a new project.": "Тип проєкту не можна змінити. Щоб записувати іншу платформу, додайте новий проєкт.",
   "The one value the tracker needs. It is not a secret, it ships in your page.": "Єдине значення, потрібне трекеру. Це не секрет, воно потрапляє на вашу сторінку.",
   "How to send the values": "Як надсилати значення",
-  "Hide how to send the values": "Сховати, як надсилати значення"
+  "Hide how to send the values": "Сховати, як надсилати значення",
+  "No scroll depth recorded on this page yet": "На цій сторінці ще немає даних про глибину прокручування",
+  "Scroll maps come from sessions recorded with scroll tracking.": "Карти прокручування будуються за сесіями, записаними з відстеженням прокручування.",
+  "Half reach {{depth}}% of the page": "Половина доходить до {{depth}}% сторінки",
+  "few reached": "дійшли небагато",
+  "all reached": "дійшли всі",
+  "fewer": "менше",
+  "more": "більше",
+  "Click map": "Карта кліків",
+  "Scroll map": "Карта прокручування",
+  "Rage clicks shown": "Повторні кліки показано",
+  "Show rage clicks": "Показати повторні кліки",
+  "Page overview: drag to move through the page": "Огляд сторінки: перетягніть, щоб переміщатися сторінкою",
+  "The page": "Сторінка",
+  "Fold": "Межа першого екрана",
+  "{{share}}% reached": "Дійшли {{share}}%",
+  "Page overview": "Огляд сторінки"
 }

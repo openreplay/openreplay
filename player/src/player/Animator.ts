@@ -233,7 +233,7 @@ export default class Animator {
             res();
           }, 250);
         } else {
-          this.freezeTimeout = setTimeout(attempt, 250);
+          this.freezeTimeout = setTimeout(attempt, 50);
         }
       };
       attempt();

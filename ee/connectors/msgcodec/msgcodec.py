@@ -270,6 +270,15 @@ class MessageCodec(Codec):
                 time_to_interactive=self.read_uint(reader)
             )
 
+        if message_id == 26:
+            return ScrollEvent(
+                message_id=self.read_uint(reader),
+                timestamp=self.read_uint(reader),
+                percent=self.read_uint(reader),
+                page_height=self.read_uint(reader),
+                viewport_height=self.read_uint(reader)
+            )
+
         if message_id == 27:
             return CustomEvent(
                 name=self.read_string(reader),
@@ -680,11 +689,22 @@ class MessageCodec(Codec):
                 stalled=self.read_uint(reader)
             )
 
+        if message_id == 86:
+            return ScrollDepth(
+                percent=self.read_uint(reader)
+            )
+
         if message_id == 87:
             return Incident(
                 label=self.read_string(reader),
                 start_time=self.read_int(reader),
                 end_time=self.read_int(reader)
+            )
+
+        if message_id == 88:
+            return PageHeight(
+                height=self.read_uint(reader),
+                viewport_height=self.read_uint(reader)
             )
 
         if message_id == 89:
