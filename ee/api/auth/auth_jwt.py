@@ -63,12 +63,8 @@ class JWTAuth(HTTPBearer):
                 if not credentials.scheme == "Bearer":
                     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                         detail="Invalid authentication scheme.")
-                logger.debug("Received jwt:")
-                logger.debug(credentials.credentials)
                 jwt_payload = authorizers.jwt_authorizer(scheme=credentials.scheme, token=credentials.credentials)
-                logger.debug(jwt_payload)
                 skip_iat_check = jwt_payload is not None and jwt_payload.get("aud", "") == mcp_authorizers.AUDIENCE
-                logger.debug(skip_iat_check)
                 auth_exists = jwt_payload is not None and users.auth_exists(user_id=jwt_payload.get("userId", -1),
                                                                             tenant_id=jwt_payload.get("tenantId", -1),
                                                                             jwt_iat=jwt_payload.get("iat", 100),

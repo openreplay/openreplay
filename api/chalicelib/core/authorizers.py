@@ -27,16 +27,35 @@ def is_spot_token(token: str) -> bool:
         raise
 
 
+def is_mcp_token(token: str) -> bool:
+    try:
+        if len(token) < 5 or "." not in token:
+            return False
+        decoded_token = jwt.decode(token, options={"verify_signature": False, "verify_exp": False})
+        audience = decoded_token.get("aud")
+        return audience == "mcp:OpenReplay"
+    except jwt.InvalidTokenError:
+        logger.error(f"Invalid token for is_spot_token: {sanitize(token, max_length=16)}...")
+        raise
+
+
 def jwt_authorizer(scheme: str, token: str, leeway=0) -> dict | None:
     if scheme.lower() != "bearer" or len(token) < 5 or "." not in token:
         return None
     if not token or token.count(".") != 2:
         logger.debug("! JWT Malformed token")
         return None
+    key = config("JWT_SECRET")
+    algorithm = config("JWT_ALGORITHM")
+    if is_spot_token(token):
+        key = config("JWT_SPOT_SECRET")
+    elif is_mcp_token(token):
+        key = config("JWT_MCP_SECRET")
+        algorithm = config("JWT_MCP_ALGORITHM")
     try:
         payload = jwt.decode(jwt=token,
-                             key=config("JWT_SECRET") if not is_spot_token(token) else config("JWT_SPOT_SECRET"),
-                             algorithms=config("JWT_ALGORITHM"),
+                             key=key,
+                             algorithms=algorithm,
                              audience=get_supported_audience(),
                              leeway=leeway)
     except jwt.ExpiredSignatureError:
