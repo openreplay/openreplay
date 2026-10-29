@@ -880,16 +880,10 @@
   order: 0;
 }
 
-/* an empty widget is as big as its neighbour: it has no content to end on,
-   so it takes the row's height and centres its quiet state */
-.m-dash__widget:has(.m-nodata, .m-empty--quiet) {
-  align-self: stretch;
-}
-.m-dash__widget:has(.m-nodata, .m-empty--quiet) > :last-child {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+/* an empty widget keeps a chart's floor. Not align-self: stretch: masonry.ts
+   spans a widget by its own height, so a stretched one grows every resize */
+.m-dash__widget .m-empty--quiet {
+  min-height: var(--m-widget-h);
 }
 /* the two empty blocks of a card page are one shape */
 .m-cardp__none.m-empty--quiet {
