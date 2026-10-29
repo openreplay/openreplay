@@ -13,12 +13,13 @@ import {
   adjustTimeOrigin,
   createEventListener,
   deleteEventListener,
+  getTimezone,
   IN_BROWSER,
   now,
   requestIdleCb,
   simpleMerge,
 } from '../utils.js'
-import CanvasRecorder from './canvas.js'
+import CanvasRecorder, { watchCanvasContexts } from './canvas.js'
 import Logger, { ILogLevel, LogLevel } from './logger.js'
 import Message, {
   ConsoleLog,
@@ -185,7 +186,7 @@ type AppOptions = {
     parentDomain?: string
   }
 
-  network?: NetworkOptions
+  network?: Partial<NetworkOptions>
   /**
    * use this flag to force angular detection to be offline
    *
@@ -211,14 +212,13 @@ export type Options = AppOptions & ObserverOptions & SanitizerOptions
 // TODO: use backendHost only
 export const DEFAULT_INGEST_POINT = 'https://api.openreplay.com/ingest'
 
-function getTimezone() {
-  const offset = new Date().getTimezoneOffset() * -1
-  const sign = offset >= 0 ? '+' : '-'
-  const hours = Math.floor(Math.abs(offset) / 60)
-  const minutes = Math.abs(offset) % 60
-  return `UTC${sign}${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
-}
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms))
+const postJSON = (url: string, body: unknown) =>
+  fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
 
 const proto = {
   // ask if there are any tabs alive
@@ -272,7 +272,7 @@ export default class App {
   private readonly stopCallbacks: Array<() => any> = []
   private readonly commitCallbacks: Array<CommitCallback> = []
   public readonly options: Options
-  public readonly networkOptions?: NetworkOptions
+  public readonly networkOptions?: Partial<NetworkOptions>
   private readonly revID: string
   private activityState: ActivityState = ActivityState.NotActive
   private readonly version = 'TRACKER_VERSION' // TODO: version compatability check inside each plugin.
@@ -365,13 +365,21 @@ export default class App {
     this.localStorage = this.options.localStorage ?? window.localStorage
     this.sessionStorage = this.options.sessionStorage ?? window.sessionStorage
     this.sanitizer = new Sanitizer({ app: this, options })
-    this.nodes = new Nodes({
+    const nodesOptions = {
       node_id: this.options.node_id,
       forceNgOff: Boolean(options.forceNgOff),
       maintainer: this.options.nodes?.maintainer,
       onIdSpaceExhausted: this.ignoreThisFrame,
-    })
+      // ids are never reused, so a removed node's level would otherwise stay forever
+      onUnregister: (id: number) => this.sanitizer.setLevel(id, SanitizeLevel.Plain),
+    }
+    this.nodes = new Nodes(nodesOptions)
     this.observer = new Observer({ app: this, options })
+    if (IN_BROWSER && !this.options.canvas.disableCanvas) {
+      // WebGL canvases are captured on draw; that needs their contexts from creation on
+      watchCanvasContexts(window)
+      this.observer.attachContextCallback(watchCanvasContexts)
+    }
     this.ticker = new Ticker(this)
     this.ticker.attach(() => this.commit())
     this.debug = new Logger(this.options.__debug__)
@@ -736,7 +744,7 @@ export default class App {
       this.pageFrames.find((f) => f.contentWindow === event.source) ||
       Array.from(document.querySelectorAll('iframe')).find((f) => f.contentWindow === event.source)
     if (targetFrame) {
-      const nodeId = (targetFrame as any)[this.options.node_id]
+      const nodeId = this.nodes.getID(targetFrame)
       if (nodeId !== undefined) {
         message.id = nodeId
       }
@@ -884,7 +892,8 @@ export default class App {
         this.frameBatchLastSeen.set(data.context, Date.now())
       }
       const msgBatch = data.messages
-      const mappedMessages: Message[] = []
+      // pushed one by one: spreading a large child snapshot into push() overflows the call stack
+      const mappedMessages = this.messages
       msgBatch.forEach((msg: Message) => {
         if (msg[0] === MType.MouseMove) {
           let fixedMessage = msg
@@ -896,8 +905,7 @@ export default class App {
             }
           })
           mappedMessages.push(fixedMessage)
-        }
-        if (msg[0] === MType.MouseClick) {
+        } else if (msg[0] === MType.MouseClick) {
           let fixedMessage = msg
           this.pageFrames.forEach((frame) => {
             if (frame.contentWindow === event.source) {
@@ -924,12 +932,10 @@ export default class App {
             }
           })
           mappedMessages.push(fixedMessage)
-        }
-        if (![MType.UserID, MType.UserAnonymousID, MType.Metadata].includes(msg[0])) {
+        } else if (![MType.UserID, MType.UserAnonymousID, MType.Metadata].includes(msg[0])) {
           mappedMessages.push(msg)
         }
       })
-      this.messages.push(...mappedMessages)
     }
     if (data.line === proto.polling) {
       // Self-heal: a live child that was enrolled before but fell out of trackedFrames
@@ -973,7 +979,7 @@ export default class App {
           const targetFrame = this.pageFrames.find((f) => f.contentWindow === event.source)
             || Array.from(document.querySelectorAll('iframe')).find((f) => f.contentWindow === event.source)
           if (targetFrame) {
-            const nodeId = (targetFrame as any)[this.options.node_id]
+            const nodeId = this.nodes.getID(targetFrame)
             if (nodeId !== undefined) {
               message.id = nodeId
             }
@@ -1103,8 +1109,7 @@ export default class App {
      * */
     let tries = 0
     while (tries < 100) {
-      // @ts-ignore
-      const potentialId = targetFrame[this.options.node_id]
+      const potentialId = this.nodes.getID(targetFrame)
       if (potentialId !== undefined) {
         tries = 100
         return potentialId
@@ -1140,6 +1145,12 @@ export default class App {
         }, 500)
 
         if (this.worker) {
+          // the page may be gone before the next commit task runs
+          try {
+            this.postPendingNow()
+          } catch (e) {
+            this._debug('worker_commit', e)
+          }
           this.worker.postMessage('closing')
         }
       }
@@ -1261,14 +1272,9 @@ export default class App {
 
   private _debug(context: string, e: any) {
     if (this.options.__debug_report_edp !== null) {
-      void fetch(this.options.__debug_report_edp, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          context,
-          // @ts-ignore
-          error: `${e as unknown as string}`,
-        }),
+      void postJSON(this.options.__debug_report_edp, {
+        context,
+        error: `${e as unknown as string}`,
       })
     }
     this.debug.error('OpenReplay error: ', context, e)
@@ -1321,6 +1327,10 @@ export default class App {
     }
 
     if (this.insideIframe) {
+      // liveness is signalled by the 250ms poll; an empty batch would only cost a cross-window message
+      if (!this.messages.length) {
+        return
+      }
       window.parent.postMessage(
         {
           line: proto.iframeBatch,
@@ -1358,18 +1368,20 @@ export default class App {
     this.emptyBatchCounter = 0
 
     try {
-      requestIdleCb(() => {
-        if (!this.messages.length) {
-          return
-        }
-        this.messages.unshift(Timestamp(this.timestamp()), TabData(this.session.getTabId()))
-        this.worker?.postMessage(this.messages)
-        this.commitCallbacks.forEach((cb) => cb(this.messages))
-        this.messages.length = 0
-      }, this.onCommitError)
+      requestIdleCb(this.postPending, this.onCommitError)
     } catch (e) {
       this.onCommitError(e)
     }
+  }
+
+  private postPending = () => {
+    if (!this.messages.length) {
+      return
+    }
+    this.messages.unshift(Timestamp(this.timestamp()), TabData(this.session.getTabId()))
+    this.worker?.postMessage(this.messages)
+    this.commitCallbacks.forEach((cb) => cb(this.messages))
+    this.messages.length = 0
   }
 
   private onCommitError = (e: unknown) => {
@@ -1676,26 +1688,33 @@ export default class App {
     cycle()
   }
 
+  /** `extra` goes after the common fields, keeping the body's key order */
+  private fetchStart(
+    timestamp: number,
+    doNotRecord: boolean,
+    bufferDiff: number,
+    token: string | undefined,
+    extra?: Record<string, unknown>,
+  ) {
+    return postJSON(this.options.ingestPoint + '/v1/web/start', {
+      ...this.getTrackerInfo(),
+      timestamp,
+      doNotRecord,
+      bufferDiff,
+      userID: this.session.getInfo().userID,
+      token,
+      deviceMemory,
+      jsHeapSizeLimit,
+      timezone: getTimezone(),
+      ...extra,
+    })
+  }
+
   private async setupConditionalStart(startOpts: StartOptions) {
     this.conditionsManager = new ConditionsManager(this, startOpts)
-    const r = await fetch(this.options.ingestPoint + '/v1/web/start', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        ...this.getTrackerInfo(),
-        timestamp: now(),
-        doNotRecord: true,
-        bufferDiff: 0,
-        userID: this.session.getInfo().userID,
-        token: undefined,
-        deviceMemory,
-        jsHeapSizeLimit,
-        timezone: getTimezone(),
-        width: window.screen.width,
-        height: window.screen.height,
-      }),
+    const r = await this.fetchStart(now(), true, 0, undefined, {
+      width: window.screen.width,
+      height: window.screen.height,
     })
     const {
       // this token is needed to fetch conditions and flags,
@@ -1821,23 +1840,7 @@ export default class App {
       tabId: this.session.getTabId(),
       localDebug: this.options.__local_debug,
     })
-    const r = await fetch(this.options.ingestPoint + '/v1/web/start', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        ...this.getTrackerInfo(),
-        timestamp: timestamp,
-        doNotRecord: false,
-        bufferDiff: timestamp - this.coldStartTs,
-        userID: this.session.getInfo().userID,
-        token: undefined,
-        deviceMemory,
-        jsHeapSizeLimit,
-        timezone: getTimezone(),
-      }),
-    })
+    const r = await this.fetchStart(timestamp, false, timestamp - this.coldStartTs, undefined)
     const {
       token,
       userBrowser,
@@ -1946,28 +1949,19 @@ export default class App {
       sessionToken,
     )
     try {
-      const r = await window.fetch(this.options.ingestPoint + '/v1/web/start', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...this.getTrackerInfo(),
-          timestamp,
-          doNotRecord: false,
-          bufferDiff: this.coldStartTs ? timestamp - this.coldStartTs : 0,
-          userID: this.session.getInfo().userID,
-          token: isNewSession ? undefined : sessionToken,
-          deviceMemory,
-          jsHeapSizeLimit,
-          timezone: getTimezone(),
+      const r = await this.fetchStart(
+        timestamp,
+        false,
+        this.coldStartTs ? timestamp - this.coldStartTs : 0,
+        isNewSession ? undefined : sessionToken,
+        {
           condition: conditionName,
           assistOnly: startOpts.assistOnly ?? this.socketMode,
           width: window.screen.width,
           height: window.screen.height,
           referrer: this.sanitizeReferrer(document.referrer),
-        }),
-      })
+        },
+      )
       if (r.status !== 200) {
         const error = await r.text()
         const reason = error === CANCELED ? CANCELED : `Server error: ${r.status}. ${error}`
@@ -2252,19 +2246,17 @@ export default class App {
     }
   }
 
+  /** Hands messages still waiting for the next commit to the worker (assist-only and iframe batches go elsewhere). */
+  private postPendingNow() {
+    if (this.activityState === ActivityState.Active && !this.socketMode && !this.insideIframe) {
+      this.postPending()
+    }
+  }
+
   forceFlushBatch() {
     // Hand over messages still waiting for the next commit first, so that
     // event(); forceFlushBatch() includes the event.
-    if (
-      this.activityState === ActivityState.Active &&
-      !this.socketMode &&
-      !this.insideIframe &&
-      this.messages.length
-    ) {
-      this.messages.unshift(Timestamp(this.timestamp()), TabData(this.session.getTabId()))
-      this.postToWorker(this.messages)
-      this.messages.length = 0
-    }
+    this.postPendingNow()
     this.worker?.postMessage('forceFlushBatch')
   }
 

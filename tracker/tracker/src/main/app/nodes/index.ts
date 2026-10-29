@@ -11,6 +11,8 @@ export interface NodesOptions {
   maintainer?: Partial<MaintainerOptions>
   /** called once when a crossdomain frame runs out of its node id block */
   onIdSpaceExhausted?: () => void
+  /** called with the id of every unregistered node, so id-keyed state can be dropped */
+  onUnregister?: (id: number) => void
 }
 
 export default class Nodes {
@@ -27,12 +29,14 @@ export default class Nodes {
   private idLimit = Infinity
   private idSpaceExhausted = false
   private readonly onIdSpaceExhausted?: () => void
+  private readonly onUnregister?: (id: number) => void
 
   constructor(params: NodesOptions) {
     this.node_id = params.node_id
     this.forceNgOff = params.forceNgOff
     this.maintainer = new Maintainer(this.nodes, this.unregisterNode, params.maintainer)
     this.onIdSpaceExhausted = params.onIdSpaceExhausted
+    this.onUnregister = params.onUnregister
   }
 
   crossdomainMode(level: number, frameOrder: number) {
@@ -110,6 +114,7 @@ export default class Nodes {
         )
       }
       this.totalNodeAmount--
+      this.onUnregister?.(id)
     }
     return id
   }

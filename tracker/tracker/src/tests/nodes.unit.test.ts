@@ -263,3 +263,15 @@ describe('Nodes maintainer', () => {
     expect(nodes.getID(detached)).toBeUndefined()
   })
 })
+
+describe('Nodes onUnregister', () => {
+  test('reports the id of every unregistered node', () => {
+    const onUnregister = jest.fn()
+    const n = new Nodes({ node_id: 'x', forceNgOff: false, maintainer: { enabled: false }, onUnregister })
+    const el = document.createElement('div')
+    const [id] = n.registerNode(el)
+    n.unregisterNode(el)
+    expect(onUnregister).toHaveBeenCalledWith(id)
+    n.clear()
+  })
+})

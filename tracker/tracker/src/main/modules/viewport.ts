@@ -31,7 +31,7 @@ export interface Options {
 }
 
 export default function (app: App, options?: Options): void {
-  let url: string | null, width: number, height: number
+  let url: string | null, rawUrl: string | null, width: number, height: number
   let navigationStart: number
   let referrer = document.referrer
   const urlSanitizer = options?.urlSanitizer || defaultUrlSanitizer
@@ -39,7 +39,9 @@ export default function (app: App, options?: Options): void {
 
   const sendSetPageLocation = app.safe(() => {
     const currURL = document.URL;
-    if (currURL !== url) {
+    // compare against the raw URL: `url` holds the cleaned one when replaceHashSymbol is on
+    if (currURL !== rawUrl) {
+      rawUrl = currURL
       url = currURL
       if (options?.replaceHashSymbol) {
         // replace hash router symbol if needed without affecting pathname of the url
@@ -81,7 +83,7 @@ export default function (app: App, options?: Options): void {
       : app.safe(() => app.send(SetPageVisibility(document.hidden)))
 
   app.attachStartCallback(() => {
-    url = null
+    url = rawUrl = null
     navigationStart = getTimeOrigin()
     width = height = -1
     sendSetPageLocation()

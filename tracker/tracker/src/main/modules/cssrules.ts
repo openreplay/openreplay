@@ -39,8 +39,9 @@ export default function (app: App, opts: CssRulesOptions) {
   }
   const options = { ...defaults, ...opts }
 
-  //  sheetID:index -> ruleText
-  const ruleSnapshots = new Map<string, string>()
+  // rules inserted empty (css-in-js fills them through rule.style later) -> last sent text;
+  // keyed by the rule object so inserts/deletes elsewhere in the sheet don't shift it
+  let ruleSnapshots = new WeakMap<CSSRule, string>()
   let checkInterval: number | null = null
   const trackedSheets: Set<CSSStyleSheet> = new Set();
   const checkIntervalMs = options.checkCssInterval || 200
@@ -62,37 +63,20 @@ export default function (app: App, opts: CssRulesOptions) {
             continue
           }
         }
-        for (let j = 0; j < sheet.cssRules.length; j++) {
+        const rules = sheet.cssRules
+        for (let j = 0; j < rules.length; j++) {
           try {
-            const rule = sheet.cssRules[j]
-            const key = `${sheetID}:${j}`
-            const oldText = ruleSnapshots.get(key)
+            const rule = rules[j]
+            const oldText = ruleSnapshots.get(rule)
+            if (oldText === undefined) continue
             const newText = rule.cssText
-
             if (oldText !== newText) {
-              if (oldText !== undefined) {
-                // Rule is changed
-                app.send(AdoptedSSDeleteRule(sheetID, j))
-                app.send(AdoptedSSInsertRuleURLBased(sheetID, newText, j, app.getBaseHref()))
-              } else {
-                // Rule added
-                app.send(AdoptedSSInsertRuleURLBased(sheetID, newText, j, app.getBaseHref()))
-              }
-              ruleSnapshots.set(key, newText)
+              app.send(AdoptedSSDeleteRule(sheetID, j))
+              app.send(AdoptedSSInsertRuleURLBased(sheetID, newText, j, app.getBaseHref()))
+              ruleSnapshots.set(rule, newText)
             }
           } catch (e) {
             /* Skip inaccessible rules */
-          }
-        }
-
-        const keysToCheck = Array.from(ruleSnapshots.keys()).filter((key) =>
-          key.startsWith(`${sheetID}:`),
-        )
-
-        for (const key of keysToCheck) {
-          const index = parseInt(key.split(':')[1], 10)
-          if (index >= sheet.cssRules.length) {
-            ruleSnapshots.delete(key)
           }
         }
       } catch (e) {
@@ -114,14 +98,14 @@ export default function (app: App, opts: CssRulesOptions) {
     if (typeof rule === 'string') {
       app.send(AdoptedSSInsertRuleURLBased(sheetID, rule, index, app.getBaseHref()))
       if (isRuleEmpty(rule)) {
-        ruleSnapshots.set(`${sheetID}:${index}`, rule)
-        trackedSheets.add(sheet)
+        const inserted = sheet.cssRules[index]
+        if (inserted) {
+          ruleSnapshots.set(inserted, rule)
+          trackedSheets.add(sheet)
+        }
       }
     } else {
       app.send(AdoptedSSDeleteRule(sheetID, index))
-      if (ruleSnapshots.has(`${sheetID}:${index}`)) {
-        ruleSnapshots.delete(`${sheetID}:${index}`)
-      }
     }
   })
 
@@ -142,7 +126,7 @@ export default function (app: App, opts: CssRulesOptions) {
       app.send(AdoptedSSInsertRuleURLBased(sheetID, cssText, idx, app.getBaseHref()))
       app.send(AdoptedSSDeleteRule(sheetID, idx + 1))
       if (isRuleEmpty(cssText)) {
-        ruleSnapshots.set(`${sheetID}:${idx}`, cssText)
+        ruleSnapshots.set(topmostRule, cssText)
         trackedSheets.add(sheet)
       }
     }
@@ -231,6 +215,6 @@ export default function (app: App, opts: CssRulesOptions) {
       clearInterval(checkInterval)
       checkInterval = null
     }
-    ruleSnapshots.clear()
+    ruleSnapshots = new WeakMap()
   })
 }

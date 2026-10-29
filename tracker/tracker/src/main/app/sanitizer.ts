@@ -77,6 +77,8 @@ export default class Sanitizer {
   private readonly levels: Map<number, SanitizeLevel> = new Map()
   private readonly options: Options
   public readonly privateMode: boolean
+  /** without one, only data-openreplay-* attributes decide a level */
+  public readonly hasDomSanitizer: boolean
   private readonly app: App
 
   constructor(params: { app: App; options?: Partial<Options> }) {
@@ -89,6 +91,7 @@ export default class Sanitizer {
     }
     this.privateMode = params.options?.privateMode ?? false
     this.options = Object.assign(defaultOptions, params.options)
+    this.hasDomSanitizer = this.options.domSanitizer !== undefined
   }
 
   // Pure recomputation of a node's level from the live DOM + parent level.
@@ -200,6 +203,10 @@ export default class Sanitizer {
       })
     }
     return data
+  }
+
+  hasMasked(): boolean {
+    return this.levels.size > 0
   }
 
   isObscured(id: number): boolean {
