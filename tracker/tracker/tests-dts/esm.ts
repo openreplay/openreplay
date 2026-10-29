@@ -11,3 +11,5 @@ export type EsmApp = App
 export type EsmAnalytics = Analytics
 export type EsmOptions = Partial<Options>
 export type EsmTrackerClass = TrackerClass
+// nested option groups accept partial objects
+export const esmPartialNetwork: Partial<Options> = { network: { capturePayload: true } }

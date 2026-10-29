@@ -11,6 +11,93 @@ interface CanvasSnapshot {
   isStopped: boolean
 }
 
+type GLContext = WebGLRenderingContext | WebGL2RenderingContext
+
+/**
+ * A WebGL drawing buffer (preserveDrawingBuffer: false, the default) is cleared once the
+ * frame is presented, so a snapshot taken from a timer reads a transparent canvas. The
+ * buffer is only valid in the task that drew it: we remember WebGL contexts as they are
+ * created and, when a frame is due, capture right after the page's next draw call.
+ * Contexts with a preserved buffer keep the timer capture.
+ */
+const WEBGL_TYPES = ['webgl', 'webgl2', 'experimental-webgl']
+const DRAW_CALLS = [
+  'drawArrays',
+  'drawElements',
+  'drawArraysInstanced',
+  'drawElementsInstanced',
+  'drawRangeElements',
+  'clear',
+]
+const glContexts = new WeakMap<HTMLCanvasElement, GLContext>()
+const hookedProtos = new WeakSet<object>()
+
+/** Must run before the page creates its contexts; contexts created earlier keep the timer capture. */
+export function watchCanvasContexts(context: typeof globalThis = window) {
+  const proto = context.HTMLCanvasElement?.prototype
+  if (!proto || hookedProtos.has(proto)) return
+  hookedProtos.add(proto)
+  const nativeGetContext = proto.getContext
+  proto.getContext = function (this: HTMLCanvasElement, type: string) {
+    // eslint-disable-next-line prefer-rest-params
+    const ctx = nativeGetContext.apply(this, arguments as any)
+    if (ctx && WEBGL_TYPES.includes(type)) {
+      glContexts.set(this, ctx as GLContext)
+    }
+    return ctx
+  } as typeof proto.getContext
+}
+
+interface DrawHook {
+  /** wraps the draw calls until the next one, which captures */
+  arm(): void
+  /** puts back what the context had: the page's own methods (e.g. instancing polyfills) or the prototype's */
+  unhook(): void
+}
+
+function hookDraws(gl: GLContext, capture: () => void): DrawHook {
+  const natives: Array<[string, Function]> = []
+  const pageOwn = new Set<string>()
+  for (const name of DRAW_CALLS) {
+    const native = (gl as any)[name]
+    if (typeof native === 'function') natives.push([name, native])
+    if (Object.prototype.hasOwnProperty.call(gl, name)) pageOwn.add(name)
+  }
+  let armed = false
+  // own properties on this context only; reassigned rather than deleted between frames,
+  // so draw calls run unwrapped and the object keeps its shape
+  const set = (fns: Array<[string, Function]>) => {
+    for (const [name, fn] of fns) (gl as any)[name] = fn
+  }
+  const wrappers = natives.map(([name, native]): [string, Function] => [
+    name,
+    function (this: unknown) {
+      if (armed) {
+        armed = false
+        set(natives)
+        // runs once the page's current render code returns, before the frame is presented
+        queueMicrotask(capture)
+      }
+      // eslint-disable-next-line prefer-rest-params
+      return native.apply(this, arguments)
+    },
+  ])
+  return {
+    arm() {
+      if (armed) return
+      armed = true
+      set(wrappers)
+    },
+    unhook() {
+      armed = false
+      for (const [name, native] of natives) {
+        if (pageOwn.has(name)) (gl as any)[name] = native
+        else delete (gl as any)[name]
+      }
+    },
+  }
+}
+
 interface Options {
   fps: number
   quality: 'low' | 'medium' | 'high'
@@ -32,6 +119,7 @@ class CanvasRecorder {
   private snapshots: Record<number, CanvasSnapshot> = {}
   private readonly intervals: Map<number, ReturnType<typeof setInterval>> = new Map()
   private readonly observers: Map<number, IntersectionObserver> = new Map()
+  private readonly drawHooks: Map<number, DrawHook> = new Map()
   private readonly interval: number
   private readonly fileExt: 'webp' | 'png' | 'jpeg' | 'avif'
   private uploadQueue = 0
@@ -68,11 +156,6 @@ class CanvasRecorder {
     const isIgnored = this.app.sanitizer.isObscured(id) || this.app.sanitizer.isHidden(id)
     if (isIgnored) {
       if (this.snapshots[id] || this.observers.has(id)) {
-        const observer = this.observers.get(id)
-        if (observer) {
-          observer.disconnect()
-          this.observers.delete(id)
-        }
         this.cleanupCanvas(id)
       }
     } else if (!this.snapshots[id] && !this.observers.has(id)) {
@@ -167,6 +250,15 @@ class CanvasRecorder {
       )
     }
 
+    const gl = glContexts.get(cachedCanvas)
+    const drawHook =
+      gl && !gl.getContextAttributes()?.preserveDrawingBuffer
+        ? hookDraws(gl, () => captureFn(cachedCanvas))
+        : null
+    if (drawHook) {
+      this.drawHooks.set(id, drawHook)
+    }
+
     const int = setInterval(() => {
       const snapshot = this.snapshots[id]
       if (!snapshot || snapshot.isStopped) {
@@ -175,14 +267,22 @@ class CanvasRecorder {
         return
       }
 
-      if (!document.contains(cachedCanvas)) {
+      // isConnected covers shadow roots and iframes; a removed iframe leaves its document without a window
+      if (!cachedCanvas.isConnected || !cachedCanvas.ownerDocument.defaultView) {
         this.app.debug.log('Canvas element not in sync', cachedCanvas, node)
+        if (snapshot.images.length > 0) {
+          this.sendSnaps(snapshot.images, id, snapshot.createdAt)
+          snapshot.images = []
+        }
         this.cleanupCanvas(id)
         return
       }
 
       if (!snapshot.paused) {
-        if (this.options.useAnimationFrame) {
+        if (drawHook) {
+          // captured on the next draw; an idle WebGL canvas sends nothing new
+          drawHook.arm()
+        } else if (this.options.useAnimationFrame) {
           requestAnimationFrame(() => {
             captureFn(cachedCanvas)
           })
@@ -231,58 +331,26 @@ class CanvasRecorder {
   }
 
   private async uploadBatch(images: { data: Blob; id: number }[], canvasId: number, createdAt: number) {
-    if (this.options.isDebug) {
-      const packed = await packFrames(images)
-      if (packed) {
-        const fileName = `${createdAt}_${canvasId}.${this.fileExt}.frames`
-        const url = URL.createObjectURL(new Blob([packed]))
-        const link = document.createElement('a')
-        link.href = url
-        link.download = fileName
-        link.style.display = 'none'
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-        URL.revokeObjectURL(url)
-      }
-      // fall through to also send to backend
+    const packed =
+      this.options.isDebug || this.options.framesSupport ? await packFrames(images) : null
+    if (this.options.isDebug && packed) {
+      const fileName = `${createdAt}_${canvasId}.${this.fileExt}.frames`
+      const url = URL.createObjectURL(new Blob([packed]))
+      const link = document.createElement('a')
+      link.href = url
+      link.download = fileName
+      link.style.display = 'none'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
     }
 
     let formData: FormData
 
     if (this.options.framesSupport) {
-      // Pack frames into binary format: [uint64 LE timestamp][uint32 LE size][data] per frame
-      const buffers: ArrayBuffer[] = []
-      let totalSize = 0
-      for (const snapshot of images) {
-        if (!snapshot.data) continue
-        const ab = await snapshot.data.arrayBuffer()
-        buffers.push(ab)
-        totalSize += 8 + 4 + ab.byteLength // uint64 ts + uint32 size + data
-      }
-
-      if (totalSize === 0) return
-
-      const packed = new ArrayBuffer(totalSize)
-      const view = new DataView(packed)
-      const bytes = new Uint8Array(packed)
-      let offset = 0
-
-      for (let i = 0; i < images.length; i++) {
-        if (!images[i].data) continue
-        const ab = buffers.shift()!
-        const ts = images[i].id
-        // uint64 LE as two uint32 LE writes -- timestamp
-        view.setUint32(offset, ts % 0x100000000, true)
-        view.setUint32(offset + 4, Math.floor(ts / 0x100000000), true)
-        offset += 8
-        // uint32 LE -- size
-        view.setUint32(offset, ab.byteLength, true)
-        offset += 4
-        // image data
-        bytes.set(new Uint8Array(ab), offset)
-        offset += ab.byteLength
-      }
+      // [uint64 LE timestamp][uint32 LE size][data] per frame
+      if (!packed) return
 
       formData = new FormData()
       formData.append('type', 'frames');
@@ -344,6 +412,12 @@ class CanvasRecorder {
     if (observer) {
       observer.disconnect()
       this.observers.delete(id)
+    }
+
+    const drawHook = this.drawHooks.get(id)
+    if (drawHook) {
+      drawHook.unhook()
+      this.drawHooks.delete(id)
     }
 
     if (this.snapshots[id]?.dummy) {
@@ -443,23 +517,6 @@ async function packFrames(images: { data: Blob; id: number }[]): Promise<ArrayBu
   }
 
   return packed
-}
-
-function dataUrlToBlob(dataUrl: string): [Blob, Uint8Array] | null {
-  const [header, base64] = dataUrl.split(',')
-  if (!header || !base64) return null
-  const encParts = header.match(/:(.*?);/)
-  if (!encParts) return null
-  const mime = encParts[1]
-  const blobStr = atob(base64)
-  let n = blobStr.length
-  const u8arr = new Uint8Array(n)
-
-  while (n--) {
-    u8arr[n] = blobStr.charCodeAt(n)
-  }
-
-  return [new Blob([u8arr], { type: mime }), u8arr]
 }
 
 export default CanvasRecorder

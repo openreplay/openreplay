@@ -2,6 +2,7 @@ import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globa
 import setupPerfPlugin from '../main/modules/timing.js'
 import * as TrackerMessages from '../main/app/messages.gen.js'
 import { getTimeOrigin } from '../main/utils.js'
+import { onCLS, onLCP } from 'web-vitals'
 
 jest.mock('web-vitals', () => ({
   onCLS: jest.fn(),
@@ -271,5 +272,17 @@ describe('Timing plugin', () => {
       capturePageRenderTimings: false,
     })
     expect(mockApp.ticker.attach).not.toHaveBeenCalled()
+  })
+})
+
+describe('web vitals', () => {
+  test('reporters are registered once across restarts', () => {
+    jest.clearAllMocks()
+    const app = new MockApp()
+    setupPerfPlugin(app as any, {})
+    app.startCallbacks[0]({ sessionID: 's1' })
+    app.startCallbacks[0]({ sessionID: 's2' })
+    expect(onLCP).toHaveBeenCalledTimes(1)
+    expect(onCLS).toHaveBeenCalledTimes(1)
   })
 })

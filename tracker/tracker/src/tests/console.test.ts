@@ -52,6 +52,55 @@ describe('Console logging module', () => {
     globalThis.console = originalConsole
   })
 
+  it('patches iframe consoles again when the tracker restarts', () => {
+    mainFunction(mockApp, {})
+    const frameLog = jest.fn(function log() {})
+    const frame = {
+      closed: false,
+      console: { ...originals, log: frameLog },
+    }
+    const contextCallback = mockApp.observer.attachContextCallback.mock.calls[0][0]
+    contextCallback(frame)
+    stopCallbacks.forEach((cb) => cb())
+    expect(frame.console.log).toBe(frameLog)
+
+    startCallbacks.forEach((cb) => cb())
+    frame.console.log('from frame')
+    expect(frameLog).toHaveBeenCalledWith('from frame')
+    expect(mockApp.send).toHaveBeenCalledWith([CONSOLE_LOG, 'log', 'from frame'])
+  })
+
+  it('patches a navigated iframe once when the tracker restarts', () => {
+    mainFunction(mockApp, {})
+    const frame = { closed: false, console: { ...originals } }
+    const contextCallback = mockApp.observer.attachContextCallback.mock.calls[0][0]
+    contextCallback(frame)
+    // navigation: same window, new console, a second callback
+    frame.console = { ...originals, log: jest.fn(function log() {}) }
+    contextCallback(frame)
+    stopCallbacks.forEach((cb) => cb())
+    startCallbacks.forEach((cb) => cb())
+    mockApp.send.mockClear()
+    frame.console.log('from frame')
+    expect(mockApp.send).toHaveBeenCalledTimes(1)
+  })
+
+  it('patches iframe consoles again on restart without WeakRef', () => {
+    const weakRef = globalThis.WeakRef
+    globalThis.WeakRef = undefined
+    try {
+      mainFunction(mockApp, {})
+      const frame = { closed: false, console: { ...originals } }
+      mockApp.observer.attachContextCallback.mock.calls[0][0](frame)
+      stopCallbacks.forEach((cb) => cb())
+      startCallbacks.forEach((cb) => cb())
+      frame.console.log('from frame')
+      expect(mockApp.send).toHaveBeenCalledWith([CONSOLE_LOG, 'log', 'from frame'])
+    } finally {
+      globalThis.WeakRef = weakRef
+    }
+  })
+
   it('patches console methods and still calls the original', () => {
     mainFunction(mockApp, {})
     globalThis.console.log('test log')

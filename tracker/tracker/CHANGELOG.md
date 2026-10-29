@@ -1,4 +1,24 @@
-##
+## 20.0.0
+
+- WebGL canvases are recorded (were blank frames): contexts are noted when created and a frame is captured right after the page draws; idle WebGL canvases no longer resend frames. Contexts created before the tracker was constructed, or with `preserveDrawingBuffer`, keep the timer capture
+- `adoptedStyleSheets.push()` / `splice()` / index writes are recorded (only assignment was)
+- attribute string dictionary hits no longer re-insert into the LRU map on every lookup (~4µs → ~30ns per attribute)
+- privacy: selection text inside masked content, a password field switched to `type=text`, and the content of an iframe or shadow root under a masked host or ancestor are no longer recorded in plain; a hidden iframe's document or hidden host's shadow root is no longer recorded at all, also when masked or hidden later through `resanitize()`; `data-openreplay-hidden`/`-masked` on `<html>` applies to the whole page (was ignored)
+- `replaceHashSymbol` no longer resends the page location on every tick
+- JS errors and rejections from same-origin iframes are recorded (were dropped / sent as `{}`), their console logs are recorded again after a stop/start
+- font sources with relative `url()` are resolved against the page, web vitals aren't duplicated after a restart
+- in-memory CSS scan (`scanInMemoryCSS`) no longer re-sends every rule; inlined CSS keeps `@layer`/`@import` statements
+- canvases inside shadow roots and iframes keep recording; frames pending when a canvas is removed are sent
+- commits keep flowing in background tabs; pending messages are flushed before unload
+- crossdomain: child mouse events are no longer sent twice, idle frames don't post empty batches, large child batches can't overflow the stack
+- network: removed the `useProxy` option, the legacy fetch/XHR patching and the axios spy; axios (0.x and 1.x, XHR and fetch adapters) is captured by the network proxy with no setup. `axiosInstances` is only needed for instances with a custom adapter (native HTTP bridge, mock, `env.fetch`) and no longer records requests twice or sends the session token header twice
+- network (network-proxy 1.2.8): with `sessionTokenHeader`, `fetch(request, { signal })` / `fetch(request, {})` no longer drops the request's own headers (e.g. `Authorization`); textual bodies of `Request` inputs (json/text/xml/urlencoded/graphql), `+json`/xml/untyped responses and chunked responses are recorded (text bodies up to 1MB); streaming (`event-stream`, NDJSON, `x-mixed-replace`) and binary responses aren't copied, binary ones are sized by `content-length`; a reused XHR is recorded once per request; axios `baseURL` is resolved for axios < 0.27
+- network (network-proxy 1.2.9): sensitive fields (`password`, `token`, …) of url-encoded, `FormData` and `URLSearchParams` request bodies and url-encoded responses are masked; the session token header is recorded only on requests it was sent with (not on `tokenUrlMatcher`-excluded urls or beacons), and fetch no longer adds it to the app's own headers object, which leaked it to excluded urls reusing that object
+- mouse: clicks inside same-origin iframes are recorded (were dropped; same for finished web animations of elements there), `data-*` selectors are used only when unique, class uniqueness isn't cached forever, thrashing detection resets after idle
+- sanitizer levels of removed nodes are dropped; stylesheet and font maps no longer retain detached iframe documents
+- worker: a quick stop/start can't null the new sender or reset the new session's status, and a start during the 30-minute-hidden restart no longer restarts a tracker that was stopped meanwhile
+
+## 19.0.4
 
 - flush pending messages in forceFlushBatch, add flushInterval (#5082 by [@josh08h](https://github.com/josh08h))
 
