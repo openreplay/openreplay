@@ -80,5 +80,15 @@ export default function (app: App): void {
     false,
     false,
   )
+  // a taller window shows more of the page without a scroll
+  app.attachEventListener(
+    window,
+    'resize',
+    () => {
+      if (settled) dirty = true
+    },
+    false,
+    false,
+  )
   app.ticker.attach(tick, 5)
 }

@@ -120,6 +120,18 @@ describe('scroll depth module', () => {
     expect(depths(app)).toEqual([25, 35, 100])
   })
 
+  test('a taller window reaches further once the page has settled', () => {
+    window.dispatchEvent(new Event('resize'))
+    after(180)
+    expect(sent(app)).toEqual([])
+    after(600)
+    expect(depths(app)).toEqual([25])
+    Object.defineProperty(window, 'innerHeight', { configurable: true, value: 2000 })
+    window.dispatchEvent(new Event('resize'))
+    after(180)
+    expect(depths(app)).toEqual([25, 50])
+  })
+
   test('a page shorter than the window is fully seen', () => {
     scrollHeight = 600
     after(180)
