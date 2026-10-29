@@ -31,7 +31,8 @@ fi
 docker image inspect "$IMG" >/dev/null 2>&1 || { echo "FAIL: no image $IMG"; exit 1; }
 
 echo "== offline container"
-docker run -d --name "$NAME" --network none "$IMG" or-start >/dev/null || { echo "FAIL: run"; exit 1; }
+# the scanner agent gets 2 CPUs and 8 GB (oss-scanner tools/check_build.py AGENT_MACHINE)
+docker run -d --name "$NAME" --network none --cpus 2 --memory 8g "$IMG" or-start >/dev/null || { echo "FAIL: run"; exit 1; }
 [ "$(docker inspect -f '{{.HostConfig.NetworkMode}}' "$NAME")" = none ] && ok "no network" || no "network not none"
 
 echo "== source and builds"
@@ -88,6 +89,10 @@ start=$(x "curl -s -X POST http://127.0.0.1/ingest/v1/web/start -H 'Content-Type
   -d '{\"projectKey\":\"$key\",\"timestamp\":$TS,\"timezone\":\"UTC\",\"trackerVersion\":\"6.0.0\",\"revID\":\"1\",\"doNotRecord\":false,\"width\":1920,\"height\":1080}'")
 echo "$start" | grep -q '"token"' && ok "ingest start returns a token" || no "ingest start: ${start:0:200}"
 x 'curl -fsS -o /dev/null http://127.0.0.1/v2/api/' && ok "go api answers through the edge" || no "go api down"
+# the member flow threat_model.md tells the scanner to use
+docker cp "$(dirname "$0")/probe-member.py" "$NAME":/tmp/probe-member.py
+out=$(x 'python3 /tmp/probe-member.py' 2>&1)
+echo "$out" | grep -q '^OK' && ok "member invite, accept, login; member blocked from admin route" || no "member flow: ${out: -300}"
 
 echo
 echo "RESULT: $pass passed, $fail failed"
