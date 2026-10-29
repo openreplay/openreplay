@@ -105,7 +105,7 @@ spec:
             value: "1"
           securityContext:
             {}
-          image: "clickhouse/clickhouse-server:25.1-alpine"
+          image: "clickhouse/clickhouse-server:26.8-alpine"
           imagePullPolicy: IfNotPresent
           ports:
           - containerPort: 8123
