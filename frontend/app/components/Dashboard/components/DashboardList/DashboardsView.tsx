@@ -60,12 +60,17 @@ function DashboardsView() {
   const [renaming, setRenaming] = React.useState<Dashboard | null>(null);
   const [accessFor, setAccessFor] = React.useState<Dashboard | null>(null);
   const [deleting, setDeleting] = React.useState<Dashboard | null>(null);
-  const [page, setPage] = React.useState(1);
   const pageSize = useRowsPerPage('dashboards');
 
   const { query, showMine } = dashboardStore.filter;
   const list = dashboardStore.filteredList;
   const { sort, onSort, sorted } = useLocalSort(list, SORT);
+  // kept in the store so coming back from a dashboard lands on the same page
+  const page = Math.min(
+    dashboardStore.page,
+    Math.max(1, Math.ceil(list.length / pageSize)),
+  );
+  const setPage = (p: number) => dashboardStore.updateKey('page', p);
   const rows = sorted.slice((page - 1) * pageSize, page * pageSize);
   const noneAtAll = dashboardStore.dashboards.length === 0;
 
