@@ -51,27 +51,14 @@ const newApiUrls = [
   '/filters',
   '/alerts',
   '/notifications',
-  '/projects',
-  '/sample_rate',
-  '/gdpr',
-  '/metadata',
-  '/limits',
-  '/account',
-  '/client/new_api_key',
-  '/client/members',
-  '/client/roles',
-  '/config/weekly_report',
-  '/webhooks',
-  '/assist/credentials',
-  '/trails',
 ];
 const except = [
   'integrations/slack/notify',
   'integrations/msteams/notify',
   '/events/search',
   'assign/projects',
+  '/users/modules',
   '/intelligent/',
-  '/account/password',
 ];
 const useNewApi = localStorage.getItem('__old_api') !== 'true';
 
@@ -331,9 +318,7 @@ export default class APIClient {
       useNewApi &&
       !edp.includes('/v2') &&
       NEW_API_RE.test(_path) &&
-      !EXCEPT_RE.test(_path) &&
-      // saas-only account deletion stays on chalice
-      !(method === 'DELETE' && _path === '/client/members')
+      !EXCEPT_RE.test(_path)
     ) {
       fullUrl = toV2(fullUrl, isSaas);
     }
