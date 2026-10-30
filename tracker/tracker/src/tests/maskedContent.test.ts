@@ -12,6 +12,7 @@ let nodes: Nodes
 let sent: any[]
 let observer: TopObserver
 let app: any
+let listeners: [EventTarget, string, any][] = []
 
 function makeApp(options: Partial<SanitizerOptions>) {
   const a: any = {
@@ -20,8 +21,10 @@ function makeApp(options: Partial<SanitizerOptions>) {
     send: (msg: any) => sent.push(msg),
     getBaseHref: () => 'http://localhost/',
     callResanitizeCallbacks: jest.fn(),
-    attachEventListener: (target: EventTarget, type: string, fn: any) =>
-      target.addEventListener(type, fn),
+    attachEventListener: (target: EventTarget, type: string, fn: any) => {
+      target.addEventListener(type, fn)
+      listeners.push([target, type, fn])
+    },
     debug: { log: jest.fn(), warn: jest.fn(), info: jest.fn(), error: jest.fn() },
   }
   a.nodes = nodes = new Nodes({
@@ -58,6 +61,8 @@ beforeEach(() => {
 
 afterEach(() => {
   observer.disconnect()
+  listeners.forEach(([target, type, fn]) => target.removeEventListener(type, fn))
+  listeners = []
 })
 
 describe('attributes of masked nodes', () => {

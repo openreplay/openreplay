@@ -48,11 +48,13 @@ const CONTENT_ATTRIBUTES = new Set([
   'datetime',
   'label',
   'placeholder',
+  'srcdoc',
   'title',
   'value',
 ])
 
-// data-* can hold anything, so it is masked too (apart from our own markers).
+// data-* can hold anything, so it is masked too, apart from our own markers (data-openreplay-label
+// is listed above).
 function isContentAttribute(node: Element, name: string): boolean {
   // a checkbox or radio value isn't shown, and selectors like [value=x]:checked rely on it
   if (name === 'value' && hasTag(node, 'input') && ['checkbox', 'radio'].includes(node.type)) {
