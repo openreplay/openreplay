@@ -28,11 +28,41 @@ import {
 } from '../guards.js'
 import { inlineRemoteCss } from './cssInliner.js'
 import { nextID } from '../../modules/constructedStyleSheets.js'
-import { SanitizeLevel } from '../sanitizer.js'
+import { SanitizeLevel, stringWiper } from '../sanitizer.js'
 import { parentNode, previousSibling, nextSibling, firstChild } from '../untaintedDom.js'
 
 const iconCache = {}
 const svgUrlCache = {}
+
+// Attributes that can hold page content. Others (class, style, aria-expanded, colspan, SVG
+// geometry...) are kept so masked regions still lay out and style correctly in replays.
+const CONTENT_ATTRIBUTES = new Set([
+  'alt',
+  'aria-description',
+  'aria-label',
+  'aria-placeholder',
+  'aria-roledescription',
+  'aria-valuetext',
+  'content',
+  'data-openreplay-label',
+  'datetime',
+  'label',
+  'placeholder',
+  'title',
+  'value',
+])
+
+// data-* can hold anything, so it is masked too (apart from our own markers).
+function isContentAttribute(node: Element, name: string): boolean {
+  // a checkbox or radio value isn't shown, and selectors like [value=x]:checked rely on it
+  if (name === 'value' && hasTag(node, 'input') && ['checkbox', 'radio'].includes(node.type)) {
+    return false
+  }
+  return (
+    CONTENT_ATTRIBUTES.has(name) ||
+    (name.startsWith('data-') && !name.startsWith('data-openreplay-'))
+  )
+}
 
 export async function parseUseEl(
   useElement: SVGUseElement,
@@ -425,7 +455,11 @@ export default abstract class Observer {
         }
         this.app.send(SetNodeAttributeURLBased(id, name, value!, this.app.getBaseHref()))
       } else {
-        this.app.attributeSender.sendSetAttribute(id, name, value!)
+        this.app.attributeSender.sendSetAttribute(
+          id,
+          name,
+          this.maskAttribute(id, node, name, value),
+        )
       }
       return
     }
@@ -501,7 +535,13 @@ export default abstract class Observer {
     if (['alt', 'placeholder'].includes(name) && this.app.sanitizer.privateMode) {
       value = value.replaceAll(/./g, '*')
     }
-    this.app.attributeSender.sendSetAttribute(id, name, value)
+    this.app.attributeSender.sendSetAttribute(id, name, this.maskAttribute(id, node, name, value))
+  }
+
+  private maskAttribute(id: number, node: Element, name: string, value: string): string {
+    return this.app.sanitizer.isObscured(id) && isContentAttribute(node, name)
+      ? stringWiper(value)
+      : value
   }
 
   throttling = true
@@ -875,6 +915,12 @@ export default abstract class Observer {
       return
     }
     if (isElementNode(node)) {
+      // content attributes are masked by level, so re-send them at the new one
+      for (const { name, value } of Array.from(node.attributes)) {
+        if (isContentAttribute(node, name)) {
+          this.sendNodeAttribute(id, node, name, value)
+        }
+      }
       // inputs/images/canvas re-emit their own payload via registered callbacks
       this.app.callResanitizeCallbacks(node, id)
     }
