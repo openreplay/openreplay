@@ -3,7 +3,7 @@ type StyleRoot = (Document | ShadowRoot) & {
   adoptedStyleSheets?: CSSStyleSheet[];
 };
 
-function rulesText(sheet: CSSStyleSheet | null): string | null {
+export function rulesText(sheet: CSSStyleSheet | null): string | null {
   try {
     const rules = sheet?.cssRules;
     if (!rules) return null;

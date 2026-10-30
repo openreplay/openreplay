@@ -504,4 +504,73 @@ test.describe('heatmap card', () => {
     await page.goBack();
     await expect(page.locator('.m-nav')).not.toHaveClass(/is-collapsed/);
   });
+
+  test('a saved card shows its page on a dashboard, under the current heat', async ({
+    page,
+    baseURL,
+  }) => {
+    const { api, chartRequests } = await setup(page, baseURL!);
+    let saved: any;
+    api.on('POST', /\/cards\/10$/, (_req, body) => {
+      saved = body;
+      return { data: { ...card, ...body } };
+    });
+    await page.goto(`/${PROJECT_ID}/metrics/10`);
+    await waitForOverlay(page);
+    await page.getByRole('button', { name: 'Heatmap' }).click();
+    await page.getByRole('menuitemradio', { name: 'Scroll map' }).click();
+    await expect(
+      page.locator('#clickmap-render .m-cmap__window .m-cmap__reach'),
+    ).toBeVisible();
+    await page.getByRole('button', { name: 'Update' }).click();
+    await expect.poll(() => saved?.thumbnail).toBeTruthy();
+    // the page as markup: a picture would need its cross-origin pixels
+    expect(saved.thumbnail).toMatch(
+      /^data:application\/vnd\.openreplay\.page\+gzip;base64,/,
+    );
+    expect(saved.metricOf).toBe('scrollMapUrl');
+
+    let widget = { ...card, ...saved, widgetId: 100 };
+    const dashboard = () => ({
+      dashboardId: 5,
+      name: 'E2E dashboard',
+      isPublic: true,
+      widgets: [widget],
+    });
+    api.on('GET', /\/dashboards$/, () => ({ data: [dashboard()] }));
+    api.on('GET', /\/dashboards\/5$/, () => ({ data: dashboard() }));
+    const mobs = api.mobRequests.length;
+    chartRequests.length = 0;
+
+    await page.goto(`/${PROJECT_ID}/dashboard/5`);
+    const frame = page.locator('.m-cmap__thumb iframe');
+    await expect(frame).toHaveAttribute('sandbox', '');
+    await expect(
+      page.frameLocator('.m-cmap__thumb iframe').getByText('Saved Search'),
+    ).toBeVisible();
+    await expect(page.locator('.m-cmap__thumb .m-cmap__reach')).toBeVisible();
+    // only the heat is fetched: no session pick, no replay
+    expect(chartRequests.map((b) => b.metricType)).toEqual([
+      'heatmaps_session',
+    ]);
+    expect(api.mobRequests.length).toBe(mobs);
+
+    widget = { ...widget, metricOf: 'heatMapUrl' };
+    await page.reload();
+    const heat = page.locator('.m-cmap__thumb .m-cmap__thumb-heat');
+    await expect(heat).toBeVisible();
+    await expect
+      .poll(() =>
+        heat.evaluate((c: HTMLCanvasElement) => {
+          const px = c
+            .getContext('2d')!
+            .getImageData(0, 0, c.width, c.height).data;
+          let painted = 0;
+          for (let i = 3; i < px.length; i += 4) if (px[i]) painted++;
+          return painted;
+        }),
+      )
+      .toBeGreaterThan(0);
+    await expect(page.locator('.m-cmap__thumb .m-cmap__reach')).toHaveCount(0);
+  });
 });

@@ -907,6 +907,16 @@
   border-radius: var(--m-radius-control);
   border: 1px solid var(--m-border-subtle);
 }
+.m-cmap__thumb-page {
+  position: relative;
+  overflow: hidden;
+}
+.m-cmap__thumb-heat {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
 .m-cmap__thumb img {
   display: block;
   width: 100%;

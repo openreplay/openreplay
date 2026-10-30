@@ -73,15 +73,10 @@ describe('heatmap card data', () => {
 
     const store = new DashboardStore();
     const metric = heatmapWidget();
-    const done = store.fetchMetricChartData(metric, {}, true, period);
+    const done = store.fetchMetricChartData(metric, {}, false, period);
 
     // both requests are out while the session one is still pending
     expect(getMetricChartData).toHaveBeenCalledTimes(2);
-    const clicksCall = getMetricChartData.mock.calls.find(
-      (c: any[]) => c[1].metricType === HEATMAP_CLICKS,
-    )!;
-    // clicks go through /cards/try even for a saved card
-    expect(clicksCall[2]).toBe(false);
 
     releaseSession(session);
     await done;
@@ -106,9 +101,12 @@ describe('heatmap card data', () => {
       true,
       period,
     );
-    const clicks = getMetricChartData.mock.calls.find(
-      (c: any[]) => c[1].metricType === HEATMAP_CLICKS,
-    )![1];
+    // the page comes from the card's thumbnail: no session is picked
+    expect(getMetricChartData).toHaveBeenCalledTimes(1);
+    expect(fetchSessionInfo).not.toHaveBeenCalled();
+    const [, clicks, isSaved] = getMetricChartData.mock.calls[0];
+    // clicks go through /cards/try even for a saved card
+    expect(isSaved).toBe(false);
     expect(clicks).toMatchObject({
       metricOf: HEATMAP_SCROLL_MAP,
       metricFormat: metric.metricFormat,

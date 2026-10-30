@@ -624,12 +624,16 @@ export default class DashboardStore {
                 return [];
               })
           : null;
-        const data = await metricService.getMetricChartData(
-          metric,
-          params,
-          isSaved,
-          abortSignal,
-        );
+        // a dashboard draws the page saved with the card: no session to pick
+        const data =
+          isHeatmap && isSaved
+            ? {}
+            : await metricService.getMetricChartData(
+                metric,
+                params,
+                isSaved,
+                abortSignal,
+              );
 
         if (isHeatmap && data.sessionId) {
           const sessionResp = await sessionStore.fetchSessionInfo(

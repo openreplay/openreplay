@@ -51,6 +51,10 @@ const ClickMapCard = lazy(
   () =>
     import('App/components/Dashboard/Widgets/CustomMetricsWidgets/ClickMapCard'),
 );
+const PageThumbnail = lazy(
+  () =>
+    import('App/components/Dashboard/Widgets/CustomMetricsWidgets/ClickMapCard/PageThumbnail'),
+);
 const InsightsCard = lazy(
   () =>
     import('App/components/Dashboard/Widgets/CustomMetricsWidgets/InsightsCard'),
@@ -707,9 +711,11 @@ function WidgetChart(props: Props) {
     if (metricType === HEATMAP) {
       if (!props.isPreview) {
         return _metric.thumbnail ? (
-          <div className="m-cmap__thumb">
-            <img src={_metric.thumbnail} alt={t('Click map thumbnail')} />
-          </div>
+          <PageThumbnail
+            thumbnail={_metric.thumbnail}
+            points={data?.points}
+            scroll={data?.scroll}
+          />
         ) : (
           <NoDataInWindow inGrid />
         );

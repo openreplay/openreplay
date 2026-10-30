@@ -27,6 +27,39 @@ export interface ClickPoint {
   count?: number;
 }
 
+/** Clicks summed per cell as [x, y, count] in pixels of a width x height layer. */
+export function heatmapCells(
+  clicks: ClickPoint[],
+  width: number,
+  height: number,
+): { cells: number[][]; max: number } {
+  const pointMap: Record<string, { times: number; data: number[] }> = {};
+  let max = 0;
+
+  clicks.forEach((point) => {
+    const y = roundToSecond(point.normalizedY);
+    const x = roundToSecond(point.normalizedX);
+    const key = `${y}-${x}`;
+    const clickCount = point.count ?? 1;
+    if (pointMap[key]) {
+      pointMap[key].times += clickCount;
+    } else {
+      pointMap[key] = {
+        times: clickCount,
+        data: [(x / 100) * width, (y / 100) * height],
+      };
+    }
+    max = Math.max(max, pointMap[key].times);
+  });
+
+  const cells: number[][] = [];
+  for (const key in pointMap) {
+    const { data, times } = pointMap[key];
+    cells.push([...data, times]);
+  }
+  return { cells, max };
+}
+
 export default class TargetMarker {
   private clickMapOverlay: HTMLCanvasElement | null = null;
   private heatmap: SimpleHeatmap | null = null;
@@ -84,30 +117,11 @@ export default class TargetMarker {
     overlay.width = Math.max(1, Math.round(scrollWidth * k));
     overlay.height = Math.max(1, Math.round(scrollHeight * k));
 
-    const pointMap: Record<string, { times: number; data: number[] }> = {};
-    let maxIntensity = 0;
-
-    clicks.forEach((point) => {
-      const y = roundToSecond(point.normalizedY);
-      const x = roundToSecond(point.normalizedX);
-      const key = `${y}-${x}`;
-      const clickCount = point.count ?? 1;
-      if (pointMap[key]) {
-        pointMap[key].times += clickCount;
-      } else {
-        pointMap[key] = {
-          times: clickCount,
-          data: [(x / 100) * overlay.width, (y / 100) * overlay.height],
-        };
-      }
-      maxIntensity = Math.max(maxIntensity, pointMap[key].times);
-    });
-
-    const heatmapData: number[][] = [];
-    for (const key in pointMap) {
-      const { data, times } = pointMap[key];
-      heatmapData.push([...data, times]);
-    }
+    const { cells: heatmapData, max: maxIntensity } = heatmapCells(
+      clicks,
+      overlay.width,
+      overlay.height,
+    );
 
     const setToNormalized = (coords: number[]) => [
       `${roundToSecond((coords[0] / overlay.width) * 100)}`,
