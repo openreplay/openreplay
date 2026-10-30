@@ -27,9 +27,10 @@ export default class FilterService {
   fetchProperties = async (
     eventName: string,
     isAutoCapture: boolean = false,
+    projectId = 'PROJECT_ID',
   ) => {
     // en = eventName, ac = isAutoCapture
-    let path = `/PROJECT_ID/properties/search?en=${eventName}&ac=${isAutoCapture}`;
+    let path = `/${projectId}/properties/search?en=${eventName}&ac=${isAutoCapture}`;
     const response = await this.client.get(path);
     return await response.json();
   };

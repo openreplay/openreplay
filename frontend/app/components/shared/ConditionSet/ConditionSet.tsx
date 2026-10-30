@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 
 import {
   FilterBar,
+  FilterProjectContext,
   buildFilterEditor,
   seriesTarget,
   useCatalogue,
@@ -47,7 +48,10 @@ function ConditionSetComponent({
     () => all.filter((e) => (e.source as any)?.isConditional),
     [all],
   );
-  const editor = buildFilterEditor(seriesTarget(conditions.filter, onChanged));
+  const editor = buildFilterEditor(
+    seriesTarget(conditions.filter, onChanged),
+    React.useContext(FilterProjectContext),
+  );
   const [name, setName] = React.useState(conditions.name ?? '');
   React.useEffect(() => setName(conditions.name ?? ''), [conditions.name]);
 

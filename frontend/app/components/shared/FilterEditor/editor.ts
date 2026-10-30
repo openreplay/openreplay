@@ -16,10 +16,11 @@ const propIndexOf = (key: string) => Number(key.split('.')[1]);
 async function withDefaults(
   entry: CatalogueEntry,
   filter: Filter,
+  projectId?: string,
 ): Promise<Filter> {
   if (!entry.hasProperties) return filter;
   try {
-    const props = await filterStore.getEventFilters(entry.id);
+    const props = await filterStore.getEventFilters(entry.id, projectId);
     const defaults = (props ?? []).filter((p) => p.defaultProperty);
     return {
       ...filter,
@@ -37,7 +38,11 @@ async function withDefaults(
 /* adds wait for their defaults, in pick order, per list */
 const adds = new WeakMap<object, Promise<unknown>>();
 
-export function buildFilterEditor(target: FilterTarget): FilterEditor {
+/** `projectId`: the catalogue the list's events come from, when not the active one. */
+export function buildFilterEditor(
+  target: FilterTarget,
+  projectId?: string,
+): FilterEditor {
   const owner = target.owner ?? {};
   const all = target.filters.map((f, i) => viewOf(f, String(i)));
   const events = all.filter((f) => f.isEvent);
@@ -63,7 +68,7 @@ export function buildFilterEditor(target: FilterTarget): FilterEditor {
     onAdd: (entry) => {
       // defaults are fetched per event: queue the adds so a quick second pick
       // never lands before the first
-      const ready = withDefaults(entry, storeFilterFor(entry));
+      const ready = withDefaults(entry, storeFilterFor(entry), projectId);
       const next = (adds.get(owner) ?? Promise.resolve())
         .then(() => ready)
         .then(target.add)
@@ -73,7 +78,7 @@ export function buildFilterEditor(target: FilterTarget): FilterEditor {
     },
     onReplace: (key, entry) => {
       const before = current(key);
-      void withDefaults(entry, storeFilterFor(entry)).then((f) => {
+      void withDefaults(entry, storeFilterFor(entry), projectId).then((f) => {
         // the defaults fetch is async: the row may have moved or gone meanwhile
         const i = target.filters.indexOf(before);
         if (i >= 0) target.update(i, f);
