@@ -217,6 +217,8 @@ jobs:
 
             # Process each service
             for service in "${services[@]}"; do
+                service="${service//[[:space:]]/}"
+                [[ -z $service ]] && continue
                 echo "Processing service: $service"
                 cd "$WORKING_DIR"
 
