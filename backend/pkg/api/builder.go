@@ -278,7 +278,7 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 	if err != nil {
 		return nil, err
 	}
-	integrationsHandlers, err := integrationsAPI.NewHandlers(log, cfg.JsonSizeLimit, responser, integrator)
+	integrationsHandlers, err := integrationsAPI.NewHandlers(log, cfg.JsonSizeLimit, responser, requestHandler, integrator)
 	if err != nil {
 		return nil, err
 	}

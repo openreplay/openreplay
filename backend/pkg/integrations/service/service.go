@@ -30,6 +30,7 @@ type Service interface {
 	GetIntegration(projectID uint64, provider string) (interface{}, error)
 	DeleteIntegration(projectID uint64, provider string) error
 	GetSessionDataURL(projectID uint64, provider string, sessionID uint64) (string, error)
+	GetStatus(tenantID, userID uint64, canAccessProject func(uint32) bool) (map[string]*Status, error)
 }
 
 type serviceImpl struct {
