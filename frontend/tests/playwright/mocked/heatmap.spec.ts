@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { gzipSync } from 'node:zlib';
 
 import { session as recordedSession } from '../../mocks/sessionResponse';
 import { MOBS_HOST, PROJECT_ID, login, mockApi } from './mockApi';
@@ -618,5 +619,84 @@ test.describe('heatmap card', () => {
       )
       .toBeGreaterThan(0);
     await expect(page.locator('.m-cmap__thumb .m-cmap__reach')).toHaveCount(0);
+  });
+
+  test('a heatmap stands one column wide, two rows tall, on a dashboard', async ({
+    page,
+    baseURL,
+  }) => {
+    const { api } = await setup(page, baseURL!);
+    const snapshot = {
+      html: '<body style="margin:0;height:3000px">Landing</body>',
+      width: 1440,
+      height: 3000,
+      frameWidth: 1440,
+      frameHeight: 3000,
+    };
+    const thumbnail = `data:application/vnd.openreplay.page+gzip;base64,${gzipSync(
+      JSON.stringify(snapshot),
+    ).toString('base64')}`;
+    const trend = (metricId: number) => ({
+      metricId,
+      widgetId: metricId * 10,
+      name: `Trend ${metricId}`,
+      metricType: 'timeseries',
+      metricOf: 'sessionCount',
+      metricFormat: 'sessionCount',
+      viewType: 'lineChart',
+      series: [],
+      config: { position: metricId, col: 2, row: 1 },
+    });
+    const widgets = [
+      {
+        ...card,
+        widgetId: 100,
+        thumbnail,
+        config: { position: 0, col: 2, row: 1 },
+      },
+      trend(11),
+      trend(12),
+    ];
+    const dashboard = () => ({
+      dashboardId: 5,
+      name: 'E2E dashboard',
+      isPublic: true,
+      widgets,
+    });
+    api.on('GET', /\/dashboards$/, () => ({ data: [dashboard()] }));
+    api.on('GET', /\/dashboards\/5$/, () => ({ data: dashboard() }));
+    // nothing in the window: each trend keeps a chart's height
+    api.on('POST', /\/cards\/1[12]\/chart$/, () => ({ data: { chart: [] } }));
+    let resized: any;
+    api.on('PUT', /\/dashboards\/5\/widgets\/100$/, (_req, body) => {
+      resized = body;
+      return { data: body };
+    });
+
+    await page.goto(`/${PROJECT_ID}/dashboard/5`);
+    await expect(
+      page.locator('#widget-10 .m-cmap__thumb iframe'),
+    ).toBeVisible();
+    await expect(page.locator('#widget-12 .m-empty--quiet')).toBeVisible();
+    const box = async (id: number) =>
+      (await page.locator(`#widget-${id}`).boundingBox())!;
+    const [heat, upper, lower] = await Promise.all([box(10), box(11), box(12)]);
+
+    // the two trends stack beside it and end where it ends
+    expect(Math.abs(heat.width - upper.width)).toBeLessThan(1);
+    expect(upper.x).toBeGreaterThan(heat.x);
+    expect(lower.x).toBe(upper.x);
+    expect(Math.abs(heat.y - upper.y)).toBeLessThan(1);
+    expect(
+      Math.abs(heat.y + heat.height - (lower.y + lower.height)),
+    ).toBeLessThan(1);
+
+    await page.getByRole('button', { name: 'Actions for E2E heatmap' }).click();
+    await page.getByRole('menuitem', { name: 'Full width' }).click();
+    await expect.poll(() => resized?.config?.col).toBe(4);
+    await expect
+      .poll(async () => (await box(10)).width)
+      .toBeGreaterThan(upper.width * 2);
+    expect(Math.abs((await box(10)).height - heat.height)).toBeLessThan(1);
   });
 });

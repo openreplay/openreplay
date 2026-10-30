@@ -33,7 +33,10 @@
 /* masonry: rows are 2px tracks and each widget spans its own height
    (masonry.ts), so the next half drops into the shorter column */
 .m-dash__grid {
-  --m-widget-h: 240px;
+  --m-chart-h: 240px;
+  --m-widget-h: var(--m-chart-h);
+  /* what a widget adds around its chart: head, body padding, borders */
+  --m-widget-chrome: calc(2.75rem + var(--m-space-4) + var(--m-space-5) + 2px);
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-auto-flow: dense;
@@ -45,6 +48,12 @@
    a funnel or the vitals end where their content ends */
 .m-dash__widget .m-cmap__thumb {
   height: var(--m-widget-h);
+}
+/* two charts tall, with the gap and the lower one's chrome between them */
+.m-dash__widget.is-tall {
+  --m-widget-h: calc(
+    2 * var(--m-chart-h) + var(--m-widget-chrome) + var(--m-space-4)
+  );
 }
 
 .m-dash__widget {
