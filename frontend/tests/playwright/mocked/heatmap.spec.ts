@@ -505,6 +505,52 @@ test.describe('heatmap card', () => {
     await expect(page.locator('.m-nav')).not.toHaveClass(/is-collapsed/);
   });
 
+  test('opening a card is not an edit; picking a device is', async ({
+    page,
+    baseURL,
+  }) => {
+    const { api, chartRequests } = await setup(page, baseURL!);
+    const [first] = card.series;
+    const device = {
+      name: 'userDeviceType',
+      operator: 'is',
+      value: ['desktop'],
+      isEvent: false,
+      autoCaptured: false,
+    };
+    const withDevice = {
+      ...card,
+      series: [
+        {
+          ...first,
+          filter: {
+            ...first.filter,
+            filters: [...first.filter.filters, device],
+          },
+        },
+      ],
+    };
+    api.on('GET', /\/cards\/10$/, () => ({ data: withDevice }));
+    await page.goto(`/${PROJECT_ID}/metrics/10`);
+    await waitForOverlay(page);
+
+    const update = page.getByRole('button', { name: 'Update' });
+    await expect(update).toBeDisabled();
+
+    chartRequests.length = 0;
+    await page.getByTitle('Tablet').click();
+    await expect(update).toBeEnabled();
+    await expect
+      .poll(() =>
+        chartRequests.some((b) =>
+          b.series?.[0]?.filter.filters.some(
+            (f: any) => f.name === 'userDeviceType' && f.value[0] === 'tablet',
+          ),
+        ),
+      )
+      .toBe(true);
+  });
+
   test('a saved card shows its page on a dashboard, under the current heat', async ({
     page,
     baseURL,

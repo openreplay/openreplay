@@ -23,13 +23,9 @@ function ClickMapRagePicker() {
   const { metricStore, dashboardStore, filterStore } = useStore();
   const metric = metricStore.instance;
   // @ts-ignore
-  const metricPlatform = metric.series[0]?.filter.filters.find(
+  const platform = (metric.series[0]?.filter.filters.find(
     (f) => f.name === FilterKey.USER_DEVICE_TYPE,
-  )?.value[0] as 'desktop' | 'mobile' | 'tablet' | undefined;
-
-  const [platform, setPlatform] = React.useState<
-    'desktop' | 'mobile' | 'tablet'
-  >(metricPlatform ?? 'desktop');
+  )?.value[0] ?? 'desktop') as 'desktop' | 'mobile' | 'tablet';
   const { t } = useTranslation();
 
   const scrollMap = metric.metricOf === HEATMAP_SCROLL_MAP;
@@ -72,25 +68,37 @@ function ClickMapRagePicker() {
     [],
   );
 
-  React.useEffect(() => {
-    const platformId = metricStore.instance.series[0].filter.filters.findIndex(
+  // a heatmap is drawn for one device: one without a device filter gets the
+  // default, which is not an edit of the card
+  const setDevice = (device: string) => {
+    const { filter } = metricStore.instance.series[0];
+    const current = filter.filters.find(
       (f) => f.name === FilterKey.USER_DEVICE_TYPE,
     );
-    if (platformId >= 0) {
-      metricStore.instance.series[0].filter.filters[platformId].value = [
-        platform,
-      ];
-      metricStore.instance.updateKey('hasChanged', true);
-    } else {
-      const newFilter = filterStore.findEvent({
-        name: FilterKey.USER_DEVICE_TYPE,
-      });
-      if (newFilter) {
-        newFilter.value = [platform];
-        metricStore.instance.series[0].filter.addFilter(newFilter, true);
-      }
+    if (current) {
+      current.updateKey('value', [device]);
+      return;
     }
-  }, [platform]);
+    const newFilter = filterStore.findEvent({
+      name: FilterKey.USER_DEVICE_TYPE,
+    });
+    if (newFilter) {
+      newFilter.value = [device];
+      filter.addFilter(newFilter, true);
+    }
+  };
+
+  React.useEffect(() => {
+    const filters = metricStore.instance.series[0]?.filter.filters;
+    if (filters && !filters.some((f) => f.name === FilterKey.USER_DEVICE_TYPE))
+      setDevice(platform);
+  }, []);
+
+  const setPlatform = (device: 'desktop' | 'mobile' | 'tablet') => {
+    if (device === platform) return;
+    setDevice(device);
+    metricStore.instance.updateKey('hasChanged', true);
+  };
 
   return (
     <>
