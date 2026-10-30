@@ -117,7 +117,8 @@ function DashboardView({ siteId, dashboardId, renderReport }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [dashboardId]);
+    // a project switch asks again, and a miss lands in the new project
+  }, [dashboardId, siteId]);
 
   if (!dashboard) return <Loader loading className="mt-12" />;
 
