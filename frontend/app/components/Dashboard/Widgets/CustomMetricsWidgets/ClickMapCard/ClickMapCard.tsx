@@ -94,7 +94,6 @@ function HeatmapLegend({
   const clicks = points?.reduce((n, p) => n + (p.count ?? 1), 0) ?? 0;
   return (
     <p className="m-cmap__legend">
-      {url && <span className="m-cmap__url m-mono">{url}</span>}
       {reach ? (
         <>
           <span>
@@ -104,7 +103,7 @@ function HeatmapLegend({
             })}
           </span>
           <span>
-            {t('Half reach {{depth}}% of the page', { depth: reach.median })}
+            {t('Median scroll depth is {{depth}}%', { depth: reach.median })}
           </span>
           <span
             className="m-cmap__scale is-scroll m-scheme-light"
