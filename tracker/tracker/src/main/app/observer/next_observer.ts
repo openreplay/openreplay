@@ -45,7 +45,7 @@ import {
 } from '../untaintedDom.js'
 import NextNodes, { Rec } from '../nodes/next_nodes.js'
 import IFrameOffsets, { Offset } from './iframe_offsets.js'
-import { isIgnored, sendNodeAttribute, AttributeContext } from './observer.js'
+import { isIgnored, sendNodeAttribute, sendContentAttributes, AttributeContext } from './observer.js'
 import type TopObserver from './top_observer.js'
 import { getInlineOptions, sendColorScheme, Options } from './top_observer.js'
 
@@ -921,6 +921,7 @@ export default class NextObserver
     if (node.nodeType === TEXT) {
       this.sendNodeData(r.id, parentNode(node) as Element, (node as Text).data)
     } else if (node.nodeType === ELEMENT) {
+      sendContentAttributes(this.attrCtx, r.id, node as Element)
       // inputs/images/canvas re-emit their own payload via registered callbacks
       this.app.callResanitizeCallbacks(node, r.id)
     }

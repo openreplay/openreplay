@@ -27,7 +27,7 @@ import {
 } from '../guards.js'
 import { inlineRemoteCss } from './cssInliner.js'
 import { nextID } from '../../modules/constructedStyleSheets.js'
-import { SanitizeLevel } from '../sanitizer.js'
+import { SanitizeLevel, stringWiper } from '../sanitizer.js'
 import { parentNode, previousSibling, nextSibling, firstChild } from '../untaintedDom.js'
 
 const iconCache = {}
@@ -199,6 +199,49 @@ export function shouldSkipValueAttribute(node: Element): boolean {
   return hasTag(node, 'input') && !PRESERVE_VALUE_INPUT_TYPES.has(node.type)
 }
 
+// Attributes that can hold page text. The rest (class, style, aria-expanded, SVG geometry...)
+// stays, so masked content lays out and styles the same in replays.
+const CONTENT_ATTRIBUTES = new Set([
+  'abbr',
+  'alt',
+  'aria-description',
+  'aria-label',
+  'aria-placeholder',
+  'aria-roledescription',
+  'aria-valuetext',
+  'data-openreplay-label',
+  'datetime',
+  'label',
+  'placeholder',
+  'title',
+  'value',
+])
+const BUTTON_INPUT_TYPES = new Set(['button', 'reset', 'submit'])
+
+function isContentAttribute(el: Element, name: string): boolean {
+  if (name === 'value') {
+    // the rest draw or select on it: list numbering, gauges, [value=x]:checked
+    const tag = el.localName
+    if (tag === 'input') return BUTTON_INPUT_TYPES.has((el as HTMLInputElement).type)
+    return tag !== 'li' && tag !== 'meter' && tag !== 'progress'
+  }
+  return CONTENT_ATTRIBUTES.has(name)
+}
+
+const isDataAttribute = (name: string) =>
+  name.startsWith('data-') && !name.startsWith('data-openreplay-')
+
+function maskAttribute(app: App, id: number, el: Element, name: string, value: string): string {
+  if (!app.sanitizer.isObscured(id)) return value
+  if (
+    isContentAttribute(el, name) ||
+    (isDataAttribute(name) && app.sanitizer.masksDataAttributes(id, el))
+  ) {
+    return stringWiper(value)
+  }
+  return value
+}
+
 export interface AttributeContext {
   readonly app: App
   readonly disableSprites: boolean
@@ -244,7 +287,7 @@ export function sendNodeAttribute(
       }
       app.send(SetNodeAttributeURLBased(id, name, value, app.getBaseHref()))
     } else {
-      app.attributeSender.sendSetAttribute(id, name, value)
+      app.attributeSender.sendSetAttribute(id, name, maskAttribute(app, id, node, name, value))
     }
     return
   }
@@ -316,10 +359,18 @@ export function sendNodeAttribute(
   if (name === 'href' || value.length > 1e5) {
     value = ''
   }
-  if ((name === 'alt' || name === 'placeholder') && app.sanitizer.privateMode) {
-    value = value.replaceAll(/./g, '*')
+  app.attributeSender.sendSetAttribute(id, name, maskAttribute(app, id, node, name, value))
+}
+
+/** After a level change: re-sends the attributes whose masking depends on it. */
+export function sendContentAttributes(ctx: AttributeContext, id: number, el: Element): void {
+  const attrs = el.attributes
+  for (let i = 0; i < attrs.length; i++) {
+    const name = attrs[i].nodeName
+    if (isContentAttribute(el, name) || isDataAttribute(name)) {
+      sendNodeAttribute(ctx, id, el, name, attrs[i].value)
+    }
   }
-  app.attributeSender.sendSetAttribute(id, name, value)
 }
 
 /*
@@ -624,6 +675,7 @@ export default abstract class Observer {
     // Disable parent check for the upper context HTMLHtmlElement, because it is root there... (before)
     // TODO: get rid of "special" cases (there is an issue with CreateDocument altered behaviour though)
     // TODO: Clean the logic (though now it workd fine)
+    const prevLevel = this.app.sanitizer.getLevel(id)
     if (!hasTag(node, 'html') || !this.isTopContext) {
       if (parent === null) {
         this.unbindTree(node)
@@ -720,6 +772,10 @@ export default abstract class Observer {
         this.slotMap.delete(id)
         this.app.send(SetNodeSlot(id, 0))
       }
+    }
+    if (isElementNode(node) && this.app.sanitizer.getLevel(id) !== prevLevel) {
+      // raised by an attribute change or a move: what was sent at the old level is re-sent
+      sendContentAttributes(this.attrCtx, id, node)
     }
     const attr = this.attributesMap.get(id)
     if (attr !== undefined) {
@@ -870,6 +926,7 @@ export default abstract class Observer {
   /** The top <html> can't become a placeholder (it is the replay root): its children are rebuilt instead. */
   private recreateChildren(node: Node, id: number, level: SanitizeLevel, wasHidden: boolean): void {
     this.app.sanitizer.setLevel(id, level)
+    if (isElementNode(node)) sendContentAttributes(this.attrCtx, id, node)
     for (let child = firstChild(node); child !== null; child = nextSibling(child)) {
       const childId = this.app.nodes.getID(child)
       if (childId !== undefined) {
@@ -928,6 +985,7 @@ export default abstract class Observer {
       return
     }
     if (isElementNode(node)) {
+      sendContentAttributes(this.attrCtx, id, node)
       // inputs/images/canvas re-emit their own payload via registered callbacks
       this.app.callResanitizeCallbacks(node, id)
     }

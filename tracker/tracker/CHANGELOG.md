@@ -5,6 +5,7 @@
 - `adoptedStyleSheets.push()` / `splice()` / index writes are recorded (only assignment was)
 - attribute string dictionary hits no longer re-insert into the LRU map on every lookup (~4µs → ~30ns per attribute)
 - privacy: selection text inside masked content, a password field switched to `type=text`, and the content of an iframe or shadow root under a masked host or ancestor are no longer recorded in plain; a hidden iframe's document or hidden host's shadow root is no longer recorded at all, also when masked or hidden later through `resanitize()`; `data-openreplay-hidden`/`-masked` on `<html>` applies to the whole page (was ignored)
+- privacy: attributes that can hold page text (`title`, `alt`, `placeholder`, `label`, `aria-label` and similar, `<option>`/button `value`) are masked on masked and hidden nodes, also when changed or masked later; `data-*` are masked too, except under the `privateMode` default since styles often select on them: there only `data-openreplay-obscured`/`-masked` or a hidden node masks them. In `privateMode`, `alt`/`placeholder` inside `data-openreplay-unmask` are no longer starred
 - `replaceHashSymbol` no longer resends the page location on every tick
 - JS errors and rejections from same-origin iframes are recorded (were dropped / sent as `{}`), their console logs are recorded again after a stop/start
 - font sources with relative `url()` are resolved against the page, web vitals aren't duplicated after a restart

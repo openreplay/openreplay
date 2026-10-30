@@ -213,6 +213,17 @@ export default class Sanitizer {
     return this.getLevel(id) >= SanitizeLevel.Obscured
   }
 
+  /**
+   * data-* mostly hold UI state that styles select on ([data-state=open]): masked under an
+   * explicit mask or hide only, not under the page-wide privateMode default.
+   */
+  masksDataAttributes(id: number, el: Element): boolean {
+    const level = this.getLevel(id)
+    if (level === SanitizeLevel.Hidden) return true
+    if (level !== SanitizeLevel.Obscured) return false
+    return !this.options.privateMode || closestComposed(el, MASK_SELECTOR) !== null
+  }
+
   isHidden(id: number) {
     return this.getLevel(id) === SanitizeLevel.Hidden
   }
