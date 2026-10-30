@@ -7,7 +7,12 @@ export { EntryField } from './EntryField';
 export { FilterPicker, PickerBody, entryIcon } from './FilterPicker';
 export { FilterPanel } from './FilterPanel';
 export { buildFilterEditor } from './editor';
-export { useCatalogue, useEventProperties, useValueOptions } from './data';
+export {
+  FilterProjectContext,
+  useCatalogue,
+  useEventProperties,
+  useValueOptions,
+} from './data';
 export {
   searchTarget,
   liveSearchTarget,

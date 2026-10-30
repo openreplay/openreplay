@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 import { useStore } from 'App/mstore';
 import { getPropertyName, topValuesKey } from 'App/mstore/filterStore';
@@ -8,12 +8,19 @@ import { searchService } from 'App/services';
 import { entryFromFilter } from './catalogue';
 import type { CatalogueEntry, SearchFilter } from './types';
 
+/** The project whose catalogue, properties and values the editor offers;
+    unset means the active one. */
+export const FilterProjectContext = createContext<string | undefined>(
+  undefined,
+);
+
 /** The project catalogue as picker entries; call inside an observer. */
 export function useCatalogue(scope?: string[]): CatalogueEntry[] {
   const { filterStore } = useStore();
+  const projectId = useContext(FilterProjectContext);
   const raw = scope
-    ? filterStore.getScopedCurrentProjectFilters(scope)
-    : filterStore.getCurrentProjectFilters();
+    ? filterStore.getScopedCurrentProjectFilters(scope, projectId)
+    : filterStore.getCurrentProjectFilters(projectId);
   return useMemo(() => raw.map(entryFromFilter), [raw]);
 }
 
@@ -23,6 +30,7 @@ export function useEventProperties(
   enabled: boolean,
 ): { entries: CatalogueEntry[]; loading: boolean } {
   const { filterStore } = useStore();
+  const projectId = useContext(FilterProjectContext);
   const [entries, setEntries] = useState<CatalogueEntry[]>([]);
   const [loading, setLoading] = useState(false);
   useEffect(() => {
@@ -30,7 +38,7 @@ export function useEventProperties(
     let alive = true;
     setLoading(true);
     filterStore
-      .getEventFilters(entry.id)
+      .getEventFilters(entry.id, projectId)
       .then((props: Filter[] | undefined) => {
         if (alive) setEntries((props ?? []).map(entryFromFilter));
       })
@@ -39,7 +47,7 @@ export function useEventProperties(
     return () => {
       alive = false;
     };
-  }, [enabled, entry.id]);
+  }, [enabled, entry.id, projectId]);
   return { entries, loading };
 }
 
@@ -67,6 +75,7 @@ export function useValueOptions(
   live = false,
 ): { options: ValueOption[]; loading: boolean } {
   const { filterStore } = useStore();
+  const projectId = useContext(FilterProjectContext);
   const { entry } = filter;
   const [found, setFound] = useState<ValueOption[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -74,8 +83,8 @@ export function useValueOptions(
 
   useEffect(() => {
     if (!open || entry.options || entry.isEvent) return;
-    void filterStore.fetchTopValues(entry.id, live);
-  }, [open, entry.id, live]);
+    void filterStore.fetchTopValues(entry.id, live, projectId);
+  }, [open, entry.id, live, projectId]);
 
   useEffect(() => {
     if (!open || entry.options || !q) {
@@ -95,7 +104,7 @@ export function useValueOptions(
         params.propertyName = getPropertyName(entry.source, live);
       if (filter.eventName) params.eventName = filter.eventName;
       searchService
-        .fetchAutoCompleteValues(params)
+        .fetchAutoCompleteValues(params, projectId)
         .then((data: any) => {
           const list = Array.isArray(data) ? data : (data?.events ?? []);
           if (alive) setFound(list.map(toOption));
@@ -107,7 +116,7 @@ export function useValueOptions(
       alive = false;
       clearTimeout(handle);
     };
-  }, [open, q, entry.id]);
+  }, [open, q, entry.id, projectId]);
 
   if (entry.options) {
     const lower = q.toLowerCase();
@@ -122,7 +131,7 @@ export function useValueOptions(
     };
   }
   if (found) return { options: found, loading };
-  const top = (filterStore.topValues[topValuesKey(entry.id, live)] ??
+  const top = (filterStore.topValues[topValuesKey(entry.id, live, projectId)] ??
     []) as any[];
   return { options: top.map(toOption), loading };
 }

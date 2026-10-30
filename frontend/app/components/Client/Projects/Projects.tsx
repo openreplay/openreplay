@@ -55,12 +55,8 @@ function Projects() {
     return () => {
       // the session filters and the player list the active project's metadata
       // keys: rebuild them (a global filter map reset) only if they were edited
-      // here or another project's keys were loaded in their place
-      const active = `${projectsStore.activeSiteId}`;
-      const other = (v?: string) => v !== undefined && v !== active;
-      const { changed, listFor, filtersFor } = customFieldStore;
-      if (changed || other(listFor) || other(filtersFor))
-        void customFieldStore.fetchListActive(active);
+      if (customFieldStore.changed)
+        void customFieldStore.fetchListActive(`${projectsStore.activeSiteId}`);
     };
   }, []);
 

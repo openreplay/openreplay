@@ -63,15 +63,21 @@ export default class SearchService extends BaseService {
     return j.data;
   }
 
-  async fetchTopValues(params: Record<string, any>): Promise<any> {
-    const url = `/PROJECT_ID/properties/autocomplete`;
+  async fetchTopValues(
+    params: Record<string, any>,
+    projectId = 'PROJECT_ID',
+  ): Promise<any> {
+    const url = `/${projectId}/properties/autocomplete`;
     const r = await this.client.get(url, params);
     const j = await r.json();
     return j.data;
   }
 
-  async fetchAutoCompleteValues(params: Record<string, any>): Promise<any> {
-    const url = `/PROJECT_ID/properties/autocomplete`;
+  async fetchAutoCompleteValues(
+    params: Record<string, any>,
+    projectId = 'PROJECT_ID',
+  ): Promise<any> {
+    const url = `/${projectId}/properties/autocomplete`;
     const r = await this.client.get(url, params);
     const j = await r.json();
     return j.data;

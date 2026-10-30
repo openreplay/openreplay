@@ -1,23 +1,13 @@
-import { projectStore } from '@/mstore/index';
-import { toast } from '@/ui/overlays/toast';
 import Webhook, { IWebhook } from 'Types/webhook';
 import { makeAutoObservable, observable, runInAction } from 'mobx';
 
 import { MENU_COLLAPSED } from 'App/constants/storageKeys';
-import { sessionService, webhookService } from 'App/services';
+import { webhookService } from 'App/services';
 
 import SessionSettings from './types/sessionSettings';
 
-interface CaptureConditions {
-  rate: number;
-  conditionalCapture: boolean;
-  conditions: { name: string; captureRate: number; filters: any[] }[];
-}
-
 export default class SettingsStore {
-  loadingCaptureRate: boolean = false;
   sessionSettings: SessionSettings = new SessionSettings();
-  captureRateFetched: boolean = false;
   limits: any = null;
   webhooks: Webhook[] = [];
   webhookInst = new Webhook();
@@ -40,117 +30,6 @@ export default class SettingsStore {
   foldMenu = (folded: boolean | null) => {
     this.menuCollapsed =
       folded ?? localStorage.getItem(MENU_COLLAPSED) === 'true';
-  };
-
-  saveCaptureRate = (projectId: number, data: any) =>
-    sessionService
-      .saveCaptureRate(projectId, data)
-      .then((data) => data.json())
-      .then(({ data }) => {
-        this.sessionSettings.merge({
-          captureRate: data.rate,
-          conditionalCapture: data.conditionalCapture,
-        });
-        toast.success('Settings updated successfully');
-        return true;
-      })
-      .catch(() => {
-        toast.error('Error saving capture rate');
-        return false;
-      });
-
-  fetchCaptureRate = (projectId: number): Promise<any> => {
-    this.loadingCaptureRate = true;
-    return sessionService
-      .fetchCaptureRate(projectId)
-      .then((data) => {
-        this.sessionSettings.merge({
-          captureRate: data.rate,
-          conditionalCapture: data.conditionalCapture,
-        });
-        this.captureRateFetched = true;
-      })
-      .finally(() => {
-        this.loadingCaptureRate = false;
-      });
-  };
-
-  /** The project whose capture settings are in `sessionSettings`; null while
-      another project's are loading, so nothing can be saved across projects. */
-  captureConditionsFor: number | null = null;
-
-  private captureSeq = 0;
-
-  fetchCaptureConditions = async (projectId: number): Promise<any> => {
-    const seq = ++this.captureSeq;
-    this.loadingCaptureRate = true;
-    this.captureConditionsFor = null;
-    try {
-      const data = await sessionService.fetchCaptureConditions(projectId);
-      if (seq !== this.captureSeq) return;
-      runInAction(() => {
-        this.sessionSettings.merge({
-          captureRate: data.rate,
-          conditionalCapture: data.conditionalCapture,
-          captureConditions: data.conditions,
-        });
-        this.captureConditionsFor = projectId;
-      });
-    } catch (e) {
-      if (seq === this.captureSeq)
-        toast.error('Could not load capture settings');
-    } finally {
-      if (seq === this.captureSeq)
-        runInAction(() => {
-          this.loadingCaptureRate = false;
-        });
-    }
-  };
-
-  /** Resolves to whether the settings were saved. */
-  updateCaptureConditions = (
-    projectId: number,
-    data: CaptureConditions,
-  ): Promise<boolean> => {
-    if (this.captureConditionsFor !== projectId) return Promise.resolve(false);
-    this.loadingCaptureRate = true;
-    const duplicates = data.conditions.filter(
-      (c, index) =>
-        data.conditions.findIndex((c2) => c2.name === c.name) !== index,
-    );
-    if (duplicates.length > 0) {
-      toast.error('Condition set names must be unique');
-      this.loadingCaptureRate = false;
-      return Promise.resolve(false);
-    }
-    return sessionService
-      .saveCaptureConditions(projectId, data)
-      .then((data) => data.json())
-      .then(({ data }) => {
-        this.sessionSettings.merge({
-          captureRate: data.rate,
-          conditionalCapture: data.conditionalCapture,
-          captureConditions: data.conditions,
-        });
-
-        try {
-          projectStore.syncProjectInList({
-            id: `${projectId}`,
-            sampleRate: data.rate,
-          });
-        } catch (e) {
-          console.error('Failed to update project in list:', e);
-        }
-        toast.success('Settings updated successfully');
-        return true;
-      })
-      .catch(() => {
-        toast.error('Error saving capture rate');
-        return false;
-      })
-      .finally(() => {
-        this.loadingCaptureRate = false;
-      });
   };
 
   fetchWebhooks = async () => {

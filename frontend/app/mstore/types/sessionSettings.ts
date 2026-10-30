@@ -1,14 +1,15 @@
+import { DateTime, Settings } from 'luxon';
 import { makeAutoObservable, runInAction } from 'mobx';
+
 import {
+  DURATION_FILTER,
+  MOUSE_TRAIL,
+  SHOWN_TIMEZONE,
   SKIP_TO_ISSUE,
   TIMEZONE,
   TIMEZONE_LOCAL,
-  SHOWN_TIMEZONE,
-  DURATION_FILTER,
-  MOUSE_TRAIL,
   VIRTUAL_MODE_KEY,
 } from 'App/constants/storageKeys';
-import { DateTime, Settings } from 'luxon';
 
 export type Timezone = {
   label: string;
@@ -78,10 +79,6 @@ export default class SessionSettings {
     localStorage.getItem(DURATION_FILTER) ||
       JSON.stringify(defaultDurationFilter),
   );
-  captureRate: string = '0';
-  conditionalCapture: boolean = false;
-  captureConditions: { name: string; captureRate: number; filters: any[] }[] =
-    [];
   mouseTrail: boolean = localStorage.getItem(MOUSE_TRAIL) !== 'false';
   shownTimezone: 'user' | 'local';
   virtualMode: boolean = localStorage.getItem(VIRTUAL_MODE_KEY) === 'true';
@@ -124,16 +121,6 @@ export default class SessionSettings {
     }
   };
 
-  changeCaptureRate = (rate: string) => {
-    if (!rate) return (this.captureRate = '0');
-    // react do no see the difference between 01 and 1 decimals, this is why we have to use string casting
-    if (parseInt(rate, 10) <= 100) this.captureRate = `${parseInt(rate, 10)}`;
-  };
-
-  changeConditionalCapture = (all: boolean) => {
-    this.conditionalCapture = all;
-  };
-
   updateTimezone = (value: Timezone, local?: boolean) => {
     this.timezone = value;
     Settings.defaultZone = value.value;
@@ -148,7 +135,6 @@ export default class SessionSettings {
       this[key] = value;
     });
 
-    if (key === 'captureRate' || key === 'captureAll') return;
     if (key === 'shownTimezone') {
       return localStorage.setItem(SHOWN_TIMEZONE, value as string);
     }
