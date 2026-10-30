@@ -18,11 +18,25 @@ const PRESERVE = new Set(['button', 'reset', 'submit', 'checkbox', 'radio'])
 const isSVG = (el: Element) =>
   el.namespaceURI === 'http://www.w3.org/2000/svg' || el.localName === 'svg'
 
-function attr(el: Element, name: string, value: string): [string, string] | null {
+// attributes that can hold page text are masked along with it (no privateMode here)
+const CONTENT = new Set([
+  'abbr', 'alt', 'aria-description', 'aria-label', 'aria-placeholder', 'aria-roledescription',
+  'aria-valuetext', 'data-openreplay-label', 'datetime', 'label', 'placeholder', 'title', 'value',
+])
+function isMasked(el: Element, name: string, lvl: SanitizeLevel) {
+  if (lvl < SanitizeLevel.Obscured) return false
+  if (name === 'value') {
+    if (el.localName === 'input') return ['button', 'reset', 'submit'].includes((el as HTMLInputElement).type)
+    return !['li', 'meter', 'progress'].includes(el.localName)
+  }
+  return CONTENT.has(name) || (name.startsWith('data-') && !name.startsWith('data-openreplay-'))
+}
+
+function attr(el: Element, name: string, value: string, lvl: SanitizeLevel): [string, string] | null {
   if (isSVG(el)) {
     if (name.startsWith('xlink:')) name = name.substring(6)
     if (name === 'href' && value.length > 1e5) value = ''
-    return [name, value]
+    return [name, isMasked(el, name, lvl) ? stringWiper(value) : value]
   }
   if (
     name === 'src' ||
@@ -37,7 +51,7 @@ function attr(el: Element, name: string, value: string): [string, string] | null
     return null
   if (name === 'style' || (name === 'href' && el.localName === 'link')) return [name, value]
   if (name === 'href' || value.length > 1e5) value = ''
-  return [name, value]
+  return [name, isMasked(el, name, lvl) ? stringWiper(value) : value]
 }
 
 function maskEmails(data: string) {
@@ -153,7 +167,7 @@ export function expectedTree(
       const a = el.attributes[i]
       // placeholder size is sampled when the node is created; don't compare it
       if (hidden && a.nodeName === 'style') continue
-      const r = attr(el, a.nodeName, a.value)
+      const r = attr(el, a.nodeName, a.value, lvl)
       if (r) list.push(r)
     }
     list.push(...extra)
