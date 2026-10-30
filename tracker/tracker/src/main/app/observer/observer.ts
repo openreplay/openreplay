@@ -28,11 +28,49 @@ import {
 } from '../guards.js'
 import { inlineRemoteCss } from './cssInliner.js'
 import { nextID } from '../../modules/constructedStyleSheets.js'
-import { SanitizeLevel } from '../sanitizer.js'
+import { SanitizeLevel, stringWiper } from '../sanitizer.js'
 import { parentNode, previousSibling, nextSibling, firstChild } from '../untaintedDom.js'
 
 const iconCache = {}
 const svgUrlCache = {}
+
+// Attributes that can hold page content. Others (class, style, aria-expanded, colspan, SVG
+// geometry...) are kept so masked regions still lay out and style correctly in replays.
+const CONTENT_ATTRIBUTES = new Set([
+  'alt',
+  'aria-description',
+  'aria-label',
+  'aria-placeholder',
+  'aria-roledescription',
+  'aria-valuetext',
+  'content',
+  'data-openreplay-label',
+  'datetime',
+  'label',
+  'placeholder',
+  'srcdoc',
+  'title',
+  'value',
+])
+
+// data-* can hold anything, so it is masked too, apart from our own markers (data-openreplay-label
+// is listed above).
+function isContentAttribute(node: Element, name: string): boolean {
+  if (name === 'value' && hasTag(node, 'input') && ['checkbox', 'radio'].includes(node.type)) {
+    return false
+  }
+  return (
+    CONTENT_ATTRIBUTES.has(name) ||
+    (name.startsWith('data-') && !name.startsWith('data-openreplay-'))
+  )
+}
+
+function isStyleState(node: Element, name: string): boolean {
+  if (name === 'value') {
+    return ['li', 'meter', 'progress'].includes(node.localName)
+  }
+  return name.startsWith('data-') && !CONTENT_ATTRIBUTES.has(name)
+}
 
 export async function parseUseEl(
   useElement: SVGUseElement,
@@ -425,7 +463,11 @@ export default abstract class Observer {
         }
         this.app.send(SetNodeAttributeURLBased(id, name, value!, this.app.getBaseHref()))
       } else {
-        this.app.attributeSender.sendSetAttribute(id, name, value!)
+        this.app.attributeSender.sendSetAttribute(
+          id,
+          name,
+          this.maskAttribute(id, node, name, value),
+        )
       }
       return
     }
@@ -501,7 +543,18 @@ export default abstract class Observer {
     if (['alt', 'placeholder'].includes(name) && this.app.sanitizer.privateMode) {
       value = value.replaceAll(/./g, '*')
     }
-    this.app.attributeSender.sendSetAttribute(id, name, value)
+    this.app.attributeSender.sendSetAttribute(id, name, this.maskAttribute(id, node, name, value))
+  }
+
+  private maskAttribute(id: number, node: Element, name: string, value: string): string {
+    const sanitizer = this.app.sanitizer
+    if (!sanitizer.isObscured(id) || !isContentAttribute(node, name)) {
+      return value
+    }
+    if (isStyleState(node, name) && sanitizer.isPrivateDefault(id, node)) {
+      return value
+    }
+    return stringWiper(value)
   }
 
   throttling = true
@@ -613,6 +666,7 @@ export default abstract class Observer {
 
     const parent = parentNode(node)
     let parentID: number | undefined
+    const prevLevel = this.app.sanitizer.getLevel(id)
 
     // Disable parent check for the upper context HTMLHtmlElement, because it is root there... (before)
     // TODO: get rid of "special" cases (there is an issue with CreateDocument altered behaviour though)
@@ -709,6 +763,9 @@ export default abstract class Observer {
         this.slotMap.delete(id)
         this.app.send(SetNodeSlot(id, 0))
       }
+    }
+    if (this.app.sanitizer.getLevel(id) !== prevLevel) {
+      this.reemitNode(id, node)
     }
     const attr = this.attributesMap.get(id)
     if (attr !== undefined) {
@@ -875,6 +932,12 @@ export default abstract class Observer {
       return
     }
     if (isElementNode(node)) {
+      // content attributes are masked by level, so re-send them at the new one
+      for (const { name, value } of Array.from(node.attributes)) {
+        if (isContentAttribute(node, name)) {
+          this.sendNodeAttribute(id, node, name, value)
+        }
+      }
       // inputs/images/canvas re-emit their own payload via registered callbacks
       this.app.callResanitizeCallbacks(node, id)
     }

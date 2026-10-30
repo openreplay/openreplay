@@ -1,6 +1,7 @@
 import type App from './index.js'
 import { stars, hasOpenreplayAttribute } from '../utils.js'
 import { isElementNode, isTextNode } from './guards.js'
+import { parentNode } from './untaintedDom.js'
 
 export enum SanitizeLevel {
   Plain,
@@ -206,8 +207,52 @@ export default class Sanitizer {
     return this.getLevel(id) >= SanitizeLevel.Obscured
   }
 
+  isPrivateDefault(id: number, node: Element): boolean {
+    if (
+      !this.privateMode ||
+      this.getLevel(id) !== SanitizeLevel.Obscured ||
+      closestComposed(node, MASK_SELECTOR) !== null
+    ) {
+      return false
+    }
+    const { domSanitizer } = this.options
+    for (let el: Element | null = node; domSanitizer && el; el = composedParentElement(el)) {
+      if (domSanitizer(el) === SanitizeLevel.Obscured) {
+        return false
+      }
+    }
+    return true
+  }
+
   isHidden(id: number) {
     return this.getLevel(id) === SanitizeLevel.Hidden
+  }
+
+  // Whether any text a selection range covers is masked. Walks only the covered text nodes,
+  // since ancestors of the range (e.g. <body> in privateMode) can be masked while it isn't.
+  intersectsObscured(range: Range): boolean {
+    const start = range.startContainer
+    const walker = document.createTreeWalker(range.commonAncestorContainer, NodeFilter.SHOW_TEXT)
+    walker.currentNode = start
+    let inRange = false
+    for (let text = isTextNode(start) ? start : walker.nextNode(); text; text = walker.nextNode()) {
+      if (range.intersectsNode(text)) {
+        inRange = true
+        if (this.isTextObscured(text)) return true
+      } else if (inRange) {
+        break
+      }
+    }
+    return false
+  }
+
+  // Text under a hidden element isn't registered, so use its nearest registered ancestor.
+  private isTextObscured(text: Node): boolean {
+    for (let node: Node | null = text; node !== null; node = parentNode(node)) {
+      const id = this.app.nodes.getID(node)
+      if (id !== undefined) return this.isObscured(id)
+    }
+    return false
   }
 
   getInnerTextSecure(el: HTMLElement): string {

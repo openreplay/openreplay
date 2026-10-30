@@ -1,5 +1,14 @@
 import type App from '../app/index.js'
 import { SelectionChange } from '../app/messages.gen.js'
+import { stringWiper } from '../app/sanitizer.js'
+
+// Selected text is read from the live page, so wipe it when it covers masked text.
+function touchesObscured(app: App, selection: Selection): boolean {
+  for (let i = 0; i < selection.rangeCount; i++) {
+    if (app.sanitizer.intersectsObscured(selection.getRangeAt(i))) return true
+  }
+  return false
+}
 
 function selection(app: App) {
   app.attachEventListener(document, 'selectionchange', () => {
@@ -7,8 +16,9 @@ function selection(app: App) {
     if (selection !== null && !selection.isCollapsed) {
       const selectionStart = app.nodes.getID(selection.anchorNode!)
       const selectionEnd = app.nodes.getID(selection.focusNode!)
-      const selectedText = selection.toString().replace(/\s+/g, ' ')
       if (selectionStart && selectionEnd) {
+        const text = selection.toString().replace(/\s+/g, ' ')
+        const selectedText = touchesObscured(app, selection) ? stringWiper(text) : text
         app.send(SelectionChange(selectionStart, selectionEnd, selectedText))
       }
     } else {
