@@ -84,7 +84,7 @@ describe('attributes of masked nodes', () => {
     expect(attributes('#o')).toEqual({ id: 'o', value: '**** *****' })
   })
 
-  test('keeps values that hold state: checkbox, radio, list numbering and gauges', () => {
+  test('keeps checkbox and radio values, which selectors like [value=x]:checked rely on', () => {
     setup(
       '<div data-openreplay-obscured>' +
         '<input id="c" type="checkbox" value="yes"><input id="r" type="radio" value="card">' +
@@ -94,9 +94,9 @@ describe('attributes of masked nodes', () => {
     )
     expect(attributes('#c').value).toBe('yes')
     expect(attributes('#r').value).toBe('card')
-    expect(attributes('#l').value).toBe('3')
-    expect(attributes('#p').value).toBe('50')
     expect(attributes('#b').value).toBe('*** ****')
+    expect(attributes('#l').value).toBe('*')
+    expect(attributes('#p').value).toBe('**')
   })
 
   test('keeps layout and state attributes, so masked regions still replay correctly', () => {
@@ -185,9 +185,10 @@ describe('attributes of masked nodes', () => {
     expect(attributes('#s').title).toBe('**** *****')
   })
 
-  test('in privateMode, wipes content attributes but keeps data-* and unmasked regions', () => {
+  test('in privateMode, wipes content attributes but keeps styling state and unmasked regions', () => {
     setup(
       '<span id="s" title="Jane Smith" data-state="open" aria-expanded="true"></span>' +
+        '<ol><li id="l" value="3">x</li></ol><progress id="p" value="50" max="100"></progress>' +
         '<div data-openreplay-unmask><span id="u" title="Apply now"></span></div>',
       { privateMode: true },
     )
@@ -197,12 +198,15 @@ describe('attributes of masked nodes', () => {
       'data-state': 'open',
       'aria-expanded': 'true',
     })
+    expect(attributes('#l').value).toBe('3')
+    expect(attributes('#p').value).toBe('50')
     expect(attributes('#u')).toEqual({ id: 'u', title: 'Apply now' })
   })
 
-  test('in privateMode, still wipes data-* under an explicit mask', () => {
+  test('in privateMode, still wipes styling state under an explicit mask', () => {
     setup(
-      '<div data-openreplay-obscured><span id="o" data-name="Jane"></span></div>' +
+      '<div data-openreplay-obscured><span id="o" data-name="Jane"></span>' +
+        '<ol><li id="l" value="3">x</li></ol></div>' +
         '<div class="name"><span id="d" data-name="Jane"></span></div>',
       {
         privateMode: true,
@@ -211,6 +215,7 @@ describe('attributes of masked nodes', () => {
       },
     )
     expect(attributes('#o')['data-name']).toBe('****')
+    expect(attributes('#l').value).toBe('*')
     expect(attributes('#d')['data-name']).toBe('****')
   })
 })

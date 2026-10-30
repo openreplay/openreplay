@@ -53,23 +53,23 @@ const CONTENT_ATTRIBUTES = new Set([
   'value',
 ])
 
-function isStateValue(node: Element): boolean {
-  if (hasTag(node, 'input')) {
-    return ['checkbox', 'radio'].includes(node.type)
-  }
-  return ['li', 'meter', 'progress'].includes(node.localName)
-}
-
 // data-* can hold anything, so it is masked too, apart from our own markers (data-openreplay-label
 // is listed above).
 function isContentAttribute(node: Element, name: string): boolean {
-  if (name === 'value' && isStateValue(node)) {
+  if (name === 'value' && hasTag(node, 'input') && ['checkbox', 'radio'].includes(node.type)) {
     return false
   }
   return (
     CONTENT_ATTRIBUTES.has(name) ||
     (name.startsWith('data-') && !name.startsWith('data-openreplay-'))
   )
+}
+
+function isStyleState(node: Element, name: string): boolean {
+  if (name === 'value') {
+    return ['li', 'meter', 'progress'].includes(node.localName)
+  }
+  return name.startsWith('data-') && !CONTENT_ATTRIBUTES.has(name)
 }
 
 export async function parseUseEl(
@@ -551,7 +551,7 @@ export default abstract class Observer {
     if (!sanitizer.isObscured(id) || !isContentAttribute(node, name)) {
       return value
     }
-    if (!CONTENT_ATTRIBUTES.has(name) && sanitizer.isPrivateDefault(id, node)) {
+    if (isStyleState(node, name) && sanitizer.isPrivateDefault(id, node)) {
       return value
     }
     return stringWiper(value)
