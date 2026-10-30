@@ -397,9 +397,10 @@
   line-height: var(--m-leading-snug);
 }
 .m-pref__on {
-  display: inline-flex;
+  display: inline-grid;
+  grid-template-columns: 5px auto;
   align-items: center;
-  gap: var(--m-space-2);
+  column-gap: var(--m-space-2);
   font-size: var(--m-text-2xs);
   color: var(--m-content-secondary);
 }
@@ -409,6 +410,9 @@
   height: 5px;
   border-radius: var(--m-radius-full);
   background: var(--m-mark-success);
+}
+.m-pref__on-count {
+  grid-column: 2;
 }
 .m-pref__split {
   display: grid;
