@@ -64,7 +64,8 @@ describe('attributes of masked nodes', () => {
   test('wipes attributes that can hold content', () => {
     setup(
       '<div data-openreplay-obscured>' +
-        '<span id="s" title="Jane Smith" aria-label="Jane Smith" data-name="Jane"></span>' +
+        '<span id="s" title="Jane Smith" aria-label="Jane Smith" data-name="Jane"' +
+        ' data-openreplay-label="Jane"></span>' +
         '<select><option id="o" value="Jane Smith">x</option></select>' +
         '</div>',
     )
@@ -73,8 +74,21 @@ describe('attributes of masked nodes', () => {
       title: '**** *****',
       'aria-label': '**** *****',
       'data-name': '****',
+      'data-openreplay-label': '****',
     })
     expect(attributes('#o')).toEqual({ id: 'o', value: '**** *****' })
+  })
+
+  test('keeps checkbox and radio values, which selectors like [value=x]:checked rely on', () => {
+    setup(
+      '<div data-openreplay-obscured>' +
+        '<input id="c" type="checkbox" value="yes"><input id="r" type="radio" value="card">' +
+        '<input id="b" type="submit" value="Pay Jane">' +
+        '</div>',
+    )
+    expect(attributes('#c').value).toBe('yes')
+    expect(attributes('#r').value).toBe('card')
+    expect(attributes('#b').value).toBe('*** ****')
   })
 
   test('keeps layout and state attributes, so masked regions still replay correctly', () => {
@@ -131,14 +145,35 @@ describe('attributes of masked nodes', () => {
     expect(attributes('#s').title).toBe('**** *****')
   })
 
+  test('re-sends content attributes when a node is masked or unmasked later', () => {
+    let level = SanitizeLevel.Plain
+    setup('<a id="a" class="name" href="/profile" title="Jane Smith"></a>', {
+      domSanitizer: () => level,
+    })
+    level = SanitizeLevel.Obscured
+    sent = []
+    observer.resanitizeSubtree($('#a'))
+    expect(attributes('#a')).toEqual({ title: '**** *****' })
+
+    level = SanitizeLevel.Plain
+    sent = []
+    observer.resanitizeSubtree($('#a'))
+    expect(attributes('#a')).toEqual({ title: 'Jane Smith' })
+  })
+
   test('in privateMode, wipes content attributes but keeps unmasked regions', () => {
     setup(
-      '<span id="s" title="Jane Smith" aria-expanded="true"></span>' +
-        '<div data-openreplay-unmask><span id="u" title="Apply now"></span></div>',
+      '<span id="s" title="Jane Smith" data-name="Jane" aria-expanded="true"></span>' +
+        '<div data-openreplay-unmask><span id="u" title="Apply now" data-name="Apply"></span></div>',
       { privateMode: true },
     )
-    expect(attributes('#s')).toEqual({ id: 's', title: '**** *****', 'aria-expanded': 'true' })
-    expect(attributes('#u')).toEqual({ id: 'u', title: 'Apply now' })
+    expect(attributes('#s')).toEqual({
+      id: 's',
+      title: '**** *****',
+      'data-name': '****',
+      'aria-expanded': 'true',
+    })
+    expect(attributes('#u')).toEqual({ id: 'u', title: 'Apply now', 'data-name': 'Apply' })
   })
 })
 

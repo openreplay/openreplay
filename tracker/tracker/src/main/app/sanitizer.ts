@@ -1,6 +1,7 @@
 import type App from './index.js'
 import { stars, hasOpenreplayAttribute } from '../utils.js'
 import { isElementNode, isTextNode } from './guards.js'
+import { parentNode } from './untaintedDom.js'
 
 export enum SanitizeLevel {
   Plain,
@@ -230,7 +231,7 @@ export default class Sanitizer {
 
   // Text under a hidden element isn't registered, so use its nearest registered ancestor.
   private isTextObscured(text: Node): boolean {
-    for (let node: Node | null = text; node !== null; node = node.parentNode) {
+    for (let node: Node | null = text; node !== null; node = parentNode(node)) {
       const id = this.app.nodes.getID(node)
       if (id !== undefined) return this.isObscured(id)
     }

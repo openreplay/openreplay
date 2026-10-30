@@ -44,6 +44,7 @@ const CONTENT_ATTRIBUTES = new Set([
   'aria-roledescription',
   'aria-valuetext',
   'content',
+  'data-openreplay-label',
   'datetime',
   'label',
   'placeholder',
@@ -52,7 +53,11 @@ const CONTENT_ATTRIBUTES = new Set([
 ])
 
 // data-* can hold anything, so it is masked too (apart from our own markers).
-function isContentAttribute(name: string): boolean {
+function isContentAttribute(node: Element, name: string): boolean {
+  // a checkbox or radio value isn't shown, and selectors like [value=x]:checked rely on it
+  if (name === 'value' && hasTag(node, 'input') && ['checkbox', 'radio'].includes(node.type)) {
+    return false
+  }
   return (
     CONTENT_ATTRIBUTES.has(name) ||
     (name.startsWith('data-') && !name.startsWith('data-openreplay-'))
@@ -450,7 +455,11 @@ export default abstract class Observer {
         }
         this.app.send(SetNodeAttributeURLBased(id, name, value!, this.app.getBaseHref()))
       } else {
-        this.app.attributeSender.sendSetAttribute(id, name, this.maskAttribute(id, name, value))
+        this.app.attributeSender.sendSetAttribute(
+          id,
+          name,
+          this.maskAttribute(id, node, name, value),
+        )
       }
       return
     }
@@ -526,11 +535,11 @@ export default abstract class Observer {
     if (['alt', 'placeholder'].includes(name) && this.app.sanitizer.privateMode) {
       value = value.replaceAll(/./g, '*')
     }
-    this.app.attributeSender.sendSetAttribute(id, name, this.maskAttribute(id, name, value))
+    this.app.attributeSender.sendSetAttribute(id, name, this.maskAttribute(id, node, name, value))
   }
 
-  private maskAttribute(id: number, name: string, value: string): string {
-    return this.app.sanitizer.isObscured(id) && isContentAttribute(name)
+  private maskAttribute(id: number, node: Element, name: string, value: string): string {
+    return this.app.sanitizer.isObscured(id) && isContentAttribute(node, name)
       ? stringWiper(value)
       : value
   }
@@ -906,6 +915,12 @@ export default abstract class Observer {
       return
     }
     if (isElementNode(node)) {
+      // content attributes are masked by level, so re-send them at the new one
+      for (const { name, value } of Array.from(node.attributes)) {
+        if (isContentAttribute(node, name)) {
+          this.sendNodeAttribute(id, node, name, value)
+        }
+      }
       // inputs/images/canvas re-emit their own payload via registered callbacks
       this.app.callResanitizeCallbacks(node, id)
     }
