@@ -16,7 +16,10 @@ export interface PageSnapshot {
 }
 
 const MIME = 'application/vnd.openreplay.page+gzip';
-const PREFIX = `data:${MIME};base64,`;
+// the page's size rides in the header, so a dashboard lays the card out
+// without unpacking it: data:<mime>;w=1440;h=3000;base64,...
+const HEAD =
+  /^data:application\/vnd\.openreplay\.page\+gzip((?:;\w+=[\w.]+)*);base64,/;
 // the API takes a card of up to 5 MB, the rest of it is small
 const MAX_LENGTH = 4_500_000;
 // nested frames go into srcdoc, each level escaped once more
@@ -183,18 +186,35 @@ export async function encodePageSnapshot(
 ): Promise<string> {
   const json = new TextEncoder().encode(JSON.stringify(snapshot));
   const bytes = await pipe(new CompressionStream('gzip'), json);
-  return toDataURL(new Blob([bytes], { type: MIME }));
+  const url = await toDataURL(new Blob([bytes], { type: MIME }));
+  return url.replace(
+    ';base64,',
+    `;w=${Math.round(snapshot.width)};h=${Math.round(snapshot.height)};base64,`,
+  );
 }
 
 export function isPageSnapshot(thumbnail: string | undefined | null) {
-  return !!thumbnail?.startsWith(PREFIX);
+  return !!thumbnail && HEAD.test(thumbnail);
+}
+
+/** The page's size, read from the thumbnail's header. */
+export function pageSize(
+  thumbnail: string | undefined | null,
+): { width: number; height: number } | null {
+  const params = thumbnail?.match(HEAD)?.[1];
+  if (!params) return null;
+  const p = new URLSearchParams(params.slice(1).replaceAll(';', '&'));
+  const width = Number(p.get('w'));
+  const height = Number(p.get('h'));
+  return width > 0 && height > 0 ? { width, height } : null;
 }
 
 export async function readPageSnapshot(
   thumbnail: string,
 ): Promise<PageSnapshot | null> {
-  if (!isPageSnapshot(thumbnail)) return null;
-  const binary = atob(thumbnail.slice(PREFIX.length));
+  const head = thumbnail.match(HEAD);
+  if (!head) return null;
+  const binary = atob(thumbnail.slice(head[0].length));
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
   const json = await pipe(new DecompressionStream('gzip'), bytes);

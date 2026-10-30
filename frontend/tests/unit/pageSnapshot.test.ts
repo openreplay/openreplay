@@ -4,6 +4,7 @@ import { CompressionStream, DecompressionStream } from 'node:stream/web';
 import {
   encodePageSnapshot,
   isPageSnapshot,
+  pageSize,
   readPageSnapshot,
   serializePage,
 } from 'App/components/Session/Player/ClickMapRenderer/pageSnapshot';
@@ -93,11 +94,28 @@ describe('page snapshot', () => {
     const url = await encodePageSnapshot(snapshot);
     expect(isPageSnapshot(url)).toBe(true);
     expect(await readPageSnapshot(url)).toEqual(snapshot);
+    // a dashboard reads the size without unpacking the page
+    expect(pageSize(url)).toEqual({ width: 1440, height: 3200 });
+  });
+
+  it('reads a snapshot saved before the size was in its header', async () => {
+    const url = await encodePageSnapshot({
+      html: '<p>page</p>',
+      width: 800,
+      height: 600,
+      frameWidth: 800,
+      frameHeight: 600,
+    });
+    const old = url.replace(';w=800;h=600', '');
+    expect(isPageSnapshot(old)).toBe(true);
+    expect(pageSize(old)).toBeNull();
+    expect((await readPageSnapshot(old))?.html).toBe('<p>page</p>');
   });
 
   it('leaves a picture thumbnail alone', async () => {
     const png = 'data:image/png;base64,iVBORw0KGgo=';
     expect(isPageSnapshot(png)).toBe(false);
+    expect(pageSize(png)).toBeNull();
     expect(await readPageSnapshot(png)).toBeNull();
   });
 });

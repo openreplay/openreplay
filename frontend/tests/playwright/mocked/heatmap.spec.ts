@@ -573,7 +573,7 @@ test.describe('heatmap card', () => {
     await expect.poll(() => saved?.thumbnail).toBeTruthy();
     // the page as markup: a picture would need its cross-origin pixels
     expect(saved.thumbnail).toMatch(
-      /^data:application\/vnd\.openreplay\.page\+gzip;base64,/,
+      /^data:application\/vnd\.openreplay\.page\+gzip;w=\d+;h=\d+;base64,/,
     );
     expect(saved.metricOf).toBe('scrollMapUrl');
 
@@ -621,21 +621,22 @@ test.describe('heatmap card', () => {
     await expect(page.locator('.m-cmap__thumb .m-cmap__reach')).toHaveCount(0);
   });
 
-  test('a heatmap stands one column wide, two rows tall, on a dashboard', async ({
+  test('a heatmap of a long page stands one column wide, two rows tall, on a dashboard', async ({
     page,
     baseURL,
   }) => {
     const { api } = await setup(page, baseURL!);
-    const snapshot = {
-      html: '<body style="margin:0;height:3000px">Landing</body>',
-      width: 1440,
-      height: 3000,
-      frameWidth: 1440,
-      frameHeight: 3000,
+    const pageThumb = (width: number, height: number) => {
+      const snapshot = {
+        html: `<body style="margin:0;height:${height}px">Landing</body>`,
+        width,
+        height,
+        frameWidth: width,
+        frameHeight: height,
+      };
+      const data = gzipSync(JSON.stringify(snapshot)).toString('base64');
+      return `data:application/vnd.openreplay.page+gzip;w=${width};h=${height};base64,${data}`;
     };
-    const thumbnail = `data:application/vnd.openreplay.page+gzip;base64,${gzipSync(
-      JSON.stringify(snapshot),
-    ).toString('base64')}`;
     const trend = (metricId: number) => ({
       metricId,
       widgetId: metricId * 10,
@@ -651,7 +652,7 @@ test.describe('heatmap card', () => {
       {
         ...card,
         widgetId: 100,
-        thumbnail,
+        thumbnail: pageThumb(1440, 3000),
         config: { position: 0, col: 2, row: 1 },
       },
       trend(11),
@@ -698,5 +699,20 @@ test.describe('heatmap card', () => {
       .poll(async () => (await box(10)).width)
       .toBeGreaterThan(upper.width * 2);
     expect(Math.abs((await box(10)).height - heat.height)).toBeLessThan(1);
+
+    // a page about as tall as wide: one row, still one column
+    widgets[0] = {
+      ...widgets[0],
+      thumbnail: pageThumb(1440, 900),
+      config: { position: 0, col: 2, row: 1 },
+    };
+    await page.reload();
+    await expect(
+      page.locator('#widget-10 .m-cmap__thumb iframe'),
+    ).toBeVisible();
+    await expect(page.locator('#widget-11 .m-empty--quiet')).toBeVisible();
+    const [short, beside] = await Promise.all([box(10), box(11)]);
+    expect(Math.abs(short.height - beside.height)).toBeLessThan(1);
+    expect(Math.abs(short.width - beside.width)).toBeLessThan(1);
   });
 });

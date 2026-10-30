@@ -1,23 +1,32 @@
+import { pageSize } from 'App/components/Session/Player/ClickMapRenderer/pageSnapshot';
 import { HEATMAP } from 'App/constants/card';
 
 interface Placed {
   metricType?: string;
+  thumbnail?: string;
   config?: { col?: number };
 }
+
+// a page this many times taller than wide is drawn two rows tall
+const TALL_PAGE = 1.5;
 
 /** Two columns: a widget is a half (one column) or full (both). Legacy widgets
     store a 1-4 column count; 3 and 4 read as full. */
 export const isFullWidget = (w: Placed) => (w.config?.col ?? 4) >= 3;
 
-/** A heatmap stands two rows tall: the page needs the height. */
-export const isTallWidget = (w: Placed) => w.metricType === HEATMAP;
+/** A heatmap of a long page stands two rows tall. */
+export const isTallWidget = (w: Placed) => {
+  if (w.metricType !== HEATMAP) return false;
+  const size = pageSize(w.thumbnail);
+  return !!size && size.height / size.width >= TALL_PAGE;
+};
 
 /**
  * Halves drawn full: the grid fills with dense flow, so a half with no other
  * half to share its row would leave a hole. Simulates that placement in
  * one-row cells and returns the halves left alone (they stay halves in the
- * saved config). A tall half takes two cells of its column and never
- * stretches: it was made narrow to stand beside the others.
+ * saved config). A heatmap never stretches: it was made narrow to stand
+ * beside the others. A tall one takes two cells of its column.
  */
 export function loneHalves<T extends Placed>(widgets: readonly T[]): Set<T> {
   const cells: T[][] = [];
@@ -48,7 +57,7 @@ export function loneHalves<T extends Placed>(widgets: readonly T[]): Set<T> {
   const lone = new Set<T>();
   for (const [left, right] of cells) {
     const alone = left && right ? undefined : (left ?? right);
-    if (alone && !isTallWidget(alone)) lone.add(alone);
+    if (alone && alone.metricType !== HEATMAP) lone.add(alone);
   }
   return lone;
 }

@@ -1,6 +1,9 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { loneHalves } from 'App/components/Dashboard/components/DashboardWidgetGrid/placement';
+import {
+  isTallWidget,
+  loneHalves,
+} from 'App/components/Dashboard/components/DashboardWidgetGrid/placement';
 
 const half = (name: string) => ({
   name,
@@ -12,9 +15,12 @@ const full = (name: string) => ({
   metricType: 'table',
   config: { col: 4 },
 });
-const heatmap = (col = 2) => ({
+const page = (w: number, h: number) =>
+  `data:application/vnd.openreplay.page+gzip;w=${w};h=${h};base64,H4sI`;
+const heatmap = (col = 2, thumbnail = page(1440, 3000)) => ({
   name: 'heatmap',
   metricType: 'heatMap',
+  thumbnail,
   config: { col },
 });
 
@@ -40,6 +46,17 @@ describe('dashboard placement', () => {
   it('puts a full widget under a heatmap, not beside its lower half', () => {
     expect(lone([heatmap(), half('a'), full('b'), half('c')])).toEqual([]);
     expect(lone([heatmap(), full('b'), half('c')])).toEqual([]);
+  });
+
+  it('gives a page about as tall as wide one row', () => {
+    expect(isTallWidget(heatmap(2, page(1440, 3000)))).toBe(true);
+    expect(isTallWidget(heatmap(2, page(390, 2400)))).toBe(true);
+    expect(isTallWidget(heatmap(2, page(1440, 900)))).toBe(false);
+    // a picture thumbnail carries no size
+    expect(isTallWidget(heatmap(2, 'data:image/png;base64,iVBO'))).toBe(false);
+    const short = heatmap(2, page(1440, 900));
+    expect(lone([short, half('a'), half('b')])).toEqual(['b']);
+    expect(lone([short])).toEqual([]);
   });
 
   it('places a full-width heatmap as two full rows', () => {
