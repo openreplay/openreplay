@@ -169,7 +169,7 @@ function renderSize(r: any) {
 }
 
 export function renderDuration(r: any) {
-  const { t } = useTranslation();
+  const t = i18n.t;
   if (!r.success) return 'x';
 
   const text = `${Math.floor(r.duration)}ms`;
@@ -214,7 +214,7 @@ function renderStatus({
   cached: boolean;
   error?: string;
 }) {
-  const { t } = useTranslation();
+  const t = i18n.t;
   const noInfoReq = status === 'no-info';
   const hasTooltip = cached || noInfoReq;
   let tooltipTitle = undefined;
