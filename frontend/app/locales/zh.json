@@ -837,8 +837,6 @@
   "Which projects this connection covers.": "Which projects this connection covers.",
   "Integration removed": "集成已移除",
   "Failed to remove integration": "移除集成失败",
-  "Connected · {{n}} projects": "已连接 · {{n}} 个项目",
-  "Connected · {{n}} projects_other": "已连接 · {{n}} 个项目",
   "Only one issue tracker can be connected at a time. Disconnect {{name}} first.": "一次只能连接一个问题跟踪工具。请先断开 {{name}}。",
   "Sessions stop linking to it. You can connect it again later.": "会话将不再关联到它。您可以稍后重新连接。",
   "Issue reporting": "问题上报",
