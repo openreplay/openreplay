@@ -28,11 +28,36 @@ import {
 } from '../guards.js'
 import { inlineRemoteCss } from './cssInliner.js'
 import { nextID } from '../../modules/constructedStyleSheets.js'
-import { SanitizeLevel } from '../sanitizer.js'
+import { SanitizeLevel, stringWiper } from '../sanitizer.js'
 import { parentNode, previousSibling, nextSibling, firstChild } from '../untaintedDom.js'
 
 const iconCache = {}
 const svgUrlCache = {}
+
+// Attributes that can hold page content. Others (class, style, aria-expanded, colspan, SVG
+// geometry...) are kept so masked regions still lay out and style correctly in replays.
+const CONTENT_ATTRIBUTES = new Set([
+  'alt',
+  'aria-description',
+  'aria-label',
+  'aria-placeholder',
+  'aria-roledescription',
+  'aria-valuetext',
+  'content',
+  'datetime',
+  'label',
+  'placeholder',
+  'title',
+  'value',
+])
+
+// data-* can hold anything, so it is masked too (apart from our own markers).
+function isContentAttribute(name: string): boolean {
+  return (
+    CONTENT_ATTRIBUTES.has(name) ||
+    (name.startsWith('data-') && !name.startsWith('data-openreplay-'))
+  )
+}
 
 export async function parseUseEl(
   useElement: SVGUseElement,
@@ -425,7 +450,7 @@ export default abstract class Observer {
         }
         this.app.send(SetNodeAttributeURLBased(id, name, value!, this.app.getBaseHref()))
       } else {
-        this.app.attributeSender.sendSetAttribute(id, name, value!)
+        this.app.attributeSender.sendSetAttribute(id, name, this.maskAttribute(id, name, value))
       }
       return
     }
@@ -501,7 +526,13 @@ export default abstract class Observer {
     if (['alt', 'placeholder'].includes(name) && this.app.sanitizer.privateMode) {
       value = value.replaceAll(/./g, '*')
     }
-    this.app.attributeSender.sendSetAttribute(id, name, value)
+    this.app.attributeSender.sendSetAttribute(id, name, this.maskAttribute(id, name, value))
+  }
+
+  private maskAttribute(id: number, name: string, value: string): string {
+    return this.app.sanitizer.isObscured(id) && isContentAttribute(name)
+      ? stringWiper(value)
+      : value
   }
 
   throttling = true
