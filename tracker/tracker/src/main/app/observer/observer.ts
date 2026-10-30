@@ -53,11 +53,17 @@ const CONTENT_ATTRIBUTES = new Set([
   'value',
 ])
 
+function isStateValue(node: Element): boolean {
+  if (hasTag(node, 'input')) {
+    return ['checkbox', 'radio'].includes(node.type)
+  }
+  return ['li', 'meter', 'progress'].includes(node.localName)
+}
+
 // data-* can hold anything, so it is masked too, apart from our own markers (data-openreplay-label
 // is listed above).
 function isContentAttribute(node: Element, name: string): boolean {
-  // a checkbox or radio value isn't shown, and selectors like [value=x]:checked rely on it
-  if (name === 'value' && hasTag(node, 'input') && ['checkbox', 'radio'].includes(node.type)) {
+  if (name === 'value' && isStateValue(node)) {
     return false
   }
   return (
@@ -541,9 +547,14 @@ export default abstract class Observer {
   }
 
   private maskAttribute(id: number, node: Element, name: string, value: string): string {
-    return this.app.sanitizer.isObscured(id) && isContentAttribute(node, name)
-      ? stringWiper(value)
-      : value
+    const sanitizer = this.app.sanitizer
+    if (!sanitizer.isObscured(id) || !isContentAttribute(node, name)) {
+      return value
+    }
+    if (!CONTENT_ATTRIBUTES.has(name) && sanitizer.isPrivateDefault(id, node)) {
+      return value
+    }
+    return stringWiper(value)
   }
 
   throttling = true
@@ -655,6 +666,7 @@ export default abstract class Observer {
 
     const parent = parentNode(node)
     let parentID: number | undefined
+    const prevLevel = this.app.sanitizer.getLevel(id)
 
     // Disable parent check for the upper context HTMLHtmlElement, because it is root there... (before)
     // TODO: get rid of "special" cases (there is an issue with CreateDocument altered behaviour though)
@@ -751,6 +763,9 @@ export default abstract class Observer {
         this.slotMap.delete(id)
         this.app.send(SetNodeSlot(id, 0))
       }
+    }
+    if (this.app.sanitizer.getLevel(id) !== prevLevel) {
+      this.reemitNode(id, node)
     }
     const attr = this.attributesMap.get(id)
     if (attr !== undefined) {

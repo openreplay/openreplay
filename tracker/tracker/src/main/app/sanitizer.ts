@@ -207,6 +207,23 @@ export default class Sanitizer {
     return this.getLevel(id) >= SanitizeLevel.Obscured
   }
 
+  isPrivateDefault(id: number, node: Element): boolean {
+    if (
+      !this.privateMode ||
+      this.getLevel(id) !== SanitizeLevel.Obscured ||
+      closestComposed(node, MASK_SELECTOR) !== null
+    ) {
+      return false
+    }
+    const { domSanitizer } = this.options
+    for (let el: Element | null = node; domSanitizer && el; el = composedParentElement(el)) {
+      if (domSanitizer(el) === SanitizeLevel.Obscured) {
+        return false
+      }
+    }
+    return true
+  }
+
   isHidden(id: number) {
     return this.getLevel(id) === SanitizeLevel.Hidden
   }
