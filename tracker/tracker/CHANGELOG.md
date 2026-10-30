@@ -1,3 +1,7 @@
+## 19.0.5
+
+- sanitize masked content in attributes and selected text (#5099 by [@josh08h](https://github.com/josh08h))
+
 ## 19.0.4
 
 - flush pending messages in forceFlushBatch, add flushInterval (#5082 by [@josh08h](https://github.com/josh08h))
