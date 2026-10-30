@@ -1,6 +1,7 @@
-import React, { useEffect, useRef } from 'react';
-import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
+import React, { useEffect, useRef } from 'react';
+
+import { useStore } from 'App/mstore';
 import { useHistory, useLocation, useParams } from 'App/routing';
 
 const withSiteIdUpdater = (BaseComponent) => {
@@ -12,30 +13,25 @@ const withSiteIdUpdater = (BaseComponent) => {
     const urlSiteId = params?.siteId;
     const location = useLocation();
     const history = useHistory();
-    const prevSiteIdRef = useRef(siteId);
     const lastUrlSiteIdRef = useRef(urlSiteId);
 
+    // one effect, so a render can't act on both sides: a link or back/forward
+    // moves the address and the project follows; the switcher moves the
+    // project and the address follows
     useEffect(() => {
       if (!urlSiteId) return;
-      if (lastUrlSiteIdRef.current === urlSiteId) return;
-
-      lastUrlSiteIdRef.current = urlSiteId;
-      if (urlSiteId !== siteId) setSiteId(urlSiteId);
-    }, [setSiteId, siteId, urlSiteId]);
-
-    useEffect(() => {
-      const { pathname } = location;
-
-      const shouldUrlUpdate =
-        urlSiteId && siteId && parseInt(urlSiteId, 10) !== parseInt(siteId, 10);
-      if (shouldUrlUpdate) {
+      if (lastUrlSiteIdRef.current !== urlSiteId) {
+        lastUrlSiteIdRef.current = urlSiteId;
+        if (urlSiteId !== siteId) setSiteId(urlSiteId);
+        return;
+      }
+      if (siteId && parseInt(urlSiteId, 10) !== parseInt(siteId, 10)) {
         const path = ['', siteId]
-          .concat(pathname.split('/').slice(2))
+          .concat(location.pathname.split('/').slice(2))
           .join('/');
         history.push(path);
       }
-      prevSiteIdRef.current = siteId;
-    }, [history, location, siteId, urlSiteId]);
+    }, [history, location, setSiteId, siteId, urlSiteId]);
 
     const key = siteId;
 
