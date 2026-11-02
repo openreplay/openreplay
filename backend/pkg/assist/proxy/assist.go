@@ -226,14 +226,18 @@ func (r *GetLiveSessionsRequest) Parse() *GetAssistSessionsPayload {
 		Sort:       map[string]string{"key": r.Sort, "order": r.Order},
 	}
 	for _, filter := range r.Filters {
-		switch f := filter.(type) {
-		case map[string]interface{}:
-			filterType := f["name"].(string) // it was 'type'
-			if strings.HasPrefix(filterType, "metadata_") {
-				filterType = f["source"].(string) // temp hack with a frontend support
-			}
-			res.Filter[filterType] = map[string]interface{}{"values": f["value"], "operator": f["operator"]}
+		f, ok := filter.(map[string]interface{})
+		if !ok {
+			continue
 		}
+		filterType, _ := f["name"].(string) // it was 'type'
+		if strings.HasPrefix(filterType, "metadata_") {
+			filterType, _ = f["source"].(string) // temp hack with a frontend support
+		}
+		if filterType == "" {
+			continue
+		}
+		res.Filter[filterType] = map[string]interface{}{"values": f["value"], "operator": f["operator"]}
 	}
 	return res
 }
