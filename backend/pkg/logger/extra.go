@@ -104,7 +104,7 @@ func sendLog(es *elasticsearch.Client, logMessage LogMessage) {
 }
 
 func (el *extraLogger) Log(ctx context.Context, msg string) {
-	if sID, ok := ctx.Value("sessionID").(string); ok {
+	if sID, ok := sessionID(ctx); ok {
 		msg = fmt.Sprintf("%s openReplaySession.id=%s", msg, sID)
 	}
 	if el.hasSentry {
