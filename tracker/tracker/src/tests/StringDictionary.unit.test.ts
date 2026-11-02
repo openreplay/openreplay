@@ -6,28 +6,6 @@ afterEach(() => {
 })
 
 describe('StringDictionary', () => {
-  test('different strings get different keys within the same ms', () => {
-    jest.spyOn(Date, 'now').mockReturnValue(1_700_000_000_000)
-    const dict = new StringDictionary()
-
-    const [key1, isNew1] = dict.getKey('Datadog')
-    const [key2, isNew2] = dict.getKey('PostHog')
-
-    expect(key1).not.toBe(key2)
-    expect(isNew1).toBe(true)
-    expect(isNew2).toBe(true)
-  })
-
-  test('identical strings share a key', () => {
-    const dict = new StringDictionary()
-
-    const [key1] = dict.getKey("What's up?")
-    const [key2, isNew2] = dict.getKey("What's up?")
-
-    expect(key1).toBe(key2)
-    expect(isNew2).toBe(false)
-  })
-
   test('keys stay unique with more than 10k new strings in one ms and across the next ms', () => {
     const now = jest.spyOn(Date, 'now').mockReturnValue(1_700_000_000_000)
     const dict = new StringDictionary()

@@ -54,11 +54,8 @@ const attrs = (el: Element) => {
   return out
 }
 
-const allData = () =>
-  sent
-    .filter((m) => m[0] === Type.SetNodeData)
-    .map((m) => m[2])
-    .join('|')
+const textData = () => sent.filter((m) => m[0] === Type.SetNodeData).map((m) => m[2])
+const allData = () => textData().join('|')
 // the default core picks iframes up after 250ms
 const waitFrames = () => new Promise((r) => setTimeout(r, 300))
 
@@ -183,7 +180,7 @@ describe.each(['default', 'next'] as const)('%s observer: attributes of masked c
     expect(attrs($('#b'))['data-state']).toBe('****')
   })
 
-  test('privateMode: resanitize masks an unmask region under a new explicit mask', async () => {
+  test('privateMode: an unmask region under a new explicit mask is masked', async () => {
     setup(
       core,
       '<div id="w"><section><p id="u" data-openreplay-unmask title="Jane">card 4111</p></section></div>',
@@ -192,41 +189,40 @@ describe.each(['default', 'next'] as const)('%s observer: attributes of masked c
     expect(allData()).toContain('card 4111')
     $('#w').setAttribute('data-openreplay-masked', '')
     await flush()
-    observer.resanitizeSubtree($('#w'))
+    // the next core applies it on the attribute change
+    if (core === 'default') observer.resanitizeSubtree($('#w'))
     expect(attrs($('#u')).title).toBe('****')
     expect(allData()).toContain('**** ****')
+    const count = textData().length
     ;($('#u').firstChild as Text).data = 'card 5555'
     await flush()
+    expect(textData()).toHaveLength(count + 1)
     expect(allData()).not.toContain('5555')
   })
 })
 
 describe('next observer: privateMode explicit masks', () => {
-  test.each(['attribute', 'domSanitizer'])(
-    'a mask by %s above an unmask region masks it right away',
-    async (via) => {
-      setup(
-        'next',
-        '<div id="w"><section><p id="u" data-openreplay-unmask title="Jane">card 4111</p></section></div>',
-        via === 'attribute'
-          ? { privateMode: true }
-          : {
-              privateMode: true,
-              domSanitizer: (el: Element) =>
-                el.classList.contains('secret') ? SanitizeLevel.Obscured : SanitizeLevel.Plain,
-            },
-      )
-      expect(allData()).toContain('card 4111')
-      if (via === 'attribute') $('#w').setAttribute('data-openreplay-masked', '')
-      else $('#w').classList.add('secret')
-      await flush()
-      expect(attrs($('#u')).title).toBe('****')
-      expect(allData()).toContain('**** ****')
-      ;($('#u').firstChild as Text).data = 'card 5555'
-      await flush()
-      expect(allData()).not.toContain('5555')
-    },
-  )
+  test('a domSanitizer mask above an unmask region masks it right away', async () => {
+    setup(
+      'next',
+      '<div id="w"><section><p id="u" data-openreplay-unmask title="Jane">card 4111</p></section></div>',
+      {
+        privateMode: true,
+        domSanitizer: (el: Element) =>
+          el.classList.contains('secret') ? SanitizeLevel.Obscured : SanitizeLevel.Plain,
+      },
+    )
+    expect(allData()).toContain('card 4111')
+    $('#w').classList.add('secret')
+    await flush()
+    expect(attrs($('#u')).title).toBe('****')
+    expect(allData()).toContain('**** ****')
+    const count = textData().length
+    ;($('#u').firstChild as Text).data = 'card 5555'
+    await flush()
+    expect(textData()).toHaveLength(count + 1)
+    expect(allData()).not.toContain('5555')
+  })
 
   test('a mask attribute masks data-* right away, its removal waits for resanitize', async () => {
     setup(

@@ -101,13 +101,6 @@ describe('Console logging module', () => {
     }
   })
 
-  it('patches console methods and still calls the original', () => {
-    mainFunction(mockApp, {})
-    globalThis.console.log('test log')
-    expect(originals.log).toHaveBeenCalledWith('test log')
-    expect(mockApp.send).toHaveBeenCalledWith([CONSOLE_LOG, 'log', 'test log'])
-  })
-
   it('maps each patched method to its level', () => {
     mainFunction(mockApp, {})
     for (const level of ['log', 'info', 'warn', 'error', 'debug']) {

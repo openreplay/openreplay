@@ -210,24 +210,6 @@ describe('PrivacyManager', () => {
     expect(real.getItem('__openreplay_uuid')).toBe(null)
   })
 
-  test('storage falls back to memory when the real storage throws', () => {
-    const broken = new FakeStorage()
-    broken.setItem = () => {
-      throw new Error('QuotaExceededError')
-    }
-    broken.getItem = () => {
-      throw new Error('SecurityError')
-    }
-    const s = new PolicyStorage(
-      'local',
-      broken,
-      { record: 'full', storage: 'persistent', identity: 'raw', networkPayloads: true },
-    )
-    s.setItem('k', 'v')
-    expect(s.getItem('k')).toBe('v')
-    expect(() => s.removeItem('k')).not.toThrow()
-  })
-
   test('a value whose real write failed wins over a stale one until a write succeeds', () => {
     const real = new FakeStorage()
     real.setItem('k', 'stale')

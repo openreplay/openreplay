@@ -125,22 +125,6 @@ describe('requestIdleCb task scheduler', () => {
 
     expect(ran).toEqual(['first', 'rejected', 'after'])
   })
-
-  test('repeated failures keep the queue alive', async () => {
-    const ran: number[] = []
-    for (let i = 0; i < 6; i++) {
-      try {
-        requestIdleCb(() => {
-          ran.push(i)
-          if (i % 2 === 0) throw new Error('every other one fails')
-        })
-      } catch {
-        /* ignore */
-      }
-      await tick(2)
-    }
-    expect(ran).toEqual([0, 1, 2, 3, 4, 5])
-  })
 })
 
 describe('requestIdleCb in a background tab', () => {

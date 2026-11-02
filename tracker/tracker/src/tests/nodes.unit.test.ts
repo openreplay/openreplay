@@ -106,21 +106,6 @@ describe('Nodes', () => {
     })
   })
 
-  test('cleanTree removes detached nodes and keeps attached ones', () => {
-    const attached = document.createElement('div')
-    const detached = document.createElement('div')
-    document.body.appendChild(attached)
-    const [attachedId] = nodes.registerNode(attached)
-    const [detachedId] = nodes.registerNode(detached)
-
-    nodes.cleanTree()
-
-    expect(nodes.getNodeCount()).toBe(1)
-    expect(nodes.getNode(attachedId)).toBe(attached)
-    expect(nodes.getNode(detachedId)).toBeUndefined()
-    expect(nodes.getID(detached)).toBeUndefined()
-  })
-
   test('scanTree visits every registered node', () => {
     const a = document.createElement('div')
     const b = document.createElement('span')

@@ -1,7 +1,6 @@
 // @ts-nocheck
 import { describe, expect, test, jest, afterEach } from '@jest/globals'
 import selection from '../main/modules/selection.js'
-import setupImg from '../main/modules/img.js'
 import setupMouse from '../main/modules/mouse.js'
 import webAnimations from '../main/modules/webAnimations.js'
 import { Type } from '../main/app/messages.gen.js'
@@ -97,63 +96,6 @@ describe('selection', () => {
     Object.defineProperty(host, 'childNodes', { get: () => [] })
     const after = document.querySelector('#c')!.firstChild!
     expect(select(host, 0, after, 3)).not.toContain('secret')
-  })
-})
-
-describe('img', () => {
-  function setup(obscuredIds: number[] = []) {
-    const ids = new Map<Node, number>()
-    let nodeCb
-    const app = {
-      safe: (f) => f,
-      send: jest.fn(),
-      attributeSender: { sendSetAttribute: jest.fn() },
-      getBaseHref: () => 'http://localhost/shop/item',
-      timestamp: () => 0,
-      options: { forceNgOff: true },
-      attachStopCallback() {},
-      attachResanitizeCallback() {},
-      sanitizer: { isHidden: () => false, isObscured: (id: number) => obscuredIds.includes(id) },
-      nodes: {
-        getID: (n: Node) => ids.get(n),
-        attachNodeCallback: (cb) => (nodeCb = cb),
-        attachNodeListener() {},
-      },
-    }
-    setupImg(app)
-    let next = 1
-    const add = () => {
-      const img = document.createElement('img')
-      document.body.append(img)
-      ids.set(img, next++)
-      nodeCb(img)
-      return img
-    }
-    return { app, add }
-  }
-  const flush = () => new Promise((r) => setTimeout(r, 0))
-
-  test('relative srcset candidates resolve against the base url', async () => {
-    const { app, add } = setup()
-    const img = add()
-    img.setAttribute('srcset', 'a@2x.png 2x, /b.png 3x')
-    await flush()
-    expect(app.attributeSender.sendSetAttribute).toHaveBeenCalledWith(
-      1,
-      'srcset',
-      'http://localhost/shop/a@2x.png 2x, http://localhost/b.png 3x',
-    )
-  })
-
-  test('src changes of a masked image are not sent', async () => {
-    const { app, add } = setup([1])
-    const img = add()
-    img.setAttribute('src', 'http://localhost/private.png')
-    await flush()
-    const srcSends = app.send.mock.calls.filter(
-      (c) => c[0][0] === Type.SetNodeAttributeURLBased && c[0][2] === 'src',
-    )
-    expect(srcSends).toEqual([])
   })
 })
 

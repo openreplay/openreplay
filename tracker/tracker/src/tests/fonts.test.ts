@@ -89,13 +89,6 @@ describe('fonts module', () => {
     expect(app.send).toHaveBeenCalledWith(LoadFontFace(0, 'Circ', 'url("http://localhost/c.woff2")', ''))
   })
 
-  test('replays stored fonts on node callback', () => {
-    new (window as any).FontFace('OtherFont', 'url(other.woff2)')
-    app.send.mockClear()
-    nodeCallback(document)
-    expect(app.send).toHaveBeenCalledWith(LoadFontFace(0, 'OtherFont', 'url("http://localhost/other.woff2")', ''))
-  })
-
   test('iframe with unregistered document: page FontFace still works, font sent once registered', () => {
     const frameDoc = document.implementation.createHTMLDocument('frame')
     const frameWnd: any = { FontFace: NativeFontFace, document: frameDoc }

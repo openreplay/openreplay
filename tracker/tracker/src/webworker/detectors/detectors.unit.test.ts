@@ -17,7 +17,6 @@ function collector() {
 
 const click = (id: number, label: string, selector = `#${label}`): Message =>
   [Type.MouseClick, id, 0, label, selector, 0, 0] as Message
-const inputTarget = (id: number): Message => [Type.SetInputTarget, id, 'lbl'] as Message
 /** What the observer really emits when it registers a text field or select. */
 const inputValue = (id: number, value = ''): Message =>
   [Type.SetInputValue, id, value, 0] as Message
@@ -58,29 +57,6 @@ describe('DeadClickDetector', () => {
     expect(issues).toEqual([])
   })
 
-  test('ignores clicks on known input targets', () => {
-    const { issues, report } = collector()
-    const d = new DeadClickDetector(report)
-
-    d.handle(inputTarget(1), 6, 1000)
-    d.handle(click(1, 'email'), 7, 1000)
-    d.handle(click(2, 'buy'), 8, 9000)
-
-    expect(issues).toEqual([])
-  })
-
-  test('input targets survive a DOM mutation', () => {
-    const { issues, report } = collector()
-    const d = new DeadClickDetector(report)
-
-    d.handle(inputTarget(1), 6, 1000)
-    d.handle(textMutation(), 7, 1100)
-    d.handle(click(1, 'email'), 8, 2000)
-    d.handle(click(2, 'buy'), 9, 9000)
-
-    expect(issues).toEqual([])
-  })
-
   // The tracker has no SetInputTarget call site, so these are the only signals
   // that identify an input. Without them a click into a text field that then
   // sits idle reports as dead.
@@ -116,7 +92,7 @@ describe('DeadClickDetector', () => {
     const { issues, report } = collector()
     const d = new DeadClickDetector(report)
 
-    d.handle(inputTarget(1), 6, 1000)
+    d.handle(inputChange(1), 6, 1000)
     d.handle(createDocument(), 7, 1100)
     d.handle(click(1, 'email'), 8, 2000)
     d.handle(textMutation(), 9, 2000 + 1235)

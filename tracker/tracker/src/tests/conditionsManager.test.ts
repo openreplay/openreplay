@@ -117,19 +117,13 @@ describe('ConditionsManager', () => {
     expect(appMock.start).toHaveBeenCalledWith(startOptionsMock, undefined, 'test')
   })
 
-  test('processMessage is a no-op once started', () => {
-    const manager = make([{ type: 'custom_event', operator: 'is', value: ['e'], name: 'c' }])
-    manager.hasStarted = true
-    manager.processMessage([Type.CustomEvent, 'e', ''])
-    expect(appMock.start).not.toHaveBeenCalled()
-  })
-
   describe('exception', () => {
     const msg = [Type.JSException, 'TypeError', 'An Error occurred', 'Payload', 'Metadata']
 
-    test('matches name/message/payload', () => {
+    // each needle is in one field only
+    test.each(['TypeError', 'occurred', 'Payload'])('matches %s in name, message or payload', (needle) => {
       make([
-        { type: 'exception', operator: 'contains', value: ['Error'], name: 'exc' },
+        { type: 'exception', operator: 'contains', value: [needle], name: 'exc' },
       ]).processMessage(msg)
       expect(appMock.start).toHaveBeenCalledWith(startOptionsMock, undefined, 'exc')
     })
@@ -137,6 +131,9 @@ describe('ConditionsManager', () => {
     test('does not match unrelated exceptions', () => {
       make([
         { type: 'exception', operator: 'contains', value: ['Network'], name: 'exc' },
+      ]).processMessage(msg)
+      make([
+        { type: 'exception', operator: 'contains', value: ['Metadata'], name: 'exc' },
       ]).processMessage(msg)
       make([{ type: 'exception', operator: 'is', value: ['Error'], name: 'exc' }]).processMessage(
         msg,

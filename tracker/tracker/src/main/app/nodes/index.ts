@@ -119,18 +119,6 @@ export default class Nodes {
     return id
   }
 
-  cleanTree() {
-    // sadly we keep empty items in array here resulting in some memory still being used
-    // but its still better than keeping dead nodes or undef elements
-    // plus we keep our index positions for new/alive nodes
-    // performance test: 3ms for 30k nodes with 17k dead ones
-    for (const [_, node] of this.nodes) {
-      if (node && !document.contains(node)) {
-        this.unregisterNode(node)
-      }
-    }
-  }
-
   callNodeCallbacks(node: Node, isStart: boolean): void {
     this.nodeCallbacks.forEach((cb) => cb(node, isStart))
   }

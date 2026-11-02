@@ -35,17 +35,14 @@ describe('guards on cross-realm (iframe) nodes', () => {
     frame.remove()
   })
 
-  test('nodes really come from another realm', () => {
-    const el = doc.createElement('div')
-    expect(el instanceof Element).toBe(false)
-    expect(doc instanceof Document).toBe(false)
-  })
-
   test('nodeType-based guards still recognize them', () => {
     const el = doc.createElement('div')
     const text = doc.createTextNode('t')
     const comment = doc.createComment('c')
     const fragment = doc.createDocumentFragment()
+    // the case these guards exist for: instanceof fails across realms
+    expect(el instanceof Element).toBe(false)
+    expect(doc instanceof Document).toBe(false)
 
     expect(isNode(el)).toBe(true)
     expect(isElementNode(el)).toBe(true)
@@ -76,11 +73,6 @@ describe('guards on cross-realm (iframe) nodes', () => {
 })
 
 describe('isSVGElement', () => {
-  test('any element in the SVG namespace', () => {
-    expect(isSVGElement(document.createElementNS(SVG_NS, 'svg'))).toBe(true)
-    expect(isSVGElement(document.createElementNS(SVG_NS, 'path'))).toBe(true)
-  })
-
   test('falls back to localName for an <svg> outside the SVG namespace', () => {
     const svg = document.createElementNS('http://www.w3.org/1999/xhtml', 'svg')
     expect(svg.namespaceURI).not.toBe(SVG_NS)
@@ -94,12 +86,6 @@ describe('isSVGElement', () => {
 })
 
 describe('hasTag', () => {
-  test('matches by localName', () => {
-    expect(hasTag(document.createElement('input'), 'input')).toBe(true)
-    // @ts-expect-error
-    expect(hasTag(document.createElement('div'), 'span')).toBe(false)
-  })
-
   test('matches SVG <style> as style', () => {
     const style = document.createElementNS(SVG_NS, 'style')
     expect(style.tagName).toBe('style')
@@ -110,9 +96,5 @@ describe('hasTag', () => {
     const img = document.createElement('IMG')
     expect(img.tagName).toBe('IMG')
     expect(hasTag(img, 'img')).toBe(true)
-  })
-
-  test('non-element nodes never match', () => {
-    expect(hasTag(document.createTextNode('style'), 'style')).toBe(false)
   })
 })

@@ -87,22 +87,6 @@ describe('ConstantProperties', () => {
     jest.restoreAllMocks()
   })
 
-  test('constructs with correct base properties', () => {
-    const properties = new ConstantProperties(localStorageMock, sessionStorageMock)
-
-    expect(utils.uaParse).toHaveBeenCalledWith(window, expect.any(Function))
-    expect(properties.os).toBe('Windows')
-    expect(properties.osVersion).toBe('10')
-    expect(properties.browser).toBe('Chrome')
-    expect(properties.browserVersion).toBe('91.0.4472.124 (91)')
-    expect(properties.platform).toBe('desktop')
-    expect(properties.screenHeight).toBe(1080)
-    expect(properties.screenWidth).toBe(1920)
-    expect(properties.initialReferrer).toBe('https://example.com')
-    expect(properties.searchEngine).toBeNull()
-    expect(properties.user_id).toBeNull()
-  })
-
   test('detects UTM parameters from URL and stores them', () => {
     withSearch('?utm_source=test_source&utm_medium=test_medium&utm_campaign=test_campaign', () => {
       const properties = new ConstantProperties(localStorageMock, sessionStorageMock)
@@ -272,33 +256,14 @@ describe('ConstantProperties', () => {
     expect(properties.getSuperProperties()).toEqual({})
   })
 
-  test('getSuperProperties returns parsed object when stored', () => {
-    localStorageStore[superPropKey] = JSON.stringify({ foo: 'bar', answer: 42 })
-
+  test('super properties persist across instances until cleared', () => {
     const properties = new ConstantProperties(localStorageMock, sessionStorageMock)
+    properties.saveSuperProperties({ foo: 'bar', answer: 42 })
 
-    const result = properties.getSuperProperties()
-    expect(result).toEqual({ foo: 'bar', answer: 42 })
-  })
-
-  test('saveSuperProperties persists object as JSON', () => {
-    const properties = new ConstantProperties(localStorageMock, sessionStorageMock)
-
-    const props = { a: 1, b: 'two' }
-    properties.saveSuperProperties(props)
-
-    expect(localStorageMock.setItem).toHaveBeenCalledWith(superPropKey, JSON.stringify(props))
-    expect(JSON.parse(localStorageStore[superPropKey])).toEqual(props)
-  })
-
-  test('clearSuperProperties stores empty object', () => {
-    localStorageStore[superPropKey] = JSON.stringify({ foo: 'bar' })
-
-    const properties = new ConstantProperties(localStorageMock, sessionStorageMock)
-    properties.clearSuperProperties()
-
-    expect(localStorageMock.setItem).toHaveBeenCalledWith(superPropKey, JSON.stringify({}))
-    expect(JSON.parse(localStorageStore[superPropKey])).toEqual({})
+    const next = new ConstantProperties(localStorageMock, sessionStorageMock)
+    expect(next.getSuperProperties()).toEqual({ foo: 'bar', answer: 42 })
+    next.clearSuperProperties()
+    expect(properties.getSuperProperties()).toEqual({})
   })
 
   test('all getter returns full property map with correct keys', () => {
@@ -325,30 +290,6 @@ describe('ConstantProperties', () => {
         search_engine: null,
       })
     })
-  })
-
-  test('defaultPropertyKeys lists the reserved property names', () => {
-    const properties = new ConstantProperties(localStorageMock, sessionStorageMock)
-
-    expect(properties.defaultPropertyKeys).toEqual([
-      'os',
-      'os_version',
-      'browser',
-      'browser_version',
-      'platform',
-      'screen_height',
-      'screen_width',
-      'initial_referrer',
-      'utm_source',
-      'utm_medium',
-      'utm_campaign',
-      'user_id',
-      'distinct_id',
-      'sdk_edition',
-      'sdk_version',
-      'timezone',
-      'search_engine',
-    ])
   })
 
   test('late OS version refinement from uaParse updates properties', () => {

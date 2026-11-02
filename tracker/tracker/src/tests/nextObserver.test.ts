@@ -248,6 +248,8 @@ describe('NextObserver privacy', () => {
     setup('<iframe id="f" data-openreplay-obscured data-openreplay-capture></iframe>')
     ;($('#f') as HTMLIFrameElement).contentDocument!.body.innerHTML = '<p>card 4111</p>'
     observer.observe()
+    expect(ofType(Type.CreateIFrameDocument)).toHaveLength(1)
+    expect(allData()).toContain('****')
     expect(allData()).not.toContain('4111')
   })
 
@@ -477,8 +479,11 @@ describe('NextObserver privacy changes after insertion', () => {
     $('#w').setAttribute('data-openreplay-obscured', '')
     await flush()
     expect(data(nodes.getID(text)).pop()).not.toContain('4111')
+    const count = data(nodes.getID(text)).length
     text.data = 'card 5500'
     await flush()
+    // masked 'card 5500' and 'card 4111' look the same: check the update was sent at all
+    expect(data(nodes.getID(text))).toHaveLength(count + 1)
     expect(data(nodes.getID(text)).pop()).not.toContain('5500')
     observer.disconnect()
     nodes.clear()
@@ -504,8 +509,11 @@ describe('NextObserver privacy changes after insertion', () => {
     await flush()
     expect(data(nodes.getID(text)).pop()).not.toContain('4111')
     expect(app.callResanitizeCallbacks).toHaveBeenCalledWith($('#i'), nodes.getID($('#i')))
+    const count = data(nodes.getID(text)).length
     text.data = 'card 5500'
     await flush()
+    // masked 'card 5500' and 'card 4111' look the same: check the update was sent at all
+    expect(data(nodes.getID(text))).toHaveLength(count + 1)
     expect(data(nodes.getID(text)).pop()).not.toContain('5500')
     expect(app.sanitizer.isObscured(nodes.getID($('#i')))).toBe(true)
   })
@@ -615,14 +623,6 @@ describe('NextObserver callbacks and roots', () => {
     expect(seen).toContain($('#shown'))
     expect(seen).toContain(host.shadowRoot)
     expect(seen).not.toContain($('#secret'))
-  })
-
-  test('a shadow root attached to a live host is recorded right away', () => {
-    setup('<x-late id="late"></x-late>')
-    observer.observe()
-    const late = $('#late')
-    late.attachShadow({ mode: 'open' })
-    expect(ofType(Type.CreateIFrameDocument).map((m) => m[1])).toContain(nodes.getID(late))
   })
 
   test('replacing <html> starts a new document', async () => {
@@ -755,13 +755,14 @@ describe('NextObserver parity details', () => {
     expect(ofType(Type.SetNodeSlot)).toContainEqual([Type.SetNodeSlot, nodes.getID(light), nodes.getID(slot)])
   })
 
-  test('content of a shadow root attached later is reported as a snapshot (isStart)', () => {
+  test('a shadow root attached later is recorded right away, as a snapshot (isStart)', () => {
     setup('<x-late id="late"></x-late>')
     const starts: Array<[Node, boolean]> = []
     nodes.attachNodeCallback((n, isStart) => starts.push([n, isStart]))
     observer.observe()
     const late = $('#late')
     const sr = late.attachShadow({ mode: 'open' })
+    expect(ofType(Type.CreateIFrameDocument).map((m) => m[1])).toContain(nodes.getID(late))
     expect(starts.find(([n]) => n === sr)?.[1]).toBe(true)
   })
 })

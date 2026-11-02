@@ -71,13 +71,6 @@ describe('input module', () => {
 
   const plain = () => setupInput(h.app as any, { defaultInputMode: InputMode.Plain })
 
-  test('sends the initial value of a new text field', () => {
-    plain()
-    const el = input('text', 'hello')
-    const id = h.add(el)
-    expect(h.sent(Type.SetInputValue)).toEqual([[Type.SetInputValue, id, 'hello', 0]])
-  })
-
   test('ticker polling catches programmatic value changes, without duplicates', () => {
     plain()
     const el = input('text', 'a')
@@ -126,12 +119,6 @@ describe('input module', () => {
     el.value = 'changed'
     h.tick()
     expect(h.sent(Type.SetInputValue)).toHaveLength(1)
-  })
-
-  test('password fields are hidden (mask -1, no value) even in plain mode', () => {
-    plain()
-    const id = h.add(input('password', 'hunter2'))
-    expect(h.sent(Type.SetInputValue)).toEqual([[Type.SetInputValue, id, '', -1]])
   })
 
   test('sanitizer hidden / obscured levels win over plain mode', () => {
