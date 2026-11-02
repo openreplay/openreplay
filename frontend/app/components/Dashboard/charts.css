@@ -838,16 +838,23 @@
   opacity: 0.42;
   mix-blend-mode: multiply;
 }
+/* dark dashes on light gaps, so the line reads on any page */
 .m-cmap__mark {
+  --m-mark-dash: calc(6px / var(--m-screen-k, 1));
   position: absolute;
   left: 0;
   right: 0;
-  border-top: calc(1.5px / var(--m-screen-k, 1)) dashed
-    color-mix(in srgb, var(--m-content-primary) 55%, transparent);
+  height: calc(2px / var(--m-screen-k, 1));
+  background: repeating-linear-gradient(
+    to right,
+    color-mix(in srgb, var(--m-content-primary) 80%, transparent) 0
+      var(--m-mark-dash),
+    color-mix(in srgb, var(--m-surface-raised) 90%, transparent) 0
+      calc(2 * var(--m-mark-dash))
+  );
 }
 .m-cmap__mark.is-fold {
-  border-top-style: solid;
-  border-top-color: var(--m-content-accent);
+  background: var(--m-content-accent);
 }
 .m-cmap__mark-label {
   position: absolute;

@@ -2800,7 +2800,7 @@
   "Hide how to send the values": "값을 보내는 방법 숨기기",
   "No scroll depth recorded on this page yet": "이 페이지에 아직 기록된 스크롤 깊이가 없습니다",
   "Scroll maps come from sessions recorded with scroll tracking.": "스크롤 맵은 스크롤 추적이 켜진 상태로 녹화된 세션에서 만들어집니다.",
-  "Half reach {{depth}}% of the page": "절반이 페이지의 {{depth}}%까지 도달",
+  "Median scroll depth is {{depth}}%": "스크롤 깊이 중앙값 {{depth}}%",
   "few reached": "적게 도달",
   "all reached": "모두 도달",
   "fewer": "적음",

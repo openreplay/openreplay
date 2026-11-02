@@ -2859,7 +2859,7 @@
   "Hide how to send the values": "Hide how to send the values",
   "No scroll depth recorded on this page yet": "No scroll depth recorded on this page yet",
   "Scroll maps come from sessions recorded with scroll tracking.": "Scroll maps come from sessions recorded with scroll tracking.",
-  "Half reach {{depth}}% of the page": "Half reach {{depth}}% of the page",
+  "Median scroll depth is {{depth}}%": "Median scroll depth is {{depth}}%",
   "few reached": "few reached",
   "all reached": "all reached",
   "fewer": "fewer",

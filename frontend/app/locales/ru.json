@@ -2977,7 +2977,7 @@
   "Hide how to send the values": "Скрыть, как отправлять значения",
   "No scroll depth recorded on this page yet": "На этой странице пока нет данных о глубине прокрутки",
   "Scroll maps come from sessions recorded with scroll tracking.": "Карты прокрутки строятся по сессиям, записанным с отслеживанием прокрутки.",
-  "Half reach {{depth}}% of the page": "Половина доходит до {{depth}}% страницы",
+  "Median scroll depth is {{depth}}%": "Медианная глубина прокрутки — {{depth}}%",
   "few reached": "дошли немногие",
   "all reached": "дошли все",
   "fewer": "меньше",

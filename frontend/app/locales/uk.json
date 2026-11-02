@@ -2977,7 +2977,7 @@
   "Hide how to send the values": "Сховати, як надсилати значення",
   "No scroll depth recorded on this page yet": "На цій сторінці ще немає даних про глибину прокручування",
   "Scroll maps come from sessions recorded with scroll tracking.": "Карти прокручування будуються за сесіями, записаними з відстеженням прокручування.",
-  "Half reach {{depth}}% of the page": "Половина доходить до {{depth}}% сторінки",
+  "Median scroll depth is {{depth}}%": "Медіанна глибина прокрутки — {{depth}}%",
   "few reached": "дійшли небагато",
   "all reached": "дійшли всі",
   "fewer": "менше",

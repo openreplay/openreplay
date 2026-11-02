@@ -2918,7 +2918,7 @@
   "Hide how to send the values": "Masquer comment envoyer les valeurs",
   "No scroll depth recorded on this page yet": "Aucune profondeur de défilement enregistrée sur cette page pour l’instant",
   "Scroll maps come from sessions recorded with scroll tracking.": "Les cartes de défilement proviennent des sessions enregistrées avec le suivi du défilement.",
-  "Half reach {{depth}}% of the page": "La moitié atteint {{depth}} % de la page",
+  "Median scroll depth is {{depth}}%": "Profondeur de défilement médiane : {{depth}} %",
   "few reached": "peu l’ont atteint",
   "all reached": "tous l’ont atteint",
   "fewer": "moins",

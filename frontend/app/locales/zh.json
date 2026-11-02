@@ -2800,7 +2800,7 @@
   "Hide how to send the values": "隐藏如何发送值",
   "No scroll depth recorded on this page yet": "此页面尚未记录滚动深度",
   "Scroll maps come from sessions recorded with scroll tracking.": "滚动图来自启用了滚动跟踪的会话录制。",
-  "Half reach {{depth}}% of the page": "一半会话到达页面的 {{depth}}%",
+  "Median scroll depth is {{depth}}%": "滚动深度中位数为 {{depth}}%",
   "few reached": "少数到达",
   "all reached": "全部到达",
   "fewer": "较少",

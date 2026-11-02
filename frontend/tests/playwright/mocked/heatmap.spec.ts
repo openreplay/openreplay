@@ -394,7 +394,7 @@ test.describe('heatmap card', () => {
       '1,200 sessions',
     );
     await expect(page.locator('.m-cmap__legend')).toContainText(
-      'Half reach 61% of the page',
+      'Median scroll depth is 61%',
     );
     // the click layer is gone, the rage toggle too
     await expect(page.locator(OVERLAY)).toHaveCount(0);
