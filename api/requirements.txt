@@ -1,5 +1,5 @@
 #these dependencies are used to solve vulnerabilities, to be removed in the future
-certifi==2026.10.19
+certifi==2026.10.23
 
 #required dependencies
 urllib3==2.8.0
