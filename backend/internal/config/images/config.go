@@ -20,6 +20,7 @@ type Config struct {
 	TopicRawImages    string `env:"TOPIC_RAW_IMAGES,required"`
 	GroupImageStorage string `env:"GROUP_IMAGE_STORAGE,required"`
 	UseProfiler       bool   `env:"PROFILER_ENABLED,default=false"`
+	UnpackedSizeLimit int64  `env:"UNPACKED_SIZE_LIMIT,default=50000000"` // 50mb
 }
 
 func New(log logger.Logger) *Config {
