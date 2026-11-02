@@ -79,6 +79,25 @@ describe('forceFlushBatch', () => {
     expect(posted).toEqual(['forceFlushBatch'])
   })
 
+  test('keeps pending messages away from the stopped worker in assist-only mode, also on page hide', () => {
+    URL.createObjectURL = jest.fn(() => 'blob:worker')
+    const [starts, stops] = [app.startCallbacks.length, app.stopCallbacks.length]
+    app.initWorker()
+    // attach just the unload listeners initWorker registered
+    app.startCallbacks.slice(starts).forEach((cb) => cb({}))
+    app.worker = {
+      postMessage: jest.fn((data) => posted.push(Array.isArray(data) ? [...data] : data)),
+    }
+    app.socketMode = true
+    app.send([MType.CustomEvent, 'assist', '{}'])
+    app.forceFlushBatch()
+    window.dispatchEvent(new Event('pagehide'))
+    expect(posted).toEqual(['forceFlushBatch', 'closing'])
+    expect(app.messages).toHaveLength(1)
+    app.socketMode = false
+    app.stopCallbacks.slice(stops).forEach((cb) => cb())
+  })
+
   test('does not hand over messages before the tracker is active', () => {
     app.activityState = COLD_START
     app.messages.push([MType.CustomEvent, 'early', '{}'])

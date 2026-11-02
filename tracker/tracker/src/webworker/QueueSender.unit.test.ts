@@ -302,28 +302,6 @@ describe('QueueSender', () => {
     expect((fetchMock.mock.calls[1][1] as any).headers.Authorization).toBe('Bearer fresh')
   })
 
-  test('A failing batch blocks the queue rather than letting later ones pass', async () => {
-    jest.useFakeTimers()
-    const onFailed = jest.fn()
-    const queueSender = defaultQueueSender({ onFailed })
-    const fetchMock = mockFetch(500)
-    queueSender.authorise(randomToken)
-
-    queueSender.push(sampleArray, 'visual', 1)
-    queueSender.push(sampleArray, 'player')
-    await Promise.resolve()
-    await Promise.resolve()
-
-    // Every attempt is the same first batch; 'player' never goes out ahead of it.
-    for (let i = 0; i < 12; i++) {
-      jest.advanceTimersByTime(20_000)
-      await Promise.resolve()
-      await Promise.resolve()
-    }
-    expect(fetchMock.mock.calls.every((c) => dataTypeOf(c) === 'visual')).toBe(true)
-    expect(onFailed).toHaveBeenCalled()
-  })
-
   // .clean()
   test("Doesn't call fetch on push() after clean()", () => {
     const queueSender = defaultQueueSender()

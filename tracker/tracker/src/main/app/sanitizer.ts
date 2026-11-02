@@ -66,6 +66,27 @@ function composedParentElement(node: Node): Element | null {
   return root && root.nodeType === Node.DOCUMENT_FRAGMENT_NODE && root.host ? root.host : null
 }
 
+// Where the root of `el`'s tree takes its level from: a shadow host, or the <iframe> of a recorded document.
+function hostOf(el: Element): Element | null {
+  const root = el.getRootNode() as ShadowRoot | Document
+  if (root.nodeType === Node.DOCUMENT_FRAGMENT_NODE) return (root as ShadowRoot).host ?? null
+  if (root.nodeType !== Node.DOCUMENT_NODE || root === document) return null
+  try {
+    return (root as Document).defaultView?.frameElement ?? null
+  } catch {
+    return null
+  }
+}
+
+export const isDataAttribute = (name: string) =>
+  name.startsWith('data-') && !name.startsWith('data-openreplay-')
+
+function hasDataAttribute(el: Element): boolean {
+  const attrs = el.attributes
+  for (let i = 0; i < attrs.length; i++) if (isDataAttribute(attrs[i].nodeName)) return true
+  return false
+}
+
 export const stringWiper =(input: string) =>
   input
     .trim()
@@ -75,8 +96,14 @@ export default class Sanitizer {
   // Node id -> level. Plain (0) is never stored; a missing entry means Plain.
   // A map (not the old grow-only Sets) so levels can be raised and lowered.
   private readonly levels: Map<number, SanitizeLevel> = new Map()
+  /** elements domSanitizer masked when their level was last computed */
+  private readonly sanitizerMasked = new WeakSet<Element>()
+  /** privateMode: obscured ids whose data-* were last sent masked */
+  private readonly maskedData = new Set<number>()
   private readonly options: Options
   public readonly privateMode: boolean
+  /** without one, only data-openreplay-* attributes decide a level */
+  public readonly hasDomSanitizer: boolean
   private readonly app: App
 
   constructor(params: { app: App; options?: Partial<Options> }) {
@@ -89,6 +116,7 @@ export default class Sanitizer {
     }
     this.privateMode = params.options?.privateMode ?? false
     this.options = Object.assign(defaultOptions, params.options)
+    this.hasDomSanitizer = this.options.domSanitizer !== undefined
   }
 
   // Pure recomputation of a node's level from the live DOM + parent level.
@@ -106,9 +134,9 @@ export default class Sanitizer {
           // Root of an unmasked region: its parent is obscured only by privateMode itself,
           // so inherit just explicit masks (or hidden), not the private default.
           if (parentLevel === SanitizeLevel.Obscured && !(parent && isUnmasked(parent))) {
-            parentLevel = closestComposed(node, MASK_SELECTOR)
-              ? SanitizeLevel.Obscured
-              : SanitizeLevel.Plain
+            const from = parent ?? hostOf(node)
+            parentLevel =
+              from && this.explicitlyMasked(from) ? SanitizeLevel.Obscured : SanitizeLevel.Plain
           }
         }
       } else if (isTextNode(node)) {
@@ -138,6 +166,8 @@ export default class Sanitizer {
 
     if (this.options.domSanitizer !== undefined && isElementNode(node)) {
       const sanitizeLevel = this.options.domSanitizer(node)
+      if (sanitizeLevel >= SanitizeLevel.Obscured) this.sanitizerMasked.add(node)
+      else this.sanitizerMasked.delete(node)
       if (sanitizeLevel === SanitizeLevel.Obscured && level < SanitizeLevel.Obscured) {
         level = SanitizeLevel.Obscured
       }
@@ -159,6 +189,7 @@ export default class Sanitizer {
   // Sets a node's level (either direction) and returns the previous one.
   setLevel(id: number, level: SanitizeLevel): SanitizeLevel {
     const prev = this.getLevel(id)
+    if (level !== SanitizeLevel.Obscured) this.maskedData.delete(id)
     if (level === SanitizeLevel.Plain) {
       this.levels.delete(id)
     } else {
@@ -202,8 +233,60 @@ export default class Sanitizer {
     return data
   }
 
+  hasMasked(): boolean {
+    return this.levels.size > 0
+  }
+
   isObscured(id: number): boolean {
     return this.getLevel(id) >= SanitizeLevel.Obscured
+  }
+
+  /**
+   * data-* mostly hold UI state that styles select on ([data-state=open]): masked under an
+   * explicit mask or hide only, not under the page-wide privateMode default.
+   */
+  masksDataAttributes(id: number, el: Element): boolean {
+    const level = this.getLevel(id)
+    if (level === SanitizeLevel.Hidden) return true
+    if (level !== SanitizeLevel.Obscured) return false
+    if (!this.options.privateMode) return true
+    const masked = this.explicitlyMasked(el)
+    if (masked) this.maskedData.add(id)
+    else this.maskedData.delete(id)
+    return masked
+  }
+
+  /**
+   * privateMode: an explicit mask came or went on content the default already obscures. The level
+   * stays, so this is what tells the observers to re-send the data-* (`maskOnly`: new masks only).
+   */
+  dataMaskChanged(id: number, el: Element, maskOnly = false): boolean {
+    if (!this.options.privateMode || this.getLevel(id) !== SanitizeLevel.Obscured) return false
+    if (!hasDataAttribute(el)) return false
+    const masked = this.explicitlyMasked(el)
+    return masked !== this.maskedData.has(id) && (masked || !maskOnly)
+  }
+
+  /** domSanitizer masked `el` when its level was last computed */
+  maskedBySanitizer(el: Element): boolean {
+    return this.hasDomSanitizer && this.sanitizerMasked.has(el)
+  }
+
+  /**
+   * Masked by data-openreplay-obscured/-masked or domSanitizer on `el` or an ancestor, through
+   * shadow hosts and recorded iframes, which pass their level on.
+   */
+  explicitlyMasked(el: Element): boolean {
+    for (let cur: Element | null = el; cur !== null; cur = hostOf(cur)) {
+      if (!this.hasDomSanitizer) {
+        if (cur.closest(MASK_SELECTOR)) return true
+        continue
+      }
+      for (let a: Element | null = cur; a !== null; a = a.parentElement) {
+        if (this.sanitizerMasked.has(a) || a.matches(MASK_SELECTOR)) return true
+      }
+    }
+    return false
   }
 
   isHidden(id: number) {
@@ -220,5 +303,6 @@ export default class Sanitizer {
 
   clear(): void {
     this.levels.clear()
+    this.maskedData.clear()
   }
 }

@@ -6,10 +6,12 @@ on:
     branches: [ "main", "dev" ]
     paths:
       - tracker/**
+      - '!tracker/harness/**'
   pull_request:
     branches: [ "dev", "main" ]
     paths:
       - tracker/**
+      - '!tracker/harness/**'
 
 permissions:
   contents: read

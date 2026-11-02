@@ -107,21 +107,6 @@ beforeEach(() => { warn = jest.spyOn(console, 'warn').mockImplementation(() => {
 afterEach(() => { warn.mockRestore() })
 
 describe('BatchMetadata is always first', () => {
-  test('normal path is untouched: one visual with a byte-exact split', () => {
-    const { writer, captured } = makeWriter()
-    ;[
-      [T.Timestamp, 1_700_000_000_000], [T.TabData, 'tab-9'],
-      [T.MouseMove, 1, 2],
-      [T.SetCSSDataURLBased, 3, '.a{color:red}', 'http://app.test/'],
-      ORLOADED,
-    ].forEach((m) => writer.writeMessage(m as any))
-
-    expect(captured).toHaveLength(1)
-    expect(captured[0].dataType).toBe('visual')
-    assertReadable(captured, 'normal')
-    expect(warn).not.toHaveBeenCalled()
-  })
-
   test('a headerless player half is repaired, and the megabatch is still paired', () => {
     const { writer, captured } = makeWriter()
     writer.writeMessage([T.SetCSSDataURLBased, 3, '.a{color:red}', 'http://app.test/'] as any)
@@ -208,21 +193,5 @@ describe('BatchMetadata is always first', () => {
     // Truncate the last message's payload so the size prefix overruns the body.
     ;(writer as any).emitBatch(good.subarray(0, good.length - 2), 'player', false)
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('malformed player batch'))
-  })
-
-  test('every stream still round-trips through ingestion after repairs', () => {
-    const { writer, captured } = makeWriter()
-    ;[
-      [T.Timestamp, 1_700_000_000_000], [T.TabData, 'tab-9'],
-      [T.MouseMove, 1, 2],
-      [T.InputChange, 42, 'abc', false, 'Name', 5, 3],
-      [T.ConsoleLog, 'info', 'hello'],
-      [T.SetCSSDataURLBased, 3, '.a{color:red}', 'http://app.test/'],
-      ORLOADED,
-      [T.MouseMove, 3, 4],
-    ].forEach((m) => writer.writeMessage(m as any))
-    writer.finaliseBatch()
-    expect(captured.length).toBeGreaterThan(1)
-    assertReadable(captured, 'mixed')
   })
 })

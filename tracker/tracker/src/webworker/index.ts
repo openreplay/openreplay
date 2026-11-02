@@ -55,14 +55,20 @@ function resetWriter(): void {
 function resetSender(): void {
   if (sender) {
     sender.clean()
-    // allowing some time to send last batch
+    const stale = sender
+    // allowing some time to send last batch; a restart may have created a new sender meanwhile
     setTimeout(() => {
-      sender = null
+      if (sender === stale) sender = null
     }, 20)
   }
 }
 
-function reset(): Promise<any> {
+// bumped by every reset and start, so late reset timers can't touch a newer session
+let generation = 0
+
+/** resolves true when no start happened while resetting */
+function reset(): Promise<boolean> {
+  const gen = ++generation
   return new Promise((res) => {
     workerStatus = WorkerStatus.Stopping
     if (sendIntervalID !== null) {
@@ -74,8 +80,9 @@ function reset(): Promise<any> {
     detectors = null
     detectorsTimestamp = 0
     setTimeout(() => {
-      workerStatus = WorkerStatus.NotActive
-      res(null)
+      const current = gen === generation
+      if (current) workerStatus = WorkerStatus.NotActive
+      res(current)
     }, 100)
   })
 }
@@ -84,8 +91,9 @@ function initiateRestart(): void {
   if ([WorkerStatus.Stopped, WorkerStatus.Stopping].includes(workerStatus)) return
   postMessage('a_stop')
   // eslint-disable-next-line
-  reset().then(() => {
-    postMessage('a_start')
+  reset().then((current) => {
+    // a start/reset during the reset owns the session now: restarting would resurrect a stopped tracker
+    if (current) postMessage('a_start')
   })
 }
 
@@ -102,8 +110,8 @@ self.onmessage = ({ data }: { data: ToWorkerData }): any => {
   if (data === 'stop') {
     finalizeSession()
     // eslint-disable-next-line
-    reset().then(() => {
-      workerStatus = WorkerStatus.Stopped
+    reset().then((current) => {
+      if (current) workerStatus = WorkerStatus.Stopped
     })
     return
   }
@@ -151,6 +159,7 @@ self.onmessage = ({ data }: { data: ToWorkerData }): any => {
   }
 
   if (data.type === 'start') {
+    generation++
     workerStatus = WorkerStatus.Starting
     sender = new QueueSender(
       data.ingestPoint,

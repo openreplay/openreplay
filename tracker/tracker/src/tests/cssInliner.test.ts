@@ -65,19 +65,6 @@ describe('inlineRemoteCss', () => {
     expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
-  test('should fetch CSS if accessing rules throws an error', () => {
-    mockNode.href = 'http://example.com/style.css';
-    const mockSheet = {};
-    Object.defineProperty(mockSheet, 'cssRules', {
-      get: () => { throw new Error('CORS error'); }
-    });
-    Object.defineProperty(mockNode, 'sheet', {
-      get: () => mockSheet
-    });
-    inlineRemoteCss(mockNode, 456,  'http://example.com',mockNextID,mockAdoptedSSInsertRuleURLBased, mockAdoptedSSAddOwner);
-    expect(globalThis.fetch).toHaveBeenCalledWith('http://example.com/style.css');
-  });
-
   test('should handle successful fetch and process CSS text', async () => {
     mockNode.href = 'http://example.com/style.css';
     const mockSheet = {};
@@ -94,6 +81,7 @@ describe('inlineRemoteCss', () => {
       get: () => mockSheet
     });
     inlineRemoteCss(mockNode, 456,  'http://example.com',mockNextID,mockAdoptedSSInsertRuleURLBased, mockAdoptedSSAddOwner);
+    expect(globalThis.fetch).toHaveBeenCalledWith('http://example.com/style.css');
     await flush();
     expect(mockNextID).toHaveBeenCalledTimes(1);
     expect(mockAdoptedSSAddOwner).toHaveBeenCalledWith(123, 456);
@@ -159,9 +147,10 @@ describe('inlineRemoteCss', () => {
     expect(mockAdoptedSSInsertRuleURLBased).toHaveBeenCalledTimes(2);
   });
 
-  test('should handle failed fetch', async () => {
+  test('a failed fetch is logged and retried from the sheet once the link loads', async () => {
+    let sheet: any = null;
     Object.defineProperty(mockNode, 'sheet', {
-      get: () => null
+      get: () => sheet
     });
     mockNode.href = 'http://example.com/style.css';
     globalThis.fetch.mockRejectedValue(new Error('Network error'));
@@ -172,12 +161,17 @@ describe('inlineRemoteCss', () => {
       expect.stringContaining('Failed to fetch CSS from http://example.com/style.css:'),
       expect.any(Error)
     );
+    expect(mockAdoptedSSInsertRuleURLBased).not.toHaveBeenCalled();
+    sheet = { cssRules: [{ cssText: 'body { color: red; }' }] };
+    mockNode.dispatchEvent(new Event('load'));
+    expect(mockAdoptedSSInsertRuleURLBased).toHaveBeenCalledWith(123, 'body { color: red; }', 0, 'http://example.com');
     consoleSpy.mockRestore();
   });
 
-  test('should handle non-OK response from fetch', async () => {
+  test('a non-OK response is logged and the sheet is read if it loaded meanwhile', async () => {
+    let sheet: any = null;
     Object.defineProperty(mockNode, 'sheet', {
-      get: () => null
+      get: () => sheet
     });
     mockNode.href = 'http://example.com/style.css';
     globalThis.fetch.mockResolvedValue({
@@ -189,6 +183,7 @@ describe('inlineRemoteCss', () => {
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
     inlineRemoteCss(mockNode, 456,  'http://example.com',mockNextID,mockAdoptedSSInsertRuleURLBased, mockAdoptedSSAddOwner);
+    sheet = { cssRules: [{ cssText: 'body { color: red; }' }] };
 
     await flush();
     expect(consoleSpy).toHaveBeenCalledTimes(1);
@@ -196,48 +191,34 @@ describe('inlineRemoteCss', () => {
       'OpenReplay: Failed to fetch CSS from http://example.com/style.css:',
       expect.objectContaining({ message: 'response status 404' })
     );
-    expect(mockAdoptedSSInsertRuleURLBased).not.toHaveBeenCalled();
+    expect(mockAdoptedSSInsertRuleURLBased).toHaveBeenCalledTimes(1);
+    expect(mockAdoptedSSInsertRuleURLBased).toHaveBeenCalledWith(123, 'body { color: red; }', 0, 'http://example.com');
     consoleSpy.mockRestore();
   });
 
-  test('should handle nested CSS rules correctly', async () => {
-    Object.defineProperty(mockNode, 'sheet', {
-      get: () => null
-    });
+  test('keeps brace-less at-rules as separate rules', async () => {
     mockNode.href = 'http://example.com/style.css';
-    const nestedCss = `
-      @media (max-width: 600px) {
-        .header {
-          font-size: 14px;
-        }
-        .footer {
-          font-size: 12px;
-        }
-      }
-      .container {
-        padding: 20px;
-      }
-    `;
     globalThis.fetch.mockResolvedValue({
       ok: true,
-      text: () => Promise.resolve(nestedCss)
+      text: () => Promise.resolve('@layer theme, base;\nbody { color: red; }'),
     });
-    inlineRemoteCss(mockNode, 456, 'http://example.com',mockNextID,mockAdoptedSSInsertRuleURLBased, mockAdoptedSSAddOwner);
+    inlineRemoteCss(mockNode, 456, 'http://example.com', mockNextID, mockAdoptedSSInsertRuleURLBased, mockAdoptedSSAddOwner);
     await flush();
-    expect(mockNextID).toHaveBeenCalled();
-    expect(mockAdoptedSSAddOwner).toHaveBeenCalledWith(123, 456);
-    expect(mockAdoptedSSInsertRuleURLBased).toHaveBeenCalledWith(
-      123,
-      '@media (max-width: 600px) {\n        .header {\n          font-size: 14px;\n        }\n        .footer {\n          font-size: 12px;\n        }\n      }',
-      0,
-      'http://example.com'
-    );
-    expect(mockAdoptedSSInsertRuleURLBased).toHaveBeenCalledWith(
-      123,
-      '.container {\n        padding: 20px;\n      }',
-      1,
-      'http://example.com'
-    );
+    expect(mockAdoptedSSInsertRuleURLBased).toHaveBeenCalledWith(123, '@layer theme, base;', 0, 'http://example.com');
+    expect(mockAdoptedSSInsertRuleURLBased).toHaveBeenCalledWith(123, 'body { color: red; }', 1, 'http://example.com');
+    expect(mockAdoptedSSInsertRuleURLBased).toHaveBeenCalledTimes(2);
+  });
+
+  test('keeps ; inside an unquoted url() of an @import', async () => {
+    const imp = '@import url(https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap);';
+    mockNode.href = 'http://example.com/style.css';
+    globalThis.fetch.mockResolvedValue({
+      ok: true,
+      text: () => Promise.resolve(imp + '\nbody { color: red; }'),
+    });
+    inlineRemoteCss(mockNode, 456, 'http://example.com', mockNextID, mockAdoptedSSInsertRuleURLBased, mockAdoptedSSAddOwner);
+    await flush();
+    expect(mockAdoptedSSInsertRuleURLBased).toHaveBeenCalledWith(123, imp, 0, 'http://example.com');
     expect(mockAdoptedSSInsertRuleURLBased).toHaveBeenCalledTimes(2);
   });
 });

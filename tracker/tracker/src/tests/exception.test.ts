@@ -138,3 +138,17 @@ describe('getExceptionMessageFromEvent', () => {
     ])
   })
 })
+
+describe('getExceptionMessageFromEvent with iframe events', () => {
+  test('handles an ErrorEvent and Error created in an iframe realm', () => {
+    const frame = document.createElement('iframe')
+    document.body.appendChild(frame)
+    const w = frame.contentWindow as any
+    const event = new w.ErrorEvent('error', { error: new w.Error('frame boom'), message: 'frame boom' })
+    const msg = getExceptionMessageFromEvent(event, w) as any
+    expect(msg?.[0]).toBe(Type.JSException)
+    expect(msg?.[1]).toBe('Error')
+    expect(msg?.[2]).toBe('frame boom')
+    frame.remove()
+  })
+})

@@ -17,6 +17,8 @@ export default class IFrameObserver extends Observer {
         return
       }
       this.docId = docID
+      // the document inherits the host's level (masked host or ancestor, domSanitizer)
+      this.app.sanitizer.setLevel(docID, this.app.sanitizer.getLevel(hostID))
       this.app.send(CreateIFrameDocument(hostID, docID))
     })
   }

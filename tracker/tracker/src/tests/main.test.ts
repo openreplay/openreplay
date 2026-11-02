@@ -111,5 +111,6 @@ describe('Constructor Tests', () => {
     await expect(tracker.start({ userID: 'user-1' })).resolves.toBe(result)
     expect(setUserID).toHaveBeenCalledWith('user-1')
     expect(appStart).toHaveBeenCalledWith({ userID: 'user-1' })
+    expect(setUserID.mock.invocationCallOrder[0]).toBeLessThan(appStart.mock.invocationCallOrder[0])
   })
 })

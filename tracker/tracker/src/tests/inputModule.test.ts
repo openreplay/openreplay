@@ -71,13 +71,6 @@ describe('input module', () => {
 
   const plain = () => setupInput(h.app as any, { defaultInputMode: InputMode.Plain })
 
-  test('sends the initial value of a new text field', () => {
-    plain()
-    const el = input('text', 'hello')
-    const id = h.add(el)
-    expect(h.sent(Type.SetInputValue)).toEqual([[Type.SetInputValue, id, 'hello', 0]])
-  })
-
   test('ticker polling catches programmatic value changes, without duplicates', () => {
     plain()
     const el = input('text', 'a')
@@ -126,12 +119,6 @@ describe('input module', () => {
     el.value = 'changed'
     h.tick()
     expect(h.sent(Type.SetInputValue)).toHaveLength(1)
-  })
-
-  test('password fields are hidden (mask -1, no value) even in plain mode', () => {
-    plain()
-    const id = h.add(input('password', 'hunter2'))
-    expect(h.sent(Type.SetInputValue)).toEqual([[Type.SetInputValue, id, '', -1]])
   })
 
   test('sanitizer hidden / obscured levels win over plain mode', () => {
@@ -234,5 +221,40 @@ describe('input module', () => {
     h.tick()
     // no longer polled after stop
     expect(h.sent(Type.SetInputValue)).toHaveLength(1)
+  })
+})
+
+describe('input module: password fields', () => {
+  afterEach(() => {
+    document.body.innerHTML = ''
+  })
+
+  test('stay hidden after a "show password" toggle switches the type to text', () => {
+    const h = createApp()
+    setupInput(h.app as any, { defaultInputMode: InputMode.Plain })
+    const el = input('password', 'secret')
+    h.add(el)
+    el.type = 'text'
+    el.value = 'secret2'
+    h.tick()
+    const sent = h.sent(Type.SetInputValue)
+    expect(sent).toHaveLength(2)
+    for (const m of sent) {
+      expect(m[2]).toBe('')
+      expect(m[3]).toBe(-1)
+    }
+  })
+
+  test('stay hidden after password -> text with no value change in between', () => {
+    const h = createApp()
+    setupInput(h.app as any, { defaultInputMode: InputMode.Plain })
+    const el = input('text')
+    h.add(el)
+    el.type = 'password'
+    h.tick()
+    el.type = 'text'
+    el.value = 'hunter2'
+    h.tick()
+    expect(h.sent(Type.SetInputValue).at(-1)).toEqual([Type.SetInputValue, h.app.nodes.getID(el), '', -1])
   })
 })

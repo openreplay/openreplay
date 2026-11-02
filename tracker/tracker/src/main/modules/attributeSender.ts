@@ -16,7 +16,9 @@ export class StringDictionary {
   private lastTs = -1
   private lastSuffix = 0
   /** backwards dictionary of [repeated str:key], in LRU order (oldest first) */
-  private backDict: Map<string, number> = new Map()
+  private backDict: Map<string, { key: number; pos: number }> = new Map()
+  /** insertion position of the next (re)inserted entry */
+  private pos = 0
   private totalChars = 0
 
   constructor(
@@ -27,9 +29,14 @@ export class StringDictionary {
   getKey = (str: string): [number, boolean] => {
     const existing = this.backDict.get(str)
     if (existing !== undefined) {
-      this.backDict.delete(str)
-      this.backDict.set(str, existing)
-      return [existing, false]
+      // re-inserting on every hit makes V8 compact the map constantly (~4µs per call);
+      // only entries that drifted into the older half move to the recent end
+      if (existing.pos < this.pos - (this.backDict.size >> 1)) {
+        this.backDict.delete(str)
+        existing.pos = this.pos++
+        this.backDict.set(str, existing)
+      }
+      return [existing.key, false]
     }
     // shaving the first 2 digits of the timestamp (since they are irrelevant for next millennia)
     const shavedTs = Date.now() % 10 ** (13 - 2)
@@ -44,7 +51,7 @@ export class StringDictionary {
       this.lastSuffix = 0
     }
     const id = this.lastTs * SUFFIX_SPACE + this.lastSuffix
-    this.backDict.set(str, id)
+    this.backDict.set(str, { key: id, pos: this.pos++ })
     this.totalChars += str.length
     this.evict()
     return [id, true]

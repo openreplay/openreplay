@@ -1,11 +1,4 @@
-import Message, {
-  CustomEvent,
-  JSException,
-  MouseClick,
-  NetworkRequest,
-  SetPageLocation,
-  Type,
-} from '../../common/messages.gen.js'
+import Message, { NetworkRequest, Type } from '../../common/messages.gen.js'
 import App, { StartOptions } from '../app/index.js'
 
 export interface IFeatureFlag {
@@ -64,17 +57,11 @@ export default class ConditionsManager {
           if (filter.type === 'fetch') {
             cond = {
               type: 'network_request',
-              subConditions: [],
+              subConditions: filter.filters
+                .map((f) => this.createConditionFromFilter(f as unknown as Filter))
+                .filter(Boolean) as unknown as SubCondition[],
               name: c.name,
             }
-            filter.filters.forEach((f) => {
-              const subCond = this.createConditionFromFilter(f as unknown as Filter)
-              if (subCond) {
-                ;(cond as unknown as NetworkRequestCondition).subConditions.push(
-                  subCond as unknown as SubCondition,
-                )
-              }
-            })
           } else {
             cond = this.createConditionFromFilter(filter)
           }
@@ -114,36 +101,42 @@ export default class ConditionsManager {
 
     switch (message[0]) {
       case Type.JSException:
-        this.jsExceptionEvent(message)
-        break
+        // name, message, payload
+        return this.check('exception', [message[1], message[2], message[3]])
       case Type.CustomEvent:
-        this.customEvent(message)
-        break
+        // name, payload
+        return this.check('custom_event', [message[1], message[2]])
       case Type.MouseClick:
-        this.clickEvent(message)
-        break
-      case Type.SetPageLocation:
-        this.pageLocationEvent(message)
-        break
+        // label, selector
+        return this.check('click', [message[3], message[4]])
+      case Type.SetPageLocation: {
+        let pathname = message[1]
+        try {
+          pathname = new URL(message[1]).pathname
+        } catch (e) {}
+        return this.check('visited_url', [pathname])
+      }
       case Type.NetworkRequest:
-        this.networkRequest(message)
-        break
-      default:
-        break
+        return this.networkRequest(message)
     }
   }
 
   processFlags(flag: IFeatureFlag[]) {
-    const flagConds = this.conditions.filter(
-      (c) => c.type === 'feature_flag',
-    ) as FeatureFlagCondition[]
-    if (flagConds.length) {
-      flagConds.forEach((flagCond) => {
-        const operator = operators[flagCond.operator]
-        if (operator && flag.find((f) => operator(f.key, flagCond.value))) {
-          this.trigger(flagCond.name)
-        }
-      })
+    this.check(
+      'feature_flag',
+      flag.map((f) => f.key),
+    )
+  }
+
+  /** triggers every condition of this type whose operator matches one of the values */
+  private check(type: Condition['type'], values: unknown[]) {
+    for (const cond of this.conditions) {
+      if (cond.type !== type) continue
+      const { operator: op, value } = cond as CommonCondition
+      const operator = operators[op] as (a: unknown, b: unknown) => boolean
+      if (operator && values.some((v) => operator(v, value))) {
+        this.trigger(cond.name)
+      }
     }
   }
 
@@ -169,7 +162,6 @@ export default class ConditionsManager {
   }
 
   networkRequest(message: NetworkRequest) {
-    // method - 2, url - 3, status - 6, duration - 8
     const reqConds = this.conditions.filter(
       (c) => c.type === 'network_request',
     ) as NetworkRequestCondition[]
@@ -178,23 +170,7 @@ export default class ConditionsManager {
       const validSubConditions = reqCond.subConditions.filter((c) => c.operator !== 'isAny')
       if (validSubConditions.length) {
         const allPass = validSubConditions.every((subCond) => {
-          let value
-          switch (subCond.key) {
-            case 'url':
-              value = message[3]
-              break
-            case 'status':
-              value = message[6]
-              break
-            case 'method':
-              value = message[2]
-              break
-            case 'duration':
-              value = message[8]
-              break
-            default:
-              break
-          }
+          const value = message[REQUEST_FIELDS[subCond.key]]
           const operator = operators[subCond.operator] as (a: string, b: string[]) => boolean
           // @ts-ignore
           if (operator && operator(value, subCond.value)) {
@@ -208,68 +184,6 @@ export default class ConditionsManager {
         this.trigger(reqCond.name)
       }
     })
-  }
-
-  customEvent(message: CustomEvent) {
-    // name - 1, payload - 2
-    const evConds = this.conditions.filter((c) => c.type === 'custom_event') as CommonCondition[]
-    if (evConds.length) {
-      evConds.forEach((evCond) => {
-        const operator = operators[evCond.operator] as (a: string, b: string[]) => boolean
-        if (
-          operator &&
-          (operator(message[1], evCond.value) || operator(message[2], evCond.value))
-        ) {
-          this.trigger(evCond.name)
-        }
-      })
-    }
-  }
-
-  clickEvent(message: MouseClick) {
-    // label - 3, selector - 4
-    const clickCond = this.conditions.filter((c) => c.type === 'click') as CommonCondition[]
-    if (clickCond.length) {
-      clickCond.forEach((click) => {
-        const operator = operators[click.operator] as (a: string, b: string[]) => boolean
-        if (operator && (operator(message[3], click.value) || operator(message[4], click.value))) {
-          this.trigger(click.name)
-        }
-      })
-    }
-  }
-
-  pageLocationEvent(message: SetPageLocation) {
-    // url - 1
-    const urlConds = this.conditions.filter((c) => c.type === 'visited_url') as CommonCondition[]
-    if (urlConds.length) {
-      let pathname = message[1]
-      try {
-        pathname = new URL(message[1]).pathname
-      } catch (e) {}
-      urlConds.forEach((urlCond) => {
-        const operator = operators[urlCond.operator] as (a: string, b: string[]) => boolean
-        if (operator && operator(pathname, urlCond.value)) {
-          this.trigger(urlCond.name)
-        }
-      })
-    }
-  }
-
-  jsExceptionEvent(message: JSException) {
-    // name - 1, message - 2, payload - 3
-    const testedValues = [message[1], message[2], message[3]]
-    const exceptionConds = this.conditions.filter(
-      (c) => c.type === 'exception',
-    ) as ExceptionCondition[]
-    if (exceptionConds) {
-      exceptionConds.forEach((exceptionCond) => {
-        const operator = operators[exceptionCond.operator]
-        if (operator && testedValues.some((val) => operator(val, exceptionCond.value))) {
-          this.trigger(exceptionCond.name)
-        }
-      })
-    }
   }
 }
 // duration,
@@ -342,117 +256,50 @@ const operators = {
   lessThan: (val: unknown, target: unknown) => Number(val) < num(target),
 }
 
+const REQUEST_FIELDS = { method: 2, url: 3, status: 6, duration: 8 } as const
+
+const OP_MAP: Record<string, string> = {
+  on: 'is',
+  notOn: 'isNot',
+  '\u003e': 'greaterThan',
+  '\u003c': 'lessThan',
+  '\u003d': 'is',
+  '\u003c=': 'lessOrEqual',
+  '\u003e=': 'greaterOrEqual',
+}
+
+// filter type -> [condition type, network request key, operator needs mapping]
+const CONDITION_TYPES: Record<string, [string, string, boolean]> = {
+  click: ['click', '', true],
+  location: ['visited_url', '', false],
+  custom: ['custom_event', '', false],
+  error: ['exception', '', false],
+  fetchUrl: ['network_request', 'url', false],
+  fetchStatusCode: ['network_request', 'status', true],
+  fetchMethod: ['network_request', 'method', true],
+  fetchDuration: ['network_request', 'duration', true],
+}
+
+const own = <T>(map: Record<string, T>, key: string) =>
+  Object.prototype.hasOwnProperty.call(map, key) ? map[key] : undefined
+
 const mapCondition = (condition: Filter): Condition => {
-  const opMap = {
-    on: 'is',
-    notOn: 'isNot',
-    '\u003e': 'greaterThan',
-    '\u003c': 'lessThan',
-    '\u003d': 'is',
-    '\u003c=': 'lessOrEqual',
-    '\u003e=': 'greaterOrEqual',
+  const { type, operator, value } = condition
+  let con: Record<string, unknown>
+  if (type === 'duration') {
+    con = { type: 'session_duration', value, key: '', operator: 'is' }
+  } else if (type === 'metadata') {
+    con = {
+      type: condition.source === 'featureFlag' ? 'feature_flag' : type,
+      operator,
+      value,
+      key: '',
+    }
+  } else {
+    const t = own(CONDITION_TYPES, type)
+    con = t
+      ? { type: t[0], operator: t[2] ? own(OP_MAP, operator) : operator, value, key: t[1] }
+      : { type: '', operator: '', value, key: '' }
   }
-
-  const mapOperator = (operator: string) => {
-    const keys = Object.keys(opMap)
-    // @ts-ignore
-    if (keys.includes(operator)) return opMap[operator]
-  }
-
-  let con = {
-    type: '',
-    operator: '',
-    value: condition.value,
-    key: '',
-  }
-  switch (condition.type) {
-    case 'click':
-      con = {
-        type: 'click',
-        operator: mapOperator(condition.operator),
-        value: condition.value,
-        key: '',
-      }
-      break
-    case 'location':
-      con = {
-        type: 'visited_url',
-        // @ts-ignore
-        operator: condition.operator,
-        value: condition.value,
-        key: '',
-      }
-      break
-    case 'custom':
-      con = {
-        type: 'custom_event',
-        // @ts-ignore
-        operator: condition.operator,
-        value: condition.value,
-        key: '',
-      }
-      break
-    case 'metadata':
-      con = {
-        // @ts-ignore
-        type: condition.source === 'featureFlag' ? 'feature_flag' : condition.type,
-        // @ts-ignore
-        operator: condition.operator,
-        value: condition.value,
-        key: '',
-      }
-      break
-    case 'error':
-      con = {
-        type: 'exception',
-        // @ts-ignore
-        operator: condition.operator,
-        value: condition.value,
-        key: '',
-      }
-      break
-    case 'duration':
-      con = {
-        type: 'session_duration',
-        // @ts-ignore
-        value: condition.value,
-        key: '',
-        operator: 'is',
-      }
-      break
-    case 'fetchUrl':
-      con = {
-        type: 'network_request',
-        key: 'url',
-        operator: condition.operator,
-        value: condition.value,
-      }
-      break
-    case 'fetchStatusCode':
-      con = {
-        type: 'network_request',
-        key: 'status',
-        operator: mapOperator(condition.operator),
-        value: condition.value,
-      }
-      break
-    case 'fetchMethod':
-      con = {
-        type: 'network_request',
-        key: 'method',
-        operator: mapOperator(condition.operator),
-        value: condition.value,
-      }
-      break
-    case 'fetchDuration':
-      con = {
-        type: 'network_request',
-        key: 'duration',
-        operator: mapOperator(condition.operator),
-        value: condition.value,
-      }
-      break
-  }
-  // @ts-ignore
-  return con
+  return con as unknown as Condition
 }

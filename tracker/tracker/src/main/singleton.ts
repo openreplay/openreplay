@@ -58,19 +58,11 @@ class TrackerSingleton {
    * (which can be used to stitch sessions together)
    * */
   stop(): string | undefined {
-    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
-      return
-    }
-
-    return this.instance.stop()
+    return this.t?.stop()
   }
 
   setUserID = (id: string): void => {
-    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
-      return
-    }
-
-    this.instance.setUserID(id)
+    this.t?.setUserID(id)
   }
 
   get analytics() {
@@ -83,13 +75,7 @@ class TrackerSingleton {
     properties?: Record<string, any>,
     options?: { send_immediately: boolean },
   ): void => {
-    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
-      return
-    }
-
-    // Route through analytics directly: Tracker.track is bound to analytics?.track
-    // at field-init time (before analytics exists), so it is always undefined.
-    this.instance.analytics?.track(eventName, properties, options)
+    this.t?.analytics?.track(eventName, properties, options)
   }
 
   /**
@@ -100,95 +86,58 @@ class TrackerSingleton {
    * Read more: https://docs.openreplay.com/en/installation/metadata/
    */
   setMetadata(key: string, value: string): void {
-    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
-      return
-    }
-
-    this.instance.setMetadata(key, value)
+    this.t?.setMetadata(key, value)
   }
 
   /**
    * Returns full URL for the current session
    */
   getSessionURL(options?: { withCurrentTime?: boolean }): string | undefined {
-    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
-      return
-    }
-
-    return this.instance.getSessionURL(options)
+    return this.t?.getSessionURL(options)
   }
 
   getSessionID(): string | null | undefined {
-    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
-      return null
-    }
-
-    return this.instance.getSessionID()
+    const t = this.t
+    return t ? t.getSessionID() : null
   }
 
   getSessionToken(): string | null | undefined {
-    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
-      return null
-    }
-
-    return this.instance.getSessionToken()
+    const t = this.t
+    return t ? t.getSessionToken() : null
   }
 
   event(key: string, payload: any = null, issue = false): void {
-    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
-      return
-    }
-
-    this.instance.event(key, payload, issue)
+    this.t?.event(key, payload, issue)
   }
 
   issue(key: string, payload: any = null): void {
-    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
-      return
-    }
-
-    this.instance.issue(key, payload)
+    this.t?.issue(key, payload)
   }
 
   handleError(
     e: Error | ErrorEvent | PromiseRejectionEvent,
     metadata: Record<string, any> = {},
   ): void {
-    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
-      return
-    }
-
-    this.instance.handleError(e, metadata)
+    this.t?.handleError(e, metadata)
   }
 
   restartCanvasTracking(): void {
-    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
-      return
-    }
-
-    this.instance.restartCanvasTracking()
+    this.t?.restartCanvasTracking()
   }
 
   /**
    * Set the anonymous user ID
    */
   setUserAnonymousID(id: string): void {
-    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
-      return
-    }
-
-    this.instance.setUserAnonymousID(id)
+    this.t?.setUserAnonymousID(id)
   }
 
   /**
    * Check if the tracker is active
    */
   isActive(): boolean {
-    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
-      return false
-    }
-
-    return this.instance.isActive()
+    const t = this.t
+    return t ? t.isActive() : false
   }
 
   /**
@@ -209,11 +158,7 @@ class TrackerSingleton {
    * session by calling start() on conditional trigger and we will then send buffered batch, so it won't get lost
    * */
   coldStart(startOpts?: Partial<StartOptions>, conditional?: boolean) {
-    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
-      return
-    }
-
-    return this.instance.coldStart(startOpts, conditional)
+    return this.t?.coldStart(startOpts, conditional)
   }
 
   /**
@@ -226,11 +171,13 @@ class TrackerSingleton {
   trackWs(
     channelName: string,
   ): ((msgType: string, data: string, dir: 'up' | 'down') => void) | undefined {
-    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
-      return () => {} // Return no-op function
-    }
+    const t = this.t
+    return t ? t.trackWs(channelName) : () => {} // Return no-op function
+  }
 
-    return this.instance.trackWs(channelName)
+  /** the instance, or null (with a warning if not configured yet) */
+  private get t(): Tracker | null {
+    return IN_BROWSER && this.ensureConfigured() ? this.instance : null
   }
 
   private ensureConfigured() {
@@ -244,11 +191,8 @@ class TrackerSingleton {
   }
 
   use<T>(fn: (app: App | null, options?: Partial<Options>) => T): T {
-    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
-      return fn(null)
-    }
-
-    return this.instance.use(fn)
+    const t = this.t
+    return t ? t.use(fn) : fn(null)
   }
 
   /**
@@ -266,11 +210,7 @@ class TrackerSingleton {
    * setBuffer - replaces current buffer with given
    * */
   startOfflineRecording(...args: Parameters<Tracker['startOfflineRecording']>) {
-    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
-      return
-    }
-
-    return this.instance.startOfflineRecording(...args)
+    return this.t?.startOfflineRecording(...args)
   }
 
   /**
@@ -281,35 +221,21 @@ class TrackerSingleton {
    * @reject {string} - error message
    * */
   uploadOfflineRecording() {
-    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
-      return
-    }
-
-    return this.instance.uploadOfflineRecording()
+    return this.t?.uploadOfflineRecording()
   }
 
   forceFlushBatch() {
-    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
-      return
-    }
-
-    return this.instance.forceFlushBatch()
+    return this.t?.forceFlushBatch()
   }
 
   getSessionInfo() {
-    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
-      return null
-    }
-
-    return this.instance.getSessionInfo()
+    const t = this.t
+    return t ? t.getSessionInfo() : null
   }
 
   getTabId() {
-    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
-      return null
-    }
-
-    return this.instance.getTabId()
+    const t = this.t
+    return t ? t.getTabId() : null
   }
 
   /**
@@ -321,11 +247,7 @@ class TrackerSingleton {
    * @param el - the highest node you changed; omit to re-scan the whole document.
    * */
   resanitize(el?: Element) {
-    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
-      return
-    }
-
-    return this.instance.resanitize(el)
+    return this.t?.resanitize(el)
   }
 
   /**
@@ -333,38 +255,22 @@ class TrackerSingleton {
    * (0 = Plain, 1 = Obscured, 2 = Hidden), or undefined if it isn't tracked.
    * */
   checkSanitization(el: Node) {
-    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
-      return undefined
-    }
-
-    return this.instance.checkSanitization(el)
+    return this.t?.checkSanitization(el)
   }
 
   incident(options: { label?: string; startTime: number; endTime?: number }): void {
-    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
-      return
-    }
-
-    this.instance.incident(options)
+    this.t?.incident(options)
   }
 
   /**
    * Use custom token for analytics events without session recording
    * */
   setAnalyticsToken(token: string): void {
-    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
-      return
-    }
-
-    this.instance.setAnalyticsToken(token)
+    this.t?.setAnalyticsToken(token)
   }
 
   getAnalyticsToken(): string | undefined {
-    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
-      return undefined
-    }
-
-    return this.instance.getAnalyticsToken()
+    return this.t?.getAnalyticsToken()
   }
 }
 

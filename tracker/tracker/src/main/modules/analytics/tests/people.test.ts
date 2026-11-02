@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { jest, describe, test, expect, beforeEach } from '@jest/globals'
 import People from '../people.js'
-import { categories, mutationTypes } from '../types.js'
+import { mutationTypes } from '../types.js'
 
 describe('People', () => {
   let constantProps: any
@@ -53,7 +53,6 @@ describe('People', () => {
         },
       },
     ])
-    expect(categories.people).toBe('user_actions')
   })
 
   test('identify does not call onId when fromTracker=true', () => {

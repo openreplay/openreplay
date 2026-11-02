@@ -24,8 +24,9 @@ function webAnimations(app: App, options: Options = {}) {
       () => {
         const lastKF = anim.effect.getKeyframes().at(-1)
         if (!lastKF) return
-        if (!el || !(el instanceof Element) || !el.isConnected) return
-        const computedStyle = getComputedStyle(el)
+        // no instanceof, and the element's own window: it may live in an iframe
+        if (!el || el.nodeType !== Node.ELEMENT_NODE || !el.isConnected) return
+        const computedStyle = (el.ownerDocument.defaultView ?? window).getComputedStyle(el)
         const keys = Object.keys(lastKF).filter((p) => !toIgnore.includes(p))
         // @ts-ignore
         const finalStyle = {}

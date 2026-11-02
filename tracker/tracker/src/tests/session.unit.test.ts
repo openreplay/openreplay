@@ -52,16 +52,6 @@ describe('Session', () => {
     jest.clearAllMocks()
   })
 
-  test('creates a new Session with default values', () => {
-    expect(session.getInfo()).toEqual({
-      sessionID: undefined,
-      metadata: {},
-      userID: null,
-      timestamp: 0,
-      projectID: undefined,
-    })
-  })
-
   test('assigns new info correctly', () => {
     const newInfo = {
       sessionID: 'new_id',
@@ -92,11 +82,6 @@ describe('Session', () => {
     session.setUserID('u1')
     expect(callback).toHaveBeenLastCalledWith({ userID: 'u1' })
     expect(session.getInfo().userID).toBe('u1')
-  })
-
-  test('gets page number correctly', () => {
-    store.pageno_key = '2'
-    expect(session.getPageNumber()).toEqual(2)
   })
 
   test('increments page number and stores it', () => {

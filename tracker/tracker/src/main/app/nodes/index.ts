@@ -11,6 +11,8 @@ export interface NodesOptions {
   maintainer?: Partial<MaintainerOptions>
   /** called once when a crossdomain frame runs out of its node id block */
   onIdSpaceExhausted?: () => void
+  /** called with the id of every unregistered node, so id-keyed state can be dropped */
+  onUnregister?: (id: number) => void
 }
 
 export default class Nodes {
@@ -27,12 +29,14 @@ export default class Nodes {
   private idLimit = Infinity
   private idSpaceExhausted = false
   private readonly onIdSpaceExhausted?: () => void
+  private readonly onUnregister?: (id: number) => void
 
   constructor(params: NodesOptions) {
     this.node_id = params.node_id
     this.forceNgOff = params.forceNgOff
     this.maintainer = new Maintainer(this.nodes, this.unregisterNode, params.maintainer)
     this.onIdSpaceExhausted = params.onIdSpaceExhausted
+    this.onUnregister = params.onUnregister
   }
 
   crossdomainMode(level: number, frameOrder: number) {
@@ -110,20 +114,9 @@ export default class Nodes {
         )
       }
       this.totalNodeAmount--
+      this.onUnregister?.(id)
     }
     return id
-  }
-
-  cleanTree() {
-    // sadly we keep empty items in array here resulting in some memory still being used
-    // but its still better than keeping dead nodes or undef elements
-    // plus we keep our index positions for new/alive nodes
-    // performance test: 3ms for 30k nodes with 17k dead ones
-    for (const [_, node] of this.nodes) {
-      if (node && !document.contains(node)) {
-        this.unregisterNode(node)
-      }
-    }
   }
 
   callNodeCallbacks(node: Node, isStart: boolean): void {

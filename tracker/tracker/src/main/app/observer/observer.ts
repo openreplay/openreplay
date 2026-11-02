@@ -1,4 +1,4 @@
-import { createMutationObserver, throttleWithTrailing } from '../../utils.js'
+import { createMutationObserver, throttleWithTrailing, canAccessIframe } from '../../utils.js'
 import {
   CreateDocument,
   RemoveNodeAttribute,
@@ -24,11 +24,10 @@ import {
   isSVGElement,
   isUseElement,
   hasTag,
-  isCommentNode,
 } from '../guards.js'
 import { inlineRemoteCss } from './cssInliner.js'
 import { nextID } from '../../modules/constructedStyleSheets.js'
-import { SanitizeLevel } from '../sanitizer.js'
+import { SanitizeLevel, stringWiper, isDataAttribute } from '../sanitizer.js'
 import { parentNode, previousSibling, nextSibling, firstChild } from '../untaintedDom.js'
 
 const iconCache = {}
@@ -174,25 +173,17 @@ export async function parseUseEl(
   }
 }
 
-function isIgnored(node: Node): boolean {
-  if (isCommentNode(node)) {
-    return true
-  }
-  if (isTextNode(node)) {
-    return false
-  }
-  if (!isElementNode(node)) {
-    return true
-  }
-  const tag = node.tagName.toUpperCase()
-  if (tag === 'LINK') {
-    const rel = node.getAttribute('rel')
-    const as = node.getAttribute('as')
+export function isIgnored(node: Node): boolean {
+  const t = node.nodeType
+  if (t === Node.TEXT_NODE) return false
+  if (t !== Node.ELEMENT_NODE) return true
+  const tag = (node as Element).localName
+  if (tag === 'link') {
+    const rel = (node as Element).getAttribute('rel')
+    const as = (node as Element).getAttribute('as')
     return !(rel?.includes('stylesheet') || as === 'style' || as === 'font')
   }
-  return (
-    tag === 'SCRIPT' || tag === 'NOSCRIPT' || tag === 'META' || tag === 'TITLE' || tag === 'BASE'
-  )
+  return tag === 'script' || tag === 'noscript' || tag === 'meta' || tag === 'title' || tag === 'base'
 }
 
 function isObservable(node: Node): boolean {
@@ -206,6 +197,192 @@ const PRESERVE_VALUE_INPUT_TYPES = new Set(['button', 'reset', 'submit', 'checkb
 
 export function shouldSkipValueAttribute(node: Element): boolean {
   return hasTag(node, 'input') && !PRESERVE_VALUE_INPUT_TYPES.has(node.type)
+}
+
+// Attributes that can hold page text. The rest (class, style, aria-expanded, SVG geometry...)
+// stays, so masked content lays out and styles the same in replays.
+const CONTENT_ATTRIBUTES = new Set([
+  'abbr',
+  'alt',
+  'aria-description',
+  'aria-label',
+  'aria-placeholder',
+  'aria-roledescription',
+  'aria-valuetext',
+  'data-openreplay-label',
+  'datetime',
+  'label',
+  'placeholder',
+  'title',
+  'value',
+])
+const BUTTON_INPUT_TYPES = new Set(['button', 'reset', 'submit'])
+
+function isContentAttribute(el: Element, name: string): boolean {
+  if (name === 'value') {
+    // the rest draw or select on it: list numbering, gauges, [value=x]:checked
+    const tag = el.localName
+    if (tag === 'input') return BUTTON_INPUT_TYPES.has((el as HTMLInputElement).type)
+    return tag !== 'li' && tag !== 'meter' && tag !== 'progress'
+  }
+  return CONTENT_ATTRIBUTES.has(name)
+}
+
+function maskAttribute(app: App, id: number, el: Element, name: string, value: string): string {
+  if (!app.sanitizer.isObscured(id)) return value
+  if (
+    isContentAttribute(el, name) ||
+    (isDataAttribute(name) && app.sanitizer.masksDataAttributes(id, el))
+  ) {
+    return stringWiper(value)
+  }
+  return value
+}
+
+export interface AttributeContext {
+  readonly app: App
+  readonly disableSprites: boolean
+  readonly inlineRemoteCss: boolean
+  readonly inlinerOptions?: { forceFetch?: boolean; forcePlain?: boolean }
+  readonly domParser: DOMParser
+  /** bumped on disconnect: async work (sprites, css inlining) of an older session bails */
+  generation: number
+}
+
+export function sendNodeAttribute(
+  ctx: AttributeContext,
+  id: number,
+  node: Element,
+  name: string,
+  value: string | null,
+): void {
+  const app = ctx.app
+  if (isSVGElement(node)) {
+    if (name.startsWith('xlink:')) {
+      name = name.substring(6)
+    }
+    if (value === null) {
+      app.send(RemoveNodeAttribute(id, name))
+      return
+    }
+    if (isUseElement(node) && name === 'href' && !ctx.disableSprites) {
+      const gen = ctx.generation
+      parseUseEl(node, 'svgtext', ctx.domParser)
+        .then((svgData) => {
+          if (svgData && gen === ctx.generation) {
+            app.send(SetNodeAttribute(id, name, `_$OPENREPLAY_SPRITE$_${svgData}`))
+          }
+        })
+        .catch((e: any) => {
+          console.error('Openreplay: Error parsing <use> element:', e)
+        })
+      return
+    }
+    if (name === 'href') {
+      if (value.length > 1e5) {
+        value = ''
+      }
+      app.send(SetNodeAttributeURLBased(id, name, value, app.getBaseHref()))
+    } else {
+      app.attributeSender.sendSetAttribute(id, name, maskAttribute(app, id, node, name, value))
+    }
+    return
+  }
+  // `open` alone can't tell showModal() (modal/top-layer) from show()/`<dialog open>`
+  // (non-modal); emit the mode alongside it so the player replays the right call (see DOMManager).
+  if (name === 'open' && hasTag(node, 'dialog')) {
+    let mode: 'modal' | 'nonmodal' | 'closed'
+    if (value === null) {
+      mode = 'closed'
+    } else {
+      let isModal = false
+      try {
+        isModal = (node as HTMLDialogElement).matches('dialog:modal')
+      } catch (e) {
+        /* :modal pseudo-class unsupported on this browser */
+      }
+      mode = isModal ? 'modal' : 'nonmodal'
+    }
+    app.send(SetNodeAttribute(id, '__openreplay_dialog', mode))
+  }
+  if (
+    name === 'src' ||
+    name === 'srcset' ||
+    name === 'integrity' ||
+    name === 'crossorigin' ||
+    name === 'autocomplete' ||
+    name.substring(0, 2) === 'on'
+  ) {
+    return
+  }
+  if (name === 'value' && shouldSkipValueAttribute(node)) {
+    return
+  }
+  if (value === null) {
+    app.send(RemoveNodeAttribute(id, name))
+    return
+  }
+  if (name === 'style' || (name === 'href' && hasTag(node, 'link'))) {
+    if ('rel' in node && node.rel === 'stylesheet' && ctx.inlineRemoteCss) {
+      const gen = ctx.generation
+      setTimeout(() => {
+        inlineRemoteCss(
+          node as HTMLLinkElement,
+          id,
+          app.getBaseHref(),
+          nextID,
+          (sheetId: number, cssText: string, index: number, baseHref: string) => {
+            if (ctx.generation !== gen) return
+            app.send(AdoptedSSInsertRuleURLBased(sheetId, cssText, index, baseHref))
+          },
+          (sheetId: number, ownerId: number) => {
+            if (ctx.generation !== gen) return
+            app.send(AdoptedSSAddOwner(sheetId, ownerId))
+          },
+          ctx.inlinerOptions?.forceFetch,
+          ctx.inlinerOptions?.forcePlain,
+          (cssText: string, fakeTextId: number) => {
+            if (ctx.generation !== gen) return
+            app.send(CreateTextNode(fakeTextId, id, 0))
+            app.send(SetCSSDataURLBased(fakeTextId, cssText, app.getBaseHref()))
+          },
+        )
+      }, 0)
+      return
+    }
+    app.send(SetNodeAttributeURLBased(id, name, value, app.getBaseHref()))
+    return
+  }
+  if (name === 'href' || value.length > 1e5) {
+    value = ''
+  }
+  app.attributeSender.sendSetAttribute(id, name, maskAttribute(app, id, node, name, value))
+}
+
+/** After a level change: re-sends the attributes whose masking depends on it. */
+export function sendContentAttributes(ctx: AttributeContext, id: number, el: Element): void {
+  const attrs = el.attributes
+  for (let i = 0; i < attrs.length; i++) {
+    const name = attrs[i].nodeName
+    if (isContentAttribute(el, name) || isDataAttribute(name)) {
+      sendNodeAttribute(ctx, id, el, name, attrs[i].value)
+    }
+  }
+}
+
+/** privateMode: re-sends the data-* of an element whose explicit mask came or went without a level change. */
+export function refreshDataAttributes(
+  ctx: AttributeContext,
+  id: number,
+  el: Element,
+  maskOnly = false,
+): void {
+  if (!ctx.app.sanitizer.dataMaskChanged(id, el, maskOnly)) return
+  const attrs = el.attributes
+  for (let i = 0; i < attrs.length; i++) {
+    const name = attrs[i].nodeName
+    if (isDataAttribute(name)) sendNodeAttribute(ctx, id, el, name, attrs[i].value)
+  }
 }
 
 /*
@@ -238,30 +415,28 @@ export default abstract class Observer {
   private readonly attributesMap: Map<number, Set<string>> = new Map()
   private readonly textSet: Set<number> = new Set()
   private readonly slotMap: Map<number, number | undefined> = new Map()
-  private readonly disableSprites: boolean = false
   /**
    * this option means that, instead of using link element with href to load css,
    * we will try to parse the css text instead and send it as css rules set
    * can (and will) affect performance
    * */
   private readonly inlineRemoteCss: boolean = false
-  private readonly inlinerOptions: Options['inlinerOptions'] = undefined
-  private readonly domParser = new DOMParser()
-  /**
-   * Bumped on every disconnect(). Stale async CSS-inlining callbacks from a
-   * previous session (e.g. agent reload → tracker restart) compare against
-   * this and bail instead of sending messages that reference vanished node ids.
-   */
-  private generation = 0
+  private readonly attrCtx: AttributeContext
   constructor(
     protected readonly app: App,
     protected readonly isTopContext: boolean = false,
     options: Options = {},
   ) {
     this.throttling = !Boolean(options.disableThrottling)
-    this.disableSprites = Boolean(options.disableSprites)
     this.inlineRemoteCss = Boolean(options.inlineRemoteCss)
-    this.inlinerOptions = options.inlinerOptions
+    this.attrCtx = {
+      app,
+      disableSprites: Boolean(options.disableSprites),
+      inlineRemoteCss: this.inlineRemoteCss,
+      inlinerOptions: options.inlinerOptions,
+      domParser: new DOMParser(),
+      generation: 0,
+    }
     this.observer = createMutationObserver(
       this.app.safe((mutations) => {
         let rootSwapped = false
@@ -396,117 +571,12 @@ export default abstract class Observer {
     }
   }
 
-  private sendNodeAttribute(id: number, node: Element, name: string, value: string | null): void {
-    if (isSVGElement(node)) {
-      if (name.startsWith('xlink:')) {
-        name = name.substring(6)
-      }
-      if (value === null) {
-        this.app.send(RemoveNodeAttribute(id, name))
-        return
-      }
-
-      if (isUseElement(node) && name === 'href' && !this.disableSprites) {
-        parseUseEl(node, 'svgtext', this.domParser)
-          .then((svgData) => {
-            if (svgData) {
-              this.app.send(SetNodeAttribute(id, name, `_$OPENREPLAY_SPRITE$_${svgData}`))
-            }
-          })
-          .catch((e: any) => {
-            console.error('Openreplay: Error parsing <use> element:', e)
-          })
-        return
-      }
-
-      if (name === 'href') {
-        if (value!.length > 1e5) {
-          value = ''
-        }
-        this.app.send(SetNodeAttributeURLBased(id, name, value!, this.app.getBaseHref()))
-      } else {
-        this.app.attributeSender.sendSetAttribute(id, name, value!)
-      }
-      return
-    }
-    // `open` alone can't tell showModal() (modal/top-layer) from show()/`<dialog open>`
-    // (non-modal); emit the mode alongside it so the player replays the right call (see DOMManager).
-    if (name === 'open' && hasTag(node, 'dialog')) {
-      let mode: 'modal' | 'nonmodal' | 'closed'
-      if (value === null) {
-        mode = 'closed'
-      } else {
-        let isModal = false
-        try {
-          isModal = (node as HTMLDialogElement).matches('dialog:modal')
-        } catch (e) {
-          /* :modal pseudo-class unsupported on this browser */
-        }
-        mode = isModal ? 'modal' : 'nonmodal'
-      }
-      this.app.send(SetNodeAttribute(id, '__openreplay_dialog', mode))
-    }
-    if (
-      name === 'src' ||
-      name === 'srcset' ||
-      name === 'integrity' ||
-      name === 'crossorigin' ||
-      name === 'autocomplete' ||
-      name.substring(0, 2) === 'on'
-    ) {
-      return
-    }
-    if (name === 'value' && shouldSkipValueAttribute(node)) {
-      return
-    }
-    if (value === null) {
-      this.app.send(RemoveNodeAttribute(id, name))
-      return
-    }
-    if (name === 'style' || (name === 'href' && hasTag(node, 'link'))) {
-      if ('rel' in node && node.rel === 'stylesheet' && this.inlineRemoteCss) {
-        const gen = this.generation
-        setTimeout(() => {
-          inlineRemoteCss(
-            // @ts-ignore
-            node,
-            id,
-            this.app.getBaseHref(),
-            nextID,
-            (id: number, cssText: string, index: number, baseHref: string) => {
-              if (this.generation !== gen) return
-              this.app.send(AdoptedSSInsertRuleURLBased(id, cssText, index, baseHref))
-            },
-            (sheetId: number, ownerId: number) => {
-              if (this.generation !== gen) return
-              this.app.send(AdoptedSSAddOwner(sheetId, ownerId))
-            },
-            this.inlinerOptions?.forceFetch,
-            this.inlinerOptions?.forcePlain,
-            (cssText: string, fakeTextId: number) => {
-              if (this.generation !== gen) return
-              this.app.send(CreateTextNode(fakeTextId, id, 0))
-              this.app.send(SetCSSDataURLBased(fakeTextId, cssText, this.app.getBaseHref()))
-            },
-          )
-        }, 0)
-        return
-      }
-      this.app.send(SetNodeAttributeURLBased(id, name, value, this.app.getBaseHref()))
-      return
-    }
-    if (name === 'href' || value.length > 1e5) {
-      value = ''
-    }
-    if (['alt', 'placeholder'].includes(name) && this.app.sanitizer.privateMode) {
-      value = value.replaceAll(/./g, '*')
-    }
-    this.app.attributeSender.sendSetAttribute(id, name, value)
-  }
-
   throttling = true
-  private throttledSetNodeData = throttleWithTrailing<number, [Element, string]>(
-    (id, parentElement, data) => this.sendNodeData(id, parentElement, data),
+  private throttledSetNodeData = throttleWithTrailing<number, [Element, string, Node]>(
+    (id, parentElement, data, node) => {
+      // a trailing send may come after the node was removed and its mask level dropped
+      if (this.app.nodes.getID(node) === id) this.sendNodeData(id, parentElement, data)
+    },
     30,
   )
 
@@ -617,6 +687,7 @@ export default abstract class Observer {
     // Disable parent check for the upper context HTMLHtmlElement, because it is root there... (before)
     // TODO: get rid of "special" cases (there is an issue with CreateDocument altered behaviour though)
     // TODO: Clean the logic (though now it workd fine)
+    const prevLevel = this.app.sanitizer.getLevel(id)
     if (!hasTag(node, 'html') || !this.isTopContext) {
       if (parent === null) {
         this.unbindTree(node)
@@ -636,6 +707,10 @@ export default abstract class Observer {
       if (this.app.sanitizer.isHidden(parentID)) {
         return false
       }
+    } else {
+      // no parent to inherit from, but its own mask/hidden attributes still apply to the page
+      const level = this.app.sanitizer.computeLevel(node, SanitizeLevel.Plain)
+      if (level > this.app.sanitizer.getLevel(id)) this.app.sanitizer.setLevel(id, level)
     }
     // From here parentID === undefined if node is top context HTML node
     let sibling = previousSibling(node)
@@ -677,13 +752,13 @@ export default abstract class Observer {
         }
         for (let i = 0; i < el.attributes.length; i++) {
           const attr = el.attributes[i]
-          this.sendNodeAttribute(id, el, attr.nodeName, attr.value)
+          sendNodeAttribute(this.attrCtx, id, el, attr.nodeName, attr.value)
         }
       } else if (isTextNode(node)) {
         // for text node id != 0, hence parentID !== undefined and parent is Element
         this.app.send(CreateTextNode(id, parentID as number, index))
         if (this.throttling) {
-          this.throttledSetNodeData(id, parent as Element, node.data)
+          this.throttledSetNodeData(id, parent as Element, node.data, node)
         } else {
           this.sendNodeData(id, parent as Element, node.data)
         }
@@ -710,13 +785,17 @@ export default abstract class Observer {
         this.app.send(SetNodeSlot(id, 0))
       }
     }
+    if (isElementNode(node) && this.app.sanitizer.getLevel(id) !== prevLevel) {
+      // raised by an attribute change or a move: what was sent at the old level is re-sent
+      sendContentAttributes(this.attrCtx, id, node)
+    }
     const attr = this.attributesMap.get(id)
     if (attr !== undefined) {
       if (!isElementNode(node)) {
         throw 'commitNode: node is not an element'
       }
       for (const name of attr) {
-        this.sendNodeAttribute(id, node, name, node.getAttribute(name))
+        sendNodeAttribute(this.attrCtx, id, node, name, node.getAttribute(name))
       }
     }
     if (this.textSet.has(id)) {
@@ -725,7 +804,7 @@ export default abstract class Observer {
       }
       // for text node id != 0, hence parent is Element
       if (this.throttling) {
-        this.throttledSetNodeData(id, parent as Element, node.data)
+        this.throttledSetNodeData(id, parent as Element, node.data, node)
       } else {
         this.sendNodeData(id, parent as Element, node.data)
       }
@@ -807,7 +886,12 @@ export default abstract class Observer {
     // Crossing the hidden boundary changes the rendered structure (placeholder vs
     // real subtree), so rebuild rather than re-emit.
     if (wasHidden !== willHidden) {
-      this.recreateSubtree(node)
+      const parent = parentNode(node)
+      if (parent !== null && this.app.nodes.getID(parent) !== undefined) {
+        this.recreateSubtree(node)
+      } else {
+        this.recreateChildren(node, id, newLevel, wasHidden)
+      }
       return
     }
     if (willHidden) {
@@ -817,9 +901,26 @@ export default abstract class Observer {
     if (prevLevel !== newLevel) {
       this.app.sanitizer.setLevel(id, newLevel)
       this.reemitNode(id, node)
+    } else if (isElementNode(node)) {
+      refreshDataAttributes(this.attrCtx, id, node)
     }
     for (let child = firstChild(node); child !== null; child = nextSibling(child)) {
       this.resanitizeNode(child, newLevel)
+    }
+    // a recorded iframe document or shadow root is observed separately and inherits the host level
+    const inner = hasTag(node, 'iframe')
+      ? canAccessIframe(node)
+        ? node.contentDocument
+        : null
+      : isElementNode(node)
+        ? node.shadowRoot
+        : null
+    const innerId = inner ? this.app.nodes.getID(inner) : undefined
+    if (innerId !== undefined) {
+      this.app.sanitizer.setLevel(innerId, newLevel)
+      for (let child = firstChild(inner!); child !== null; child = nextSibling(child)) {
+        this.resanitizeNode(child, newLevel)
+      }
     }
   }
 
@@ -836,8 +937,31 @@ export default abstract class Observer {
     this.commitNodes()
   }
 
-  private clearSubtreeRegistration(node: Node): void {
+  /** The top <html> can't become a placeholder (it is the replay root): its children are rebuilt instead. */
+  private recreateChildren(node: Node, id: number, level: SanitizeLevel, wasHidden: boolean): void {
+    this.app.sanitizer.setLevel(id, level)
+    if (isElementNode(node)) sendContentAttributes(this.attrCtx, id, node)
+    for (let child = firstChild(node); child !== null; child = nextSibling(child)) {
+      const childId = this.app.nodes.getID(child)
+      if (childId !== undefined) {
+        // children of a hidden root were never created player-side
+        if (!wasHidden) this.app.send(RemoveNode(childId))
+        this.clearSubtreeRegistration(child)
+      }
+      this.bindTree(child)
+    }
+    this.commitNodes()
+  }
+
+  /** An iframe left the recording (rebuilt as hidden): the top observer stops recording its document. */
+  protected releaseFrame(_iframe: HTMLIFrameElement): void {}
+  /** Same for the shadow root of a host in a rebuilt subtree. */
+  protected releaseShadow(_host: Element): void {}
+
+  protected clearSubtreeRegistration(node: Node): void {
     const clearOne = (n: Node) => {
+      if (hasTag(n, 'iframe')) this.releaseFrame(n)
+      else if (isElementNode(n) && n.shadowRoot) this.releaseShadow(n)
       const oldId = this.app.nodes.getID(n)
       if (oldId !== undefined) {
         this.app.sanitizer.setLevel(oldId, SanitizeLevel.Plain)
@@ -875,6 +999,7 @@ export default abstract class Observer {
       return
     }
     if (isElementNode(node)) {
+      sendContentAttributes(this.attrCtx, id, node)
       // inputs/images/canvas re-emit their own payload via registered callbacks
       this.app.callResanitizeCallbacks(node, id)
     }
@@ -905,7 +1030,7 @@ export default abstract class Observer {
     this.observer.disconnect()
     this.clear()
     this.throttledSetNodeData.clear()
-    this.generation++
+    this.attrCtx.generation++
   }
 
   protected resetThrottledSetNodeData(): void {

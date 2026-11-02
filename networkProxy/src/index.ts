@@ -1,12 +1,15 @@
 import BeaconProxy from "./beaconProxy";
 import FetchProxy from "./fetchProxy";
 import XHRProxy from "./xhrProxy";
+import hookAxios, { AxiosInstance } from "./axiosHook";
 import { INetworkMessage, RequestResponseData } from "./types";
 
 export {
   BeaconProxy,
   FetchProxy,
   XHRProxy,
+  hookAxios,
+  AxiosInstance,
   INetworkMessage,
   RequestResponseData,
 };
@@ -77,6 +80,7 @@ export default function createNetworkProxy(
           sendMessage,
           isServiceUrl,
           tokenUrlMatcher,
+          original,
         ),
         original,
       )
@@ -94,6 +98,8 @@ export default function createNetworkProxy(
           sendMessage,
           isServiceUrl,
           tokenUrlMatcher,
+          original,
+          context,
         ) as typeof context.fetch,
         original,
       )

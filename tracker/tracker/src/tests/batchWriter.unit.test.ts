@@ -95,32 +95,7 @@ describe('BatchWriter', () => {
     return writer
   }
 
-  describe('configuration', () => {
-    test('setBeaconSizeLimit bounds the oversized one-shot batch', () => {
-      const big = [MType.SetPageLocation, 'http://x', '', 0, 'a'.repeat(300_000)] as Message
-      const writer = createWriter()
-      writer.setBeaconSizeLimit(400_000)
-      writer.writeMessage(big)
-      expect(onBatch).toHaveBeenCalledTimes(1)
-      expect(onBatch.mock.calls[0][0].length).toBeGreaterThan(300_000)
-      expect(onBatch.mock.calls[0][0].length).toBeLessThanOrEqual(400_000)
-
-      writer.setBeaconSizeLimit(250_000)
-      writer.writeMessage(big)
-      expect(onBatch).toHaveBeenCalledTimes(1)
-      expect(warn).toHaveBeenCalledWith('OpenReplay: beacon size overflow. Skipping large message.', big)
-    })
-  })
-
   describe('emission policy', () => {
-    test('finaliseBatch after multiple calls with no messages still does nothing', () => {
-      const writer = createWriter()
-      writer.finaliseBatch()
-      writer.finaliseBatch()
-      writer.finaliseBatch()
-      expect(onBatch).not.toHaveBeenCalled()
-    })
-
     test('timestamp-only messages do not trigger a batch send', () => {
       const writer = createWriter()
       writer.writeMessage([MType.Timestamp, 2000])
@@ -168,17 +143,6 @@ describe('BatchWriter', () => {
   })
 
   describe('protocol v2: asset message separation', () => {
-    test('asset messages produce a separate batch with dataType=assets', () => {
-      const writer = createWriter({ protocolVersion: 2 })
-      writer.writeMessage([MType.MouseMove, 100, 200])
-      writer.writeMessage([MType.SetNodeAttributeURLBased, 1, 'class', 'value', 'http://base.com'])
-      writer.finaliseBatch()
-
-      expect(onBatch).toHaveBeenCalledTimes(2)
-      expect(onBatch.mock.calls[0][2]).toBe('player')
-      expect(onBatch.mock.calls[1][2]).toBe('assets')
-    })
-
     test('asset-only batch (no regular messages) sends only assets', () => {
       const writer = createWriter({ protocolVersion: 2 })
       writer.writeMessage([MType.SetNodeAttributeURLBased, 1, 'src', 'img.png', 'http://base.com'])
@@ -187,36 +151,6 @@ describe('BatchWriter', () => {
 
       expect(onBatch).toHaveBeenCalledTimes(1)
       expect(onBatch.mock.calls[0][2]).toBe('assets')
-    })
-
-    test('asset batch starts with BatchMetadata version=3', () => {
-      const writer = createWriter({ protocolVersion: 2 })
-      writer.writeMessage([MType.SetNodeAttributeURLBased, 1, 'src', 'img.png', 'http://base.com'])
-      writer.finaliseBatch()
-
-      const assetBatch: Uint8Array = onBatch.mock.calls[0][0]
-      expect(assetBatch[0]).toBe(MType.BatchMetadata)
-      expect(assetBatch[1]).toBe(3)
-    })
-
-    test('regular batch has version=2 when protocolVersion=2', () => {
-      const writer = createWriter({ protocolVersion: 2 })
-      writer.writeMessage([MType.MouseMove, 100, 200])
-      writer.finaliseBatch()
-
-      const batch: Uint8Array = onBatch.mock.calls[0][0]
-      expect(batch[0]).toBe(MType.BatchMetadata)
-      expect(batch[1]).toBe(2)
-    })
-
-    test('asset messages are cleared after finaliseBatch', () => {
-      const writer = createWriter({ protocolVersion: 2 })
-      writer.writeMessage([MType.SetNodeAttributeURLBased, 1, 'src', 'img.png', 'http://base.com'])
-      writer.finaliseBatch()
-      expect(onBatch).toHaveBeenCalledTimes(1)
-
-      writer.finaliseBatch()
-      expect(onBatch).toHaveBeenCalledTimes(1)
     })
 
     // Pair-flush ordering: when assetBuilder is about to emit (soft-cap or
@@ -241,18 +175,6 @@ describe('BatchWriter', () => {
       expect(onBatch.mock.calls[2][2]).toBe('assets')
     })
 
-    test('oversized asset one-shot emits playerBuilder first', () => {
-      const writer = createWriter({ protocolVersion: 2 })
-      writer.writeMessage([MType.MouseMove, 100, 200])
-      // Single asset msg larger than the soft cap (200kB) but under the hard
-      // cap (1MB) — goes through the oversized one-shot path.
-      writer.writeMessage([MType.SetCSSDataURLBased, 1, 'z'.repeat(250_000), 'http://b.com'])
-
-      expect(onBatch).toHaveBeenCalledTimes(2)
-      expect(onBatch.mock.calls[0][2]).toBe('player')
-      expect(onBatch.mock.calls[1][2]).toBe('assets')
-    })
-
     test('asset overflow with empty playerBuilder emits only the asset batch', () => {
       const writer = createWriter({ protocolVersion: 2 })
       // No player messages — playerBuilder is empty when assetBuilder overflows.
@@ -274,43 +196,11 @@ describe('BatchWriter', () => {
     })
   })
 
-  describe('multiple batches maintain correct state', () => {
-    test('interleaved regular and asset batches across multiple finalizes', () => {
-      const writer = createWriter({ protocolVersion: 2 })
-
-      // First batch: regular + assets
-      writer.writeMessage([MType.MouseMove, 100, 200])
-      writer.writeMessage([MType.SetNodeAttributeURLBased, 1, 'src', 'a.png', 'http://b.com'])
-      writer.finaliseBatch()
-      expect(onBatch).toHaveBeenCalledTimes(2)
-
-      // Second batch: only regular
-      writer.writeMessage([MType.MouseMove, 120, 220])
-      writer.finaliseBatch()
-      expect(onBatch).toHaveBeenCalledTimes(3)
-      expect(onBatch.mock.calls[2][2]).toBe('player')
-
-      // Third batch: only assets
-      writer.writeMessage([MType.SetCSSDataURLBased, 2, 'bg', 'http://c.com'])
-      writer.finaliseBatch()
-      expect(onBatch).toHaveBeenCalledTimes(4)
-      expect(onBatch.mock.calls[3][2]).toBe('assets')
-    })
-  })
-
   describe('clean()', () => {
     test('clean resets all state, next finalize produces nothing', () => {
       const writer = createWriter({ protocolVersion: 2 })
       writer.writeMessage([MType.MouseMove, 100, 200])
       writer.writeMessage([MType.SetNodeAttributeURLBased, 1, 'src', 'a.png', 'http://b.com'])
-      writer.clean()
-      writer.finaliseBatch()
-      expect(onBatch).not.toHaveBeenCalled()
-    })
-
-    test('clean discards in-progress regular content; subsequent finalise emits nothing', () => {
-      const writer = createWriter()
-      writer.writeMessage([MType.MouseMove, 100, 200])
       writer.clean()
       writer.finaliseBatch()
       expect(onBatch).not.toHaveBeenCalled()

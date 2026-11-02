@@ -125,20 +125,63 @@ describe('requestIdleCb task scheduler', () => {
 
     expect(ran).toEqual(['first', 'rejected', 'after'])
   })
+})
 
-  test('repeated failures keep the queue alive', async () => {
+describe('requestIdleCb in a background tab', () => {
+  test('keeps draining the queue although animation frames never fire', async () => {
+    jest.useFakeTimers()
+    ;(globalThis as any).requestAnimationFrame = () => 0
+    const hidden = jest.spyOn(document, 'hidden', 'get').mockReturnValue(true)
+    let ric: (cb: () => any) => void
+    jest.resetModules()
+    jest.isolateModules(() => {
+      ric = require('../main/utils.js').requestIdleCb
+    })
     const ran: number[] = []
-    for (let i = 0; i < 6; i++) {
-      try {
-        requestIdleCb(() => {
-          ran.push(i)
-          if (i % 2 === 0) throw new Error('every other one fails')
-        })
-      } catch {
-        /* ignore */
-      }
-      await tick(2)
+    ric!(() => ran.push(1))
+    ric!(() => ran.push(2))
+    ric!(() => ran.push(3))
+    for (let i = 0; i < 10; i++) {
+      await Promise.resolve()
+      await Promise.resolve()
+      jest.runOnlyPendingTimers()
     }
-    expect(ran).toEqual([0, 1, 2, 3, 4, 5])
+    expect(ran).toEqual([1, 2, 3])
+    hidden.mockRestore()
+    jest.useRealTimers()
+  })
+
+  test('a step already waiting for an animation frame runs once the tab gets hidden', async () => {
+    jest.useFakeTimers()
+    const frames: Array<() => void> = []
+    ;(globalThis as any).requestAnimationFrame = (cb: any) => frames.push(cb)
+    let ric: (cb: () => any) => void
+    jest.resetModules()
+    jest.isolateModules(() => {
+      ric = require('../main/utils.js').requestIdleCb
+    })
+    const ran: number[] = []
+    ric!(() => ran.push(1))
+    ric!(() => ran.push(2))
+    ric!(() => ran.push(3))
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(ran).toEqual([1])
+    expect(frames).toHaveLength(1)
+
+    const hidden = jest.spyOn(document, 'hidden', 'get').mockReturnValue(true)
+    document.dispatchEvent(new Event('visibilitychange'))
+    for (let i = 0; i < 10; i++) {
+      await Promise.resolve()
+      await Promise.resolve()
+      jest.runOnlyPendingTimers()
+    }
+    expect(ran).toEqual([1, 2, 3])
+    // the frame fires when the tab is shown again: the step already ran
+    frames.forEach((f) => f())
+    ric!(() => ran.push(4))
+    expect(ran).toEqual([1, 2, 3, 4])
+    hidden.mockRestore()
+    jest.useRealTimers()
   })
 })

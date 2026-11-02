@@ -154,6 +154,15 @@ describe('img module', () => {
     expect(srcMessages()).toHaveLength(0)
   })
 
+  test('a srcset set later is resolved and sent too', async () => {
+    const { img, id } = addImg({ src: 'https://cdn.test/a.jpg' }, loaded)
+    img.setAttribute('srcset', 'a@2x.jpg 2x, /b.jpg 3x')
+    await Promise.resolve()
+    expect(attrCalls()).toEqual([
+      [id, 'srcset', 'https://shop.test/product/a@2x.jpg 2x, https://shop.test/b.jpg 3x'],
+    ])
+  })
+
   test('image already broken at attach reports an error and sends no src', () => {
     addImg(
       { src: 'https://cdn.test/404.jpg' },
