@@ -67,10 +67,13 @@ jobs:
         git remote set-url origin https://x-access-token:${{ secrets.ACTIONS_COMMMIT_TOKEN }}@github.com/${{ github.repository }}.git
 
     - name: Log input parameters
+      env:
+        SERVICES_INPUT: ${{ github.event.inputs.services }}
+        BRANCH: ${{ github.ref_name }}
       run: |
         echo "===== Workflow Input Parameters ====="
-        echo "Services: ${{ github.event.inputs.services }}"
-        echo "Branch: ${{ github.ref_name }}"
+        echo "Services: $SERVICES_INPUT"
+        echo "Branch: $BRANCH"
         echo "===================================="
 
     - name: Build
