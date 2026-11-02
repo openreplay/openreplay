@@ -27,7 +27,7 @@ import {
 } from '../guards.js'
 import { inlineRemoteCss } from './cssInliner.js'
 import { nextID } from '../../modules/constructedStyleSheets.js'
-import { SanitizeLevel, stringWiper } from '../sanitizer.js'
+import { SanitizeLevel, stringWiper, isDataAttribute } from '../sanitizer.js'
 import { parentNode, previousSibling, nextSibling, firstChild } from '../untaintedDom.js'
 
 const iconCache = {}
@@ -228,9 +228,6 @@ function isContentAttribute(el: Element, name: string): boolean {
   return CONTENT_ATTRIBUTES.has(name)
 }
 
-const isDataAttribute = (name: string) =>
-  name.startsWith('data-') && !name.startsWith('data-openreplay-')
-
 function maskAttribute(app: App, id: number, el: Element, name: string, value: string): string {
   if (!app.sanitizer.isObscured(id)) return value
   if (
@@ -370,6 +367,21 @@ export function sendContentAttributes(ctx: AttributeContext, id: number, el: Ele
     if (isContentAttribute(el, name) || isDataAttribute(name)) {
       sendNodeAttribute(ctx, id, el, name, attrs[i].value)
     }
+  }
+}
+
+/** privateMode: re-sends the data-* of an element whose explicit mask came or went without a level change. */
+export function refreshDataAttributes(
+  ctx: AttributeContext,
+  id: number,
+  el: Element,
+  maskOnly = false,
+): void {
+  if (!ctx.app.sanitizer.dataMaskChanged(id, el, maskOnly)) return
+  const attrs = el.attributes
+  for (let i = 0; i < attrs.length; i++) {
+    const name = attrs[i].nodeName
+    if (isDataAttribute(name)) sendNodeAttribute(ctx, id, el, name, attrs[i].value)
   }
 }
 
@@ -889,6 +901,8 @@ export default abstract class Observer {
     if (prevLevel !== newLevel) {
       this.app.sanitizer.setLevel(id, newLevel)
       this.reemitNode(id, node)
+    } else if (isElementNode(node)) {
+      refreshDataAttributes(this.attrCtx, id, node)
     }
     for (let child = firstChild(node); child !== null; child = nextSibling(child)) {
       this.resanitizeNode(child, newLevel)

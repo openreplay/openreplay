@@ -54,6 +54,14 @@ const attrs = (el: Element) => {
   return out
 }
 
+const allData = () =>
+  sent
+    .filter((m) => m[0] === Type.SetNodeData)
+    .map((m) => m[2])
+    .join('|')
+// the default core picks iframes up after 250ms
+const waitFrames = () => new Promise((r) => setTimeout(r, 300))
+
 afterEach(() => observer.disconnect())
 
 describe.each(['default', 'next'] as const)('%s observer: attributes of masked content', (core) => {
@@ -126,5 +134,73 @@ describe.each(['default', 'next'] as const)('%s observer: attributes of masked c
     $('#s').setAttribute('data-openreplay-obscured', '')
     await flush()
     expect(attrs($('#s')).title).toBe('****')
+  })
+
+  test('privateMode: a domSanitizer mask counts as explicit for data-* and unmask', () => {
+    setup(
+      core,
+      `<span id="s" class="secret" data-name="Jane">x</span>
+      <div class="secret"><p id="u" data-openreplay-unmask data-name="Jane">card 4111</p></div>`,
+      {
+        privateMode: true,
+        domSanitizer: (el: Element) =>
+          el.classList.contains('secret') ? SanitizeLevel.Obscured : SanitizeLevel.Plain,
+      },
+    )
+    expect(attrs($('#s'))['data-name']).toBe('****')
+    expect(attrs($('#u'))['data-name']).toBe('****')
+    expect(allData()).not.toContain('4111')
+  })
+
+  test('privateMode: a masked iframe host counts as explicit for data-* and unmask inside', async () => {
+    setup(core, '<div data-openreplay-obscured><iframe id="f"></iframe></div>', {
+      privateMode: true,
+    })
+    const doc = ($('#f') as HTMLIFrameElement).contentDocument!
+    doc.body.innerHTML =
+      '<span id="i" data-name="Jane"></span><p data-openreplay-unmask>card 4111</p>'
+    await waitFrames()
+    expect(attrs(doc.getElementById('i')!)['data-name']).toBe('****')
+    expect(allData()).toContain('****')
+    expect(allData()).not.toContain('4111')
+  })
+
+  test('privateMode: resanitize re-sends data-* when an explicit mask goes or comes', async () => {
+    setup(
+      core,
+      '<div id="w" data-openreplay-obscured><button id="b" data-state="open" title="Jane">x</button></div>',
+      { privateMode: true },
+    )
+    expect(attrs($('#b'))).toEqual({ 'data-state': '****', title: '****' })
+    $('#w').removeAttribute('data-openreplay-obscured')
+    await flush()
+    observer.resanitizeSubtree($('#w'))
+    expect(attrs($('#b'))).toEqual({ 'data-state': 'open', title: '****' })
+
+    $('#w').setAttribute('data-openreplay-masked', '')
+    await flush()
+    observer.resanitizeSubtree($('#w'))
+    expect(attrs($('#b'))['data-state']).toBe('****')
+  })
+})
+
+describe('next observer: privateMode explicit masks', () => {
+  test('a mask attribute masks data-* right away, its removal waits for resanitize', async () => {
+    setup(
+      'next',
+      '<div id="w"><button id="b" data-state="open">x</button><span id="s" data-name="Jane"></span></div>',
+      { privateMode: true },
+    )
+    expect(attrs($('#b'))['data-state']).toBe('open')
+    $('#w').setAttribute('data-openreplay-masked', '')
+    await flush()
+    expect(attrs($('#b'))['data-state']).toBe('****')
+    expect(attrs($('#s'))['data-name']).toBe('****')
+
+    $('#w').removeAttribute('data-openreplay-masked')
+    await flush()
+    expect(attrs($('#b'))['data-state']).toBe('****')
+    observer.resanitizeSubtree($('#w'))
+    expect(attrs($('#b'))['data-state']).toBe('open')
   })
 })

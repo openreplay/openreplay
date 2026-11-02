@@ -45,7 +45,13 @@ import {
 } from '../untaintedDom.js'
 import NextNodes, { Rec } from '../nodes/next_nodes.js'
 import IFrameOffsets, { Offset } from './iframe_offsets.js'
-import { isIgnored, sendNodeAttribute, sendContentAttributes, AttributeContext } from './observer.js'
+import {
+  isIgnored,
+  sendNodeAttribute,
+  sendContentAttributes,
+  refreshDataAttributes,
+  AttributeContext,
+} from './observer.js'
 import type TopObserver from './top_observer.js'
 import { getInlineOptions, sendColorScheme, Options } from './top_observer.js'
 
@@ -625,12 +631,28 @@ export default class NextObserver
     const chain: Node[] = []
     for (let i = 0; i < pend.length; i++) {
       const n = pend[i]
-      // a node may land in a container that is itself pending further down the list
-      // (inserted first, wrapped later): place the pending ancestors top-down first
-      for (let a = parentNode(n); a !== null && this.fresh.has(a); a = parentNode(a)) chain.push(a)
-      while (chain.length) this.placeOne(chain.pop() as Node)
+      // a node may land in a container that is itself pending further down the list (inserted
+      // first, wrapped or moved later): place the pending ancestors top-down first, so it gets
+      // their new level. An ancestor whose move changes its level is re-collected as fresh,
+      // hence the repeat.
+      for (;;) {
+        for (let a = parentNode(n); a !== null && this.unplaced(a); a = parentNode(a)) chain.push(a)
+        if (!chain.length) break
+        while (chain.length) this.placeOne(chain.pop() as Node)
+      }
       this.placeOne(n)
     }
+  }
+
+  private unplaced(n: Node) {
+    if (this.fresh.has(n)) return true
+    const r = this.nodes.rec(n)
+    return (
+      r !== undefined &&
+      r.b === this.batch &&
+      (r.f & (MOVED | PLACED)) === MOVED &&
+      this.nodes.alive(r)
+    )
   }
 
   private placeOne(n: Node) {
@@ -799,8 +821,34 @@ export default class NextObserver
       const r = this.nodes.live(n)
       // fresh nodes have no live record yet: placement computes their level
       if (r === undefined || n.nodeType !== ELEMENT) continue
-      this.raiseLevel(n, r, r.p?.lvl ?? SanitizeLevel.Plain)
+      const before = r.lvl
+      const rebuilt = this.raiseLevel(n, r, r.p?.lvl ?? SanitizeLevel.Plain)
+      // privateMode: a mask on content the default already obscures changes only its data-*
+      if (
+        !rebuilt &&
+        before === SanitizeLevel.Obscured &&
+        r.lvl === before &&
+        this.app.sanitizer.privateMode &&
+        hasPrivacyAttr(names)
+      ) {
+        this.maskDataAttributes(n)
+      }
     }
+  }
+
+  private maskDataAttributes(node: Node) {
+    const r = this.nodes.live(node)
+    if (r === undefined || node.nodeType !== ELEMENT) return
+    refreshDataAttributes(this.attrCtx, r.id, node as Element, true)
+    for (let c = firstChild(node); c !== null; c = nextSibling(c)) this.maskDataAttributes(c)
+    this.maskDataAttributesOf(this.shadowOf(node as Element))
+    this.maskDataAttributesOf(this.frameDocs.get(node as Element))
+  }
+
+  /** children of a shadow root or iframe document */
+  private maskDataAttributesOf(root: Node | null | undefined) {
+    if (!root) return
+    for (let c = firstChild(root); c !== null; c = nextSibling(c)) this.maskDataAttributes(c)
   }
 
   private flushUpdates() {
@@ -873,6 +921,7 @@ export default class NextObserver
     }
     if (willHidden) return
     if (r.lvl !== newLevel) this.setLevel(r, node, newLevel)
+    else if (node.nodeType === ELEMENT) refreshDataAttributes(this.attrCtx, r.id, node as Element)
     for (let c = firstChild(node); c !== null; c = nextSibling(c)) this.resanitizeNode(c, newLevel)
     if (node.nodeType === ELEMENT) {
       const sr = this.shadowOf(node as Element)

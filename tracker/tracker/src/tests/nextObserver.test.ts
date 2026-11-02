@@ -417,6 +417,34 @@ describe('NextObserver privacy changes after insertion', () => {
     expect(allData()).not.toContain('4111')
   })
 
+  test.each([true, false])(
+    'text added to a node moved into a masked container in the same turn is never sent plain (no throttling: %s)',
+    async (disableThrottling) => {
+      setup('<div id="a"><p id="p">x</p></div><div id="m" data-openreplay-obscured></div>', {
+        disableThrottling,
+      })
+      observer.observe()
+      $('#p').append('card 4111')
+      $('#m').append($('#p'))
+      await flush()
+      await new Promise((r) => setTimeout(r, 50))
+      expect(allData()).not.toContain('4111')
+      const m = mirror()
+      expect(m.errors).toEqual([])
+      expect(m.html()).toContain('**** ****')
+    },
+  )
+
+  test('text added to a node moved in the same turn keeps the order', async () => {
+    setup('<div id="a"><p id="p">x</p></div><div id="q"><i>1</i><i>2</i></div>')
+    observer.observe()
+    $('#p').append(' more')
+    $('#q').insertBefore($('#p'), $('#q').children[1])
+    $('#q').prepend(document.createElement('b'))
+    await flush()
+    expectInSync()
+  })
+
   test('text added in the same turn as an ancestor is hidden is never sent', async () => {
     setup('<div id="d"><p id="p"></p></div>')
     observer.observe()
