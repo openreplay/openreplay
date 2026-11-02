@@ -236,8 +236,8 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
       }
     }
 
-    // save POST data
-    if (init?.body) {
+    // save POST data; an init body (even an empty one) replaces the Request's own, null keeps it
+    if (init?.body != null) {
       item.requestData = genStringBody(init.body);
     } else if (
       typeof input !== "string" &&

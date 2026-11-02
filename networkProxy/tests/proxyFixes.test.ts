@@ -89,6 +89,23 @@ describe("fetch proxy fixes", () => {
   });
 
   it.each([
+    ["an empty init body replaces", "", ""],
+    ["a null init body keeps", null, '{"a":1}'],
+  ])("%s the body of a Request input", async (_name, body, expected) => {
+    const sendMessage = vi.fn();
+    let sentBody = "";
+    const target = vi.fn(async (input: Request, init?: RequestInit) => {
+      sentBody = await new Request(input, init).text();
+      return new Response("{}", { headers: { "content-type": "application/json" } });
+    });
+    const wrapped = FetchProxy.create(false, noToken, identity, sendMessage, () => false, undefined, target as any);
+    await wrapped(makeRequest(), { body });
+    await flush();
+    expect(sentBody).toBe(expected);
+    expect(JSON.parse(sendMessage.mock.calls[0][0].request).body || "").toBe(expected);
+  });
+
+  it.each([
     ["application/problem+json", '{"title":"bad"}'],
     ["application/xml", "<a/>"],
     [null, "boom"],
