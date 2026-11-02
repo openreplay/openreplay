@@ -31,7 +31,6 @@ require (
 	github.com/prometheus/client_golang v1.25.0
 	github.com/redis/go-redis/v9 v9.23.0
 	github.com/robfig/cron/v3 v3.0.1
-	github.com/rs/xid v1.6.0
 	github.com/sethvargo/go-envconfig v1.4.3
 	github.com/tomasen/realip v0.0.0-20180522021738-f0c99a92ddce
 	github.com/ua-parser/uap-go v0.0.0-20260529044130-17c35e68e58c

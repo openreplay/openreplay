@@ -2,13 +2,13 @@ package keys
 
 import (
 	"context"
+	"crypto/rand"
 	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/rs/xid"
 
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
@@ -58,7 +58,7 @@ func (k *keysImpl) Set(spotID, expiration uint64, user *user.User) (*Key, error)
 		}
 		return nil, nil
 	}
-	newKey := xid.New().String()
+	newKey := rand.Text()
 	expiredAt := now.Add(time.Duration(expiration) * time.Second)
 	sql := `
 	WITH spot AS (
