@@ -821,34 +821,44 @@ export default class NextObserver
       const r = this.nodes.live(n)
       // fresh nodes have no live record yet: placement computes their level
       if (r === undefined || n.nodeType !== ELEMENT) continue
+      const s = this.app.sanitizer
       const before = r.lvl
+      const wasSanitized = s.maskedBySanitizer(n as Element)
       const rebuilt = this.raiseLevel(n, r, r.p?.lvl ?? SanitizeLevel.Plain)
-      // privateMode: a mask on content the default already obscures changes only its data-*
       if (
         !rebuilt &&
         before === SanitizeLevel.Obscured &&
         r.lvl === before &&
-        this.app.sanitizer.privateMode &&
-        hasPrivacyAttr(names)
+        s.privateMode &&
+        (hasPrivacyAttr(names) || (!wasSanitized && s.maskedBySanitizer(n as Element)))
       ) {
-        this.maskDataAttributes(n)
+        this.applyExplicitMask(n, r)
       }
     }
   }
 
-  private maskDataAttributes(node: Node) {
-    const r = this.nodes.live(node)
-    if (r === undefined || node.nodeType !== ELEMENT) return
-    refreshDataAttributes(this.attrCtx, r.id, node as Element, true)
-    for (let c = firstChild(node); c !== null; c = nextSibling(c)) this.maskDataAttributes(c)
-    this.maskDataAttributesOf(this.shadowOf(node as Element))
-    this.maskDataAttributesOf(this.frameDocs.get(node as Element))
-  }
-
-  /** children of a shadow root or iframe document */
-  private maskDataAttributesOf(root: Node | null | undefined) {
-    if (!root) return
-    for (let c = firstChild(root); c !== null; c = nextSibling(c)) this.maskDataAttributes(c)
+  /**
+   * privateMode: an explicit mask on content the default already obscures keeps the level,
+   * but reaches the unmasked regions below it and the data-* of the obscured part.
+   */
+  private applyExplicitMask(node: Node, r: Rec) {
+    if (node.nodeType === ELEMENT) refreshDataAttributes(this.attrCtx, r.id, node as Element, true)
+    const visit = (c: Node) => {
+      const cr = this.nodes.live(c)
+      if (cr === undefined) return
+      const before = cr.lvl
+      // raised ones re-send their own subtree
+      if (!this.raiseLevel(c, cr, r.lvl) && cr.lvl === before && before === SanitizeLevel.Obscured) {
+        this.applyExplicitMask(c, cr)
+      }
+    }
+    for (let c = firstChild(node); c !== null; c = nextSibling(c)) visit(c)
+    if (node.nodeType === ELEMENT) {
+      const sr = this.shadowOf(node as Element)
+      if (sr) visit(sr)
+      const doc = this.frameDocs.get(node as Element)
+      if (doc) visit(doc)
+    }
   }
 
   private flushUpdates() {

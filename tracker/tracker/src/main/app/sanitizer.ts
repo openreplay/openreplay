@@ -267,6 +267,11 @@ export default class Sanitizer {
     return masked !== this.maskedData.has(id) && (masked || !maskOnly)
   }
 
+  /** domSanitizer masked `el` when its level was last computed */
+  maskedBySanitizer(el: Element): boolean {
+    return this.hasDomSanitizer && this.sanitizerMasked.has(el)
+  }
+
   /**
    * Masked by data-openreplay-obscured/-masked or domSanitizer on `el` or an ancestor, through
    * shadow hosts and recorded iframes, which pass their level on.
