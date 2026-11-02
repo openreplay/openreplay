@@ -250,6 +250,22 @@ describe('PrivacyManager', () => {
     expect(real.getItem('k')).toBe('newer')
   })
 
+  test('a downgrade keeps the value whose real write failed, not the older device copy', () => {
+    const real = new FakeStorage()
+    const full = { record: 'full', storage: 'persistent', identity: 'raw', networkPayloads: true } as const
+    const s = new PolicyStorage('local', real, full)
+    s.setItem('k', 'v1')
+    const setItem = real.setItem.bind(real)
+    real.setItem = () => {
+      throw new Error('QuotaExceededError')
+    }
+    s.setItem('k', 'v2')
+    real.setItem = setItem
+    s.applyPolicy({ ...full, storage: 'none' })
+    expect(s.getItem('k')).toBe('v2')
+    expect(real.getItem('k')).toBeNull()
+  })
+
   test('upgrade keeps a key that fails to move readable and moves the others', () => {
     const real = new FakeStorage()
     const setItem = real.setItem.bind(real)
@@ -376,6 +392,31 @@ describe('PrivacyManager', () => {
     const pm = new PrivacyManager({}, env({ globalPrivacyControl: true }))
     expect(pm.getPolicy().record).toBe('none')
     expect(pm.describe().source).toBe('gpc')
+  })
+
+  test('a policy narrowed from persistent to session erases listed keys from local storage', () => {
+    const local = new FakeStorage()
+    const session = new FakeStorage()
+    local.setItem('__openreplay_uuid', 'old')
+    session.setItem('__openreplay_uuid', 'tab')
+    const pm = new PrivacyManager(
+      {
+        storageKeys: ['__openreplay_uuid'],
+        resolvePolicy: (p, input) =>
+          input.consent.storage === 'denied' ? { ...p, record: 'full', storage: 'session' } : p,
+      },
+      env(),
+    )
+    pm.createStorage('local', local)
+    pm.createStorage('session', session)
+    expect(local.getItem('__openreplay_uuid')).toBe('old')
+    const changes: any[] = []
+    pm.onChange((c) => changes.push(c))
+    pm.setConsent({ storage: 'denied' })
+    expect(pm.getPolicy().storage).toBe('session')
+    expect(local.getItem('__openreplay_uuid')).toBeNull()
+    expect(session.getItem('__openreplay_uuid')).toBe('tab')
+    expect(changes[0].revoked).toBe(false)
   })
 })
 

@@ -39,6 +39,7 @@ export interface PrivacyChange {
 type Env = { navigator?: Partial<Navigator>; window?: any; crypto?: Crypto }
 
 const RECORD_RANK = { none: 0, private: 1, full: 2 } as const
+const STORAGE_RANK = { none: 0, session: 1, persistent: 2 } as const
 
 export default class PrivacyManager {
   private readonly opts: PolicyOptions
@@ -138,7 +139,9 @@ export default class PrivacyManager {
     const revoked =
       RECORD_RANK[this.policy.record] < RECORD_RANK[prev.record] ||
       (prev.storage !== 'none' && this.policy.storage === 'none')
-    if (revoked || decided) this.purgeDisallowed()
+    // persistent -> session revokes nothing, but legacy keys in local storage must go too
+    const narrowed = STORAGE_RANK[this.policy.storage] < STORAGE_RANK[prev.storage]
+    if (revoked || decided || narrowed) this.purgeDisallowed()
     const change: PrivacyChange = { prev, next: this.policy, source, revoked }
     this.listeners.forEach((cb) => {
       try {

@@ -131,7 +131,8 @@ export class PolicyStorage implements Storage {
       } else {
         this.ownKeys.forEach((k) => {
           const v = this.real!.getItem(k)
-          if (v !== null) this.memory.setItem(k, v)
+          // memory already holds a newer value when the last real write failed
+          if (v !== null && this.memory.getItem(k) === null) this.memory.setItem(k, v)
           this.real!.removeItem(k)
         })
       }
