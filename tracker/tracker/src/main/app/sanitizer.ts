@@ -276,7 +276,7 @@ export default class Sanitizer {
    * Masked by data-openreplay-obscured/-masked or domSanitizer on `el` or an ancestor, through
    * shadow hosts and recorded iframes, which pass their level on.
    */
-  private explicitlyMasked(el: Element): boolean {
+  explicitlyMasked(el: Element): boolean {
     for (let cur: Element | null = el; cur !== null; cur = hostOf(cur)) {
       if (!this.hasDomSanitizer) {
         if (cur.closest(MASK_SELECTOR)) return true

@@ -699,6 +699,15 @@ export default class NextObserver
       mr.ix = ix
       mr.ixMut = pr.mut
       this.syncSlot(mr, n)
+      const s = this.app.sanitizer
+      if (
+        lvl === SanitizeLevel.Obscured &&
+        s.privateMode &&
+        n.nodeType === ELEMENT &&
+        s.explicitlyMasked(n as Element)
+      ) {
+        this.applyExplicitMask(n, mr)
+      }
       return
     }
     this.fresh.delete(n)

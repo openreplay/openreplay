@@ -202,6 +202,27 @@ describe.each(['default', 'next'] as const)('%s observer: attributes of masked c
 })
 
 describe('next observer: privateMode explicit masks', () => {
+  test('a node moved under an explicit mask brings its unmask regions and data-* along', async () => {
+    setup(
+      'next',
+      `<div id="m" data-openreplay-masked></div>
+      <div id="w"><i id="d" data-name="Jane"></i><p id="u" data-openreplay-unmask>card 4111</p></div>`,
+      { privateMode: true },
+    )
+    expect(allData()).toContain('card 4111')
+    expect(attrs($('#d'))['data-name']).toBe('Jane')
+    $('#m').append($('#w'))
+    await flush()
+    expect(sent.filter((m) => m[0] === Type.RemoveNode)).toEqual([])
+    expect(attrs($('#d'))['data-name']).toBe('****')
+    expect(allData()).toContain('**** ****')
+    const count = textData().length
+    ;($('#u').firstChild as Text).data = 'card 5555'
+    await flush()
+    expect(textData()).toHaveLength(count + 1)
+    expect(allData()).not.toContain('5555')
+  })
+
   test('a domSanitizer mask above an unmask region masks it right away', async () => {
     setup(
       'next',
