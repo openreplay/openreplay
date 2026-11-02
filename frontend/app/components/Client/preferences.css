@@ -380,14 +380,15 @@
 .m-pref__card-lead {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 6px;
   min-width: 0;
   flex: 1;
 }
 .m-pref__card-title {
   display: flex;
-  align-items: center;
-  gap: var(--m-space-3);
+  align-items: start;
+  justify-content: start;
+  flex-direction: column;
   font-size: var(--m-text-sm);
   font-weight: var(--m-weight-medium);
 }
@@ -412,7 +413,7 @@
   background: var(--m-mark-success);
 }
 .m-pref__on-count {
-  grid-column: 2;
+  grid-column: 3;
 }
 .m-pref__split {
   display: grid;

@@ -80,31 +80,16 @@ function Integrations(props: Props) {
 
   // a connection covers projects of its own choosing: a card is connected
   // where any project has it, and a backend one says how many
-  const projectIds = projectsStore.list.map((p) => String(p.projectId));
-  const { data: byProject, refetch: refetchByProject } = useQuery({
-    queryKey: ['integrationsByProject', projectIds],
-    queryFn: async () =>
-      Object.fromEntries(
-        await Promise.all(
-          projectIds.map(async (id) => {
-            const { data } = await integrationsService
-              .fetchList(undefined, id)
-              .catch(() => ({ data: [] }));
-            const names = (Array.isArray(data) ? data : [])
-              .filter((i: any) => i.integrated)
-              .map((i: any) => i.name as string);
-            return [id, names] as const;
-          }),
-        ),
-      ) as Record<string, string[]>,
-    enabled: projectIds.length > 0,
+  const { data: status, refetch: refetchStatus } = useQuery({
+    queryKey: ['integrationStatus'],
+    queryFn: integrationsService.fetchStatus,
   });
-  const projectsWith = (slug: string) =>
-    byProject
-      ? projectIds.filter((id) => byProject[id]?.includes(slug)).length
-      : integratedList.includes(slug)
-        ? 1
-        : 0;
+  const projectsWith = (slug: string) => {
+    const s = status?.[slug];
+    if (!s) return integratedList.includes(slug) ? 1 : 0;
+    if (s.projectIds) return s.projectIds.length;
+    return s.integrated ? 1 : 0;
+  };
 
   const onClick = (integration: any) => {
     if (
@@ -129,7 +114,7 @@ function Integrations(props: Props) {
 
     const close = () => {
       hideModal();
-      void refetchByProject();
+      void refetchStatus();
     };
     showModal(
       React.cloneElement(integration.component, {
@@ -137,7 +122,7 @@ function Integrations(props: Props) {
         siteId,
         onClose: close,
       }),
-      { right: true, onClose: () => void refetchByProject() },
+      { right: true, onClose: () => void refetchStatus() },
     );
   };
 
@@ -150,7 +135,7 @@ function Integrations(props: Props) {
       toast.error(t('Failed to remove integration'));
     } finally {
       void fetchIntegrationList(siteId);
-      void refetchByProject();
+      void refetchStatus();
     }
   };
 
@@ -203,13 +188,13 @@ function Integrations(props: Props) {
                   </span>
                   <span className="m-pref__card-lead">
                     <span className="m-pref__card-title">
-                      {integration.title}
+                      <span>{integration.title}</span>
                       {on ? (
                         <span className="m-pref__on">
                           {t('Connected')}
                           {cat.isProject && covered > 1 ? (
                             <span className="m-pref__on-count">
-                              {t('{{count}} projects', { count: covered })}
+                              {t('({{count}} projects)', { count: covered })}
                             </span>
                           ) : null}
                         </span>

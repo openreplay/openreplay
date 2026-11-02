@@ -180,6 +180,18 @@ describe('APIClient URL Replacer Logic', () => {
       expectedUrl: 'https://example.com/v2/api/assist/credentials',
     },
     {
+      description: 'Integration status without site ID',
+      edp: 'https://example.com/api',
+      path: '/integration/status',
+      expectedUrl: 'https://example.com/v2/api/integration/status',
+    },
+    {
+      description: 'SaaS: integration status',
+      edp: 'https://api.openreplay.com',
+      path: '/integration/status',
+      expectedUrl: 'https://api.openreplay.com/v2/integration/status',
+    },
+    {
       description: 'Audit trail actions',
       edp: 'https://example.com/api',
       path: '/trails/actions',
