@@ -44,8 +44,19 @@ func New() Logger {
 	return customLogger
 }
 
+// sessionID accepts both string and uint64, since callers set either.
+func sessionID(ctx context.Context) (string, bool) {
+	switch v := ctx.Value("sessionID").(type) {
+	case string:
+		return v, true
+	case uint64:
+		return fmt.Sprint(v), true
+	}
+	return "", false
+}
+
 func (l *loggerImpl) prepare(ctx context.Context, logger *zap.Logger) *zap.Logger {
-	if sID, ok := ctx.Value("sessionID").(string); ok {
+	if sID, ok := sessionID(ctx); ok {
 		logger = logger.With(zap.String("sessionID", sID))
 	}
 	if pID, ok := ctx.Value("projectID").(string); ok {

@@ -252,6 +252,7 @@ func (c *cacher) retry(ctx context.Context, t *Task, explicitDelay time.Duration
 	}
 	if c.scheduler.schedule(t, time.Now().Add(delay)) {
 		c.metrics.IncreaseRetries()
+		c.log.Debug(ctx, "retrying asset (attempt=%d/%d, reason=%s, in=%s): %s", t.attempt, c.maxAttempts, reason, delay, errors.Wrap(cause, t.urlContext))
 	} else {
 		// retry heap is full: shed load (the entry stays deduped for now)
 		c.metrics.IncreaseTerminalFailures("retry_queue_full")
