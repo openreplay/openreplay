@@ -4,10 +4,9 @@ from http import cookies
 from os import environ
 from urllib.parse import urlparse
 
-from decouple import config
+from decouple import config, Csv
 from fastapi import Request, HTTPException
 from starlette.datastructures import FormData
-from routers.scim import helpers as __scim_helpers
 
 if config("ENABLE_SSO", cast=bool, default=True):
     from onelogin.saml2.auth import OneLogin_Saml2_Auth
@@ -180,5 +179,19 @@ def is_scim_available():
     return False
 
 
+PREFIXES = [p.lower() for p in config("idp_group_prefixes", cast=Csv(), default="")] or ["openreplay", "or"]
+
+
 def group_name_to_role_name(group_name: str) -> str:
-    return __scim_helpers.group_name_to_role_name(group_name)
+    if group_name is None or len(group_name) == 0:
+        return group_name
+
+    for prefix in PREFIXES:
+        if group_name.lower().startswith(prefix):
+            group_name = group_name[len(prefix):]
+            break
+
+    if group_name.startswith((".", " ", "-", "_")):
+        group_name = group_name[1:]
+
+    return group_name.strip()
