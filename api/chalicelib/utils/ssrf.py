@@ -11,15 +11,16 @@ def get_allowed_hosts():
     return {h.strip().lower() for h in config("WEBHOOK_ALLOWED_HOSTS", default="").split(",") if h.strip()}
 
 
-def resolve_public_ip(endpoint):
+def resolve_public_ip(endpoint, allowed_hosts=None):
     """Validates that the endpoint resolves to public IPs only and returns one of them,
     so the request can be pinned to it (protects against DNS-rebinding between check and request).
-    Returns None (no validation, no pinning) for hosts listed in WEBHOOK_ALLOWED_HOSTS."""
+    Returns None (no validation, no pinning) for hosts listed in `allowed_hosts`
+    (defaults to WEBHOOK_ALLOWED_HOSTS)."""
     parsed = urlparse(endpoint)
     hostname = parsed.hostname
     if not hostname:
         raise ValueError(f"endpoint has no valid hostname: {endpoint}")
-    if hostname.lower() in get_allowed_hosts():
+    if hostname.lower() in (get_allowed_hosts() if allowed_hosts is None else allowed_hosts):
         return None
     try:
         resolved = socket.getaddrinfo(hostname, parsed.port or (443 if parsed.scheme == "https" else 80),
@@ -49,16 +50,16 @@ class PinnedHostHTTPSAdapter(HTTPAdapter):
         super().init_poolmanager(*args, **kwargs)
 
 
-def post_json(endpoint, json_data, headers=None, timeout=None):
-    """POSTs JSON to an endpoint after validating that it targets a public IP (SSRF guard).
+def request(method, endpoint, json_data=None, headers=None, timeout=None, allowed_hosts=None):
+    """Sends an HTTP request to an endpoint after validating that it targets a public IP (SSRF guard).
     The connection is pinned to the validated IP and redirects are not followed.
-    Raises ValueError if the endpoint is non-public and not in WEBHOOK_ALLOWED_HOSTS."""
+    Raises ValueError if the endpoint is non-public and not in `allowed_hosts` (defaults to WEBHOOK_ALLOWED_HOSTS)."""
     endpoint = str(endpoint)
     headers = headers or {}
-    pinned_ip = resolve_public_ip(endpoint)
+    pinned_ip = resolve_public_ip(endpoint, allowed_hosts=allowed_hosts)
     if pinned_ip is None:
-        return requests.post(url=endpoint, json=json_data, headers=headers, timeout=timeout,
-                             allow_redirects=False)
+        return requests.request(method=method, url=endpoint, json=json_data, headers=headers, timeout=timeout,
+                                allow_redirects=False)
     parsed = urlparse(endpoint)
     hostname = parsed.hostname
     ip_host = f"[{pinned_ip}]" if ":" in pinned_ip else pinned_ip
@@ -68,8 +69,18 @@ def post_json(endpoint, json_data, headers=None, timeout=None):
     with requests.Session() as s:
         if parsed.scheme == "https":
             s.mount("https://", PinnedHostHTTPSAdapter(hostname))
-        return s.post(url=pinned_url, json=json_data, headers=headers, timeout=timeout,
-                      allow_redirects=False)
+        return s.request(method=method, url=pinned_url, json=json_data, headers=headers, timeout=timeout,
+                         allow_redirects=False)
+
+
+def post_json(endpoint, json_data, headers=None, timeout=None):
+    """POSTs JSON to an endpoint, see `request` for the SSRF guard."""
+    return request("POST", endpoint, json_data=json_data, headers=headers, timeout=timeout)
+
+
+def head(endpoint, headers=None, timeout=None, allowed_hosts=None):
+    """Sends a HEAD request to an endpoint, see `request` for the SSRF guard."""
+    return request("HEAD", endpoint, headers=headers, timeout=timeout, allowed_hosts=allowed_hosts)
 
 
 def get_integration_allowed_hosts():
