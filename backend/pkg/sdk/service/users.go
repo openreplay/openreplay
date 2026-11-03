@@ -15,6 +15,7 @@ import (
 
 type Users interface {
 	Add(session *sessions.Session, user *model.User) error
+	AddOnStart(session *sessions.Session, user *model.User) error
 	Get(projectID uint32, userID string) (*model.User, error)
 	Update(user *model.User) error
 	Delete(projectID uint32, userID string) error
@@ -53,7 +54,21 @@ func (u *usersImpl) Add(session *sessions.Session, user *model.User) error {
 		u.log.Error(context.Background(), "can't update userID for session: %d", session.SessionID)
 	}
 	session.UserID = &user.UserID
+	return u.upsert(session, user)
+}
 
+func (u *usersImpl) AddOnStart(session *sessions.Session, user *model.User) error {
+	user.UserID = strings.TrimSpace(user.UserID)
+	if user.UserID == "" {
+		return nil
+	}
+	if session.UserID == nil || *session.UserID != user.UserID {
+		return u.Add(session, user)
+	}
+	return u.upsert(session, user)
+}
+
+func (u *usersImpl) upsert(session *sessions.Session, user *model.User) error {
 	// Check that we don't have this user already in DB
 	if currUser, err := u.Get(session.ProjectID, user.UserID); err == nil {
 		u.log.Debug(context.Background(), "we already have this user in DB for session: %d", session.SessionID)
