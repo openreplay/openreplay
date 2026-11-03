@@ -1201,9 +1201,8 @@ def authenticate_sso(email: str, internal_id: str):
                       role_id,
                       service_account
                FROM public.users AS users
-               WHERE users.email = %(email)s
-                 AND {"internal_id IS NULL" if internal_id is None else "internal_id = %(internal_id)s"};""",
-            {"email": email, "internal_id": internal_id},
+               WHERE users.email = %(email)s;""",
+            {"email": email},
         )
 
         cur.execute(query)
