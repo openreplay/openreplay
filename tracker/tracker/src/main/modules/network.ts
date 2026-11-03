@@ -32,10 +32,7 @@ interface AxiosInterceptorManager {
   ): number
 }
 
-/**
- * The part of an axios (0.x or 1.x) instance the network module uses. Not network-proxy's
- * own type: its declarations use extensionless imports, which break NodeNext consumers.
- */
+/** The part of an axios (0.x or 1.x) instance the network module uses. */
 export interface AxiosInstance {
   interceptors: {
     request: AxiosInterceptorManager
@@ -126,33 +123,23 @@ export default function (app: App, opts: Partial<Options> = {}) {
     )
   }
   const isServiceURL = (url: string) => app.isServiceURL(url)
-  const ignoredHeaders = () => (app.sanitizer.privateMode ? true : options.ignoreHeaders)
+  const proxyOptions = () => ({
+    sendMessage,
+    sanitize,
+    setSessionTokenHeader,
+    isServiceUrl: isServiceURL,
+    ignoredHeaders: app.sanitizer.privateMode ? true : options.ignoreHeaders,
+    tokenUrlMatcher: options.tokenUrlMatcher,
+    // bodies sanitize would delete aren't read at all
+    captureBody: () => options.capturePayload && !app.sanitizer.privateMode,
+  })
 
   const patchWindow = (context: typeof globalThis) => {
-    createNetworkProxy(
-      context,
-      ignoredHeaders(),
-      setSessionTokenHeader,
-      sanitize,
-      sendMessage,
-      isServiceURL,
-      { xhr: true, fetch: true, beacon: true },
-      options.tokenUrlMatcher,
-    )
+    createNetworkProxy(context, proxyOptions())
   }
 
   patchWindow(window)
-  options.axiosInstances?.forEach((instance) =>
-    hookAxios(
-      instance,
-      ignoredHeaders(),
-      setSessionTokenHeader,
-      sanitize,
-      sendMessage,
-      isServiceURL,
-      options.tokenUrlMatcher,
-    ),
-  )
+  options.axiosInstances?.forEach((instance) => hookAxios(instance, proxyOptions()))
 
   if (options.captureInIframes) {
     app.observer.attachContextCallback(app.safe(patchWindow))
