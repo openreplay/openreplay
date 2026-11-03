@@ -1,7 +1,10 @@
 import logging
+from urllib.parse import urlparse
+
+import requests
 
 from chalicelib.core.log_tools import log_tools
-from elasticsearch import Elasticsearch
+from chalicelib.utils import ssrf
 from schemas import schemas
 
 logger = logging.getLogger(__name__)
@@ -57,33 +60,32 @@ def add_edit(tenant_id, project_id, data: schemas.IntegrationElasticsearchSchema
                    indexes=data.indexes, port=data.port)
 
 
-def __get_es_client(host, port, api_key_id, api_key, use_ssl=False, timeout=15):
-    scheme = "http" if host.startswith("http") else "https"
-    host = host.replace("http://", "").replace("https://", "")
-    try:
-        args = {
-            "hosts": [{"host": host, "port": port, "scheme": scheme}],
-            "verify_certs": use_ssl,
-            "request_timeout": timeout,
-            "api_key": api_key
-        }
-        es = Elasticsearch(
-            **args
-        )
-        r = es.ping()
-        if not r and not use_ssl:
-            return __get_es_client(host, port, api_key_id, api_key, use_ssl=True, timeout=timeout)
-        if not r:
-            return None
-    except Exception as err:
-        logger.error("================exception connecting to ES host:")
-        logger.exception(err)
-        return None
-    return es
+def __candidate_urls(host, port):
+    """Builds the base URLs to probe: the given scheme if the host has one, otherwise https then http."""
+    host = host.strip()
+    has_scheme = host.startswith("http://") or host.startswith("https://")
+    parsed = urlparse(host if has_scheme else f"https://{host}")
+    if not parsed.hostname:
+        return []
+    schemes = [parsed.scheme] if has_scheme else ["https", "http"]
+    hostname = f"[{parsed.hostname}]" if ":" in parsed.hostname else parsed.hostname
+    return [f"{scheme}://{hostname}:{port}/" for scheme in schemes]
 
 
 def ping(tenant_id, data: schemas.IntegrationElasticsearchTestSchema):
-    es = __get_es_client(data.host, data.port, data.api_key_id, data.api_key, timeout=3)
-    if es is None:
-        return {"state": False}
-    return {"state": es.ping()}
+    """Checks that the Elasticsearch host answers `HEAD /` (the same request the official client's ping() sends).
+    The request goes through the SSRF guard: the host must resolve to a public IP, or be listed in
+    WEBHOOK_ALLOWED_HOSTS, and the connection is pinned to the validated IP."""
+    headers = {"Authorization": f"ApiKey {data.api_key}"}
+    for url in __candidate_urls(data.host, data.port):
+        try:
+            r = ssrf.head(endpoint=url, headers=headers, timeout=3)
+        except ValueError as e:
+            logger.warning(f"ES connection test rejected: {e}")
+            return {"state": False, "error": str(e)}
+        except requests.RequestException as e:
+            logger.debug(f"ES connection test failed for {url}: {e}")
+            continue
+        if r.ok:
+            return {"state": True}
+    return {"state": False}

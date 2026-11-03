@@ -49,16 +49,16 @@ class PinnedHostHTTPSAdapter(HTTPAdapter):
         super().init_poolmanager(*args, **kwargs)
 
 
-def post_json(endpoint, json_data, headers=None, timeout=None):
-    """POSTs JSON to an endpoint after validating that it targets a public IP (SSRF guard).
+def request(method, endpoint, json_data=None, headers=None, timeout=None):
+    """Sends an HTTP request to an endpoint after validating that it targets a public IP (SSRF guard).
     The connection is pinned to the validated IP and redirects are not followed.
     Raises ValueError if the endpoint is non-public and not in WEBHOOK_ALLOWED_HOSTS."""
     endpoint = str(endpoint)
     headers = headers or {}
     pinned_ip = resolve_public_ip(endpoint)
     if pinned_ip is None:
-        return requests.post(url=endpoint, json=json_data, headers=headers, timeout=timeout,
-                             allow_redirects=False)
+        return requests.request(method=method, url=endpoint, json=json_data, headers=headers, timeout=timeout,
+                                allow_redirects=False)
     parsed = urlparse(endpoint)
     hostname = parsed.hostname
     ip_host = f"[{pinned_ip}]" if ":" in pinned_ip else pinned_ip
@@ -68,5 +68,15 @@ def post_json(endpoint, json_data, headers=None, timeout=None):
     with requests.Session() as s:
         if parsed.scheme == "https":
             s.mount("https://", PinnedHostHTTPSAdapter(hostname))
-        return s.post(url=pinned_url, json=json_data, headers=headers, timeout=timeout,
-                      allow_redirects=False)
+        return s.request(method=method, url=pinned_url, json=json_data, headers=headers, timeout=timeout,
+                         allow_redirects=False)
+
+
+def post_json(endpoint, json_data, headers=None, timeout=None):
+    """POSTs JSON to an endpoint, see `request` for the SSRF guard."""
+    return request("POST", endpoint, json_data=json_data, headers=headers, timeout=timeout)
+
+
+def head(endpoint, headers=None, timeout=None):
+    """Sends a HEAD request to an endpoint, see `request` for the SSRF guard."""
+    return request("HEAD", endpoint, headers=headers, timeout=timeout)
