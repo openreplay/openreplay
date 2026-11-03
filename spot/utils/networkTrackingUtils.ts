@@ -1,4 +1,4 @@
-import { WebRequest } from "webextension-polyfill";
+import type { WebRequest } from "webextension-polyfill";
 
 // UI types used by NetworkPanelComp: xhr, js, css, img, media, other, websocket, graphql
 export type NetworkRequestType = 'xhr' | 'js' | 'css' | 'img' | 'media' | 'other' | 'websocket' | 'graphql';
