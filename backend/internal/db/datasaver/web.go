@@ -10,7 +10,7 @@ import (
 func (s *saverImpl) handleWebMessage(session *sessions.Session, msg messages.Message) error {
 	switch m := msg.(type) {
 	case *messages.SessionStart:
-		if err := s.users.Add(session, m.UserID); err != nil {
+		if err := s.users.AddOnStart(session, m.UserID); err != nil {
 			s.log.Warn(context.Background(), "error adding user to session: %s", err)
 		}
 	case *messages.SessionEnd:
