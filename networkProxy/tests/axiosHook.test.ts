@@ -123,3 +123,21 @@ describe("axios hook", () => {
     ]);
   });
 });
+
+describe("axios hook options", () => {
+  it("takes an options object, skips bodies with captureBody: false, and unhooks", async () => {
+    const api: any = fakeAxios(async (config) => ({ config, status: 200, headers: { "content-length": "7" }, data: { id: 1 } }));
+    const ejected: string[] = [];
+    api.interceptors.request.eject = () => ejected.push("request");
+    api.interceptors.response.eject = () => ejected.push("response");
+    const sendMessage = vi.fn();
+    const unhook = hookAxios(api, { sendMessage, captureBody: false });
+    await api.request({ url: "https://api.example.com/a", method: "post", data: '{"b":2}' });
+    const msg = sendMessage.mock.calls[0][0];
+    expect(JSON.parse(msg.request).body).toBeFalsy();
+    expect(JSON.parse(msg.response).body).toBeFalsy();
+    expect(msg.responseSize).toBe(7);
+    unhook();
+    expect(ejected).toEqual(["request", "response"]);
+  });
+});

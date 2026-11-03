@@ -3,13 +3,13 @@ import {
   INetworkMessage,
   httpMethod,
   RequestState,
-} from './types'
+} from './types.js'
 import {
   tryFilterUrl,
   filterHeaders,
   filterBody,
   sanitizeObject,
-} from "./sanitizers";
+} from "./sanitizers.js";
 
 /**
  * I know we're not using most of the information from this class
@@ -71,10 +71,11 @@ export default class NetworkMessage {
     const gqlHeader = "application/graphql-response"
     const isGraphql = messageInfo.url.includes("/graphql")
       || Object.values(messageInfo.request.headers).some(v => v && typeof v === 'string' && v.includes(gqlHeader))
-    if (isGraphql && messageInfo.response.body && typeof messageInfo.response.body === 'string') {
-      const isError = messageInfo.response.body.includes("errors");
-      messageInfo.status = isError ? 400 : 200;
+    const resBody: any = messageInfo.response.body
+    if (isGraphql && resBody) {
       this.requestType = 'graphql';
+      // a GraphQL error usually comes with 200
+      if (messageInfo.status < 400 && hasGraphqlErrors(resBody)) messageInfo.status = 400;
     }
 
     return {
@@ -109,11 +110,24 @@ export default class NetworkMessage {
     return { reqHs, resHs }
   }
 
+  private ignored?: Set<string>
+
   isHeaderIgnored(key: string) {
-    if (Array.isArray(this.ignoredHeaders)) {
-      return this.ignoredHeaders.map((k) => k.toLowerCase()).includes(key.toLowerCase())
-    } else {
-      return this.ignoredHeaders
+    if (!Array.isArray(this.ignoredHeaders)) return this.ignoredHeaders
+    this.ignored ??= new Set(this.ignoredHeaders.map((k) => k.toLowerCase()))
+    return this.ignored.has(key.toLowerCase())
+  }
+}
+
+function hasGraphqlErrors(body: unknown) {
+  let parsed: any = body
+  if (typeof body === 'string') {
+    if (!body.includes('"errors"')) return false
+    try {
+      parsed = JSON.parse(body)
+    } catch {
+      return false
     }
   }
+  return !!parsed && Array.isArray(parsed.errors) && parsed.errors.length > 0
 }

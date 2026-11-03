@@ -1,16 +1,17 @@
-import NetworkMessage from './networkMessage'
-import { INetworkMessage, RequestResponseData } from './types';
-import { genStringBody, getURL } from './utils'
+import NetworkMessage from './networkMessage.js'
+import { INetworkMessage, ProxyConfig, RequestResponseData } from './types.js';
+import { documentBase, genStringBody, getURL, shouldCapture, tagOf } from './utils.js'
 
 // https://fetch.spec.whatwg.org/#concept-bodyinit-extract
 const getContentType = (data?: BodyInit) => {
-  if (data instanceof Blob) {
-    return data.type
+  const tag = tagOf(data)
+  if (tag === 'Blob' || tag === 'File') {
+    return (data as Blob).type
   }
-  if (data instanceof FormData) {
+  if (tag === 'FormData') {
     return 'multipart/form-data'
   }
-  if (data instanceof URLSearchParams) {
+  if (tag === 'URLSearchParams') {
     return 'application/x-www-form-urlencoded;charset=UTF-8'
   }
   return 'text/plain;charset=UTF-8'
@@ -18,23 +19,33 @@ const getContentType = (data?: BodyInit) => {
 
 export class BeaconProxyHandler<T extends typeof navigator.sendBeacon> implements ProxyHandler<T> {
   constructor(
-    private readonly ignoredHeaders: boolean | string[],
-    private readonly setSessionTokenHeader: (cb: (name: string, value: string) => void) => void,
-    private readonly sanitize: (data: RequestResponseData) => RequestResponseData | null,
-    private readonly sendMessage: (item: INetworkMessage) => void,
-    private readonly isServiceUrl: (url: string) => boolean,
+    private readonly config: ProxyConfig,
+    private readonly context: typeof globalThis = window,
   ) {}
 
   public apply(target: T, thisArg: T, argsList: any[]) {
-    const urlString: string = argsList[0]
-    const data: BodyInit = argsList[1]
-    const item = new NetworkMessage(this.ignoredHeaders, this.setSessionTokenHeader, this.sanitize)
-    if (this.isServiceUrl(urlString)) {
-      return target.apply(thisArg, argsList)
+    let item: NetworkMessage | null = null
+    try {
+      item = this.beforeSend(argsList)
+    } catch {}
+    const isSuccess = target.apply(thisArg, argsList)
+    if (item) {
+      try {
+        this.afterSend(item, isSuccess)
+      } catch {}
     }
-    const url = getURL(urlString)
+    return isSuccess
+  }
+
+  private beforeSend(argsList: any[]) {
+    if (this.config.disabled) return null
+    const urlString = String(argsList[0])
+    const data: BodyInit = argsList[1]
+    if (this.config.isServiceUrl(urlString)) return null
+    const item = new NetworkMessage(this.config.ignoredHeaders, this.config.setSessionTokenHeader, this.config.sanitize)
+    const url = getURL(urlString, documentBase(this.context))
     item.method = 'POST'
-    item.url = urlString
+    item.url = url.toString()
     item.name = (url.pathname.split('/').pop() || '') + url.search
     item.requestType = 'beacon'
     item.requestHeader = { 'Content-Type': getContentType(data) }
@@ -47,13 +58,12 @@ export class BeaconProxyHandler<T extends typeof navigator.sendBeacon> implement
         item.getData[key] = value
       }
     }
-    item.requestData = genStringBody(data)
+    if (shouldCapture(this.config.captureBody, item.url)) item.requestData = genStringBody(data)
+    item.startTime = performance.now()
+    return item
+  }
 
-    if (!item.startTime) {
-      item.startTime = performance.now()
-    }
-
-    const isSuccess = target.apply(thisArg, argsList)
+  private afterSend(item: NetworkMessage, isSuccess: boolean) {
     if (isSuccess) {
       item.endTime = performance.now()
       item.duration = item.endTime - (item.startTime || item.endTime)
@@ -67,9 +77,8 @@ export class BeaconProxyHandler<T extends typeof navigator.sendBeacon> implement
 
     const msg = item.getMessage()
     if (msg) {
-      this.sendMessage(msg)
+      this.config.sendMessage(msg)
     }
-    return isSuccess
   }
 }
 
@@ -81,19 +90,23 @@ export default class BeaconProxy {
     sanitize: (data: RequestResponseData) => RequestResponseData | null,
     sendMessage: (item: INetworkMessage) => void,
     isServiceUrl: (url: string) => boolean,
+    context: typeof globalThis = window,
+  ) {
+    return BeaconProxy.fromConfig(
+      { ignoredHeaders, setSessionTokenHeader, sanitize, sendMessage, isServiceUrl },
+      originalSendBeacon,
+      context,
+    )
+  }
+
+  public static fromConfig(
+    config: ProxyConfig,
+    originalSendBeacon: typeof window.navigator.sendBeacon,
+    context: typeof globalThis = window,
   ) {
     if (!originalSendBeacon) {
       return undefined
     }
-    return new Proxy(
-      originalSendBeacon,
-      new BeaconProxyHandler(
-        ignoredHeaders,
-        setSessionTokenHeader,
-        sanitize,
-        sendMessage,
-        isServiceUrl,
-      ),
-    )
+    return new Proxy(originalSendBeacon, new BeaconProxyHandler(config, context))
   }
 }

@@ -1,7 +1,7 @@
-import NetworkMessage from "./networkMessage";
-import { INetworkMessage, RequestResponseData } from "./types";
-import { genStringBody, getStringResponseByType, getURL } from "./utils";
-import { proxiedRequests } from "./proxied";
+import NetworkMessage from "./networkMessage.js";
+import { INetworkMessage, NetworkProxyOptions, RequestResponseData } from "./types.js";
+import { genStringBody, getStringResponseByType, getURL, shouldCapture } from "./utils.js";
+import { proxiedRequests } from "./proxied.js";
 
 interface AxiosInterceptorManager {
   use(
@@ -9,6 +9,7 @@ interface AxiosInterceptorManager {
     onRejected?: (error: any) => any,
     options?: { synchronous?: boolean },
   ): number;
+  eject?(id: number): void;
 }
 
 /** The part of an axios (0.x or 1.x) instance the hook uses. */
@@ -44,11 +45,16 @@ function plainHeaders(headers: any): Record<string, string> {
   return out;
 }
 
+type AxiosHookOptions = Omit<NetworkProxyOptions, "modules">;
+
 /**
  * Records the requests of an axios instance that never reach the XHR / fetch proxies: custom
  * adapters (native bridges, mocks) or a fetch passed through `env`. Requests the proxies
  * handled are skipped, so nothing is recorded twice.
+ *
+ * @returns removes the interceptors
  */
+export default function hookAxios(instance: AxiosInstance, options: AxiosHookOptions): () => void;
 export default function hookAxios(
   instance: AxiosInstance,
   ignoredHeaders: boolean | string[],
@@ -57,7 +63,28 @@ export default function hookAxios(
   sendMessage: (message: INetworkMessage) => void,
   isServiceUrl: (url: string) => boolean,
   tokenUrlMatcher?: (url: string) => boolean,
-): void {
+): () => void;
+export default function hookAxios(instance: AxiosInstance, ...args: any[]): () => void {
+  const options: AxiosHookOptions =
+    args[0] && typeof args[0] === "object" && !Array.isArray(args[0])
+      ? args[0]
+      : {
+          ignoredHeaders: args[0],
+          setSessionTokenHeader: args[1],
+          sanitize: args[2],
+          sendMessage: args[3],
+          isServiceUrl: args[4],
+          tokenUrlMatcher: args[5],
+        };
+  const {
+    ignoredHeaders = [],
+    setSessionTokenHeader = () => {},
+    sanitize = (data: RequestResponseData) => data,
+    sendMessage,
+    isServiceUrl = () => false,
+    tokenUrlMatcher,
+    captureBody,
+  } = options;
   const fullUrl = (config: any) => {
     try {
       // getUri ignores baseURL before axios 0.27: join it here, getUri only adds the params
@@ -70,15 +97,17 @@ export default function hookAxios(
   };
 
   const onRequest = (config: any) => {
-    config[START] = performance.now();
-    setSessionTokenHeader((name, value) => {
-      if (tokenUrlMatcher !== undefined && !tokenUrlMatcher(String(fullUrl(config)))) return;
-      if (config.headers && typeof config.headers.set === "function") {
-        config.headers.set(name, value);
-      } else {
-        config.headers = { ...config.headers, [name]: value };
-      }
-    });
+    try {
+      config[START] = performance.now();
+      setSessionTokenHeader((name, value) => {
+        if (tokenUrlMatcher !== undefined && !tokenUrlMatcher(String(fullUrl(config)))) return;
+        if (config.headers && typeof config.headers.set === "function") {
+          config.headers.set(name, value);
+        } else {
+          config.headers = { ...config.headers, [name]: value };
+        }
+      });
+    } catch {}
     return config;
   };
 
@@ -93,14 +122,20 @@ export default function hookAxios(
     item.method = String(config.method || "get").toUpperCase() as NetworkMessage["method"];
     item.url = url.toString();
     item.requestHeader = plainHeaders(config.headers);
-    item.requestData = genStringBody(config.data);
+    const capture = shouldCapture(captureBody, item.url);
+    if (capture) item.requestData = genStringBody(config.data);
     for (const [key, value] of url.searchParams) {
       item.getData[key] = value;
     }
     item.status = response?.status ?? 0;
     item.header = plainHeaders(response?.headers);
-    item.response = getStringResponseByType("", response?.data);
-    item.responseSize = item.response.length;
+    if (capture) {
+      item.response = getStringResponseByType("", response?.data);
+      item.responseSize = item.response.length;
+    } else {
+      const data = response?.data;
+      item.responseSize = typeof data === "string" ? data.length : Number(item.header["content-length"]) || 0;
+    }
     item.startTime = config[START];
     item.endTime = performance.now();
     item.duration = item.endTime - item.startTime;
@@ -115,8 +150,8 @@ export default function hookAxios(
     } catch {}
   };
 
-  instance.interceptors.request.use(onRequest, undefined, { synchronous: true });
-  instance.interceptors.response.use(
+  const requestId = instance.interceptors.request.use(onRequest, undefined, { synchronous: true });
+  const responseId = instance.interceptors.response.use(
     (response: any) => {
       safeRecord(response?.config, response, response?.request);
       return response;
@@ -129,4 +164,8 @@ export default function hookAxios(
       return Promise.reject(error);
     },
   );
+  return () => {
+    instance.interceptors.request.eject?.(requestId);
+    instance.interceptors.response.eject?.(responseId);
+  };
 }

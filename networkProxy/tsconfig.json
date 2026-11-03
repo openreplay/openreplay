@@ -1,13 +1,13 @@
 {
   "compilerOptions": {
     "target": "ES2017",
-    "module": "ES2022",
+    "module": "NodeNext",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "declaration": true,
     "outDir": "./dist",
     "strict": false,
     "esModuleInterop": true,
-    "moduleResolution": "node",
+    "moduleResolution": "NodeNext",
     "sourceMap": true,
     "forceConsistentCasingInFileNames": true
   },

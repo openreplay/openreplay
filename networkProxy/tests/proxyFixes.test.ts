@@ -317,7 +317,7 @@ describe("xhr proxy fixes", () => {
     xhr.send();
     xhr.respond(200, "{}");
     expect(setHeader.mock.calls).toEqual([["X-OpenReplay-SessionToken", "t"]]);
-    expect(sent().map((m) => m.request.headers)).toEqual([{}, { "X-OpenReplay-SessionToken": "t" }]);
+    expect(sent().map((m) => m.request.headers)).toEqual([{}, { "X-OpenReplay-SessionToken": "*" }]);
     setHeader.mockRestore();
   });
 });
@@ -325,13 +325,13 @@ describe("xhr proxy fixes", () => {
 describe("genStringBody", () => {
   it("keeps JSON bodies that contain '&'", () => {
     expect(genStringBody('{"q":"a&b"}')).toBe('{"q":"a&b"}');
-    expect(genStringBody("a=1&b=2")).toBe("a=1,b=2");
+    expect(genStringBody("a=1&b=2")).toBe("a=1&b=2");
   });
 });
 
 describe("url-encoded bodies", () => {
   it("masks sensitive fields of string, URLSearchParams and FormData bodies", () => {
-    expect(genStringBody("user=a&password=secret")).toBe("user=a,password=******");
+    expect(genStringBody("user=a&password=secret")).toBe("user=a&password=******");
     expect(genStringBody(new URLSearchParams({ user: "a", token: "abc" }))).toBe("user=a,token=***");
     const form = new FormData();
     form.append("Password", "hunter2");
@@ -357,7 +357,7 @@ describe("url-encoded bodies", () => {
       body: "user=a&password=secret",
     });
     await flush();
-    expect(JSON.parse(sendMessage.mock.calls[0][0].request).body).toBe("user=a,password=******");
+    expect(JSON.parse(sendMessage.mock.calls[0][0].request).body).toBe("user=a&password=******");
   });
 
   it("records the fields after a sensitive one and masks a lone field", async () => {
@@ -369,7 +369,7 @@ describe("url-encoded bodies", () => {
     await wrapped("https://api.example.com/login", { method: "POST", body: ' {"password":"x"}' });
     await flush();
     const bodies = sendMessage.mock.calls.map(([m]: any) => JSON.parse(m.request).body);
-    expect(bodies).toEqual(["password=*,user=bob,plan=pro", "password=******", '{"password":"*"}']);
+    expect(bodies).toEqual(["password=*&user=bob&plan=pro", "password=******", '{"password":"*"}']);
   });
 });
 
@@ -387,7 +387,7 @@ describe("session token header with tokenUrlMatcher", () => {
     await flush();
     expect(new Headers(target.mock.calls[0][1]?.headers).has("x-openreplay-sessiontoken")).toBe(false);
     expect(new Headers(target.mock.calls[1][1]?.headers).get("x-openreplay-sessiontoken")).toBe("t");
-    expect(recordedHeaders(sendMessage)).toEqual([{}, { "X-OpenReplay-SessionToken": "t" }]);
+    expect(recordedHeaders(sendMessage)).toEqual([{}, { "X-OpenReplay-SessionToken": "*" }]);
   });
 
   it.each([
@@ -455,7 +455,7 @@ describe("session token header with tokenUrlMatcher", () => {
     await wrapped("https://api.example.com/b", { headers: { "x-openreplay-sessiontoken": "app" } });
     await flush();
     expect(new Headers(target.mock.calls[0][1]!.headers).get("x-openreplay-sessiontoken")).toBe("app");
-    expect(recordedHeaders(sendMessage)).toEqual([{ "x-openreplay-sessiontoken": "app" }]);
+    expect(recordedHeaders(sendMessage)).toEqual([{ "x-openreplay-sessiontoken": "***" }]);
   });
 
   it("beacons never record it: sendBeacon can't send headers", () => {
