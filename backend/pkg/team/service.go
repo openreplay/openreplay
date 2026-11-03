@@ -55,7 +55,7 @@ type teamImpl struct {
 }
 
 func New(log logger.Logger, cfg *config.Config, pgconn pool.Pool, mailer Mailer) Team {
-	if cfg.SiteURL == "" {
+	if cfg.SiteURL == "" && !isAbsoluteURL(cfg.InvitationLink) {
 		log.Warn(context.Background(), "SITE_URL is not set, invitation links will be relative")
 	}
 	return &teamImpl{
@@ -80,8 +80,17 @@ func memberArgs(tenantID uint64, memberID int64) pgx.NamedArgs {
 	return pgx.NamedArgs{"tenantId": tenantID, "userId": memberID}
 }
 
+func isAbsoluteURL(link string) bool {
+	link = strings.ToLower(link)
+	return strings.HasPrefix(link, "http://") || strings.HasPrefix(link, "https://")
+}
+
 func (s *teamImpl) invitationLink(token string) string {
-	return strings.TrimRight(s.cfg.SiteURL, "/") + strings.Replace(s.cfg.InvitationLink, "%s", token, 1)
+	link := strings.Replace(s.cfg.InvitationLink, "%s", token, 1)
+	if isAbsoluteURL(link) {
+		return link
+	}
+	return strings.TrimRight(s.cfg.SiteURL, "/") + link
 }
 
 func (s *teamImpl) scanMember(row pgx.Row) (*Member, error) {
@@ -134,12 +143,16 @@ func (s *teamImpl) getMember(tenantID uint64, memberID int64) (*Member, error) {
 	return m, nil
 }
 
-func newInvitationToken() (string, error) {
-	b := make([]byte, 64)
+func randomToken(size int) (string, error) {
+	b := make([]byte, size)
 	if _, err := rand.Read(b); err != nil {
 		return "", err
 	}
 	return base64.RawURLEncoding.EncodeToString(b), nil
+}
+
+func newInvitationToken() (string, error) {
+	return randomToken(64)
 }
 
 type txFunc func(tx *pool.Tx) error
@@ -189,7 +202,7 @@ func (s *teamImpl) Invite(ctx context.Context, inviter *user.User, req *InviteRe
 	}
 
 	var memberID int64
-	var tenantName string
+	var tenantName, verification string
 	err = s.inTx(ctx, func(tx *pool.Tx) error {
 		var exists bool
 		if err := tx.TxQueryRow(`
@@ -218,6 +231,9 @@ func (s *teamImpl) Invite(ctx context.Context, inviter *user.User, req *InviteRe
 		if err := setInvitation(tx, memberID, token); err != nil {
 			return fmt.Errorf("set invitation: %s", err)
 		}
+		if verification, err = s.emailVerification(tx, memberID); err != nil {
+			return err
+		}
 		if err := tx.TxQueryRow(`
 			SELECT tenants.name FROM public.tenants WHERE `+tenantScope+` LIMIT 1`,
 			pgx.NamedArgs{"tenantId": inviter.TenantID}).Scan(&tenantName); err != nil {
@@ -235,7 +251,11 @@ func (s *teamImpl) Invite(ctx context.Context, inviter *user.User, req *InviteRe
 	}
 	link := s.invitationLink(token)
 	member.InvitationLink = &link
-	go s.sendInvitation(req.Email, link, tenantName, inviter.Name)
+	emailLink := link
+	if verification != "" {
+		emailLink += "&verification=" + verification
+	}
+	go s.sendInvitation(req.Email, emailLink, tenantName, inviter.Name)
 	return member, nil
 }
 

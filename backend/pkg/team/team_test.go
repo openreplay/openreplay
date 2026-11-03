@@ -84,6 +84,12 @@ func TestInvitationLinkAndToken(t *testing.T) {
 	if got := s.invitationLink("abc"); got != "https://or.example.com/api/users/invitation?token=abc" {
 		t.Fatalf("unexpected link %q", got)
 	}
+	for _, siteURL := range []string{"", "https://app.example.com"} {
+		abs := &teamImpl{cfg: &config.Config{SiteURL: siteURL, InvitationLink: "HTTPS://api.example.com/users/invitation?token=%s"}}
+		if got := abs.invitationLink("abc"); got != "HTTPS://api.example.com/users/invitation?token=abc" {
+			t.Fatalf("absolute link must not be prefixed with SITE_URL %q, got %q", siteURL, got)
+		}
+	}
 	token, err := newInvitationToken()
 	if err != nil {
 		t.Fatalf("token: %s", err)
