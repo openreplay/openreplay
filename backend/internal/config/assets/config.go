@@ -15,6 +15,7 @@ type Config struct {
 	AssetsOrigin         string            `env:"ASSETS_ORIGIN,required"`
 	AssetsSizeLimit      int               `env:"ASSETS_SIZE_LIMIT,required"`
 	AssetsRequestHeaders map[string]string `env:"ASSETS_REQUEST_HEADERS"`
+	AssetsDenyHosts      string            `env:"ASSETS_DENY_HOSTS"` // comma-separated; "x.com", ".x.com" or "*.x.com"
 	UseProfiler          bool              `env:"PROFILER_ENABLED,default=false"`
 	ClientKeyFilePath    string            `env:"CLIENT_KEY_FILE_PATH"`
 	CaCertFilePath       string            `env:"CA_CERT_FILE_PATH"`

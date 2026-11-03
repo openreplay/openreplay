@@ -4,10 +4,12 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	stderrors "errors"
 	"fmt"
 	"io"
 	"mime"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -26,6 +28,7 @@ const MAX_CACHE_DEPTH = 5
 
 type cacher struct {
 	log            logger.Logger
+	denyHosts      []string                    // ASSETS_DENY_HOSTS: never fetched or resolved
 	timeoutMap     *timeoutMap                 // Concurrency implemented
 	objStorage     objectstorage.ObjectStorage // AWS Docs: "These clients are safe to use concurrently."
 	httpClient     *http.Client                // Docs: "Clients are safe for concurrent use by multiple goroutines."
@@ -82,12 +85,23 @@ func NewCacher(log logger.Logger, cfg *config.Config, store objectstorage.Object
 
 	}
 
+	denyHosts := assets.ParseHostList(cfg.AssetsDenyHosts)
 	c := &cacher{
 		log:        log,
+		denyHosts:  denyHosts,
 		timeoutMap: newTimeoutMap(),
 		objStorage: store,
 		httpClient: &http.Client{
 			Timeout: time.Duration(6) * time.Second,
+			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				if isDenied(req.URL.Hostname(), denyHosts) {
+					return errDeniedHost
+				}
+				if len(via) >= 10 { // net/http default
+					return stderrors.New("stopped after 10 redirects")
+				}
+				return nil
+			},
 			Transport: &http.Transport{
 				Proxy:           http.ProxyFromEnvironment,
 				TLSClientConfig: tlsConfig,
@@ -108,6 +122,11 @@ func (c *cacher) CacheFile(task *Task) {
 
 func (c *cacher) cacheURL(t *Task) {
 	ctx := context.WithValue(context.Background(), "sessionID", t.sessionID)
+	// Denied hosts are never contacted, not even resolved.
+	if u, err := url.Parse(t.requestURL); err == nil && isDenied(u.Hostname(), c.denyHosts) {
+		c.logDenied(ctx, t, errDeniedHost)
+		return
+	}
 	t.retries--
 	start := time.Now()
 	req, _ := http.NewRequest("GET", t.requestURL, nil)
@@ -116,6 +135,10 @@ func (c *cacher) cacheURL(t *Task) {
 		req.Header.Set(k, v)
 	}
 	res, err := c.httpClient.Do(req)
+	if stderrors.Is(err, errDeniedHost) {
+		c.logDenied(ctx, t, err)
+		return
+	}
 	if err != nil {
 		c.log.Error(ctx, "Error while caching: %s", errors.Wrap(err, t.urlContext))
 		return
@@ -249,6 +272,22 @@ func (c *cacher) UpdateTimeouts() {
 
 func (c *cacher) Stop() {
 	c.workers.Stop()
+}
+
+var errDeniedHost = stderrors.New("host is in ASSETS_DENY_HOSTS")
+
+// logDenied matches the v1.27+ permanent-failure format so one query works on both.
+func (c *cacher) logDenied(ctx context.Context, t *Task, cause error) {
+	c.log.Error(ctx, "Error while caching (permanent, reason=denied_host): %s", errors.Wrap(cause, t.urlContext))
+}
+
+func isDenied(host string, deny []string) bool {
+	for _, p := range deny {
+		if assets.MatchesHost(host, p) {
+			return true
+		}
+	}
+	return false
 }
 
 func setRetries() int {

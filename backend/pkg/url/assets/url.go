@@ -97,3 +97,24 @@ func (r *Rewriter) RewriteURL(sessionID uint64, baseURL string, relativeURL stri
 	}
 	return u.String()
 }
+
+// MatchesHost reports whether host matches pattern: "example.com" matches the
+// domain and its subdomains, ".example.com" / "*.example.com" only subdomains.
+func MatchesHost(host, pattern string) bool {
+	host, pattern = strings.ToLower(host), strings.ToLower(strings.TrimPrefix(pattern, "*"))
+	if strings.HasPrefix(pattern, ".") {
+		return strings.HasSuffix(host, pattern)
+	}
+	return host == pattern || strings.HasSuffix(host, "."+pattern)
+}
+
+// ParseHostList splits a comma-separated host list, dropping blanks.
+func ParseHostList(s string) []string {
+	var list []string
+	for _, h := range strings.Split(s, ",") {
+		if h = strings.TrimSpace(h); h != "" {
+			list = append(list, h)
+		}
+	}
+	return list
+}
