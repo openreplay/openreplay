@@ -24,7 +24,7 @@ def is_mcp_token(token: str) -> bool:
         audience = decoded_token.get("aud")
         return audience == AUDIENCE
     except jwt.InvalidTokenError:
-        logger.error(f"Invalid token for is_spot_token: {token}")
+        logger.error(f"Invalid token for is_mcp_token: {token}")
         raise
 
 
@@ -101,7 +101,8 @@ def get_token_by_state(client_id, state):
 
     if row is None:
         raise HTTPException(status_code=404, detail="State not found or token already generated")
-    if MCP_LOGIN_TIMEOUT_S > 0 and (row["iat"] + MCP_LOGIN_TIMEOUT_S) >= TimeUTC.now():
+    # row["iat"] is in epoch seconds, TimeUTC.now() is in epoch milliseconds
+    if MCP_LOGIN_TIMEOUT_S > 0 and TimeUTC.now() > (row["iat"] + MCP_LOGIN_TIMEOUT_S) * 1000:
         raise HTTPException(status_code=408, detail="Login timed out")
 
     return generate_jwt(user_id=row["user_id"], tenant_id=row["tenant_id"], iat=row["iat"], client_id=client_id, jti=row["jti"])
