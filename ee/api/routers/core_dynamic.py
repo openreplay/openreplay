@@ -114,44 +114,44 @@ def refresh_login(response: JSONResponse, context: schemas.CurrentContext = Depe
     return content
 
 
-@app.get('/account', tags=['accounts'])
-def get_account(context: schemas.CurrentContext = Depends(OR_context)):
-    r = users.get_user(tenant_id=context.tenant_id, user_id=context.user_id)
-    if r is None:
-        return {"errors": ["current user not found"]}
-    t = tenants.get_by_tenant_id(context.tenant_id)
-    if t is not None:
-        t = dict(t)
-        t["createdAt"] = TimeUTC.datetime_to_timestamp(t["createdAt"])
-        t["tenantName"] = t.pop("name")
-        if not r["admin"] and not r["superAdmin"]:
-            t.pop("apiKey", None)
-            t.pop("tenantKey", None)
-    else:
-        return {"errors": ["current tenant not found"]}
+# @app.get('/account', tags=['accounts'])
+# def get_account(context: schemas.CurrentContext = Depends(OR_context)):
+#     r = users.get_user(tenant_id=context.tenant_id, user_id=context.user_id)
+#     if r is None:
+#         return {"errors": ["current user not found"]}
+#     t = tenants.get_by_tenant_id(context.tenant_id)
+#     if t is not None:
+#         t = dict(t)
+#         t["createdAt"] = TimeUTC.datetime_to_timestamp(t["createdAt"])
+#         t["tenantName"] = t.pop("name")
+#         if not r["admin"] and not r["superAdmin"]:
+#             t.pop("apiKey", None)
+#             t.pop("tenantKey", None)
+#     else:
+#         return {"errors": ["current tenant not found"]}
 
-    return {
-        'data': {
-            **r,
-            **t,
-            **license.get_status(context.tenant_id),
-            "smtp": smtp.has_smtp(),
-            "saml2": SAML2_helper.is_saml2_available()
-        }
-    }
-
-
-@app.post('/account', tags=["account"])
-def edit_account(data: schemas.EditAccountSchema = Body(...),
-                 context: schemas.CurrentContext = Depends(OR_context)):
-    return users.edit_account(tenant_id=context.tenant_id, user_id=context.user_id, changes=data)
+#     return {
+#         'data': {
+#             **r,
+#             **t,
+#             **license.get_status(context.tenant_id),
+#             "smtp": smtp.has_smtp(),
+#             "saml2": SAML2_helper.is_saml2_available()
+#         }
+#     }
 
 
-@app.post('/account/scope', tags=["account"])
-def change_scope(data: schemas.ScopeSchema = Body(),
-                 context: schemas.CurrentContext = Depends(OR_context)):
-    data = scope.update_scope(tenant_id=context.tenant_id, scope=data.scope)
-    return {'data': data}
+# @app.post('/account', tags=["account"])
+# def edit_account(data: schemas.EditAccountSchema = Body(...),
+#                  context: schemas.CurrentContext = Depends(OR_context)):
+#     return users.edit_account(tenant_id=context.tenant_id, user_id=context.user_id, changes=data)
+
+
+# @app.post('/account/scope', tags=["account"])
+# def change_scope(data: schemas.ScopeSchema = Body(),
+#                  context: schemas.CurrentContext = Depends(OR_context)):
+#     data = scope.update_scope(tenant_id=context.tenant_id, scope=data.scope)
+#     return {'data': data}
 
 
 @app.post('/account/password', tags=["account"])
@@ -194,11 +194,11 @@ def edit_slack_integration(integrationId: int, data: schemas.EditCollaborationSc
                                    changes={"name": data.name, "endpoint": data.url.unicode_string()})}
 
 
-@app.post('/client/members', tags=["client"], dependencies=[OR_role("owner", "admin")])
-def add_member(background_tasks: BackgroundTasks, data: schemas.CreateMemberSchema = Body(...),
-               context: schemas.CurrentContext = Depends(OR_context)):
-    return users.create_member(tenant_id=context.tenant_id, user_id=context.user_id, data=data,
-                               background_tasks=background_tasks)
+# @app.post('/client/members', tags=["client"], dependencies=[OR_role("owner", "admin")])
+# def add_member(background_tasks: BackgroundTasks, data: schemas.CreateMemberSchema = Body(...),
+#                context: schemas.CurrentContext = Depends(OR_context)):
+#     return users.create_member(tenant_id=context.tenant_id, user_id=context.user_id, data=data,
+#                                background_tasks=background_tasks)
 
 
 @public_app.get('/users/invitation', tags=['users'])
@@ -236,17 +236,17 @@ def change_password_by_invitation(response: JSONResponse, data: schemas.EditPass
     return r
 
 
-@app.put('/client/members/{memberId}', tags=["client"], dependencies=[OR_role("owner", "admin")])
-def edit_member(memberId: int, data: schemas.EditMemberSchema,
-                context: schemas.CurrentContext = Depends(OR_context)):
-    return users.edit_member(tenant_id=context.tenant_id, editor_id=context.user_id, changes=data,
-                             user_id_to_update=memberId)
+# @app.put('/client/members/{memberId}', tags=["client"], dependencies=[OR_role("owner", "admin")])
+# def edit_member(memberId: int, data: schemas.EditMemberSchema,
+#                 context: schemas.CurrentContext = Depends(OR_context)):
+#     return users.edit_member(tenant_id=context.tenant_id, editor_id=context.user_id, changes=data,
+#                              user_id_to_update=memberId)
 
 
-@app.get('/projects', tags=['projects'])
-def get_projects(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": projects.get_projects(tenant_id=context.tenant_id, gdpr=True,
-                                          recorded=True, user_id=context.user_id)}
+# @app.get('/projects', tags=['projects'])
+# def get_projects(context: schemas.CurrentContext = Depends(OR_context)):
+#     return {"data": projects.get_projects(tenant_id=context.tenant_id, gdpr=True,
+#                                           recorded=True, user_id=context.user_id)}
 
 
 @app.get('/{projectId}/sessions/{sessionId}/errors/{errorId}/sourcemaps', tags=["sessions", "sourcemaps"],

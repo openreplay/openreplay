@@ -16,66 +16,66 @@ from fastapi import Depends, Body, Query
 public_app, app, app_apikey = get_routers()
 
 
-@app.get('/client/roles', tags=["client", "roles"], dependencies=[OR_role("owner", "admin")])
-def get_roles(context: schemas.CurrentContext = Depends(OR_context)):
-    return {
-        'data': roles.get_roles(tenant_id=context.tenant_id)
-    }
+# @app.get('/client/roles', tags=["client", "roles"], dependencies=[OR_role("owner", "admin")])
+# def get_roles(context: schemas.CurrentContext = Depends(OR_context)):
+#     return {
+#         'data': roles.get_roles(tenant_id=context.tenant_id)
+#     }
 
 
-@app.post('/client/roles', tags=["client", "roles"], dependencies=[OR_role("owner", "admin")])
-@app.put('/client/roles', tags=["client", "roles"], dependencies=[OR_role("owner", "admin")])
-def add_role(data: schemas.RolePayloadSchema = Body(...),
-             context: schemas.CurrentContext = Depends(OR_context)):
-    data = roles.create(tenant_id=context.tenant_id, user_id=context.user_id, data=data)
-    if "errors" in data:
-        return data
+# @app.post('/client/roles', tags=["client", "roles"], dependencies=[OR_role("owner", "admin")])
+# @app.put('/client/roles', tags=["client", "roles"], dependencies=[OR_role("owner", "admin")])
+# def add_role(data: schemas.RolePayloadSchema = Body(...),
+#              context: schemas.CurrentContext = Depends(OR_context)):
+#     data = roles.create(tenant_id=context.tenant_id, user_id=context.user_id, data=data)
+#     if "errors" in data:
+#         return data
 
-    return {
-        'data': data
-    }
-
-
-@app.post('/client/roles/{roleId}', tags=["client", "roles"], dependencies=[OR_role("owner", "admin")])
-@app.put('/client/roles/{roleId}', tags=["client", "roles"], dependencies=[OR_role("owner", "admin")])
-def edit_role(roleId: int, data: schemas.RolePayloadSchema = Body(...),
-              context: schemas.CurrentContext = Depends(OR_context)):
-    data = roles.update(tenant_id=context.tenant_id, user_id=context.user_id, role_id=roleId, data=data)
-    if "errors" in data:
-        return data
-
-    return {
-        'data': data
-    }
+#     return {
+#         'data': data
+#     }
 
 
-@app.delete('/client/roles/{roleId}', tags=["client", "roles"], dependencies=[OR_role("owner", "admin")])
-def delete_role(roleId: int, _=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
-    data = roles.delete(tenant_id=context.tenant_id, user_id=context.user_id, role_id=roleId)
-    if "errors" in data:
-        return data
-    return {
-        'data': data
-    }
+# @app.post('/client/roles/{roleId}', tags=["client", "roles"], dependencies=[OR_role("owner", "admin")])
+# @app.put('/client/roles/{roleId}', tags=["client", "roles"], dependencies=[OR_role("owner", "admin")])
+# def edit_role(roleId: int, data: schemas.RolePayloadSchema = Body(...),
+#               context: schemas.CurrentContext = Depends(OR_context)):
+#     data = roles.update(tenant_id=context.tenant_id, user_id=context.user_id, role_id=roleId, data=data)
+#     if "errors" in data:
+#         return data
+
+#     return {
+#         'data': data
+#     }
 
 
-@app.get('/config/assist/credentials', tags=["assist"])
-@app.get('/assist/credentials', tags=["assist"])
-def get_assist_credentials():
-    return {"data": assist_helper.get_full_config()}
+# @app.delete('/client/roles/{roleId}', tags=["client", "roles"], dependencies=[OR_role("owner", "admin")])
+# def delete_role(roleId: int, _=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
+#     data = roles.delete(tenant_id=context.tenant_id, user_id=context.user_id, role_id=roleId)
+#     if "errors" in data:
+#         return data
+#     return {
+#         'data': data
+#     }
 
 
-@app.post('/trails', tags=["traces", "trails"], dependencies=[OR_role("owner", "admin")])
-def get_trails(data: schemas.TrailSearchPayloadSchema = Body(...),
-               context: schemas.CurrentContext = Depends(OR_context)):
-    return {
-        'data': traces.get_all(tenant_id=context.tenant_id, data=data)
-    }
+# @app.get('/config/assist/credentials', tags=["assist"])
+# @app.get('/assist/credentials', tags=["assist"])
+# def get_assist_credentials():
+#     return {"data": assist_helper.get_full_config()}
 
 
-@app.post('/trails/actions', tags=["traces", "trails"], dependencies=[OR_role("owner", "admin")])
-def get_available_trail_actions(context: schemas.CurrentContext = Depends(OR_context)):
-    return {'data': traces.get_available_actions(tenant_id=context.tenant_id)}
+# @app.post('/trails', tags=["traces", "trails"], dependencies=[OR_role("owner", "admin")])
+# def get_trails(data: schemas.TrailSearchPayloadSchema = Body(...),
+#                context: schemas.CurrentContext = Depends(OR_context)):
+#     return {
+#         'data': traces.get_all(tenant_id=context.tenant_id, data=data)
+#     }
+
+
+# @app.post('/trails/actions', tags=["traces", "trails"], dependencies=[OR_role("owner", "admin")])
+# def get_available_trail_actions(context: schemas.CurrentContext = Depends(OR_context)):
+#     return {'data': traces.get_available_actions(tenant_id=context.tenant_id)}
 
 
 @app.put('/{projectId}/assist/save', tags=["assist"])

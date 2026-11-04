@@ -399,18 +399,18 @@ def get_metadata(integrationProjectId: int, context: schemas.CurrentContext = De
     return {"data": data}
 
 
-@app.get('/{projectId}/gdpr', tags=["projects", "gdpr"])
-def get_gdpr(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": projects.get_gdpr(project_id=projectId)}
+# @app.get('/{projectId}/gdpr', tags=["projects", "gdpr"])
+# def get_gdpr(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+#     return {"data": projects.get_gdpr(project_id=projectId)}
 
 
-@app.post('/{projectId}/gdpr', tags=["projects", "gdpr"])
-def edit_gdpr(projectId: int, data: schemas.GdprSchema = Body(...),
-              context: schemas.CurrentContext = Depends(OR_context)):
-    result = projects.edit_gdpr(project_id=projectId, gdpr=data)
-    if "errors" in result:
-        return result
-    return {"data": result}
+# @app.post('/{projectId}/gdpr', tags=["projects", "gdpr"])
+# def edit_gdpr(projectId: int, data: schemas.GdprSchema = Body(...),
+#               context: schemas.CurrentContext = Depends(OR_context)):
+#     result = projects.edit_gdpr(project_id=projectId, gdpr=data)
+#     if "errors" in result:
+#         return result
+#     return {"data": result}
 
 
 @public_app.post('/password/reset-link', tags=["reset password"])
@@ -420,9 +420,9 @@ def reset_password_handler(background_tasks: BackgroundTasks, data: schemas.Forg
     return reset_password.reset(data=data, background_tasks=background_tasks)
 
 
-@app.get('/{projectId}/metadata', tags=["metadata"])
-def get_metadata(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": metadata.get(project_id=projectId)}
+# @app.get('/{projectId}/metadata', tags=["metadata"])
+# def get_metadata(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+#     return {"data": metadata.get(project_id=projectId)}
 
 
 # @app.post('/{projectId}/metadata/list', tags=["metadata"])
@@ -431,23 +431,23 @@ def get_metadata(projectId: int, context: schemas.CurrentContext = Depends(OR_co
 #     return metadata.add_edit_delete(tenant_id=context.tenant_id, project_id=projectId, new_metas=data.list)
 
 
-@app.post('/{projectId}/metadata', tags=["metadata"])
-def add_metadata(projectId: int, data: schemas.MetadataSchema = Body(...),
-                 context: schemas.CurrentContext = Depends(OR_context)):
-    return metadata.add(tenant_id=context.tenant_id, project_id=projectId, new_name=data.key)
+# @app.post('/{projectId}/metadata', tags=["metadata"])
+# def add_metadata(projectId: int, data: schemas.MetadataSchema = Body(...),
+#                  context: schemas.CurrentContext = Depends(OR_context)):
+#     return metadata.add(tenant_id=context.tenant_id, project_id=projectId, new_name=data.key)
 
 
-@app.post('/{projectId}/metadata/{index}', tags=["metadata"])
-def edit_metadata(projectId: int, index: int, data: schemas.MetadataSchema = Body(...),
-                  context: schemas.CurrentContext = Depends(OR_context)):
-    return metadata.edit(tenant_id=context.tenant_id, project_id=projectId, index=index,
-                         new_name=data.key)
+# @app.post('/{projectId}/metadata/{index}', tags=["metadata"])
+# def edit_metadata(projectId: int, index: int, data: schemas.MetadataSchema = Body(...),
+#                   context: schemas.CurrentContext = Depends(OR_context)):
+#     return metadata.edit(tenant_id=context.tenant_id, project_id=projectId, index=index,
+#                          new_name=data.key)
 
 
-@app.delete('/{projectId}/metadata/{index}', tags=["metadata"])
-def delete_metadata(projectId: int, index: int, _=Body(None),
-                    context: schemas.CurrentContext = Depends(OR_context)):
-    return metadata.delete(tenant_id=context.tenant_id, project_id=projectId, index=index)
+# @app.delete('/{projectId}/metadata/{index}', tags=["metadata"])
+# def delete_metadata(projectId: int, index: int, _=Body(None),
+#                     context: schemas.CurrentContext = Depends(OR_context)):
+#     return metadata.delete(tenant_id=context.tenant_id, project_id=projectId, index=index)
 
 
 @app.get('/{projectId}/integration/sources', tags=["integrations"])
@@ -455,15 +455,15 @@ def search_integrations(projectId: int, context: schemas.CurrentContext = Depend
     return log_tools.search(project_id=projectId)
 
 
-@app.get('/{projectId}/sample_rate', tags=["projects"])
-def get_capture_status(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": projects.get_capture_status(project_id=projectId)}
+# @app.get('/{projectId}/sample_rate', tags=["projects"])
+# def get_capture_status(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+#     return {"data": projects.get_capture_status(project_id=projectId)}
 
 
-@app.post('/{projectId}/sample_rate', tags=["projects"])
-def update_capture_status(projectId: int, data: schemas.SampleRateSchema = Body(...),
-                          context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": projects.update_capture_status(project_id=projectId, changes=data)}
+# @app.post('/{projectId}/sample_rate', tags=["projects"])
+# def update_capture_status(projectId: int, data: schemas.SampleRateSchema = Body(...),
+#                           context: schemas.CurrentContext = Depends(OR_context)):
+#     return {"data": projects.update_capture_status(project_id=projectId, changes=data)}
 
 
 @app.post('/{projectId}/conditions', tags=["projects"])
@@ -499,15 +499,15 @@ def sign_sourcemap_for_upload(projectKey: str, data: schemas.SourcemapUploadPayl
     return {"data": sourcemaps.presign_upload_urls(project_id=context.project.project_id, urls=data.urls)}
 
 
-@app.get('/config/weekly_report', tags=["weekly report config"])
-def get_weekly_report_config(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": weekly_report.get_config(user_id=context.user_id)}
+# @app.get('/config/weekly_report', tags=["weekly report config"])
+# def get_weekly_report_config(context: schemas.CurrentContext = Depends(OR_context)):
+#     return {"data": weekly_report.get_config(user_id=context.user_id)}
 
 
-@app.post('/config/weekly_report', tags=["weekly report config"])
-def edit_weekly_report_config(data: schemas.WeeklyReportConfigSchema = Body(...),
-                              context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": weekly_report.edit_config(user_id=context.user_id, weekly_report=data.weekly_report)}
+# @app.post('/config/weekly_report', tags=["weekly report config"])
+# def edit_weekly_report_config(data: schemas.WeeklyReportConfigSchema = Body(...),
+#                               context: schemas.CurrentContext = Depends(OR_context)):
+#     return {"data": weekly_report.edit_config(user_id=context.user_id, weekly_report=data.weekly_report)}
 
 
 @app.get('/{projectId}/assist/sessions', tags=["assist"])
@@ -529,44 +529,44 @@ def mobile_signe(projectId: int, sessionId: int, data: schemas.MobileSignPayload
     return {"data": mobile.sign_keys(project_id=projectId, session_id=sessionId, keys=data.keys)}
 
 
-@app.post('/projects', tags=['projects'], dependencies=[OR_role("owner", "admin")])
-def create_project(data: schemas.CreateProjectSchema = Body(...),
-                   context: schemas.CurrentContext = Depends(OR_context)):
-    return projects.create(tenant_id=context.tenant_id, user_id=context.user_id, data=data)
+# @app.post('/projects', tags=['projects'], dependencies=[OR_role("owner", "admin")])
+# def create_project(data: schemas.CreateProjectSchema = Body(...),
+#                    context: schemas.CurrentContext = Depends(OR_context)):
+#     return projects.create(tenant_id=context.tenant_id, user_id=context.user_id, data=data)
 
 
-@app.get('/projects/{projectId}', tags=['projects'])
-def get_project(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    data = projects.get_project(tenant_id=context.tenant_id, project_id=projectId, include_last_session=True,
-                                include_gdpr=True)
-    if data is None:
-        return {"errors": ["project not found"]}
-    return {"data": data}
+# @app.get('/projects/{projectId}', tags=['projects'])
+# def get_project(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+#     data = projects.get_project(tenant_id=context.tenant_id, project_id=projectId, include_last_session=True,
+#                                 include_gdpr=True)
+#     if data is None:
+#         return {"errors": ["project not found"]}
+#     return {"data": data}
 
 
-@app.put('/projects/{projectId}', tags=['projects'], dependencies=[OR_role("owner", "admin")])
-def edit_project(projectId: int, data: schemas.CreateProjectSchema = Body(...),
-                 context: schemas.CurrentContext = Depends(OR_context)):
-    return projects.edit(tenant_id=context.tenant_id, user_id=context.user_id, data=data, project_id=projectId)
+# @app.put('/projects/{projectId}', tags=['projects'], dependencies=[OR_role("owner", "admin")])
+# def edit_project(projectId: int, data: schemas.CreateProjectSchema = Body(...),
+#                  context: schemas.CurrentContext = Depends(OR_context)):
+#     return projects.edit(tenant_id=context.tenant_id, user_id=context.user_id, data=data, project_id=projectId)
 
 
-@app.delete('/projects/{projectId}', tags=['projects'], dependencies=[OR_role("owner", "admin")])
-def delete_project(projectId: int, _=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
-    return projects.delete(tenant_id=context.tenant_id, user_id=context.user_id, project_id=projectId)
+# @app.delete('/projects/{projectId}', tags=['projects'], dependencies=[OR_role("owner", "admin")])
+# def delete_project(projectId: int, _=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
+#     return projects.delete(tenant_id=context.tenant_id, user_id=context.user_id, project_id=projectId)
 
 
-@app.post('/client/new_api_key', tags=['client'], dependencies=[OR_role("owner", "admin")])
-def generate_new_tenant_token(context: schemas.CurrentContext = Depends(OR_context)):
-    logger.info(f"tenant api_key rotated tenant_id={context.tenant_id} user_id={context.user_id}")
-    return {
-        'data': tenants.generate_new_api_key(context.tenant_id)
-    }
+# @app.post('/client/new_api_key', tags=['client'], dependencies=[OR_role("owner", "admin")])
+# def generate_new_tenant_token(context: schemas.CurrentContext = Depends(OR_context)):
+#     logger.info(f"tenant api_key rotated tenant_id={context.tenant_id} user_id={context.user_id}")
+#     return {
+#         'data': tenants.generate_new_api_key(context.tenant_id)
+#     }
 
 
-@app.post('/users/modules', tags=['users'])
-def update_user_module(context: schemas.CurrentContext = Depends(OR_context),
-                       data: schemas.ModuleStatus = Body(...)):
-    return {"data": users.update_user_module(context.user_id, data)}
+# @app.post('/users/modules', tags=['users'])
+# def update_user_module(context: schemas.CurrentContext = Depends(OR_context),
+#                        data: schemas.ModuleStatus = Body(...)):
+#     return {"data": users.update_user_module(context.user_id, data)}
 
 
 @app.get('/boarding', tags=['boarding'])
@@ -611,40 +611,40 @@ def delete_slack_integration(integrationId: int, _=Body(None), context: schemas.
     return webhook.delete(tenant_id=context.tenant_id, webhook_id=integrationId)
 
 
-@app.put('/webhooks', tags=["webhooks"])
-def add_edit_webhook(data: schemas.WebhookSchema = Body(...),
-                     context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": webhook.add_edit(tenant_id=context.tenant_id, data=data, replace_none=True)}
+# @app.put('/webhooks', tags=["webhooks"])
+# def add_edit_webhook(data: schemas.WebhookSchema = Body(...),
+#                      context: schemas.CurrentContext = Depends(OR_context)):
+#     return {"data": webhook.add_edit(tenant_id=context.tenant_id, data=data, replace_none=True)}
 
 
-@app.get('/webhooks', tags=["webhooks"])
-def get_webhooks(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": webhook.get_by_tenant(tenant_id=context.tenant_id, replace_none=True)}
+# @app.get('/webhooks', tags=["webhooks"])
+# def get_webhooks(context: schemas.CurrentContext = Depends(OR_context)):
+#     return {"data": webhook.get_by_tenant(tenant_id=context.tenant_id, replace_none=True)}
 
 
-@app.delete('/webhooks/{webhookId}', tags=["webhooks"])
-def delete_webhook(webhookId: int, _=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
-    return webhook.delete(tenant_id=context.tenant_id, webhook_id=webhookId)
+# @app.delete('/webhooks/{webhookId}', tags=["webhooks"])
+# def delete_webhook(webhookId: int, _=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
+#     return webhook.delete(tenant_id=context.tenant_id, webhook_id=webhookId)
 
 
-@app.get('/client/members', tags=["client"], dependencies=[OR_role("owner", "admin")])
-def get_members(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": users.get_members(tenant_id=context.tenant_id)}
+# @app.get('/client/members', tags=["client"], dependencies=[OR_role("owner", "admin")])
+# def get_members(context: schemas.CurrentContext = Depends(OR_context)):
+#     return {"data": users.get_members(tenant_id=context.tenant_id)}
 
 
-@app.get('/client/members/{memberId}/reset', tags=["client"], dependencies=[OR_role("owner", "admin")])
-def reset_reinvite_member(memberId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return users.reset_member(tenant_id=context.tenant_id, editor_id=context.user_id, user_id_to_update=memberId)
+# @app.get('/client/members/{memberId}/reset', tags=["client"], dependencies=[OR_role("owner", "admin")])
+# def reset_reinvite_member(memberId: int, context: schemas.CurrentContext = Depends(OR_context)):
+#     return users.reset_member(tenant_id=context.tenant_id, editor_id=context.user_id, user_id_to_update=memberId)
 
 
-@app.delete('/client/members/{memberId}', tags=["client"], dependencies=[OR_role("owner", "admin")])
-def delete_member(memberId: int, _=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
-    return users.delete_member(tenant_id=context.tenant_id, user_id=context.user_id, id_to_delete=memberId)
+# @app.delete('/client/members/{memberId}', tags=["client"], dependencies=[OR_role("owner", "admin")])
+# def delete_member(memberId: int, _=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
+#     return users.delete_member(tenant_id=context.tenant_id, user_id=context.user_id, id_to_delete=memberId)
 
 
-@app.put('/client/members/{memberId}/owner', tags=["client"], dependencies=[OR_role("owner")])
-def transfer_ownership(memberId: int, _=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
-    return users.transfer_ownership(tenant_id=context.tenant_id, user_id=context.user_id, new_owner_id=memberId)
+# @app.put('/client/members/{memberId}/owner', tags=["client"], dependencies=[OR_role("owner")])
+# def transfer_ownership(memberId: int, _=Body(None), context: schemas.CurrentContext = Depends(OR_context)):
+#     return users.transfer_ownership(tenant_id=context.tenant_id, user_id=context.user_id, new_owner_id=memberId)
 
 
 @app.get('/account/new_api_key', tags=["account"], dependencies=[OR_role("owner", "admin")])
@@ -652,14 +652,14 @@ def generate_new_user_token(context: schemas.CurrentContext = Depends(OR_context
     return {"data": users.generate_new_api_key(user_id=context.user_id)}
 
 
-@app.get('/limits', tags=['accounts'])
-def get_limits(context: schemas.CurrentContext = Depends(OR_context)):
-    return {
-        'data': {
-            "teamMember": -1,
-            "projects": -1,
-        }
-    }
+# @app.get('/limits', tags=['accounts'])
+# def get_limits(context: schemas.CurrentContext = Depends(OR_context)):
+#     return {
+#         'data': {
+#             "teamMember": -1,
+#             "projects": -1,
+#         }
+#     }
 
 
 @app.get('/integrations/msteams/channels', tags=["integrations"])
