@@ -312,6 +312,8 @@ export default class App {
   }
 
   private canStart = false
+  private stopEpoch = 0
+  private workerRestartEpoch: number | null = null
   private rootId: number | null = null
   private pageFrames: HTMLIFrameElement[] = []
   private frameOderNumber = 0
@@ -1208,8 +1210,13 @@ export default class App {
   }
 
   private restart = (forceNew = false) => {
+    if (this.activityState === ActivityState.NotActive) {
+      return
+    }
     this.stop(false)
+    const epoch = this.stopEpoch
     this.waitStatus(ActivityState.NotActive).then(() => {
+      if (epoch !== this.stopEpoch) return
       this.allowAppStart()
       // Force a brand-new session when asked (e.g. a stale bfcache restore) without
       // letting forceNew leak into later restarts through prevOpts.
@@ -1257,9 +1264,16 @@ export default class App {
   private handleWorkerMsg(data: FromWorkerData) {
     // handling 401 auth restart (new token assignment)
     if (data === 'a_stop') {
+      // the worker may have begun this restart before it got our 'stop'
+      const wasRunning = this.activityState !== ActivityState.NotActive
       this.stop(false)
+      this.workerRestartEpoch = wasRunning ? this.stopEpoch : null
     } else if (data === 'a_start') {
+      const epoch = this.workerRestartEpoch
+      this.workerRestartEpoch = null
+      if (epoch === null) return
       this.waitStatus(ActivityState.NotActive).then(() => {
+        if (epoch !== this.stopEpoch) return
         this.allowAppStart()
         this.start(this.prevOpts, true)
           .then((r) => {
@@ -1404,8 +1418,9 @@ export default class App {
   private onCommitError = (e: unknown) => {
     this._debug('worker_commit', e)
     this.stop(true)
+    const epoch = this.stopEpoch
     setTimeout(() => {
-      void this.start()
+      if (epoch === this.stopEpoch) void this.start()
     }, 500)
   }
 
@@ -1663,8 +1678,10 @@ export default class App {
     this.singleBuffer = false
     const second = 1000
     const isNewSession = this.checkSessionToken(startOpts.forceNew)
+    let epoch = this.stopEpoch
     if (conditional) {
       await this.setupConditionalStart(startOpts)
+      if (epoch !== this.stopEpoch) return
     }
     const cycle = () => {
       this.orderNumber += 1
@@ -1680,6 +1697,7 @@ export default class App {
         this.bufferedMessages2.push(TabData(this.session.getTabId()))
       }
       this.stop(false)
+      epoch = this.stopEpoch
       this.activityState = ActivityState.ColdStart
       if (startOpts.sessionHash) {
         this.session.applySessionHash(startOpts.sessionHash)
@@ -1699,13 +1717,19 @@ export default class App {
       this.observer.observe()
       this.ticker.start()
     }
-    this.coldInterval = setInterval(() => {
+    const interval = setInterval(() => {
+      if (epoch !== this.stopEpoch) {
+        clearInterval(interval)
+        return
+      }
       cycle()
     }, 30 * second)
+    this.coldInterval = interval
     cycle()
   }
 
   private async setupConditionalStart(startOpts: StartOptions) {
+    const epoch = this.stopEpoch
     this.conditionsManager = new ConditionsManager(this, startOpts)
     const r = await fetch(this.options.ingestPoint + '/v1/web/start', {
       method: 'POST',
@@ -1738,6 +1762,7 @@ export default class App {
       userState,
       projectID,
     } = await r.json()
+    if (epoch !== this.stopEpoch) return
     this.session.assign({ projectID })
     this.session.setUserInfo({
       userBrowser,
@@ -1908,6 +1933,7 @@ export default class App {
     resetByWorker = false,
     conditionName?: string,
   ): Promise<StartPromiseReturn> {
+    const epoch = this.stopEpoch
     if (Object.keys(startOpts).length !== 0) {
       this.prevOpts = startOpts
     }
@@ -1997,6 +2023,9 @@ export default class App {
           referrer: this.sanitizeReferrer(document.referrer),
         }),
       })
+      if (epoch !== this.stopEpoch) {
+        return UnsuccessfulStart(CANCELED)
+      }
       if (r.status !== 200) {
         const error = await r.text()
         const reason = error === CANCELED ? CANCELED : `Server error: ${r.status}. ${error}`
@@ -2029,6 +2058,9 @@ export default class App {
         assistOnly: socketOnly,
         protocolVersion,
       } = await r.json()
+      if (epoch !== this.stopEpoch) {
+        return UnsuccessfulStart(CANCELED)
+      }
       if (
         typeof token !== 'string' ||
         typeof userUUID !== 'string' ||
@@ -2128,6 +2160,9 @@ export default class App {
         this.clearBuffers()
         this.commit()
         /** --------------- COLD START BUFFER ------------------*/
+        if (epoch !== this.stopEpoch) {
+          return UnsuccessfulStart(CANCELED)
+        }
       }
       if (this.insideIframe && this.rootId) {
         this.observer.crossdomainObserve(this.rootId, this.frameOderNumber, this.frameLevel)
@@ -2262,8 +2297,10 @@ export default class App {
       this.signalIframeTracker()
     }
 
+    const epoch = this.stopEpoch
     if (!document.hidden) {
       await this.waitStart()
+      if (epoch !== this.stopEpoch) return UnsuccessfulStart(CANCELED)
       return this._start(...args)
     } else {
       return new Promise((resolve) => {
@@ -2272,7 +2309,7 @@ export default class App {
             await this.waitStart()
             // eslint-disable-next-line
             document.removeEventListener('visibilitychange', onVisibilityChange)
-            resolve(this._start(...args))
+            resolve(epoch !== this.stopEpoch ? UnsuccessfulStart(CANCELED) : this._start(...args))
           }
         }
         // eslint-disable-next-line
@@ -2327,6 +2364,7 @@ export default class App {
   }
 
   stop(stopWorker = true): void {
+    this.stopEpoch++
     if (this.activityState !== ActivityState.NotActive) {
       try {
         if (this.options.crossdomain?.enabled) {
