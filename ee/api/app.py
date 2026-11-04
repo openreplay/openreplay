@@ -190,13 +190,8 @@ app.include_router(mcp.public_app)
 
 if config("ENABLE_SSO", cast=bool, default=True):
     app.include_router(saml.public_app)
-    app.include_router(saml.app)
-    app.include_router(saml.app_apikey)
-    app.include_router(scim.public_app)
-    app.include_router(scim.app)
-    app.include_router(scim.app_apikey)
-
     if SAML2_helper.is_scim_configured():
         logger.info("SCIM configured, mounting endpoints...")
+        app.include_router(scim.public_app)
         SCIM_MOUNT_PATH = "/sso/scim/v2"
         app.mount(SCIM_MOUNT_PATH, WSGIMiddleware(PrefixMiddleware(scim.scim_app, SCIM_MOUNT_PATH)))
