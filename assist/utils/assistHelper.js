@@ -63,8 +63,18 @@ const extractSessionInfo = function (socket) {
     if (socket.handshake.query.sessionInfo !== undefined) {
         logger.debug(`received headers: ${socket.handshake.headers}`);
 
-        socket.handshake.query.sessionInfo = JSON.parse(socket.handshake.query.sessionInfo);
-        socket.handshake.query.sessionInfo = {...BASE_sessionInfo, ...socket.handshake.query.sessionInfo};
+        let sessionInfo;
+        try {
+            sessionInfo = JSON.parse(socket.handshake.query.sessionInfo);
+        } catch (e) {
+            logger.debug(`invalid sessionInfo, peerId: ${socket.handshake.query.peerId}, err: ${e.message}`);
+            return false;
+        }
+        if (typeof sessionInfo !== 'object' || sessionInfo === null) {
+            logger.debug(`sessionInfo is not an object, peerId: ${socket.handshake.query.peerId}`);
+            return false;
+        }
+        socket.handshake.query.sessionInfo = {...BASE_sessionInfo, ...sessionInfo};
 
         let ua = uaParser(socket.handshake.headers['user-agent']);
         socket.handshake.query.sessionInfo.userOs = ua.os.name || null;
@@ -89,6 +99,7 @@ const extractSessionInfo = function (socket) {
             }
         }
     }
+    return true;
 }
 
 function socketConnexionTimeout(io) {

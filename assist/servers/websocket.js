@@ -9,6 +9,7 @@ const {
 const {
     createSocketIOServer
 } = require('../utils/wsServer');
+const {logger} = require('../utils/logger');
 const {
     socketsListByProject,
     socketsLiveByProject,
@@ -30,7 +31,10 @@ module.exports = {
     start: (server, prefix) => {
         io = createSocketIOServer(server, prefix);
         io.use(async (socket, next) => await authorizer.check(socket, next));
-        io.on('connection', (socket) => onConnect(socket));
+        io.on('connection', (socket) => onConnect(socket).catch(err => {
+            logger.error(`connection handler failed for ${socket.id}: ${err}`);
+            socket.disconnect();
+        }));
 
         console.log("WS server started");
         socketConnexionTimeout(io);
