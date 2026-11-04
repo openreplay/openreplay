@@ -18,6 +18,24 @@ const EVENTS_DEFINITION = {
         UPDATE_SESSION: "SERVER_UPDATE_SESSION"
     }
 };
+
+const CALL_EVENTS = new Set([
+    '_agent_name', 'call_end', 'videofeed',
+    'webrtc_call_offer', 'webrtc_call_answer', 'webrtc_call_ice_candidate',
+    'request_control', 'release_control',
+    'click', 'scroll', 'move', 'input', 'focus', 'select', 'drag', 'startDrag', 'stopDrag',
+    'startAnnotation', 'moveAnnotation', 'stopAnnotation',
+]);
+
+// Tokens issued before the claim existed carry no canCall and keep working.
+function agentCanCall(socket) {
+    return !(socket.decoded && socket.decoded.canCall === false);
+}
+
+function agentMaySend(socket, eventName) {
+    return agentCanCall(socket) || !CALL_EVENTS.has(eventName);
+}
+
 EVENTS_DEFINITION.emit = {
   NEW_AGENT: "NEW_AGENT",
   NO_AGENTS: "NO_AGENT",
@@ -175,5 +193,7 @@ module.exports = {
     IDENTITIES,
     socketConnexionTimeout,
     errorHandler,
+    agentCanCall,
+    agentMaySend,
     authorizer: {generateAccessToken, check}
 };

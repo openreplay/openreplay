@@ -5,7 +5,9 @@ const {
     IDENTITIES,
     EVENTS_DEFINITION,
     extractSessionInfo,
-    errorHandler
+    errorHandler,
+    agentCanCall,
+    agentMaySend,
 } = require("./assistHelper");
 const {
     startAssist,
@@ -207,6 +209,10 @@ async function onUpdateEvent(socket, ...args) {
 
 async function onWebrtcAgentHandler(socket, ...args) {
     if (socket.handshake.query.identity === IDENTITIES.agent) {
+        if (!agentCanCall(socket)) {
+            logger.debug(`${socket.id} has no call permission, dropping webrtc agent event`);
+            return;
+        }
         const agentIdToConnect = args[0]?.data?.toAgentId;
         logger.debug(`${socket.id} sent webrtc event to agent:${agentIdToConnect}`);
         if (agentIdToConnect && socket.handshake.sessionData.AGENTS_CONNECTED.includes(agentIdToConnect)) {
@@ -225,6 +231,10 @@ async function onAny(socket, eventName, ...args) {
         logger.debug(`received event:${eventName}, from:${socket.handshake.query.identity}, sending message to room:${socket.handshake.query.roomId}`);
         socket.to(socket.handshake.query.roomId).emit(eventName, args[0]);
     } else {
+        if (!agentMaySend(socket, eventName)) {
+            logger.debug(`${socket.id} has no call permission, dropping event:${eventName}`);
+            return;
+        }
         // Stats
         handleEvent(eventName, socket, args[0]);
         logger.debug(`received event:${eventName}, from:${socket.handshake.query.identity}, sending message to session of room:${socket.handshake.query.roomId}`);
