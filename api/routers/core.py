@@ -460,13 +460,13 @@ def search_integrations(projectId: int, context: schemas.CurrentContext = Depend
 #     return {"data": projects.get_capture_status(project_id=projectId)}
 
 
-# @app.post('/{projectId}/sample_rate', tags=["projects"])
+# @app.post('/{projectId}/sample_rate', tags=["projects"], dependencies=[OR_role("owner", "admin")])
 # def update_capture_status(projectId: int, data: schemas.SampleRateSchema = Body(...),
 #                           context: schemas.CurrentContext = Depends(OR_context)):
 #     return {"data": projects.update_capture_status(project_id=projectId, changes=data)}
 
 
-@app.post('/{projectId}/conditions', tags=["projects"])
+@app.post('/{projectId}/conditions', tags=["projects"], dependencies=[OR_role("owner", "admin")])
 def update_conditions(projectId: int, data: schemas.ProjectSettings = Body(...),
                       context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": projects.update_conditions(project_id=projectId, changes=data)}
