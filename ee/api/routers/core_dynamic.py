@@ -1,21 +1,19 @@
 import logging
-from typing import Optional, Union
 
 from decouple import config
 from fastapi import Body, Depends, BackgroundTasks, Request
 from fastapi import HTTPException, status
-from starlette.responses import RedirectResponse, FileResponse, JSONResponse, Response
+from starlette.responses import RedirectResponse, JSONResponse, Response
 
 import schemas
-from chalicelib.core import assist, signup, feature_flags
 from chalicelib.core import scope
+from chalicelib.core import signup, feature_flags
 from chalicelib.core import tenants, users, projects, license
 from chalicelib.core import webhook
 from chalicelib.core.collaborations.collaboration_slack import Slack
 from chalicelib.core.errors import errors, errors_details
 from chalicelib.utils import SAML2_helper
 from chalicelib.utils import captcha, smtp
-from chalicelib.utils import contextual_validators
 from chalicelib.utils import helper
 from chalicelib.utils.TimeUTC import TimeUTC
 from or_dependencies import OR_context, OR_role

@@ -3,7 +3,6 @@ import logging
 import secrets
 from typing import Optional
 
-import schemas
 from cachetools import TTLCache, cached
 from decouple import config
 from fastapi import BackgroundTasks, HTTPException
@@ -11,7 +10,9 @@ from psycopg2.extras import Json
 from pydantic import BaseModel, model_validator
 from starlette import status
 
+import schemas
 from chalicelib.core import authorizers, roles, spot, tenants
+from chalicelib.core.mcp import authorizers as mcp_authorizers
 from chalicelib.utils import email_helper, helper, pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 
@@ -776,6 +777,7 @@ def change_password(tenant_id, user_id, email, old_password, new_password):
         return {"errors": ["wrong password"]}
     changes = {"password": new_password}
     user = update(tenant_id=tenant_id, user_id=user_id, changes=changes)
+    mcp_authorizers.logout(user_id=user_id)
     r = authenticate(user["email"], new_password)
 
     return {
@@ -793,7 +795,7 @@ def set_password_invitation(tenant_id, user_id, new_password):
     changes = {"password": new_password}
     user = update(tenant_id=tenant_id, user_id=user_id, changes=changes)
     r = authenticate(user["email"], new_password)
-
+    mcp_authorizers.logout(user_id=user_id)
     return {
         "jwt": r.pop("jwt"),
         "refreshToken": r.pop("refreshToken"),

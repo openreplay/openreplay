@@ -35,8 +35,7 @@ def _get_current_auth_context(request: Request, jwt_payload: dict) -> schemas.Cu
 
 
 def _allow_access_to_endpoint(request: Request, current_context: schemas.CurrentContext) -> bool:
-    return request.url.path not in ["/logout", "/api/logout", "/refresh", "/api/refresh",
-                                    "/spot/logout", "/api/spot/logout", "/spot/refresh", "/api/spot/refresh"]
+    return True
 
 
 class JWTAuth(HTTPBearer):
