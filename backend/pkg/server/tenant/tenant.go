@@ -24,11 +24,11 @@ func New(pgconn pool.Pool) Tenants {
 }
 
 func (u *tenantsImpl) GetTenantByApiKey(apiKey string) (*Tenant, error) {
-	sql := fmt.Sprintf(`
+	sql := `
 		SELECT tenant_id, api_key
-	   	FROM public.tenants
-	   	WHERE api_key = $1
-	   	LIMIT 1;`)
+		FROM public.tenants
+		WHERE api_key = $1 AND ` + tenantScope + `
+		LIMIT 1;`
 
 	tenant := &Tenant{AuthMethod: "jwt"}
 	if err := u.conn.QueryRow(sql, apiKey).Scan(&tenant.TenantID, &tenant.ApiKey); err != nil {
