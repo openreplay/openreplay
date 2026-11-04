@@ -95,8 +95,8 @@ def ping(tenant_id, data: schemas.IntegrationElasticsearchTestSchema):
             r = ssrf.head(endpoint=url, headers=headers, timeout=3,
                           allowed_hosts=ssrf.get_integration_allowed_hosts())
         except ValueError as e:
-            logger.warning(f"blocked Elasticsearch integration with non-public host: {sanitize(data.host)}")
-            return {"state": False, "error": str(e)}
+            logger.warning(f"blocked Elasticsearch integration with non-public host: {sanitize(data.host)} ({e})")
+            return {"state": False, "error": "host must be a public hostname or IP address"}
         except requests.RequestException as e:
             logger.debug(f"ES connection test failed for {sanitize(url)}: {e}")
             continue
