@@ -90,19 +90,16 @@ export default class Call {
         this.store.update({ calling: CallingState.NoCall });
       }
     });
-    socket.on('messages_gz', () => {
-      if (reconnecting) {
-        // When the connection is restored, we initiate a re-creation of the connection
-        this._callSessionPeer();
-        reconnecting = false;
+    // the user's tab is back: redial, unless the call ended meanwhile
+    const onMessagesResumed = () => {
+      if (!reconnecting) return;
+      reconnecting = false;
+      if (this.store.get().calling === CallingState.Reconnecting) {
+        this._callSessionPeer(true);
       }
-    });
-    socket.on('messages', () => {
-      if (reconnecting) {
-        this._callSessionPeer();
-        reconnecting = false;
-      }
-    });
+    };
+    socket.on('messages_gz', onMessagesResumed);
+    socket.on('messages', onMessagesResumed);
     socket.on('disconnect', () => {
       this.store.update({ calling: CallingState.NoCall });
     });
@@ -229,11 +226,14 @@ export default class Call {
     isAgent,
     socketId,
     localPeerId,
+    resume = false,
   }: {
     remotePeerId: string;
     isAgent?: boolean;
     socketId?: string;
     localPeerId?: string;
+    /** redial after the user's reload: their tracker accepts it without a prompt */
+    resume?: boolean;
   }) {
     try {
       // Create RTCPeerConnection with client
@@ -257,7 +257,11 @@ export default class Call {
           type: WEBRTC_CALL_AGENT_EVENT_TYPES.OFFER,
         });
       } else {
-        this.socket.emit('webrtc_call_offer', { from: remotePeerId, offer });
+        this.socket.emit('webrtc_call_offer', {
+          from: remotePeerId,
+          offer,
+          resume,
+        });
       }
       this.connectAttempts = 0;
     } catch (e: any) {
@@ -268,7 +272,7 @@ export default class Call {
           this.connectAttempts++;
           logger.log('reconnecting', this.connectAttempts);
           await new Promise((resolve) => setTimeout(resolve, 250));
-          await this._peerConnection({ remotePeerId });
+          await this._peerConnection({ remotePeerId, resume });
         } else {
           logger.log('error', this.connectAttempts);
           this.callArgs?.onError?.(
@@ -474,7 +478,7 @@ export default class Call {
   }
 
   // Calls the method to create a connection with a peer
-  private _callSessionPeer() {
+  private _callSessionPeer(resume = false) {
     if (
       ![CallingState.NoCall, CallingState.Reconnecting].includes(
         this.store.get().calling,
@@ -493,7 +497,7 @@ export default class Call {
 
     const userName = getPlayerConfig().getUserName?.() ?? 'Agent';
     this.emitData('_agent_name', userName);
-    void this._peerConnection({ remotePeerId: this.callID });
+    void this._peerConnection({ remotePeerId: this.callID, resume });
   }
 
   private callAgentsInSession({ agentIds }: { agentIds: string[] }) {
