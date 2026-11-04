@@ -14,7 +14,7 @@ from routers.subs import spot
 
 logger = logging.getLogger(__name__)
 
-public_app, app, app_apikey = get_routers(prefix="/sso/saml2")
+public_app, _, _ = get_routers(prefix="/sso/saml2")
 
 
 @public_app.get("", tags=["saml2"])
