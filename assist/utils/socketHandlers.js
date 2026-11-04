@@ -82,6 +82,14 @@ function processNewSocket(socket) {
 
 async function onConnect(socket) {
     logger.debug(`WS started:${socket.id}, Query:${JSON.stringify(socket.handshake.query)}`);
+    if (socket.handshake.query.identity === undefined || socket.handshake.query.peerId === undefined) {
+        logger.debug(`no identity or peerId, refusing connexion`);
+        return socket.disconnect();
+    }
+    if (socket.handshake.query.identity === IDENTITIES.session && socket.handshake.query.sessionInfo === undefined) {
+        logger.debug(`sessionInfo is undefined, refusing connexion`);
+        return socket.disconnect();
+    }
     processNewSocket(socket);
     IncreaseTotalWSConnections(socket.handshake.query.identity);
 
@@ -99,7 +107,9 @@ async function onConnect(socket) {
                 }
             }
         }
-        extractSessionInfo(socket);
+        if (!extractSessionInfo(socket)) {
+            return socket.disconnect();
+        }
         if (tabsCount < 0) {
             // New session creates new room
             IncreaseTotalRooms();
@@ -122,8 +132,13 @@ async function onConnect(socket) {
 
     if (socket.handshake.query.identity === IDENTITIES.agent) {
         if (socket.handshake.query.agentInfo !== undefined) {
-            socket.handshake.query.agentInfo = JSON.parse(socket.handshake.query.agentInfo);
-            socket.handshake.query.agentID = socket.handshake.query.agentInfo.id;
+            try {
+                socket.handshake.query.agentInfo = JSON.parse(socket.handshake.query.agentInfo);
+            } catch (e) {
+                logger.debug(`invalid agentInfo, peerId: ${socket.handshake.query.peerId}, err: ${e.message}`);
+                return socket.disconnect();
+            }
+            socket.handshake.query.agentID = socket.handshake.query.agentInfo?.id;
             // Stats
             startAssist(socket, socket.handshake.query.agentID);
         }
