@@ -143,8 +143,42 @@ EOF
 	rm -rf "$root"
 }
 
+# Fresh installs: chalice must get the MCP secret from common.env, whose
+# change_me_ placeholder install.sh replaces with a random value.
+test_mcp_secret_wired() {
+	grep -Eq '^COMMON_JWT_MCP_SECRET=change_me_' "$TEST_DIR/common.env" && pass "common.env has MCP secret placeholder" || fail "common.env has MCP secret placeholder"
+	grep -Fxq 'JWT_MCP_SECRET="${COMMON_JWT_MCP_SECRET}"' "$TEST_DIR/docker-envs/chalice.env" && pass "chalice.env sets JWT_MCP_SECRET" || fail "chalice.env sets JWT_MCP_SECRET"
+}
+
+# Upgrades: secrets new in the target template must not stay as public
+# change_me_ placeholders; existing secrets must be kept.
+test_upgrade_generates_new_secrets() {
+	local root; root="$(make_sandbox)"
+	cat >"$root/work/old.env" <<'EOF'
+COMMON_VERSION=v1.27.0
+COMMON_JWT_SECRET=existing-secret
+EOF
+	cat >"$root/work/common.env" <<'EOF'
+COMMON_VERSION=v1.28.0
+COMMON_JWT_SECRET=change_me_jwt
+COMMON_JWT_MCP_SECRET=change_me_jwt_mcp
+EOF
+	(
+		cd "$root/work" || exit 1
+		export PATH="$root/bin:$PATH"
+		source ./upgrade.sh "old.env" >/dev/null 2>&1
+	)
+	local merged="$root/work/common.env"
+	if grep -q 'change_me_' "$merged"; then fail "no change_me_ placeholder left"; else pass "no change_me_ placeholder left"; fi
+	grep -Eq '^COMMON_JWT_MCP_SECRET=[0-9a-f]{20,}$' "$merged" && pass "MCP secret generated" || fail "MCP secret generated"
+	grep -Fxq 'COMMON_JWT_SECRET=existing-secret' "$merged" && pass "existing secret kept" || fail "existing secret kept"
+	rm -rf "$root"
+}
+
 test_merge_sourceable
 test_merge_release_versions
+test_mcp_secret_wired
+test_upgrade_generates_new_secrets
 test_network_name
 test_compose_v2
 
