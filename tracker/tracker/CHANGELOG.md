@@ -4,6 +4,7 @@
 - canvas: browsers without a WebP encoder (Safari/iOS) send JPEG instead of silently falling back to PNG; transparent areas are painted with the background color behind the canvas
 - canvas: on the main-thread fallback, canvases whose capture blocks for more than 16ms are captured less often; no capture while the tab is hidden
 - canvas: `fixedCanvasScaling` no longer stops capturing a canvas when the helper canvas has no 2d context; tainted (cross-origin) canvases stop capturing instead of throwing on every tick; empty canvases are skipped until they get a size; canvases that never became visible no longer start recording after `stop()`
+- lifecycle: `stop()` cancels a pending `start()` — a start response arriving after `stop()` no longer activates the tracker, the start resolves `{ success: false, reason: 'canceled' }`; worker 401 recovery, commit-error retry, cross-tab reset, bfcache restore and cold-start cycles no longer bring a stopped tracker back
 
 ## 19.0.6
 
