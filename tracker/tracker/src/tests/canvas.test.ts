@@ -8,6 +8,7 @@ describe('CanvasRecorder', () => {
   let appMock: jest.Mocked<App>
   let canvasRecorder: CanvasRecorder
   let nodeMock: HTMLCanvasElement
+  let webpProbe: jest.SpiedFunction<HTMLCanvasElement['toDataURL']>
   const originalIO = window.IntersectionObserver
   const originalFetch = globalThis.fetch
 
@@ -39,6 +40,9 @@ describe('CanvasRecorder', () => {
       ingestPoint: 'http://example.com',
     }
 
+    webpProbe = jest
+      .spyOn(HTMLCanvasElement.prototype, 'toDataURL')
+      .mockReturnValue('data:image/webp;base64,')
     canvasRecorder = new CanvasRecorder(appMock, { fps: 10, quality: 'medium' })
     nodeMock = document.createElement('canvas')
     nodeMock.toBlob = jest.fn((cb: (b: Blob | null) => void) => cb(new Blob(['img'])))
@@ -126,7 +130,7 @@ describe('CanvasRecorder', () => {
       jest.advanceTimersByTime(300)
       expect(nodeMock.toBlob).not.toHaveBeenCalled()
       expect(canvasRecorder['snapshots'][1]).toBeUndefined()
-      expect(canvasRecorder['intervals'].size).toBe(0)
+      expect(canvasRecorder['timer']).toBeNull()
     })
   })
 
@@ -136,7 +140,7 @@ describe('CanvasRecorder', () => {
       const clearIntervalSpy = jest.spyOn(globalThis, 'clearInterval')
       document.body.appendChild(nodeMock)
       canvasRecorder.recordCanvas(nodeMock, 1)
-      const interval = canvasRecorder['intervals'].get(1)
+      const interval = canvasRecorder['timer']
       jest.advanceTimersByTime(300)
       expect(nodeMock.toBlob).toHaveBeenCalledTimes(3)
 
@@ -144,13 +148,288 @@ describe('CanvasRecorder', () => {
 
       expect(clearIntervalSpy).toHaveBeenCalledWith(interval)
       expect(canvasRecorder['snapshots']).toEqual({})
-      expect(canvasRecorder['intervals'].size).toBe(0)
+      expect(canvasRecorder['timer']).toBeNull()
       expect(globalThis.fetch).toHaveBeenCalledTimes(1)
       const body = (globalThis.fetch as jest.Mock).mock.calls[0][1].body as FormData
       expect(body.getAll('snapshot')).toHaveLength(3)
 
       jest.advanceTimersByTime(1000)
       expect(nodeMock.toBlob).toHaveBeenCalledTimes(3)
+    })
+  })
+  describe('main-thread capture', () => {
+    beforeEach(() => {
+      jest.useFakeTimers()
+      document.body.appendChild(nodeMock)
+    })
+
+    test('fixedScaling captures the full canvas when the helper canvas has no 2d context', () => {
+      canvasRecorder = new CanvasRecorder(appMock, { fps: 10, quality: 'medium', fixedScaling: true })
+      jest.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
+      canvasRecorder.recordCanvas(nodeMock, 1)
+      jest.advanceTimersByTime(300)
+      expect(nodeMock.toBlob).toHaveBeenCalledTimes(3)
+    })
+
+    test('fixedScaling draws a CSS-pixel copy and encodes that', () => {
+      const dpr = window.devicePixelRatio
+      window.devicePixelRatio = 2
+      const drawImage = jest.fn()
+      jest.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({ drawImage } as any)
+      const dummyToBlob = jest
+        .spyOn(HTMLCanvasElement.prototype, 'toBlob')
+        .mockImplementation((cb: BlobCallback) => cb(new Blob(['img'])))
+      canvasRecorder = new CanvasRecorder(appMock, { fps: 10, quality: 'medium', fixedScaling: true })
+      canvasRecorder.recordCanvas(nodeMock, 1)
+      jest.advanceTimersByTime(100)
+      window.devicePixelRatio = dpr
+      expect(drawImage).toHaveBeenCalledWith(nodeMock, 0, 0, 150, 75)
+      expect(nodeMock.toBlob).not.toHaveBeenCalled()
+      expect(dummyToBlob).toHaveBeenCalledTimes(1)
+    })
+
+    test('without a webp encoder, encodes jpeg over the color behind the canvas', () => {
+      webpProbe.mockReturnValue('data:image/png;base64,')
+      document.body.style.backgroundColor = 'rgb(10, 20, 30)'
+      const ctx = { fillRect: jest.fn(), drawImage: jest.fn(), fillStyle: '' }
+      const fills: string[] = []
+      ctx.fillRect.mockImplementation(() => fills.push(ctx.fillStyle))
+      jest.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(ctx as any)
+      const dummyToBlob = jest
+        .spyOn(HTMLCanvasElement.prototype, 'toBlob')
+        .mockImplementation((cb: BlobCallback) => cb(new Blob(['img'])))
+      canvasRecorder = new CanvasRecorder(appMock, { fps: 10, quality: 'medium' })
+      canvasRecorder.recordCanvas(nodeMock, 1)
+      jest.advanceTimersByTime(100)
+      document.body.style.backgroundColor = ''
+      expect(fills).toEqual(['#fff', 'rgb(10, 20, 30)'])
+      expect(ctx.drawImage).toHaveBeenCalledWith(nodeMock, 0, 0, 300, 150)
+      expect(nodeMock.toBlob).not.toHaveBeenCalled()
+      expect(dummyToBlob.mock.calls[0].slice(1)).toEqual(['image/jpeg', 0.55])
+    })
+
+    test('stops a tainted canvas instead of throwing on every tick', () => {
+      nodeMock.toBlob = jest.fn(() => {
+        throw new DOMException('tainted', 'SecurityError')
+      })
+      canvasRecorder.recordCanvas(nodeMock, 1)
+      jest.advanceTimersByTime(300)
+      expect(nodeMock.toBlob).toHaveBeenCalledTimes(1)
+      expect(canvasRecorder['snapshots'][1]).toBeUndefined()
+      expect(canvasRecorder['timer']).toBeNull()
+    })
+
+    test('skips an empty canvas until it gets a size', () => {
+      nodeMock.width = 0
+      canvasRecorder.recordCanvas(nodeMock, 1)
+      jest.advanceTimersByTime(300)
+      expect(nodeMock.toBlob).not.toHaveBeenCalled()
+      nodeMock.width = 300
+      jest.advanceTimersByTime(100)
+      expect(nodeMock.toBlob).toHaveBeenCalledTimes(1)
+    })
+
+    test('does not capture while the document is hidden', () => {
+      const hidden = jest.spyOn(document, 'hidden', 'get').mockReturnValue(true)
+      canvasRecorder.recordCanvas(nodeMock, 1)
+      jest.advanceTimersByTime(300)
+      expect(nodeMock.toBlob).not.toHaveBeenCalled()
+      hidden.mockReturnValue(false)
+      jest.advanceTimersByTime(100)
+      expect(nodeMock.toBlob).toHaveBeenCalledTimes(1)
+    })
+
+    test('backs off while captures block the main thread and recovers when they are cheap', () => {
+      let now = 0
+      let cost = 40
+      jest.spyOn(performance, 'now').mockImplementation(() => now)
+      nodeMock.toBlob = jest.fn((cb: BlobCallback) => {
+        now += cost
+        cb(new Blob(['img']))
+      })
+      canvasRecorder.recordCanvas(nodeMock, 1)
+      // stride 1 -> 2 -> 4 -> 8: ticks 1, 2, 4, 8
+      jest.advanceTimersByTime(1500)
+      expect(nodeMock.toBlob).toHaveBeenCalledTimes(4)
+      expect(canvasRecorder['snapshots'][1].stride).toBe(8)
+
+      cost = 0
+      // stride 8 -> 4 -> 2 -> 1: ticks 16, 20, 22
+      jest.advanceTimersByTime(700)
+      expect(nodeMock.toBlob).toHaveBeenCalledTimes(7)
+      jest.advanceTimersByTime(300)
+      expect(nodeMock.toBlob).toHaveBeenCalledTimes(10)
+    })
+
+    test('clear disconnects observers of canvases that never became visible', () => {
+      const disconnect = jest.fn()
+      window.IntersectionObserver = jest.fn().mockImplementation(() => ({
+        observe: jest.fn(),
+        disconnect,
+      }))
+      canvasRecorder.captureCanvas(nodeMock)
+      canvasRecorder.clear()
+      expect(disconnect).toHaveBeenCalledTimes(1)
+      expect(canvasRecorder['observers'].size).toBe(0)
+    })
+
+    test('packs frames when the backend supports them', async () => {
+      // jsdom's Blob has no arrayBuffer()
+      nodeMock.toBlob = jest.fn((cb: BlobCallback) => {
+        const blob = new Blob(['img'])
+        blob.arrayBuffer = () => Promise.resolve(Uint8Array.from([105, 109, 103]).buffer)
+        cb(blob)
+      })
+      canvasRecorder = new CanvasRecorder(appMock, { fps: 10, quality: 'medium', framesSupport: true })
+      canvasRecorder.recordCanvas(nodeMock, 1)
+      jest.advanceTimersByTime(1000)
+      for (let i = 0; i < 20; i++) await Promise.resolve()
+      expect(appMock.debug.error).not.toHaveBeenCalled()
+      expect(globalThis.fetch).toHaveBeenCalledTimes(1)
+      const body = (globalThis.fetch as jest.Mock).mock.calls[0][1].body as FormData
+      expect(body.get('type')).toBe('frames')
+      const file = body.get('frames') as File
+      expect(file.name).toBe('1000_1.webp.frames')
+      // 10 × ([u64 ts][u32 size]['img'])
+      expect(file.size).toBe(10 * (12 + 3))
+    })
+  })
+
+  describe('worker capture', () => {
+    let Recorder: typeof CanvasRecorder
+    let workers: any[]
+    let bitmap: { close: jest.Mock }
+    const saved: Record<string, any> = {}
+    const globalsToMock = ['CANVAS_WORKER_BODY', 'Worker', 'OffscreenCanvas', 'createImageBitmap']
+
+    beforeEach(() => {
+      jest.useFakeTimers()
+      document.body.appendChild(nodeMock)
+      globalsToMock.forEach((k) => (saved[k] = (globalThis as any)[k]))
+      saved.createObjectURL = URL.createObjectURL
+      workers = []
+      bitmap = { close: jest.fn() }
+      Object.assign(globalThis, {
+        CANVAS_WORKER_BODY: 'worker body',
+        Worker: class {
+          postMessage = jest.fn()
+          terminate = jest.fn()
+          onmessage: ((e: any) => void) | null = null
+          onerror: ((e: any) => void) | null = null
+          constructor() {
+            workers.push(this)
+          }
+        },
+        OffscreenCanvas: class {
+          convertToBlob() {}
+        },
+        createImageBitmap: jest.fn(() => Promise.resolve(bitmap)),
+      })
+      URL.createObjectURL = jest.fn(() => 'blob:worker')
+      jest.isolateModules(() => {
+        Recorder = require('../main/app/canvas').default
+      })
+      canvasRecorder.clear()
+      canvasRecorder = new Recorder(appMock, { fps: 10, quality: 'low' })
+    })
+
+    afterEach(() => {
+      globalsToMock.forEach((k) => ((globalThis as any)[k] = saved[k]))
+      URL.createObjectURL = saved.createObjectURL
+    })
+
+    const frameMessages = () =>
+      workers[0].postMessage.mock.calls.filter(([m]: any[]) => m.type === 'frame')
+    const reply = (data: any) => workers[0].onmessage({ data })
+
+    test('transfers bitmaps to the worker instead of encoding on the main thread', async () => {
+      canvasRecorder.recordCanvas(nodeMock, 1)
+      await jest.advanceTimersByTimeAsync(100)
+      expect(nodeMock.toBlob).not.toHaveBeenCalled()
+      expect(workers).toHaveLength(1)
+      expect(frameMessages()).toHaveLength(1)
+      const [msg, transfer] = frameMessages()[0]
+      expect(msg).toMatchObject({
+        type: 'frame',
+        canvasId: 1,
+        createdAt: 1000,
+        ts: 1000,
+        width: 300,
+        height: 150,
+        mime: 'image/webp',
+        quality: 0.35,
+        background: null,
+        target: { url: 'http://example.com/v1/web/images', token: 'token', framesSupport: false },
+      })
+      expect(transfer).toEqual([bitmap])
+
+      // still encoding: no new capture
+      await jest.advanceTimersByTimeAsync(200)
+      expect(frameMessages()).toHaveLength(1)
+
+      reply({ type: 'done', canvasId: 1 })
+      await jest.advanceTimersByTimeAsync(100)
+      expect(frameMessages()).toHaveLength(2)
+    })
+
+    test('without a webp encoder, asks for jpeg over the color behind the canvas', async () => {
+      webpProbe.mockReturnValue('data:image/png;base64,')
+      const wrapper = document.createElement('div')
+      wrapper.style.backgroundColor = 'rgb(1, 2, 3)'
+      wrapper.appendChild(nodeMock)
+      document.body.appendChild(wrapper)
+      canvasRecorder = new Recorder(appMock, { fps: 10, quality: 'low' })
+      canvasRecorder.recordCanvas(nodeMock, 1)
+      await jest.advanceTimersByTimeAsync(100)
+      wrapper.remove()
+      expect(frameMessages()[0][0]).toMatchObject({ mime: 'image/jpeg', background: 'rgb(1, 2, 3)' })
+    })
+
+    test('fixedScaling asks the worker for the CSS-pixel size', async () => {
+      const dpr = window.devicePixelRatio
+      window.devicePixelRatio = 2
+      canvasRecorder = new Recorder(appMock, { fps: 10, quality: 'low', fixedScaling: true })
+      canvasRecorder.recordCanvas(nodeMock, 1)
+      await jest.advanceTimersByTimeAsync(100)
+      window.devicePixelRatio = dpr
+      expect(frameMessages()[0][0]).toMatchObject({ width: 150, height: 75 })
+    })
+
+    test('falls back to toBlob when the worker cannot encode', async () => {
+      canvasRecorder.recordCanvas(nodeMock, 1)
+      await jest.advanceTimersByTimeAsync(100)
+      reply({ type: 'fail', reason: 'no 2d context on OffscreenCanvas' })
+      expect(workers[0].terminate).toHaveBeenCalled()
+      await jest.advanceTimersByTimeAsync(100)
+      expect(nodeMock.toBlob).toHaveBeenCalledTimes(1)
+      expect(workers).toHaveLength(1)
+    })
+
+    test('stops capturing a canvas the worker reports as tainted', async () => {
+      canvasRecorder.recordCanvas(nodeMock, 1)
+      await jest.advanceTimersByTimeAsync(100)
+      reply({ type: 'done', canvasId: 1, stop: true })
+      expect(canvasRecorder['snapshots'][1]).toBeUndefined()
+      expect(workers[0].postMessage).toHaveBeenCalledWith({ type: 'drop', canvasId: 1 })
+    })
+
+    test('restarts the tracker when the upload token expired', async () => {
+      appMock.stop = jest.fn()
+      appMock.start = jest.fn(() => Promise.resolve())
+      canvasRecorder.recordCanvas(nodeMock, 1)
+      await jest.advanceTimersByTimeAsync(100)
+      reply({ type: 'unauthorized' })
+      expect(appMock.stop).toHaveBeenCalledWith(false)
+      jest.advanceTimersByTime(250)
+      expect(appMock.start).toHaveBeenCalled()
+    })
+
+    test('clear flushes frames buffered in the worker', async () => {
+      canvasRecorder.recordCanvas(nodeMock, 1)
+      await jest.advanceTimersByTimeAsync(100)
+      canvasRecorder.clear()
+      const types = workers[0].postMessage.mock.calls.map(([m]: any[]) => m.type)
+      expect(types).toEqual(['frame', 'flush', 'drop'])
     })
   })
 })
