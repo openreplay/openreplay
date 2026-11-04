@@ -24,6 +24,22 @@
 - sanitizer levels of removed nodes are dropped; stylesheet and font maps no longer retain detached iframe documents
 - worker: a quick stop/start can't null the new sender or reset the new session's status, and a start during the 30-minute-hidden restart no longer restarts a tracker that was stopped meanwhile
 
+## 19.0.7
+
+- canvas: snapshots are encoded in a dedicated worker (`createImageBitmap` + `OffscreenCanvas.convertToBlob`) instead of `toBlob` on the main thread, which removes periodic frame drops on Safari/iOS WebGL pages (fixes #5119); frames are packed and uploaded from the worker too
+- canvas: browsers without a WebP encoder (Safari/iOS) send JPEG instead of silently falling back to PNG; transparent areas are painted with the background color behind the canvas
+- canvas: on the main-thread fallback, canvases whose capture blocks for more than 16ms are captured less often; no capture while the tab is hidden
+- canvas: `fixedCanvasScaling` no longer stops capturing a canvas when the helper canvas has no 2d context; tainted (cross-origin) canvases stop capturing instead of throwing on every tick; empty canvases are skipped until they get a size; canvases that never became visible no longer start recording after `stop()`
+- lifecycle: `stop()` cancels a pending `start()` — a start response arriving after `stop()` no longer activates the tracker, the start resolves `{ success: false, reason: 'canceled' }`; worker 401 recovery, commit-error retry, cross-tab reset, bfcache restore and cold-start cycles no longer bring a stopped tracker back
+
+## 19.0.6
+
+- crossdomain: the parent page answers child iframes only with `crossdomain.enabled` (as documented); new `crossdomain.childDomains` limits which child origins can join; replies go to the child's origin instead of `*`; a child accepts commands only from its parent window, and only from `parentDomain` when set
+
+## 19.0.5
+
+- sanitize masked content in attributes and selected text (#5099 by [@josh08h](https://github.com/josh08h))
+
 ## 19.0.4
 
 - flush pending messages in forceFlushBatch, add flushInterval (#5082 by [@josh08h](https://github.com/josh08h))
