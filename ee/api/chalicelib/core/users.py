@@ -278,6 +278,7 @@ def create_member(
     modules = []
     if tenants.has_service_account(tenant_id=tenant_id):
         modules = ["usability-tests", "feature-flags", "replay-export"]
+    new_member = None
     if user is not None and user["tenantId"] == tenant_id:
         new_member = restore_member(
             tenant_id=tenant_id,
@@ -290,17 +291,9 @@ def create_member(
             modules=modules,
         )
     elif user is not None:
-        __hard_delete_user(user_id=user["userId"])
-        new_member = create_new_member(
-            tenant_id=tenant_id,
-            email=data.email,
-            invitation_token=invitation_token,
-            admin=data.admin,
-            name=data.name,
-            role_id=role_id,
-            modules=modules,
-        )
-    else:
+        __rename_deleted_user(user_id=user["userId"], email=data.email)
+
+    if new_member is None:
         new_member = create_new_member(
             tenant_id=tenant_id,
             email=data.email,
@@ -1141,14 +1134,28 @@ def create_sso_user(tenant_id, email, admin, name, origin, role_id, internal_id=
         return helper.dict_to_camel_case(cur.fetchone())
 
 
-def __hard_delete_user(user_id):
+def __rename_deleted_user(user_id, email):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
-            """DELETE
+            """SELECT COUNT(1) AS c
                FROM public.users
+               WHERE email ILIKE %(email)s
+                 AND users.deleted_at IS NOT NULL;""",
+            {"email": f"deleted%_{email}"},
+        )
+        cur.execute(query)
+        row = cur.fetchone()
+        email_prefix = 'deleted'
+        if row is not None:
+            row = row["c"]
+            email_prefix = f"deleted{row}"
+        email_prefix += "_"
+        query = cur.mogrify(
+            """UPDATE public.users
+               SET email=%(email_prefix)s || email
                WHERE users.user_id = %(user_id)s
                  AND users.deleted_at IS NOT NULL;""",
-            {"user_id": user_id},
+            {"user_id": user_id, "email_prefix": email_prefix},
         )
         cur.execute(query)
 
