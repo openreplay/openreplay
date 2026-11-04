@@ -206,9 +206,10 @@ func (e *handlersImpl) startSessionHandlerWeb(w http.ResponseWriter, r *http.Req
 
 		expTime := startTime.Add(time.Duration(p.MaxSessionDuration) * time.Millisecond)
 		tokenData = &token.TokenData{
-			ID:      sessionID,
-			Delay:   startTimeMili - req.Timestamp,
-			ExpTime: expTime.UnixMilli(),
+			ID:        sessionID,
+			Delay:     startTimeMili - req.Timestamp,
+			ExpTime:   expTime.UnixMilli(),
+			ProjectID: p.ProjectID,
 		}
 
 		// Add sessionID to context

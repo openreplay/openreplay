@@ -181,7 +181,7 @@ func (e *handlersImpl) startMobileSessionHandler(w http.ResponseWriter, r *http.
 		}
 
 		expTime := startTime.Add(time.Duration(p.MaxSessionDuration) * time.Millisecond)
-		tokenData = &token.TokenData{sessionID, 0, expTime.UnixMilli()}
+		tokenData = &token.TokenData{ID: sessionID, ExpTime: expTime.UnixMilli(), ProjectID: p.ProjectID}
 
 		// Add sessionID to context
 		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionID)))
