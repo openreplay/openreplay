@@ -12,7 +12,7 @@ const withSiteIdUpdater = (BaseComponent) => {
     const urlSiteId = params?.siteId;
     const location = useLocation();
     const history = useHistory();
-    const prevSiteIdRef = useRef(siteId);
+    const prevSiteIdRef = useRef(null);
     const lastUrlSiteIdRef = useRef(urlSiteId);
 
     useEffect(() => {
@@ -26,8 +26,14 @@ const withSiteIdUpdater = (BaseComponent) => {
     useEffect(() => {
       const { pathname } = location;
 
+      // only follow the store when the store changed; a URL change is applied
+      // to the store by the effect above, and pushing back here ping-pongs
+      const siteIdChanged = prevSiteIdRef.current !== siteId;
       const shouldUrlUpdate =
-        urlSiteId && siteId && parseInt(urlSiteId, 10) !== parseInt(siteId, 10);
+        siteIdChanged &&
+        urlSiteId &&
+        siteId &&
+        parseInt(urlSiteId, 10) !== parseInt(siteId, 10);
       if (shouldUrlUpdate) {
         const path = ['', siteId]
           .concat(pathname.split('/').slice(2))

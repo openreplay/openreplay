@@ -80,7 +80,7 @@ function DashboardView(props: Props) {
     return () => {
       cancelled = true;
     };
-  }, [dashboardId]);
+  }, [dashboardId, siteId]);
 
   if (!dashboard) return <Loader loading className="mt-12" />;
   return (
