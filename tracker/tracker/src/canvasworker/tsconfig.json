@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig-base.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "webworker"],
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "target": "es2020",
+    "declaration": false
+  },
+}

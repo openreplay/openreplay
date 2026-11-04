@@ -1,15 +1,20 @@
 import App from '../app/index.js'
 import { hasTag } from './guards.js'
 import Message, { CanvasNode } from './messages.gen.js'
+import {
+  FRAMES_PER_BATCH,
+  FramesUploader,
+  type CanvasFrame,
+  type FromCanvasWorker,
+  type ToCanvasWorker,
+  type UploadTarget,
+} from '../../common/canvas.js'
 
-interface CanvasSnapshot {
-  images: { data: Blob; id: number }[]
-  createdAt: number
-  paused: boolean
-  dummy: HTMLCanvasElement
-  isCapturing: boolean
-  isStopped: boolean
-}
+/**
+ * this value is injected during build time via rollup
+ * */
+// @ts-ignore
+const canvasWorkerBody: string | undefined = global.CANVAS_WORKER_BODY
 
 type GLContext = WebGLRenderingContext | WebGL2RenderingContext
 
@@ -98,6 +103,22 @@ function hookDraws(gl: GLContext, capture: () => void): DrawHook {
   }
 }
 
+interface CanvasSnapshot {
+  node: HTMLCanvasElement
+  images: CanvasFrame[]
+  createdAt: number
+  paused: boolean
+  isCapturing: boolean
+  /** captured on every `stride`-th tick; grows while captures block the main thread */
+  stride: number
+  ticks: number
+  captures: number
+  /** JPEG only: color behind the canvas, painted under its transparent pixels */
+  background: string | null
+  /** main-thread fixedScaling only */
+  dummy: HTMLCanvasElement | null
+}
+
 interface Options {
   fps: number
   quality: 'low' | 'medium' | 'high'
@@ -109,31 +130,79 @@ interface Options {
   fileExt?: 'webp' | 'png' | 'jpeg' | 'avif'
 }
 
-interface QueuedBatch {
-  images: { data: Blob; id: number }[]
-  canvasId: number
-  createdAt: number
+const qualityInt = {
+  low: 0.35,
+  medium: 0.55,
+  high: 0.8,
 }
 
+/** one frame at 60Hz */
+const CAPTURE_BUDGET_MS = 16
+const MAX_STRIDE = 8
+
+// WebKit has no WebP encoder and silently falls back to PNG (lossless, huge, ignores quality)
+function supportsWebpEncoding() {
+  try {
+    const probe = document.createElement('canvas')
+    probe.width = probe.height = 1
+    return probe.toDataURL('image/webp').startsWith('data:image/webp')
+  } catch {
+    return false
+  }
+}
+
+const isTransparent = (color: string) =>
+  !color || color === 'transparent' || color === 'rgba(0, 0, 0, 0)' || /\/\s*0\)$/.test(color)
+
+function backdropColor(node: Element) {
+  for (let el: Element | null = node; el; el = el.parentElement) {
+    const color = (el.ownerDocument.defaultView ?? window).getComputedStyle(el).backgroundColor
+    if (!isTransparent(color)) {
+      return color
+    }
+  }
+  return '#fff'
+}
+
+function canUseWorker() {
+  return (
+    !!canvasWorkerBody &&
+    typeof Worker === 'function' &&
+    typeof createImageBitmap === 'function' &&
+    typeof OffscreenCanvas === 'function' &&
+    'convertToBlob' in OffscreenCanvas.prototype
+  )
+}
+
+/**
+ * Encoding happens in a dedicated worker (createImageBitmap -> OffscreenCanvas.convertToBlob):
+ * WebKit encodes canvas.toBlob synchronously on the main thread. Browsers without
+ * OffscreenCanvas fall back to toBlob, throttled by `stride` when captures get expensive.
+ */
 class CanvasRecorder {
   private snapshots: Record<number, CanvasSnapshot> = {}
-  private readonly intervals: Map<number, ReturnType<typeof setInterval>> = new Map()
   private readonly observers: Map<number, IntersectionObserver> = new Map()
   private readonly drawHooks: Map<number, DrawHook> = new Map()
   private readonly interval: number
-  private readonly fileExt: 'webp' | 'png' | 'jpeg' | 'avif'
-  private uploadQueue = 0
-  private readonly MAX_CONCURRENT_UPLOADS = 2
-  private readonly MAX_QUEUE_SIZE = 50 // ~500 images max (50 batches × 10 images)
-  private readonly pendingBatches: QueuedBatch[] = []
-  private isProcessingQueue = false
+  private readonly quality: number
+  private readonly mime: 'image/webp' | 'image/jpeg'
+  private timer: ReturnType<typeof setInterval> | null = null
+  private worker: Worker | null = null
+  private workerDisabled = !canUseWorker()
+  private readonly uploader: FramesUploader
 
   constructor(
     private readonly app: App,
     private readonly options: Options,
   ) {
-    this.fileExt = 'webp'
     this.interval = 1000 / options.fps
+    this.quality = qualityInt[options.quality] ?? qualityInt.medium
+    this.mime = supportsWebpEncoding() ? 'image/webp' : 'image/jpeg'
+    this.uploader = new FramesUploader({
+      unauthorized: this.initRestart,
+      error: (message) => this.app.debug.error(message),
+      debugFrames: this.saveLocally,
+    })
   }
 
   startTracking() {
@@ -208,206 +277,295 @@ class CanvasRecorder {
   recordCanvas = (node: Node, id: number) => {
     const ts = this.app.timestamp()
     this.snapshots[id] = {
+      node: node as HTMLCanvasElement,
       images: [],
       createdAt: ts,
       paused: false,
-      dummy: document.createElement('canvas'),
       isCapturing: false,
-      isStopped: false,
+      stride: 1,
+      ticks: 0,
+      captures: 0,
+      background: null,
+      dummy: null,
     }
     const canvasMsg = CanvasNode(id.toString(), ts)
     this.app.send(canvasMsg as Message)
 
-    const cachedCanvas = node as HTMLCanvasElement
-
-    const captureFn = (canvas: HTMLCanvasElement) => {
-      if (!this.snapshots[id] || this.snapshots[id].isCapturing || this.snapshots[id].isStopped) {
-        return
-      }
-
-      this.snapshots[id].isCapturing = true
-      captureSnapshot(
-        canvas,
-        this.options.quality,
-        this.snapshots[id].dummy,
-        this.options.fixedScaling,
-        this.fileExt,
-        (blob) => {
-          if (this.snapshots[id]) {
-            this.snapshots[id].isCapturing = false
-          }
-
-          if (!blob || !this.snapshots[id] || this.snapshots[id].isStopped) {
-            return
-          }
-
-          this.snapshots[id].images.push({ id: this.app.timestamp(), data: blob })
-          if (this.snapshots[id].images.length > 9) {
-            this.sendSnaps(this.snapshots[id].images, id, this.snapshots[id].createdAt)
-            this.snapshots[id].images = []
-          }
-        },
-      )
+    const gl = glContexts.get(node as HTMLCanvasElement)
+    if (gl && !gl.getContextAttributes()?.preserveDrawingBuffer) {
+      this.drawHooks.set(id, hookDraws(gl, () => this.capture(id)))
     }
 
-    const gl = glContexts.get(cachedCanvas)
-    const drawHook =
-      gl && !gl.getContextAttributes()?.preserveDrawingBuffer
-        ? hookDraws(gl, () => captureFn(cachedCanvas))
-        : null
-    if (drawHook) {
-      this.drawHooks.set(id, drawHook)
+    if (!this.timer) {
+      this.timer = setInterval(this.tick, this.interval)
     }
+  }
 
-    const int = setInterval(() => {
+  private tick = () => {
+    if (document.hidden) {
+      return
+    }
+    const due: number[] = []
+    Object.keys(this.snapshots).forEach((key) => {
+      const id = Number(key)
       const snapshot = this.snapshots[id]
-      if (!snapshot || snapshot.isStopped) {
-        this.app.debug.log('Canvas is not present in {snapshots}')
-        this.cleanupCanvas(id)
-        return
-      }
-
+      const canvas = snapshot.node
       // isConnected covers shadow roots and iframes; a removed iframe leaves its document without a window
-      if (!cachedCanvas.isConnected || !cachedCanvas.ownerDocument.defaultView) {
-        this.app.debug.log('Canvas element not in sync', cachedCanvas, node)
-        if (snapshot.images.length > 0) {
-          this.sendSnaps(snapshot.images, id, snapshot.createdAt)
-          snapshot.images = []
-        }
+      if (!canvas.isConnected || !canvas.ownerDocument.defaultView) {
+        this.app.debug.log('Canvas element not in sync', canvas)
+        this.flushSnapshot(id, snapshot)
+        this.worker?.postMessage({
+          type: 'flush',
+          canvasId: id,
+          target: this.uploadTarget(),
+          debug: !!this.options.isDebug,
+        } satisfies ToCanvasWorker)
         this.cleanupCanvas(id)
         return
       }
-
-      if (!snapshot.paused) {
-        if (drawHook) {
-          // captured on the next draw; an idle WebGL canvas sends nothing new
-          drawHook.arm()
-        } else if (this.options.useAnimationFrame) {
-          requestAnimationFrame(() => {
-            captureFn(cachedCanvas)
-          })
-        } else {
-          captureFn(cachedCanvas)
-        }
+      if (snapshot.paused || snapshot.isCapturing) {
+        return
       }
-    }, this.interval)
-
-    this.intervals.set(id, int)
-  }
-
-  sendSnaps(images: { data: Blob; id: number }[], canvasId: number, createdAt: number) {
-    if (Object.keys(this.snapshots).length === 0) {
-      return
-    }
-
-    if (this.pendingBatches.length >= this.MAX_QUEUE_SIZE) {
-      this.app.debug.warn('Upload queue full, dropping canvas batch')
-      return
-    }
-
-    this.pendingBatches.push({ images, canvasId, createdAt })
-
-    if (!this.isProcessingQueue) {
-      this.processUploadQueue()
-    }
-  }
-
-  private async processUploadQueue() {
-    this.isProcessingQueue = true
-
-    while (this.pendingBatches.length > 0) {
-      if (this.uploadQueue >= this.MAX_CONCURRENT_UPLOADS) {
-        await new Promise((resolve) => setTimeout(resolve, 100))
-        continue
+      snapshot.ticks++
+      if (snapshot.ticks % snapshot.stride !== 0) {
+        return
       }
-
-      const batch = this.pendingBatches.shift()
-      if (!batch) break
-
-      this.uploadBatch(batch.images, batch.canvasId, batch.createdAt)
-    }
-
-    this.isProcessingQueue = false
-  }
-
-  private async uploadBatch(images: { data: Blob; id: number }[], canvasId: number, createdAt: number) {
-    const packed =
-      this.options.isDebug || this.options.framesSupport ? await packFrames(images) : null
-    if (this.options.isDebug && packed) {
-      const fileName = `${createdAt}_${canvasId}.${this.fileExt}.frames`
-      const url = URL.createObjectURL(new Blob([packed]))
-      const link = document.createElement('a')
-      link.href = url
-      link.download = fileName
-      link.style.display = 'none'
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      URL.revokeObjectURL(url)
-    }
-
-    let formData: FormData
-
-    if (this.options.framesSupport) {
-      // [uint64 LE timestamp][uint32 LE size][data] per frame
-      if (!packed) return
-
-      formData = new FormData()
-      formData.append('type', 'frames');
-      const fileName = `${createdAt}_${canvasId}.${this.fileExt}.frames`
-      formData.append('frames', new Blob([packed]), fileName)
-    } else {
-      // Legacy: send individual image files
-      formData = new FormData()
-      images.forEach((snapshot) => {
-        const blob = snapshot.data
-        if (!blob) return
-        const name = `${createdAt}_${canvasId}_${snapshot.id}.${this.fileExt}`
-        formData.append('snapshot', blob, name)
-      })
-    }
-
-    const initRestart = () => {
-      this.app.debug.log('Restarting tracker; token expired')
-      this.app.stop(false)
-      setTimeout(() => {
-        void this.app.start({}, true)
-      }, 250)
-    }
-
-    this.uploadQueue++
-    fetch(this.app.options.ingestPoint + '/v1/web/images', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.app.session.getSessionToken() ?? ''}`,
-      },
-      body: formData,
+      const drawHook = this.drawHooks.get(id)
+      if (drawHook) {
+        // captured on the next draw; an idle WebGL canvas sends nothing new
+        drawHook.arm()
+      } else {
+        due.push(id)
+      }
     })
-      .then((r) => {
-        if (r.status === 401) {
-          return initRestart()
+    if (due.length === 0) {
+      return
+    }
+    if (this.options.useAnimationFrame) {
+      requestAnimationFrame(() => due.forEach(this.capture))
+    } else {
+      due.forEach(this.capture)
+    }
+  }
+
+  private capture = (id: number) => {
+    const snapshot = this.snapshots[id]
+    if (!snapshot || snapshot.isCapturing) {
+      return
+    }
+    const canvas = snapshot.node
+    // createImageBitmap rejects and drawImage throws on an empty canvas
+    if (!canvas.width || !canvas.height) {
+      return
+    }
+    snapshot.isCapturing = true
+    const ts = this.app.timestamp()
+    const start = performance.now()
+    if (this.mime === 'image/jpeg' && snapshot.captures++ % FRAMES_PER_BATCH === 0) {
+      snapshot.background = backdropColor(canvas)
+    }
+    try {
+      const worker = this.getWorker()
+      if (worker) {
+        this.captureToWorker(worker, id, snapshot, ts)
+      } else {
+        this.captureOnMainThread(id, snapshot, ts)
+      }
+    } catch (e) {
+      // toBlob throws on a tainted (cross-origin) canvas, it will never succeed
+      this.app.debug.error('Canvas capture failed, stopping', e)
+      this.cleanupCanvas(id)
+      return
+    }
+    const cost = performance.now() - start
+    if (cost > CAPTURE_BUDGET_MS) {
+      snapshot.stride = Math.min(snapshot.stride * 2, MAX_STRIDE)
+    } else if (snapshot.stride > 1 && cost < CAPTURE_BUDGET_MS / 2) {
+      snapshot.stride = snapshot.stride / 2
+    }
+  }
+
+  private targetSize(canvas: HTMLCanvasElement) {
+    if (!this.options.fixedScaling) {
+      return { width: canvas.width, height: canvas.height }
+    }
+    const ratio = window.devicePixelRatio || 1
+    return {
+      width: Math.max(1, Math.floor(canvas.width / ratio)),
+      height: Math.max(1, Math.floor(canvas.height / ratio)),
+    }
+  }
+
+  private captureToWorker(worker: Worker, id: number, snapshot: CanvasSnapshot, ts: number) {
+    const { width, height } = this.targetSize(snapshot.node)
+    createImageBitmap(snapshot.node).then(
+      (bitmap) => {
+        if (this.snapshots[id] !== snapshot || this.worker !== worker) {
+          bitmap.close()
+          snapshot.isCapturing = false
+          return
         }
-        return true
-      })
-      .catch((e) => {
-        this.app.debug.error('error saving canvas', e)
-      })
-      .finally(() => {
-        this.uploadQueue--
-      })
+        const msg: ToCanvasWorker = {
+          type: 'frame',
+          canvasId: id,
+          createdAt: snapshot.createdAt,
+          ts,
+          bitmap,
+          width,
+          height,
+          mime: this.mime,
+          quality: this.quality,
+          background: snapshot.background,
+          target: this.uploadTarget(),
+          debug: !!this.options.isDebug,
+        }
+        worker.postMessage(msg, [bitmap])
+      },
+      (e) => {
+        this.app.debug.log('Canvas bitmap failed', e)
+        snapshot.isCapturing = false
+      },
+    )
+  }
+
+  private captureOnMainThread(id: number, snapshot: CanvasSnapshot, ts: number) {
+    let source = snapshot.node
+    if (this.options.fixedScaling || snapshot.background) {
+      const { width, height } = this.targetSize(source)
+      const dummy = snapshot.dummy ?? (snapshot.dummy = document.createElement('canvas'))
+      dummy.width = width
+      dummy.height = height
+      const ctx = dummy.getContext('2d')
+      if (ctx) {
+        if (snapshot.background) {
+          ctx.fillStyle = '#fff'
+          ctx.fillRect(0, 0, width, height)
+          ctx.fillStyle = snapshot.background
+          ctx.fillRect(0, 0, width, height)
+        }
+        ctx.drawImage(source, 0, 0, width, height)
+        source = dummy
+      }
+    }
+    source.toBlob(
+      (blob) => {
+        if (this.snapshots[id] !== snapshot) {
+          return
+        }
+        snapshot.isCapturing = false
+        if (!blob) {
+          return
+        }
+        snapshot.images.push({ id: ts, data: blob })
+        if (snapshot.images.length >= FRAMES_PER_BATCH) {
+          this.flushSnapshot(id, snapshot)
+        }
+      },
+      this.mime,
+      this.quality,
+    )
+  }
+
+  private getWorker(): Worker | null {
+    if (this.workerDisabled) {
+      return null
+    }
+    if (!this.worker) {
+      try {
+        this.worker = new Worker(
+          URL.createObjectURL(new Blob([canvasWorkerBody!], { type: 'text/javascript' })),
+        )
+        this.worker.onmessage = this.onWorkerMessage
+        this.worker.onerror = (e) => {
+          this.app.debug.error('Canvas worker error, encoding on main thread', e)
+          this.disableWorker()
+        }
+      } catch (e) {
+        this.app.debug.error('Canvas worker unavailable, encoding on main thread', e)
+        this.disableWorker()
+      }
+    }
+    return this.worker
+  }
+
+  private onWorkerMessage = ({ data }: MessageEvent<FromCanvasWorker>) => {
+    switch (data.type) {
+      case 'done': {
+        const snapshot = this.snapshots[data.canvasId]
+        if (!snapshot) return
+        snapshot.isCapturing = false
+        if (data.stop) {
+          this.app.debug.log('Canvas is tainted, stopping capture', data.canvasId)
+          this.cleanupCanvas(data.canvasId)
+        }
+        break
+      }
+      case 'unauthorized':
+        this.initRestart()
+        break
+      case 'error':
+        this.app.debug.error(data.message)
+        break
+      case 'debugFrames':
+        this.saveLocally(data.name, data.buffer)
+        break
+      case 'fail':
+        this.app.debug.warn('Canvas worker unavailable, encoding on main thread:', data.reason)
+        this.disableWorker()
+        break
+    }
+  }
+
+  private disableWorker() {
+    this.workerDisabled = true
+    this.worker?.terminate()
+    this.worker = null
+    Object.values(this.snapshots).forEach((snapshot) => {
+      snapshot.isCapturing = false
+    })
+  }
+
+  private uploadTarget(): UploadTarget {
+    return {
+      url: this.app.options.ingestPoint + '/v1/web/images',
+      token: this.app.session.getSessionToken() ?? '',
+      framesSupport: !!this.options.framesSupport,
+    }
+  }
+
+  private flushSnapshot(id: number, snapshot: CanvasSnapshot) {
+    if (snapshot.images.length === 0) {
+      return
+    }
+    this.uploader.push(
+      { images: snapshot.images, canvasId: id, createdAt: snapshot.createdAt },
+      this.uploadTarget(),
+      !!this.options.isDebug,
+    )
+    snapshot.images = []
+  }
+
+  private initRestart = () => {
+    this.app.debug.log('Restarting tracker; token expired')
+    this.app.stop(false)
+    setTimeout(() => {
+      void this.app.start({}, true)
+    }, 250)
+  }
+
+  private saveLocally = (name: string, buffer: ArrayBuffer) => {
+    const url = URL.createObjectURL(new Blob([buffer]))
+    const link = document.createElement('a')
+    link.href = url
+    link.download = name
+    link.style.display = 'none'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
   }
 
   private cleanupCanvas(id: number) {
-    if (this.snapshots[id]) {
-      this.snapshots[id].isStopped = true
-    }
-
-    const interval = this.intervals.get(id)
-    if (interval) {
-      clearInterval(interval)
-      this.intervals.delete(id)
-    }
-
     const observer = this.observers.get(id)
     if (observer) {
       observer.disconnect()
@@ -420,103 +578,40 @@ class CanvasRecorder {
       this.drawHooks.delete(id)
     }
 
-    if (this.snapshots[id]?.dummy) {
-      const dummy = this.snapshots[id].dummy
+    const dummy = this.snapshots[id]?.dummy
+    if (dummy) {
       dummy.width = 0
       dummy.height = 0
     }
-
     delete this.snapshots[id]
+    this.worker?.postMessage({ type: 'drop', canvasId: id } satisfies ToCanvasWorker)
+
+    if (this.timer && Object.keys(this.snapshots).length === 0) {
+      clearInterval(this.timer)
+      this.timer = null
+    }
   }
 
   clear() {
-    // Flush remaining images before cleanup
-    Object.keys(this.snapshots).forEach((idStr) => {
-      const id = parseInt(idStr, 10)
-      const snapshot = this.snapshots[id]
-
-      if (snapshot && snapshot.images.length > 0) {
-        this.sendSnaps(snapshot.images, id, snapshot.createdAt)
-        snapshot.images = []
-      }
+    Object.keys(this.snapshots).forEach((key) => {
+      const id = Number(key)
+      this.flushSnapshot(id, this.snapshots[id])
     })
+    this.worker?.postMessage({
+      type: 'flush',
+      target: this.uploadTarget(),
+      debug: !!this.options.isDebug,
+    } satisfies ToCanvasWorker)
 
-    Object.keys(this.snapshots).forEach((idStr) => {
-      const id = parseInt(idStr, 10)
-      this.cleanupCanvas(id)
+    Object.keys(this.snapshots).forEach((key) => {
+      this.cleanupCanvas(Number(key))
     })
-
-    // don't clear pendingBatches or stop queue processing
-    // to allow flushed images to finish uploading in the background
-
-    this.intervals.clear()
+    // observers of canvases that never became visible would start recording after stop
+    this.observers.forEach((observer) => observer.disconnect())
     this.observers.clear()
     this.snapshots = {}
+    // pending uploads keep going in the background
   }
-}
-
-const qualityInt = {
-  low: 0.35,
-  medium: 0.55,
-  high: 0.8,
-}
-
-function captureSnapshot(
-  canvas: HTMLCanvasElement,
-  quality: 'low' | 'medium' | 'high' = 'medium',
-  dummy: HTMLCanvasElement,
-  fixedScaling = false,
-  fileExt: 'webp' | 'png' | 'jpeg' | 'avif',
-  onBlob: (blob: Blob | null) => void,
-) {
-  const imageFormat = `image/${fileExt}`
-  if (fixedScaling) {
-    const canvasScaleRatio = window.devicePixelRatio || 1
-    dummy.width = canvas.width / canvasScaleRatio
-    dummy.height = canvas.height / canvasScaleRatio
-    const ctx = dummy.getContext('2d')
-    if (!ctx) {
-      return ''
-    }
-    ctx.clearRect(0, 0, dummy.width, dummy.height)
-    ctx.drawImage(canvas, 0, 0, dummy.width, dummy.height)
-    dummy.toBlob(onBlob, imageFormat, qualityInt[quality])
-  } else {
-    canvas.toBlob(onBlob, imageFormat, qualityInt[quality])
-  }
-}
-
-async function packFrames(images: { data: Blob; id: number }[]): Promise<ArrayBuffer | null> {
-  const buffers: ArrayBuffer[] = []
-  let totalSize = 0
-  for (const snapshot of images) {
-    if (!snapshot.data) continue
-    const ab = await snapshot.data.arrayBuffer()
-    buffers.push(ab)
-    totalSize += 8 + 4 + ab.byteLength
-  }
-
-  if (totalSize === 0) return null
-
-  const packed = new ArrayBuffer(totalSize)
-  const view = new DataView(packed)
-  const bytes = new Uint8Array(packed)
-  let offset = 0
-
-  for (let i = 0; i < images.length; i++) {
-    if (!images[i].data) continue
-    const ab = buffers.shift()!
-    const ts = images[i].id
-    view.setUint32(offset, ts % 0x100000000, true)
-    view.setUint32(offset + 4, Math.floor(ts / 0x100000000), true)
-    offset += 8
-    view.setUint32(offset, ab.byteLength, true)
-    offset += 4
-    bytes.set(new Uint8Array(ab), offset)
-    offset += ab.byteLength
-  }
-
-  return packed
 }
 
 export default CanvasRecorder
