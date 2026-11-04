@@ -59,6 +59,8 @@ const common = (workspace, plugins = []) => ({
   target: 'es2022',
   logLevel: 'error',
   alias: { '@tracker': path.join(trackerPackage(workspace), 'src') },
+  // rollup inlines the canvas worker; without it canvas.ts takes its main-thread path
+  define: { 'global.CANVAS_WORKER_BODY': 'undefined' },
   plugins: [constEnums, ...plugins],
 })
 
