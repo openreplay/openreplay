@@ -1,5 +1,7 @@
 ## 20.0.0
 
+- crossdomain: the parent page answers child iframes only with `crossdomain.enabled` (as documented); new `crossdomain.childDomains` limits which child origins can join; replies go to the child's origin instead of `*`; a child accepts commands only from its parent window, and only from `parentDomain` when set
+- `app.getSanitizedTitle()`: the page title as recorded (`privateMode` / `urls.titleSanitizer` applied)
 - addition of scrollmap related messages
 - experimental `nextObserver: true` option: alternative DOM core that tracks node liveness structurally (no id map, no node maintainer), uses one MutationObserver for the page, iframes and shadow roots, and computes sibling indexes without recursion; same recording format, off by default
 - WebGL canvases are recorded (were blank frames): contexts are noted when created and a frame is captured right after the page draws; idle WebGL canvases no longer resend frames. Contexts created before the tracker was constructed, or with `preserveDrawingBuffer`, keep the timer capture
