@@ -1,10 +1,10 @@
 import logging
 from urllib.parse import urlparse
 
-import requests
 from decouple import config
 
 from chalicelib.core.sourcemaps import sourcemaps_parser
+from chalicelib.utils import ssrf
 from chalicelib.utils.log import sanitize
 from chalicelib.utils.storage import StorageClient, generators
 
@@ -72,8 +72,14 @@ def format_payload(p, truncate_to_first=False):
 
 
 def url_exists(url):
+    """`url` comes from error stack frames sent by the tracker, so it is attacker-controlled.
+    Only public http(s) hosts on standard ports are probed, and the HEAD request is pinned to the
+    validated IP (no redirects) so it cannot be turned into an internal-network oracle."""
+    if not ssrf.is_safe_external_url(url):
+        logger.warning(f"blocked sourcemap lookup for non-public URL: {sanitize(url)}")
+        return False
     try:
-        r = requests.head(url, allow_redirects=False)
+        r = ssrf.head(endpoint=url, timeout=config("sourcemapTimeout", cast=int, default=5), allowed_hosts=set())
         return r.status_code == 200 and "text/html" not in r.headers.get("Content-Type", "")
     except Exception as e:
         logger.warning(f"!! Issue checking if URL exists: {sanitize(url)}")
