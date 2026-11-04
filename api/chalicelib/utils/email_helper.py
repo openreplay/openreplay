@@ -1,3 +1,5 @@
+import html
+
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.email_handler import __get_html_from_file, send_html
 
@@ -32,6 +34,15 @@ def alert_email(recipients, subject, data):
     send_html(BODY_HTML=BODY_HTML, SUBJECT=subject, recipient=recipients)
 
 
+def _e(value):
+    return html.escape(str(value), quote=True)
+
+
+RAW_WEEKLY_REPORT_KEYS = ("o_tr_u", "o_tr_d", "past_week_issues_status", "past_month_issues_status",
+                          "progress_legend", "progress_tr", "breakdown_list", "breakdown_list_other",
+                          "b_tr_u", "b_tr_d")
+
+
 def __get_color(idx):
     return "#3EAAAF" if idx == 0 else "#77C3C7" if idx == 1 else "#9ED4D7" if idx == 2 else "#99d59a"
 
@@ -45,12 +56,12 @@ def weekly_report2(recipients, data):
                     <table style="width:100%;font-weight:300;margin-bottom:0;border-collapse:collapse">
                         <tbody>
                         <tr style="font-weight:300">
-                          <td height="{d["value"]}px" title="{d["issues_count"]}" style="font-size:0;padding:0;font-weight:300;margin:0;line-height:0;background-color:#C5E5E7;text-align:left">&nbsp;</td>
+                          <td height="{_e(d["value"])}px" title="{_e(d["issues_count"])}" style="font-size:0;padding:0;font-weight:300;margin:0;line-height:0;background-color:#C5E5E7;text-align:left">&nbsp;</td>
                         </tr>
                     </tbody></table>
                   </td>"""
         data[
-            "o_tr_d"] += f"""<td title="{d["day_long"]}, midnight" style="font-size:10px;color:#333333;padding:3px 5px 0 0;width:14%;font-weight:300;margin:0;text-align:center">{d["day_short"]}</td>"""
+            "o_tr_d"] += f"""<td title="{_e(d["day_long"])}, midnight" style="font-size:10px;color:#333333;padding:3px 5px 0 0;width:14%;font-weight:300;margin:0;text-align:center">{_e(d["day_short"])}</td>"""
 
     data[
         "past_week_issues_status"] = f'<img src="img/weekly/arrow-{"increase" if data["past_week_issues_evolution"] > 0 else "decrease"}.png" width="15px" height="10px" style="font-weight:300;vertical-align:middle">'
@@ -66,10 +77,10 @@ def weekly_report2(recipients, data):
         color = __get_color(idx)
         data["progress_legend"].append(
             f"""<td style="padding:0;font-weight:300;margin:0;text-align:left;">
-                    <span style="white-space:nowrap;"><span style="border-radius:50%;font-weight:300;vertical-align:bottom;color:#fff;width:16px;height:16px;margin:0 8px;display:inline-block;background-color:{color}"></span>{i["count"]}</span><span style="font-weight:300;margin-left:5px;margin-right:0px;white-space:nowrap;">{i["type"]}</span>
+                    <span style="white-space:nowrap;"><span style="border-radius:50%;font-weight:300;vertical-align:bottom;color:#fff;width:16px;height:16px;margin:0 8px;display:inline-block;background-color:{color}"></span>{_e(i["count"])}</span><span style="font-weight:300;margin-left:5px;margin-right:0px;white-space:nowrap;">{_e(i["type"])}</span>
                 </td>""")
         data[
-            "progress_tr"] += f'<td width="{i["value"]}%" title="{i["count"]} {i["type"]}" style="padding:0;font-weight:300;margin:0;background-color:{color};text-align:left">&nbsp;</td>'
+            "progress_tr"] += f'<td width="{_e(i["value"])}%" title="{_e(i["count"])} {_e(i["type"])}" style="padding:0;font-weight:300;margin:0;background-color:{color};text-align:left">&nbsp;</td>'
 
     data["progress_legend"] = '<tr style="font-weight:300;font-size:13px;">' + "".join(
         data["progress_legend"]) + "</tr>"
@@ -81,31 +92,31 @@ def weekly_report2(recipients, data):
             color = __get_color(idx)
             color_breakdown[i["type"]] = color
             data["breakdown_list"] += f"""<tr style="font-weight:300">
-              <td style="font-size:14px;padding:5px 0;font-weight:300;margin:0;text-align:left;white-space:nowrap;"><span style="vertical-align: middle;border-radius:50%;width:1em;font-weight:300;display:inline-block;background-color:{color};height:1em"></span>&nbsp;&nbsp;{i["type"]}</td>
-              <td style="font-size:14px;padding:5px 0;font-weight:300;margin:0;text-align:left"><a href="%(frontend_url)s" style="color:#394EFF;font-weight:300;text-decoration:none" target="_blank" data-saferedirecturl="#">{i["sessions_count"]}</a></td>
-              <td style="font-size:14px;padding:5px 0;font-weight:300;margin:0;text-align:left"><img src="img/weekly/arrow-{"increase" if i["last_week_sessions_evolution"] > 0 else "decrease"}.png" width="10px" height="7px" style="font-weight:300;vertical-align:middle;margin-right: 3px;"> {abs(i["last_week_sessions_evolution"])}%</td>
-              <td style="font-size:14px;padding:5px 0;font-weight:300;margin:0;text-align:left"><img src="img/weekly/arrow-{"increase" if i["last_month_sessions_evolution"] > 0 else "decrease"}.png" width="10px" height="7px" style="font-weight:300;vertical-align:middle;margin-right: 3px;"> {abs(i["last_month_sessions_evolution"])}%</td>
+              <td style="font-size:14px;padding:5px 0;font-weight:300;margin:0;text-align:left;white-space:nowrap;"><span style="vertical-align: middle;border-radius:50%;width:1em;font-weight:300;display:inline-block;background-color:{color};height:1em"></span>&nbsp;&nbsp;{_e(i["type"])}</td>
+              <td style="font-size:14px;padding:5px 0;font-weight:300;margin:0;text-align:left"><a href="%(frontend_url)s" style="color:#394EFF;font-weight:300;text-decoration:none" target="_blank" data-saferedirecturl="#">{_e(i["sessions_count"])}</a></td>
+              <td style="font-size:14px;padding:5px 0;font-weight:300;margin:0;text-align:left"><img src="img/weekly/arrow-{"increase" if i["last_week_sessions_evolution"] > 0 else "decrease"}.png" width="10px" height="7px" style="font-weight:300;vertical-align:middle;margin-right: 3px;"> {_e(abs(i["last_week_sessions_evolution"]))}%</td>
+              <td style="font-size:14px;padding:5px 0;font-weight:300;margin:0;text-align:left"><img src="img/weekly/arrow-{"increase" if i["last_month_sessions_evolution"] > 0 else "decrease"}.png" width="10px" height="7px" style="font-weight:300;vertical-align:middle;margin-right: 3px;"> {_e(abs(i["last_month_sessions_evolution"]))}%</td>
             </tr>"""
         else:
             data["breakdown_list_other"] = f"""<tfoot style="font-weight:300">
             <tr style="font-weight:300">
-              <td style="font-size:14px;padding:5px 0;font-weight:300;margin:0;text-align:left;white-space:nowrap;"><span style="vertical-align: middle;border-radius:50%;width:1em;font-weight:300;display:inline-block;background-color:#999999;height:1em"></span>&nbsp;&nbsp;{i["type"]}</td>
-              <td style="font-size:14px;padding:5px 0;font-weight:300;margin:0;text-align:left"><a href="%(frontend_url)s" style="color:#394EFF;font-weight:300;text-decoration:none" target="_blank" data-saferedirecturl="#">{i["sessions_count"]}</a></td>
-              <td style="font-size:14px;padding:5px 0;font-weight:300;margin:0;text-align:left"><img src="img/weekly/arrow-{"increase" if i["last_week_sessions_evolution"] > 0 else "decrease"}.png" width="10px" height="7px" style="font-weight:300;vertical-align:middle;margin-right: 3px;"> {abs(i["last_week_sessions_evolution"])}%</td>
-              <td style="font-size:14px;padding:5px 0;font-weight:300;margin:0;text-align:left"><img src="img/weekly/arrow-{"increase" if i["last_month_sessions_evolution"] > 0 else "decrease"}.png" width="10px" height="7px" style="font-weight:300;vertical-align:middle;margin-right: 3px;"> {abs(i["last_month_sessions_evolution"])}%</td>
+              <td style="font-size:14px;padding:5px 0;font-weight:300;margin:0;text-align:left;white-space:nowrap;"><span style="vertical-align: middle;border-radius:50%;width:1em;font-weight:300;display:inline-block;background-color:#999999;height:1em"></span>&nbsp;&nbsp;{_e(i["type"])}</td>
+              <td style="font-size:14px;padding:5px 0;font-weight:300;margin:0;text-align:left"><a href="%(frontend_url)s" style="color:#394EFF;font-weight:300;text-decoration:none" target="_blank" data-saferedirecturl="#">{_e(i["sessions_count"])}</a></td>
+              <td style="font-size:14px;padding:5px 0;font-weight:300;margin:0;text-align:left"><img src="img/weekly/arrow-{"increase" if i["last_week_sessions_evolution"] > 0 else "decrease"}.png" width="10px" height="7px" style="font-weight:300;vertical-align:middle;margin-right: 3px;"> {_e(abs(i["last_week_sessions_evolution"]))}%</td>
+              <td style="font-size:14px;padding:5px 0;font-weight:300;margin:0;text-align:left"><img src="img/weekly/arrow-{"increase" if i["last_month_sessions_evolution"] > 0 else "decrease"}.png" width="10px" height="7px" style="font-weight:300;vertical-align:middle;margin-right: 3px;"> {_e(abs(i["last_month_sessions_evolution"]))}%</td>
             </tr>
         </tfoot>"""
     data["b_tr_u"] = ""
     data["b_tr_d"] = ""
     for i in data["issues_breakdown_by_day"]:
         data[
-            "b_tr_d"] += f"""<td title="{i["day_long"]}" style="font-size:14px;color:#333333;padding:10px 0 0;width:14%;border-right:10px solid #fff;font-weight:300;margin:0;text-align:center">
-            {i["day_short"]}
+            "b_tr_d"] += f"""<td title="{_e(i["day_long"])}" style="font-size:14px;color:#333333;padding:10px 0 0;width:14%;border-right:10px solid #fff;font-weight:300;margin:0;text-align:center">
+            {_e(i["day_short"])}
           </td>"""
         if len(i["partition"]) > 0:
             sup_partition = ""
             for j in i["partition"]:
-                sup_partition += f'<tr style="font-weight:300"><td height="{j["value"]}" title="{j["count"]} {j["type"]}" style="font-size:0;padding:0;border-right:none;font-weight:300;margin:0;line-height:0;background-color:{color_breakdown[j["type"]]};text-align:left"></td></tr>'
+                sup_partition += f'<tr style="font-weight:300"><td height="{_e(j["value"])}" title="{_e(j["count"])} {_e(j["type"])}" style="font-size:0;padding:0;border-right:none;font-weight:300;margin:0;line-height:0;background-color:{color_breakdown[j["type"]]};text-align:left"></td></tr>'
         else:
             sup_partition = '<tr style="font-weight:300"><td height="3" style="font-size:0;padding:0;border-right:none;font-weight:300;margin:0;line-height:0;background-color:#999999;text-align:left"></td></tr>'
         data[
@@ -114,6 +125,7 @@ def weekly_report2(recipients, data):
                 <tbody>{sup_partition}</tbody>
             </table>
           </td>"""
-    BODY_HTML = __get_html_from_file("chalicelib/utils/html/Project-Weekly-Report.html", formatting_variables=data)
+    BODY_HTML = __get_html_from_file("chalicelib/utils/html/Project-Weekly-Report.html", formatting_variables=data,
+                                     raw_keys=RAW_WEEKLY_REPORT_KEYS)
     SUBJECT = "OpenReplay Project Weekly Report"
     send_html(BODY_HTML=BODY_HTML, SUBJECT=SUBJECT, recipient=recipients)
