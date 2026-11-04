@@ -70,6 +70,8 @@ describe.each(['default', 'next'] as const)('%s observer: attributes of masked c
         <select><option id="o" value="jane@x.io">Jane</option></select>
         <input id="c" type="checkbox" value="opt-in"><input id="b" type="submit" value="Pay Jane">
         <ol><li id="l" value="3">x</li></ol>
+        <meter id="m" value="720" max="850"></meter><progress id="pr" value="50" max="100"></progress>
+        <iframe id="f" srcdoc="<p>Jane Smith</p>"></iframe>
         <svg id="g" aria-label="Jane" width="10"></svg>
       </div>
       <div id="h" data-openreplay-hidden title="Jane Smith">secret</div>
@@ -85,7 +87,10 @@ describe.each(['default', 'next'] as const)('%s observer: attributes of masked c
     expect(attrs($('#o')).value).toBe('*********')
     expect(attrs($('#b')).value).toBe('*** ****')
     expect(attrs($('#c')).value).toBe('opt-in')
-    expect(attrs($('#l')).value).toBe('3')
+    expect(attrs($('#l')).value).toBe('*')
+    expect(attrs($('#m'))).toEqual({ value: '***', max: '850' })
+    expect(attrs($('#pr'))).toEqual({ value: '**', max: '100' })
+    expect(attrs($('#f')).srcdoc).toBe('******* *********')
     expect(attrs($('#g'))).toEqual({ 'aria-label': '****', width: '10' })
     expect(attrs($('#h')).title).toBe('**** *****')
     expect(attrs($('#p')).title).toBe('Public')
@@ -102,12 +107,16 @@ describe.each(['default', 'next'] as const)('%s observer: attributes of masked c
     setup(
       core,
       `<button id="d" data-state="open" title="Jane">x</button>
-      <div data-openreplay-obscured><span id="e" data-name="Jane"></span></div>
+      <ol><li id="l" value="3">x</li></ol><iframe id="f" srcdoc="Jane"></iframe>
+      <div data-openreplay-obscured><span id="e" data-name="Jane"></span><meter id="m" value="7"></meter></div>
       <div data-openreplay-unmask><span id="u" title="Public" data-name="Public"></span></div>`,
       { privateMode: true },
     )
     expect(attrs($('#d'))).toEqual({ 'data-state': 'open', title: '****' })
+    expect(attrs($('#l')).value).toBe('3')
+    expect(attrs($('#f')).srcdoc).toBe('****')
     expect(attrs($('#e'))['data-name']).toBe('****')
+    expect(attrs($('#m')).value).toBe('*')
     expect(attrs($('#u'))).toEqual({ title: 'Public', 'data-name': 'Public' })
   })
 
@@ -165,19 +174,22 @@ describe.each(['default', 'next'] as const)('%s observer: attributes of masked c
   test('privateMode: resanitize re-sends data-* when an explicit mask goes or comes', async () => {
     setup(
       core,
-      '<div id="w" data-openreplay-obscured><button id="b" data-state="open" title="Jane">x</button></div>',
+      '<div id="w" data-openreplay-obscured><button id="b" data-state="open" title="Jane">x</button><meter id="m" value="7"></meter></div>',
       { privateMode: true },
     )
     expect(attrs($('#b'))).toEqual({ 'data-state': '****', title: '****' })
+    expect(attrs($('#m')).value).toBe('*')
     $('#w').removeAttribute('data-openreplay-obscured')
     await flush()
     observer.resanitizeSubtree($('#w'))
     expect(attrs($('#b'))).toEqual({ 'data-state': 'open', title: '****' })
+    expect(attrs($('#m')).value).toBe('7')
 
     $('#w').setAttribute('data-openreplay-masked', '')
     await flush()
     observer.resanitizeSubtree($('#w'))
     expect(attrs($('#b'))['data-state']).toBe('****')
+    expect(attrs($('#m')).value).toBe('*')
   })
 
   test('privateMode: an unmask region under a new explicit mask is masked', async () => {

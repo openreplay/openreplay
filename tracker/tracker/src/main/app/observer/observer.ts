@@ -27,7 +27,7 @@ import {
 } from '../guards.js'
 import { inlineRemoteCss } from './cssInliner.js'
 import { nextID } from '../../modules/constructedStyleSheets.js'
-import { SanitizeLevel, stringWiper, isDataAttribute } from '../sanitizer.js'
+import { SanitizeLevel, stringWiper, isStateAttribute } from '../sanitizer.js'
 import { parentNode, previousSibling, nextSibling, firstChild } from '../untaintedDom.js'
 
 const iconCache = {}
@@ -213,6 +213,7 @@ const CONTENT_ATTRIBUTES = new Set([
   'datetime',
   'label',
   'placeholder',
+  'srcdoc',
   'title',
   'value',
 ])
@@ -232,7 +233,7 @@ function maskAttribute(app: App, id: number, el: Element, name: string, value: s
   if (!app.sanitizer.isObscured(id)) return value
   if (
     isContentAttribute(el, name) ||
-    (isDataAttribute(name) && app.sanitizer.masksDataAttributes(id, el))
+    (isStateAttribute(el, name) && app.sanitizer.masksStateAttributes(id, el))
   ) {
     return stringWiper(value)
   }
@@ -364,24 +365,24 @@ export function sendContentAttributes(ctx: AttributeContext, id: number, el: Ele
   const attrs = el.attributes
   for (let i = 0; i < attrs.length; i++) {
     const name = attrs[i].nodeName
-    if (isContentAttribute(el, name) || isDataAttribute(name)) {
+    if (isContentAttribute(el, name) || isStateAttribute(el, name)) {
       sendNodeAttribute(ctx, id, el, name, attrs[i].value)
     }
   }
 }
 
-/** privateMode: re-sends the data-* of an element whose explicit mask came or went without a level change. */
-export function refreshDataAttributes(
+/** privateMode: re-sends the state attributes of an element whose explicit mask came or went without a level change. */
+export function refreshStateAttributes(
   ctx: AttributeContext,
   id: number,
   el: Element,
   maskOnly = false,
 ): void {
-  if (!ctx.app.sanitizer.dataMaskChanged(id, el, maskOnly)) return
+  if (!ctx.app.sanitizer.stateMaskChanged(id, el, maskOnly)) return
   const attrs = el.attributes
   for (let i = 0; i < attrs.length; i++) {
     const name = attrs[i].nodeName
-    if (isDataAttribute(name)) sendNodeAttribute(ctx, id, el, name, attrs[i].value)
+    if (isStateAttribute(el, name)) sendNodeAttribute(ctx, id, el, name, attrs[i].value)
   }
 }
 
@@ -902,7 +903,7 @@ export default abstract class Observer {
       this.app.sanitizer.setLevel(id, newLevel)
       this.reemitNode(id, node)
     } else if (isElementNode(node)) {
-      refreshDataAttributes(this.attrCtx, id, node)
+      refreshStateAttributes(this.attrCtx, id, node)
     }
     for (let child = firstChild(node); child !== null; child = nextSibling(child)) {
       this.resanitizeNode(child, newLevel)

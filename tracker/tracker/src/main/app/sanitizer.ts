@@ -78,12 +78,16 @@ function hostOf(el: Element): Element | null {
   }
 }
 
-export const isDataAttribute = (name: string) =>
-  name.startsWith('data-') && !name.startsWith('data-openreplay-')
+const STATE_VALUE_TAGS = new Set(['li', 'meter', 'progress'])
 
-function hasDataAttribute(el: Element): boolean {
+export const isStateAttribute = (el: Element, name: string) =>
+  name === 'value'
+    ? STATE_VALUE_TAGS.has(el.localName)
+    : name.startsWith('data-') && !name.startsWith('data-openreplay-')
+
+function hasStateAttribute(el: Element): boolean {
   const attrs = el.attributes
-  for (let i = 0; i < attrs.length; i++) if (isDataAttribute(attrs[i].nodeName)) return true
+  for (let i = 0; i < attrs.length; i++) if (isStateAttribute(el, attrs[i].nodeName)) return true
   return false
 }
 
@@ -242,10 +246,11 @@ export default class Sanitizer {
   }
 
   /**
-   * data-* mostly hold UI state that styles select on ([data-state=open]): masked under an
-   * explicit mask or hide only, not under the page-wide privateMode default.
+   * data-* and li/meter/progress values mostly hold UI state that styles select or draw on
+   * ([data-state=open], list numbering, gauges): masked under an explicit mask or hide only, not
+   * under the page-wide privateMode default.
    */
-  masksDataAttributes(id: number, el: Element): boolean {
+  masksStateAttributes(id: number, el: Element): boolean {
     const level = this.getLevel(id)
     if (level === SanitizeLevel.Hidden) return true
     if (level !== SanitizeLevel.Obscured) return false
@@ -258,11 +263,11 @@ export default class Sanitizer {
 
   /**
    * privateMode: an explicit mask came or went on content the default already obscures. The level
-   * stays, so this is what tells the observers to re-send the data-* (`maskOnly`: new masks only).
+   * stays, so this is what tells the observers to re-send the state attributes (`maskOnly`: new masks only).
    */
-  dataMaskChanged(id: number, el: Element, maskOnly = false): boolean {
+  stateMaskChanged(id: number, el: Element, maskOnly = false): boolean {
     if (!this.options.privateMode || this.getLevel(id) !== SanitizeLevel.Obscured) return false
-    if (!hasDataAttribute(el)) return false
+    if (!hasStateAttribute(el)) return false
     const masked = this.explicitlyMasked(el)
     return masked !== this.maskedData.has(id) && (masked || !maskOnly)
   }

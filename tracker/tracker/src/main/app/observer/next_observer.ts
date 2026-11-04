@@ -49,7 +49,7 @@ import {
   isIgnored,
   sendNodeAttribute,
   sendContentAttributes,
-  refreshDataAttributes,
+  refreshStateAttributes,
   AttributeContext,
 } from './observer.js'
 import type TopObserver from './top_observer.js'
@@ -851,7 +851,7 @@ export default class NextObserver
    * but reaches the unmasked regions below it and the data-* of the obscured part.
    */
   private applyExplicitMask(node: Node, r: Rec) {
-    if (node.nodeType === ELEMENT) refreshDataAttributes(this.attrCtx, r.id, node as Element, true)
+    if (node.nodeType === ELEMENT) refreshStateAttributes(this.attrCtx, r.id, node as Element, true)
     const visit = (c: Node) => {
       const cr = this.nodes.live(c)
       if (cr === undefined) return
@@ -940,7 +940,7 @@ export default class NextObserver
     }
     if (willHidden) return
     if (r.lvl !== newLevel) this.setLevel(r, node, newLevel)
-    else if (node.nodeType === ELEMENT) refreshDataAttributes(this.attrCtx, r.id, node as Element)
+    else if (node.nodeType === ELEMENT) refreshStateAttributes(this.attrCtx, r.id, node as Element)
     for (let c = firstChild(node); c !== null; c = nextSibling(c)) this.resanitizeNode(c, newLevel)
     if (node.nodeType === ELEMENT) {
       const sr = this.shadowOf(node as Element)
