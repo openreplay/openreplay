@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"openreplay/backend/pkg/analytics/model"
+	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"strings"
 )
@@ -138,6 +139,21 @@ func (c *conditionsImpl) getConditions(projectID uint32) ([]ConditionSet, error)
 }
 
 func (c *conditionsImpl) Get(projectID uint32) (*Response, error) {
+	var active bool
+	err := c.db.QueryRow(`
+		SELECT active
+		FROM public.projects
+		WHERE project_id = $1 AND deleted_at IS NULL
+	`, projectID).Scan(&active)
+	if err != nil {
+		if postgres.IsNoRowsErr(err) {
+			return &Response{Conditions: []ConditionSet{}}, nil
+		}
+		return nil, err
+	}
+	if !active {
+		return &Response{Conditions: []ConditionSet{}}, nil
+	}
 	conditions, err := c.getConditions(projectID)
 	return &Response{Conditions: conditions}, err
 }
