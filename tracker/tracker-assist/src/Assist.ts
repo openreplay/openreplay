@@ -27,6 +27,8 @@ const SS_CONTINUE_KEY = "__openreplay_assist_continue";
 // sessionStorage flag: user already approved session viewing (requestConfirm
 // mode), so a page reload doesn't re-prompt
 const SS_CONFIRM_KEY = "__openreplay_session_confirm";
+// how long after connecting a reloaded page keeps its calling list for the agent's redial
+const CALL_RESUME_WINDOW = 15_000;
 
 /**
  * Events allowed out of the socket before the user approved session viewing.
@@ -163,6 +165,7 @@ export default class Assist {
   private pendingStart: (() => void) | null = null;
   private titleNode: HTMLTitleElement | null = null;
   private titleObserver: MutationObserver | null = null;
+  private endActiveCall: (() => void) | null = null;
   private callingState: CallingState = CallingState.False;
   private remoteControl: RemoteControl | null = null;
   private peerReconnectTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -241,7 +244,7 @@ export default class Assist {
     this.titleNode = document.querySelector("title");
     this.titleObserver = this.titleNode
       ? new MutationObserver(() => {
-          this.emit("UPDATE_SESSION", { pageTitle: document.title });
+          this.emit("UPDATE_SESSION", { pageTitle: this.pageTitle() });
         })
       : null;
     app.attachStartCallback(() => {
@@ -631,6 +634,11 @@ export default class Assist {
     });
   }
 
+  /** trackers before 20.0 have no getSanitizedTitle */
+  private pageTitle(): string {
+    return this.app.getSanitizedTitle?.() ?? document.title;
+  }
+
   private get agentsConnected(): boolean {
     return Object.keys(this.agents).length > 0;
   }
@@ -677,7 +685,7 @@ export default class Assist {
         identity: "session",
         tabId: app.getTabId(),
         sessionInfo: JSON.stringify({
-          pageTitle: document.title,
+          pageTitle: this.pageTitle(),
           active: true,
           assistOnly: app.socketMode,
           ...app.getSessionInfo(),
@@ -708,8 +716,16 @@ export default class Assist {
       app.debug.warn("Socket closed:", e);
     });
 
+    let resumeWindowArmed = false;
     socket.on("connect", () => {
       this.armSocketStableReset();
+      if (resumeWindowArmed) return;
+      resumeWindowArmed = true;
+      setTimeout(() => {
+        if (this.callingState !== CallingState.True) {
+          sessionStorage.removeItem(this.options.session_calling_peer_key);
+        }
+      }, CALL_RESUME_WINDOW);
     });
 
     socket.on("disconnect", () => {
@@ -1011,10 +1027,13 @@ export default class Assist {
 
     socket.on(
       "webrtc_call_offer",
-      async (_, data: { from: string; offer: RTCSessionDescriptionInit }) => {
+      async (
+        senderId: string,
+        data: { from: string; offer: RTCSessionDescriptionInit; resume?: boolean },
+      ) => {
         if (!this.sessionApproved) return;
         if (!this.calls.has(data.from)) {
-          await handleIncomingCallOffer(data.from, data.offer);
+          await handleIncomingCallOffer(data.from, data.offer, senderId, data.resume);
         }
       },
     );
@@ -1132,17 +1151,21 @@ export default class Assist {
     const handleIncomingCallOffer = async (
       from: string,
       offer: RTCSessionDescriptionInit,
+      senderId: string,
+      resume?: boolean,
     ) => {
       app.debug.log("handleIncomingCallOffer", from);
       let confirmAnswer: Promise<boolean>;
       const callingPeerIds = JSON.parse(
         sessionStorage.getItem(this.options.session_calling_peer_key) || "[]",
       );
-      // if the caller is already in the list, then we immediately accept the call without ui
-      if (
-        callingPeerIds.includes(from) ||
-        this.callingState === CallingState.True
-      ) {
+      // the call id ends with the caller's socket id; dashboards that don't send
+      // `resume` rely on the list expiring (CALL_RESUME_WINDOW)
+      const resumesCall =
+        resume !== false &&
+        callingPeerIds.includes(from) &&
+        from.endsWith(`-${senderId}-agent`);
+      if (resumesCall || this.callingState === CallingState.True) {
         confirmAnswer = Promise.resolve(true);
       } else {
         // set the state to wait for confirmation
@@ -1313,6 +1336,11 @@ export default class Assist {
       this.emit("call_end");
       handleCallEnd();
     };
+    this.endActiveCall = () => {
+      if (this.callingState !== CallingState.False || this.calls.size > 0) {
+        initiateCallEnd();
+      }
+    };
 
     const startCanvasStream = async (stream: MediaStream, id: number) => {
       // canvas streams go over WebRTC, not this.emit — gate them explicitly;
@@ -1343,9 +1371,11 @@ export default class Assist {
       }
     };
 
-    app.nodes.attachNodeCallback((node) => {
+    const isMaskedCanvas = (id: number) =>
+      app.sanitizer.isHidden(id) || app.sanitizer.isObscured(id);
+    const captureCanvas = (node: Node) => {
       const id = app.nodes.getID(node);
-      if (id && hasTag(node, "canvas") && !app.sanitizer.isHidden(id)) {
+      if (id && hasTag(node, "canvas") && !isMaskedCanvas(id)) {
         app.debug.log(`Creating stream for canvas ${id}`);
         const canvasHandler = new Canvas(
           node as unknown as HTMLCanvasElement,
@@ -1369,7 +1399,18 @@ export default class Assist {
         }, 5000);
         this.canvasNodeCheckers.set(id, int);
       }
-    });
+    };
+    if (!app.options.canvas?.disableCanvas) {
+      app.nodes.attachNodeCallback(captureCanvas);
+      app.attachResanitizeCallback?.((node, id) => {
+        if (!hasTag(node, "canvas")) return;
+        if (isMaskedCanvas(id)) {
+          this.stopCanvasStream(id);
+        } else if (!this.canvasMap.has(id)) {
+          captureCanvas(node);
+        }
+      });
+    }
   }
 
   private setupPeerListeners(id: string) {
@@ -1411,6 +1452,8 @@ export default class Assist {
     }
     this.clearSocketStableReset();
     this.cleanCanvasConnections();
+    // releases the mic and the calling state; a later start must prompt again
+    this.endActiveCall?.();
     this.calls.forEach((pc) => pc.close());
     this.calls.clear();
     if (this.socket) {

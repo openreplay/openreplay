@@ -80,7 +80,7 @@ export default class Call {
         this.store.get().calling === CallingState.Reconnecting
       ) {
         this.reconnecting = false;
-        this._callSessionPeer();
+        this._callSessionPeer(true);
       }
     };
     this.unsubscribe = listen(socket, {
@@ -280,11 +280,14 @@ export default class Call {
     isAgent,
     socketId,
     localPeerId,
+    resume = false,
   }: {
     remotePeerId: string;
     isAgent?: boolean;
     socketId?: string;
     localPeerId?: string;
+    /** redial after the user's reload: their tracker accepts it without a prompt */
+    resume?: boolean;
   }) {
     let pc: RTCPeerConnection | undefined;
     try {
@@ -306,7 +309,11 @@ export default class Call {
           type: WEBRTC_CALL_AGENT_EVENT_TYPES.OFFER,
         });
       } else {
-        this.socket.emit('webrtc_call_offer', { from: remotePeerId, offer });
+        this.socket.emit('webrtc_call_offer', {
+          from: remotePeerId,
+          offer,
+          resume,
+        });
       }
     } catch (e: any) {
       logger.error(e);
@@ -487,7 +494,7 @@ export default class Call {
   }
 
   // Calls the method to create a connection with a peer
-  private _callSessionPeer() {
+  private _callSessionPeer(resume = false) {
     const { calling } = this.store.get();
     if (calling !== CallingState.NoCall && calling !== CallingState.Reconnecting) {
       return;
@@ -501,7 +508,7 @@ export default class Call {
 
     const userName = getPlayerConfig().getUserName?.() ?? 'Agent';
     this.emitData('_agent_name', userName);
-    void this._peerConnection({ remotePeerId: this.callID });
+    void this._peerConnection({ remotePeerId: this.callID, resume });
   }
 
   /**

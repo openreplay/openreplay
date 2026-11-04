@@ -993,3 +993,170 @@ describe('Assist — teardown when the last agent leaves', () => {
     expect(app.stop).toHaveBeenCalledTimes(2)
   })
 })
+
+describe('Assist — call consent and masking', () => {
+  let assist: any
+  let app: any
+  let handlers: Record<string, (...args: any[]) => void>
+  let fakeSocket: any
+  let nodeCallbacks: Array<(node: Node) => void>
+  let resanitizeCallbacks: Array<(node: Node, id: number) => void>
+
+  const CALLING_KEY = '__openreplay_calling_peer'
+  const CALLING_TRUE = 1
+  const CALLING_FALSE = 2
+  const callId = 'project-1-session-1-tab-1-7-sock-A-agent'
+  const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
+  const promptShown = () =>
+    !!document.getElementById('openreplay-confirm-window-wrapper')
+
+  const makeSocketApp = () => ({
+    ...makeApp(),
+    active: jest.fn(() => true),
+    getSessionID: jest.fn(() => 'session-1'),
+    getProjectKey: jest.fn(() => 'project-1'),
+    getTabId: jest.fn(() => 'tab-1'),
+    getSessionInfo: jest.fn(() => ({})),
+    getHost: jest.fn(() => 'app.local'),
+    getSanitizedTitle: jest.fn(() => '*****'),
+    socketMode: false,
+    nodes: {
+      attachNodeCallback: jest.fn((cb: any) => nodeCallbacks.push(cb)),
+      getID: jest.fn(() => 5),
+      getNode: jest.fn(),
+    },
+    attachResanitizeCallback: jest.fn((cb: any) => resanitizeCallbacks.push(cb)),
+    sanitizer: { isHidden: jest.fn(() => false), isObscured: jest.fn(() => false), },
+  })
+
+  const startAssist = () => {
+    assist = new Assist(app as any, {})
+    assist.onStart()
+  }
+
+  beforeEach(() => {
+    sessionStorage.clear()
+    document.body.innerHTML = ''
+    nodeCallbacks = []
+    resanitizeCallbacks = []
+    app = makeSocketApp()
+    handlers = {}
+    fakeSocket = {
+      on: jest.fn((ev: string, cb: any) => { handlers[ev] = cb }),
+      onAny: jest.fn(),
+      emit: jest.fn(),
+      disconnect: jest.fn(),
+      connect: jest.fn(),
+    }
+    ;(connect as unknown as jest.Mock).mockReturnValue(fakeSocket)
+    jest
+      .spyOn(Assist.prototype as any, 'playNotificationSound')
+      .mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    jest.useRealTimers()
+    jest.restoreAllMocks()
+    jest.clearAllMocks()
+  })
+
+  test('a stored call id redialed from the same agent socket resumes without a prompt', async () => {
+    sessionStorage.setItem(CALLING_KEY, JSON.stringify([callId,]))
+    startAssist()
+
+    await handlers.webrtc_call_offer('sock-A', { from: callId, offer: {}, resume: true, })
+    await flush()
+
+    expect(promptShown()).toBe(false)
+  })
+
+  test('a stored call id sent from another socket prompts', async () => {
+    sessionStorage.setItem(CALLING_KEY, JSON.stringify([callId,]))
+    startAssist()
+
+    void handlers.webrtc_call_offer('sock-B', { from: callId, offer: {}, })
+    await flush()
+
+    expect(promptShown()).toBe(true)
+  })
+
+  test('a fresh call prompts even when its id is still stored', async () => {
+    sessionStorage.setItem(CALLING_KEY, JSON.stringify([callId,]))
+    startAssist()
+
+    void handlers.webrtc_call_offer('sock-A', { from: callId, offer: {}, resume: false, })
+    await flush()
+
+    expect(promptShown()).toBe(true)
+  })
+
+  test('the calling list is dropped when no call resumes soon after connecting', () => {
+    jest.useFakeTimers()
+    sessionStorage.setItem(CALLING_KEY, JSON.stringify([callId,]))
+    startAssist()
+
+    handlers.connect()
+    jest.advanceTimersByTime(14_000)
+    expect(sessionStorage.getItem(CALLING_KEY)).not.toBeNull()
+    jest.advanceTimersByTime(1_000)
+    expect(sessionStorage.getItem(CALLING_KEY)).toBeNull()
+  })
+
+  test('clean() ends an active call so a later start prompts again', () => {
+    startAssist()
+    assist.callingState = CALLING_TRUE
+    sessionStorage.setItem(CALLING_KEY, JSON.stringify([callId,]))
+
+    assist.clean()
+
+    expect(assist.callingState).toBe(CALLING_FALSE)
+    expect(sessionStorage.getItem(CALLING_KEY)).toBeNull()
+    expect(fakeSocket.emit).toHaveBeenCalledWith('call_end', expect.anything())
+  })
+
+  test('obscured canvases are not streamed', () => {
+    app.sanitizer.isObscured.mockReturnValue(true)
+    startAssist()
+
+    nodeCallbacks.forEach((cb) => cb(document.createElement('canvas')))
+
+    expect(assist.canvasMap.size).toBe(0)
+  })
+
+  test('a canvas masked at runtime stops streaming', () => {
+    startAssist()
+    const stop = jest.fn()
+    assist.canvasMap.set(5, { stop, })
+    app.sanitizer.isObscured.mockReturnValue(true)
+
+    resanitizeCallbacks.forEach((cb) => cb(document.createElement('canvas'), 5))
+
+    expect(stop).toHaveBeenCalled()
+    expect(assist.canvasMap.has(5)).toBe(false)
+  })
+
+  test('disableCanvas turns canvas streaming off', () => {
+    app.options = { ...app.options, canvas: { disableCanvas: true, }, }
+    startAssist()
+
+    expect(app.nodes.attachNodeCallback).not.toHaveBeenCalled()
+    expect(app.attachResanitizeCallback).not.toHaveBeenCalled()
+  })
+
+  test('the handshake carries the sanitized page title', () => {
+    document.title = 'Invoice for Jane Doe'
+    startAssist()
+
+    const query = (connect as unknown as jest.Mock).mock.calls[0][1] as any
+    expect(JSON.parse(query.query.sessionInfo).pageTitle).toBe('*****')
+  })
+
+  test('trackers without getSanitizedTitle fall back to document.title', () => {
+    document.title = 'Plain title'
+    delete app.getSanitizedTitle
+    startAssist()
+
+    const query = (connect as unknown as jest.Mock).mock.calls[0][1] as any
+    expect(JSON.parse(query.query.sessionInfo).pageTitle).toBe('Plain title')
+  })
+})
