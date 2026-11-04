@@ -1,3 +1,7 @@
+## 19.0.6
+
+- crossdomain: the parent page answers child iframes only with `crossdomain.enabled` (as documented); new `crossdomain.childDomains` limits which child origins can join; replies go to the child's origin instead of `*`; a child accepts commands only from its parent window, and only from `parentDomain` when set
+
 ## 19.0.5
 
 - sanitize masked content in attributes and selected text (#5099 by [@josh08h](https://github.com/josh08h))

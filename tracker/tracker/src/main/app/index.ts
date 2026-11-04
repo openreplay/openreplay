@@ -183,6 +183,11 @@ type AppOptions = {
      * @default '*'
      * */
     parentDomain?: string
+    /**
+     * parent page only: origins of the child iframes allowed to join this session,
+     * e.g. ['https://widget.example.com']. Any child iframe on the page when omitted.
+     * */
+    childDomains?: string[]
   }
 
   network?: NetworkOptions
@@ -242,6 +247,18 @@ const proto = {
   reset: 'reset-your-session-please',
 } as const
 
+const toOrigin = (domain: string): string | null => {
+  try {
+    return new URL(domain).origin
+  } catch {
+    return null
+  }
+}
+
+/** sandboxed frames report origin 'null' and can only be reached with '*' */
+const replyTarget = (event: MessageEvent): string =>
+  event.origin && event.origin !== 'null' ? event.origin : '*'
+
 /** reverse map proto value -> short readable key, for the crossdomain debug log */
 const protoLabel: Record<string, string> = Object.fromEntries(
   Object.entries(proto).map(([k, v]) => [v, k]),
@@ -282,6 +299,10 @@ export default class App {
   public socketMode = false
   private readonly bc: BroadcastChannel | null = null
   private readonly contextId: string
+  /** child side: origin from crossdomain.parentDomain, null when '*' or unset */
+  private readonly parentOrigin: string | null
+  /** parent side: crossdomain.childDomains as origins, null when any child is allowed */
+  private readonly childOrigins: Set<string> | null
   private canvasRecorder: CanvasRecorder | null = null
   private conditionsManager: ConditionsManager | null = null
   private readonly tagWatcher: TagWatcher
@@ -348,6 +369,12 @@ export default class App {
       disableThrottling: false,
     }
     this.options = simpleMerge(defaultOptions, options)
+    const parentDomain = this.options.crossdomain?.parentDomain
+    this.parentOrigin = parentDomain && parentDomain !== '*' ? toOrigin(parentDomain) : null
+    const childDomains = this.options.crossdomain?.childDomains
+    this.childOrigins = childDomains?.length
+      ? new Set(childDomains.map((d) => toOrigin(d) ?? d))
+      : null
 
     if (
       !this.insideIframe &&
@@ -427,14 +454,14 @@ export default class App {
       this.iframeDebugInterval = setInterval(this.emitIframeDebug, 60_000)
     } else {
       this.initWorker()
-      /**
-       * if we get a signal from child iframes, we check for their node_id and send it back,
-       * so they can act as if it was just a same-domain iframe
-       * */
-      window.addEventListener('message', this.crossDomainIframeListener)
-      // Parent-only: once per minute, log an encoded snapshot of every tracked child
-      // iframe and the freshness of our two-way comms, to debug iframes that go silent.
       if (this.options.crossdomain?.enabled) {
+        /**
+         * if we get a signal from child iframes, we check for their node_id and send it back,
+         * so they can act as if it was just a same-domain iframe
+         * */
+        window.addEventListener('message', this.crossDomainIframeListener)
+        // Parent-only: once per minute, log an encoded snapshot of every tracked child
+        // iframe and the freshness of our two-way comms, to debug iframes that go silent.
         if (this.xdomainDebugInterval) clearInterval(this.xdomainDebugInterval)
         this.xdomainDebugInterval = setInterval(this.emitCrossdomainDebug, 60_000)
       }
@@ -568,7 +595,8 @@ export default class App {
   }
   parentCrossDomainFrameListener = (event: MessageEvent) => {
     const { data } = event
-    if (!data || event.source === window) return
+    if (!data || event.source !== window.parent) return
+    if (this.parentOrigin && event.origin !== this.parentOrigin) return
     // Debug: remember the last time the parent talked to us.
     if (
       data.line === proto.startIframe ||
@@ -742,7 +770,7 @@ export default class App {
       }
     }
     // @ts-ignore
-    event.source?.postMessage(message, '*')
+    event.source?.postMessage(message, replyTarget(event))
     this.recordSentToFrame(ctx, proto.startIframe)
     this.debug.log('Re-adopting orphaned crossdomain iframe', ctx)
   }
@@ -811,6 +839,7 @@ export default class App {
   }
   crossDomainIframeListener = (event: MessageEvent) => {
     if (event.source === window) return
+    if (this.childOrigins && !this.childOrigins.has(event.origin)) return
     const { data } = event
     if (!data) return
     // Debug: remember when we last heard *anything* from this context, and its domain.
@@ -833,7 +862,7 @@ export default class App {
     }
     if (data.line === proto.iframeSignal) {
       // @ts-ignore
-      event.source?.postMessage({ ping: true, line: proto.parentAlive }, '*')
+      event.source?.postMessage({ ping: true, line: proto.parentAlive }, replyTarget(event))
       this.recordSentToFrame(data.context, proto.parentAlive)
       const signalId = async () => {
         if (event.source === null) {
@@ -867,7 +896,7 @@ export default class App {
           }
           this.debug.log('Got child frame signal; nodeId', id, event.source, iframeData)
           // @ts-ignore
-          event.source?.postMessage(iframeData, '*')
+          event.source?.postMessage(iframeData, replyTarget(event))
           this.recordSentToFrame(data.context, proto.iframeId)
         } catch (e) {
           console.error(e)
@@ -980,7 +1009,7 @@ export default class App {
           }
         }
         // @ts-ignore
-        event.source?.postMessage(message, '*')
+        event.source?.postMessage(message, replyTarget(event))
         this.recordSentToFrame(data.context, nextCommand)
         if (this.pollingQueue[nextCommand].length === 0) {
           delete this.pollingQueue[nextCommand]
