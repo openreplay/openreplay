@@ -5,7 +5,6 @@ from threading import Semaphore
 import psycopg2
 import psycopg2.extras
 from decouple import config
-from chalicelib.utils import env_secrets
 from psycopg2 import pool
 
 logger = logging.getLogger(__name__)
@@ -13,7 +12,7 @@ logger = logging.getLogger(__name__)
 _PG_CONFIG = {"host": config("pg_host"),
               "database": config("pg_dbname"),
               "user": config("pg_user"),
-              "password": env_secrets.get("pg_password"),
+              "password": config("pg_password"),
               "port": config("pg_port", cast=int),
               "application_name": config("APP_NAME", default="PY")}
 PG_CONFIG = dict(_PG_CONFIG)

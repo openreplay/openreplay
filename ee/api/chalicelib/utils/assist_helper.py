@@ -7,11 +7,11 @@ from decouple import config
 
 from chalicelib.core import assist_ice
 from chalicelib.utils import helper_ee
-from chalicelib.utils import env_secrets
 
 
 def __get_secret():
-    return env_secrets.get("assist_secret", default=None)
+    return config("assist_secret") if config("assist_secret", default=None) is not None \
+                                      and len(config("assist_secret")) > 0 else None
 
 
 def get_temporary_credentials():
