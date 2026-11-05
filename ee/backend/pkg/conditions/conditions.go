@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"log"
 	"openreplay/backend/pkg/analytics/model"
+	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"strings"
+	"sync"
 )
 
 type Conditions interface {
@@ -18,6 +20,7 @@ type Conditions interface {
 
 type conditionsImpl struct {
 	db    pool.Pool
+	mu    sync.RWMutex
 	cache map[uint32]map[string]int // projectID -> condition -> rate
 }
 
@@ -129,7 +132,9 @@ func (c *conditionsImpl) getConditions(projectID uint32) ([]ConditionSet, error)
 	for _, condition := range conditions {
 		conditionSet[condition.Name] = condition.Rate
 	}
+	c.mu.Lock()
 	c.cache[projectID] = conditionSet
+	c.mu.Unlock()
 
 	if conditions == nil {
 		return []ConditionSet{}, nil
@@ -138,6 +143,21 @@ func (c *conditionsImpl) getConditions(projectID uint32) ([]ConditionSet, error)
 }
 
 func (c *conditionsImpl) Get(projectID uint32) (*Response, error) {
+	var active bool
+	err := c.db.QueryRow(`
+		SELECT active
+		FROM public.projects
+		WHERE project_id = $1 AND deleted_at IS NULL
+	`, projectID).Scan(&active)
+	if err != nil {
+		if postgres.IsNoRowsErr(err) {
+			return &Response{Conditions: []ConditionSet{}}, nil
+		}
+		return nil, err
+	}
+	if !active {
+		return &Response{Conditions: []ConditionSet{}}, nil
+	}
 	conditions, err := c.getConditions(projectID)
 	return &Response{Conditions: conditions}, err
 }
@@ -168,20 +188,22 @@ func (c *conditionsImpl) GetProjectConditions(projectID uint32) (interface{}, er
 	return proConditions, nil
 }
 
+func (c *conditionsImpl) cachedRate(projectID uint32, condition string) (int, bool) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	rate, ok := c.cache[projectID][condition]
+	return rate, ok
+}
+
 func (c *conditionsImpl) GetRate(projectID uint32, condition string, def int) (int, error) {
-	proj, ok := c.cache[projectID]
-	if ok {
-		rate, ok := proj[condition]
-		if ok {
-			return rate, nil
-		}
+	if rate, ok := c.cachedRate(projectID, condition); ok {
+		return rate, nil
 	}
 	// Don't have project's conditions in cache or particular condition
-	_, err := c.getConditions(projectID)
-	if err != nil {
+	if _, err := c.getConditions(projectID); err != nil {
 		return 0, err
 	}
-	rate, ok := c.cache[projectID][condition]
+	rate, ok := c.cachedRate(projectID, condition)
 	if !ok {
 		return 0, fmt.Errorf("condition %s not found", condition)
 	}

@@ -29,7 +29,7 @@ func newDirect(log logger.Logger, cfg *config.Config, projects projects.Projects
 	}
 }
 
-func (a *directImpl) GetLiveSessionByID(projID uint32, sessID uint64) (interface{}, error) {
+func (a *directImpl) GetLiveSessionByID(projID uint32, sessID uint64, canCall bool) (interface{}, error) {
 	switch {
 	case projID == 0:
 		return nil, errors.New("projID is 0")
@@ -62,7 +62,7 @@ func (a *directImpl) GetLiveSessionByID(projID uint32, sessID uint64) (interface
 		data[k] = v
 	}
 	data["live"] = true
-	if token, err := agentToken(a.cfg, projID, proj.ProjectKey, sessID); err != nil {
+	if token, err := agentToken(a.cfg, projID, proj.ProjectKey, sessID, canCall); err != nil {
 		a.log.Error(context.Background(), "[assist] GetLiveSessionByID: %v", err)
 	} else {
 		data["agentToken"] = token

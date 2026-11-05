@@ -43,7 +43,7 @@ func newProxy(log logger.Logger, cfg *api.Config, projects projects.Projects) (A
 }
 
 // assist.get_live_session_by_id(project_id=project_id, session_id=session_id)
-func (a *proxyImpl) GetLiveSessionByID(projID uint32, sessID uint64) (interface{}, error) {
+func (a *proxyImpl) GetLiveSessionByID(projID uint32, sessID uint64, canCall bool) (interface{}, error) {
 	switch {
 	case projID == 0:
 		return nil, errors.New("projID is 0")
@@ -90,7 +90,7 @@ func (a *proxyImpl) GetLiveSessionByID(projID uint32, sessID uint64) (interface{
 	}
 
 	response.Data["live"] = true
-	if token, err := agentToken(a.cfg, projID, proj.ProjectKey, sessID); err != nil {
+	if token, err := agentToken(a.cfg, projID, proj.ProjectKey, sessID, canCall); err != nil {
 		a.log.Error(context.Background(), "[proxy] GetLiveSessionByID: %v", err)
 	} else {
 		response.Data["agentToken"] = token

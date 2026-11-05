@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 	"time"
@@ -40,23 +41,22 @@ func (e *handlersImpl) getConditions(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
-	// Check authorization
-	_, err := e.tokenizer.ParseFromHTTPRequest(r)
+	tokenData, err := e.tokenizer.ParseFromHTTPRequest(r)
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
-	// Get taskID
-	vars := mux.Vars(r)
-	projID := vars["project"]
-	projectID, err := strconv.Atoi(projID)
+	projectID, err := strconv.ParseUint(mux.Vars(r)["project"], 10, 32)
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
+	if tokenData.ProjectID == 0 || tokenData.ProjectID != uint32(projectID) {
+		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusForbidden, errors.New("token doesn't belong to the project"), startTime, r.URL.Path, bodySize)
+		return
+	}
 
-	// Get task info
 	info, err := e.conditions.Get(uint32(projectID))
 	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
