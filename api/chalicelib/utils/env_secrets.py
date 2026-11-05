@@ -16,14 +16,14 @@ logger = logging.getLogger(__name__)
 # (`randAlphaNum 20` / `openssl rand -hex 10`).
 MIN_LENGTHS = {
     # HMAC signing secrets
-    "JWT_SECRET": 20,
-    "JWT_REFRESH_SECRET": 20,
-    "JWT_SPOT_SECRET": 20,
-    "JWT_SPOT_REFRESH_SECRET": 20,
-    "JWT_MCP_SECRET": 20,
-    "ASSIST_JWT_SECRET": 20,
-    "SCIM_ACCESS_SECRET_KEY": 20,
-    "SCIM_REFRESH_SECRET_KEY": 20,
+    "JWT_SECRET": 30,
+    "JWT_REFRESH_SECRET": 30,
+    "JWT_SPOT_SECRET": 30,
+    "JWT_SPOT_REFRESH_SECRET": 30,
+    "JWT_MCP_SECRET": 30,
+    "ASSIST_JWT_SECRET": 30,
+    "SCIM_ACCESS_SECRET_KEY": 30,
+    "SCIM_REFRESH_SECRET_KEY": 30,
     # shared service keys
     "ASSIST_KEY": 20,
     "assist_secret": 16,
