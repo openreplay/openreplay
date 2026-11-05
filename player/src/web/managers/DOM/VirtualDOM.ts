@@ -472,25 +472,37 @@ export class OnloadStyleSheet extends PromiseQueue<CSSStyleSheet> {
     );
   }
 
+  private addContext?: (vRoot: OnloadVRoot) => void;
+
+  /**
+   * Constructed sheet, created in the window of the first owner root that gets a node:
+   * an owner removed before the replay reaches it never does, see addOwnerContext.
+   */
   static fromVRootContext(vRoot: OnloadVRoot) {
-    return new OnloadStyleSheet(
-      new Promise((resolve, reject) =>
-        vRoot.onNode((node) => {
-          const doc =
-            (node as Document | ShadowRoot).ownerDocument || (node as Document);
-
-          // added: use document.defaultView for both Document & ShadowRoot
-          const context = doc.defaultView;
-
-          if (!context) {
-            reject('Root node default view not found');
-            return;
-          }
-          /* a StyleSheet from another Window context won't work */
-          resolve(new context.CSSStyleSheet());
-        }),
-      ),
+    let resolveSheet: (sheet: CSSStyleSheet) => void = () => {};
+    const olSheet = new OnloadStyleSheet(
+      new Promise<CSSStyleSheet>((resolve) => {
+        resolveSheet = resolve;
+      }),
     );
+    let resolved = false;
+    olSheet.addContext = (root) =>
+      root.onNode((node) => {
+        if (resolved) return;
+        const doc =
+          (node as Document | ShadowRoot).ownerDocument || (node as Document);
+        /* a StyleSheet from another Window context won't work */
+        const context = doc.defaultView;
+        if (!context) return;
+        resolved = true;
+        resolveSheet(new context.CSSStyleSheet());
+      });
+    olSheet.addContext(vRoot);
+    return olSheet;
+  }
+
+  addOwnerContext(vRoot: OnloadVRoot) {
+    this.addContext?.(vRoot);
   }
 
   insertRule(rule: string, index: number) {
