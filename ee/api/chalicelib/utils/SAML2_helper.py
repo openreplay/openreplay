@@ -8,6 +8,7 @@ from decouple import config
 from fastapi import Request, HTTPException
 from starlette.datastructures import FormData
 from routers.scim import helpers as __scim_helpers
+from chalicelib.utils import env_secrets
 
 if config("ENABLE_SSO", cast=bool, default=True):
     from onelogin.saml2.auth import OneLogin_Saml2_Auth
@@ -34,7 +35,7 @@ SAML2 = {
         },
         "NameIDFormat": "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
         "x509cert": config("sp_crt", default=""),
-        "privateKey": config("sp_key", default=""),
+        "privateKey": env_secrets.get("sp_key", default=""),
     },
     "security": {"requestedAuthnContext": False},
     "idp": None,
@@ -174,8 +175,8 @@ environ["hastSAML2"] = str(is_saml2_available())
 
 
 def is_scim_configured():
-    return len(config("SCIM_ACCESS_SECRET_KEY", default="")) > 4 \
-        and len(config("SCIM_REFRESH_SECRET_KEY", default="")) > 4
+    return env_secrets.is_set("SCIM_ACCESS_SECRET_KEY") \
+        and env_secrets.is_set("SCIM_REFRESH_SECRET_KEY")
 
 
 def is_scim_available():

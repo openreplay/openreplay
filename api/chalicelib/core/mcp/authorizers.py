@@ -5,6 +5,7 @@ from decouple import config
 from fastapi import HTTPException
 
 from chalicelib.utils import pg_client
+from chalicelib.utils import env_secrets
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.log import sanitize
 from schemas import schemas, MCP
@@ -36,7 +37,7 @@ def jwt_authorizer(scheme: str, token: str, leeway=0) -> dict | None:
         return None
     try:
         payload = jwt.decode(jwt=token,
-                             key=config("JWT_MCP_SECRET"),
+                             key=env_secrets.get("JWT_MCP_SECRET"),
                              algorithms=config("JWT_MCP_ALGORITHM"),
                              audience=get_supported_audience(),
                              leeway=leeway)
@@ -64,7 +65,7 @@ def generate_jwt(user_id, tenant_id, iat, jti, client_id):
             "aud": AUDIENCE,
             "clientId": client_id
         },
-        key=config("JWT_MCP_SECRET"),
+        key=env_secrets.get("JWT_MCP_SECRET"),
         algorithm=config("JWT_MCP_ALGORITHM")
     )
     return token

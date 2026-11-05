@@ -14,6 +14,7 @@ from starlette.responses import StreamingResponse
 
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client, ch_client
+from chalicelib.utils import env_secrets
 from chalicelib.utils.log import sanitize
 from crons import core_crons, core_dynamic_crons
 from routers import core, core_dynamic
@@ -34,6 +35,7 @@ class ORPYAsyncConnection(AsyncConnection):
 async def lifespan(app: FastAPI):
     # Startup
     logging.info(">>>>> starting up <<<<<")
+    env_secrets.check_required()
     ap_logger = logging.getLogger("apscheduler")
     ap_logger.setLevel(loglevel)
 
@@ -59,7 +61,7 @@ async def lifespan(app: FastAPI):
         "host": config("pg_host", default="localhost"),
         "dbname": config("pg_dbname", default="orpy"),
         "user": config("pg_user", default="orpy"),
-        "password": config("pg_password", default="orpy"),
+        "password": env_secrets.get("pg_password"),
         "port": config("pg_port", cast=int, default=5432),
         "application_name": "AIO" + config("APP_NAME", default="PY"),
     }
