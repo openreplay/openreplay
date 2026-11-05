@@ -6,6 +6,7 @@ from decouple import config
 from chalicelib.core import tenants
 from chalicelib.core import users, spot
 from chalicelib.utils.TimeUTC import TimeUTC
+from chalicelib.utils import env_secrets
 from chalicelib.utils.log import sanitize
 
 logger = logging.getLogger(__name__)
@@ -45,12 +46,12 @@ def jwt_authorizer(scheme: str, token: str, leeway=0) -> dict | None:
     if not token or token.count(".") != 2:
         logger.debug("! JWT Malformed token")
         return None
-    key = config("JWT_SECRET")
+    key = env_secrets.get("JWT_SECRET")
     algorithm = config("JWT_ALGORITHM")
     if is_spot_token(token):
-        key = config("JWT_SPOT_SECRET")
+        key = env_secrets.get("JWT_SPOT_SECRET")
     elif is_mcp_token(token):
-        key = config("JWT_MCP_SECRET")
+        key = env_secrets.get("JWT_MCP_SECRET")
         algorithm = config("JWT_MCP_ALGORITHM")
     try:
         payload = jwt.decode(jwt=token,
@@ -79,8 +80,8 @@ def jwt_refresh_authorizer(scheme: str, token: str):
         return None
     try:
         payload = jwt.decode(jwt=token,
-                             key=config("JWT_REFRESH_SECRET") if not is_spot_token(token) \
-                                 else config("JWT_SPOT_REFRESH_SECRET"),
+                             key=env_secrets.get("JWT_REFRESH_SECRET") if not is_spot_token(token) \
+                                 else env_secrets.get("JWT_SPOT_REFRESH_SECRET"),
                              algorithms=config("JWT_ALGORITHM"),
                              audience=get_supported_audience())
     except jwt.ExpiredSignatureError:
@@ -106,7 +107,7 @@ def generate_jwt(user_id, tenant_id, iat, aud, for_spot=False):
             "iat": iat,
             "aud": aud
         },
-        key=config("JWT_SECRET") if not for_spot else config("JWT_SPOT_SECRET"),
+        key=env_secrets.get("JWT_SECRET") if not for_spot else env_secrets.get("JWT_SPOT_SECRET"),
         algorithm=config("JWT_ALGORITHM")
     )
     return token
@@ -124,7 +125,7 @@ def generate_jwt_refresh(user_id, tenant_id, iat, aud, jwt_jti, for_spot=False):
             "aud": aud,
             "jti": jwt_jti
         },
-        key=config("JWT_REFRESH_SECRET") if not for_spot else config("JWT_SPOT_REFRESH_SECRET"),
+        key=env_secrets.get("JWT_REFRESH_SECRET") if not for_spot else env_secrets.get("JWT_SPOT_REFRESH_SECRET"),
         algorithm=config("JWT_ALGORITHM")
     )
     return token

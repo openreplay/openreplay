@@ -1,6 +1,7 @@
 from decouple import config
 from datetime import datetime, timedelta
 from chalicelib.utils.storage.interface import ObjectStorage
+from chalicelib.utils import env_secrets
 from azure.storage.blob import BlobServiceClient, BlobSasPermissions, generate_blob_sas
 
 
@@ -11,7 +12,7 @@ class AzureBlobStorage(ObjectStorage):
         # Prepare blob storage client
         self.client = BlobServiceClient(
             account_url=f"https://{config('AZURE_ACCOUNT_NAME')}.blob.core.windows.net",
-            credential=config("AZURE_ACCOUNT_KEY"),
+            credential=env_secrets.get("AZURE_ACCOUNT_KEY"),
         )
 
     def exists(self, bucket, key):
@@ -25,7 +26,7 @@ class AzureBlobStorage(ObjectStorage):
         blob_sas = generate_blob_sas(account_name=config("AZURE_ACCOUNT_NAME"),
                                      container_name=bucket,
                                      blob_name=key,
-                                     account_key=config("AZURE_ACCOUNT_KEY"),
+                                     account_key=env_secrets.get("AZURE_ACCOUNT_KEY"),
                                      permission=BlobSasPermissions(read=True),
                                      expiry=datetime.utcnow() + timedelta(seconds=expires_in),
                                      )
@@ -35,7 +36,7 @@ class AzureBlobStorage(ObjectStorage):
         blob_sas = generate_blob_sas(account_name=config("AZURE_ACCOUNT_NAME"),
                                      container_name=bucket,
                                      blob_name=key,
-                                     account_key=config("AZURE_ACCOUNT_KEY"),
+                                     account_key=env_secrets.get("AZURE_ACCOUNT_KEY"),
                                      permission=BlobSasPermissions(write=True),
                                      expiry=datetime.utcnow() + timedelta(seconds=expires_in),
                                      )

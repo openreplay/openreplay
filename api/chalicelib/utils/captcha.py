@@ -4,13 +4,14 @@ import requests
 from decouple import config
 
 from chalicelib.utils import helper
+from chalicelib.utils import env_secrets
 from chalicelib.utils.log import sanitize
 
 logger = logging.getLogger(__name__)
 
 
 def __get_captcha_config():
-    return config("captcha_server"), config("captcha_key")
+    return config("captcha_server"), env_secrets.get("captcha_key")
 
 
 def is_valid(response):
