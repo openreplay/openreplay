@@ -84,8 +84,9 @@ function processNewSocket(socket) {
 
 async function onConnect(socket) {
     logger.debug(`WS started:${socket.id}, Query:${JSON.stringify(socket.handshake.query)}`);
-    if (socket.handshake.query.identity === undefined || socket.handshake.query.peerId === undefined) {
-        logger.debug(`no identity or peerId, refusing connexion`);
+    const peer = typeof socket.handshake.query.peerId === 'string' ? extractPeerId(socket.handshake.query.peerId) : {};
+    if (!Object.values(IDENTITIES).includes(socket.handshake.query.identity) || !peer.projectKey || !peer.sessionId) {
+        logger.debug(`unknown identity or malformed peerId, refusing connexion`);
         return socket.disconnect();
     }
     if (socket.handshake.query.identity === IDENTITIES.session && socket.handshake.query.sessionInfo === undefined) {

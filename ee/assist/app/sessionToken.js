@@ -70,8 +70,11 @@ function parse(token, secret) {
     if (expTime + EXPIRY_GRACE_MS <= Date.now()) {
         throw new Error('token expired');
     }
-    const projectId = parts.length === 5 ? Number(base36ToBigInt(parts[3])) : 0;
-    return {sessionId: id.toString(), expTime, projectId};
+    const project = parts.length === 5 ? base36ToBigInt(parts[3]) : 0n;
+    if (project < 0n || project > 0xFFFFFFFFn) {
+        throw new Error('wrong token format');
+    }
+    return {sessionId: id.toString(), expTime, projectId: Number(project)};
 }
 
 module.exports = {parse};
