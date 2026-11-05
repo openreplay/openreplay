@@ -32,7 +32,7 @@ module.exports = {
         io = createSocketIOServer(server, prefix);
         io.use(async (socket, next) => await authorizer.check(socket, next));
         io.on('connection', (socket) => onConnect(socket).catch(err => {
-            logger.error(`connection handler failed for ${socket.id}: ${err}`);
+            logger.error(`connection handler failed for ${socket.id}: ${err && err.stack || err}`);
             socket.disconnect();
         }));
 

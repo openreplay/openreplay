@@ -181,7 +181,7 @@ func (e *handlersImpl) startSessionHandlerWeb(w http.ResponseWriter, r *http.Req
 
 	userUUID := uuid.GetUUID(req.UserUUID)
 	tokenData, err := e.tokenizer.Parse(req.Token)
-	if err != nil || req.Reset { // Starting the new one
+	if err != nil || req.Reset || (tokenData.ProjectID != 0 && tokenData.ProjectID != p.ProjectID) { // Starting the new one
 		dice := byte(rand.Intn(100))
 		// Use condition rate if it's set
 		if req.Condition != "" {
@@ -270,6 +270,7 @@ func (e *handlersImpl) startSessionHandlerWeb(w http.ResponseWriter, r *http.Req
 			}
 		}
 	} else {
+		tokenData.ProjectID = p.ProjectID // legacy token without project part
 		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", tokenData.ID)))
 	}
 

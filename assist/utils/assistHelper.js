@@ -25,6 +25,8 @@ const CALL_EVENTS = new Set([
     'request_control', 'release_control',
     'click', 'scroll', 'move', 'input', 'focus', 'select', 'drag', 'startDrag', 'stopDrag',
     'startAnnotation', 'moveAnnotation', 'stopAnnotation',
+    'WEBRTC_AGENT_CALL',
+    's_call_started', 's_call_ended', 's_control_started', 's_control_ended', 's_recording_started', 's_recording_ended',
 ]);
 
 // Tokens issued before the claim existed carry no canCall and keep working.
