@@ -1,3 +1,7 @@
+## 19.1.1
+
+- shadow DOM: a shadow host removed and inserted again (cached route views, Ionic inline modals and popovers moved to `ion-app` when presented) was replayed with an empty shadow root, which hid its content (#5105)
+
 ## 19.1.0
 
 - shadow DOM: slotted web components rendered after the tracker started (Ionic/Stencil pages, lazy-loaded components) no longer stop the page recording; a `slotchange` unbound `<html>` and every later change outside shadow roots was dropped silently, so replays and Assist stayed on the first page (fixes #5105)
