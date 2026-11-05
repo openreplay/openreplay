@@ -94,6 +94,19 @@ export default function (app: App | null) {
     The rule is not substituted (remains the same object), however the text gets changed.
   */
 
+  // in-place changes (push, splice, index writes) bypass the setter, so the getter hands out
+  // a proxy of the live array that reports writes; cached so identity stays stable
+  const arrayProxies = new WeakMap<object, { arr: object; proxy: object }>()
+  const pendingUpdates = new WeakSet<object>()
+  const scheduleUpdate = (root: StyleSheetOwner) => {
+    if (pendingUpdates.has(root)) return
+    pendingUpdates.add(root)
+    setTimeout(() => {
+      pendingUpdates.delete(root)
+      sendAdoptedStyleSheetsUpdate(root)
+    }, 0)
+  }
+
   function patchAdoptedStyleSheets(
     prototype: typeof Document.prototype | typeof ShadowRoot.prototype,
   ) {
@@ -102,8 +115,32 @@ export default function (app: App | null) {
       'adoptedStyleSheets',
     )
     if (nativeAdoptedStyleSheetsDescriptor) {
+      const nativeGet = nativeAdoptedStyleSheetsDescriptor.get
       Object.defineProperty(prototype, 'adoptedStyleSheets', {
         ...nativeAdoptedStyleSheetsDescriptor,
+        get: nativeGet
+          ? function (this: StyleSheetOwner) {
+              const arr = nativeGet.call(this)
+              if (!arr || typeof arr !== 'object') return arr
+              const cached = arrayProxies.get(this)
+              if (cached && cached.arr === arr) return cached.proxy
+              const root = this
+              const proxy = new Proxy(arr, {
+                set(target, key, value) {
+                  const ok = Reflect.set(target, key, value)
+                  scheduleUpdate(root)
+                  return ok
+                },
+                deleteProperty(target, key) {
+                  const ok = Reflect.deleteProperty(target, key)
+                  scheduleUpdate(root)
+                  return ok
+                },
+              })
+              arrayProxies.set(this, { arr, proxy })
+              return proxy
+            }
+          : undefined,
         set: function (this: StyleSheetOwner, value) {
           // @ts-ignore
           const retVal = nativeAdoptedStyleSheetsDescriptor.set.call(this, value)
