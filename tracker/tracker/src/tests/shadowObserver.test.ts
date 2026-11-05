@@ -125,6 +125,28 @@ describe('TopObserver shadow root observers', () => {
     expect(sent.some((m) => m[0] === Type.CreateElementNode && m[1] === nodes.getID(later))).toBe(true)
   })
 
+  test('a re-inserted host gets its shadow content sent again under new ids', async () => {
+    const [host, shadow] = await addHost()
+    await flush()
+    const oldRootId = nodes.getID(shadow)
+    const span = shadow.querySelector('span')!
+    const oldSpanId = nodes.getID(span)
+
+    host.remove()
+    await flush()
+    // a cached view / moved overlay: the same element comes back later
+    document.body.appendChild(host)
+    await flush()
+
+    const hostId = nodes.getID(host)
+    const rootId = nodes.getID(shadow)
+    expect(rootId).toBeDefined()
+    expect(rootId).not.toBe(oldRootId)
+    expect(nodes.getID(span)).not.toBe(oldSpanId)
+    expect(sent).toContainEqual([Type.CreateIFrameDocument, hostId, rootId])
+    expect(sent).toContainEqual([Type.CreateElementNode, nodes.getID(span), rootId, 0, 'SPAN', false])
+  })
+
   test('disconnect() disconnects every shadow observer and restores attachShadow', async () => {
     const [, s1] = await addHost()
     const [, s2] = await addHost()
