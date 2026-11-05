@@ -707,6 +707,8 @@ export default class DOMManager extends ListWalker<Message> {
         if (!olStyleSheet) {
           olStyleSheet = OnloadStyleSheet.fromVRootContext(vRoot);
           this.olStyleSheets.set(msg.sheetID, olStyleSheet);
+        } else {
+          olStyleSheet.addOwnerContext(vRoot);
         }
         this.flushPendingStyleRules(msg.sheetID, olStyleSheet);
         olStyleSheet.whenReady((styleSheet) => {
