@@ -103,6 +103,34 @@ describe('TopObserver shadow root observers', () => {
     expect(shadowObservers().has(shadow)).toBe(true)
   })
 
+  test('slotchange keeps the light DOM bound and reports the slot', async () => {
+    const host = document.createElement('div')
+    host.innerHTML = '<span slot="a">light</span>'
+    document.body.appendChild(host)
+    await flush()
+    const shadow = host.attachShadow({ mode: 'open' })
+    await flush()
+    // slot rendered after the light DOM was committed (lazy web components)
+    shadow.innerHTML = '<slot name="a"></slot>'
+    await flush()
+    await flush()
+    // the next commit of the shadow observer used to walk the light DOM up to <html> and unbind it
+    shadow.appendChild(document.createElement('i'))
+    await flush()
+
+    const light = host.querySelector('span')!
+    const slotId = nodes.getID(shadow.querySelector('slot')!)
+    expect(slotId).toBeDefined()
+    expect(nodes.getID(document.documentElement)).toBe(0)
+    expect(nodes.getID(host)).toBeDefined()
+    expect(sent).toContainEqual([Type.SetNodeSlot, nodes.getID(light), slotId])
+
+    const later = document.createElement('p')
+    document.body.appendChild(later)
+    await flush()
+    expect(sent.some((m) => m[0] === Type.CreateElementNode && m[1] === nodes.getID(later))).toBe(true)
+  })
+
   test('disconnect() disconnects every shadow observer and restores attachShadow', async () => {
     const [, s1] = await addHost()
     const [, s2] = await addHost()

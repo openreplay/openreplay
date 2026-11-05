@@ -32,6 +32,8 @@ import { parentNode, previousSibling, nextSibling, firstChild } from '../untaint
 
 const iconCache = {}
 const svgUrlCache = {}
+// slotted nodes and their slot live in different roots (and observers), so this is shared
+const slotOf = new WeakMap<Node, number>()
 
 export async function parseUseEl(
   useElement: SVGUseElement,
@@ -415,7 +417,7 @@ export default abstract class Observer {
   private readonly indexes: Array<number> = []
   private readonly attributesMap: Map<number, Set<string>> = new Map()
   private readonly textSet: Set<number> = new Set()
-  private readonly slotMap: Map<number, number | undefined> = new Map()
+  private root: Node | null = null
   /**
    * this option means that, instead of using link element with href to load css,
    * we will try to parse the css text instead and send it as css rules set
@@ -593,14 +595,19 @@ export default abstract class Observer {
   private bindNode(node: Node): void {
     const [id, isNew] = this.app.nodes.registerNode(node)
     if (isElementNode(node) && hasTag(node, 'slot')) {
+      // assigned nodes belong to the host's root and observer, so send the slot directly
       this.app.nodes.attachNodeListener(node, 'slotchange', () => {
-        const sl = node as HTMLSlotElement
-        sl.assignedNodes({ flatten: true }).forEach((n) => {
-          const nid = this.app.nodes.getID(n)
-          if (nid !== undefined) {
-            this.recents.set(nid, RecentsType.Changed)
+        const slotID = this.app.nodes.getID(node)
+        if (slotID === undefined) {
+          return
+        }
+        for (const el of (node as HTMLSlotElement).assignedElements()) {
+          const id = this.app.nodes.getID(el)
+          if (id !== undefined && slotOf.get(el) !== slotID) {
+            slotOf.set(el, slotID)
+            this.app.send(SetNodeSlot(id, slotID))
           }
-        })
+        }
       })
     }
     if (isNew) {
@@ -638,10 +645,12 @@ export default abstract class Observer {
   }
 
   private unbindTree(node: Node) {
-    const id = this.app.nodes.unregisterNode(node)
-    if (id !== undefined) {
-      this.slotMap.delete(id)
+    if (node.isConnected && node.getRootNode() !== this.root) {
+      // attached to another observer's root, which owns it
+      return
     }
+    const id = this.app.nodes.unregisterNode(node)
+    slotOf.delete(node)
     if (id !== undefined && this.recents.get(id) === RecentsType.Removed) {
       // Sending RemoveNode only for parent to maintain
       this.app.send(RemoveNode(id))
@@ -767,7 +776,7 @@ export default abstract class Observer {
       if (slot) {
         const slotID = this.app.nodes.getID(slot)
         if (slotID !== undefined) {
-          this.slotMap.set(id, slotID)
+          slotOf.set(node, slotID)
           this.app.send(SetNodeSlot(id, slotID))
         }
       }
@@ -777,12 +786,12 @@ export default abstract class Observer {
       this.app.send(MoveNode(id, parentID, index))
       if (slot) {
         const slotID = this.app.nodes.getID(slot)
-        if (slotID !== undefined && this.slotMap.get(id) !== slotID) {
-          this.slotMap.set(id, slotID)
+        if (slotID !== undefined && slotOf.get(node) !== slotID) {
+          slotOf.set(node, slotID)
           this.app.send(SetNodeSlot(id, slotID))
         }
-      } else if (this.slotMap.has(id)) {
-        this.slotMap.delete(id)
+      } else if (slotOf.has(node)) {
+        slotOf.delete(node)
         this.app.send(SetNodeSlot(id, 0))
       }
     }
@@ -841,6 +850,7 @@ export default abstract class Observer {
     beforeCommit: (id?: number) => unknown,
     nodeToBind: Node = node,
   ) {
+    this.root = node
     this.observer.observe(node, {
       childList: true,
       attributes: true,
