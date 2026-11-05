@@ -1,3 +1,8 @@
+## 19.1.0
+
+- shadow DOM: slotted web components rendered after the tracker started (Ionic/Stencil pages, lazy-loaded components) no longer stop the page recording; a `slotchange` unbound `<html>` and every later change outside shadow roots was dropped silently, so replays and Assist stayed on the first page (fixes #5105)
+- `adoptedStyleSheets.push()` / `splice()` / index writes are recorded (only assignment was), so Stencil/Ionic components first used after start keep their styles
+
 ## 19.0.7
 
 - canvas: snapshots are encoded in a dedicated worker (`createImageBitmap` + `OffscreenCanvas.convertToBlob`) instead of `toBlob` on the main thread, which removes periodic frame drops on Safari/iOS WebGL pages (fixes #5119); frames are packed and uploaded from the worker too
