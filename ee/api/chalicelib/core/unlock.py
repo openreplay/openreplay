@@ -7,7 +7,6 @@ from decouple import config
 
 from chalicelib.core import license_token
 from chalicelib.utils import helper
-from chalicelib.utils import env_secrets
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.log import sanitize
 
@@ -23,11 +22,7 @@ def __get_mid():
 
 
 def get_license():
-    try:
-        return env_secrets.get("LICENSE_KEY", default="")
-    except env_secrets.SecretError as e:
-        logger.warning(f"!! invalid LICENSE_KEY: {e}")
-        return ""
+    return config("LICENSE_KEY", default="")
 
 
 def __set_state(expiration_ms: int, number_of_seats=None):

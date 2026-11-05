@@ -9,7 +9,6 @@ from decouple import config
 
 import schemas
 from chalicelib.utils.TimeUTC import TimeUTC
-from chalicelib.utils import env_secrets
 
 
 def random_string(length=36):
@@ -100,8 +99,8 @@ TRACK_TIME = True
 
 
 def allow_captcha():
-    return config("captcha_server", default=None) is not None and len(config("captcha_server")) > 0 \
-        and env_secrets.is_set("captcha_key")
+    return config("captcha_server", default=None) is not None and config("captcha_key", default=None) is not None \
+        and len(config("captcha_server")) > 0 and len(config("captcha_key")) > 0
 
 
 def string_to_sql_like(value):

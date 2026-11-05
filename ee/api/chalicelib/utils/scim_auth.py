@@ -7,12 +7,11 @@ from fastapi import HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer
 from chalicelib.core import users
 from chalicelib.utils import SAML2_helper
-from chalicelib.utils import env_secrets
 
 logger = logging.getLogger(__name__)
 
-ACCESS_SECRET_KEY = env_secrets.get("SCIM_ACCESS_SECRET_KEY", default="")
-REFRESH_SECRET_KEY = env_secrets.get("SCIM_REFRESH_SECRET_KEY", default="")
+ACCESS_SECRET_KEY = config("SCIM_ACCESS_SECRET_KEY", default="")
+REFRESH_SECRET_KEY = config("SCIM_REFRESH_SECRET_KEY", default="")
 ALGORITHM = config("SCIM_JWT_ALGORITHM", default="HS512")
 ACCESS_TOKEN_EXPIRE_SECONDS = config("SCIM_ACCESS_TOKEN_EXPIRE_SECONDS", default=604800, cast=int)
 REFRESH_TOKEN_EXPIRE_SECONDS = config("SCIM_REFRESH_TOKEN_EXPIRE_SECONDS", default=2592000, cast=int)

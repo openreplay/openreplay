@@ -1,14 +1,13 @@
 """
-Secret env vars (keys, passwords, passphrases, tokens) must be read through this module
-instead of calling decouple.config() directly, so every secret gets a minimum-length check.
+Startup verification of secret env vars (keys, passwords, passphrases, tokens).
 
-- Required secrets (no `default`): missing, empty or too short -> SecretError.
-- Optional secrets (`default` given): missing/empty -> `default` is returned (feature disabled);
-  set but too short -> SecretError.
+Called once from the app lifespan. The rest of the code keeps reading values with decouple.config().
+- REQUIRED secrets must be present, non-empty and at least MIN_LENGTHS[name] characters long.
+- OPTIONAL secrets are only checked when set (non-empty): they must then reach the minimum length.
 """
 import logging
 
-from decouple import config, UndefinedValueError
+from decouple import config
 
 logger = logging.getLogger(__name__)
 
@@ -42,55 +41,44 @@ MIN_LENGTHS = {
     "sp_key": 64,  # SAML SP private key (PEM)
 }
 
-# Secrets every API instance needs; validated at startup so a weak value fails fast
-# instead of on the first login.
-REQUIRED_AT_STARTUP = (
+# Read without a default somewhere in the code: must be set.
+REQUIRED = (
     "JWT_SECRET",
     "JWT_REFRESH_SECRET",
     "JWT_SPOT_SECRET",
     "JWT_SPOT_REFRESH_SECRET",
     "JWT_MCP_SECRET",
+    "ASSIST_JWT_SECRET",
+    "ASSIST_KEY",
+    "pg_password",
 )
 
-_REQUIRED = object()
+# Feature is disabled when unset/empty: only checked when a value is provided.
+OPTIONAL = tuple(name for name in MIN_LENGTHS if name not in REQUIRED)
 
 
 class SecretError(ValueError):
     pass
 
 
-def get(name: str, default=_REQUIRED) -> str | None:
-    """Read secret env var `name` and enforce its minimum length (see MIN_LENGTHS)."""
+def _check(name: str, required: bool) -> str | None:
     min_length = MIN_LENGTHS[name]
-    try:
-        value = config(name)
-    except UndefinedValueError:
-        value = None
+    value = config(name, default=None)
     if value is None or len(value) == 0:
-        if default is _REQUIRED:
-            raise SecretError(f"env var {name} is required and must be at least {min_length} characters long")
-        return default
-    if not isinstance(value, str):
-        value = str(value)
+        if required:
+            return f"env var {name} is required and must be at least {min_length} characters long"
+        return None
     if len(value) < min_length:
-        raise SecretError(f"env var {name} is too short: {len(value)} characters, minimum is {min_length}")
-    return value
+        return f"env var {name} is too short: {len(value)} characters, minimum is {min_length}"
+    return None
 
 
-def is_set(name: str) -> bool:
-    """True if the optional secret is configured (non-empty and long enough)."""
-    return get(name, default=None) is not None
-
-
-def check_required() -> None:
-    """Fail fast at startup if any always-required secret is missing or too short."""
-    errors = []
-    for name in REQUIRED_AT_STARTUP:
-        try:
-            get(name)
-        except SecretError as e:
-            errors.append(str(e))
+def check() -> None:
+    """Fail fast at startup if a required secret is missing/too short or a set optional secret is too short."""
+    errors = [e for e in (_check(n, required=True) for n in REQUIRED) if e]
+    errors += [e for e in (_check(n, required=False) for n in OPTIONAL) if e]
     if errors:
         for e in errors:
             logger.critical(e)
         raise SecretError("invalid secret configuration: " + "; ".join(errors))
+    logger.info("secret env vars verified")

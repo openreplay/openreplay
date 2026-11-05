@@ -10,14 +10,12 @@ from fastapi import HTTPException, status
 import schemas
 from chalicelib.core import projects
 from chalicelib.utils.TimeUTC import TimeUTC
-from chalicelib.utils import env_secrets
 from chalicelib.utils.log import sanitize
 
 logger = logging.getLogger(__name__)
 
-
-def __get_assist_url():
-    return config("ASSIST_URL") % env_secrets.get("ASSIST_KEY")
+ASSIST_KEY = config("ASSIST_KEY")
+ASSIST_URL = config("ASSIST_URL") % ASSIST_KEY
 
 
 def get_live_sessions_ws_user_id(project_id, user_id):
@@ -55,7 +53,7 @@ def get_live_sessions_ws(project_id, body: schemas.LiveSessionsSearchPayloadSche
 def __get_live_sessions_ws(project_id, data):
     project_key = projects.get_project_key(project_id)
     try:
-        results = requests.post(__get_assist_url() + config("assist") + f"/{project_key}",
+        results = requests.post(ASSIST_URL + config("assist") + f"/{project_key}",
                                 json=data, timeout=config("assistTimeout", cast=int, default=5))
         if results.status_code != 200:
             logger.error(f"!! issue with the peer-server code:{results.status_code} for __get_live_sessions_ws")
@@ -97,7 +95,7 @@ def __get_agent_token(project_id, project_key, session_id):
             "iss": config("JWT_ISSUER"),
             "aud": f"openreplay:agent"
         },
-        key=env_secrets.get("ASSIST_JWT_SECRET"),
+        key=config("ASSIST_JWT_SECRET"),
         algorithm=config("JWT_ALGORITHM")
     )
 
@@ -105,7 +103,7 @@ def __get_agent_token(project_id, project_key, session_id):
 def get_live_session_by_id(project_id, session_id):
     project_key = projects.get_project_key(project_id)
     try:
-        results = requests.get(__get_assist_url() + config("assist") + f"/{project_key}/{session_id}",
+        results = requests.get(ASSIST_URL + config("assist") + f"/{project_key}/{session_id}",
                                timeout=config("assistTimeout", cast=int, default=5))
         if results.status_code != 200:
             logger.error(f"!! issue with the peer-server code:{results.status_code} for get_live_session_by_id")
@@ -135,7 +133,7 @@ def is_live(project_id, session_id, project_key=None):
     if project_key is None:
         project_key = projects.get_project_key(project_id)
     try:
-        results = requests.get(__get_assist_url() + config("assistList") + f"/{project_key}/{session_id}",
+        results = requests.get(ASSIST_URL + config("assistList") + f"/{project_key}/{session_id}",
                                timeout=config("assistTimeout", cast=int, default=5))
         if results.status_code != 200:
             logger.error(f"!! issue with the peer-server code:{results.status_code} for is_live")
@@ -164,7 +162,7 @@ def autocomplete(project_id, q: str, key: str = None):
         params["key"] = key
     try:
         results = requests.get(
-            __get_assist_url() + config("assistList") + f"/{project_key}/autocomplete",
+            ASSIST_URL + config("assistList") + f"/{project_key}/autocomplete",
             params=params, timeout=config("assistTimeout", cast=int, default=5))
         if results.status_code != 200:
             logger.error(f"!! issue with the peer-server code:{results.status_code} for autocomplete")
@@ -242,7 +240,7 @@ def get_raw_devtools_by_id(project_id, session_id):
 def session_exists(project_id, session_id):
     project_key = projects.get_project_key(project_id)
     try:
-        results = requests.get(__get_assist_url() + config("assist") + f"/{project_key}/{session_id}",
+        results = requests.get(ASSIST_URL + config("assist") + f"/{project_key}/{session_id}",
                                timeout=config("assistTimeout", cast=int, default=5))
         if results.status_code != 200:
             logger.error(f"!! issue with the peer-server code:{results.status_code} for session_exists")

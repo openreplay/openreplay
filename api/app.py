@@ -33,7 +33,7 @@ class ORPYAsyncConnection(AsyncConnection):
 async def lifespan(app: FastAPI):
     # Startup
     logging.info(">>>>> starting up <<<<<")
-    env_secrets.check_required()
+    env_secrets.check()
 
     await pg_client.init()
     await ch_client.init()
@@ -42,7 +42,7 @@ async def lifespan(app: FastAPI):
         "host": config("pg_host", default="localhost"),
         "dbname": config("pg_dbname", default="orpy"),
         "user": config("pg_user", default="orpy"),
-        "password": env_secrets.get("pg_password"),
+        "password": config("pg_password", default="orpy"),
         "port": config("pg_port", cast=int, default=5432),
         "application_name": "AIO" + config("APP_NAME", default="PY"),
     }
