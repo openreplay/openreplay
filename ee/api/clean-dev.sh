@@ -59,6 +59,7 @@ rm -rf ./chalicelib/utils/metrics_helper.py
 rm -rf ./chalicelib/utils/pg_client.py
 rm -rf ./chalicelib/utils/smtp.py
 rm -rf ./chalicelib/utils/sql_helper.py
+rm -rf ./chalicelib/utils/ssrf.py
 rm -rf ./chalicelib/utils/storage/generators.py
 rm -rf ./chalicelib/utils/storage/interface.py
 rm -rf ./chalicelib/utils/storage/s3.py

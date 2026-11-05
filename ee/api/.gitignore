@@ -233,6 +233,7 @@ Pipfile.lock
 /chalicelib/utils/pg_client.py
 /chalicelib/utils/smtp.py
 /chalicelib/utils/sql_helper.py
+/chalicelib/utils/ssrf.py
 /chalicelib/utils/storage/generators.py
 /chalicelib/utils/storage/interface.py
 /chalicelib/utils/storage/s3.py
