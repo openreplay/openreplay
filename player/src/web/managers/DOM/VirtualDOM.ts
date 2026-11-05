@@ -195,10 +195,14 @@ export class VElement extends VParent<Element> {
   }
 
   protected createNode() {
+    // In the replay's document: a shadow host moved into a node of another document loses
+    // its adopted (constructed) stylesheets, also once moved back.
+    const parent = this.parentNode?.node;
+    const doc = parent ? parent.ownerDocument || (parent as Document) : document;
     try {
       const element = this.isSVG
-        ? document.createElementNS('http://www.w3.org/2000/svg', this.tagName)
-        : document.createElement(this.tagName);
+        ? doc.createElementNS('http://www.w3.org/2000/svg', this.tagName)
+        : doc.createElement(this.tagName);
       element.dataset.openreplayId = this.nodeId.toString();
       return element;
     } catch (e) {
@@ -207,7 +211,7 @@ export class VElement extends VParent<Element> {
         this.tagName,
         e,
       );
-      return document.createElement(this.tagName.replace(/[^a-z]/gi, ''));
+      return doc.createElement(this.tagName.replace(/[^a-z]/gi, ''));
     }
   }
 
