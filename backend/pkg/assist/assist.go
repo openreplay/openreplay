@@ -7,7 +7,7 @@ import (
 var ErrNoLiveSession = errors.New("no live session")
 
 type Assist interface {
-	GetLiveSessionByID(projID uint32, sessID uint64) (interface{}, error)
+	GetLiveSessionByID(projID uint32, sessID uint64, canCall bool) (interface{}, error)
 	GetLiveSessionsWS(projID uint32, req *GetLiveSessionsRequest) (interface{}, error)
 	IsLive(projID uint32, sessID uint64) (bool, error)
 	Autocomplete(projID uint32, q, key string) ([]map[string]interface{}, error)

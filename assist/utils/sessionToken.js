@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 
-// Mirrors backend/pkg/token/tokenizer.go: "<id36>.<delay36>.<exp36>.<base58(hmac-sha256)>"
+// Mirrors backend/pkg/token/tokenizer.go: "<id36>.<delay36>.<exp36>.<project36>.<base58(hmac-sha256)>"
+// (legacy tokens have no project part)
 
 const B58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 const B36 = '0123456789abcdefghijklmnopqrstuvwxyz';
@@ -52,12 +53,12 @@ function parse(token, secret) {
         throw new Error('wrong token format');
     }
     const parts = token.split('.');
-    if (parts.length !== 4) {
+    if (parts.length !== 4 && parts.length !== 5) {
         throw new Error('wrong token format');
     }
-    const body = parts.slice(0, 3).join('.');
+    const body = parts.slice(0, -1).join('.');
     const expected = crypto.createHmac('sha256', secret).update(body).digest();
-    const actual = base58Decode(parts[3]);
+    const actual = base58Decode(parts[parts.length - 1]);
     if (actual.length !== expected.length || !crypto.timingSafeEqual(actual, expected)) {
         throw new Error('wrong token sign');
     }
@@ -69,7 +70,11 @@ function parse(token, secret) {
     if (expTime + EXPIRY_GRACE_MS <= Date.now()) {
         throw new Error('token expired');
     }
-    return {sessionId: id.toString(), expTime};
+    const project = parts.length === 5 ? base36ToBigInt(parts[3]) : 0n;
+    if (project < 0n || project > 0xFFFFFFFFn) {
+        throw new Error('wrong token format');
+    }
+    return {sessionId: id.toString(), expTime, projectId: Number(project)};
 }
 
 module.exports = {parse};

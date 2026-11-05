@@ -47,4 +47,11 @@ const wsserver = wsapp.listen(PORT, HOST, () => {
 
 wsapp.enable('trust proxy');
 socket.start(wsserver);
+
+process.on('unhandledRejection', err => {
+    logger.error(`Unhandled rejection: ${err && err.stack || err}`);
+});
+process.on('uncaughtException', err => {
+    logger.error(`Uncaught exception: ${err && err.stack || err}`);
+});
 module.exports = {wsserver};

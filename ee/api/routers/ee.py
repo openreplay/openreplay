@@ -8,7 +8,8 @@ from chalicelib.utils import assist_helper
 
 unlock.check()
 
-from or_dependencies import OR_context, OR_role
+from or_dependencies import OR_context, OR_role, OR_scope
+from schemas import Permissions, ServicePermissions
 from routers.base import get_routers
 import schemas
 from fastapi import Depends, Body, Query
@@ -78,7 +79,7 @@ public_app, app, app_apikey = get_routers()
 #     return {'data': traces.get_available_actions(tenant_id=context.tenant_id)}
 
 
-@app.put('/{projectId}/assist/save', tags=["assist"])
+@app.put('/{projectId}/assist/save', tags=["assist"], dependencies=[OR_scope(Permissions.ASSIST_LIVE, ServicePermissions.ASSIST_LIVE)])
 def sign_record_for_upload(projectId: int, data: schemas.AssistRecordPayloadSchema = Body(...),
                            context: schemas.CurrentContext = Depends(OR_context)):
     if not sessions_pg.session_exists(project_id=projectId, session_id=data.session_id):
@@ -86,7 +87,7 @@ def sign_record_for_upload(projectId: int, data: schemas.AssistRecordPayloadSche
     return {"data": assist_records.presign_record(project_id=projectId, data=data, context=context)}
 
 
-@app.put('/{projectId}/assist/save/done', tags=["assist"])
+@app.put('/{projectId}/assist/save/done', tags=["assist"], dependencies=[OR_scope(Permissions.ASSIST_LIVE, ServicePermissions.ASSIST_LIVE)])
 def save_record_after_upload(projectId: int, data: schemas.AssistRecordSavePayloadSchema = Body(...),
                              context: schemas.CurrentContext = Depends(OR_context)):
     if not sessions_pg.session_exists(project_id=projectId, session_id=data.session_id):
@@ -94,18 +95,18 @@ def save_record_after_upload(projectId: int, data: schemas.AssistRecordSavePaylo
     return {"data": {"URL": assist_records.save_record(project_id=projectId, data=data, context=context)}}
 
 
-@app.post('/{projectId}/assist/records', tags=["assist"])
+@app.post('/{projectId}/assist/records', tags=["assist"], dependencies=[OR_scope(Permissions.ASSIST_LIVE, ServicePermissions.ASSIST_LIVE)])
 def search_records(projectId: int, data: schemas.AssistRecordSearchPayloadSchema = Body(...),
                    context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": assist_records.search_records(project_id=projectId, data=data, context=context)}
 
 
-@app.get('/{projectId}/assist/records/{recordId}', tags=["assist"])
+@app.get('/{projectId}/assist/records/{recordId}', tags=["assist"], dependencies=[OR_scope(Permissions.ASSIST_LIVE, ServicePermissions.ASSIST_LIVE)])
 def get_record(projectId: int, recordId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": assist_records.get_record(project_id=projectId, record_id=recordId, context=context)}
 
 
-@app.post('/{projectId}/assist/records/{recordId}', tags=["assist"])
+@app.post('/{projectId}/assist/records/{recordId}', tags=["assist"], dependencies=[OR_scope(Permissions.ASSIST_LIVE, ServicePermissions.ASSIST_LIVE)])
 def update_record(projectId: int, recordId: int, data: schemas.AssistRecordUpdatePayloadSchema = Body(...),
                   context: schemas.CurrentContext = Depends(OR_context)):
     result = assist_records.update_record(project_id=projectId, record_id=recordId, data=data, context=context)
@@ -114,7 +115,7 @@ def update_record(projectId: int, recordId: int, data: schemas.AssistRecordUpdat
     return {"data": result}
 
 
-@app.delete('/{projectId}/assist/records/{recordId}', tags=["assist"])
+@app.delete('/{projectId}/assist/records/{recordId}', tags=["assist"], dependencies=[OR_scope(Permissions.ASSIST_LIVE, ServicePermissions.ASSIST_LIVE)])
 def delete_record(projectId: int, recordId: int, _=Body(None),
                   context: schemas.CurrentContext = Depends(OR_context)):
     result = assist_records.delete_record(project_id=projectId, record_id=recordId, context=context)
@@ -123,7 +124,7 @@ def delete_record(projectId: int, recordId: int, _=Body(None),
     return {"data": result}
 
 
-@app.get('/{projectId}/assist-stats/avg', tags=["assist-stats"])
+@app.get('/{projectId}/assist-stats/avg', tags=["assist-stats"], dependencies=[OR_scope(Permissions.ASSIST_LIVE, ServicePermissions.ASSIST_LIVE)])
 def get_assist_stats_avg(
         projectId: int,
         startTimestamp: int = None,
@@ -140,6 +141,7 @@ def get_assist_stats_avg(
 @app.get(
     '/{projectId}/assist-stats/top-members',
     tags=["assist-stats"],
+    dependencies=[OR_scope(Permissions.ASSIST_LIVE, ServicePermissions.ASSIST_LIVE)],
     response_model=schemas.AssistStatsTopMembersResponse
 )
 def get_assist_stats_top_members(
@@ -169,6 +171,7 @@ def get_assist_stats_top_members(
 @app.post(
     '/{projectId}/assist-stats/sessions',
     tags=["assist-stats"],
+    dependencies=[OR_scope(Permissions.ASSIST_LIVE, ServicePermissions.ASSIST_LIVE)],
     response_model=schemas.AssistStatsSessionsResponse
 )
 def get_assist_stats_sessions(
