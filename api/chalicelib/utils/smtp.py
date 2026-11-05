@@ -4,6 +4,7 @@ from smtplib import SMTPAuthenticationError
 
 from decouple import config
 from fastapi import HTTPException
+from chalicelib.utils import env_secrets
 
 logger = logging.getLogger(__name__)
 
@@ -37,9 +38,9 @@ class SMTPClient:
             self.server.starttls()
             # stmplib docs recommend calling ehlo() before & after starttls()
             self.server.ehlo()
-        if len(config("EMAIL_USER", default="")) > 0 and len(config("EMAIL_PASSWORD", default="")) > 0:
+        if len(config("EMAIL_USER", default="")) > 0 and env_secrets.is_set("EMAIL_PASSWORD"):
             try:
-                self.server.login(user=config("EMAIL_USER"), password=config("EMAIL_PASSWORD"))
+                self.server.login(user=config("EMAIL_USER"), password=env_secrets.get("EMAIL_PASSWORD"))
             except SMTPAuthenticationError:
                 raise HTTPException(401, "SMTP Authentication Error")
         return self.server

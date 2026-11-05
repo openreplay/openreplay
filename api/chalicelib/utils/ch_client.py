@@ -9,6 +9,7 @@ import clickhouse_connect
 from clickhouse_connect.driver.client import Client
 from clickhouse_connect.driver.query import QueryContext
 from decouple import config
+from chalicelib.utils import env_secrets
 
 logger = logging.getLogger(__name__)
 
@@ -17,8 +18,8 @@ _CH_CONFIG = {
              else config("ch_host")),
     "user": (config("CLICKHOUSE_USER", default="default") if config("ch_user", default=None) is None
              else config("ch_user")),
-    "password": (config("CLICKHOUSE_PASSWORD", default="") if config("ch_password", default=None) is None
-                 else config("ch_password")),
+    "password": (env_secrets.get("CLICKHOUSE_PASSWORD", default="") if config("ch_password", default=None) is None
+                 else env_secrets.get("ch_password", default="")),
     "port": (config("CLICKHOUSE_PORT", cast=int) if config("ch_port_http", default=None) is None
              else config("ch_port_http", cast=int)),
     "client_name": config("APP_NAME", default="PY"),
