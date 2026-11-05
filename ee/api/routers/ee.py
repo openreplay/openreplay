@@ -92,7 +92,10 @@ def save_record_after_upload(projectId: int, data: schemas.AssistRecordSavePaylo
                              context: schemas.CurrentContext = Depends(OR_context)):
     if not sessions_pg.session_exists(project_id=projectId, session_id=data.session_id):
         return {"errors": ["Session not found"]}
-    return {"data": {"URL": assist_records.save_record(project_id=projectId, data=data, context=context)}}
+    result = assist_records.save_record(project_id=projectId, data=data, context=context)
+    if "errors" in result:
+        return result
+    return {"data": {"URL": result}}
 
 
 @app.post('/{projectId}/assist/records', tags=["assist"], dependencies=[OR_scope(Permissions.ASSIST_LIVE, ServicePermissions.ASSIST_LIVE)])

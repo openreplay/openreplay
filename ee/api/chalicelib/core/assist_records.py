@@ -1,4 +1,5 @@
 import hashlib
+import re
 
 import schemas
 from chalicelib.utils import pg_client, helper
@@ -12,6 +13,19 @@ def generate_file_key(project_id, key):
     return f"{project_id}/{hashlib.md5(key.encode()).hexdigest()}"
 
 
+def __is_project_key(project_id, key):
+    return isinstance(key, str) and re.fullmatch(rf"{int(project_id)}/[0-9a-f]{{32}}", key) is not None
+
+
+def __presign_for_sharing(project_id, key):
+    if not __is_project_key(project_id=project_id, key=key):
+        return None
+    return StorageClient.get_presigned_url_for_sharing(
+        bucket=config("ASSIST_RECORDS_BUCKET"), key=key,
+        expires_in=config("PRESIGNED_URL_EXPIRATION", cast=int, default=900)
+    )
+
+
 def presign_record(project_id, data: schemas.AssistRecordPayloadSchema, context: schemas.CurrentContext):
     key = generate_file_key(project_id=project_id, key=f"{TimeUTC.now()}-{data.name}")
     presigned_url = StorageClient.get_presigned_url_for_upload(bucket=config('ASSIST_RECORDS_BUCKET'), expires_in=1800,
@@ -20,21 +34,25 @@ def presign_record(project_id, data: schemas.AssistRecordPayloadSchema, context:
 
 
 def save_record(project_id, data: schemas.AssistRecordSavePayloadSchema, context: schemas.CurrentContext):
-    extra.tag_record(file_key=data.key, tag_value=config('RETENTION_L_VALUE', default='vault'))
+    if not __is_project_key(project_id=project_id, key=data.key) \
+            or not StorageClient.exists(bucket=config('ASSIST_RECORDS_BUCKET'), key=data.key):
+        return {"errors": ["invalid record key"]}
     params = {"user_id": context.user_id, "project_id": project_id, **data.model_dump()}
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             f"""INSERT INTO assist_records(project_id, user_id, name, file_key, duration, session_id)
-                VALUES (%(project_id)s, %(user_id)s, %(name)s, %(key)s,%(duration)s, %(session_id)s)
-                RETURNING record_id, user_id, session_id, created_at, name, duration, 
+                SELECT %(project_id)s, %(user_id)s, %(name)s, %(key)s,%(duration)s, %(session_id)s
+                WHERE NOT EXISTS(SELECT 1 FROM assist_records WHERE file_key = %(key)s)
+                RETURNING record_id, user_id, session_id, created_at, name, duration,
                         (SELECT name FROM users WHERE users.user_id = %(user_id)s LIMIT 1) AS created_by, file_key;""",
             params)
         cur.execute(query)
-        result = helper.dict_to_camel_case(cur.fetchone())
-        result["URL"] = StorageClient.get_presigned_url_for_sharing(
-            bucket=config("ASSIST_RECORDS_BUCKET"), key=result.pop("fileKey"),
-            expires_in=config("PRESIGNED_URL_EXPIRATION", cast=int, default=900)
-        )
+        row = cur.fetchone()
+    if row is None:
+        return {"errors": ["invalid record key"]}
+    extra.tag_record(file_key=data.key, tag_value=config('RETENTION_L_VALUE', default='vault'))
+    result = helper.dict_to_camel_case(row)
+    result["URL"] = __presign_for_sharing(project_id=project_id, key=result.pop("fileKey"))
     return result
 
 
@@ -103,10 +121,7 @@ def get_record(project_id, record_id, context: schemas.CurrentContext):
         cur.execute(query)
         result = helper.dict_to_camel_case(cur.fetchone())
         if result:
-            result["URL"] = StorageClient.get_presigned_url_for_sharing(
-                bucket=config("ASSIST_RECORDS_BUCKET"), key=result.pop("fileKey"),
-                expires_in=config("PRESIGNED_URL_EXPIRATION", cast=int, default=900)
-            )
+            result["URL"] = __presign_for_sharing(project_id=project_id, key=result.pop("fileKey"))
     return result
 
 
@@ -134,10 +149,7 @@ def update_record(project_id, record_id, data: schemas.AssistRecordUpdatePayload
         result = helper.dict_to_camel_case(cur.fetchone())
         if not result:
             return {"errors": ["record not found"]}
-        result["URL"] = StorageClient.get_presigned_url_for_sharing(
-            bucket=config("ASSIST_RECORDS_BUCKET"), key=result.pop("fileKey"),
-            expires_in=config("PRESIGNED_URL_EXPIRATION", cast=int, default=900)
-        )
+        result["URL"] = __presign_for_sharing(project_id=project_id, key=result.pop("fileKey"))
     return result
 
 
@@ -158,5 +170,6 @@ def delete_record(project_id, record_id, context: schemas.CurrentContext):
         result = helper.dict_to_camel_case(cur.fetchone())
         if not result:
             return {"errors": ["record not found"]}
-        extra.tag_record(file_key=result["fileKey"], tag_value=config('RETENTION_D_VALUE', default='default'))
+        if __is_project_key(project_id=project_id, key=result["fileKey"]):
+            extra.tag_record(file_key=result["fileKey"], tag_value=config('RETENTION_D_VALUE', default='default'))
     return {"state": "success"}
