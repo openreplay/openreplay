@@ -4,7 +4,6 @@ from botocore.client import Config
 from botocore.exceptions import ClientError
 from decouple import config
 from requests.models import PreparedRequest
-from chalicelib.utils import env_secrets
 from chalicelib.utils.storage.interface import ObjectStorage
 
 
@@ -14,14 +13,14 @@ class AmazonS3Storage(ObjectStorage):
         resource = boto3.resource('s3')
     else:
         client = boto3.client('s3', endpoint_url=config("S3_HOST"),
-                              aws_access_key_id=env_secrets.get("S3_KEY"),
-                              aws_secret_access_key=env_secrets.get("S3_SECRET"),
+                              aws_access_key_id=config("S3_KEY"),
+                              aws_secret_access_key=config("S3_SECRET"),
                               config=Config(signature_version='s3v4'),
                               region_name=config("sessions_region"),
                               verify=not config("S3_DISABLE_SSL_VERIFY", default=False, cast=bool))
         resource = boto3.resource('s3', endpoint_url=config("S3_HOST"),
-                                  aws_access_key_id=env_secrets.get("S3_KEY"),
-                                  aws_secret_access_key=env_secrets.get("S3_SECRET"),
+                                  aws_access_key_id=config("S3_KEY"),
+                                  aws_secret_access_key=config("S3_SECRET"),
                                   config=Config(signature_version='s3v4'),
                                   region_name=config("sessions_region"),
                                   verify=not config("S3_DISABLE_SSL_VERIFY", default=False, cast=bool))
