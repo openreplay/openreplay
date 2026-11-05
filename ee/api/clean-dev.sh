@@ -41,6 +41,7 @@ rm -rf ./chalicelib/utils/captcha.py
 rm -rf ./chalicelib/utils/dev.py
 rm -rf ./chalicelib/utils/email_handler.py
 rm -rf ./chalicelib/utils/email_helper.py
+rm -rf ./chalicelib/utils/env_secrets.py
 rm -rf ./chalicelib/utils/event_filter_definition.py
 rm -rf ./chalicelib/utils/github_client_v3.py
 rm -rf ./chalicelib/utils/helper.py
@@ -50,6 +51,7 @@ rm -rf ./chalicelib/utils/metrics_helper.py
 rm -rf ./chalicelib/utils/pg_client.py
 rm -rf ./chalicelib/utils/smtp.py
 rm -rf ./chalicelib/utils/sql_helper.py
+rm -rf ./chalicelib/utils/ssrf.py
 rm -rf ./chalicelib/utils/storage/generators.py
 rm -rf ./chalicelib/utils/storage/interface.py
 rm -rf ./chalicelib/utils/storage/s3.py

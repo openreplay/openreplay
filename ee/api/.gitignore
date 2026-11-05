@@ -216,6 +216,7 @@ Pipfile.lock
 /chalicelib/utils/dev.py
 /chalicelib/utils/email_handler.py
 /chalicelib/utils/email_helper.py
+/chalicelib/utils/env_secrets.py
 /chalicelib/utils/event_filter_definition.py
 /chalicelib/utils/github_client_v3.py
 /chalicelib/utils/helper.py
@@ -225,6 +226,7 @@ Pipfile.lock
 /chalicelib/utils/pg_client.py
 /chalicelib/utils/smtp.py
 /chalicelib/utils/sql_helper.py
+/chalicelib/utils/ssrf.py
 /chalicelib/utils/storage/generators.py
 /chalicelib/utils/storage/interface.py
 /chalicelib/utils/storage/s3.py
