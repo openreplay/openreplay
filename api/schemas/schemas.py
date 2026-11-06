@@ -216,6 +216,19 @@ class EditPasswordByInvitationSchema(BaseModel):
     password: SecretStr = Field(...)
 
 
+class AssignmentSchema(BaseModel):
+    assignee: str = Field(...)
+    description: str = Field(...)
+    title: str = Field(...)
+    issue_type: str = Field(...)
+
+    _transform_title = field_validator("title", mode="before")(remove_whitespace)
+
+
+class CommentAssignmentSchema(BaseModel):
+    message: str = Field(...)
+
+
 class IntegrationNotificationSchema(BaseModel):
     comment: Optional[str] = Field(default=None)
 
