@@ -357,6 +357,8 @@
   "Waiting for the session to become active...": "Очікування активності сесії...",
   "If it's taking too much time, it could mean the user is simply inactive.": "Якщо це триває занадто багато часу, можливо, користувач просто неактивний.",
   "Connected": "Підключено",
+  "Connected to every project": "Підключено до всіх проєктів",
+  "Connected to {{names}}": "Підключено до {{names}}",
   "Disconnected": "Вимкнено",
   "The connection was lost with the remote session. The user may have simply closed the tab/browser.": "З'єднання з віддаленою сесією втрачено. Можливо, користувач просто закрив вкладку/браузер.",
   "Something wrong just happened. Try refreshing the page.": "Сталася помилка. Спробуйте оновити сторінку.",

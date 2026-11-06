@@ -357,6 +357,8 @@
   "Waiting for the session to become active...": "Waiting for the session to become active...",
   "If it's taking too much time, it could mean the user is simply inactive.": "If it's taking too much time, it could mean the user is simply inactive.",
   "Connected": "Connected",
+  "Connected to every project": "Connected to every project",
+  "Connected to {{names}}": "Connected to {{names}}",
   "Disconnected": "Disconnected",
   "The connection was lost with the remote session. The user may have simply closed the tab/browser.": "The connection was lost with the remote session. The user may have simply closed the tab/browser.",
   "Something wrong just happened. Try refreshing the page.": "Something wrong just happened. Try refreshing the page.",

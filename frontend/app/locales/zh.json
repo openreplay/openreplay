@@ -357,6 +357,8 @@
   "Waiting for the session to become active...": "等待会话变为活动状态...",
   "If it's taking too much time, it could mean the user is simply inactive.": "如果花费时间过长，可能意味着用户处于非活动状态。",
   "Connected": "已连接",
+  "Connected to every project": "已连接到所有项目",
+  "Connected to {{names}}": "已连接到 {{names}}",
   "Disconnected": "已断开连接",
   "The connection was lost with the remote session. The user may have simply closed the tab/browser.": "与远程会话的连接已丢失。用户可能只是关闭了标签页/浏览器。",
   "Something wrong just happened. Try refreshing the page.": "发生了错误，请尝试刷新页面。",

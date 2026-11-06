@@ -357,6 +357,8 @@
   "Waiting for the session to become active...": "En attente de l'activation de la session...",
   "If it's taking too much time, it could mean the user is simply inactive.": "Si cela prend trop de temps, cela peut simplement signifier que l'utilisateur est inactif.",
   "Connected": "Connecté",
+  "Connected to every project": "Connecté à tous les projets",
+  "Connected to {{names}}": "Connecté à {{names}}",
   "Disconnected": "Déconnecté",
   "The connection was lost with the remote session. The user may have simply closed the tab/browser.": "La connexion a été perdue avec la session distante. L'utilisateur a peut-être simplement fermé l'onglet ou le navigateur.",
   "Something wrong just happened. Try refreshing the page.": "Un problème est survenu. Essayez de rafraîchir la page.",
