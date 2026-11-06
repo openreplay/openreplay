@@ -154,6 +154,7 @@ describe('webAnimations', () => {
       let nodeCb
       const app = {
         nodes: { getID: (n: Node) => (n === el ? 7 : undefined), attachNodeCallback: (cb) => (nodeCb = cb) },
+        attachStartCallback() {},
         attachStopCallback() {},
         send: jest.fn(),
       }
