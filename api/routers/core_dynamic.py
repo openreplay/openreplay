@@ -12,6 +12,7 @@ from chalicelib.core import tenants, users, projects, license
 from chalicelib.core import webhook
 from chalicelib.core.collaborations.collaboration_slack import Slack
 from chalicelib.core.errors import errors, errors_details
+from chalicelib.core.sessions import sessions_assignments
 from chalicelib.utils import captcha, smtp
 from chalicelib.utils import helper
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -243,6 +244,44 @@ def get_error_trace(projectId: int, sessionId: int, errorId: str,
                     context: schemas.CurrentContext = Depends(OR_context)):
     data = errors.get_trace(project_id=projectId, error_id=errorId)
     if "errors" in data:
+        return data
+    return {
+        'data': data
+    }
+
+
+@app.get('/{projectId}/sessions/{sessionId}/assign', tags=["sessions"])
+def get_session_assignments(projectId: int, sessionId: int, context: schemas.CurrentContext = Depends(OR_context)):
+    data = sessions_assignments.get_by_session(project_id=projectId, session_id=sessionId,
+                                               tenant_id=context.tenant_id,
+                                               user_id=context.user_id)
+    if "errors" in data:
+        return data
+    return {
+        'data': data
+    }
+
+
+@app.get('/{projectId}/sessions/{sessionId}/assign/{issueId}', tags=["sessions", "issueTracking"])
+def get_session_assignment(projectId: int, sessionId: int, issueId: str,
+                           context: schemas.CurrentContext = Depends(OR_context)):
+    data = sessions_assignments.get(project_id=projectId, session_id=sessionId, assignment_id=issueId,
+                                    tenant_id=context.tenant_id, user_id=context.user_id)
+    if "errors" in data:
+        return data
+    return {
+        'data': data
+    }
+
+
+@app.post('/{projectId}/sessions/{sessionId}/assign/{issueId}/comment', tags=["sessions", "issueTracking"])
+def comment_assignment(projectId: int, sessionId: int, issueId: str,
+                       data: schemas.CommentAssignmentSchema = Body(...),
+                       context: schemas.CurrentContext = Depends(OR_context)):
+    data = sessions_assignments.comment(tenant_id=context.tenant_id, project_id=projectId,
+                                        session_id=sessionId, assignment_id=issueId,
+                                        user_id=context.user_id, message=data.message)
+    if "errors" in data.keys():
         return data
     return {
         'data': data
