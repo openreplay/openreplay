@@ -15,6 +15,7 @@ from chalicelib.core.issue_tracking import github, integrations_global, integrat
     jira_cloud
 from chalicelib.core.log_tools import datadog, newrelic, stackdriver, elasticsearch, \
     sentry, bugsnag, cloudwatch, sumologic, rollbar
+from chalicelib.core.sessions import sessions_assignments
 from chalicelib.core.sourcemaps import sourcemaps
 from or_dependencies import OR_context, OR_role
 from routers.base import get_routers
@@ -399,6 +400,31 @@ def get_metadata(integrationProjectId: int, context: schemas.CurrentContext = De
     if isinstance(data, dict) and "errors" in data:
         return data
     return {"data": data}
+
+
+@app.get('/{projectId}/assignments', tags=["assignment"])
+def get_all_assignments(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+    data = sessions_assignments.get_all(project_id=projectId, user_id=context.user_id)
+    return {
+        'data': data
+    }
+
+
+@app.post('/{projectId}/sessions/{sessionId}/assign/projects/{integrationProjectId}', tags=["assignment"])
+def create_issue_assignment(projectId: int, sessionId: int, integrationProjectId,
+                            data: schemas.AssignmentSchema = Body(...),
+                            context: schemas.CurrentContext = Depends(OR_context)):
+    data = sessions_assignments.create_new_assignment(tenant_id=context.tenant_id, project_id=projectId,
+                                                      session_id=sessionId,
+                                                      creator_id=context.user_id, assignee=data.assignee,
+                                                      description=data.description, title=data.title,
+                                                      issue_type=data.issue_type,
+                                                      integration_project_id=integrationProjectId)
+    if "errors" in data.keys():
+        return data
+    return {
+        'data': data
+    }
 
 
 @app.get('/{projectId}/gdpr', tags=["projects", "gdpr"])
