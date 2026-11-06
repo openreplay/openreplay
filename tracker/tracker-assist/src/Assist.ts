@@ -636,6 +636,7 @@ export default class Assist {
 
   /** trackers before 20.0 have no getSanitizedTitle */
   private pageTitle(): string {
+    // @ts-ignore
     return this.app.getSanitizedTitle?.() ?? document.title;
   }
 

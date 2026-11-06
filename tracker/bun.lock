@@ -44,7 +44,7 @@
     },
     "tracker-assist": {
       "name": "@openreplay/tracker-assist",
-      "version": "11.0.21",
+      "version": "11.0.23",
       "dependencies": {
         "csstype": "^3.2.3",
         "fflate": "^0.8.3",
