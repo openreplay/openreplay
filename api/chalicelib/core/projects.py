@@ -14,6 +14,9 @@ from chalicelib.utils.TimeUTC import TimeUTC
 
 logger = logging.getLogger(__name__)
 
+MAX_PROJECT_ID = 65000
+LIMIT_REACHED = False
+
 
 # Ignore tenant_id for all queries because this version is for FOSS, it supports 1 single tenant.
 
@@ -50,6 +53,10 @@ def __update(tenant_id, project_id, changes):
 
 
 def __create(tenant_id, data):
+    global LIMIT_REACHED
+    if LIMIT_REACHED:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="maximum number of projects reached.")
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""INSERT INTO public.projects (name, platform, active)
                                 VALUES (%(name)s,%(platform)s,TRUE)
@@ -57,6 +64,12 @@ def __create(tenant_id, data):
                             data)
         cur.execute(query=query)
         project_id = cur.fetchone()["project_id"]
+        if project_id > MAX_PROJECT_ID:
+            LIMIT_REACHED = True
+            cur.connection.rollback()
+            logger.error(f"project creation rejected: project_id {project_id} exceeds {MAX_PROJECT_ID}")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="maximum number of projects reached.")
     return get_project(tenant_id=tenant_id, project_id=project_id, include_gdpr=True)
 
 

@@ -24,6 +24,9 @@ class ProjectAuthorizer:
         current_project = None
         if self.project_identifier == "projectId" \
                 and (isinstance(value, int) or isinstance(value, str) and value.isnumeric()):
+            if int(value) > projects.MAX_PROJECT_ID:
+                logger.debug(f"project id out of range {self.project_identifier}:{sanitize(value)}")
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="project not found.")
             current_project = projects.get_project(project_id=value, tenant_id=current_user.tenant_id)
         elif self.project_identifier == "projectKey":
             current_project = projects.get_by_project_key(project_key=value)
