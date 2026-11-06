@@ -470,16 +470,13 @@ export default class DOMManager extends ListWalker<Message> {
           logger.error('RemoveNode: Node not found', msg);
           return;
         }
-        if (!vChild.parentNode) {
-          if (!vChild.pendingRoot) {
-            logger.error('RemoveNode: Parent node not found', msg);
-            return;
-          }
-          // its shadow root / iframe document isn't created yet: cancel the deferred insert
-          vChild.pendingRoot = null;
-        } else {
-          vChild.parentNode.removeChild(vChild);
+        if (!vChild.parentNode && !vChild.pendingRoot) {
+          logger.error('RemoveNode: Parent node not found', msg);
+          return;
         }
+        // cancels an insert deferred until its shadow root / iframe document is ready
+        vChild.pendingRoot = null;
+        vChild.parentNode?.removeChild(vChild);
         this.vElements.delete(msg.id);
         this.vTexts.delete(msg.id);
         return;
