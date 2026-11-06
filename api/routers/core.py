@@ -1,12 +1,11 @@
 import logging
 from typing import Union, Optional
 
-from decouple import config
 from fastapi import Depends, Body, BackgroundTasks
 
 import schemas
 from chalicelib.core import projects, reset_password, \
-    announcements, assist, mobile, boarding, webhook, users, tags
+    announcements, assist, mobile, webhook, users, tags
 from chalicelib.core.collaborations.collaboration_msteams import MSTeams
 from chalicelib.core.collaborations.collaboration_slack import Slack
 from chalicelib.core.issue_tracking import github, integrations_global, integrations_manager, \
@@ -442,33 +441,6 @@ def sessions_live(projectId: int, data: schemas.LiveSessionsSearchPayloadSchema 
 def mobile_signe(projectId: int, sessionId: int, data: schemas.MobileSignPayloadSchema = Body(...),
                  context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": mobile.sign_keys(project_id=projectId, session_id=sessionId, keys=data.keys)}
-
-
-@app.get('/boarding', tags=['boarding'])
-def get_boarding_state(context: schemas.CurrentContext = Depends(OR_context)):
-    if config("LOCAL_DEV", cast=bool, default=False):
-        return {"data": ""}
-    return {"data": boarding.get_state(tenant_id=context.tenant_id)}
-
-
-@app.get('/boarding/installing', tags=['boarding'])
-def get_boarding_state_installing(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": boarding.get_state_installing(tenant_id=context.tenant_id)}
-
-
-@app.get('/boarding/identify-users', tags=["boarding"])
-def get_boarding_state_identify_users(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": boarding.get_state_identify_users(tenant_id=context.tenant_id)}
-
-
-@app.get('/boarding/manage-users', tags=["boarding"])
-def get_boarding_state_manage_users(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": boarding.get_state_manage_users(tenant_id=context.tenant_id)}
-
-
-@app.get('/boarding/integrations', tags=["boarding"])
-def get_boarding_state_integrations(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": boarding.get_state_integrations(tenant_id=context.tenant_id)}
 
 
 @app.get('/integrations/slack/channels', tags=["integrations"])

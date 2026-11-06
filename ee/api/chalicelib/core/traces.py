@@ -27,7 +27,6 @@ IGNORE_ROUTES = [
     {"method": ["GET"], "path": "/{projectId}/sessions2/favorite"},
     {"method": ["GET"], "path": re.compile("^/{projectId}/sessions2/{sessionId}/.*")},
     {"method": ["GET"], "path": "/{projectId}/sample_rate"},
-    {"method": ["GET"], "path": "/boarding"},
     {"method": ["GET"], "path": "/{projectId}/metadata"},
     {"method": ["GET"], "path": "/{projectId}/integration/sources"},
     {"method": ["GET"], "path": "/{projectId}/funnels"},
