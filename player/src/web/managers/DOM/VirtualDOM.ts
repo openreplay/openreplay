@@ -67,6 +67,7 @@ abstract class VParent<T extends Node = Node> extends VNode<T> {
   protected notMontedChildren: Set<VChild> = new Set();
 
   insertChildAt(child: VChild, index: number) {
+    child.pendingRoot = null;
     if (child.parentNode) {
       child.parentNode.removeChild(child);
     }
@@ -169,6 +170,8 @@ export type VRoot = VDocument | VShadowRoot;
 export class VElement extends VParent<Element> {
   parentNode: VParent | null =
     null; /** Should be modified only by he parent itself */
+  /** Root this node waits to be inserted into (see OnloadVRoot.insertChildAt) */
+  pendingRoot: OnloadVRoot | null = null;
 
   private newAttributes: Map<string, string | false> = new Map();
 
@@ -190,10 +193,14 @@ export class VElement extends VParent<Element> {
   }
 
   protected createNode() {
+    // In the replay's document: a shadow host moved into a node of another document loses
+    // its adopted (constructed) stylesheets, also once moved back.
+    const parent = this.parentNode?.node;
+    const doc = parent ? parent.ownerDocument || (parent as Document) : document;
     try {
       const element = this.isSVG
-        ? document.createElementNS('http://www.w3.org/2000/svg', this.tagName)
-        : document.createElement(this.tagName);
+        ? doc.createElementNS('http://www.w3.org/2000/svg', this.tagName)
+        : doc.createElement(this.tagName);
       element.dataset.openreplayId = this.nodeId.toString();
       return element;
     } catch (e) {
@@ -202,12 +209,35 @@ export class VElement extends VParent<Element> {
         this.tagName,
         e,
       );
-      return document.createElement(this.tagName.replace(/[^a-z]/gi, ''));
+      return doc.createElement(this.tagName.replace(/[^a-z]/gi, ''));
     }
   }
 
   setAttribute(name: string, value: string) {
     this.newAttributes.set(name, value);
+  }
+
+  private animationResult: Animation | null = null;
+
+  /**
+   * Final state of a recorded web animation, kept as a filling animation like on the page:
+   * an inline style would be dropped by the app's next style write (Ionic clears its
+   * before-styles right after an animation finishes).
+   */
+  applyAnimationResult(styles: Record<string, string>) {
+    // onNode: creating the node here, before its parent root exists, would put it in the wrong document
+    this.onNode((node) => {
+      this.animationResult?.cancel();
+      this.animationResult = null;
+      try {
+        this.animationResult = node.animate([styles], {
+          duration: 0,
+          fill: 'forwards',
+        });
+      } catch {
+        this.applyStyleChanges(Object.entries(styles));
+      }
+    });
   }
 
   applyStyleChanges(styles: [prop: string, value: string][]) {
@@ -333,6 +363,7 @@ export class VSpriteMap extends VElement {
 
 export class VText extends VNode<Text> {
   parentNode: VParent | null = null;
+  pendingRoot: OnloadVRoot | null = null;
 
   protected createNode() {
     return new Text();
@@ -430,8 +461,13 @@ export class OnloadVRoot extends PromiseQueue<VRoot> {
     this.whenReady((vRoot) => vRoot.applyChanges());
   }
 
-  insertChildAt(...args: Parameters<VParent['insertChildAt']>) {
-    this.whenReady((vRoot) => vRoot.insertChildAt(...args));
+  insertChildAt(child: VChild, index: number) {
+    // a child removed or moved before the root exists must not appear once it does
+    child.pendingRoot = this;
+    this.whenReady((vRoot) => {
+      if (child.pendingRoot !== this) return;
+      vRoot.insertChildAt(child, index);
+    });
   }
 }
 
@@ -457,25 +493,37 @@ export class OnloadStyleSheet extends PromiseQueue<CSSStyleSheet> {
     );
   }
 
+  private addContext?: (vRoot: OnloadVRoot) => void;
+
+  /**
+   * Constructed sheet, created in the window of the first owner root that gets a node:
+   * an owner removed before the replay reaches it never does, see addOwnerContext.
+   */
   static fromVRootContext(vRoot: OnloadVRoot) {
-    return new OnloadStyleSheet(
-      new Promise((resolve, reject) =>
-        vRoot.onNode((node) => {
-          const doc =
-            (node as Document | ShadowRoot).ownerDocument || (node as Document);
-
-          // added: use document.defaultView for both Document & ShadowRoot
-          const context = doc.defaultView;
-
-          if (!context) {
-            reject('Root node default view not found');
-            return;
-          }
-          /* a StyleSheet from another Window context won't work */
-          resolve(new context.CSSStyleSheet());
-        }),
-      ),
+    let resolveSheet: (sheet: CSSStyleSheet) => void = () => {};
+    const olSheet = new OnloadStyleSheet(
+      new Promise<CSSStyleSheet>((resolve) => {
+        resolveSheet = resolve;
+      }),
     );
+    let resolved = false;
+    olSheet.addContext = (root) =>
+      root.onNode((node) => {
+        if (resolved) return;
+        const doc =
+          (node as Document | ShadowRoot).ownerDocument || (node as Document);
+        /* a StyleSheet from another Window context won't work */
+        const context = doc.defaultView;
+        if (!context) return;
+        resolved = true;
+        resolveSheet(new context.CSSStyleSheet());
+      });
+    olSheet.addContext(vRoot);
+    return olSheet;
+  }
+
+  addOwnerContext(vRoot: OnloadVRoot) {
+    this.addContext?.(vRoot);
   }
 
   insertRule(rule: string, index: number) {
