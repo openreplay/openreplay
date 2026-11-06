@@ -1,6 +1,7 @@
 import { Icon } from '@/ui/icons/Icon';
 import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
 import { toast } from '@/ui/overlays/toast';
+import { Tooltip } from '@/ui/overlays/tooltip';
 import { useQuery } from '@tanstack/react-query';
 import withPageTitle from 'HOCs/withPageTitle';
 import { TFunction } from 'i18next';
@@ -84,12 +85,14 @@ function Integrations(props: Props) {
     queryKey: ['integrationStatus'],
     queryFn: integrationsService.fetchStatus,
   });
-  const projectsWith = (slug: string) => {
+  const projectsWith = (slug: string): string[] => {
     const s = status?.[slug];
-    if (!s) return integratedList.includes(slug) ? 1 : 0;
-    if (s.projectIds) return s.projectIds.length;
-    return s.integrated ? 1 : 0;
+    if (s?.projectIds) return s.projectIds.map(String);
+    const on = s ? s.integrated : integratedList.includes(slug);
+    return on ? [String(siteId)] : [];
   };
+  const projectName = (id: string) =>
+    projectsStore.list.find((p) => String(p.projectId) === id)?.name ?? id;
 
   const onClick = (integration: any) => {
     if (
@@ -156,10 +159,13 @@ function Integrations(props: Props) {
         <PrefBlock key={cat.key} title={cat.title} hint={cat.description}>
           <div className="m-pref__cards">
             {cat.integrations.map((integration: any) => {
-              const covered = integration.slug
+              const covered: string[] = integration.slug
                 ? projectsWith(integration.slug)
-                : 0;
-              const on = covered > 0;
+                : [];
+              const on = covered.length > 0;
+              // tenant-wide connections (trackers, chat) reach every project
+              const everywhere =
+                !cat.isProject || covered.length >= projectsStore.list.length;
               const blocked =
                 integration.slug in issueTrackers &&
                 activeTracker &&
@@ -188,16 +194,27 @@ function Integrations(props: Props) {
                   </span>
                   <span className="m-pref__card-lead">
                     <span className="m-pref__card-title">
-                      <span>{integration.title}</span>
+                      <span className="m-truncate">{integration.title}</span>
                       {on ? (
-                        <span className="m-pref__on">
-                          {t('Connected')}
-                          {cat.isProject && covered > 1 ? (
-                            <span className="m-pref__on-count">
-                              {t('({{count}} projects)', { count: covered })}
-                            </span>
-                          ) : null}
-                        </span>
+                        <Tooltip
+                          title={
+                            everywhere
+                              ? t('Connected to every project')
+                              : t('Connected to {{names}}', {
+                                  names: covered
+                                    .map((id) => projectName(id))
+                                    .join(', '),
+                                })
+                          }
+                        >
+                          <span className="m-pref__on m-pref__card-status">
+                            {everywhere
+                              ? t('All projects')
+                              : t('{{count}} projects', {
+                                  count: covered.length,
+                                })}
+                          </span>
+                        </Tooltip>
                       ) : null}
                     </span>
                     <span className="m-pref__card-sub">
