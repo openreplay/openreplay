@@ -1,3 +1,9 @@
+## 19.1.2
+
+- Assist: web animations stopped being recorded once an agent joined (Assist restarts tracking, and the stop restored the original `Element.prototype.animate` for good), so Ionic modals, popovers, select and datetime overlays stayed invisible for the agent; animations that already finished with `fill: forwards/both` when tracking (re)starts are recorded too, including inside shadow roots (#5105)
+- DOM: nodes slotted into scoped Stencil components (Ionic `ion-input`, `ion-textarea`, `ion-searchbar`, ...) were recorded under the component host instead of the element they sit in, because Stencil redefines `parentNode`/`nextSibling` on them; replays and Assist showed a broken layout (#5105)
+- constructed stylesheets: rules whose browser serialization drops a `var()` shorthand followed by one of its longhands (`background: var(--background); background-clip: padding-box`, e.g. Ionic FAB buttons) are sent with their source text (#5105)
+
 ## 19.1.1
 
 - shadow DOM: a shadow host removed and inserted again (cached route views, Ionic inline modals and popovers moved to `ion-app` when presented) was replayed with an empty shadow root, which hid its content (#5105)

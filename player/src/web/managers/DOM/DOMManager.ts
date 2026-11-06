@@ -107,6 +107,9 @@ export default class DOMManager extends ListWalker<Message> {
   /** Moved into an iframe/shadow root that isn't ready yet (maybe for several
    * batches): until the insert applies they sit under their old parent. */
   private pendingRootInserts = new Set<VElement | VText>();
+  /** Scrolls that clamped because the node's content or styles weren't laid out yet. */
+  private clampedScrolls = new Map<Element, { x: number; y: number; tries: number }>();
+  private scrollRetryTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(params: {
     screen: Screen;
@@ -411,6 +414,7 @@ export default class DOMManager extends ListWalker<Message> {
         vDoc.insertChildAt(vHTMLElement, 0);
         this.olVRoots.clear();
         this.pendingRootInserts.clear();
+        this.clampedScrolls.clear();
         this.olVRoots.set(0, vDoc); // watchout: id==0 for both Document and documentElement
         // this is done for the AdoptedCSS logic
         // Maybetodo: start Document as 0-node in tracker
@@ -481,10 +485,15 @@ export default class DOMManager extends ListWalker<Message> {
           return;
         }
         if (!vChild.parentNode) {
-          logger.error('RemoveNode: Parent node not found', msg);
-          return;
+          if (!vChild.pendingRoot) {
+            logger.error('RemoveNode: Parent node not found', msg);
+            return;
+          }
+          // its shadow root / iframe document isn't created yet: cancel the deferred insert
+          vChild.pendingRoot = null;
+        } else {
+          vChild.parentNode.removeChild(vChild);
         }
-        vChild.parentNode.removeChild(vChild);
         this.vElements.delete(msg.id);
         this.vTexts.delete(msg.id);
         if (vChild instanceof VElement) {
@@ -697,8 +706,10 @@ export default class DOMManager extends ListWalker<Message> {
           pending.push(msg);
           return;
         }
-        // @ts-ignore (configure ts with recent WebAPI)
-        styleSheet.replaceSync(sanitizeCssText(msg.text));
+        styleSheet.whenReady((s) =>
+          // @ts-ignore (configure ts with recent WebAPI)
+          s.replaceSync(sanitizeCssText(msg.text)),
+        );
         return;
       }
       case MType.AdoptedSsAddOwner: {
@@ -832,7 +843,7 @@ export default class DOMManager extends ListWalker<Message> {
           logger.error('NodeAnimationResult: Node not found', msg);
           return;
         }
-        vElem.applyStyleChanges(Object.entries(styles));
+        vElem.applyAnimationResult(styles);
       }
     }
   };
@@ -939,6 +950,33 @@ export default class DOMManager extends ListWalker<Message> {
     }
   }
 
+  private applyNodeScroll(node: Element, x: number, y: number) {
+    node.scrollLeft = x;
+    node.scrollTop = y;
+    if (Math.abs(node.scrollLeft - x) > 1 || Math.abs(node.scrollTop - y) > 1) {
+      this.clampedScrolls.set(node, { x, y, tries: 0 });
+      this.scheduleScrollRetry();
+    } else {
+      this.clampedScrolls.delete(node);
+    }
+  }
+
+  private scheduleScrollRetry() {
+    if (this.scrollRetryTimer !== null) return;
+    this.scrollRetryTimer = setTimeout(() => {
+      this.scrollRetryTimer = null;
+      this.clampedScrolls.forEach((s, node) => {
+        node.scrollLeft = s.x;
+        node.scrollTop = s.y;
+        const reached =
+          Math.abs(node.scrollLeft - s.x) <= 1 &&
+          Math.abs(node.scrollTop - s.y) <= 1;
+        if (reached || ++s.tries >= 20) this.clampedScrolls.delete(node);
+      });
+      if (this.clampedScrolls.size > 0) this.scheduleScrollRetry();
+    }, 100);
+  }
+
   async moveReady(t: number): Promise<void> {
     this.moveApply(t, this.applyMessage);
     this.forgetRemovedSubtrees();
@@ -971,8 +1009,7 @@ export default class DOMManager extends ListWalker<Message> {
         if (msg) {
           let scrollVHost: VElement | OnloadVRoot | undefined;
           if ((scrollVHost = this.vElements.get(msg.id))) {
-            scrollVHost.node.scrollLeft = msg.x;
-            scrollVHost.node.scrollTop = msg.y;
+            this.applyNodeScroll(scrollVHost.node, msg.x, msg.y);
           } else if ((scrollVHost = this.olVRoots.get(msg.id))) {
             scrollVHost.whenReady((vNode) => {
               if (vNode instanceof VDocument) {

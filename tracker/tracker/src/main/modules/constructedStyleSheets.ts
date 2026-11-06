@@ -6,6 +6,7 @@ import {
   AdoptedSSRemoveOwner,
 } from '../app/messages.gen.js'
 import { isRootNode } from '../app/guards.js'
+import { ruleText, sourceRules } from './cssSourceText.js'
 
 type StyleSheetOwner = (Document | ShadowRoot) & { adoptedStyleSheets: CSSStyleSheet[] }
 
@@ -35,6 +36,8 @@ export default function (app: App | null) {
   }
 
   const adoptedStyleSheetsOwnings: Map<number, number[]> = new Map()
+  // text the sheet was filled with: its rules' cssText can lose declarations (see cssSourceText)
+  const sheetSources = new WeakMap<CSSStyleSheet, string>()
 
   const sendAdoptedStyleSheetsUpdate = (root: StyleSheetOwner) =>
     setTimeout(() => {
@@ -65,9 +68,15 @@ export default function (app: App | null) {
           if (init) {
             try {
               const rules = s.cssRules
+              const sources = sourceRules(sheetSources.get(s), rules)
               for (let i = 0; i < rules.length; i++) {
                 app.send(
-                  AdoptedSSInsertRuleURLBased(sheetID, rules[i].cssText, i, app.getBaseHref()),
+                  AdoptedSSInsertRuleURLBased(
+                    sheetID,
+                    ruleText(rules[i], sources?.[i]),
+                    i,
+                    app.getBaseHref(),
+                  ),
                 )
               }
             } catch (e) {
@@ -168,6 +177,7 @@ export default function (app: App | null) {
     //@ts-ignore
     context.CSSStyleSheet.prototype.replace = function (text: string) {
       return replace.call(this, text).then((sheet: CSSStyleSheet) => {
+        sheetSources.set(this, text)
         const sheetID = styleSheetIDMap.get(this)
         if (sheetID) {
           app.send(AdoptedSSReplaceURLBased(sheetID, text, app.getBaseHref()))
@@ -177,6 +187,7 @@ export default function (app: App | null) {
     }
     //@ts-ignore
     context.CSSStyleSheet.prototype.replaceSync = function (text: string) {
+      sheetSources.set(this, text)
       const sheetID = styleSheetIDMap.get(this)
       if (sheetID) {
         app.send(AdoptedSSReplaceURLBased(sheetID, text, app.getBaseHref()))
