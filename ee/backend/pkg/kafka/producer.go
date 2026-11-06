@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sync"
 	"time"
 
 	"openreplay/backend/pkg/env"
@@ -16,11 +17,13 @@ import (
 const queueFullBackoff = 100 * time.Millisecond
 
 type Producer struct {
+	config   kafka.ConfigMap
+	mu       sync.RWMutex
 	producer *kafka.Producer
 }
 
 func NewProducer(messageSizeLimit int, useBatch bool) *Producer {
-	kafkaConfig := &kafka.ConfigMap{
+	kafkaConfig := kafka.ConfigMap{
 		"enable.idempotence":                    true,
 		"bootstrap.servers":                     env.String("KAFKA_SERVERS"),
 		"go.delivery.reports":                   env.Bool("KAFKA_DELIVERY_REPORTS"),
@@ -35,6 +38,8 @@ func NewProducer(messageSizeLimit int, useBatch bool) *Producer {
 		"queue.buffering.max.kbytes":            131072, // 128 MiB un-acked buffer cap (default 1 GiB)
 		"retry.backoff.ms":                      100,
 		"max.in.flight.requests.per.connection": 1,
+		"topic.metadata.refresh.interval.ms":    30000,  // learn a new partition leader within seconds after a silent broker disconnect (default 5m)
+		"message.timeout.ms":                    600000, // must stay well above the metadata refresh interval, otherwise a retried batch loses messages and the idempotent producer goes fatal
 		"compression.type":                      env.String("COMPRESSION_TYPE"),
 	}
 	// Apply ssl configuration
@@ -53,17 +58,57 @@ func NewProducer(messageSizeLimit int, useBatch bool) *Producer {
 		kafkaConfig.SetKey("sasl.kerberos.keytab", os.Getenv("KERBEROS_KEYTAB_LOCATION"))
 	}
 
-	producer, err := kafka.NewProducer(kafkaConfig)
+	p := &Producer{config: kafkaConfig}
+	producer, err := p.newInstance()
 	if err != nil {
 		log.Fatalln(err)
 	}
-	newProducer := &Producer{producer}
-	go newProducer.errorHandler()
-	return newProducer
+	p.producer = producer
+	return p
 }
 
-func (p *Producer) errorHandler() {
-	for e := range p.producer.Events() {
+// kafka.NewProducer strips the go.* keys from the map it is given, so every instance gets its own copy.
+func (p *Producer) newInstance() (*kafka.Producer, error) {
+	conf := make(kafka.ConfigMap, len(p.config))
+	for k, v := range p.config {
+		conf[k] = v
+	}
+	producer, err := kafka.NewProducer(&conf)
+	if err != nil {
+		return nil, err
+	}
+	go p.errorHandler(producer)
+	return producer, nil
+}
+
+// Every call into the current instance holds the read lock, so recreate can't close an instance
+// that still has a call in flight.
+func (p *Producer) produce(msg *kafka.Message) (*kafka.Producer, error) {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.producer, p.producer.Produce(msg, nil)
+}
+
+// recreate replaces a producer that entered the fatal state. Messages still queued in the old instance are
+// lost (librdkafka purges them on fatal); their keys are reported by errorHandler.
+func (p *Producer) recreate(failed *kafka.Producer) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if p.producer != failed {
+		return nil
+	}
+	fresh, err := p.newInstance()
+	if err != nil {
+		return err
+	}
+	p.producer = fresh
+	log.Printf("kafka producer recreated after fatal error: %v\n", failed.GetFatalError())
+	go failed.Close()
+	return nil
+}
+
+func (p *Producer) errorHandler(producer *kafka.Producer) {
+	for e := range producer.Events() {
 		switch ev := e.(type) {
 		case *kafka.Message:
 			if ev.TopicPartition.Error != nil {
@@ -71,15 +116,16 @@ func (p *Producer) errorHandler() {
 			}
 		case kafka.Error:
 			if ev.IsFatal() {
-				log.Printf("kafka producer entered fatal state, all produce calls will fail until restart: %v\n", ev)
+				log.Printf("kafka producer entered fatal state: %v\n", ev)
 			}
 		}
 	}
 }
 
 func (p *Producer) produceWithRetry(msg *kafka.Message) error {
+	recreated := false
 	for {
-		err := p.producer.Produce(msg, nil)
+		producer, err := p.produce(msg)
 		if err == nil {
 			return nil
 		}
@@ -87,16 +133,20 @@ func (p *Producer) produceWithRetry(msg *kafka.Message) error {
 		if !errors.As(err, &kErr) {
 			return err
 		}
-		if kErr.Code() == kafka.ErrFatal {
-			if fatal := p.producer.GetFatalError(); fatal != nil {
-				return fatal
+		switch kErr.Code() {
+		case kafka.ErrQueueFull:
+			time.Sleep(queueFullBackoff)
+		case kafka.ErrFatal:
+			if recreated {
+				return producer.GetFatalError()
 			}
+			if err := p.recreate(producer); err != nil {
+				return fmt.Errorf("producer is fatal and can't be recreated: %w", err)
+			}
+			recreated = true
+		default:
 			return err
 		}
-		if kErr.Code() != kafka.ErrQueueFull {
-			return err
-		}
-		time.Sleep(queueFullBackoff)
 	}
 }
 
@@ -117,6 +167,8 @@ func (p *Producer) ProduceToPartition(topic string, partition, key uint64, value
 }
 
 func (p *Producer) Ping(ctx context.Context) error {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
 	if err := p.producer.GetFatalError(); err != nil {
 		return err
 	}
@@ -131,10 +183,14 @@ func (p *Producer) Ping(ctx context.Context) error {
 }
 
 func (p *Producer) Close(timeoutMs int) {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
 	p.producer.Flush(timeoutMs)
 	p.producer.Close()
 }
 
 func (p *Producer) Flush(timeoutMs int) {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
 	p.producer.Flush(timeoutMs)
 }

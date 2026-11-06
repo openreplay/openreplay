@@ -17,6 +17,7 @@ import (
 func ProcessEndedSessions(
 	ctx context.Context,
 	candidates map[uint64]uint64,
+	retry map[uint64]bool,
 	loaded map[uint64]*sessions.Session,
 	sessManager sessions.Sessions,
 	producer types.Producer,
@@ -41,9 +42,19 @@ func ProcessEndedSessions(
 			currDuration = *sess.Duration
 		}
 		newDur := timestamp - sess.Timestamp
+		if retry[sessionID] && sess.Duration != nil && newDur <= currDuration {
+			// The DB was updated on the previous attempt, only the sessionEnd is missing.
+			sessCtx := context.WithValue(ctx, "sessionID", fmt.Sprintf("%d", sessionID))
+			if produceSessionEnd(sessCtx, sessionID, sess.Timestamp+currDuration, sess, sessManager, producer, cfg, log, details, cleanupReg) {
+				details.Retried++
+				completed[sessionID] = true
+			}
+			continue
+		}
 		if currDuration == newDur {
 			if sess.Duration != nil {
 				details.Duplicated[sessionID] = currDuration
+				cleanupReg.Done(sessionID)
 				completed[sessionID] = true
 				continue
 			}
@@ -51,6 +62,7 @@ func ProcessEndedSessions(
 		}
 		if currDuration > newDur {
 			details.Shorter[sessionID] = int64(currDuration) - int64(newDur)
+			cleanupReg.Done(sessionID)
 			completed[sessionID] = true
 			continue
 		}
@@ -115,12 +127,14 @@ func ProcessEndedSession(
 	if currDuration == newDur {
 		if sess.Duration != nil {
 			details.Duplicated[sessionID] = currDuration
+			cleanupReg.Done(sessionID)
 			return true
 		}
 		log.Info(ctx, "ending zero-duration session, sessID: %d", sessionID)
 	}
 	if currDuration > newDur {
 		details.Shorter[sessionID] = int64(currDuration) - int64(newDur)
+		cleanupReg.Done(sessionID)
 		return true
 	}
 
@@ -161,9 +175,35 @@ func emitSessionEnd(
 	// Re-check after the update — could have raced with another path.
 	if currDuration == newDuration && currDuration != 0 {
 		details.Duplicated[sessionID] = currDuration
+		cleanupReg.Done(sessionID)
 		return true
 	}
 
+	if !produceSessionEnd(ctx, sessionID, timestamp, sess, sessManager, producer, cfg, log, details, cleanupReg) {
+		return false
+	}
+
+	if currDuration != 0 {
+		details.Diff[sessionID] = int64(newDuration) - int64(currDuration)
+		details.Updated++
+	} else {
+		details.New++
+	}
+	return true
+}
+
+func produceSessionEnd(
+	ctx context.Context,
+	sessionID uint64,
+	timestamp uint64,
+	sess *sessions.Session,
+	sessManager sessions.Sessions,
+	producer types.Producer,
+	cfg *config.Config,
+	log logger.Logger,
+	details *LogDetails,
+	cleanupReg registry.Registry,
+) bool {
 	msg := &messages.SessionEnd{Timestamp: timestamp}
 	if cfg.UseEncryption {
 		if key := storage.GenerateEncryptionKey(); key != nil {
@@ -199,12 +239,5 @@ func emitSessionEnd(
 	}
 
 	cleanupReg.Done(sessionID)
-
-	if currDuration != 0 {
-		details.Diff[sessionID] = int64(newDuration) - int64(currDuration)
-		details.Updated++
-	} else {
-		details.New++
-	}
 	return true
 }

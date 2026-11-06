@@ -5,6 +5,7 @@ import "github.com/prometheus/client_golang/prometheus"
 const (
 	EndNew             = "new"
 	EndUpdated         = "updated"
+	EndRetried         = "retried"
 	EndDuplicate       = "duplicate"
 	EndShorter         = "shorter"
 	EndNotFound        = "not_found"

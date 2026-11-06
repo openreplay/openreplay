@@ -8,7 +8,7 @@ import (
 	"openreplay/backend/pkg/metrics/ender"
 )
 
-type EndedSessionHandler func(map[uint64]uint64) map[uint64]bool
+type EndedSessionHandler func(candidates map[uint64]uint64, retry map[uint64]bool) map[uint64]bool
 
 // session holds information about user's session live status
 type session struct {
@@ -16,6 +16,7 @@ type session struct {
 	lastUpdate    int64 // local timestamp
 	lastUserTime  uint64
 	isEnded       bool
+	emitPending   bool // sessionEnd was not delivered
 }
 
 // SessionEnder updates timestamp of last message for each session
@@ -132,19 +133,35 @@ func (se *SessionEnder) HandleEndedSessions(handler EndedSessionHandler) {
 
 	// Find ended sessions
 	endedCandidates := make(map[uint64]uint64, len(se.sessions)/2) // [sessionID]lastUserTime
+	retry := make(map[uint64]bool)
 	for sessID, sess := range se.sessions {
 		if !isSessionEnded(sessID, sess) {
 			continue
 		}
 		sess.isEnded = true
 		endedCandidates[sessID] = sess.lastUserTime
+		if sess.emitPending {
+			retry[sessID] = true
+		}
 	}
 
 	// Process ended sessions
-	for sessID, completed := range handler(endedCandidates) {
+	for sessID, completed := range handler(endedCandidates, retry) {
 		if completed {
 			delete(se.sessions, sessID)
 			se.metrics.DecreaseActiveSessions()
+		} else if sess, ok := se.sessions[sessID]; ok {
+			sess.emitPending = true
 		}
 	}
+}
+
+func (se *SessionEnder) Pending() int {
+	n := 0
+	for _, sess := range se.sessions {
+		if sess.emitPending {
+			n++
+		}
+	}
+	return n
 }

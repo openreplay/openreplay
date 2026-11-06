@@ -46,7 +46,7 @@ func (s *redisStore) Remove(members ...string) error {
 	return s.redis.ZRem(ctx, registry.PendingKey, args...).Err()
 }
 
-func NewPGSource(db pool.Pool) DurationSource {
+func NewPGSource(db pool.Pool) SessionSource {
 	return &pgSource{db: db}
 }
 
@@ -54,25 +54,25 @@ type pgSource struct {
 	db pool.Pool
 }
 
-func (s *pgSource) Durations(sessionIDs []uint64) (map[uint64]*uint64, error) {
+func (s *pgSource) Load(sessionIDs []uint64) (map[uint64]Session, error) {
 	rows, err := s.db.Query(`
-		SELECT session_id, duration
+		SELECT session_id, start_ts, duration, COALESCE(file_key, '')
 		FROM sessions
 		WHERE session_id = ANY($1)`, sessionIDs)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	res := make(map[uint64]*uint64, len(sessionIDs))
+	res := make(map[uint64]Session, len(sessionIDs))
 	for rows.Next() {
 		var (
 			sessionID uint64
-			duration  *uint64
+			sess      Session
 		)
-		if err := rows.Scan(&sessionID, &duration); err != nil {
+		if err := rows.Scan(&sessionID, &sess.StartTs, &sess.Duration, &sess.FileKey); err != nil {
 			return nil, err
 		}
-		res[sessionID] = duration
+		res[sessionID] = sess
 	}
 	return res, rows.Err()
 }

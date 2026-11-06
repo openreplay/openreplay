@@ -70,6 +70,8 @@ func NewDispatcher(log logger.Logger, cfg *config.Config, producer types.Produce
 	if store := reaper.NewRedisStore(redisClient); store != nil && db != nil {
 		d.reaper = reaper.New(log, store, reaper.NewPGSource(db), producer, reaper.Config{
 			TopicTrigger:      cfg.TopicTrigger,
+			TopicRawAssets:    cfg.TopicRawAssets,
+			TopicRawMobile:    cfg.TopicRawMobile,
 			TopicRawImages:    cfg.TopicRawImages,
 			TopicCanvasImages: cfg.TopicCanvasImages,
 			PartitionsNumber:  uint64(cfg.PartitionsNumber),
