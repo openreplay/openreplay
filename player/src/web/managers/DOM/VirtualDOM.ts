@@ -67,6 +67,7 @@ abstract class VParent<T extends Node = Node> extends VNode<T> {
   protected notMontedChildren: Set<VChild> = new Set();
 
   insertChildAt(child: VChild, index: number) {
+    child.pendingRoot = null;
     if (child.parentNode) {
       child.parentNode.removeChild(child);
     }
@@ -169,6 +170,8 @@ export type VRoot = VDocument | VShadowRoot;
 export class VElement extends VParent<Element> {
   parentNode: VParent | null =
     null; /** Should be modified only by he parent itself */
+  /** Root this node waits to be inserted into (see OnloadVRoot.insertChildAt) */
+  pendingRoot: OnloadVRoot | null = null;
 
   private newAttributes: Map<string, string | false> = new Map();
 
@@ -212,6 +215,29 @@ export class VElement extends VParent<Element> {
 
   setAttribute(name: string, value: string) {
     this.newAttributes.set(name, value);
+  }
+
+  private animationResult: Animation | null = null;
+
+  /**
+   * Final state of a recorded web animation, kept as a filling animation like on the page:
+   * an inline style would be dropped by the app's next style write (Ionic clears its
+   * before-styles right after an animation finishes).
+   */
+  applyAnimationResult(styles: Record<string, string>) {
+    // onNode: creating the node here, before its parent root exists, would put it in the wrong document
+    this.onNode((node) => {
+      this.animationResult?.cancel();
+      this.animationResult = null;
+      try {
+        this.animationResult = node.animate([styles], {
+          duration: 0,
+          fill: 'forwards',
+        });
+      } catch {
+        this.applyStyleChanges(Object.entries(styles));
+      }
+    });
   }
 
   applyStyleChanges(styles: [prop: string, value: string][]) {
@@ -337,6 +363,7 @@ export class VSpriteMap extends VElement {
 
 export class VText extends VNode<Text> {
   parentNode: VParent | null = null;
+  pendingRoot: OnloadVRoot | null = null;
 
   protected createNode() {
     return new Text();
@@ -434,8 +461,13 @@ export class OnloadVRoot extends PromiseQueue<VRoot> {
     this.whenReady((vRoot) => vRoot.applyChanges());
   }
 
-  insertChildAt(...args: Parameters<VParent['insertChildAt']>) {
-    this.whenReady((vRoot) => vRoot.insertChildAt(...args));
+  insertChildAt(child: VChild, index: number) {
+    // a child removed or moved before the root exists must not appear once it does
+    child.pendingRoot = this;
+    this.whenReady((vRoot) => {
+      if (child.pendingRoot !== this) return;
+      vRoot.insertChildAt(child, index);
+    });
   }
 }
 
