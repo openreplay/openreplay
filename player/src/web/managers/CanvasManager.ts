@@ -314,7 +314,39 @@ export default class CanvasManager extends ListWalker<Timestamp> {
       backgroundOrigin: 'content-box',
       backgroundClip: 'content-box',
     });
+    this.restoreCanvasBox(canvasEl);
   };
+
+  private inlineBlockCanvas: HTMLCanvasElement | null = null;
+
+  /**
+   * Without scripting the canvas is a non-replaced element: no intrinsic size
+   * from its width/height, and while `display: inline` it ignores CSS sizes
+   * too, so it collapses to 0x0. Size containment with the bitmap size as the
+   * intrinsic size, plus inline-block for inline canvases, restores the
+   * replaced-element box.
+   */
+  private restoreCanvasBox(canvasEl: HTMLCanvasElement) {
+    const { style } = canvasEl;
+    // Drop our own override before reading, so a later display: none or
+    // [hidden] from the recording still wins.
+    if (
+      this.inlineBlockCanvas === canvasEl &&
+      style.display === 'inline-block'
+    ) {
+      style.removeProperty('display');
+    }
+    const view = canvasEl.ownerDocument.defaultView;
+    if (view?.getComputedStyle(canvasEl).display === 'inline') {
+      style.display = 'inline-block';
+      this.inlineBlockCanvas = canvasEl;
+    }
+    style.contain = 'size';
+    style.containIntrinsicSize = `${canvasEl.width}px ${canvasEl.height}px`;
+    // Scroll container: otherwise Chromium's automatic min size grows a box
+    // sized by aspect-ratio (CSS width only) to the full intrinsic height.
+    style.overflow = 'hidden';
+  }
 
   /** Take ownership of the displayed frame and release the one it replaced. */
   private retainFrame(blobUrl: string) {
