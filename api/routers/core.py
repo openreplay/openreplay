@@ -70,9 +70,9 @@ def notify(projectId: int, integration: str, webhookId: int, source: str, source
     return {"data": None}
 
 
-@app.get('/integrations/sentry', tags=["integrations"])
-def get_all_sentry(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": sentry.get_all(tenant_id=context.tenant_id)}
+# @app.get('/integrations/sentry', tags=["integrations"])
+# def get_all_sentry(context: schemas.CurrentContext = Depends(OR_context)):
+#     return {"data": sentry.get_all(tenant_id=context.tenant_id)}
 
 
 @app.get('/{projectId}/integrations/sentry', tags=["integrations"])
@@ -96,9 +96,9 @@ def proxy_sentry(projectId: int, eventId: str, context: schemas.CurrentContext =
     return {"data": sentry.proxy_get(tenant_id=context.tenant_id, project_id=projectId, event_id=eventId)}
 
 
-@app.get('/integrations/datadog', tags=["integrations"])
-def get_all_datadog(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": datadog.get_all(tenant_id=context.tenant_id)}
+# @app.get('/integrations/datadog', tags=["integrations"])
+# def get_all_datadog(context: schemas.CurrentContext = Depends(OR_context)):
+#     return {"data": datadog.get_all(tenant_id=context.tenant_id)}
 
 
 @app.get('/{projectId}/integrations/datadog', tags=["integrations"])
@@ -117,9 +117,9 @@ def delete_datadog(projectId: int, _=Body(None), context: schemas.CurrentContext
     return {"data": datadog.delete(tenant_id=context.tenant_id, project_id=projectId)}
 
 
-@app.get('/integrations/stackdriver', tags=["integrations"])
-def get_all_stackdriver(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": stackdriver.get_all(tenant_id=context.tenant_id)}
+# @app.get('/integrations/stackdriver', tags=["integrations"])
+# def get_all_stackdriver(context: schemas.CurrentContext = Depends(OR_context)):
+#     return {"data": stackdriver.get_all(tenant_id=context.tenant_id)}
 
 
 @app.get('/{projectId}/integrations/stackdriver', tags=["integrations"])
@@ -138,9 +138,9 @@ def delete_stackdriver(projectId: int, _=Body(None), context: schemas.CurrentCon
     return {"data": stackdriver.delete(tenant_id=context.tenant_id, project_id=projectId)}
 
 
-@app.get('/integrations/newrelic', tags=["integrations"])
-def get_all_newrelic(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": newrelic.get_all(tenant_id=context.tenant_id)}
+# @app.get('/integrations/newrelic', tags=["integrations"])
+# def get_all_newrelic(context: schemas.CurrentContext = Depends(OR_context)):
+#     return {"data": newrelic.get_all(tenant_id=context.tenant_id)}
 
 
 @app.get('/{projectId}/integrations/newrelic', tags=["integrations"])
@@ -159,9 +159,9 @@ def delete_newrelic(projectId: int, _=Body(None), context: schemas.CurrentContex
     return {"data": newrelic.delete(tenant_id=context.tenant_id, project_id=projectId)}
 
 
-@app.get('/integrations/rollbar', tags=["integrations"])
-def get_all_rollbar(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": rollbar.get_all(tenant_id=context.tenant_id)}
+# @app.get('/integrations/rollbar', tags=["integrations"])
+# def get_all_rollbar(context: schemas.CurrentContext = Depends(OR_context)):
+#     return {"data": rollbar.get_all(tenant_id=context.tenant_id)}
 
 
 @app.get('/{projectId}/integrations/rollbar', tags=["integrations"])
@@ -186,9 +186,9 @@ def list_projects_bugsnag(data: schemas.IntegrationBugsnagBasicSchema = Body(...
     return {"data": bugsnag.list_projects(auth_token=data.authorization_token)}
 
 
-@app.get('/integrations/bugsnag', tags=["integrations"])
-def get_all_bugsnag(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": bugsnag.get_all(tenant_id=context.tenant_id)}
+# @app.get('/integrations/bugsnag', tags=["integrations"])
+# def get_all_bugsnag(context: schemas.CurrentContext = Depends(OR_context)):
+#     return {"data": bugsnag.get_all(tenant_id=context.tenant_id)}
 
 
 @app.get('/{projectId}/integrations/bugsnag', tags=["integrations"])
@@ -215,9 +215,9 @@ def list_groups_cloudwatch(data: schemas.IntegrationCloudwatchBasicSchema = Body
                                                region=data.region)}
 
 
-@app.get('/integrations/cloudwatch', tags=["integrations"])
-def get_all_cloudwatch(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": cloudwatch.get_all(tenant_id=context.tenant_id)}
+# @app.get('/integrations/cloudwatch', tags=["integrations"])
+# def get_all_cloudwatch(context: schemas.CurrentContext = Depends(OR_context)):
+#     return {"data": cloudwatch.get_all(tenant_id=context.tenant_id)}
 
 
 @app.get('/{projectId}/integrations/cloudwatch', tags=["integrations"])
@@ -236,9 +236,9 @@ def delete_cloudwatch(projectId: int, _=Body(None), context: schemas.CurrentCont
     return {"data": cloudwatch.delete(tenant_id=context.tenant_id, project_id=projectId)}
 
 
-@app.get('/integrations/elasticsearch', tags=["integrations"])
-def get_all_elasticsearch(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": elasticsearch.get_all(tenant_id=context.tenant_id)}
+# @app.get('/integrations/elasticsearch', tags=["integrations"])
+# def get_all_elasticsearch(context: schemas.CurrentContext = Depends(OR_context)):
+#     return {"data": elasticsearch.get_all(tenant_id=context.tenant_id)}
 
 
 @app.get('/{projectId}/integrations/elasticsearch', tags=["integrations"])
@@ -264,9 +264,9 @@ def delete_elasticsearch(projectId: int, _=Body(None), context: schemas.CurrentC
     return {"data": elasticsearch.delete(tenant_id=context.tenant_id, project_id=projectId)}
 
 
-@app.get('/integrations/sumologic', tags=["integrations"])
-def get_all_sumologic(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": sumologic.get_all(tenant_id=context.tenant_id)}
+# @app.get('/integrations/sumologic', tags=["integrations"])
+# def get_all_sumologic(context: schemas.CurrentContext = Depends(OR_context)):
+#     return {"data": sumologic.get_all(tenant_id=context.tenant_id)}
 
 
 @app.get('/{projectId}/integrations/sumologic', tags=["integrations"])
