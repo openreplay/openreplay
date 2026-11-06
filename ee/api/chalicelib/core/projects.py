@@ -1,4 +1,5 @@
 import json
+import logging
 from collections import Counter
 from typing import Optional, List
 
@@ -10,6 +11,11 @@ import schemas
 from chalicelib.core import users
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
+
+logger = logging.getLogger(__name__)
+
+MAX_PROJECT_ID = 65000
+LIMIT_REACHED = False
 
 
 def __exists_by_name(tenant_id: int, name: str, exclude_id: Optional[int]) -> bool:
@@ -46,6 +52,10 @@ def __update(tenant_id, project_id, changes):
 
 
 def __create(tenant_id, data):
+    global LIMIT_REACHED
+    if LIMIT_REACHED:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="maximum number of projects reached.")
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""INSERT INTO public.projects (tenant_id, name, platform, active)
                                 VALUES (%(tenant_id)s,%(name)s,%(platform)s,TRUE)
@@ -53,6 +63,12 @@ def __create(tenant_id, data):
                             {"tenant_id": tenant_id, **data})
         cur.execute(query=query)
         project_id = cur.fetchone()["project_id"]
+        if project_id > MAX_PROJECT_ID:
+            LIMIT_REACHED = True
+            cur.connection.rollback()
+            logger.error(f"project creation rejected: project_id {project_id} exceeds {MAX_PROJECT_ID}")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="maximum number of projects reached.")
     return get_project(tenant_id=tenant_id, project_id=project_id, include_gdpr=True)
 
 

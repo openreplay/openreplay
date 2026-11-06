@@ -54,7 +54,7 @@ func (h *handlersImpl) fail(r *api.RequestContext, action string, err error) (an
 	switch {
 	case errors.Is(err, ErrProjectNotFound), errors.Is(err, ErrMetadataNotFound):
 		return nil, http.StatusNotFound, err
-	case errors.Is(err, ErrNameExists), errors.Is(err, ErrMetadataLimit):
+	case errors.Is(err, ErrNameExists), errors.Is(err, ErrMetadataLimit), errors.Is(err, ErrProjectLimit):
 		return nil, http.StatusBadRequest, err
 	}
 	h.log.Error(r.Request.Context(), "failed to %s: %s", action, err)
