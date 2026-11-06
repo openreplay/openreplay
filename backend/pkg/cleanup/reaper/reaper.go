@@ -183,19 +183,20 @@ func (r *Reaper) resend(member string, sessionID uint64, isMobile bool, sess Ses
 		r.delivered = append(r.delivered, member)
 		r.ackMu.Unlock()
 	}
+	// The images topic goes first
 	endTs := sess.StartTs + *sess.Duration
 	if isMobile {
 		msg := (&messages.MobileSessionEnd{Timestamp: endTs}).Encode()
-		if err := r.producer.ProduceWithAck(r.cfg.TopicRawMobile, sessionID, msg, ack); err != nil {
+		if err := r.producer.Produce(r.cfg.TopicRawImages, sessionID, msg); err != nil {
 			return err
 		}
-		return r.producer.Produce(r.cfg.TopicRawImages, sessionID, msg)
+		return r.producer.ProduceWithAck(r.cfg.TopicRawMobile, sessionID, msg, ack)
 	}
 	msg := (&messages.SessionEnd{Timestamp: endTs, EncryptionKey: sess.FileKey}).Encode()
-	if err := r.producer.ProduceWithAck(r.cfg.TopicRawAssets, sessionID, msg, ack); err != nil {
+	if err := r.producer.Produce(r.cfg.TopicCanvasImages, sessionID, msg); err != nil {
 		return err
 	}
-	return r.producer.Produce(r.cfg.TopicCanvasImages, sessionID, msg)
+	return r.producer.ProduceWithAck(r.cfg.TopicRawAssets, sessionID, msg, ack)
 }
 
 func (r *Reaper) clean(sessionID uint64, isMobile bool) error {
