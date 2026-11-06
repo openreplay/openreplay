@@ -8,7 +8,7 @@ require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.43.0
 	github.com/DataDog/datadog-api-client-go/v2 v2.37.1
 	github.com/Masterminds/semver v1.5.0
-	github.com/andybalholm/brotli v1.2.0
+	github.com/andybalholm/brotli v1.2.8
 	github.com/aws/aws-sdk-go v1.55.6
 	github.com/btcsuite/btcutil v1.0.2
 	github.com/confluentinc/confluent-kafka-go/v2 v2.10.0
