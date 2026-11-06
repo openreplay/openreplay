@@ -14,6 +14,7 @@ const (
 	StageLoad          = "load"
 	StageUpdate        = "update"
 	StageProduce       = "produce"
+	StageDeliver       = "deliver"
 	StageProduceCanvas = "produce_canvas"
 )
 

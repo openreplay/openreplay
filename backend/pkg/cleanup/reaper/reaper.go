@@ -47,6 +47,9 @@ type Reaper struct {
 
 	mu     sync.RWMutex
 	active map[uint64]bool
+
+	ackMu     sync.Mutex
+	delivered []string
 }
 
 func New(log logger.Logger, store PendingStore, sessions SessionSource, producer types.Producer, cfg Config) *Reaper {
@@ -75,8 +78,22 @@ func (r *Reaper) owns(sessionID uint64) bool {
 	return len(r.active) > 0 && r.active[sessionID%r.cfg.PartitionsNumber]
 }
 
+func (r *Reaper) removeDelivered(ctx context.Context) {
+	r.ackMu.Lock()
+	delivered := r.delivered
+	r.delivered = nil
+	r.ackMu.Unlock()
+	if len(delivered) == 0 {
+		return
+	}
+	if err := r.store.Remove(delivered...); err != nil {
+		r.log.Warn(ctx, "reaper: can't remove delivered members: %s", err)
+	}
+}
+
 func (r *Reaper) Tick(nowMs int64) {
 	ctx := context.Background()
+	r.removeDelivered(ctx)
 	members, err := r.store.Due(nowMs, batchLimit)
 	if err != nil {
 		r.log.Error(ctx, "reaper: can't read pending sessions: %s", err)
@@ -128,12 +145,11 @@ func (r *Reaper) Tick(nowMs int64) {
 	for _, e := range entries {
 		sessCtx := context.WithValue(ctx, "sessionID", fmt.Sprintf("%d", e.sessionID))
 		if sess, ok := loaded[e.sessionID]; ok && sess.Duration != nil {
-			if err := r.resend(e.sessionID, e.isMobile, sess); err != nil {
+			if err := r.resend(e.member, e.sessionID, e.isMobile, sess); err != nil {
 				r.log.Error(sessCtx, "reaper: can't resend sessionEnd, will retry: %s", err)
 				continue
 			}
 			r.log.Info(sessCtx, "reaper: sessionEnd was never delivered, resent")
-			toRemove = append(toRemove, e.member)
 			sent++
 			continue
 		}
@@ -153,19 +169,30 @@ func (r *Reaper) Tick(nowMs int64) {
 			r.log.Warn(ctx, "reaper: can't remove processed members: %s", err)
 		}
 	}
+	r.removeDelivered(ctx)
 }
 
-func (r *Reaper) resend(sessionID uint64, isMobile bool, sess Session) error {
+func (r *Reaper) resend(member string, sessionID uint64, isMobile bool, sess Session) error {
+	ack := func(err error) {
+		if err != nil {
+			sessCtx := context.WithValue(context.Background(), "sessionID", fmt.Sprintf("%d", sessionID))
+			r.log.Error(sessCtx, "reaper: resent sessionEnd was not delivered, will retry: %s", err)
+			return
+		}
+		r.ackMu.Lock()
+		r.delivered = append(r.delivered, member)
+		r.ackMu.Unlock()
+	}
 	endTs := sess.StartTs + *sess.Duration
 	if isMobile {
 		msg := (&messages.MobileSessionEnd{Timestamp: endTs}).Encode()
-		if err := r.producer.Produce(r.cfg.TopicRawMobile, sessionID, msg); err != nil {
+		if err := r.producer.ProduceWithAck(r.cfg.TopicRawMobile, sessionID, msg, ack); err != nil {
 			return err
 		}
 		return r.producer.Produce(r.cfg.TopicRawImages, sessionID, msg)
 	}
 	msg := (&messages.SessionEnd{Timestamp: endTs, EncryptionKey: sess.FileKey}).Encode()
-	if err := r.producer.Produce(r.cfg.TopicRawAssets, sessionID, msg); err != nil {
+	if err := r.producer.ProduceWithAck(r.cfg.TopicRawAssets, sessionID, msg, ack); err != nil {
 		return err
 	}
 	return r.producer.Produce(r.cfg.TopicCanvasImages, sessionID, msg)

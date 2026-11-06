@@ -37,6 +37,7 @@ type Consumer interface {
 // Producer sends batches of session data to queue (redis or kafka)
 type Producer interface {
 	Produce(topic string, key uint64, value []byte) error
+	ProduceWithAck(topic string, key uint64, value []byte, ack func(error)) error
 	ProduceToPartition(topic string, partition, key uint64, value []byte) error
 	Ping(ctx context.Context) error
 	Flush(timeout int)

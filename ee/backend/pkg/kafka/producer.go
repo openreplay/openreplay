@@ -14,12 +14,18 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
 
-const queueFullBackoff = 100 * time.Millisecond
+const (
+	queueFullBackoff      = 100 * time.Millisecond
+	retireFlushTimeoutMs  = 5000
+	deliveryQueueCapacity = 10000
+)
 
 type Producer struct {
-	config   kafka.ConfigMap
-	mu       sync.RWMutex
-	producer *kafka.Producer
+	config     kafka.ConfigMap
+	mu         sync.RWMutex
+	producer   *kafka.Producer
+	deliveries chan kafka.Event
+	closed     bool
 }
 
 func NewProducer(messageSizeLimit int, useBatch bool) *Producer {
@@ -59,52 +65,50 @@ func NewProducer(messageSizeLimit int, useBatch bool) *Producer {
 	}
 
 	p := &Producer{config: kafkaConfig}
-	producer, err := p.newInstance()
+	producer, deliveries, err := p.newInstance()
 	if err != nil {
 		log.Fatalln(err)
 	}
-	p.producer = producer
+	p.producer, p.deliveries = producer, deliveries
 	return p
 }
 
 // kafka.NewProducer strips the go.* keys from the map it is given, so every instance gets its own copy.
-func (p *Producer) newInstance() (*kafka.Producer, error) {
+func (p *Producer) newInstance() (*kafka.Producer, chan kafka.Event, error) {
 	conf := make(kafka.ConfigMap, len(p.config))
 	for k, v := range p.config {
 		conf[k] = v
 	}
 	producer, err := kafka.NewProducer(&conf)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
+	deliveries := make(chan kafka.Event, deliveryQueueCapacity)
 	go p.errorHandler(producer)
-	return producer, nil
+	go p.ackHandler(deliveries)
+	return producer, deliveries, nil
 }
 
-// Every call into the current instance holds the read lock, so recreate can't close an instance
-// that still has a call in flight.
-func (p *Producer) produce(msg *kafka.Message) (*kafka.Producer, error) {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
-	return p.producer, p.producer.Produce(msg, nil)
-}
-
-// recreate replaces a producer that entered the fatal state. Messages still queued in the old instance are
-// lost (librdkafka purges them on fatal); their keys are reported by errorHandler.
 func (p *Producer) recreate(failed *kafka.Producer) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	if p.producer != failed {
 		return nil
 	}
-	fresh, err := p.newInstance()
+	fresh, deliveries, err := p.newInstance()
 	if err != nil {
 		return err
 	}
-	p.producer = fresh
 	log.Printf("kafka producer recreated after fatal error: %v\n", failed.GetFatalError())
-	go failed.Close()
+	go retire(failed, p.deliveries)
+	p.producer, p.deliveries = fresh, deliveries
 	return nil
+}
+
+func retire(producer *kafka.Producer, deliveries chan kafka.Event) {
+	producer.Flush(retireFlushTimeoutMs)
+	producer.Close()
+	close(deliveries)
 }
 
 func (p *Producer) errorHandler(producer *kafka.Producer) {
@@ -120,6 +124,36 @@ func (p *Producer) errorHandler(producer *kafka.Producer) {
 			}
 		}
 	}
+}
+
+func (p *Producer) ackHandler(deliveries chan kafka.Event) {
+	for e := range deliveries {
+		msg, ok := e.(*kafka.Message)
+		if !ok {
+			continue
+		}
+		ack, ok := msg.Opaque.(func(error))
+		if !ok {
+			continue
+		}
+		if msg.TopicPartition.Error != nil {
+			fmt.Printf("Delivery failed: topicPartition: %v, key: %d\n", msg.TopicPartition, decodeKey(msg.Key))
+		}
+		ack(msg.TopicPartition.Error)
+	}
+}
+
+func (p *Producer) produce(msg *kafka.Message) (*kafka.Producer, error) {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	if p.closed {
+		return nil, errors.New("kafka producer is closed")
+	}
+	var deliveries chan kafka.Event
+	if msg.Opaque != nil {
+		deliveries = p.deliveries
+	}
+	return p.producer, p.producer.Produce(msg, deliveries)
 }
 
 func (p *Producer) produceWithRetry(msg *kafka.Message) error {
@@ -158,6 +192,15 @@ func (p *Producer) Produce(topic string, key uint64, value []byte) error {
 	})
 }
 
+func (p *Producer) ProduceWithAck(topic string, key uint64, value []byte, ack func(error)) error {
+	return p.produceWithRetry(&kafka.Message{
+		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: getKeyPartition(key)},
+		Key:            encodeKey(key),
+		Value:          value,
+		Opaque:         ack,
+	})
+}
+
 func (p *Producer) ProduceToPartition(topic string, partition, key uint64, value []byte) error {
 	return p.produceWithRetry(&kafka.Message{
 		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: int32(partition)},
@@ -169,6 +212,9 @@ func (p *Producer) ProduceToPartition(topic string, partition, key uint64, value
 func (p *Producer) Ping(ctx context.Context) error {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
+	if p.closed {
+		return errors.New("kafka producer is closed")
+	}
 	if err := p.producer.GetFatalError(); err != nil {
 		return err
 	}
@@ -183,14 +229,22 @@ func (p *Producer) Ping(ctx context.Context) error {
 }
 
 func (p *Producer) Close(timeoutMs int) {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if p.closed {
+		return
+	}
+	p.closed = true
 	p.producer.Flush(timeoutMs)
 	p.producer.Close()
+	close(p.deliveries)
 }
 
 func (p *Producer) Flush(timeoutMs int) {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
+	if p.closed {
+		return
+	}
 	p.producer.Flush(timeoutMs)
 }

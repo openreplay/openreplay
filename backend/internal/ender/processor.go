@@ -6,13 +6,16 @@ import (
 	"strings"
 
 	config "openreplay/backend/internal/config/ender"
-	"openreplay/backend/pkg/cleanup/registry"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue/types"
 	"openreplay/backend/pkg/sessions"
 	"openreplay/backend/pkg/storage"
 )
+
+type DeliveryTracker interface {
+	Track(sessionID, timestamp uint64) func(error)
+}
 
 func ProcessEndedSessions(
 	ctx context.Context,
@@ -24,7 +27,7 @@ func ProcessEndedSessions(
 	cfg *config.Config,
 	log logger.Logger,
 	details *LogDetails,
-	cleanupReg registry.Registry,
+	tracker DeliveryTracker,
 ) map[uint64]bool {
 	completed := make(map[uint64]bool, len(candidates))
 	toUpdate := make(map[uint64]uint64, len(candidates)) // sessionID -> timestamp
@@ -43,9 +46,8 @@ func ProcessEndedSessions(
 		}
 		newDur := timestamp - sess.Timestamp
 		if retry[sessionID] && sess.Duration != nil && newDur <= currDuration {
-			// The DB was updated on the previous attempt, only the sessionEnd is missing.
 			sessCtx := context.WithValue(ctx, "sessionID", fmt.Sprintf("%d", sessionID))
-			if produceSessionEnd(sessCtx, sessionID, sess.Timestamp+currDuration, sess, sessManager, producer, cfg, log, details, cleanupReg) {
+			if produceSessionEnd(sessCtx, sessionID, sess.Timestamp+currDuration, sess, sessManager, producer, cfg, log, details, tracker) {
 				details.Retried++
 				completed[sessionID] = true
 			}
@@ -54,7 +56,6 @@ func ProcessEndedSessions(
 		if currDuration == newDur {
 			if sess.Duration != nil {
 				details.Duplicated[sessionID] = currDuration
-				cleanupReg.Done(sessionID)
 				completed[sessionID] = true
 				continue
 			}
@@ -62,7 +63,6 @@ func ProcessEndedSessions(
 		}
 		if currDuration > newDur {
 			details.Shorter[sessionID] = int64(currDuration) - int64(newDur)
-			cleanupReg.Done(sessionID)
 			completed[sessionID] = true
 			continue
 		}
@@ -79,7 +79,7 @@ func ProcessEndedSessions(
 		log.Error(ctx, "batch duration update failed, falling back per-session: %s", err)
 		for sessionID, timestamp := range toUpdate {
 			sessCtx := context.WithValue(ctx, "sessionID", fmt.Sprintf("%d", sessionID))
-			if ProcessEndedSession(sessCtx, sessionID, timestamp, loaded[sessionID], sessManager, producer, cfg, log, details, cleanupReg) {
+			if ProcessEndedSession(sessCtx, sessionID, timestamp, loaded[sessionID], sessManager, producer, cfg, log, details, tracker) {
 				completed[sessionID] = true
 			}
 		}
@@ -95,7 +95,7 @@ func ProcessEndedSessions(
 			continue
 		}
 		sessCtx := context.WithValue(ctx, "sessionID", fmt.Sprintf("%d", sessionID))
-		if emitSessionEnd(sessCtx, sessionID, timestamp, loaded[sessionID], prevDur[sessionID], newDuration, sessManager, producer, cfg, log, details, cleanupReg) {
+		if emitSessionEnd(sessCtx, sessionID, timestamp, loaded[sessionID], prevDur[sessionID], newDuration, sessManager, producer, cfg, log, details, tracker) {
 			completed[sessionID] = true
 		}
 	}
@@ -112,7 +112,7 @@ func ProcessEndedSession(
 	cfg *config.Config,
 	log logger.Logger,
 	details *LogDetails,
-	cleanupReg registry.Registry,
+	tracker DeliveryTracker,
 ) bool {
 	if sess == nil {
 		details.NotFound[sessionID] = timestamp
@@ -127,14 +127,12 @@ func ProcessEndedSession(
 	if currDuration == newDur {
 		if sess.Duration != nil {
 			details.Duplicated[sessionID] = currDuration
-			cleanupReg.Done(sessionID)
 			return true
 		}
 		log.Info(ctx, "ending zero-duration session, sessID: %d", sessionID)
 	}
 	if currDuration > newDur {
 		details.Shorter[sessionID] = int64(currDuration) - int64(newDur)
-		cleanupReg.Done(sessionID)
 		return true
 	}
 
@@ -155,7 +153,7 @@ func ProcessEndedSession(
 		log.Error(ctx, "can't update session duration, err: %s", err)
 		return false
 	}
-	return emitSessionEnd(ctx, sessionID, timestamp, sess, currDuration, newDuration, sessManager, producer, cfg, log, details, cleanupReg)
+	return emitSessionEnd(ctx, sessionID, timestamp, sess, currDuration, newDuration, sessManager, producer, cfg, log, details, tracker)
 }
 
 func emitSessionEnd(
@@ -170,16 +168,15 @@ func emitSessionEnd(
 	cfg *config.Config,
 	log logger.Logger,
 	details *LogDetails,
-	cleanupReg registry.Registry,
+	tracker DeliveryTracker,
 ) bool {
 	// Re-check after the update — could have raced with another path.
 	if currDuration == newDuration && currDuration != 0 {
 		details.Duplicated[sessionID] = currDuration
-		cleanupReg.Done(sessionID)
 		return true
 	}
 
-	if !produceSessionEnd(ctx, sessionID, timestamp, sess, sessManager, producer, cfg, log, details, cleanupReg) {
+	if !produceSessionEnd(ctx, sessionID, timestamp, sess, sessManager, producer, cfg, log, details, tracker) {
 		return false
 	}
 
@@ -202,7 +199,7 @@ func produceSessionEnd(
 	cfg *config.Config,
 	log logger.Logger,
 	details *LogDetails,
-	cleanupReg registry.Registry,
+	tracker DeliveryTracker,
 ) bool {
 	msg := &messages.SessionEnd{Timestamp: timestamp}
 	if cfg.UseEncryption {
@@ -215,11 +212,13 @@ func produceSessionEnd(
 		}
 	}
 
+	ack := tracker.Track(sessionID, timestamp)
 	if sess.Platform == "ios" || sess.Platform == "android" {
 		mobileMsg := &messages.MobileSessionEnd{Timestamp: timestamp}
-		if err := producer.Produce(cfg.TopicRawMobile, sessionID, mobileMsg.Encode()); err != nil {
+		if err := producer.ProduceWithAck(cfg.TopicRawMobile, sessionID, mobileMsg.Encode(), ack); err != nil {
 			details.ProduceErrors++
 			log.Error(ctx, "can't send MobileSessionEnd to mobile topic: %s", err)
+			ack(err)
 			return false
 		}
 		if err := producer.Produce(cfg.TopicRawImages, sessionID, mobileMsg.Encode()); err != nil {
@@ -227,9 +226,10 @@ func produceSessionEnd(
 			log.Error(ctx, "can't send MobileSessionEnd signal to canvas topic: %s", err)
 		}
 	} else {
-		if err := producer.Produce(cfg.TopicRawAssets, sessionID, msg.Encode()); err != nil {
+		if err := producer.ProduceWithAck(cfg.TopicRawAssets, sessionID, msg.Encode(), ack); err != nil {
 			details.ProduceErrors++
 			log.Error(ctx, "can't send sessionEnd to raw topic: %s", err)
+			ack(err)
 			return false
 		}
 		if err := producer.Produce(cfg.TopicCanvasImages, sessionID, msg.Encode()); err != nil {
@@ -237,7 +237,5 @@ func produceSessionEnd(
 			log.Error(ctx, "can't send sessionEnd signal to canvas topic: %s", err)
 		}
 	}
-
-	cleanupReg.Done(sessionID)
 	return true
 }

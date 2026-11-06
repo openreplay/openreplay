@@ -68,10 +68,12 @@ func (s *pgSource) Load(sessionIDs []uint64) (map[uint64]Session, error) {
 		var (
 			sessionID uint64
 			sess      Session
+			fileKey   []byte
 		)
-		if err := rows.Scan(&sessionID, &sess.StartTs, &sess.Duration, &sess.FileKey); err != nil {
+		if err := rows.Scan(&sessionID, &sess.StartTs, &sess.Duration, &fileKey); err != nil {
 			return nil, err
 		}
+		sess.FileKey = string(fileKey)
 		res[sessionID] = sess
 	}
 	return res, rows.Err()

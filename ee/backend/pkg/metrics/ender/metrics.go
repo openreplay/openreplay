@@ -14,6 +14,7 @@ const (
 	StageLoad          = "load"
 	StageUpdate        = "update"
 	StageProduce       = "produce"
+	StageDeliver       = "deliver"
 	StageProduceCanvas = "produce_canvas"
 )
 
@@ -92,7 +93,7 @@ func newSessionEnds(serviceName string) *prometheus.CounterVec {
 		prometheus.CounterOpts{
 			Namespace: serviceName,
 			Name:      "session_ends_total",
-			Help:      "A counter displaying finalised ended-session candidates by outcome (new/updated/duplicate/shorter/not_found/failed/negative).",
+			Help:      "A counter displaying finalised ended-session candidates by outcome (new/updated/retried/duplicate/shorter/not_found/failed/negative).",
 		},
 		[]string{"outcome"},
 	)
@@ -110,7 +111,7 @@ func newEndErrors(serviceName string) *prometheus.CounterVec {
 		prometheus.CounterOpts{
 			Namespace: serviceName,
 			Name:      "session_end_errors_total",
-			Help:      "A counter displaying failures while finalising ended sessions by stage (load/update/produce are retried, produce_canvas is not).",
+			Help:      "A counter displaying failures while finalising ended sessions by stage (load/update/produce/deliver are retried, produce_canvas is not).",
 		},
 		[]string{"stage"},
 	)
