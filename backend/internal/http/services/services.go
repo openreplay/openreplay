@@ -3,6 +3,7 @@ package services
 import (
 	"openreplay/backend/internal/config/http"
 	"openreplay/backend/internal/http/geoip"
+	"openreplay/backend/internal/http/ipfilter"
 	"openreplay/backend/internal/http/uaparser"
 	"openreplay/backend/pkg/cleanup/registry"
 	"openreplay/backend/pkg/conditions"
@@ -47,6 +48,10 @@ func New(log logger.Logger, cfg *http.Config, webMetrics web.Web, dbMetrics data
 	if err != nil {
 		return nil, err
 	}
+	excludeIPs, err := ipfilter.New(cfg.ExcludedIPRanges)
+	if err != nil {
+		return nil, err
+	}
 	tokenizer := token.NewTokenizer(cfg.TokenSecret)
 	conditions := conditions.New(pgconn)
 	flaker := flakeid.NewFlaker(cfg.WorkerID)
@@ -55,10 +60,10 @@ func New(log logger.Logger, cfg *http.Config, webMetrics web.Web, dbMetrics data
 	responser := api.NewResponser(webMetrics)
 	cleanupReg := registry.New(log, redis)
 	builder := &serviceBuilder{}
-	if builder.webAPI, err = websessions.NewHandlers(cfg, log, responser, producer, projs, sessions, uaModule, geoModule, tokenizer, conditions, flaker, cleanupReg, webMetrics); err != nil {
+	if builder.webAPI, err = websessions.NewHandlers(cfg, log, responser, producer, projs, sessions, uaModule, geoModule, excludeIPs, tokenizer, conditions, flaker, cleanupReg, webMetrics); err != nil {
 		return nil, err
 	}
-	if builder.mobileAPI, err = mobilesessions.NewHandlers(cfg, log, responser, producer, projs, sessions, uaModule, geoModule, tokenizer, conditions, flaker, cleanupReg, webMetrics); err != nil {
+	if builder.mobileAPI, err = mobilesessions.NewHandlers(cfg, log, responser, producer, projs, sessions, uaModule, geoModule, excludeIPs, tokenizer, conditions, flaker, cleanupReg, webMetrics); err != nil {
 		return nil, err
 	}
 	if builder.conditionsAPI, err = conditionsAPI.NewHandlers(log, responser, tokenizer, conditions); err != nil {
