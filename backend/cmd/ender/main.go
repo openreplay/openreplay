@@ -57,7 +57,8 @@ func main() {
 	projManager := projects.New(log, pgConn, redisClient, dbMetric)
 	sessManager := sessions.New(log, pgConn, projManager, redisClient, dbMetric, sessions.IgnoreInactiveProjects)
 
-	sessionEndGenerator, err := ender.New(log, enderMetric, ender.EVENTS_SESSION_END_TIMEOUT, cfg.PartitionsNumber)
+	cleanupRegistry := registry.New(log, redisClient)
+	sessionEndGenerator, err := ender.New(log, enderMetric, cleanupRegistry, ender.EVENTS_SESSION_END_TIMEOUT, cfg.PartitionsNumber)
 	if err != nil {
 		log.Fatal(ctx, "can't init ender service: %s", err)
 	}
@@ -69,7 +70,6 @@ func main() {
 		return producer.Ping(ctx)
 	})
 
-	cleanupRegistry := registry.New(log, redisClient)
 	cleanupDispatcher, err := cleanup.NewDispatcher(log, cfg, producer, pgConn, redisClient)
 	if err != nil {
 		log.Fatal(ctx, "can't init cleanup dispatcher: %s", err)
@@ -119,7 +119,10 @@ func main() {
 		case sig := <-sigchan:
 			log.Info(ctx, "Caught signal %v: terminating", sig)
 			producer.Close(cfg.ProducerTimeout)
-			if err := consumer.CommitBack(ender.EVENTS_BACK_COMMIT_GAP); err != nil {
+			sessionEndGenerator.ApplyDeliveries()
+			if pending := sessionEndGenerator.Pending(); pending > 0 {
+				log.Warn(ctx, "%d sessions wait for sessionEnd delivery, offsets are not committed on shutdown", pending)
+			} else if err := consumer.CommitBack(ender.EVENTS_BACK_COMMIT_GAP); err != nil {
 				log.Error(ctx, "can't commit messages with offset: %s", err)
 			}
 			consumer.Close()
@@ -127,12 +130,17 @@ func main() {
 			os.Exit(0)
 		case <-tick:
 			details := ender.NewLogDetails()
-			sessionEndGenerator.HandleEndedSessions(func(candidates map[uint64]uint64) map[uint64]bool {
-				return processEndedBatch(ctx, candidates, sessManager, producer, cfg, log, details, cleanupRegistry)
+			sessionEndGenerator.HandleEndedSessions(func(candidates map[uint64]uint64, retry map[uint64]bool) map[uint64]bool {
+				return processEndedBatch(ctx, candidates, retry, sessManager, producer, cfg, log, details, sessionEndGenerator)
 			})
 			details.Log(log, ctx)
 			details.Record(enderMetric)
 			producer.Flush(cfg.ProducerTimeout)
+			sessionEndGenerator.ApplyDeliveries()
+			if pending := sessionEndGenerator.Pending(); pending > 0 {
+				log.Warn(ctx, "%d sessions wait for sessionEnd delivery, offsets are not committed", pending)
+				continue
+			}
 			if err := consumer.CommitBack(ender.EVENTS_BACK_COMMIT_GAP); err != nil {
 				log.Error(ctx, "can't commit messages with offset: %s", err)
 			}
@@ -147,12 +155,13 @@ func main() {
 func processEndedBatch(
 	ctx context.Context,
 	candidates map[uint64]uint64,
+	retry map[uint64]bool,
 	sessManager sessions.Sessions,
 	producer types.Producer,
 	cfg *config.Config,
 	log logger.Logger,
 	details *ender.LogDetails,
-	cleanupReg registry.Registry,
+	tracker ender.DeliveryTracker,
 ) map[uint64]bool {
 	if len(candidates) == 0 {
 		return map[uint64]bool{}
@@ -167,5 +176,5 @@ func processEndedBatch(
 		log.Error(ctx, "can't get sessions from database: %s", err)
 		return map[uint64]bool{}
 	}
-	return ender.ProcessEndedSessions(ctx, candidates, loaded, sessManager, producer, cfg, log, details, cleanupReg)
+	return ender.ProcessEndedSessions(ctx, candidates, retry, loaded, sessManager, producer, cfg, log, details, tracker)
 }
