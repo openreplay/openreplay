@@ -28,6 +28,7 @@ type LogDetails struct {
 	Diff                map[uint64]int64
 	Updated             int
 	New                 int
+	Retried             int
 	LoadErrors          int
 	UpdateErrors        int
 	ProduceErrors       int
@@ -37,6 +38,7 @@ type LogDetails struct {
 func (l *LogDetails) Record(m ender.Ender) {
 	m.IncreaseSessionEnds(ender.EndNew, float64(l.New))
 	m.IncreaseSessionEnds(ender.EndUpdated, float64(l.Updated))
+	m.IncreaseSessionEnds(ender.EndRetried, float64(l.Retried))
 	m.IncreaseSessionEnds(ender.EndDuplicate, float64(len(l.Duplicated)))
 	m.IncreaseSessionEnds(ender.EndShorter, float64(len(l.Shorter)))
 	m.IncreaseSessionEnds(ender.EndNotFound, float64(len(l.NotFound)))
@@ -95,6 +97,10 @@ func (l *LogDetails) Log(log logger.Logger, ctx context.Context) {
 	if l.New > 0 {
 		logBuilder.WriteString("new: %d, ")
 		logValues = append(logValues, l.New)
+	}
+	if l.Retried > 0 {
+		logBuilder.WriteString("retried: %d, ")
+		logValues = append(logValues, l.Retried)
 	}
 	if len(l.NotFound) > 0 {
 		logBuilder.WriteString("not found: %d, ")
