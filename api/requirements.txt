@@ -7,7 +7,7 @@ requests==2.34.2
 boto3==1.43.118
 pyjwt==2.15.1
 psycopg2-binary==2.9.13
-psycopg[pool,binary]==3.3.6
+psycopg[pool,binary]==3.3.8
 clickhouse-connect==1.11.0
 elasticsearch==9.5.1
 jira==3.10.5
