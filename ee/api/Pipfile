@@ -4,32 +4,32 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-certifi = "==2026.10.19"
+cryptography = "==50.0.2"
+certifi = "==2026.10.23"
 urllib3 = "==2.8.0"
 requests = "==2.34.2"
-boto3 = "==1.43.118"
+boto3 = "==1.43.126"
 pyjwt = "==2.15.1"
-cryptography = "==50.0.2"
 psycopg2-binary = "==2.9.13"
-clickhouse-connect = "==1.11.0"
+clickhouse-connect = "==1.12.0"
 elasticsearch = "==9.5.1"
 jira = "==3.10.5"
-cachetools = "==7.2.4"
-fastapi = "==0.161.1"
-gunicorn = "==26.2.0"
+cachetools = "==8.0.0"
+fastapi = "==0.162.2"
 python-decouple = "==3.8"
+redis = "==8.1.0"
+gunicorn = "==26.2.0"
 apscheduler = "==3.11.3"
 python3-saml = "==1.16.0"
-python-multipart = "==0.0.32"
-scim2-models = "==0.12.2"
-scim2-server = "==0.8.2"
+python-multipart = "==0.0.33"
+scim2-models = "==0.12.4"
+scim2-server = "==0.8.5"
 scim2-filter-parser = "==0.7.0"
 werkzeug = "==3.1.9"
-redis = "==8.1.0"
 azure-storage-blob = "==12.31.0"
-psycopg = {extras = ["binary", "pool"], version = "==3.3.6"}
+psycopg = {extras = ["binary", "pool"], version = "==3.3.8"}
 uvicorn = {extras = ["standard"], version = "==0.54.0"}
-pydantic = {extras = ["email"], version = "==2.14.1"}
+pydantic = {extras = ["email"], version = "==2.14.3"}
 
 [dev-packages]
 
