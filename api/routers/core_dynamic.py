@@ -1,22 +1,21 @@
 import logging
 
 from decouple import config
-from fastapi import Body, Depends, BackgroundTasks
+from fastapi import Body, Depends
 from fastapi import HTTPException, status
 from starlette.responses import RedirectResponse, JSONResponse, Response
 
 import schemas
 from chalicelib.core import scope
 from chalicelib.core import signup
-from chalicelib.core import tenants, users, projects, license
+from chalicelib.core import tenants, users, license
 from chalicelib.core import webhook
 from chalicelib.core.collaborations.collaboration_slack import Slack
 from chalicelib.core.errors import errors, errors_details
 from chalicelib.core.sessions import sessions_assignments
 from chalicelib.utils import captcha, smtp
 from chalicelib.utils import helper
-from chalicelib.utils.TimeUTC import TimeUTC
-from or_dependencies import OR_context, OR_role
+from or_dependencies import OR_context
 from routers.base import get_routers
 from routers.subs import spot
 
@@ -110,44 +109,6 @@ def refresh_login(response: JSONResponse, context: schemas.CurrentContext = Depe
     return content
 
 
-# @app.get('/account', tags=['accounts'])
-# def get_account(context: schemas.CurrentContext = Depends(OR_context)):
-#     r = users.get_user(tenant_id=context.tenant_id, user_id=context.user_id)
-#     if r is None:
-#         return {"errors": ["current user not found"]}
-#     t = tenants.get_by_tenant_id(context.tenant_id)
-#     if t is not None:
-#         t = dict(t)
-#         t["createdAt"] = TimeUTC.datetime_to_timestamp(t["createdAt"])
-#         t["tenantName"] = t.pop("name")
-#         if not r["admin"] and not r["superAdmin"]:
-#             t.pop("apiKey", None)
-#     else:
-#         return {"errors": ["current tenant not found"]}
-
-#     return {
-#         'data': {
-#             **r,
-#             **t,
-#             **license.get_status(context.tenant_id),
-#             "smtp": smtp.has_smtp()
-#         }
-#     }
-
-
-# @app.post('/account', tags=["account"])
-# def edit_account(data: schemas.EditAccountSchema = Body(...),
-#                  context: schemas.CurrentContext = Depends(OR_context)):
-#     return users.edit_account(tenant_id=context.tenant_id, user_id=context.user_id, changes=data)
-
-
-# @app.post('/account/scope', tags=["account"], dependencies=[OR_role("owner", "admin")])
-# def change_scope(data: schemas.ScopeSchema = Body(),
-#                  context: schemas.CurrentContext = Depends(OR_context)):
-#     data = scope.update_scope(tenant_id=-1, scope=data.scope)
-#     return {'data': data}
-
-
 @app.post('/account/password', tags=["account"])
 def change_client_password(resqponse: JSONResponse, data: schemas.EditUserPasswordSchema = Body(...),
                            context: schemas.CurrentContext = Depends(OR_context)):
@@ -188,13 +149,6 @@ def edit_slack_integration(integrationId: int, data: schemas.EditCollaborationSc
                                    changes={"name": data.name, "endpoint": data.url.unicode_string()})}
 
 
-# @app.post('/client/members', tags=["client"], dependencies=[OR_role("owner", "admin")])
-# def add_member(background_tasks: BackgroundTasks, data: schemas.CreateMemberSchema = Body(...),
-#                context: schemas.CurrentContext = Depends(OR_context)):
-#     return users.create_member(tenant_id=context.tenant_id, user_id=context.user_id, data=data,
-#                                background_tasks=background_tasks)
-
-
 @public_app.get('/users/invitation', tags=['users'])
 def process_invitation_link(token: str):
     if token is None or len(token) < 64:
@@ -225,18 +179,6 @@ def change_password_by_invitation(response: JSONResponse, data: schemas.EditPass
     r = users.set_password_invitation(new_password=data.password.get_secret_value(), user_id=user["userId"])
     r = __process_authentication_response(response=response, data=r)
     return r
-
-
-# @app.put('/client/members/{memberId}', tags=["client"], dependencies=[OR_role("owner", "admin")])
-# def edit_member(memberId: int, data: schemas.EditMemberSchema,
-#                 context: schemas.CurrentContext = Depends(OR_context)):
-#     return users.edit_member(tenant_id=context.tenant_id, editor_id=context.user_id, changes=data,
-#                              user_id_to_update=memberId)
-
-
-# @app.get('/projects', tags=['projects'])
-# def get_projects(context: schemas.CurrentContext = Depends(OR_context)):
-#     return {"data": projects.get_projects(tenant_id=context.tenant_id, gdpr=True, recorded=True)}
 
 
 @app.get('/{projectId}/sessions/{sessionId}/errors/{errorId}/sourcemaps', tags=["sessions", "sourcemaps"])
@@ -305,13 +247,3 @@ def errors_get_details_sourcemaps(projectId: int, errorId: str,
     return {
         'data': data
     }
-
-
-# TODO: delete this if UI is not calling it
-@app.get('/delete_later/{projectId}/errors/{errorId}/sessions', tags=["errors"])
-def get_errors_sessions(projectId: int, errorId: str,
-                        startDate: int = TimeUTC.now(-7), endDate: int = TimeUTC.now(),
-                        context: schemas.CurrentContext = Depends(OR_context)):
-    return {
-        "data": errors.get_sessions(project_id=projectId, user_id=context.user_id, error_id=errorId,
-                                    start_date=startDate, end_date=endDate)}

@@ -1,4 +1,3 @@
-from calendar import monthrange
 from datetime import datetime, timedelta
 
 import zoneinfo
@@ -10,10 +9,6 @@ class TimeUTC:
     MS_MINUTE = 60 * 1000
     MS_HOUR = MS_MINUTE * 60
     MS_DAY = MS_HOUR * 24
-    MS_WEEK = MS_DAY * 7
-    MS_MONTH = MS_DAY * 30
-    MS_MONTH_TRUE = monthrange(datetime.now(UTC_ZI).astimezone(UTC_ZI).year,
-                               datetime.now(UTC_ZI).astimezone(UTC_ZI).month)[1] * MS_DAY
     RANGE_VALUE = None
 
     @staticmethod
@@ -86,10 +81,6 @@ class TimeUTC:
     @staticmethod
     def to_human_readable(ts, fmt='%Y-%m-%d %H:%M:%S UTC'):
         return datetime.utcfromtimestamp(ts // 1000).strftime(fmt)
-
-    @staticmethod
-    def human_to_timestamp(ts, pattern="%Y-%m-%dT%H:%M:%S.%f"):
-        return int(datetime.strptime(ts, pattern).timestamp() * 1000)
 
     @staticmethod
     def datetime_to_timestamp(date):

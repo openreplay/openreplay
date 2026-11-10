@@ -43,29 +43,6 @@ def get_by_api_key(api_key):
         return helper.dict_to_camel_case(cur.fetchone())
 
 
-def generate_new_api_key(tenant_id):
-    with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(f"""UPDATE public.tenants
-                                SET api_key=generate_api_key(20)
-                                WHERE tenant_id= %(tenant_id)s 
-                                    AND deleted_at ISNULL
-                                RETURNING api_key;""",
-                            {"tenant_id": tenant_id})
-        cur.execute(query=query)
-        return helper.dict_to_camel_case(cur.fetchone())
-
-
-def edit_tenant(tenant_id, changes):
-    with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(f"""UPDATE public.tenants 
-                                SET {", ".join([f"{helper.key_to_snake_case(k)} = %({k})s" for k in changes.keys()])}
-                                WHERE tenant_id= %(tenant_id)s AND deleted_at ISNULL
-                                RETURNING name, opt_out;""",
-                            {"tenant_id": tenant_id, **changes})
-        cur.execute(query=query)
-        return helper.dict_to_camel_case(cur.fetchone())
-
-
 def tenants_exists_sync(use_pool=True):
     with pg_client.PostgresClient(use_pool=use_pool) as cur:
         cur.execute("SELECT EXISTS(SELECT 1 FROM public.tenants)")
@@ -80,37 +57,3 @@ async def tenants_exists(use_pool=True):
             row = await cnx.execute("SELECT EXISTS(SELECT 1 FROM public.tenants)")
             row = await row.fetchone()
             return row["exists"]
-
-
-@cached(cache)
-def get_by_tenant_key(tenant_key):
-    with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(f"""SELECT tenants.tenant_id,
-                                       tenants.name,
-                                       tenants.api_key,
-                                       tenants.created_at,
-                                        '{license.EDITION}' AS edition,
-                                        openreplay_version() AS version_number,
-                                        tenants.opt_out,
-                                        tenants.tenant_key
-                                FROM public.tenants
-                                WHERE tenants.tenant_key = %(tenant_key)s 
-                                    AND tenants.deleted_at ISNULL
-                                LIMIT 1;""",
-                            {"tenant_key": tenant_key})
-        cur.execute(query=query)
-        return helper.dict_to_camel_case(cur.fetchone())
-
-
-@cached(TTLCache(maxsize=10, ttl=config("S_ACCOUNT_CACHE_TTL_S", cast=int, default=300)))
-def has_service_account(tenant_id):
-    with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(f"""SELECT 1
-                                FROM public.users
-                                WHERE tenant_id = %(tenantId)s 
-                                    AND deleted_at ISNULL
-                                    AND service_account
-                                LIMIT 1;""",
-                            {"tenantId": tenant_id})
-        cur.execute(query=query)
-        return cur.fetchone() is not None

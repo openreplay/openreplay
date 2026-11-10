@@ -9,7 +9,6 @@ pyjwt==2.15.1
 psycopg2-binary==2.9.13
 psycopg[pool,binary]==3.3.8
 clickhouse-connect==1.12.0
-elasticsearch==9.5.1
 jira==3.10.5
 cachetools==8.0.0
 

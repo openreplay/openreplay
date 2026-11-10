@@ -12,7 +12,6 @@ def obfuscate_string(string):
 
 class JIRAIntegration(base.BaseIntegration):
     def __init__(self, tenant_id, user_id):
-        self.__tenant_id = tenant_id
         # TODO: enable super-constructor when OAuth is done
         # super(JIRAIntegration, self).__init__(jwt, user_id, JIRACloudIntegrationProxy)
         self._issue_handler = None
@@ -88,10 +87,6 @@ class JIRAIntegration(base.BaseIntegration):
         return w
 
     # TODO: make this generic for all issue tracking integrations
-    def _add(self, data):
-        print("a pretty defined abstract method")
-        return
-
     def add(self, username, token, url, obfuscate=False):
         with pg_client.PostgresClient() as cur:
             cur.execute(
