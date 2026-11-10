@@ -144,6 +144,9 @@ spec:
   - metadata:
       name: default-chi-openreplay-clickhouse-replicated-0-0-0
     spec:
+      {{- with .Values.storageClassName }}
+      storageClassName: {{ . | quote }}
+      {{- end }}
       accessModes: [ "ReadWriteOnce" ]
       resources:
         requests:
