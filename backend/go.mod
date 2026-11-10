@@ -36,6 +36,7 @@ require (
 	github.com/ua-parser/uap-go v0.0.0-20260529044130-17c35e68e58c
 	go.uber.org/zap v1.28.0
 	golang.org/x/net v0.60.0
+	golang.org/x/time v0.12.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 

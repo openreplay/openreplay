@@ -38,6 +38,8 @@ import (
 	eventAPI "openreplay/backend/pkg/events/api"
 	"openreplay/backend/pkg/favorite"
 	favoriteAPI "openreplay/backend/pkg/favorite/api"
+	"openreplay/backend/pkg/ingest_keys"
+	ingestKeysAPI "openreplay/backend/pkg/ingest_keys/api"
 	integrationsAPI "openreplay/backend/pkg/integrations/api"
 	integrationsService "openreplay/backend/pkg/integrations/service"
 	"openreplay/backend/pkg/jobs"
@@ -49,6 +51,8 @@ import (
 	noteAPI "openreplay/backend/pkg/notes/api"
 	"openreplay/backend/pkg/notifications"
 	"openreplay/backend/pkg/objectstorage"
+	"openreplay/backend/pkg/otel_logs"
+	otelLogsAPI "openreplay/backend/pkg/otel_logs/api"
 	"openreplay/backend/pkg/projects"
 	projectsAdmin "openreplay/backend/pkg/projects/admin"
 	replayAPI "openreplay/backend/pkg/replays/api"
@@ -88,6 +92,8 @@ type serviceBuilder struct {
 	accountsAPI        api.Handlers
 	webhooksAPI        api.Handlers
 	teamAPI            api.Handlers
+	ingestKeysAPI      api.Handlers
+	otelLogsAPI        api.Handlers
 	extraHandlers      []api.Handlers
 	workers            []Worker
 	wg                 sync.WaitGroup
@@ -95,7 +101,8 @@ type serviceBuilder struct {
 
 func (b *serviceBuilder) Handlers() []api.Handlers {
 	handlers := []api.Handlers{b.sessionAPI, b.eventAPI, b.filtersCatalogAPI, b.analyticsEventsAPI, b.favoriteAPI, b.noteAPI, b.replayAPI, b.apiKeyAPI, b.conditionsAPI,
-		b.chartsAPI, b.dashboardsAPI, b.cardsAPI, b.searchAPI, b.savedSearchesAPI, b.usersAPI, b.lexiconAPI, b.tagsAdminAPI, b.integrationsAPI, b.alertsAPI, b.notificationsAPI, b.projectsAdminAPI, b.accountsAPI, b.webhooksAPI, b.teamAPI}
+		b.chartsAPI, b.dashboardsAPI, b.cardsAPI, b.searchAPI, b.savedSearchesAPI, b.usersAPI, b.lexiconAPI, b.tagsAdminAPI, b.integrationsAPI, b.alertsAPI, b.notificationsAPI, b.projectsAdminAPI, b.accountsAPI, b.webhooksAPI, b.teamAPI,
+		b.ingestKeysAPI, b.otelLogsAPI}
 	return append(handlers, b.extraHandlers...)
 }
 
@@ -319,6 +326,16 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		return nil, err
 	}
 
+	ingestKeysHandlers, err := ingestKeysAPI.NewHandlers(log, requestHandler, ingest_keys.New(log, pgconn, redisClient))
+	if err != nil {
+		return nil, err
+	}
+
+	otelLogsHandlers, err := otelLogsAPI.NewHandlers(log, requestHandler, otel_logs.New(log, chconn))
+	if err != nil {
+		return nil, err
+	}
+
 	extraHandlers, workers, err := eeServices(eeDeps{
 		log:        log,
 		cfg:        cfg,
@@ -360,6 +377,8 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		accountsAPI:        accountsHandlers,
 		webhooksAPI:        webhooksHandlers,
 		teamAPI:            teamHandlers,
+		ingestKeysAPI:      ingestKeysHandlers,
+		otelLogsAPI:        otelLogsHandlers,
 		extraHandlers:      extraHandlers,
 		workers:            workers,
 	}, nil
