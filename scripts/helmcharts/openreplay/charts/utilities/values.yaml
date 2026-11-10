@@ -6,7 +6,10 @@ replicaCount: 1
 
 env: {}
 
+# Default resources for the apiCrons CronJobs; apiCrons.<job>.resources wins.
+resources: {}
 efsCleaner:
+  resources: {}
   retention: 1
   # This value is the new convention, and has priority.
   # retentionHours: 12

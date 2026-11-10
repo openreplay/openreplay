@@ -75,6 +75,10 @@ spec:
       # Offline migration: copy schema files from pre-built migration image
       - name: migration
         image: "{{ .Values.offlineMigration.image.registry }}/{{ .Values.offlineMigration.image.repository }}:{{ .Values.offlineMigration.image.tag | default .Chart.AppVersion }}"
+        {{- with $.Values.migrationJob.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
         env:
           - name: ENTERPRISE_EDITION_LICENSE
             value: "{{ .Values.global.enterpriseEditionLicense }}"
@@ -129,6 +133,10 @@ spec:
       {{- end }}
       - name: git
         image: alpine/git:2.52.0
+        {{- with $.Values.migrationJob.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
         env:
           {{- range $key, $val := .Values.global.env }}
           - name: {{ $key }}
@@ -270,6 +278,10 @@ spec:
           mountPath: /mnt/efs
       - name: postgres-check
         image: "{{.Values.postgresql.image.registry}}/{{.Values.postgresql.image.repository}}:{{.Values.postgresql.image.tag}}"
+        {{- with $.Values.migrationJob.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
         env:
           - name: PGHOST
             value: "{{ .Values.global.postgresql.postgresqlHost }}"
@@ -310,6 +322,10 @@ spec:
             }
       - name: clickhouse-check
         image: "{{.Values.clickhouse.image.registry}}/{{.Values.clickhouse.image.repository}}:{{.Values.clickhouse.image.tag}}"
+        {{- with $.Values.migrationJob.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
         env:
           {{- range $key, $val := .Values.global.env }}
           - name: {{ $key }}
@@ -404,6 +420,10 @@ spec:
             value: '{{ $val }}'
           {{- end }}
         image: "{{.Values.postgresql.image.registry}}/{{.Values.postgresql.image.repository}}:{{.Values.postgresql.image.tag}}"
+        {{- with $.Values.migrationJob.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
         command: 
         - /bin/bash
         - /opt/migrations/dbops.sh
@@ -417,6 +437,10 @@ spec:
       {{- if or .Values.minio.enabled .Values.minio.forceInit }}
       - name: minio
         image: "{{.Values.minio.migrationImage.registry}}/{{.Values.minio.migrationImage.repository}}:{{.Values.minio.migrationImage.tag}}"
+        {{- with $.Values.migrationJob.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
         env:
           - name: OPENREPLAY_VERSION
             valueFrom:
@@ -488,6 +512,10 @@ spec:
           - name: VAULT_ADDR
             value: "{{ .Values.global.vault.vaultHost }}"
         image: hashicorp/vault:1.12.0
+        {{- with $.Values.migrationJob.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
         command: 
         - /bin/sh
         - /opt/migrations/vault.sh
@@ -517,6 +545,10 @@ spec:
           - name: VAULT_BUCKET
             value: "{{ .Values.global.s3.vaultBucket }}"
         image: amazon/aws-cli
+        {{- with $.Values.migrationJob.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
         command: 
         - /bin/bash
         - -c
@@ -551,6 +583,10 @@ spec:
       {{- if or .Values.global.enterpriseEditionLicense .Values.forceKafkaMigration }}
       - name: kafka
         image: "{{.Values.kafkaMigration.image.registry}}/{{.Values.kafkaMigration.image.repository}}:{{.Values.kafkaMigration.image.tag}}"
+        {{- with $.Values.migrationJob.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
         env:
           - name: OPENREPLAY_VERSION
             valueFrom:
@@ -595,6 +631,10 @@ spec:
       {{- end}}
       - name: clickhouse
         image: "{{.Values.clickhouse.image.registry}}/{{.Values.clickhouse.image.repository}}:{{.Values.clickhouse.image.tag}}"
+        {{- with $.Values.migrationJob.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
         env:
           - name: OPENREPLAY_VERSION
             valueFrom:

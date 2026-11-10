@@ -47,6 +47,10 @@ spec:
           - name: report-cron
             image: "{{ tpl $job.image.registry . }}/{{ $job.image.repository }}:{{ $job.image.tag | default .Chart.AppVersion }}-ee"
             imagePullPolicy: "{{ $job.image.pullPolicy}}"
+            {{- with ($job.resources | default .Values.resources) }}
+            resources:
+              {{- toYaml . | nindent 14 }}
+            {{- end }}
             env:
               {{- include "openreplay.env" (dict "ctx" .) | nindent 14 }}
               {{- include "openreplay.secretEnv" (dict "ctx" .) | nindent 14 }}

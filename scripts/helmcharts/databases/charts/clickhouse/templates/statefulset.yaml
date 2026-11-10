@@ -62,6 +62,10 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.backupImage.repository }}:{{ .Values.backupImage.tag }}"
           imagePullPolicy: {{ .Values.backupImage.pullPolicy }}
+          {{- with .Values.backupResources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           args:
             - server
           ports:
@@ -140,6 +144,9 @@ spec:
   - metadata:
       name: default-chi-openreplay-clickhouse-replicated-0-0-0
     spec:
+      {{- with .Values.storageClassName }}
+      storageClassName: {{ . | quote }}
+      {{- end }}
       accessModes: [ "ReadWriteOnce" ]
       resources:
         requests:
