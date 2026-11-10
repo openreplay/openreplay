@@ -86,4 +86,20 @@ describe('sprite holder', () => {
     expect(symbol.querySelector('a')!.hasAttribute('href')).toBe(false);
     expect(symbol.querySelector('circle')).not.toBeNull();
   });
+
+  // The markup is read as XML, then written back and read again as HTML. The two parsers
+  // disagree on where a comment or a processing instruction ends, so the rules have to
+  // hold on the tree the HTML parser built: that is the one sent to the replay frame.
+  it.each([
+    ['a comment', '<!--><path d="M0 0" onclick="void 0"/>-->'],
+    ['a processing instruction', '<?x ><path d="M0 0" onclick="void 0"/>?>'],
+  ])('applies the rules to markup hidden from XML in %s', (_, hidden) => {
+    const holder = createSpriteHolder();
+    const markup = `<svg xmlns="${SVG}" viewBox="0 0 16 16">${hidden}</svg>`;
+
+    handleSprites({}, new DOMParser(), spriteMessage(7, markup), holder);
+
+    expect(holder.querySelector('symbol')).not.toBeNull();
+    expect(holder.querySelector('[onclick]')).toBeNull();
+  });
 });

@@ -28,6 +28,10 @@ export function createSpriteHolder(): SVGElement {
  * reaches the replay as one string and so never passes DOMManager's per-message
  * checks. A second layer only: the inert holder and the frame sandbox are what
  * keep this markup from executing.
+ *
+ * Has to run on the tree the HTML parser built, not on the XML one the markup is
+ * first read into: the two parsers disagree (on where a comment ends, for one),
+ * so markup can be inert text in XML and elements after the HTML re-parse.
  */
 function scrubSprite(root: Element): void {
   Array.from(root.querySelectorAll('*')).forEach((node) => {
@@ -64,7 +68,6 @@ export function handleSprites(
     const svgDoc = parser.parseFromString(svgData, 'image/svg+xml');
     const originalSvg = svgDoc.querySelector('svg');
     if (originalSvg) {
-      scrubSprite(originalSvg);
       // Created by the holder's document, never the app's: see createSpriteHolder.
       const symbol = spriteMapSvg.ownerDocument.createElementNS(
         SVG_NS,
@@ -77,6 +80,7 @@ export function handleSprites(
         originalSvg.getAttribute('viewBox') || '0 0 24 24',
       );
       symbol.innerHTML = originalSvg.innerHTML;
+      scrubSprite(symbol);
 
       spriteMapSvg.appendChild(symbol);
       msg.value = `#${symbolId}`;
