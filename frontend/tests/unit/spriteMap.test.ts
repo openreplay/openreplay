@@ -93,6 +93,37 @@ describe('DOMManager sprite map', () => {
     expect(frameDoc.getElementById('symbol-209')).not.toBeNull();
   });
 
+  // The symbols are recorded markup. Parsed into a node of the app's document they can
+  // run there, detached or not; the replay document is sandboxed.
+  it('never parses the symbols into a node of the app document', async () => {
+    const appCreate = jest.spyOn(document, 'createElementNS');
+    const written: Document[] = [];
+    const frameElement = (frame.contentWindow as any).Element.prototype;
+    const innerHTML = Object.getOwnPropertyDescriptor(
+      frameElement,
+      'innerHTML',
+    )!;
+    Object.defineProperty(frameElement, 'innerHTML', {
+      ...innerHTML,
+      set(this: Element, value: string) {
+        written.push(this.ownerDocument);
+        innerHTML.set!.call(this, value);
+      },
+    });
+
+    try {
+      // Content first: the host is then filled while <body> is still unlinked.
+      manager.setSpriteContent(SYMBOLS);
+      await apply(pageMessages());
+    } finally {
+      Object.defineProperty(frameElement, 'innerHTML', innerHTML);
+    }
+
+    expect(appCreate).not.toHaveBeenCalled();
+    expect(written).toEqual([frameDoc]);
+    expect(frameDoc.getElementById('symbol-209')).not.toBeNull();
+  });
+
   it('survives the VDOM reconciliation of later mutations', async () => {
     await apply(pageMessages());
     manager.setSpriteContent(SYMBOLS);

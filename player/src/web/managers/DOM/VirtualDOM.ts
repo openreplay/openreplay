@@ -338,11 +338,34 @@ export class VHTMLElement extends VElement {
  * the replay document (`<use>` refuses external and data: refs as cross-origin).
  * Its content comes from innerHTML instead of the message stream, so VParent's child
  * reconciliation must not run here: it would prune every symbol as an unexpected node.
+ *
+ * That content is recorded markup going through the HTML parser, so the node is always
+ * created by the replay document, which is sandboxed: VElement's lazy creation would use
+ * the app's `document` whenever the node is read before its parent is linked, and markup
+ * parsed into a node of the app's document can run there even while detached.
  */
 export class VSpriteMap extends VElement {
   private content = '';
 
   private dirty = false;
+
+  constructor(
+    private readonly replayDocument: Document,
+    index: number,
+  ) {
+    super('svg', true, index, index);
+  }
+
+  protected createNode() {
+    const node = this.replayDocument.createElementNS(
+      'http://www.w3.org/2000/svg',
+      'svg',
+    );
+    node.setAttribute('id', 'OPENREPLAY_SPRITES_MAP');
+    node.setAttribute('style', 'display: none;');
+    node.dataset.openreplayId = this.index.toString();
+    return node;
+  }
 
   setContent(content: string) {
     if (content === this.content) {
@@ -354,6 +377,10 @@ export class VSpriteMap extends VElement {
 
   applyChanges() {
     if (!this.dirty) {
+      return;
+    }
+    if (this.node.ownerDocument === document) {
+      console.error('Openreplay: sprite map is outside of the replay document');
       return;
     }
     this.node.innerHTML = this.content;

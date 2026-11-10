@@ -26,6 +26,11 @@ import type { SkipInterval } from './managers/ActivityManager';
 
 import HookManager from './managers/HookManager';
 import ConnectionManager from './managers/ConnectionManager';
+import {
+  SPRITE_MARKER,
+  createSpriteHolder,
+  handleSprites,
+} from './managers/DOM/spriteMap';
 
 interface RawList {
   event: Record<string, any>[] & { tabId: string | null };
@@ -428,12 +433,7 @@ export default class MessageManager {
   createSpriteMap = () => {
     if (!this.spriteMapSvg) {
       this.domParser = new DOMParser();
-      this.spriteMapSvg = document.createElementNS(
-        'http://www.w3.org/2000/svg',
-        'svg',
-      );
-      this.spriteMapSvg.setAttribute('style', 'display: none;');
-      this.spriteMapSvg.setAttribute('id', 'reconstructed-sprite');
+      this.spriteMapSvg = createSpriteHolder();
     }
   };
 
@@ -445,7 +445,7 @@ export default class MessageManager {
     if (msg.tp === 9999) return;
     this.hookManager.append(msg);
     if (msg.tp === MType.SetNodeAttribute) {
-      if (msg.value.includes('_$OPENREPLAY_SPRITE$_')) {
+      if (msg.value.includes(SPRITE_MARKER)) {
         this.createSpriteMap();
         if (!this.domParser) {
           return console.error('DOM parser is not initialized?');
@@ -577,37 +577,4 @@ function mapTabs(tabs: Record<string, TabSessionManager>) {
   });
 
   return tabMap;
-}
-
-function handleSprites(
-  potentialSpriteMap: Record<string, any>,
-  parser: DOMParser,
-  msg: Record<string, any>,
-  spriteMapSvg: SVGElement,
-) {
-  const [_, svgData] = msg.value.split('_$OPENREPLAY_SPRITE$_');
-  const potentialSprite = potentialSpriteMap[svgData];
-  if (potentialSprite) {
-    msg.value = potentialSprite;
-  } else {
-    const svgDoc = parser.parseFromString(svgData, 'image/svg+xml');
-    const originalSvg = svgDoc.querySelector('svg');
-    if (originalSvg) {
-      const symbol = document.createElementNS(
-        'http://www.w3.org/2000/svg',
-        'symbol',
-      );
-      const symbolId = `symbol-${msg.id || `ind-${msg.time}`}`; // Generate an ID if missing
-      symbol.setAttribute('id', symbolId);
-      symbol.setAttribute(
-        'viewBox',
-        originalSvg.getAttribute('viewBox') || '0 0 24 24',
-      );
-      symbol.innerHTML = originalSvg.innerHTML;
-
-      spriteMapSvg.appendChild(symbol);
-      msg.value = `#${symbolId}`;
-      potentialSpriteMap[svgData] = `#${symbolId}`;
-    }
-  }
 }

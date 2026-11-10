@@ -255,17 +255,13 @@ export default class DOMManager extends ListWalker<Message> {
     if (this.spriteHosts.has(body)) {
       return;
     }
+    const replayDocument = this.screen.document;
+    if (!replayDocument) {
+      logger.error('No root iframe document found for the sprite map');
+      return;
+    }
     this.spriteHosts.add(body);
-    const spriteMap = new VSpriteMap(
-      'svg',
-      true,
-      SPRITE_MAP_INDEX,
-      SPRITE_MAP_INDEX,
-    );
-    // Set on the node, not through setAttribute: the queue is flushed by
-    // VElement.applyChanges, which VSpriteMap deliberately does not call.
-    spriteMap.node.setAttribute('id', 'OPENREPLAY_SPRITES_MAP');
-    spriteMap.node.setAttribute('style', 'display: none;');
+    const spriteMap = new VSpriteMap(replayDocument, SPRITE_MAP_INDEX);
     body.insertChildAt(spriteMap, SPRITE_MAP_INDEX);
     this.spriteMaps.push(spriteMap);
     this.writeSprites(spriteMap);
