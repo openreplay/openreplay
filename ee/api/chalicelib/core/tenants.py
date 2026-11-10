@@ -43,6 +43,25 @@ def get_by_api_key(api_key):
         return helper.dict_to_camel_case(cur.fetchone())
 
 
+def get_by_tenant_key(tenant_key):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(f"""SELECT tenants.tenant_id,
+                                       tenants.name,
+                                       tenants.api_key,
+                                       tenants.created_at,
+                                        '{license.EDITION}' AS edition,
+                                        openreplay_version() AS version_number,
+                                        tenants.opt_out,
+                                        tenants.tenant_key
+                                FROM public.tenants
+                                WHERE tenants.tenant_key = %(tenant_key)s 
+                                    AND tenants.deleted_at ISNULL
+                                LIMIT 1;""",
+                            {"tenant_key": tenant_key})
+        cur.execute(query=query)
+        return helper.dict_to_camel_case(cur.fetchone())
+
+
 def tenants_exists_sync(use_pool=True):
     with pg_client.PostgresClient(use_pool=use_pool) as cur:
         cur.execute("SELECT EXISTS(SELECT 1 FROM public.tenants)")
