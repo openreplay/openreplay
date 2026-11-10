@@ -97,6 +97,9 @@ tolerations: []
 
 affinity: {}
 storageSize: 100Gi
+# Resources for the clickhouse-backup sidecar and the backup CronJob.
+backupResources: {}
+backupCronResources: {}
 
 # Kernel / OS tuning (optional, disabled by default)
 # These require privileged initContainers and may need cluster-level configuration.

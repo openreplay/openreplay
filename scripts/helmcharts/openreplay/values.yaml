@@ -1,6 +1,9 @@
 migrationJob:
   podAnnotations:
     linkerd.io/inject: disabled
+  # Applied to every container of the databases-migrate Job (needed when the
+  # namespace has a ResourceQuota on requests/limits).
+  resources: {}
 
 # Safety guard: the openreplay-version ConfigMap template aborts helm at
 # render time if the cluster already has a newer version than Chart.AppVersion.

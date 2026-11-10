@@ -263,6 +263,10 @@ spec:
       - name: fix-aof
         image: {{ template "redis.image" . }}
         imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+        {{- with .Values.master.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
         {{- if .Values.containerSecurityContext.enabled }}
         securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
         {{- end }}
