@@ -141,22 +141,6 @@ def generate_new_api_key(user_id):
     return helper.dict_to_camel_case(r)
 
 
-def __get_account_info(tenant_id, user_id):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(
-                f"""SELECT users.name, 
-                           tenants.name AS tenant_name, 
-                           tenants.opt_out
-                    FROM public.users INNER JOIN public.tenants ON(TRUE)
-                    WHERE users.user_id = %(userId)s
-                        AND users.deleted_at IS NULL;""",
-                {"tenantId": tenant_id, "userId": user_id})
-        )
-        r = cur.fetchone()
-    return helper.dict_to_camel_case(r)
-
-
 def get_by_email_only(email):
     with pg_client.PostgresClient() as cur:
         cur.execute(

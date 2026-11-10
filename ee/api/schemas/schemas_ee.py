@@ -54,10 +54,6 @@ class RolePayloadSchema(BaseModel):
     _transform_name = field_validator('name', mode="before")(remove_whitespace)
 
 
-class CreateMemberSchema(schemas.CreateMemberSchema):
-    roleId: Optional[int] = Field(default=None)
-
-
 class EditMemberSchema(BaseModel):
     name: str = Field(...)
     email: EmailStr = Field(...)

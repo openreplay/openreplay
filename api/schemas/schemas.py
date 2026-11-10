@@ -54,18 +54,6 @@ class UserSignupSchema(UserLoginSchema):
     )
 
 
-class EditAccountSchema(BaseModel):
-    name: Optional[str] = Field(default=None)
-    tenantName: Optional[str] = Field(default=None)
-    opt_out: Optional[bool] = Field(default=None)
-
-    _transform_name = field_validator("name", mode="before")(remove_whitespace)
-    _transform_tenantName = field_validator("tenantName", mode="before")(
-        remove_whitespace
-    )
-    _check_account_name = field_validator("name", "tenantName")(check_account_name)
-
-
 class ForgetPasswordPayloadSchema(_GRecaptcha):
     email: EmailStr = Field(...)
 
@@ -184,16 +172,6 @@ class WebhookSchema(BaseModel):
     auth_header: Optional[str] = Field(default=None)
     name: str = Field(default="", max_length=100, pattern=NAME_PATTERN)
 
-    _transform_name = field_validator("name", mode="before")(remove_whitespace)
-
-
-class CreateMemberSchema(BaseModel):
-    user_id: Optional[int] = Field(default=None)
-    name: str = Field(...)
-    email: EmailStr = Field(...)
-    admin: Optional[bool] = Field(default=False)
-
-    _transform_email = field_validator("email", mode="before")(transform_email)
     _transform_name = field_validator("name", mode="before")(remove_whitespace)
 
 

@@ -5,15 +5,15 @@ from typing import Optional
 
 from cachetools import TTLCache, cached
 from decouple import config
-from fastapi import BackgroundTasks, HTTPException
+from fastapi import HTTPException
 from psycopg2.extras import Json
 from pydantic import BaseModel, model_validator
 from starlette import status
 
 import schemas
-from chalicelib.core import authorizers, roles, spot, tenants
+from chalicelib.core import authorizers, roles, spot
 from chalicelib.core.mcp import authorizers as mcp_authorizers
-from chalicelib.utils import email_helper, helper, pg_client
+from chalicelib.utils import helper, pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 
 logger = logging.getLogger(__name__)
@@ -22,138 +22,6 @@ AUDIENCE = "front:OpenReplay"
 
 def __generate_invitation_token():
     return secrets.token_urlsafe(64)
-
-
-def create_new_member(
-        tenant_id,
-        email,
-        invitation_token,
-        admin,
-        name,
-        owner=False,
-        role_id=None,
-        modules=[],
-):
-    with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(
-            f""" \
-            WITH u AS (
-            INSERT
-            INTO public.users (tenant_id, email, role, name, data, role_id{", settings" if len(modules) > 0 else ""})
-            VALUES (%(tenant_id)s, %(email)s, %(role)s, %(name)s, %(data)s,
-                    (SELECT COALESCE ((SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND role_id = %(role_id)s), (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name = 'Member' LIMIT 1), (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name != 'Owner' LIMIT 1)))
-                    {", %(settings)s" if len(modules) > 0 else ""})
-                RETURNING tenant_id, user_id, email, role, name, created_at, role_id
-                ), au AS (
-            INSERT
-            INTO public.basic_authentication (user_id, invitation_token, invited_at)
-            VALUES ((SELECT user_id FROM u), %(invitation_token)s, timezone('utc'::text, now()))
-                RETURNING invitation_token
-                )
-            SELECT u.user_id,
-                   u.email,
-                   u.role,
-                   u.name,
-                   u.created_at,
-                   (CASE WHEN u.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
-                   (CASE WHEN u.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
-                   (CASE WHEN u.role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                   au.invitation_token,
-                   u.role_id,
-                   roles.name                                             AS role_name,
-                   TRUE                                                   AS has_password
-            FROM au,
-                 u
-                     LEFT JOIN roles USING (tenant_id)
-            WHERE roles.role_id IS NULL
-               OR roles.role_id = (SELECT u.role_id FROM u);""",
-            {
-                "tenant_id": tenant_id,
-                "email": email,
-                "role": "owner" if owner else "admin" if admin else "member",
-                "name": name,
-                "data": json.dumps({"lastAnnouncementView": TimeUTC.now()}),
-                "invitation_token": invitation_token,
-                "role_id": role_id,
-                "settings": json.dumps({"modules": modules}),
-            },
-        )
-        cur.execute(query)
-        row = helper.dict_to_camel_case(cur.fetchone())
-        if row:
-            row["createdAt"] = TimeUTC.datetime_to_timestamp(row["createdAt"])
-        return row
-
-
-def restore_member(
-        tenant_id,
-        user_id,
-        email,
-        invitation_token,
-        admin,
-        name,
-        owner=False,
-        role_id=None,
-        modules=[],
-):
-    with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(
-            f"""\
-                    WITH u AS (UPDATE public.users
-                               SET name= %(name)s,
-                                   role = %(role)s,
-                                   deleted_at= NULL,
-                                   created_at = timezone('utc'::text, now()),
-                                   tenant_id= %(tenant_id)s,
-                                   api_key= generate_api_key(20),
-                                   role_id= (SELECT COALESCE((SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND role_id = %(role_id)s),
-                                                           (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name = 'Member' LIMIT 1),
-                                                           (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name != 'Owner' LIMIT 1)))
-                                   {",settings=%(settings)s" if len(modules) > 0 else ""}
-                               WHERE user_id=%(user_id)s
-                               RETURNING
-                                   tenant_id,
-                                   user_id,
-                                   email,
-                                   role,
-                                   name,
-                                   created_at,role_id),
-                         au AS (UPDATE public.basic_authentication
-                                SET invitation_token = %(invitation_token)s,
-                                    invited_at = timezone('utc'::text, now()),
-                                    change_pwd_expire_at = NULL,
-                                    change_pwd_token = NULL
-                                WHERE user_id=%(user_id)s
-                                RETURNING invitation_token)
-                    SELECT u.user_id,
-                           u.email,
-                           u.role,
-                           u.name,
-                           u.created_at,
-                           (CASE WHEN u.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
-                           (CASE WHEN u.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
-                           (CASE WHEN u.role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                           au.invitation_token,
-                           u.role_id,
-                           roles.name AS role_name,
-                           TRUE AS has_password
-                    FROM au,u LEFT JOIN roles USING(tenant_id)
-                    WHERE roles.role_id IS NULL OR roles.role_id = (SELECT u.role_id FROM u);""",
-            {
-                "tenant_id": tenant_id,
-                "user_id": user_id,
-                "email": email,
-                "role": "owner" if owner else "admin" if admin else "member",
-                "name": name,
-                "role_id": role_id,
-                "invitation_token": invitation_token,
-                "settings": json.dumps({"modules": modules}),
-            },
-        )
-        cur.execute(query)
-        result = cur.fetchone()
-        result["created_at"] = TimeUTC.datetime_to_timestamp(result["created_at"])
-    return helper.dict_to_camel_case(result)
 
 
 def generate_new_invitation(user_id):
@@ -246,79 +114,6 @@ def update(tenant_id, user_id, changes, output=True):
     return get_user(user_id=user_id, tenant_id=tenant_id)
 
 
-def create_member(
-        tenant_id,
-        user_id,
-        data: schemas.CreateMemberSchema,
-        background_tasks: BackgroundTasks,
-):
-    admin = get_user(tenant_id=tenant_id, user_id=user_id)
-    if not admin["admin"] and not admin["superAdmin"]:
-        return {"errors": ["unauthorized"]}
-    if data.user_id is not None:
-        return {"errors": ["please use POST/PUT /client/members/{memberId} for update"]}
-    user = get_by_email_only(email=data.email)
-    if user:
-        return {"errors": ["user already exists"]}
-
-    if data.name is None or len(data.name) == 0:
-        data.name = data.email
-    role_id = data.roleId
-    if role_id is None:
-        role_id = roles.get_role_by_name(tenant_id=tenant_id, name="member").get(
-            "roleId"
-        )
-    else:
-        role = roles.get_role(tenant_id=tenant_id, role_id=role_id)
-        if role is None:
-            return {"errors": ["role not found"]}
-        if role["name"].lower() == "owner" and role["protected"]:
-            return {"errors": ["invalid role"]}
-    invitation_token = __generate_invitation_token()
-    user = get_deleted_user_by_email(email=data.email)
-    modules = []
-    if tenants.has_service_account(tenant_id=tenant_id):
-        modules = ["usability-tests", "feature-flags", "replay-export"]
-    new_member = None
-    if user is not None and user["tenantId"] == tenant_id:
-        new_member = restore_member(
-            tenant_id=tenant_id,
-            email=data.email,
-            invitation_token=invitation_token,
-            admin=data.admin,
-            name=data.name,
-            user_id=user["userId"],
-            role_id=role_id,
-            modules=modules,
-        )
-    elif user is not None:
-        __rename_deleted_user(user_id=user["userId"], email=data.email)
-
-    if new_member is None:
-        new_member = create_new_member(
-            tenant_id=tenant_id,
-            email=data.email,
-            invitation_token=invitation_token,
-            admin=data.admin,
-            name=data.name,
-            role_id=role_id,
-            modules=modules,
-        )
-    new_member["invitationLink"] = __get_invitation_link(
-        new_member.pop("invitationToken")
-    )
-    background_tasks.add_task(
-        email_helper.send_team_invitation,
-        **{
-            "recipient": data.email,
-            "invitation_link": new_member["invitationLink"],
-            "client_id": tenants.get_by_tenant_id(tenant_id)["name"],
-            "sender_name": admin["name"],
-        },
-    )
-    return {"data": new_member}
-
-
 def __get_invitation_link(invitation_token):
     return config("SITE_URL") + config("invitation_link") % invitation_token
 
@@ -400,51 +195,6 @@ def generate_new_api_key(user_id):
     return helper.dict_to_camel_case(r)
 
 
-def __get_account_info(tenant_id, user_id):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(
-                """SELECT users.name,
-                          tenants.name AS tenant_name,
-                          tenants.opt_out
-                   FROM public.users
-                            INNER JOIN public.tenants USING (tenant_id)
-                   WHERE users.user_id = %(userId)s
-                     AND tenants.tenant_id = %(tenantId)s
-                     AND tenants.deleted_at IS NULL
-                     AND users.deleted_at IS NULL;""",
-                {"tenantId": tenant_id, "userId": user_id},
-            )
-        )
-        r = cur.fetchone()
-    return helper.dict_to_camel_case(r)
-
-
-def edit_account(user_id, tenant_id, changes: schemas.EditAccountSchema):
-    if (
-            changes.opt_out is not None
-            or changes.tenantName is not None
-            and len(changes.tenantName) > 0
-    ):
-        user = get_user(user_id=user_id, tenant_id=tenant_id)
-        if not user["superAdmin"] and not user["admin"]:
-            return {"errors": ["unauthorized"]}
-
-    if changes.name is not None and len(changes.name) > 0:
-        update(tenant_id=tenant_id, user_id=user_id, changes={"name": changes.name})
-
-    _tenant_changes = {}
-    if changes.tenantName is not None and len(changes.tenantName) > 0:
-        _tenant_changes["name"] = changes.tenantName
-
-    if changes.opt_out is not None:
-        _tenant_changes["opt_out"] = changes.opt_out
-    if len(_tenant_changes.keys()) > 0:
-        tenants.edit_tenant(tenant_id=tenant_id, changes=_tenant_changes)
-
-    return {"data": __get_account_info(tenant_id=tenant_id, user_id=user_id)}
-
-
 def edit_member(
         user_id_to_update, tenant_id, changes: schemas.EditMemberSchema, editor_id
 ):
@@ -493,35 +243,6 @@ def edit_member(
         )
         return {"data": get_member(user_id=user_id_to_update, tenant_id=tenant_id)}
     return {"data": user}
-
-
-def get_by_email_only(email):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(
-                """SELECT users.user_id,
-                          users.tenant_id,
-                          users.email,
-                          users.role,
-                          users.name,
-                          (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
-                          (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
-                          (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                          origin,
-                          basic_authentication.password IS NOT NULL                  AS has_password,
-                          role_id,
-                          internal_id,
-                          roles.name                                                 AS role_name
-                   FROM public.users
-                            LEFT JOIN public.basic_authentication USING (user_id)
-                            LEFT JOIN public.roles USING (role_id)
-                   WHERE users.email = %(email)s
-                     AND users.deleted_at IS NULL LIMIT 1;""",
-                {"email": email},
-            )
-        )
-        r = cur.fetchone()
-    return helper.dict_to_camel_case(r)
 
 
 def get_member(tenant_id, user_id):
@@ -823,6 +544,35 @@ def email_exists(email):
         )
         r = cur.fetchone()
     return r["count"] > 0
+
+
+def get_by_email_only(email):
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify(
+                """SELECT users.user_id,
+                          users.tenant_id,
+                          users.email,
+                          users.role,
+                          users.name,
+                          (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
+                          (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
+                          (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
+                          origin,
+                          basic_authentication.password IS NOT NULL                  AS has_password,
+                          role_id,
+                          internal_id,
+                          roles.name                                                 AS role_name
+                   FROM public.users
+                            LEFT JOIN public.basic_authentication USING (user_id)
+                            LEFT JOIN public.roles USING (role_id)
+                   WHERE users.email = %(email)s
+                     AND users.deleted_at IS NULL LIMIT 1;""",
+                {"email": email},
+            )
+        )
+        r = cur.fetchone()
+    return helper.dict_to_camel_case(r)
 
 
 def get_deleted_user_by_email(email):
@@ -1134,32 +884,6 @@ def create_sso_user(tenant_id, email, admin, name, origin, role_id, internal_id=
         )
         cur.execute(query)
         return helper.dict_to_camel_case(cur.fetchone())
-
-
-def __rename_deleted_user(user_id, email):
-    with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(
-            """SELECT COUNT(1) AS c
-               FROM public.users
-               WHERE email ILIKE %(email)s
-                 AND users.deleted_at IS NOT NULL;""",
-            {"email": f"deleted%_{email}"},
-        )
-        cur.execute(query)
-        row = cur.fetchone()
-        email_prefix = 'deleted'
-        if row is not None:
-            row = row["c"]
-            email_prefix = f"deleted{row}"
-        email_prefix += "_"
-        query = cur.mogrify(
-            """UPDATE public.users
-               SET email=%(email_prefix)s || email
-               WHERE users.user_id = %(user_id)s
-                 AND users.deleted_at IS NOT NULL;""",
-            {"user_id": user_id, "email_prefix": email_prefix},
-        )
-        cur.execute(query)
 
 
 def logout(user_id: int):

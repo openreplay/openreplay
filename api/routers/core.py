@@ -5,13 +5,13 @@ from decouple import config
 from fastapi import Depends, Body, BackgroundTasks
 
 import schemas
-from chalicelib.core import projects, reset_password, log_tools, \
+from chalicelib.core import projects, reset_password, \
     announcements, assist, mobile, boarding, webhook, users, tags
 from chalicelib.core.collaborations.collaboration_msteams import MSTeams
 from chalicelib.core.collaborations.collaboration_slack import Slack
 from chalicelib.core.issue_tracking import github, integrations_global, integrations_manager, \
     jira_cloud
-from chalicelib.core.log_tools import datadog, newrelic, stackdriver, elasticsearch, \
+from chalicelib.core.log_tools import log_tools, datadog, newrelic, stackdriver, elasticsearch, \
     sentry, bugsnag, cloudwatch, sumologic, rollbar
 from chalicelib.core.sessions import sessions_assignments
 from chalicelib.core.sourcemaps import sourcemaps
