@@ -1,18 +1,8 @@
-import math
-import random
 import re
-import string
 from typing import Union
-from urllib.parse import urlparse
-import hashlib
 from decouple import config
 
 import schemas
-from chalicelib.utils.TimeUTC import TimeUTC
-
-
-def random_string(length=36):
-    return "".join(random.choices(string.hexdigits, k=length))
 
 
 def list_to_camel_case(items: list[dict], flatten: bool = False, ignore_keys=[]) -> list[dict]:
@@ -88,11 +78,6 @@ def key_to_camel_case(snake_str, delimiter='_'):
 def key_to_snake_case(name, delimiter='_', split_number=False):
     s1 = re.sub('(.)([A-Z][a-z]+)', fr'\1{delimiter}\2', name)
     return re.sub('([a-z])([A-Z0-9])' if split_number else '([a-z0-9])([A-Z])', fr'\1{delimiter}\2', s1).lower()
-
-
-def key_to_title_case(name, delimiter='_'):
-    snake = key_to_snake_case(name, delimiter)
-    return ' '.join(word.capitalize() for word in snake.split(delimiter) if word)
 
 
 TRACK_TIME = True
@@ -176,11 +161,6 @@ def values_for_operator(value: Union[str, list],
                     schemas.ClickEventExtraOperator.CONTAINS, schemas.ClickEventExtraOperator.NOT_CONTAINS):
             return f"%{value}%"
     return value
-
-
-def is_alphabet_space_dash(word):
-    r = re.compile("^[a-zA-Z -]*$")
-    return r.match(word) is not None
 
 
 def flatten_nested_dicts(obj):

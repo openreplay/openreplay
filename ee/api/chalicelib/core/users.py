@@ -972,7 +972,7 @@ def refresh_jwt_iat_jti(user_id):
         return RefreshLoginJWTs(**row)
 
 
-def authenticate(email, password, for_change_password=False) -> dict | bool | None:
+def authenticate(email, password, for_change_password=False) -> dict | None:
     if config("enforce_SSO", cast=bool, default=False) and helper.is_saml2_available():
         return {"errors": ["must sign-in with SSO, enforced by admin"]}
     with pg_client.PostgresClient() as cur:
@@ -1020,7 +1020,7 @@ def authenticate(email, password, for_change_password=False) -> dict | bool | No
 
     if r is not None:
         if for_change_password:
-            return True
+            return {}
         r = helper.dict_to_camel_case(r)
         if r["serviceAccount"]:
             raise HTTPException(

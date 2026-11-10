@@ -190,8 +190,6 @@ Pipfile.lock
 /chalicelib/core/collaborations/collaboration_base.py
 /chalicelib/core/collaborations/collaboration_msteams.py
 /chalicelib/core/collaborations/collaboration_slack.py
-/chalicelib/core/countries.py
-/chalicelib/core/metrics/custom_metrics.py
 /chalicelib/core/metrics/dashboards.py
 /chalicelib/core/metrics/funnels.py
 /chalicelib/core/metrics/heatmaps
@@ -200,7 +198,6 @@ Pipfile.lock
 /chalicelib/core/log_tools/*
 /chalicelib/core/mcp/__init__.py
 /chalicelib/core/mcp/tracer.py
-/chalicelib/core/metadata.py
 /chalicelib/core/mobile.py
 /chalicelib/core/saved_search.py
 /chalicelib/core/sessions/**/*.py
@@ -213,11 +210,9 @@ Pipfile.lock
 /chalicelib/utils/__init__.py
 /chalicelib/utils/args_transformer.py
 /chalicelib/utils/captcha.py
-/chalicelib/utils/dev.py
 /chalicelib/utils/email_handler.py
 /chalicelib/utils/email_helper.py
 /chalicelib/utils/env_secrets.py
-/chalicelib/utils/event_filter_definition.py
 /chalicelib/utils/github_client_v3.py
 /chalicelib/utils/helper.py
 /chalicelib/utils/html/
@@ -247,11 +242,9 @@ Pipfile.lock
 /schemas/schemas_mcp.py
 /schemas/transformers_validators.py
 /test/
-/chalicelib/core/user_testing.py
 /orpy.py
 /chalicelib/core/usability_testing/
 /NOTES.md
-/chalicelib/core/db_request_handler.py
 /chalicelib/utils/or_cache/
 /routers/subs/health.py
 /chalicelib/core/spot.py
@@ -261,5 +254,4 @@ Pipfile.lock
 /chalicelib/utils/ch_client_exp.py
 /chalicelib/core/errors/
 /chalicelib/core/notes.py
-/chalicelib/utils/contextual_validators.py
 /chalicelib/utils/log.py

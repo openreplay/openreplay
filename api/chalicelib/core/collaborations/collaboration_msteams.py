@@ -54,51 +54,6 @@ class MSTeams(BaseCollaboration):
         return True
 
     @classmethod
-    def send_raw(cls, tenant_id, webhook_id, body):
-        integration = cls.get_integration(tenant_id=tenant_id, integration_id=webhook_id)
-        if integration is None:
-            return {"errors": ["msteams integration not found"]}
-        try:
-            r = ssrf.post_json(
-                endpoint=integration["endpoint"],
-                json_data=body,
-                timeout=5)
-            if r.status_code != 200:
-                logger.warning(f"!! issue sending msteams raw; webhookId:{webhook_id} code:{r.status_code}")
-                logger.warning(sanitize(r.text))
-                return None
-        except requests.exceptions.Timeout:
-            logger.warning(f"!! Timeout sending msteams raw webhookId:{webhook_id}")
-            return None
-        except Exception as e:
-            logger.warning(f"!! Issue sending msteams raw webhookId:{webhook_id}")
-            logger.warning(e)
-            return None
-        return {"data": r.text}
-
-    @classmethod
-    def send_batch(cls, tenant_id, webhook_id, attachments):
-        integration = cls.get_integration(tenant_id=tenant_id, integration_id=webhook_id)
-        if integration is None:
-            return {"errors": ["msteams integration not found"]}
-        logger.debug(f"====> sending msteams batch notification: {len(attachments)}")
-        for i in range(0, len(attachments), 50):
-            part = attachments[i:i + 50]
-            for j in range(1, len(part), 2):
-                part.insert(j, {"text": "***"})
-
-            r = ssrf.post_json(endpoint=integration["endpoint"],
-                               json_data={
-                                   "@type": "MessageCard",
-                                   "@context": "http://schema.org/extensions",
-                                   "summary": part[0]["activityTitle"],
-                                   "sections": part
-                               })
-            if r.status_code != 200:
-                logger.warning("!!!! something went wrong")
-                logger.warning(sanitize(r.text))
-
-    @classmethod
     def __share(cls, tenant_id, integration_id, attachement, extra=None):
         if extra is None:
             extra = {}

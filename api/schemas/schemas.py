@@ -1,5 +1,3 @@
-from enum import StrEnum
-from itertools import chain
 from typing import Annotated, List, Literal, Optional, Union
 
 from pydantic import (
@@ -22,7 +20,6 @@ from .transformers_validators import (
     check_alphanumeric,
     check_property_name,
     check_regex,
-    int_to_string,
     remove_duplicate_values,
     remove_whitespace,
     single_to_list,
@@ -238,15 +235,6 @@ class GdprSchema(BaseModel):
     sampleRate: int = Field(...)
     maskNumbers: bool = Field(...)
     defaultInputMode: str = Field(...)
-
-
-class SampleRateSchema(BaseModel):
-    rate: int = Field(..., ge=0, le=100)
-    capture_all: bool = Field(default=False)
-
-
-class WeeklyReportConfigSchema(BaseModel):
-    weekly_report: bool = Field(default=True)
 
 
 class IntegrationBase(BaseModel):
@@ -1045,5 +1033,3 @@ class TagCreate(TagUpdate):
     ignoreDeadClick: bool = Field(default=False)
 
 
-class ScopeSchema(BaseModel):
-    scope: int = Field(default=1, ge=1, le=2)
