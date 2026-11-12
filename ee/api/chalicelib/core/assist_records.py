@@ -50,35 +50,56 @@ def search_records(project_id: int, data: schemas.AssistRecordSearchPayloadSchem
         conditions.append("assist_records.created_at<=%(endDate)s")
 
     params = {"tenant_id": context.tenant_id, "project_id": project_id,
+              "current_user": context.user_id,
               "startDate": data.startTimestamp, "endDate": data.endTimestamp,
               "p_start": (data.page - 1) * data.limit, "p_limit": data.limit,
               **data.model_dump()}
-    if data.user_id is not None:
-        conditions.append("assist_records.user_id=%(user_id)s")
     if data.query is not None and len(data.query) > 0:
         conditions.append("(users.name ILIKE %(query)s OR assist_records.name ILIKE %(query)s)")
         params["query"] = helper.values_for_operator(value=data.query,
                                                      op=schemas.SearchEventOperator.CONTAINS)
+    # the author filter applies to the page only: both counts cover the same window and search
+    scope = "WHERE base.user_id=%(user_id)s" if data.user_id is not None else ""
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(f"""SELECT COUNT(assist_records.record_id) OVER () AS count,
-                                       record_id, user_id, session_id, assist_records.created_at, 
-                                       assist_records.name, duration, users.name AS created_by
-                                FROM assist_records
-                                      INNER JOIN projects USING (project_id)
-                                      LEFT JOIN users USING (user_id)
-                                WHERE {" AND ".join(conditions)}
-                                ORDER BY assist_records.created_at {data.order}
-                                LIMIT %(p_limit)s OFFSET %(p_start)s;""",
+        query = cur.mogrify(f"""WITH base AS (SELECT assist_records.record_id, assist_records.user_id,
+                                                     assist_records.session_id, assist_records.created_at,
+                                                     assist_records.name, assist_records.duration,
+                                                     users.name AS created_by,
+                                                     sessions.user_id AS visitor_id,
+                                                     sessions.user_anonymous_id AS visitor_anonymous_id,
+                                                     sessions.user_uuid AS visitor_uuid
+                                              FROM assist_records
+                                                   INNER JOIN projects USING (project_id)
+                                                   LEFT JOIN users USING (user_id)
+                                                   LEFT JOIN sessions
+                                                             ON (sessions.session_id = assist_records.session_id)
+                                              WHERE {" AND ".join(conditions)}),
+                                     counts AS (SELECT COUNT(1) AS count_all,
+                                                       COUNT(1) FILTER (WHERE user_id = %(current_user)s) AS count_mine
+                                                FROM base),
+                                     page AS (SELECT base.*, COUNT(1) OVER () AS total
+                                              FROM base
+                                              {scope}
+                                              ORDER BY base.created_at {data.order}
+                                              LIMIT %(p_limit)s OFFSET %(p_start)s)
+                                SELECT counts.*, page.*
+                                FROM counts
+                                     LEFT JOIN page ON (TRUE)
+                                ORDER BY page.created_at {data.order};""",
                             params)
         cur.execute(query)
         rows = helper.list_to_camel_case(cur.fetchall())
-        if len(rows) == 0:
-            return {"total": 0, "records": []}
 
-        results = {"total": rows[0]["count"]}
-        for r in rows:
-            r.pop("count")
-        results["records"] = rows
+    head = rows[0]
+    results = {"total": head["total"] or 0,
+               "counts": {"all": head["countAll"], "mine": head["countMine"]},
+               "records": []}
+    if head["recordId"] is None:
+        return results
+    for r in rows:
+        for k in ("total", "countAll", "countMine"):
+            r.pop(k)
+        results["records"].append(r)
 
     return results
 
