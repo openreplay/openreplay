@@ -2,8 +2,12 @@ import { cityAfterCode } from '@/lib/geo';
 import { RelativeTime } from '@/ui/data/RelativeTime';
 import { SessionAvatar } from '@/ui/data/SessionAvatar';
 import { seedFor } from '@/ui/data/avatar';
+import { BottomSheet } from '@/ui/filters/PhoneFilters';
+import { useViewport } from '@/ui/layout/use-viewport';
 import { PopoverPanel } from '@/ui/overlays/popover';
 import { Tooltip } from '@/ui/overlays/tooltip';
+import { FilterKey } from 'Types/filter/filterType';
+import { ChevronDown, ListFilter } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -11,7 +15,10 @@ import { useTranslation } from 'react-i18next';
 import { countries } from 'App/constants';
 import { IFRAME } from 'App/constants/storageKeys';
 import { formatTimeOrDate } from 'App/date';
+import { durationFormatted } from 'App/date';
 import { useStore } from 'App/mstore';
+import { sessions as sessionsRoute, withSiteId } from 'App/routes';
+import { useNavigate } from 'App/routing';
 import { capitalize } from 'App/utils';
 
 import { MetaChips } from 'Shared/SessionsTable/MetaChips';
@@ -23,8 +30,17 @@ const UserSessionsDrawer = React.lazy(
 
 function ReplayLead({ width, height }: { width?: number; height?: number }) {
   const { t } = useTranslation();
-  const { settingsStore, sessionStore, customFieldStore, projectsStore } =
-    useStore();
+  const {
+    settingsStore,
+    sessionStore,
+    customFieldStore,
+    projectsStore,
+    filterStore,
+    searchStore,
+  } = useStore();
+  const phone = useViewport() === 'phone';
+  const navigate = useNavigate();
+  const [sheet, setSheet] = React.useState(false);
   const session = sessionStore.current;
   const { timezone } = settingsStore.sessionSettings;
   const [details, setDetails] = React.useState(false);
@@ -114,6 +130,131 @@ function ReplayLead({ width, height }: { width?: number; height?: number }) {
   ];
 
   const liveWords = active === false ? t('Live, inactive') : t('Live, active');
+
+  // a fact that is a property leaves the replay for the list, narrowed to it
+  const filterBy = (
+    by: Partial<{ name: string; displayName: string }>,
+    value: string,
+  ) => {
+    const f = filterStore.findEvent(by);
+    if (!f?.name) return;
+    f.value = [value];
+    searchStore.addFilter(f);
+    setSheet(false);
+    navigate(withSiteId(sessionsRoute(), projectsStore.activeSiteId));
+  };
+  const fact = (
+    label: string,
+    value: React.ReactNode,
+    by?: [Partial<{ name: string; displayName: string }>, string],
+    mono?: boolean,
+  ) =>
+    !value ? null : !by ? (
+      <div key={label}>
+        <dt>{label}</dt>
+        <dd className={mono ? 'm-rs__facts-mono' : undefined}>{value}</dd>
+      </div>
+    ) : (
+      <div key={label} className="is-filter">
+        <dt>{label}</dt>
+        <dd>
+          <button
+            type="button"
+            className="m-rs__fact"
+            onClick={() => filterBy(by[0], by[1])}
+            aria-label={t('Show sessions with {{label}} {{value}}', {
+              label,
+              value: by[1],
+            })}
+          >
+            <span className={mono ? 'm-rs__facts-mono' : undefined}>
+              {value}
+            </span>
+            <ListFilter
+              size={14}
+              aria-hidden="true"
+              className="m-rs__fact-glyph"
+            />
+          </button>
+        </dd>
+      </div>
+    );
+
+  // at phone the header keeps the avatar and the name; a tap opens every fact
+  if (phone)
+    return (
+      <>
+        <button
+          type="button"
+          className="m-rs__who m-rs__who--door m-hover"
+          onClick={() => setSheet(true)}
+          aria-label={t('Session details: {{name}}', { name: userDisplayName })}
+        >
+          <SessionAvatar
+            seed={seedFor(session as any)}
+            size={28}
+            presence={
+              live ? (active === false ? 'inactive' : 'active') : undefined
+            }
+            animated={!!live}
+          />
+          <span className="m-rs__name m-truncate">{userDisplayName}</span>
+          <ChevronDown
+            size={14}
+            className="m-rs__door-caret"
+            aria-hidden="true"
+          />
+        </button>
+        <BottomSheet
+          open={sheet}
+          onClose={() => setSheet(false)}
+          title={t('Session details')}
+        >
+          <div className="m-rs__facts-who">
+            <SessionAvatar seed={seedFor(session as any)} size={40} />
+            <span className="m-rs__facts-name">{userDisplayName}</span>
+          </div>
+          <p className="m-rs__facts-hint">
+            {t('Tap a detail to see every session that has it.')}
+          </p>
+          <dl className="m-rs__facts">
+            {fact(
+              t('User'),
+              userId,
+              userId ? [{ name: FilterKey.USERID }, userId] : undefined,
+            )}
+            {fact(
+              t('City'),
+              place,
+              userCity ? [{ name: FilterKey.USER_CITY }, userCity] : undefined,
+            )}
+            {fact(
+              t('Browser'),
+              session.isMobileNative ? '' : capitalize(userBrowser ?? ''),
+              userBrowser
+                ? [{ name: FilterKey.USER_BROWSER }, userBrowser]
+                : undefined,
+            )}
+            {fact(
+              t('OS'),
+              os,
+              userOs ? [{ name: FilterKey.USER_OS }, userOs] : undefined,
+            )}
+            {fact(
+              t('Started'),
+              `${formatTimeOrDate(startedAt, timezone, true)}`,
+            )}
+            {fact(
+              t('Duration'),
+              session.durationMs ? durationFormatted(session.durationMs) : '',
+            )}
+            {Object.entries(shownMeta).map(([k, v]) =>
+              fact(k, v, v ? [{ displayName: k }, v] : undefined, true),
+            )}
+          </dl>
+        </BottomSheet>
+      </>
+    );
 
   return (
     <div className="m-rs__who">

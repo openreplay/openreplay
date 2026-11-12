@@ -6,6 +6,7 @@ import {
   DropdownMenuItems,
   DropdownMenuTrigger,
 } from '@/ui/actions/dropdown-menu';
+import { useViewport } from '@/ui/layout/use-viewport';
 import { useToast } from '@/ui/overlays/toast';
 import {
   Bookmark,
@@ -77,6 +78,21 @@ function ReplayActions({
 
   const [shareAt, setShareAt] = React.useState<number | null>(null);
   const share = () => setShareAt(store?.get().time ?? 0);
+  const phone = useViewport() === 'phone';
+  const bookmarkIcon = isEnterprise ? (
+    <Vault size={15} />
+  ) : favorite ? (
+    <BookmarkCheck size={15} />
+  ) : (
+    <Bookmark size={15} />
+  );
+  const bookmarkLabel = isEnterprise
+    ? favorite
+      ? t('Remove from vault')
+      : t('Add to vault')
+    : favorite
+      ? t('Remove bookmark')
+      : t('Bookmark');
 
   const reportIssue = () => {
     issueReportingStore.init({});
@@ -127,35 +143,24 @@ function ReplayActions({
           {t('Continuing live')}
         </Button>
       )}
-      <IconButton
-        icon={
-          isEnterprise ? (
-            <Vault size={15} />
-          ) : favorite ? (
-            <BookmarkCheck size={15} />
-          ) : (
-            <Bookmark size={15} />
-          )
-        }
-        label={
-          isEnterprise
-            ? favorite
-              ? t('Remove from vault')
-              : t('Add to vault')
-            : favorite
-              ? t('Remove bookmark')
-              : t('Bookmark')
-        }
-        variant="ghost"
-        pressed={favorite}
-        onClick={toggleFavorite}
-      />
-      <IconButton
-        icon={<Share2 size={15} />}
-        label={t('Share session')}
-        variant="ghost"
-        onClick={share}
-      />
+      {/* at phone Bookmark and Share live in the ⋯ menu */}
+      {!phone && (
+        <>
+          <IconButton
+            icon={bookmarkIcon}
+            label={bookmarkLabel}
+            variant="ghost"
+            pressed={favorite}
+            onClick={toggleFavorite}
+          />
+          <IconButton
+            icon={<Share2 size={15} />}
+            label={t('Share session')}
+            variant="ghost"
+            onClick={share}
+          />
+        </>
+      )}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <span>
@@ -169,6 +174,22 @@ function ReplayActions({
         <DropdownMenuContent align="end">
           <DropdownMenuItems
             items={[
+              ...(phone
+                ? [
+                    {
+                      key: 'bookmark',
+                      icon: bookmarkIcon,
+                      label: bookmarkLabel,
+                      onClick: toggleFavorite,
+                    },
+                    {
+                      key: 'share',
+                      icon: <Share2 size={13} />,
+                      label: t('Share session'),
+                      onClick: share,
+                    },
+                  ]
+                : []),
               ...(session.isMobileNative
                 ? []
                 : [

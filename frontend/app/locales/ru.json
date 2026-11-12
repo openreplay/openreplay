@@ -3020,5 +3020,11 @@
   "Show {{n}} actions": "Показать действия: {{n}}",
   "Show {{n}} actions_one": "Показать действия: {{n}}",
   "Show {{n}} actions_other": "Показать действия: {{n}}",
-  "Clear and close the search": "Очистить и закрыть поиск"
+  "Clear and close the search": "Очистить и закрыть поиск",
+  "Session details": "Сведения о сессии",
+  "Session details: {{name}}": "Сведения о сессии: {{name}}",
+  "Tap a detail to see every session that has it.": "Нажмите на деталь, чтобы увидеть все сессии с ней.",
+  "Show sessions with {{label}} {{value}}": "Показать сессии с {{label}} {{value}}",
+  "Hide the panel": "Скрыть панель",
+  "Show the panel": "Показать панель"
 }

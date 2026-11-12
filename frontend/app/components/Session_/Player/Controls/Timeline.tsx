@@ -163,7 +163,7 @@ function Timeline({
     <div
       className={
         inline
-          ? 'relative flex flex-1 min-w-0 items-center'
+          ? 'm-tl__track relative flex flex-1 min-w-0 items-center'
           : 'flex items-center absolute w-full'
       }
       style={

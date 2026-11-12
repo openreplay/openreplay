@@ -2843,5 +2843,11 @@
   "Show {{n}} actions": "显示 {{n}} 个操作",
   "Show {{n}} actions_one": "显示 {{n}} 个操作",
   "Show {{n}} actions_other": "显示 {{n}} 个操作",
-  "Clear and close the search": "清除并关闭搜索"
+  "Clear and close the search": "清除并关闭搜索",
+  "Session details": "会话详情",
+  "Session details: {{name}}": "会话详情：{{name}}",
+  "Tap a detail to see every session that has it.": "点按某项详情，查看所有具有该详情的会话。",
+  "Show sessions with {{label}} {{value}}": "显示 {{label}} 为 {{value}} 的会话",
+  "Hide the panel": "隐藏面板",
+  "Show the panel": "显示面板"
 }

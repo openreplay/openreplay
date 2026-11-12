@@ -2902,5 +2902,11 @@
   "Show {{n}} actions": "Show {{n}} actions",
   "Show {{n}} actions_one": "Show {{n}} action",
   "Show {{n}} actions_other": "Show {{n}} actions",
-  "Clear and close the search": "Clear and close the search"
+  "Clear and close the search": "Clear and close the search",
+  "Session details": "Session details",
+  "Session details: {{name}}": "Session details: {{name}}",
+  "Tap a detail to see every session that has it.": "Tap a detail to see every session that has it.",
+  "Show sessions with {{label}} {{value}}": "Show sessions with {{label}} {{value}}",
+  "Hide the panel": "Hide the panel",
+  "Show the panel": "Show the panel"
 }

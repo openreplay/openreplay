@@ -12,7 +12,6 @@ import { sessions as sessionsRoute, withSiteId } from 'App/routes';
 import { useHistory } from 'App/routing';
 import MobilePlayer from 'Components/Session/MobilePlayer';
 
-import PhoneHorizontalWarn from './Player/SharedComponents/PhoneHorizontal';
 import SessionNotFound from './SessionNotFound';
 import WebPlayer from './WebPlayer';
 
@@ -64,7 +63,6 @@ function Session({
     );
   return (
     <>
-      <PhoneHorizontalWarn />
       <Loader className="flex-1" loading={!session.sessionId}>
         <div className="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden">
           {player}

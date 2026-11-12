@@ -4,8 +4,9 @@ import { Button } from '@/ui/actions/button';
 import { CountSuffix } from '@/ui/data/CountSuffix';
 import { SessionAvatar } from '@/ui/data/SessionAvatar';
 import { Tabs, TabsList, TabsTrigger } from '@/ui/layout/tabs';
+import { useViewport } from '@/ui/layout/use-viewport';
 import { Tooltip } from '@/ui/overlays/tooltip';
-import { ArrowLeft, PanelRight } from 'lucide-react';
+import { ArrowLeft, PanelBottom, PanelRight } from 'lucide-react';
 import React, { type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -57,6 +58,8 @@ export function ReplayScreen({
   children,
 }: ReplayScreenProps) {
   const { t } = useTranslation();
+  // at phone the panel opens as a sheet from the bottom
+  const phone = useViewport() === 'phone';
   const open = panel != null && renderPanel != null;
   // the panel slides out as it slid in, so it stays drawn for the exit
   const {
@@ -105,11 +108,17 @@ export function ReplayScreen({
         {panels.length > 0 && onPanel && (
           <div className="m-ihdr__panels" role="group">
             <IconButton
-              icon={<PanelRight size={15} />}
+              icon={
+                phone ? <PanelBottom size={15} /> : <PanelRight size={15} />
+              }
               label={
-                open
-                  ? t('Hide the side panel (F)')
-                  : t('Show the side panel (F)')
+                phone
+                  ? open
+                    ? t('Hide the panel')
+                    : t('Show the panel')
+                  : open
+                    ? t('Hide the side panel (F)')
+                    : t('Show the side panel (F)')
               }
               variant="ghost"
               pressed={open}

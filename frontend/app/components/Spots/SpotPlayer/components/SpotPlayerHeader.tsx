@@ -7,6 +7,7 @@ import {
   DropdownMenuTrigger,
 } from '@/ui/actions/dropdown-menu';
 import { SessionAvatar } from '@/ui/data/SessionAvatar';
+import { useViewport } from '@/ui/layout/use-viewport';
 import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
 import { PopoverPanel } from '@/ui/overlays/popover';
 import { useToast } from '@/ui/overlays/toast';
@@ -17,6 +18,7 @@ import {
   MoreHorizontal,
   Settings2,
   Trash2,
+  Users,
 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
@@ -25,7 +27,6 @@ import { useTranslation } from 'react-i18next';
 import { useStore } from 'App/mstore';
 import { spotsList } from 'App/routes';
 import { useHistory } from 'App/routing';
-import { mobileScreen } from 'App/utils/isMobile';
 
 import AccessModal from './AccessModal';
 
@@ -74,11 +75,12 @@ export const SpotActions = observer(() => {
   const history = useHistory();
   const { spotStore, userStore } = useStore();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const phone = useViewport() === 'phone';
   const isLoggedIn = !!userStore.jwt;
   const hasShareAccess = userStore.isEnterprise
     ? userStore.account.permissions.includes('SPOT_PUBLIC')
     : true;
-  if (!isLoggedIn || mobileScreen) return null;
+  if (!isLoggedIn) return null;
   const spot = spotStore.currentSpot!;
 
   const onCopy = () => {
@@ -105,20 +107,33 @@ export const SpotActions = observer(() => {
 
   return (
     <>
-      <Button onClick={onCopy}>
-        <Copy size={13} />
-        {t('Copy')}
-      </Button>
+      {/* at phone Copy joins the menu and Manage access is its glyph */}
+      {!phone && (
+        <Button onClick={onCopy}>
+          <Copy size={13} />
+          {t('Copy')}
+        </Button>
+      )}
       {hasShareAccess ? (
         <PopoverPanel
           placement="bottomRight"
           className="p-5"
           content={<AccessModal />}
         >
-          <Button>
-            <Settings2 size={13} />
-            {t('Manage access')}
-          </Button>
+          {phone ? (
+            <span>
+              <IconButton
+                icon={<Users size={15} />}
+                label={t('Manage access')}
+                variant="ghost"
+              />
+            </span>
+          ) : (
+            <Button>
+              <Settings2 size={13} />
+              {t('Manage access')}
+            </Button>
+          )}
         </PopoverPanel>
       ) : null}
       <DropdownMenu>
@@ -134,6 +149,16 @@ export const SpotActions = observer(() => {
         <DropdownMenuContent align="end">
           <DropdownMenuItems
             items={[
+              ...(phone
+                ? [
+                    {
+                      key: 'copy',
+                      icon: <Copy size={13} />,
+                      label: t('Copy link'),
+                      onClick: onCopy,
+                    },
+                  ]
+                : []),
               {
                 key: 'download',
                 icon: <Download size={13} />,
