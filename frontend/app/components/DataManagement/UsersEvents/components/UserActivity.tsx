@@ -6,6 +6,7 @@ import { CheckRow } from '@/ui/inputs/CheckRow';
 import { DateRange } from '@/ui/inputs/DateRange';
 import { ListFooter } from '@/ui/layout/ListFooter';
 import { PagePanel } from '@/ui/layout/PageCard';
+import { setRowsPerPage, useRowsPerPage } from '@/ui/layout/rows-per-page';
 import { PopoverSearch } from '@/ui/overlays/PopoverSearch';
 import { PopoverPanel } from '@/ui/overlays/popover';
 import { useQuery } from '@tanstack/react-query';
@@ -24,8 +25,6 @@ import { getEventIcon } from 'Components/DataManagement/Activity/getEventIcon';
 
 import UserSessionsDrawer from 'Shared/UserSessionsDrawer';
 
-const LIMIT = 50;
-
 function UserActivity({ userId, name }: { userId: string; name: string }) {
   const { t } = useTranslation();
   const { analyticsStore, filterStore, projectsStore } = useStore();
@@ -37,6 +36,7 @@ function UserActivity({ userId, name }: { userId: string; name: string }) {
   const [typeQuery, setTypeQuery] = React.useState('');
   const [openEvent, setOpenEvent] = React.useState<string | null>(null);
   const [sessionsOpen, setSessionsOpen] = React.useState(false);
+  const pageSize = useRowsPerPage('person-activity');
 
   const eventTypes = filterStore
     .getCurrentProjectFilters()
@@ -57,6 +57,7 @@ function UserActivity({ userId, name }: { userId: string; name: string }) {
       period.end,
       hidden,
       page,
+      pageSize,
     ],
     queryFn: () =>
       analyticsStore.fetchUserEvents(
@@ -65,7 +66,7 @@ function UserActivity({ userId, name }: { userId: string; name: string }) {
         period,
         hidden,
         page,
-        LIMIT,
+        pageSize,
       ),
   });
   const events = data?.events ?? [];
@@ -166,46 +167,51 @@ function UserActivity({ userId, name }: { userId: string; name: string }) {
           }
         />
       ) : (
-        <div className="m-ptl">
-          {days.map((d) => (
-            <div key={d.key}>
-              <div className="m-ptl__day">{d.key}</div>
-              {d.events.map((e) => (
-                <button
-                  key={e.event_id}
-                  type="button"
-                  className="m-ptl__row"
-                  onClick={() => setOpenEvent(e.event_id)}
-                >
-                  <span className="m-ptl__time">
-                    {formatTs(e.created_at, getLocalHourFormat())}
-                  </span>
-                  <span className="m-ptl__icon">
-                    {getEventIcon(e.isAutoCapture, e.event_name, 12)}
-                  </span>
-                  <span className="m-ptl__name m-truncate">
-                    {filterStore.getFilterDisplayName(e.event_name)}
-                  </span>
-                  <span className="m-ptl__env">{e.environment}</span>
-                  <ChevronRight
-                    size={13}
-                    className="m-ptl__chev"
-                    aria-hidden="true"
-                  />
-                </button>
-              ))}
-            </div>
-          ))}
-          {total > LIMIT && (
-            <ListFooter
-              page={page}
-              pageSize={LIMIT}
-              total={total}
-              noun={(count, n) => t('{{n}} events', { count, n })}
-              onPage={setPage}
-            />
-          )}
-        </div>
+        <>
+          <div className="m-ptl">
+            {days.map((d) => (
+              <div key={d.key}>
+                <div className="m-ptl__day">{d.key}</div>
+                {d.events.map((e) => (
+                  <button
+                    key={e.event_id}
+                    type="button"
+                    className="m-ptl__row"
+                    data-fit-row
+                    onClick={() => setOpenEvent(e.event_id)}
+                  >
+                    <span className="m-ptl__time">
+                      {formatTs(e.created_at, getLocalHourFormat())}
+                    </span>
+                    <span className="m-ptl__icon">
+                      {getEventIcon(e.isAutoCapture, e.event_name, 12)}
+                    </span>
+                    <span className="m-ptl__name m-truncate">
+                      {filterStore.getFilterDisplayName(e.event_name)}
+                    </span>
+                    <ChevronRight
+                      size={13}
+                      className="m-ptl__chev"
+                      aria-hidden="true"
+                    />
+                  </button>
+                ))}
+              </div>
+            ))}
+          </div>
+          <ListFooter
+            fit="person-activity"
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            noun={(count, n) => t('{{n}} events', { count, n })}
+            onPage={setPage}
+            onPageSize={(n) => {
+              setRowsPerPage(n);
+              setPage(1);
+            }}
+          />
+        </>
       )}
       <EventDetailsDrawer
         eventId={openEvent}

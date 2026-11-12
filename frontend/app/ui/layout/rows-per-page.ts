@@ -110,30 +110,42 @@ function scrollParent(el: HTMLElement): HTMLElement | null {
   return p;
 }
 
-/** How many rows of the table right before `foot` fit between its head and
- *  the bottom of the box that scrolls, with `foot` kept under them. */
-function measure(foot: HTMLElement, box: HTMLElement | null): number | null {
-  const prev = foot.previousElementSibling;
+function firstRows(prev: Element | null): { top: number; row: number } | null {
   const table =
     prev instanceof HTMLTableElement ? prev : prev?.querySelector('table');
   const body = table?.tBodies[0];
+  if (body && body.rows.length > 0) {
+    const rect = body.getBoundingClientRect();
+    return { top: rect.top, row: rect.height / body.rows.length };
+  }
+  // a list that is not a table marks its rows; group headings after the
+  // first one are not reserved for
+  const first = prev?.querySelector('[data-fit-row]');
+  if (!first) return null;
+  const rect = first.getBoundingClientRect();
+  return { top: rect.top, row: rect.height };
+}
+
+/** How many rows of the list right before `foot` fit between its head and
+ *  the bottom of the box that scrolls, with `foot` kept under them. */
+function measure(foot: HTMLElement, box: HTMLElement | null): number | null {
+  const rows = firstRows(foot.previousElementSibling);
   // a tab that is not shown keeps its footer mounted, with no size
-  if (!body || body.rows.length === 0 || !foot.offsetHeight) return null;
-  const rect = body.getBoundingClientRect();
-  const row = rect.height / body.rows.length;
+  if (!rows || !rows.row || !foot.offsetHeight) return null;
+  const { row } = rows;
   let top: number;
   let bottom: number;
   if (box) {
     const b = box.getBoundingClientRect();
     const cs = getComputedStyle(box);
-    top = rect.top + box.scrollTop;
+    top = rows.top + box.scrollTop;
     bottom =
       b.top +
       parseFloat(cs.borderTopWidth) +
       box.clientHeight -
       parseFloat(cs.paddingBottom);
   } else {
-    top = rect.top + window.scrollY;
+    top = rows.top + window.scrollY;
     bottom = window.innerHeight;
   }
   // the panel's padding and border under the footer
