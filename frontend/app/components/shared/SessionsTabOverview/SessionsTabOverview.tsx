@@ -16,7 +16,12 @@ import { SegmentIndicator } from '@/ui/filters/SegmentIndicator';
 import { DateRange } from '@/ui/inputs/DateRange';
 import { ListFooter } from '@/ui/layout/ListFooter';
 import { PageCard, PagePanel } from '@/ui/layout/PageCard';
-import { setRowsPerPage, useRowsPerPage } from '@/ui/layout/rows-per-page';
+import {
+  getRowsChoice,
+  getRowsPerPage,
+  setRowsPerPage,
+  useRowsPerPage,
+} from '@/ui/layout/rows-per-page';
 import { useViewport } from '@/ui/layout/use-viewport';
 import { useToast } from '@/ui/overlays/toast';
 import { Tooltip } from '@/ui/overlays/tooltip';
@@ -133,7 +138,7 @@ function SessionsTabOverview() {
   const [fields, setFields] = useState<SessionField[]>(readFields);
 
   const phone = useViewport() === 'phone';
-  const { list, total, lastPlayedSessionIds } = sessionStore;
+  const { list, total, lastPlayedSessionId } = sessionStore;
   const loading = sessionStore.loadingSessions;
   const { currentPage, activeTags } = searchStore;
   const pageSize = useRowsPerPage('sessions');
@@ -715,7 +720,7 @@ function SessionsTabOverview() {
               onHover={hover}
               onFilterToUser={filterToUser}
               onMetaClick={onMetaClick}
-              lastViewedIds={lastPlayedSessionIds}
+              lastViewedId={lastPlayedSessionId}
               timezone={timezone}
               userTimezone={
                 settingsStore.sessionSettings.shownTimezone === 'user'
@@ -730,8 +735,17 @@ function SessionsTabOverview() {
               noun={(count, n) => t('{{n}} sessions', { count, n })}
               onPage={(page) => searchStore.updateCurrentPage(page)}
               onPageSize={(n) => {
+                // Fit re-measured (window resize): stay on this page
+                const refit = n === 'fit' && getRowsChoice() === 'fit';
                 setRowsPerPage(n);
-                searchStore.updateCurrentPage(1, true);
+                const last = Math.max(
+                  1,
+                  Math.ceil(total / getRowsPerPage('sessions')),
+                );
+                searchStore.updateCurrentPage(
+                  refit ? Math.min(searchStore.currentPage, last) : 1,
+                  true,
+                );
               }}
             />
           </>
