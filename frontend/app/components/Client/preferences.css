@@ -320,9 +320,12 @@
     opacity: 1;
   }
 }
+/* the column minimum comes from the content: the longest name beside the
+   longest tag ("Elasticsearch" + "All projects") must fit, so the grid drops
+   a column before a shipped name truncates; raise it when a longer one lands */
 .m-pref__cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
   gap: var(--m-space-5);
   min-width: 0;
 }
