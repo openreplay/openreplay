@@ -1,5 +1,6 @@
 import { isIFrameElement, isRootNode } from '../../../guards';
 import { insertRule, deleteRule, replaceRule } from './safeCSSRules';
+import { parseSanitizedSvgContent } from './sanitize';
 
 function isNode(sth: any): sth is Node {
   return !!sth && sth.nodeType != null;
@@ -336,7 +337,7 @@ export class VHTMLElement extends VElement {
  * Host for the `<symbol>`s rebuilt from `_$OPENREPLAY_SPRITE$_` messages, kept as the last child
  * of every <body> so the `<use href="#symbol-N">` rewrite done in MessageManager resolves inside
  * the replay document (`<use>` refuses external and data: refs as cross-origin).
- * Its content comes from innerHTML instead of the message stream, so VParent's child
+ * Its content is set wholesale instead of coming from the message stream, so VParent's child
  * reconciliation must not run here: it would prune every symbol as an unexpected node.
  */
 export class VSpriteMap extends VElement {
@@ -356,8 +357,16 @@ export class VSpriteMap extends VElement {
     if (!this.dirty) {
       return;
     }
-    this.node.innerHTML = this.content;
     this.dirty = false;
+    // The node can be owned by the app page (created before <body> has a parent),
+    // so never innerHTML here: parse in an inert document and import the sanitized result.
+    const node = this.node;
+    const parsed = this.content ? parseSanitizedSvgContent(this.content) : null;
+    const doc = node.ownerDocument;
+    const symbols = parsed
+      ? Array.from(parsed.childNodes, (child) => doc.importNode(child, true))
+      : [];
+    node.replaceChildren(...symbols);
   }
 }
 

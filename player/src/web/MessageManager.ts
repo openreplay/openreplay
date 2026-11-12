@@ -26,6 +26,9 @@ import type { SkipInterval } from './managers/ActivityManager';
 
 import HookManager from './managers/HookManager';
 import ConnectionManager from './managers/ConnectionManager';
+import { parseSanitizedSvg } from './managers/DOM/sanitize';
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
 
 interface RawList {
   event: Record<string, any>[] & { tabId: string | null };
@@ -424,14 +427,15 @@ export default class MessageManager {
 
   spriteMapSvg: SVGElement | null = null;
   potentialSpriteMap: Record<string, any> = {};
-  domParser: DOMParser | null = null;
   createSpriteMap = () => {
     if (!this.spriteMapSvg) {
-      this.domParser = new DOMParser();
-      this.spriteMapSvg = document.createElementNS(
-        'http://www.w3.org/2000/svg',
+      // Inert document: recorded markup must never become nodes of the app page
+      const spriteDoc = document.implementation.createDocument(
+        SVG_NS,
         'svg',
+        null,
       );
+      this.spriteMapSvg = spriteDoc.documentElement as unknown as SVGElement;
       this.spriteMapSvg.setAttribute('style', 'display: none;');
       this.spriteMapSvg.setAttribute('id', 'reconstructed-sprite');
     }
@@ -447,15 +451,7 @@ export default class MessageManager {
     if (msg.tp === MType.SetNodeAttribute) {
       if (msg.value.includes('_$OPENREPLAY_SPRITE$_')) {
         this.createSpriteMap();
-        if (!this.domParser) {
-          return console.error('DOM parser is not initialized?');
-        }
-        handleSprites(
-          this.potentialSpriteMap,
-          this.domParser,
-          msg,
-          this.spriteMapSvg!,
-        );
+        handleSprites(this.potentialSpriteMap, msg, this.spriteMapSvg!);
       }
     }
     if (!this.tabs[msg.tabId]) {
@@ -581,7 +577,6 @@ function mapTabs(tabs: Record<string, TabSessionManager>) {
 
 function handleSprites(
   potentialSpriteMap: Record<string, any>,
-  parser: DOMParser,
   msg: Record<string, any>,
   spriteMapSvg: SVGElement,
 ) {
@@ -590,11 +585,10 @@ function handleSprites(
   if (potentialSprite) {
     msg.value = potentialSprite;
   } else {
-    const svgDoc = parser.parseFromString(svgData, 'image/svg+xml');
-    const originalSvg = svgDoc.querySelector('svg');
+    const originalSvg = parseSanitizedSvg(svgData ?? '');
     if (originalSvg) {
-      const symbol = document.createElementNS(
-        'http://www.w3.org/2000/svg',
+      const symbol = spriteMapSvg.ownerDocument.createElementNS(
+        SVG_NS,
         'symbol',
       );
       const symbolId = `symbol-${msg.id || `ind-${msg.time}`}`; // Generate an ID if missing
@@ -603,7 +597,9 @@ function handleSprites(
         'viewBox',
         originalSvg.getAttribute('viewBox') || '0 0 24 24',
       );
-      symbol.innerHTML = originalSvg.innerHTML;
+      while (originalSvg.firstChild) {
+        symbol.appendChild(originalSvg.firstChild);
+      }
 
       spriteMapSvg.appendChild(symbol);
       msg.value = `#${symbolId}`;
