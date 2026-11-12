@@ -3019,5 +3019,6 @@
   "Show {{n}} segments_other": "Показать сегменты: {{n}}",
   "Show {{n}} actions": "Показать действия: {{n}}",
   "Show {{n}} actions_one": "Показать действия: {{n}}",
-  "Show {{n}} actions_other": "Показать действия: {{n}}"
+  "Show {{n}} actions_other": "Показать действия: {{n}}",
+  "Clear and close the search": "Очистить и закрыть поиск"
 }

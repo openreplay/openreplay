@@ -2842,5 +2842,6 @@
   "Show {{n}} segments_other": "세그먼트 {{n}}개 보기",
   "Show {{n}} actions": "작업 {{n}}개 보기",
   "Show {{n}} actions_one": "작업 {{n}}개 보기",
-  "Show {{n}} actions_other": "작업 {{n}}개 보기"
+  "Show {{n}} actions_other": "작업 {{n}}개 보기",
+  "Clear and close the search": "검색 지우고 닫기"
 }

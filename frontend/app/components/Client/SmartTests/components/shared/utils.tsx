@@ -107,18 +107,46 @@ export const getStatusTag = (
   </span>
 );
 
+const runResult = (status: UiRunStatus, t: TFunction) =>
+  status === 'running'
+    ? { label: t('Running'), tone: 'info' as const, Icon: Loader, spin: true }
+    : status === 'failed'
+      ? { label: t('Failed'), tone: 'danger' as const, Icon: XCircle }
+      : { label: t('Passed'), tone: 'success' as const, Icon: CheckCircle2 };
+
+/** The result as its icon alone: a phone row's lead. */
+export const RunResultIcon = ({
+  status,
+  t,
+}: {
+  status: UiRunStatus;
+  t: TFunction;
+}) => {
+  const cfg = runResult(status, t);
+  const { Icon } = cfg;
+  return (
+    <span
+      className={`m-run-icon m-run-icon--${cfg.tone}`}
+      role="img"
+      aria-label={cfg.label}
+      title={cfg.label}
+    >
+      <Icon
+        size={16}
+        aria-hidden="true"
+        className={'spin' in cfg && cfg.spin ? 'animate-spin' : undefined}
+      />
+    </span>
+  );
+};
+
 // Leading icon so the outcome reads without relying on colour alone.
 export const getRunResult = (
   status: UiRunStatus,
   t: TFunction,
   className?: string,
 ) => {
-  const cfg =
-    status === 'running'
-      ? { label: t('Running'), tone: 'info' as const, Icon: Loader, spin: true }
-      : status === 'failed'
-        ? { label: t('Failed'), tone: 'danger' as const, Icon: XCircle }
-        : { label: t('Passed'), tone: 'success' as const, Icon: CheckCircle2 };
+  const cfg = runResult(status, t);
   const { Icon } = cfg;
   return (
     <span className={className}>

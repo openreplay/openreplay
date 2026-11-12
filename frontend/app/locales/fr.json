@@ -2960,5 +2960,6 @@
   "Show {{n}} segments_other": "Afficher {{n}} segments",
   "Show {{n}} actions": "Afficher {{n}} actions",
   "Show {{n}} actions_one": "Afficher {{n}} action",
-  "Show {{n}} actions_other": "Afficher {{n}} actions"
+  "Show {{n}} actions_other": "Afficher {{n}} actions",
+  "Clear and close the search": "Effacer et fermer la recherche"
 }

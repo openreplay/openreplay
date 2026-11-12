@@ -12,6 +12,7 @@ import { DateRange } from '@/ui/inputs/DateRange';
 import { SearchField } from '@/ui/inputs/SearchField';
 import { ListFooter } from '@/ui/layout/ListFooter';
 import { setRowsPerPage, useRowsPerPage } from '@/ui/layout/rows-per-page';
+import { useViewport } from '@/ui/layout/use-viewport';
 import { useToast } from '@/ui/overlays/toast';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import Period, {
@@ -55,6 +56,7 @@ import {
   REGION_OPTIONS,
   RESOLUTION_OPTIONS,
   RowTags,
+  RunResultIcon,
   VersionLabel,
   formatDuration,
   getRunResult,
@@ -370,6 +372,36 @@ function RunsTab() {
     },
   ];
 
+  // at phone a run is one cell: the result icon, the test, a quiet line
+  // "Production · 2.1s · 4h ago", then a failure's error; Rerun stays
+  const phone = useViewport() === 'phone';
+  const phoneColumns: Column<RunData>[] = [
+    {
+      title: t('Run'),
+      key: 'test',
+      render: (run) => (
+        <div className="m-runs__m">
+          <RunResultIcon status={run.status} t={t} />
+          <span className="m-runs__title m-truncate">{run.testName}</span>
+          <span className="m-runs__m-facts m-truncate">
+            {run.envName && <>{run.envName} · </>}
+            {run.status === 'running' ? (
+              <LiveDuration start={run.date} />
+            ) : run.duration ? (
+              formatDuration(run.duration)
+            ) : null}
+            {(run.status === 'running' || !!run.duration) && ' · '}
+            <RelativeTime at={run.date} />
+          </span>
+          {run.error && (
+            <span className="m-runs__error m-truncate">{run.error}</span>
+          )}
+        </div>
+      ),
+    },
+    columns[columns.length - 1]!,
+  ];
+
   /* ── filters ── */
   const dimensions: FilterDimension<FilterKey>[] = [
     {
@@ -553,7 +585,7 @@ function RunsTab() {
           <DataTable<RunData>
             className="m-runs__table"
             ariaLabel={t('Runs')}
-            columns={columns}
+            columns={phone ? phoneColumns : columns}
             rows={runs}
             rowKey={(r) => r.key}
             rowClassName={() => 'm-tests__row'}

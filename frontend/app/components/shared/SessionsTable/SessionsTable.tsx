@@ -205,7 +205,8 @@ export function SessionsTable({
           ) : (
             <SessionAvatar key={seedFor(s)} seed={seedFor(s)} />
           )}
-          {onFilterToUser ? (
+          {/* at phone a row only opens: the name is plain text */}
+          {onFilterToUser && !phone ? (
             <button
               type="button"
               className={`m-ss__name m-truncate${s.userId ? '' : ' is-anon'}`}
@@ -232,12 +233,7 @@ export function SessionsTable({
               {has('started') && startedAt(s)}
               {has('duration') && durationOf(s)}
               {has('metadata') && (
-                <MetaChips
-                  metadata={s.metadata}
-                  max={1}
-                  onPick={onMetaClick}
-                  empty={null}
-                />
+                <MetaChips metadata={s.metadata} max={1} empty={null} />
               )}
             </span>
           )}

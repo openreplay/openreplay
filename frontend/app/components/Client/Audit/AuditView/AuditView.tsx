@@ -12,6 +12,7 @@ import { ListFooter } from '@/ui/layout/ListFooter';
 import { useViewport } from '@/ui/layout/use-viewport';
 import { EntityDrawer, MetaGrid, Section } from '@/ui/overlays/EntityDrawer';
 import withPageTitle from 'HOCs/withPageTitle';
+import { LAST_7_DAYS } from 'Types/app/period';
 import { Download } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
@@ -93,6 +94,21 @@ function AuditView() {
   ];
 
   const phone = useViewport() === 'phone';
+  // at phone a row is the action, then "who · when"
+  const phoneColumns: Column<any>[] = [
+    {
+      title: t('Action'),
+      key: 'action',
+      render: (a) => (
+        <span className="m-pref__audit-m">
+          <span className="m-truncate">{a.action}</span>
+          <span className="m-pref__hint m-truncate">
+            {a.username || t('API token')} · {when(a)}
+          </span>
+        </span>
+      ),
+    },
+  ];
   const orderSelect = (
     <SimpleSelect<string>
       value={order}
@@ -125,6 +141,7 @@ function AuditView() {
           >
             <DateRange
               field={t('Created')}
+              resting={LAST_7_DAYS}
               period={period}
               onChange={(p) => auditStore.setDateRange(p)}
             />
@@ -173,7 +190,7 @@ function AuditView() {
       ) : (
         <>
           <DataTable
-            columns={columns}
+            columns={phone ? phoneColumns : columns}
             rows={list}
             rowKey={(a: any) => String(a.id ?? `${a.createdAt}-${a.action}`)}
             onRowClick={setOpen}
