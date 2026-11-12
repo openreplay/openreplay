@@ -5,6 +5,7 @@ import { Message, MType } from '../messages';
 
 import type Screen from '../Screen/Screen';
 import DOMManager from './DOM/DOMManager';
+import { parseSanitizedSvgContent } from './DOM/sanitize';
 
 export default class PagesManager extends ListWalker<DOMManager> {
   private currentPage: DOMManager | null = null;
@@ -102,7 +103,12 @@ export default class PagesManager extends ListWalker<DOMManager> {
         '#OPENREPLAY_SPRITES_MAP',
       );
       if (potential) {
-        potential.innerHTML = this.spriteMapEl!.innerHTML;
+        const parsed = parseSanitizedSvgContent(this.spriteMapEl!.innerHTML);
+        const symbols = potential.ownerDocument.createDocumentFragment();
+        while (parsed?.firstChild) {
+          symbols.appendChild(parsed.firstChild);
+        }
+        potential.replaceChildren(symbols);
         clearInterval(int);
       }
     }, 250);
