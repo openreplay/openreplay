@@ -3,7 +3,7 @@ import { OpenReplayMark } from '@/ui/brand/OpenReplayMark';
 import { useViewportAttribute } from '@/ui/layout/use-viewport';
 import { Drawer } from '@/ui/overlays/drawer';
 import AppBanners from 'Saas/layout/AppBanners';
-import { PanelLeftOpen, X } from 'lucide-react';
+import { Equal } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -83,13 +83,15 @@ function Layout({
         {phone ? (
           <div className="m-shell__bar">
             <IconButton
-              icon={<PanelLeftOpen size={16} />}
+              icon={<Equal size={20} />}
               label={t('Open the menu')}
               variant="ghost"
               onClick={() => setMobileOpen(true)}
             />
-            <OpenReplayMark size={16} className="m-shell__bar-mark" />
-            <span className="m-shell__bar-name">OpenReplay</span>
+            <span className="m-shell__bar-brand">
+              <OpenReplayMark size={20} className="m-shell__bar-mark" />
+              <span className="m-shell__bar-name">OpenReplay</span>
+            </span>
           </div>
         ) : (
           <SideNav collapsed={collapsed} onToggleCollapsed={toggle} />
@@ -112,18 +114,11 @@ function Layout({
             onClose={() => setMobileOpen(false)}
             open={mobileOpen}
           >
-            <span className="m-mobile-nav__close">
-              <IconButton
-                icon={<X size={15} />}
-                label={t('Close the menu')}
-                variant="ghost"
-                onClick={() => setMobileOpen(false)}
-              />
-            </span>
             <SideNav
               collapsed={false}
               onToggleCollapsed={() => setMobileOpen(false)}
               onNavigated={() => setMobileOpen(false)}
+              onClose={() => setMobileOpen(false)}
             />
           </Drawer>
         ) : null}

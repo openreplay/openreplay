@@ -184,6 +184,8 @@ export function PickerBody({
     return slope >= slopeTop && slope <= slopeBottom;
   };
   const aimAt = (key: string, e: ReactPointerEvent<HTMLElement>) => {
+    // a finger passing over a chip is a swipe, not an aim: touch changes on tap
+    if (e.pointerType !== 'mouse') return;
     if (q) return;
     cancelAim();
     if (key === cat) return;

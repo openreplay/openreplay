@@ -1,3 +1,4 @@
+import { IconButton } from '@/ui/actions/IconButton';
 import { ArmadaMark } from '@/ui/brand/ArmadaMark';
 import { OpenReplayMark } from '@/ui/brand/OpenReplayMark';
 import { useViewport } from '@/ui/layout/use-viewport';
@@ -26,6 +27,7 @@ import {
   Users,
   Video,
   Webhook,
+  X,
 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { type ComponentType, useMemo, useState } from 'react';
@@ -91,9 +93,16 @@ interface SideNavProps {
   collapsed: boolean;
   onToggleCollapsed: () => void;
   onNavigated?: () => void;
+  /** the phone's menu sheet: a close in the head row, parents only expand */
+  onClose?: () => void;
 }
 
-function SideNav({ collapsed, onToggleCollapsed, onNavigated }: SideNavProps) {
+function SideNav({
+  collapsed,
+  onToggleCollapsed,
+  onNavigated,
+  onClose,
+}: SideNavProps) {
   const { t, i18n } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
@@ -193,7 +202,7 @@ function SideNav({ collapsed, onToggleCollapsed, onNavigated }: SideNavProps) {
 
   return (
     <nav
-      className={`m-nav${collapsed ? ' is-collapsed' : ''}`}
+      className={`m-nav${collapsed ? ' is-collapsed' : ''}${onClose ? ' is-sheet' : ''}`}
       aria-label={t('Main')}
     >
       {/* Narrow, the mark is the expand control; open, the collapse is the
@@ -274,6 +283,17 @@ function SideNav({ collapsed, onToggleCollapsed, onNavigated }: SideNavProps) {
         </button>
       </AccountMenu>
 
+      {onClose && (
+        <span className="m-nav__sheet-head">
+          <IconButton
+            icon={<X size={15} />}
+            label={t('Close the menu')}
+            variant="ghost"
+            onClick={onClose}
+          />
+        </span>
+      )}
+
       <div className="m-nav__scroll">
         {groups.map((group, gi) => (
           <div key={group.label ?? gi} className="m-nav__section">
@@ -315,6 +335,8 @@ function SideNav({ collapsed, onToggleCollapsed, onNavigated }: SideNavProps) {
                         expanded={open}
                         onToggle={() => toggle(e.key)}
                         onClick={() => {
+                          // in the sheet only a subitem navigates (and closes it)
+                          if (onClose && e.items) return toggle(e.key);
                           onNavigate(e.key);
                           if (e.items && !open && !collapsed) toggle(e.key);
                         }}
