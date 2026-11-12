@@ -2977,5 +2977,6 @@
   "A project’s type can’t change. To record another platform, add a new project.": "Тип проєкту не можна змінити. Щоб записувати іншу платформу, додайте новий проєкт.",
   "The one value the tracker needs. It is not a secret, it ships in your page.": "Єдине значення, потрібне трекеру. Це не секрет, воно потрапляє на вашу сторінку.",
   "How to send the values": "Як надсилати значення",
-  "Hide how to send the values": "Сховати, як надсилати значення"
+  "Hide how to send the values": "Сховати, як надсилати значення",
+  "Page {{current}} of {{last}}": "Сторінка {{current}} з {{last}}"
 }

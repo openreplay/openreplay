@@ -1,0 +1,62 @@
+/* At phone every popover, menu and select (`.m-pop`) is a bottom sheet: the
+   popper's wrapper pinned to the bottom, full width, the page dimmed by a
+   shadow wide enough to be a scrim (a tap on it still closes). Tooltips are
+   not `.m-pop` and stay anchored. */
+:root[data-viewport='phone'] [data-radix-popper-content-wrapper]:has(> .m-pop) {
+  position: fixed !important;
+  inset: auto 0 0 0 !important;
+  transform: none !important;
+  min-width: 0 !important;
+  width: 100% !important;
+}
+:root[data-viewport='phone'] .m-pop {
+  width: 100% !important;
+  max-width: none !important;
+  /* no anchor to stay near: no viewport-fit nudge or cap */
+  translate: none;
+  max-height: 82dvh !important;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--m-space-5) var(--m-space-4)
+    max(var(--m-space-5), env(safe-area-inset-bottom, 0px)) !important;
+  border-width: 0 !important;
+  border-radius: var(--m-radius-surface) var(--m-radius-surface) 0 0 !important;
+  box-shadow:
+    0 0 0 100vmax var(--m-scrim),
+    0 -8px 32px rgb(0 0 0 / 0.16) !important;
+}
+/* content sized for a 17-27rem panel takes the sheet's width */
+:root[data-viewport='phone'] .m-pop > :only-child {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :root[data-viewport='phone'] .m-pop[data-state='open'] {
+    animation: m-psheet-in var(--m-duration-slow) var(--m-ease-out) both !important;
+  }
+  /* opacity in both frames: the popovers' own entrance starts at 0 */
+  @keyframes m-psheet-in {
+    from {
+      opacity: 1;
+      transform: translateY(100%);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+:root[data-viewport='phone'] .m-pop[data-state='open'] {
+  opacity: 1;
+}
+
+/* a phone list is one column of two-line rows: no column titles */
+:root[data-viewport='phone'] .m-panel .m-thead {
+  display: none;
+}
+
+/* no session queue on a phone */
+:root[data-viewport='phone'] :is(.m-ss__queue, .m-sdock) {
+  display: none !important;
+}

@@ -4,6 +4,7 @@
   flex: none;
   width: var(--m-nav-width);
   height: 100vh;
+  height: 100dvh;
   padding: var(--m-space-5) var(--m-space-5) var(--m-space-5) var(--m-space-6);
   transition:
     width var(--m-duration-normal) var(--m-ease-out),

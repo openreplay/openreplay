@@ -2918,5 +2918,6 @@
   "A project’s type can’t change. To record another platform, add a new project.": "Le type d’un projet ne peut pas changer. Pour enregistrer une autre plateforme, ajoutez un nouveau projet.",
   "The one value the tracker needs. It is not a secret, it ships in your page.": "La seule valeur dont le tracker a besoin. Ce n’est pas un secret, elle est livrée avec votre page.",
   "How to send the values": "Comment envoyer les valeurs",
-  "Hide how to send the values": "Masquer comment envoyer les valeurs"
+  "Hide how to send the values": "Masquer comment envoyer les valeurs",
+  "Page {{current}} of {{last}}": "Page {{current}} sur {{last}}"
 }

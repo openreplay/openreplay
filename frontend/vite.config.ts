@@ -15,6 +15,7 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 
 import colors from './app/theme/colors';
 import babelMobxNoMemo from './scripts/babelMobxNoMemo';
+import hoverMedia from './scripts/postcssHoverMedia.mjs';
 
 const APP_ASSETS_DIR = path.resolve(__dirname, 'app/assets');
 const PLAYER_DIR = path.resolve(__dirname, '../player');
@@ -266,6 +267,8 @@ export default defineConfig(({ mode }) => {
           }),
           postcssNesting(),
           tailwindPostcss(),
+          // :hover only where a pointer hovers: no sticky hover after a tap
+          hoverMedia(),
         ],
       },
     },

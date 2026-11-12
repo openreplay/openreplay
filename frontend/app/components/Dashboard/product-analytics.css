@@ -854,28 +854,13 @@
 .m-metricpick .m-pick2__row.is-current {
   font-weight: var(--m-weight-medium);
 }
-/* phone: a bottom sheet, the categories a sideways row of chips */
-:root[data-viewport='phone']
-  [data-radix-popper-content-wrapper]:has(> .m-metricpick) {
-  position: fixed !important;
-  inset: auto 0 0 0 !important;
-  transform: none !important;
-  min-width: 0 !important;
-}
-:root[data-viewport='phone'] .m-metricpick {
-  width: 100%;
-  max-width: none;
-  /* the sheet has no anchor to stay near: no viewport-fit nudge or cap */
-  translate: none;
-  max-height: 82dvh !important;
+/* phone: the app's bottom sheet (phone-sheets.css), edge to edge, the
+   categories a sideways row of chips */
+:root[data-viewport='phone'] .m-pop.m-metricpick {
   display: flex;
   flex-direction: column;
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-  border-width: 0;
-  border-radius: var(--m-radius-surface) var(--m-radius-surface) 0 0;
-  box-shadow:
-    0 0 0 100vmax var(--m-scrim),
-    0 -8px 32px rgb(0 0 0 / 0.16);
+  overflow: hidden;
+  padding: 0 0 env(safe-area-inset-bottom, 0px) !important;
 }
 :root[data-viewport='phone'] .m-metricpick .m-pick2 {
   flex: 1;

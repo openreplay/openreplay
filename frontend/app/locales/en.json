@@ -2859,5 +2859,6 @@
   "A project’s type can’t change. To record another platform, add a new project.": "A project’s type can’t change. To record another platform, add a new project.",
   "The one value the tracker needs. It is not a secret, it ships in your page.": "The one value the tracker needs. It is not a secret, it ships in your page.",
   "How to send the values": "How to send the values",
-  "Hide how to send the values": "Hide how to send the values"
+  "Hide how to send the values": "Hide how to send the values",
+  "Page {{current}} of {{last}}": "Page {{current}} of {{last}}"
 }
