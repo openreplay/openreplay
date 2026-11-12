@@ -280,3 +280,31 @@
   padding: var(--m-space-2) var(--m-space-3);
   border-top: 1px solid var(--m-border-subtle);
 }
+
+/* phone: who first, the facts in two columns, then the actions */
+:root[data-viewport='phone'] .m-person__card {
+  flex-wrap: wrap;
+  gap: var(--m-space-4);
+  padding: var(--m-space-4);
+}
+:root[data-viewport='phone'] .m-person__who {
+  flex: 1 1 100%;
+}
+:root[data-viewport='phone'] .m-person__facts {
+  flex: 1 1 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--m-space-4) var(--m-space-5);
+}
+:root[data-viewport='phone'] .m-person__fact dd {
+  min-width: 0;
+  max-width: 100%;
+}
+:root[data-viewport='phone'] .m-person__actions {
+  margin-inline-start: 0;
+}
+:root[data-viewport='phone'] .m-person__acthead {
+  flex-wrap: wrap;
+  row-gap: var(--m-space-2);
+  padding-block: var(--m-space-2);
+}

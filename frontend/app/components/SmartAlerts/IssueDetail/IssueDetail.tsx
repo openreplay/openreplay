@@ -107,11 +107,6 @@ function IssueDetail() {
   const screen = (children: React.ReactNode, actions?: React.ReactNode) => (
     <ReplayScreen
       back={{ label: t('Issues'), onClick: back }}
-      lead={
-        <nav className="m-ihdr__crumb" aria-label={t('Breadcrumb')}>
-          <span>{t('This issue')}</span>
-        </nav>
-      }
       actions={actions}
     >
       {children}

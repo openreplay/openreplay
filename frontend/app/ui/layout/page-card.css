@@ -256,3 +256,27 @@
   border-radius: var(--m-radius-surface) var(--m-radius-surface) 0 0;
   background: var(--m-surface-default);
 }
+
+/* phone: a panel head's controls stay on one line; a segmented strip takes
+   its own full row; the way back gives way before the verbs do */
+:root[data-viewport='phone'] .m-panel__head .m-page__controls {
+  flex-wrap: nowrap;
+}
+:root[data-viewport='phone']
+  .m-panel__head
+  .m-page__controls:has(> [data-slot='segmented']) {
+  flex: 1 1 100%;
+  margin-left: 0;
+}
+:root[data-viewport='phone']
+  .m-page__head:has(> .m-page__back)
+  > .m-page__back {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+:root[data-viewport='phone']
+  .m-page__head:has(> .m-page__back)
+  > .m-page__actions {
+  gap: var(--m-space-2);
+}

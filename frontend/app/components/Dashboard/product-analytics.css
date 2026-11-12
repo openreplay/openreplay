@@ -924,3 +924,25 @@
   padding: var(--m-space-9) var(--m-space-6);
   min-height: 260px;
 }
+
+/* phone: each alert field grows to share its row and wraps whole; the step
+   number column is narrower */
+:root[data-viewport='phone'] .m-alertf__step {
+  grid-template-columns: 1.5rem minmax(0, 1fr);
+  gap: var(--m-space-3);
+}
+:root[data-viewport='phone'] .m-alertf__row > :not(.m-alertf__word) {
+  flex: 1 1 8rem;
+  min-width: 0;
+}
+:root[data-viewport='phone'] .m-alertf__metric {
+  min-width: 0;
+  flex-basis: 100%;
+}
+:root[data-viewport='phone'] .m-alertf__word--label {
+  width: 100%;
+}
+:root[data-viewport='phone'] .m-alertf__wide {
+  min-width: 0;
+  max-width: none;
+}
