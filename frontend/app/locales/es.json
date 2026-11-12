@@ -2951,5 +2951,6 @@
   "Tap a detail to see every session that has it.": "Toca un detalle para ver todas las sesiones que lo tienen.",
   "Show sessions with {{label}} {{value}}": "Mostrar sesiones con {{label}} {{value}}",
   "Hide the panel": "Ocultar el panel",
-  "Show the panel": "Mostrar el panel"
+  "Show the panel": "Mostrar el panel",
+  "Step {{n}}, {{label}}": "Paso {{n}}, {{label}}"
 }
