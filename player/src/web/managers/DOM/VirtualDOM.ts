@@ -358,15 +358,23 @@ export class VSpriteMap extends VElement {
       return;
     }
     this.dirty = false;
-    // The node can be owned by the app page (created before <body> has a parent),
-    // so never innerHTML here: parse in an inert document and import the sanitized result.
     const node = this.node;
     const parsed = this.content ? parseSanitizedSvgContent(this.content) : null;
-    const doc = node.ownerDocument;
-    const symbols = parsed
-      ? Array.from(parsed.childNodes, (child) => doc.importNode(child, true))
-      : [];
-    node.replaceChildren(...symbols);
+    const symbols = node.ownerDocument.createDocumentFragment();
+    while (parsed?.firstChild) {
+      symbols.appendChild(parsed.firstChild);
+    }
+    node.replaceChildren(symbols);
+  }
+
+  protected createNode() {
+    // Created before it has a parent (DOMManager.attachSpriteMap), where VElement falls back
+    // to the app page's document; detached SVG <image>s there still load. Adopted on mount.
+    return document.implementation.createDocument(
+      'http://www.w3.org/2000/svg',
+      'svg',
+      null,
+    ).documentElement;
   }
 }
 

@@ -210,8 +210,10 @@ const SVG_ANIMATION_TAGS = new Set([
 ]);
 
 function isDangerousAnimation(el: Element): boolean {
-  const target = (el.getAttribute('attributeName') || '').toLowerCase();
-  return target.startsWith('on') || target === 'href' || target === 'xlink:href';
+  const target = (el.getAttribute('attributeName') || '').trim().toLowerCase();
+  // any prefix can be bound to the xlink namespace (`p:href`)
+  const local = target.slice(target.indexOf(':') + 1);
+  return local.startsWith('on') || local === 'href';
 }
 
 function sanitizeSvgAttributes(el: Element): void {
