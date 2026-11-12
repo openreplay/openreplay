@@ -10,7 +10,8 @@ import {
 } from '@/ui/actions/dropdown-menu';
 import { OpenReplayMark } from '@/ui/brand/OpenReplayMark';
 import { RelativeTime } from '@/ui/data/RelativeTime';
-import { hueIndexFor } from '@/ui/data/avatar';
+import { SessionAvatar } from '@/ui/data/SessionAvatar';
+import { hueIndexFor, seedFor } from '@/ui/data/avatar';
 import { type Column, DataTable } from '@/ui/data/table';
 import { EmptyState } from '@/ui/feedback/EmptyState';
 import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
@@ -395,6 +396,21 @@ export const LiveSection = observer(
 
 type RecordingSort = { key: 'at' | 'duration'; desc: boolean } | null;
 
+/** The recorded session's visitor, seeded and named as on Sessions; none once
+    the session is gone. */
+const visitorOf = (r: IRecord) =>
+  r.sessionId == null
+    ? null
+    : {
+        seed: seedFor({
+          userId: r.visitorId,
+          userAnonymousId: r.visitorAnonymousId,
+          userUuid: r.visitorUuid,
+          sessionId: String(r.sessionId),
+        }),
+        name: r.visitorId || r.visitorAnonymousId || null,
+      };
+
 export const RecordingsSection = observer(() => {
   const { t } = useTranslation();
   const { recordingsStore, settingsStore } = useStore();
@@ -452,6 +468,24 @@ export const RecordingsSection = observer(() => {
       render: (r) => (
         <span className="m-ss__name m-truncate m-cb__rec-name">{r.name}</span>
       ),
+    },
+    {
+      title: t('Visitor'),
+      key: 'visitor',
+      width: 240,
+      priority: 2,
+      render: (r) => {
+        const v = visitorOf(r);
+        if (!v) return <span className="m-ss__fig is-zero">—</span>;
+        return (
+          <span className="m-ss__who">
+            <SessionAvatar key={v.seed} seed={v.seed} />
+            <span className="m-truncate m-cb__rec-visitor">
+              {v.name ?? t('Anonymous User')}
+            </span>
+          </span>
+        );
+      },
     },
     {
       title: t('Recorded by'),
@@ -538,8 +572,16 @@ export const RecordingsSection = observer(() => {
           <FilterStrip
             label={t('Filter by who recorded')}
             items={[
-              { key: 'all', label: t('All recordings') },
-              { key: 'mine', label: t('My recordings') },
+              {
+                key: 'all',
+                label: t('All recordings'),
+                count: recordingsStore.counts?.all,
+              },
+              {
+                key: 'mine',
+                label: t('My recordings'),
+                count: recordingsStore.counts?.mine,
+              },
             ]}
             selected={[recordingsStore.currentUser ? 'mine' : 'all']}
             onSelect={(k) => recordingsStore.setCurrUser(k === 'mine')}
@@ -601,7 +643,9 @@ export const RecordingsSection = observer(() => {
             }}
             rowClassName={() => 'm-ss__row'}
             rowStyle={(r) =>
-              ({ '--m-avatar-i': hueIndexFor(r.name) }) as CSSProperties
+              ({
+                '--m-avatar-i': hueIndexFor(visitorOf(r)?.seed ?? r.name),
+              }) as CSSProperties
             }
             onRowClick={(r) => recordingsStore.openRecording(r)}
             ariaLabel={t('Recorded calls')}
