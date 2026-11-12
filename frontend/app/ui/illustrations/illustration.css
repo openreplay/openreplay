@@ -100,23 +100,6 @@
 .m-ill__face {
   overflow: visible;
 }
-.m-ill__face > .m-savatar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100% !important;
-  height: 100% !important;
-  border-radius: 0;
-}
-.m-ill__face > .m-savatar {
-  position: relative;
-}
-.m-ill__face > .m-savatar > img {
-  position: absolute;
-  left: var(--img-x, 0);
-  top: var(--img-y, 0);
-  flex: none;
-}
 .m-ill__grid-cell {
   fill: #000;
   fill-opacity: 0.14;
@@ -124,16 +107,6 @@
 :root.dark .m-ill__grid-cell {
   fill-opacity: 0.4;
 }
-.m-ill__face--on-cube > .m-savatar {
-  clip-path: inset(3.5% round 3px);
-}
-.m-ill__face--on-sphere > .m-savatar {
-  clip-path: circle(46.5%);
-}
-.m-ill__face--on-triangle > .m-savatar {
-  clip-path: polygon(56.4% 6%, 95.4% 96.5%, 4.6% 96.5%);
-}
-
 .m-ill__frame--1,
 .m-ill__frame--2,
 .m-ill__face--drift,
