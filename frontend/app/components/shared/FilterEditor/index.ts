@@ -4,6 +4,7 @@ export {
   SingleRule,
 } from './FilterBar';
 export { EntryField } from './EntryField';
+export { RuleSummary } from './RuleSummary';
 export { FilterPicker, PickerBody, entryIcon } from './FilterPicker';
 export { FilterPanel } from './FilterPanel';
 export { buildFilterEditor } from './editor';

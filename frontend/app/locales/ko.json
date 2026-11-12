@@ -2801,5 +2801,18 @@
   "The one value the tracker needs. It is not a secret, it ships in your page.": "트래커에 필요한 유일한 값입니다. 비밀이 아니며 페이지에 포함됩니다.",
   "How to send the values": "값을 보내는 방법",
   "Hide how to send the values": "값을 보내는 방법 숨기기",
-  "Page {{current}} of {{last}}": "{{last}}페이지 중 {{current}}페이지"
+  "Page {{current}} of {{last}}": "{{last}}페이지 중 {{current}}페이지",
+  "Time range": "기간",
+  "Search and filters": "검색 및 필터",
+  "Add a filter": "필터 추가",
+  "{{lead}}, {{n}} applied": "{{lead}}, {{n}}개 적용됨",
+  "Show {{n}} sessions": "세션 {{n}}개 보기",
+  "Show {{n}} sessions_one": "세션 {{n}}개 보기",
+  "Show {{n}} sessions_other": "세션 {{n}}개 보기",
+  "Show {{n}} issues": "이슈 {{n}}개 보기",
+  "Show {{n}} issues_one": "이슈 {{n}}개 보기",
+  "Show {{n}} issues_other": "이슈 {{n}}개 보기",
+  "Show {{n}} Spots": "Spot {{n}}개 보기",
+  "Show {{n}} Spots_one": "Spot {{n}}개 보기",
+  "Show {{n}} Spots_other": "Spot {{n}}개 보기"
 }

@@ -2801,5 +2801,18 @@
   "The one value the tracker needs. It is not a secret, it ships in your page.": "跟踪器唯一需要的值。它不是机密，会随页面一起发布。",
   "How to send the values": "如何发送值",
   "Hide how to send the values": "隐藏如何发送值",
-  "Page {{current}} of {{last}}": "第 {{current}} 页，共 {{last}} 页"
+  "Page {{current}} of {{last}}": "第 {{current}} 页，共 {{last}} 页",
+  "Time range": "时间范围",
+  "Search and filters": "搜索和筛选",
+  "Add a filter": "添加筛选",
+  "{{lead}}, {{n}} applied": "{{lead}}，已应用 {{n}} 个",
+  "Show {{n}} sessions": "显示 {{n}} 个会话",
+  "Show {{n}} sessions_one": "显示 {{n}} 个会话",
+  "Show {{n}} sessions_other": "显示 {{n}} 个会话",
+  "Show {{n}} issues": "显示 {{n}} 个问题",
+  "Show {{n}} issues_one": "显示 {{n}} 个问题",
+  "Show {{n}} issues_other": "显示 {{n}} 个问题",
+  "Show {{n}} Spots": "显示 {{n}} 个 Spot",
+  "Show {{n}} Spots_one": "显示 {{n}} 个 Spot",
+  "Show {{n}} Spots_other": "显示 {{n}} 个 Spot"
 }

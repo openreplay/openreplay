@@ -10,16 +10,18 @@ import {
 import { EmptyState } from '@/ui/feedback/EmptyState';
 import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
 import { DisplayShell, MenuSelect } from '@/ui/filters/DisplayMenu';
-import { FilterStrip } from '@/ui/filters/FilterStrip';
+import { FilterStrip, type FilterStripProps } from '@/ui/filters/FilterStrip';
+import { PhoneFilters, SheetSection } from '@/ui/filters/PhoneFilters';
 import { SegmentIndicator } from '@/ui/filters/SegmentIndicator';
 import { DateRange } from '@/ui/inputs/DateRange';
 import { ListFooter } from '@/ui/layout/ListFooter';
 import { PageCard, PagePanel } from '@/ui/layout/PageCard';
 import { setRowsPerPage, useRowsPerPage } from '@/ui/layout/rows-per-page';
+import { useViewport } from '@/ui/layout/use-viewport';
 import { useToast } from '@/ui/overlays/toast';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import withPermissions from 'HOCs/withPermissions';
-import Period from 'Types/app/period';
+import Period, { LAST_24_HOURS } from 'Types/app/period';
 import { FilterKey } from 'Types/filter/filterType';
 import { types } from 'Types/session/issue';
 import { ISSUE_KINDS } from 'Types/session/issueKinds';
@@ -55,6 +57,7 @@ import {
   type CatalogueEntry,
   EntryField,
   FilterBar,
+  RuleSummary,
   buildFilterEditor,
   describeFilters,
   isNullary,
@@ -129,6 +132,7 @@ function SessionsTabOverview() {
   const [saving, setSaving] = useState(false);
   const [fields, setFields] = useState<SessionField[]>(readFields);
 
+  const phone = useViewport() === 'phone';
   const { list, total, lastPlayedSessionIds } = sessionStore;
   const loading = sessionStore.loadingSessions;
   const { currentPage, activeTags } = searchStore;
@@ -428,27 +432,184 @@ function SessionsTabOverview() {
     />
   );
 
+  const tagStrip: FilterStripProps = {
+    label: t('Filter by what went wrong'),
+    items: [
+      { key: 'all', label: t('All') },
+      ...kinds.map((k) => ({
+        key: k.type,
+        label: t(k.label),
+        icon: ISSUE_ICONS[k.type],
+      })),
+    ],
+    selected: [tag],
+    onSelect: (key) => searchStore.toggleTag(key === 'all' ? undefined : key),
+  };
+  const windowControl = (
+    <DateRange
+      field={t('Started')}
+      period={period}
+      onChange={(p) => {
+        searchStore.edit(p.toJSON());
+        void searchStore.fetchSessions(true);
+      }}
+    />
+  );
+  const displayControl = (
+    <DisplayShell
+      changeCount={displayChanges}
+      onReset={resetDisplay}
+      rows={[
+        {
+          id: 'ss-sort',
+          label: t('Order'),
+          control: (
+            <MenuSelect<OrderKey>
+              id="ss-sort"
+              value={orderKey}
+              choices={[
+                { value: 'startTs-desc', label: t('Newest first') },
+                { value: 'startTs-asc', label: t('Oldest first') },
+                {
+                  value: 'eventsCount-desc',
+                  label: t('Most events'),
+                },
+                {
+                  value: 'eventsCount-asc',
+                  label: t('Fewest events'),
+                },
+              ]}
+              onChange={setOrder}
+            />
+          ),
+        },
+      ]}
+      fields={ALL_FIELDS.map((f) => ({
+        value: f,
+        label: t(f.charAt(0).toUpperCase() + f.slice(1)),
+        on: fields.includes(f),
+      }))}
+      onToggleField={toggleField}
+    />
+  );
+  const more = (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <span>
+          <IconButton
+            icon={<MoreHorizontal size={15} />}
+            label={t('More')}
+            variant="ghost"
+          />
+        </span>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItems
+          items={[
+            {
+              key: 'share',
+              icon: <Share2 size={13} />,
+              label: t('Copy link to this search'),
+              disabled: noRules,
+              onClick: share,
+            },
+            {
+              key: 'settings',
+              icon: <Settings2 size={13} />,
+              label: t('Session settings'),
+              onClick: () => navigate(client(CLIENT_TABS.SESSION_SETTINGS)),
+            },
+            {
+              key: 'docs',
+              icon: <BookOpen size={13} />,
+              label: t('Documentation'),
+              onClick: () =>
+                window.open(
+                  'https://docs.openreplay.com/en/session-replay/',
+                  '_blank',
+                ),
+            },
+          ]}
+        />
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
   return (
     <PageCard
       title={t('Sessions')}
       subtitle={t('Every session recorded on this project.')}
       split
     >
-      <EntryField
-        entries={entries}
-        taken={editor.properties.map((f) => f.entry.id)}
-        onPick={editor.onAdd}
-        hasRules={!noRules}
-        after={
-          noRules ? (
-            <SearchShortcuts
-              scope={memoryScope}
+      {phone ? (
+        // the field is the door to one drawer: the rules, then Show, Time
+        // range and Display
+        <PhoneFilters
+          label={t('Search and filters')}
+          result={t('Show {{n}} sessions', {
+            count: total,
+            n: total.toLocaleString(),
+          })}
+          onReset={() => {
+            searchStore.clearSearch();
+            if (tag !== 'all') searchStore.toggleTag(undefined);
+            searchStore.edit(Period({ rangeName: LAST_24_HOURS }).toJSON());
+            resetDisplay();
+            void searchStore.fetchSessions(true);
+          }}
+          trigger={({ open, badge }) => (
+            <EntryField
               entries={entries}
-              onAdd={editor.onAdd}
+              taken={editor.properties.map((f) => f.entry.id)}
+              onPick={editor.onAdd}
+              hasRules={!noRules}
+              opens={{
+                onOpen: open,
+                count: badge,
+                summary: noRules ? undefined : (
+                  <RuleSummary
+                    rules={[...editor.events, ...editor.properties]}
+                    max={2}
+                  />
+                ),
+              }}
+              trailing={more}
             />
-          ) : undefined
-        }
-      />
+          )}
+        >
+          <SheetSection
+            title={t('Search')}
+            first
+            count={editor.events.length + editor.properties.length}
+          >
+            <FilterBar
+              variant="panel"
+              editor={editor}
+              entries={entries}
+              lead={t('Add a filter')}
+            />
+          </SheetSection>
+          <FilterStrip {...tagStrip} />
+          {windowControl}
+          {displayControl}
+        </PhoneFilters>
+      ) : (
+        <EntryField
+          entries={entries}
+          taken={editor.properties.map((f) => f.entry.id)}
+          onPick={editor.onAdd}
+          hasRules={!noRules}
+          after={
+            noRules ? (
+              <SearchShortcuts
+                scope={memoryScope}
+                entries={entries}
+                onAdd={editor.onAdd}
+              />
+            ) : undefined
+          }
+        />
+      )}
 
       {segment ? (
         <SegmentIndicator
@@ -472,7 +633,8 @@ function SessionsTabOverview() {
           </PagePanel>
         </SegmentIndicator>
       ) : (
-        !noRules && (
+        !noRules &&
+        !phone && (
           <PagePanel spills>
             <FilterBar
               editor={editor}
@@ -505,109 +667,18 @@ function SessionsTabOverview() {
 
       <PagePanel
         head={
-          <>
-            <FilterStrip
-              label={t('Filter by what went wrong')}
-              items={[
-                { key: 'all', label: t('All') },
-                ...kinds.map((k) => ({
-                  key: k.type,
-                  label: t(k.label),
-                  icon: ISSUE_ICONS[k.type],
-                })),
-              ]}
-              selected={[tag]}
-              onSelect={(key) =>
-                searchStore.toggleTag(key === 'all' ? undefined : key)
-              }
-            />
-            <span className="m-recs__display">
-              <DateRange
-                field={t('Started')}
-                period={period}
-                onChange={(p) => {
-                  searchStore.edit(p.toJSON());
-                  void searchStore.fetchSessions(true);
-                }}
-              />
-              <DisplayShell
-                changeCount={displayChanges}
-                onReset={resetDisplay}
-                rows={[
-                  {
-                    id: 'ss-sort',
-                    label: t('Order'),
-                    control: (
-                      <MenuSelect<OrderKey>
-                        id="ss-sort"
-                        value={orderKey}
-                        choices={[
-                          { value: 'startTs-desc', label: t('Newest first') },
-                          { value: 'startTs-asc', label: t('Oldest first') },
-                          {
-                            value: 'eventsCount-desc',
-                            label: t('Most events'),
-                          },
-                          {
-                            value: 'eventsCount-asc',
-                            label: t('Fewest events'),
-                          },
-                        ]}
-                        onChange={setOrder}
-                      />
-                    ),
-                  },
-                ]}
-                fields={ALL_FIELDS.map((f) => ({
-                  value: f,
-                  label: t(f.charAt(0).toUpperCase() + f.slice(1)),
-                  on: fields.includes(f),
-                }))}
-                onToggleField={toggleField}
-              />
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <span>
-                    <IconButton
-                      icon={<MoreHorizontal size={15} />}
-                      label={t('More')}
-                      variant="ghost"
-                    />
-                  </span>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItems
-                    items={[
-                      {
-                        key: 'share',
-                        icon: <Share2 size={13} />,
-                        label: t('Copy link to this search'),
-                        disabled: noRules,
-                        onClick: share,
-                      },
-                      {
-                        key: 'settings',
-                        icon: <Settings2 size={13} />,
-                        label: t('Session settings'),
-                        onClick: () =>
-                          navigate(client(CLIENT_TABS.SESSION_SETTINGS)),
-                      },
-                      {
-                        key: 'docs',
-                        icon: <BookOpen size={13} />,
-                        label: t('Documentation'),
-                        onClick: () =>
-                          window.open(
-                            'https://docs.openreplay.com/en/session-replay/',
-                            '_blank',
-                          ),
-                      },
-                    ]}
-                  />
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </span>
-          </>
+          // at phone the strip, the window and Display are in the drawer the
+          // search field opens
+          phone ? undefined : (
+            <>
+              <FilterStrip {...tagStrip} />
+              <span className="m-recs__display">
+                {windowControl}
+                {displayControl}
+                {more}
+              </span>
+            </>
+          )
         }
       >
         {searchStore.latestSessionCount > 0 && (

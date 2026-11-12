@@ -69,3 +69,15 @@
   background: transparent;
   border-color: transparent;
 }
+
+/* the strip as option rows (a drawer's "Show") */
+.m-seg-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-space-2);
+}
+.m-seg-list__blank {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+}

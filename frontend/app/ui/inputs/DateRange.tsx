@@ -1,4 +1,9 @@
 import { cn } from '@/lib/utils';
+import {
+  SheetSection,
+  useInFilterSheet,
+  useSheetCount,
+} from '@/ui/filters/PhoneFilters';
 import { menuKeyDown } from '@/ui/overlays/menuKeys';
 import { PopoverPanel } from '@/ui/overlays/popover';
 import Period from 'Types/app/period';
@@ -46,9 +51,14 @@ export function DateRange({
   variant = 'outline',
 }: DateRangeProps) {
   const { t } = useTranslation();
+  const inSheet = useInFilterSheet();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<'from' | 'to'>('from');
   const rangeName: string = period?.rangeName ?? resting;
+  useSheetCount(inSheet && rangeName !== resting ? 1 : 0);
+  useEffect(() => {
+    if (inSheet) void loadCalendar();
+  }, [inSheet]);
   const custom = rangeName === CUSTOM_RANGE;
   const presets = options.filter((o) => o.value !== CUSTOM_RANGE);
   const from: number | undefined = custom ? period?.start : undefined;
@@ -120,6 +130,88 @@ export function DateRange({
     setOpen(false);
   };
 
+  const menu = (
+    <div role="menu" onKeyDown={menuKeyDown}>
+      {field && <p className="m-dr__field">{field}</p>}
+      {presets.map((pr) => (
+        <CheckRow
+          key={pr.value}
+          single
+          on={rangeName === pr.value}
+          onToggle={() => {
+            onChange(Period({ rangeName: pr.value }));
+            setOpen(false);
+          }}
+        >
+          {t(pr.label)}
+        </CheckRow>
+      ))}
+      {!disableCustom && (
+        <>
+          <div className="m-dr__rule" />
+          <CheckRow
+            single
+            on={custom}
+            onToggle={() =>
+              emitCustom(
+                DateTime.now().minus({ days: 7 }).startOf('day').toMillis(),
+                DateTime.now().endOf('day').toMillis(),
+              )
+            }
+          >
+            {t('Custom range')}
+          </CheckRow>
+        </>
+      )}
+      {custom && (
+        <div className="m-dr__picker">
+          <div className="m-dr__fields">
+            <Input
+              className={cn(
+                'm-dr__input',
+                step === 'from' && 'is-active',
+                typed.from === false && 'is-bad',
+              )}
+              value={draft.from}
+              placeholder={t('Start')}
+              aria-label={t('Start date')}
+              onFocus={() => setStep('from')}
+              onChange={(e) => onType('from', e.target.value)}
+            />
+            <Input
+              className={cn(
+                'm-dr__input',
+                step === 'to' && 'is-active',
+                typed.to === false && 'is-bad',
+              )}
+              value={draft.to}
+              placeholder={t('End')}
+              aria-label={t('End date')}
+              onFocus={() => setStep('to')}
+              onChange={(e) => onType('to', e.target.value)}
+            />
+          </div>
+          <Suspense fallback={null}>
+            <Calendar
+              selected={range}
+              onPickDay={onPickDay}
+              picking={step}
+              disableAfter={new Date()}
+            />
+          </Suspense>
+        </div>
+      )}
+    </div>
+  );
+
+  // the phone filter drawer: the presets as rows, the calendar under them
+  if (inSheet)
+    return (
+      <SheetSection title={field ?? t('Time range')}>
+        <div className="m-dr__sheet">{menu}</div>
+      </SheetSection>
+    );
+
   return (
     <PopoverPanel
       open={open}
@@ -130,79 +222,7 @@ export function DateRange({
       }}
       placement="bottomRight"
       className="m-dr__menu"
-      content={
-        <div role="menu" onKeyDown={menuKeyDown}>
-          {field && <p className="m-dr__field">{field}</p>}
-          {presets.map((pr) => (
-            <CheckRow
-              key={pr.value}
-              single
-              on={rangeName === pr.value}
-              onToggle={() => {
-                onChange(Period({ rangeName: pr.value }));
-                setOpen(false);
-              }}
-            >
-              {t(pr.label)}
-            </CheckRow>
-          ))}
-          {!disableCustom && (
-            <>
-              <div className="m-dr__rule" />
-              <CheckRow
-                single
-                on={custom}
-                onToggle={() =>
-                  emitCustom(
-                    DateTime.now().minus({ days: 7 }).startOf('day').toMillis(),
-                    DateTime.now().endOf('day').toMillis(),
-                  )
-                }
-              >
-                {t('Custom range')}
-              </CheckRow>
-            </>
-          )}
-          {custom && (
-            <div className="m-dr__picker">
-              <div className="m-dr__fields">
-                <Input
-                  className={cn(
-                    'm-dr__input',
-                    step === 'from' && 'is-active',
-                    typed.from === false && 'is-bad',
-                  )}
-                  value={draft.from}
-                  placeholder={t('Start')}
-                  aria-label={t('Start date')}
-                  onFocus={() => setStep('from')}
-                  onChange={(e) => onType('from', e.target.value)}
-                />
-                <Input
-                  className={cn(
-                    'm-dr__input',
-                    step === 'to' && 'is-active',
-                    typed.to === false && 'is-bad',
-                  )}
-                  value={draft.to}
-                  placeholder={t('End')}
-                  aria-label={t('End date')}
-                  onFocus={() => setStep('to')}
-                  onChange={(e) => onType('to', e.target.value)}
-                />
-              </div>
-              <Suspense fallback={null}>
-                <Calendar
-                  selected={range}
-                  onPickDay={onPickDay}
-                  picking={step}
-                  disableAfter={new Date()}
-                />
-              </Suspense>
-            </div>
-          )}
-        </div>
-      }
+      content={menu}
     >
       <button
         type="button"

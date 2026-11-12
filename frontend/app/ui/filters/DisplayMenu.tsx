@@ -7,6 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/ui/inputs/select';
+import { useViewport } from '@/ui/layout/use-viewport';
 import { PopoverPanel } from '@/ui/overlays/popover';
 import {
   ArrowDownWideNarrow,
@@ -16,6 +17,12 @@ import {
 import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import {
+  type FilterStripProps,
+  StripChoices,
+  stripActive,
+} from './FilterStrip';
+import { SheetSection, useInFilterSheet, useSheetCount } from './PhoneFilters';
 import './display-menu.css';
 
 export function MenuSelect<T extends string>({
@@ -61,21 +68,37 @@ export interface DisplayShellProps {
   onReset: () => void;
 
   label?: string;
+  /** the page's strip, drawn as "Show" here at phone (it folds into this) */
+  strip?: FilterStripProps;
 }
 
 export function DisplayShell({
   rows,
   fields,
   onToggleField,
-  changeCount,
+  changeCount: pageChanges,
   onReset,
   label,
+  strip,
 }: DisplayShellProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
+  const inSheet = useInFilterSheet();
+  const phone = useViewport() === 'phone';
+  const folded = phone && strip != null && !inSheet;
+  // a phone list shows no columns, so there are none to hide
+  const hideable = !phone && fields != null && fields.length > 0;
+  const stripOn = strip != null && stripActive(strip);
+  const changeCount = pageChanges + (folded && stripOn ? 1 : 0);
 
-  const content = (
-    <div className="m-dm">
+  const sections = (
+    <>
+      {folded && (
+        <div className="m-dm__section">
+          <p className="m-dm__heading">{t('Show')}</p>
+          <StripChoices {...strip} />
+        </div>
+      )}
       {rows.length > 0 && (
         <div className="m-dm__section">
           {rows.map((r) => (
@@ -87,7 +110,7 @@ export function DisplayShell({
         </div>
       )}
 
-      {fields && fields.length > 0 && (
+      {hideable && (
         <div className="m-dm__section">
           <p className="m-dm__heading">{t('Columns to hide')}</p>
           <div className="m-dm__pills">
@@ -113,8 +136,28 @@ export function DisplayShell({
           </Button>
         </div>
       )}
-    </div>
+    </>
   );
+
+  useSheetCount(inSheet ? pageChanges + (stripOn ? 1 : 0) : 0);
+  if (inSheet)
+    return (
+      <>
+        {strip && (
+          <SheetSection title={t('Show')} first>
+            <StripChoices {...strip} />
+          </SheetSection>
+        )}
+        {(rows.length > 0 || pageChanges > 0) && (
+          <SheetSection title={label ?? t('Display')}>
+            <div className="m-dm is-sheet">{sections}</div>
+          </SheetSection>
+        )}
+      </>
+    );
+  if (phone && !folded && rows.length === 0 && changeCount === 0) return null;
+
+  const content = <div className="m-dm">{sections}</div>;
 
   return (
     <PopoverPanel

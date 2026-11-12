@@ -2919,5 +2919,18 @@
   "The one value the tracker needs. It is not a secret, it ships in your page.": "La seule valeur dont le tracker a besoin. Ce n’est pas un secret, elle est livrée avec votre page.",
   "How to send the values": "Comment envoyer les valeurs",
   "Hide how to send the values": "Masquer comment envoyer les valeurs",
-  "Page {{current}} of {{last}}": "Page {{current}} sur {{last}}"
+  "Page {{current}} of {{last}}": "Page {{current}} sur {{last}}",
+  "Time range": "Période",
+  "Search and filters": "Recherche et filtres",
+  "Add a filter": "Ajouter un filtre",
+  "{{lead}}, {{n}} applied": "{{lead}}, {{n}} appliqués",
+  "Show {{n}} sessions": "Afficher {{n}} sessions",
+  "Show {{n}} sessions_one": "Afficher {{n}} session",
+  "Show {{n}} sessions_other": "Afficher {{n}} sessions",
+  "Show {{n}} issues": "Afficher {{n}} problèmes",
+  "Show {{n}} issues_one": "Afficher {{n}} problème",
+  "Show {{n}} issues_other": "Afficher {{n}} problèmes",
+  "Show {{n}} Spots": "Afficher {{n}} Spots",
+  "Show {{n}} Spots_one": "Afficher {{n}} Spot",
+  "Show {{n}} Spots_other": "Afficher {{n}} Spots"
 }
