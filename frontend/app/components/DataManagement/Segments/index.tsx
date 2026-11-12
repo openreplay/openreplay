@@ -4,7 +4,8 @@ import { type Column, DataTable } from '@/ui/data/table';
 import { EmptyState } from '@/ui/feedback/EmptyState';
 import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
 import { DisplayShell, MenuSelect } from '@/ui/filters/DisplayMenu';
-import { FilterStrip } from '@/ui/filters/FilterStrip';
+import { FilterStrip, type FilterStripProps } from '@/ui/filters/FilterStrip';
+import { PhoneFilters } from '@/ui/filters/PhoneFilters';
 import { SearchField } from '@/ui/inputs/SearchField';
 import { Switch } from '@/ui/inputs/switch';
 import { ListFooter } from '@/ui/layout/ListFooter';
@@ -262,6 +263,21 @@ function SegmentsListPage() {
     { key: 'shared', label: t('Team'), icon: <Users size={13} /> },
   ];
 
+  const ownerStrip: FilterStripProps = {
+    label: t('Whose segments'),
+    items: ownerTabs.map((o) => ({
+      key: o.key,
+      label: o.label,
+      icon: o.icon,
+      count: all.filter((s) => ownedBy(s, o.key)).length,
+    })),
+    selected: [owner],
+    onSelect: (k) => {
+      setOwner(k as Owner);
+      setPage(1);
+    },
+  };
+
   return (
     <PageCard
       title={t('Segments')}
@@ -277,20 +293,7 @@ function SegmentsListPage() {
       <PagePanel
         head={
           <>
-            <FilterStrip
-              label={t('Whose segments')}
-              items={ownerTabs.map((o) => ({
-                key: o.key,
-                label: o.label,
-                icon: o.icon,
-                count: all.filter((s) => ownedBy(s, o.key)).length,
-              }))}
-              selected={[owner]}
-              onSelect={(k) => {
-                setOwner(k as Owner);
-                setPage(1);
-              }}
-            />
+            <FilterStrip {...ownerStrip} folds="menu" />
             <div className="m-page__controls">
               <SearchField
                 value={query}
@@ -300,48 +303,65 @@ function SegmentsListPage() {
                 }}
                 placeholder={t('Filter by name')}
               />
-              <DisplayShell
-                label={t('Display segments')}
-                changeCount={
-                  (sort === 'updatedAt' ? 0 : 1) +
-                  (fields.length === ALL_FIELDS.length ? 0 : 1)
-                }
+              <PhoneFilters
+                result={t('Show {{n}} segments', {
+                  count: shown.length,
+                  n: shown.length.toLocaleString(),
+                })}
                 onReset={() => {
+                  setOwner('all');
                   setSort('updatedAt');
                   setFields(ALL_FIELDS);
+                  setPage(1);
                 }}
-                rows={[
-                  {
-                    id: 'seg-sort',
-                    label: t('Order'),
-                    control: (
-                      <MenuSelect<SegSort>
-                        id="seg-sort"
-                        value={sort}
-                        choices={[
-                          { value: 'updatedAt', label: t('Updated') },
-                          { value: 'name', label: t('Name') },
-                          { value: 'sessionsCount', label: t('Most sessions') },
-                        ]}
-                        onChange={setSort}
-                      />
-                    ),
-                  },
-                ]}
-                fields={[
-                  { value: 'count', label: t('Sessions') },
-                  { value: 'users', label: t('Users') },
-                  { value: 'owner', label: t('Owner') },
-                  { value: 'updated', label: t('Updated') },
-                ].map((f) => ({ ...f, on: has(f.value as SegField) }))}
-                onToggleField={(v) =>
-                  setFields((cur) =>
-                    cur.includes(v as SegField)
-                      ? cur.filter((x) => x !== v)
-                      : ALL_FIELDS.filter((x) => x === v || cur.includes(x)),
-                  )
-                }
-              />
+              >
+                <DisplayShell
+                  strip={ownerStrip}
+                  label={t('Display segments')}
+                  changeCount={
+                    (sort === 'updatedAt' ? 0 : 1) +
+                    (fields.length === ALL_FIELDS.length ? 0 : 1)
+                  }
+                  onReset={() => {
+                    setSort('updatedAt');
+                    setFields(ALL_FIELDS);
+                  }}
+                  rows={[
+                    {
+                      id: 'seg-sort',
+                      label: t('Order'),
+                      control: (
+                        <MenuSelect<SegSort>
+                          id="seg-sort"
+                          value={sort}
+                          choices={[
+                            { value: 'updatedAt', label: t('Updated') },
+                            { value: 'name', label: t('Name') },
+                            {
+                              value: 'sessionsCount',
+                              label: t('Most sessions'),
+                            },
+                          ]}
+                          onChange={setSort}
+                        />
+                      ),
+                    },
+                  ]}
+                  fields={[
+                    { value: 'count', label: t('Sessions') },
+                    { value: 'users', label: t('Users') },
+                    { value: 'owner', label: t('Owner') },
+                    { value: 'updated', label: t('Updated') },
+                  ].map((f) => ({ ...f, on: has(f.value as SegField) }))}
+                  onToggleField={(v) =>
+                    setFields((cur) =>
+                      cur.includes(v as SegField)
+                        ? cur.filter((x) => x !== v)
+                        : ALL_FIELDS.filter((x) => x === v || cur.includes(x)),
+                    )
+                  }
+                />
+              </PhoneFilters>
             </div>
           </>
         }

@@ -2814,5 +2814,17 @@
   "Show {{n}} issues_other": "显示 {{n}} 个问题",
   "Show {{n}} Spots": "显示 {{n}} 个 Spot",
   "Show {{n}} Spots_one": "显示 {{n}} 个 Spot",
-  "Show {{n}} Spots_other": "显示 {{n}} 个 Spot"
+  "Show {{n}} Spots_other": "显示 {{n}} 个 Spot",
+  "Show {{n}} tests": "显示 {{n}} 测试",
+  "Show {{n}} tests_one": "显示 {{n}} 测试",
+  "Show {{n}} tests_other": "显示 {{n}} 测试",
+  "Show {{n}} runs": "显示 {{n}} 次运行",
+  "Show {{n}} runs_one": "显示 {{n}} 次运行",
+  "Show {{n}} runs_other": "显示 {{n}} 次运行",
+  "Show {{n}} segments": "显示 {{n}} 个分群",
+  "Show {{n}} segments_one": "显示 {{n}} 个分群",
+  "Show {{n}} segments_other": "显示 {{n}} 个分群",
+  "Show {{n}} actions": "显示 {{n}} 个操作",
+  "Show {{n}} actions_one": "显示 {{n}} 个操作",
+  "Show {{n}} actions_other": "显示 {{n}} 个操作"
 }

@@ -2991,5 +2991,17 @@
   "Show {{n}} issues_other": "Показати проблеми: {{n}}",
   "Show {{n}} Spots": "Показати Spots: {{n}}",
   "Show {{n}} Spots_one": "Показати Spots: {{n}}",
-  "Show {{n}} Spots_other": "Показати Spots: {{n}}"
+  "Show {{n}} Spots_other": "Показати Spots: {{n}}",
+  "Show {{n}} tests": "Показати тести: {{n}}",
+  "Show {{n}} tests_one": "Показати тести: {{n}}",
+  "Show {{n}} tests_other": "Показати тести: {{n}}",
+  "Show {{n}} runs": "Показати запуски: {{n}}",
+  "Show {{n}} runs_one": "Показати запуски: {{n}}",
+  "Show {{n}} runs_other": "Показати запуски: {{n}}",
+  "Show {{n}} segments": "Показати сегменти: {{n}}",
+  "Show {{n}} segments_one": "Показати сегменти: {{n}}",
+  "Show {{n}} segments_other": "Показати сегменти: {{n}}",
+  "Show {{n}} actions": "Показати дії: {{n}}",
+  "Show {{n}} actions_one": "Показати дії: {{n}}",
+  "Show {{n}} actions_other": "Показати дії: {{n}}"
 }

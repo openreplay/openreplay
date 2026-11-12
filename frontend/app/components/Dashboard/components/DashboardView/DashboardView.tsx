@@ -8,9 +8,11 @@ import {
 } from '@/ui/actions/dropdown-menu';
 import { Chip } from '@/ui/data/Chip';
 import { Loader } from '@/ui/feedback/Loader';
+import { PhoneFilters } from '@/ui/filters/PhoneFilters';
 import { CheckRow } from '@/ui/inputs/CheckRow';
 import { DateRange } from '@/ui/inputs/DateRange';
 import { PageCard } from '@/ui/layout/PageCard';
+import { useViewport } from '@/ui/layout/use-viewport';
 import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
 import { RenameDialog } from '@/ui/overlays/RenameDialog';
 import { Modal } from '@/ui/overlays/modal';
@@ -52,6 +54,7 @@ interface Props {
 function AddCardButton() {
   const { t } = useTranslation();
   const [adding, setAdding] = React.useState(false);
+  const phone = useViewport() === 'phone';
   return (
     <PopoverPanel
       open={adding}
@@ -61,10 +64,17 @@ function AddCardButton() {
         <CardPicker key={String(adding)} onDone={() => setAdding(false)} />
       }
     >
-      <Button variant="primary">
-        <Plus size={14} />
-        {t('Add card')}
-      </Button>
+      {/* at phone the head's verbs are icons on the nav-bar row */}
+      {phone ? (
+        <Button variant="primary" size="icon" aria-label={t('Add card')}>
+          <Plus size={15} />
+        </Button>
+      ) : (
+        <Button variant="primary">
+          <Plus size={14} />
+          {t('Add card')}
+        </Button>
+      )}
     </PopoverPanel>
   );
 }
@@ -145,10 +155,12 @@ function DashboardView({ siteId, dashboardId, renderReport }: Props) {
         actions={
           <>
             <AddCardButton />
-            <DateRange
-              period={dashboardStore.period}
-              onChange={(p) => dashboardStore.setPeriod(p)}
-            />
+            <PhoneFilters>
+              <DateRange
+                period={dashboardStore.period}
+                onChange={(p) => dashboardStore.setPeriod(p)}
+              />
+            </PhoneFilters>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <span>

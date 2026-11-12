@@ -6,7 +6,8 @@ import { EmptyState } from '@/ui/feedback/EmptyState';
 import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
 import { ActiveFilters } from '@/ui/filters/ActiveFilters';
 import { type FilterDimension, FilterMenu } from '@/ui/filters/FilterMenu';
-import { FilterStrip } from '@/ui/filters/FilterStrip';
+import { FilterStrip, type FilterStripProps } from '@/ui/filters/FilterStrip';
+import { PhoneFilters } from '@/ui/filters/PhoneFilters';
 import { DateRange } from '@/ui/inputs/DateRange';
 import { SearchField } from '@/ui/inputs/SearchField';
 import { ListFooter } from '@/ui/layout/ListFooter';
@@ -449,6 +450,18 @@ function RunsTab() {
     passed: t('No passes in this period'),
   };
 
+  const resultStrip: FilterStripProps = {
+    label: t('Filter by result'),
+    items: [
+      { key: 'all', label: t('All'), count: allCount },
+      { key: 'running', label: t('Running'), count: runningCount },
+      { key: 'failed', label: t('Failed'), count: failedCount },
+      { key: 'passed', label: t('Passed'), count: passedCount },
+    ],
+    selected: [statusTab],
+    onSelect: (key) => setStatusTab(key as StatusTab),
+  };
+
   return (
     <SyntheticsFrame
       actions={
@@ -460,32 +473,37 @@ function RunsTab() {
       }
       toolbar={
         <>
-          <FilterStrip
-            label={t('Filter by result')}
-            items={[
-              { key: 'all', label: t('All'), count: allCount },
-              { key: 'running', label: t('Running'), count: runningCount },
-              { key: 'failed', label: t('Failed'), count: failedCount },
-              { key: 'passed', label: t('Passed'), count: passedCount },
-            ]}
-            selected={[statusTab]}
-            onSelect={(key) => setStatusTab(key as StatusTab)}
-          />
+          <FilterStrip {...resultStrip} folds="menu" />
           <div className="m-page__controls">
-            <DateRange
-              field={t('Started')}
-              period={period}
-              options={PERIODS}
-              resting={LAST_7_DAYS}
-              onChange={setPeriod}
-            />
-            <FilterMenu<FilterKey>
-              dimensions={dimensions}
-              isActive={isActive}
-              onToggle={onToggle}
-              activeCount={chips.length}
-              label={t('Filter runs')}
-            />
+            <PhoneFilters
+              result={t('Show {{n}} runs', {
+                count: total,
+                n: total.toLocaleString(),
+              })}
+              onReset={() => {
+                setStatusTab('all');
+                setPeriod(Period({ rangeName: LAST_7_DAYS }));
+                (Object.keys(state) as FilterKey[]).forEach((k) =>
+                  state[k][1]('all'),
+                );
+              }}
+            >
+              <DateRange
+                field={t('Started')}
+                period={period}
+                options={PERIODS}
+                resting={LAST_7_DAYS}
+                onChange={setPeriod}
+              />
+              <FilterMenu<FilterKey>
+                dimensions={dimensions}
+                isActive={isActive}
+                onToggle={onToggle}
+                activeCount={chips.length}
+                label={t('Filter runs')}
+                strip={resultStrip}
+              />
+            </PhoneFilters>
           </div>
         </>
       }
