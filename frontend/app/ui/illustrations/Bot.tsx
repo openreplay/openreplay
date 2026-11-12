@@ -1,4 +1,4 @@
-import { SessionAvatar } from '@/ui/data/SessionAvatar';
+import { SvgAvatar } from '@/ui/data/SessionAvatar';
 import { type AvatarFace, hueIndexFor } from '@/ui/data/avatar';
 import { type CSSProperties, type ReactNode, useId, useState } from 'react';
 
@@ -445,27 +445,26 @@ export function Bot({
           style={{ transformOrigin: '0px 0px' }}
         >
           {faces.map(({ kind, part }) => (
-            <foreignObject
+            <SvgAvatar
               key={kind}
-              x={b.face.x}
-              y={b.face.y}
-              width={b.face.w}
-              height={b.face.h}
+              seed={face}
+              face={part}
+              faceOnly
+              x={b.face.ix}
+              y={b.face.iy}
+              size={b.face.img}
               className={`m-ill__face m-ill__face--${kind} m-ill__face--on-${shape}`}
-              style={
-                {
-                  '--img-x': `${b.face.ix - b.face.x}px`,
-                  '--img-y': `${b.face.iy - b.face.y}px`,
-                } as CSSProperties
+              clipPath={`url(#${gridId}-clip)`}
+              ground={
+                <rect
+                  x={b.face.x}
+                  y={b.face.y}
+                  width={b.face.w}
+                  height={b.face.h}
+                  className="m-savatar__ground"
+                />
               }
-            >
-              <SessionAvatar
-                seed={face}
-                face={part}
-                size={b.face.img}
-                faceOnly
-              />
-            </foreignObject>
+            />
           ))}
           <FaceGrid
             id={gridId}

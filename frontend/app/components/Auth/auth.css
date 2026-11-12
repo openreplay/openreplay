@@ -212,9 +212,33 @@
   .m-auth__foot {
     padding-inline: var(--m-space-5);
   }
+  /* stacked and centred; the page scrolls, the footer is not pinned */
+  .m-auth__top {
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--m-space-4);
+  }
   .m-auth__foot {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
+    gap: var(--m-space-3);
+    text-align: center;
+  }
+  .m-auth__lang {
+    width: auto;
+  }
+  .m-auth__lang [data-slot='select-trigger'] {
+    width: auto;
+    gap: var(--m-space-2);
+  }
+  .m-auth {
+    height: auto;
+    min-height: 100dvh;
+  }
+  .m-auth__body {
+    flex: none;
+    overflow: visible;
+    padding-bottom: var(--m-space-6);
   }
 }
 

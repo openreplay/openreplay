@@ -67,9 +67,6 @@
 .m-cheer__face {
   overflow: visible;
 }
-.m-cheer__face > .m-savatar {
-  display: block;
-}
 
 .m-cheer__frame--1,
 .m-cheer__frame--2,
