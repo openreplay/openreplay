@@ -1,5 +1,6 @@
-import APIClient, { apiClient } from 'App/api_client';
 import Alert, { IAlert } from 'Types/alert';
+
+import APIClient, { apiClient } from 'App/api_client';
 
 export default class AlertsService {
   private client: APIClient;
@@ -22,7 +23,15 @@ export default class AlertsService {
       .then((response) => response.data || {});
   }
 
-  fetchTriggerOptions(): Promise<{ name: string; value: string | number }[]> {
+  fetchTriggerOptions(): Promise<
+    {
+      name: string;
+      value: string | number;
+      unit?: string;
+      source?: string;
+      predefined?: boolean;
+    }[]
+  > {
     return this.client
       .get('/alerts/triggers')
       .then((r) => r.json())

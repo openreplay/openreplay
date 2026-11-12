@@ -360,7 +360,8 @@
   justify-content: center;
   width: 1.5rem;
   height: 1.5rem;
-  margin-top: -2px;
+  /* centred on the title's 1.25rem line */
+  margin-top: -0.125rem;
   border-radius: var(--m-radius-full);
   background: var(--m-surface-sunken);
   color: var(--m-content-secondary);
@@ -371,8 +372,12 @@
 .m-alertf__body {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: var(--m-space-3);
   min-width: 0;
+}
+.m-alertf__body > :is(.m-alertf__help, .m-notice) {
+  align-self: stretch;
 }
 .m-alertf__title {
   margin: 0;
@@ -401,7 +406,12 @@
   flex: none;
 }
 .m-alertf__metric {
-  min-width: 12rem;
+  width: 18rem;
+  max-width: 100%;
+}
+.m-alertf__notify {
+  width: 21.5rem;
+  max-width: 100%;
 }
 .m-alertf__value {
   width: 9rem;
@@ -409,11 +419,6 @@
 .m-alertf__wide {
   min-width: 16rem;
   flex: 1;
-}
-.m-alertf__channels {
-  display: flex;
-  gap: var(--m-space-5);
-  flex-wrap: wrap;
 }
 .m-alertf__foot {
   display: flex;
@@ -843,8 +848,82 @@
 .m-brk__dim.is-over {
   box-shadow: inset 0 2px 0 var(--m-content-accent);
 }
-.m-alertf__body > [data-slot='segmented'] {
-  align-self: flex-start;
+:root[data-viewport='phone'] :is(.m-alertf__metric, .m-alertf__notify) {
+  width: 100%;
+}
+
+.m-metricpick {
+  width: max(var(--radix-popover-trigger-width), 32rem);
+  max-width: calc(100vw - 2 * var(--m-space-5));
+  overflow: hidden;
+}
+.m-metricpick :is(.m-pick2__rail, .m-pick2__list) {
+  max-height: 21rem;
+}
+.m-metricpick .m-pick2__row.is-current {
+  font-weight: var(--m-weight-medium);
+}
+/* phone: a bottom sheet, the categories a sideways row of chips */
+:root[data-viewport='phone']
+  [data-radix-popper-content-wrapper]:has(> .m-metricpick) {
+  position: fixed !important;
+  inset: auto 0 0 0 !important;
+  transform: none !important;
+  min-width: 0 !important;
+}
+:root[data-viewport='phone'] .m-metricpick {
+  width: 100%;
+  max-width: none;
+  /* the sheet has no anchor to stay near: no viewport-fit nudge or cap */
+  translate: none;
+  max-height: 82dvh !important;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  border-width: 0;
+  border-radius: var(--m-radius-surface) var(--m-radius-surface) 0 0;
+  box-shadow:
+    0 0 0 100vmax var(--m-scrim),
+    0 -8px 32px rgb(0 0 0 / 0.16);
+}
+:root[data-viewport='phone'] .m-metricpick .m-pick2 {
+  flex: 1;
+  min-height: 0;
+}
+:root[data-viewport='phone'] .m-metricpick .m-pick2__body {
+  display: flex;
+  flex-direction: column;
+}
+:root[data-viewport='phone'] .m-metricpick .m-pick2__rail {
+  flex: none;
+  flex-direction: row;
+  gap: var(--m-space-2);
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: var(--m-space-2) var(--m-space-2) var(--m-space-3);
+  border-right: 0;
+  border-bottom: var(--m-border-width) solid var(--m-border-subtle);
+  scrollbar-width: none;
+  touch-action: pan-x;
+}
+:root[data-viewport='phone'] .m-metricpick .m-pick2__cat {
+  padding-inline: var(--m-space-4);
+  border: var(--m-border-width) solid var(--m-border-subtle);
+  border-radius: var(--m-radius-full);
+}
+:root[data-viewport='phone'] .m-metricpick .m-pick2__cat > .m-truncate {
+  overflow: visible;
+}
+:root[data-viewport='phone'] .m-metricpick .m-pick2__cat.is-on {
+  border-color: transparent;
+}
+:root[data-viewport='phone'] .m-metricpick .m-pick2__chev {
+  display: none;
+}
+:root[data-viewport='phone'] .m-metricpick .m-pick2__list {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
 }
 
 /* Cards library: saved cards to add to the open dashboard (right-hand panel). */

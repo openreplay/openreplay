@@ -63,45 +63,6 @@
   overflow-wrap: anywhere;
 }
 
-.m-drawer__title-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--m-space-3);
-
-  align-self: flex-start;
-  max-width: 100%;
-  min-width: 0;
-  margin-inline: calc(var(--m-space-3) * -1);
-  padding: 1px var(--m-space-3);
-  border-radius: var(--m-radius-control);
-  text-align: left;
-  color: var(--m-content-decorative);
-  transition: background-color var(--m-duration-instant) var(--m-ease-out);
-}
-.m-drawer__title-btn:hover {
-  background: var(--m-surface-hover);
-}
-.m-drawer__title-btn svg {
-  flex: none;
-  opacity: 0;
-  transition: opacity var(--m-duration-instant) var(--m-ease-out);
-}
-.m-drawer__title-btn:hover svg {
-  opacity: 1;
-}
-
-.m-drawer__rename {
-  display: flex;
-  align-items: center;
-  gap: var(--m-space-3);
-  min-width: 0;
-  margin-right: var(--m-space-5);
-}
-.m-drawer__rename input {
-  flex: 1;
-  min-width: 0;
-}
-
 .m-drawer__meta {
   display: flex;
   align-items: center;

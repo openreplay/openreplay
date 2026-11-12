@@ -1,8 +1,7 @@
 import { IconButton } from '@/ui/actions/IconButton';
-import { Button } from '@/ui/actions/button';
-import { Input } from '@/ui/inputs/input';
-import { Pencil, X } from 'lucide-react';
-import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { EditableTitle } from '@/ui/inputs/EditableTitle';
+import { X } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Drawer, type DrawerSize } from './drawer';
@@ -65,6 +64,7 @@ export function EntityDrawer({
                 onChange={onTitleChange}
                 autoEdit={autoEditTitle}
                 placeholder={namePlaceholder}
+                heading={(text) => <h2 className="m-drawer__title">{text}</h2>}
               />
             ) : (
               title
@@ -120,97 +120,6 @@ export function DrawerHeader({
         />
       </div>
     </>
-  );
-}
-
-function EditableTitle({
-  title,
-  onChange,
-  autoEdit,
-  placeholder,
-}: {
-  title: string;
-  onChange: (title: string) => void;
-  autoEdit?: boolean;
-  placeholder?: string;
-}) {
-  const { t } = useTranslation();
-  const [editing, setEditing] = useState(!!autoEdit);
-  const [val, setVal] = useState(autoEdit ? '' : title);
-  const ref = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (!editing) setVal(title);
-  }, [title, editing]);
-
-  useEffect(() => {
-    if (!editing) return undefined;
-    const id = window.setTimeout(() => ref.current?.focus(), autoEdit ? 80 : 0);
-    return () => window.clearTimeout(id);
-  }, [editing, autoEdit]);
-
-  const commit = () => {
-    const v = val.trim();
-    if (v && v !== title) onChange(v);
-    else setVal(title);
-    setEditing(false);
-  };
-
-  if (editing) {
-    return (
-      <div className="m-drawer__rename">
-        <Input
-          ref={ref}
-          value={val}
-          maxLength={120}
-          aria-label={t('Name')}
-          placeholder={autoEdit ? (placeholder ?? t('Name')) : undefined}
-          onChange={(e) => {
-            setVal(e.target.value);
-
-            if (autoEdit) onChange(e.target.value);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') commit();
-
-            if (e.key === 'Escape') {
-              e.stopPropagation();
-              setVal(title);
-              setEditing(false);
-            }
-          }}
-        />
-
-        {!autoEdit && (
-          <>
-            <Button
-              variant="subtle"
-              onClick={() => {
-                setVal(title);
-                setEditing(false);
-              }}
-            >
-              {t('Cancel')}
-            </Button>
-            <Button variant="primary" onClick={commit}>
-              {t('Save')}
-            </Button>
-          </>
-        )}
-      </div>
-    );
-  }
-
-  return (
-    <button
-      type="button"
-      className="m-drawer__title-btn"
-      onClick={() => setEditing(true)}
-      aria-label={t('Rename {{title}}', { title })}
-    >
-      <h2 className="m-drawer__title">{title}</h2>
-      <Pencil size={13} aria-hidden="true" />
-    </button>
   );
 }
 
