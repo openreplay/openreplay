@@ -324,3 +324,193 @@
   text-decoration-color: var(--m-border-strong);
 }
 .m-ob__link:hover { text-decoration-color: currentColor; }
+
+/* ── phone first ── */
+:root[data-viewport='phone'] .m-ob__top {
+  padding: var(--m-space-4);
+}
+:root[data-viewport='phone'] .m-ob__brand {
+  --m-brand: calc(var(--m-text-lg) * var(--m-display-scale) * 1.3);
+}
+:root[data-viewport='phone'] .m-ob__body {
+  flex: 1;
+  grid-template-rows: auto 1fr;
+  align-items: stretch;
+  gap: var(--m-space-6);
+  padding: var(--m-space-2) 0 0;
+}
+:root[data-viewport='phone'] .m-ob__rail {
+  position: static;
+  gap: var(--m-space-4);
+  padding: 0 var(--m-space-4);
+}
+/* the step runs edge to edge */
+:root[data-viewport='phone'] .m-ob__card {
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+  border-inline: 0;
+  border-bottom: 0;
+  border-radius: 0;
+}
+:root[data-viewport='phone'] .m-ob__step {
+  flex: 1;
+  border-radius: 0;
+}
+:root[data-viewport='phone'] .m-ob__head {
+  gap: var(--m-space-3);
+  padding: var(--m-space-6) var(--m-space-4) 0;
+}
+:root[data-viewport='phone'] .m-ob__title {
+  font-size: calc(var(--m-text-2xl) * var(--m-display-scale));
+}
+:root[data-viewport='phone'] .m-ob__content {
+  flex: 1;
+  padding: var(--m-space-7) var(--m-space-4) var(--m-space-6);
+}
+:root[data-viewport='phone'] .m-ob__stack {
+  gap: var(--m-space-8);
+}
+/* three parts instead of the step list: blue current, grey done */
+.m-ob__progress {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--m-space-2);
+  margin-bottom: var(--m-space-4);
+}
+.m-ob__seg {
+  position: relative;
+  height: 4px;
+  border-radius: var(--m-radius-full);
+  background: var(--m-surface-sunken);
+}
+.m-ob__seg::after {
+  content: '';
+  position: absolute;
+  inset: -10px 0;
+}
+.m-ob__seg:is(.is-done, .is-past) {
+  background: var(--m-content-decorative);
+}
+.m-ob__seg.is-current {
+  background: var(--m-border-accent);
+}
+/* a part's switch sits under its title */
+:root[data-viewport='phone'] .m-ob .m-nstep__head {
+  flex-wrap: wrap;
+  row-gap: var(--m-space-2);
+  margin-bottom: var(--m-space-2);
+}
+:root[data-viewport='phone'] .m-ob .m-nstep__aside {
+  flex: 1 1 100%;
+  margin-left: 0;
+}
+/* code blocks: no caption row, the copy in the corner */
+:root[data-viewport='phone'] .m-ob .m-code {
+  position: relative;
+}
+:root[data-viewport='phone'] .m-ob .m-code__caption {
+  display: none;
+}
+:root[data-viewport='phone'] .m-ob .m-code__head {
+  position: absolute;
+  top: var(--m-space-2);
+  right: var(--m-space-2);
+  z-index: 1;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+:root[data-viewport='phone'] .m-ob .m-code:not(.m-code--inline) .m-code__pre {
+  padding-right: var(--m-space-9);
+}
+.m-ob__docs-end {
+  margin-top: var(--m-space-8);
+}
+/* the foot pinned to the bottom of the screen */
+:root[data-viewport='phone'] .m-ob__foot {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  padding: var(--m-space-3) var(--m-space-4)
+    calc(var(--m-space-3) + env(safe-area-inset-bottom));
+  border-radius: 0;
+  box-shadow: 0 -1px 0 var(--m-border-subtle);
+}
+:root[data-viewport='phone'] .m-ob__foot-right {
+  flex: 1;
+  justify-content: flex-end;
+}
+:root[data-viewport='phone'] .m-ob__foot .m-ob__next {
+  flex: 1;
+  min-width: 0;
+  max-width: 16rem;
+  justify-content: center;
+}
+:root[data-viewport='phone'] .m-ob__foot-left:empty {
+  display: none;
+}
+:root[data-viewport='phone']
+  .m-ob__foot-left:empty
+  + .m-ob__foot-right
+  .m-ob__next {
+  max-width: none;
+}
+/* invite: the email across the row, name and role under it */
+:root[data-viewport='phone'] .m-ob__invite-head {
+  display: none;
+}
+:root[data-viewport='phone'] .m-ob__invites {
+  gap: var(--m-space-5);
+}
+:root[data-viewport='phone'] .m-ob__invite-row {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 1.75rem;
+  row-gap: var(--m-space-2);
+}
+:root[data-viewport='phone'] .m-ob__invite-row > :nth-child(2) {
+  grid-row: 1;
+  grid-column: 1 / 3;
+}
+:root[data-viewport='phone'] .m-ob__invite-row > :nth-child(1) {
+  grid-row: 2;
+  grid-column: 1;
+}
+:root[data-viewport='phone'] .m-ob__invite-row > :nth-child(3) {
+  grid-row: 2;
+  grid-column: 2;
+}
+:root[data-viewport='phone'] .m-ob__invite-row > .m-ob__row-x {
+  grid-row: 1;
+  grid-column: 3;
+}
+:root[data-viewport='phone'] .m-ob__invite-row > .m-ob__row-x.is-hidden {
+  display: none;
+}
+:root[data-viewport='phone']
+  .m-ob__invite-row:has(> .m-ob__row-x.is-hidden) {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+:root[data-viewport='phone'] .m-ob__invite-actions {
+  flex-wrap: wrap;
+}
+/* done: the project field hides, the actions stack full width */
+:root[data-viewport='phone'] .m-ob[data-step='done'] .m-ob__rail {
+  display: none;
+}
+:root[data-viewport='phone'] .m-ob[data-step='done'] .m-ob__body {
+  grid-template-rows: 1fr;
+}
+:root[data-viewport='phone'] .m-ob__done {
+  padding: var(--m-space-6) var(--m-space-4) var(--m-space-7);
+}
+:root[data-viewport='phone'] .m-ob__cheer {
+  margin-left: -1rem;
+}
+:root[data-viewport='phone'] .m-ob__done-actions {
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+}
+:root[data-viewport='phone'] .m-ob__done-actions > * {
+  justify-content: center;
+}

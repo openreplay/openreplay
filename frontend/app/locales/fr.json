@@ -2967,5 +2967,6 @@
   "Tap a detail to see every session that has it.": "Touchez un détail pour voir toutes les sessions qui l'ont.",
   "Show sessions with {{label}} {{value}}": "Afficher les sessions avec {{label}} {{value}}",
   "Hide the panel": "Masquer le panneau",
-  "Show the panel": "Afficher le panneau"
+  "Show the panel": "Afficher le panneau",
+  "Step {{n}}, {{label}}": "Étape {{n}}, {{label}}"
 }

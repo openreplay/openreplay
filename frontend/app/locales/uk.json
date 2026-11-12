@@ -3026,5 +3026,6 @@
   "Tap a detail to see every session that has it.": "Торкніться деталі, щоб побачити всі сесії з нею.",
   "Show sessions with {{label}} {{value}}": "Показати сесії з {{label}} {{value}}",
   "Hide the panel": "Сховати панель",
-  "Show the panel": "Показати панель"
+  "Show the panel": "Показати панель",
+  "Step {{n}}, {{label}}": "Крок {{n}}, {{label}}"
 }

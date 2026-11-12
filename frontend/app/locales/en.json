@@ -2908,5 +2908,6 @@
   "Tap a detail to see every session that has it.": "Tap a detail to see every session that has it.",
   "Show sessions with {{label}} {{value}}": "Show sessions with {{label}} {{value}}",
   "Hide the panel": "Hide the panel",
-  "Show the panel": "Show the panel"
+  "Show the panel": "Show the panel",
+  "Step {{n}}, {{label}}": "Step {{n}}, {{label}}"
 }
