@@ -1,5 +1,6 @@
 import { isIFrameElement, isRootNode } from '../../../guards';
 import { insertRule, deleteRule, replaceRule } from './safeCSSRules';
+import { parseSanitizedSvgContent } from './sanitize';
 
 function isNode(sth: any): sth is Node {
   return !!sth && sth.nodeType != null;
@@ -336,7 +337,7 @@ export class VHTMLElement extends VElement {
  * Host for the `<symbol>`s rebuilt from `_$OPENREPLAY_SPRITE$_` messages, kept as the last child
  * of every <body> so the `<use href="#symbol-N">` rewrite done in MessageManager resolves inside
  * the replay document (`<use>` refuses external and data: refs as cross-origin).
- * Its content comes from innerHTML instead of the message stream, so VParent's child
+ * Its content is set wholesale instead of coming from the message stream, so VParent's child
  * reconciliation must not run here: it would prune every symbol as an unexpected node.
  */
 export class VSpriteMap extends VElement {
@@ -356,8 +357,24 @@ export class VSpriteMap extends VElement {
     if (!this.dirty) {
       return;
     }
-    this.node.innerHTML = this.content;
     this.dirty = false;
+    const node = this.node;
+    const parsed = this.content ? parseSanitizedSvgContent(this.content) : null;
+    const symbols = node.ownerDocument.createDocumentFragment();
+    while (parsed?.firstChild) {
+      symbols.appendChild(parsed.firstChild);
+    }
+    node.replaceChildren(symbols);
+  }
+
+  protected createNode() {
+    // Created before it has a parent (DOMManager.attachSpriteMap), where VElement falls back
+    // to the app page's document; detached SVG <image>s there still load. Adopted on mount.
+    return document.implementation.createDocument(
+      'http://www.w3.org/2000/svg',
+      'svg',
+      null,
+    ).documentElement;
   }
 }
 
