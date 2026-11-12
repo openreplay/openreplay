@@ -2944,5 +2944,6 @@
   "Show {{n}} segments_other": "Mostrar {{n}} segmentos",
   "Show {{n}} actions": "Mostrar {{n}} acciones",
   "Show {{n}} actions_one": "Mostrar {{n}} acción",
-  "Show {{n}} actions_other": "Mostrar {{n}} acciones"
+  "Show {{n}} actions_other": "Mostrar {{n}} acciones",
+  "Clear and close the search": "Borrar y cerrar la búsqueda"
 }

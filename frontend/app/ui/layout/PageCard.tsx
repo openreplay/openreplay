@@ -1,9 +1,18 @@
 import { Button } from '@/ui/actions/button';
 import { EditableTitle } from '@/ui/inputs/EditableTitle';
 import { ArrowLeft } from 'lucide-react';
-import { type ReactNode, useEffect, useRef, useState } from 'react';
+import {
+  type ReactNode,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import './page-card.css';
+import { useViewport } from './use-viewport';
 
 export interface PageCardProps {
   back?: { label: string; onClick: () => void };
@@ -27,6 +36,25 @@ export interface PageCardProps {
   children: ReactNode;
 }
 
+/* At phone a page's search is an icon; the first toolbar row or panel head
+   offers it a seat, so the opened field covers that row. */
+const SearchSlot = createContext<{
+  slot: HTMLElement | null;
+  offer: (el: HTMLElement | null) => void;
+} | null>(null);
+
+export function usePageSearchSlot(): HTMLElement | null {
+  return useContext(SearchSlot)?.slot ?? null;
+}
+
+function SearchSeat() {
+  const phone = useViewport() === 'phone';
+  const ctx = useContext(SearchSlot);
+  return phone && ctx ? (
+    <span className="m-psearch-slot" ref={ctx.offer} />
+  ) : null;
+}
+
 export function PageCard({
   back,
   title,
@@ -40,48 +68,61 @@ export function PageCard({
   split,
   children,
 }: PageCardProps) {
+  const [slot, setSlot] = useState<HTMLElement | null>(null);
+  // the first seat that offers wins; it withdraws when it unmounts
+  const offer = useCallback(
+    (el: HTMLElement | null) => setSlot((cur) => (el ? (cur ?? el) : null)),
+    [],
+  );
   return (
-    <section className={`m-page${tabs ? ' m-page--tabbed' : ''}`}>
-      <header className="m-page__head">
-        {back && (
-          <Button
-            variant="subtle"
-            onClick={back.onClick}
-            className="m-page__back"
-          >
-            <ArrowLeft size={15} />
-            {back.label}
-          </Button>
-        )}
-        <div className="m-page__lead">
-          {/* the meta is a fact about the title: it rides the title's line */}
-          <div className="m-page__titlerow">
-            {onTitleChange ? (
-              <EditableTitle
-                title={title}
-                onChange={onTitleChange}
-                heading={(text) => <h1 className="m-page__title">{text}</h1>}
-              />
-            ) : (
-              <h1 className="m-page__title">{title}</h1>
-            )}
-            {meta != null && <span className="m-page__meta">{meta}</span>}
+    <SearchSlot.Provider value={{ slot, offer }}>
+      <section className={`m-page${tabs ? ' m-page--tabbed' : ''}`}>
+        <header className="m-page__head">
+          {back && (
+            <Button
+              variant="subtle"
+              onClick={back.onClick}
+              className="m-page__back"
+            >
+              <ArrowLeft size={15} />
+              {back.label}
+            </Button>
+          )}
+          <div className="m-page__lead">
+            {/* the meta is a fact about the title: it rides the title's line */}
+            <div className="m-page__titlerow">
+              {onTitleChange ? (
+                <EditableTitle
+                  title={title}
+                  onChange={onTitleChange}
+                  heading={(text) => <h1 className="m-page__title">{text}</h1>}
+                />
+              ) : (
+                <h1 className="m-page__title">{title}</h1>
+              )}
+              {meta != null && <span className="m-page__meta">{meta}</span>}
+            </div>
+            {subtitle && <p className="m-page__sub">{subtitle}</p>}
           </div>
-          {subtitle && <p className="m-page__sub">{subtitle}</p>}
+          {lede}
+          {actions && <div className="m-page__actions">{actions}</div>}
+        </header>
+        {tabs && <div className="m-page__tabs">{tabs}</div>}
+        <div className="m-page__body">
+          {split ? children : <PagePanel head={toolbar}>{children}</PagePanel>}
         </div>
-        {lede}
-        {actions && <div className="m-page__actions">{actions}</div>}
-      </header>
-      {tabs && <div className="m-page__tabs">{tabs}</div>}
-      <div className="m-page__body">
-        {split ? children : <PagePanel head={toolbar}>{children}</PagePanel>}
-      </div>
-    </section>
+      </section>
+    </SearchSlot.Provider>
   );
 }
 
 export function PageToolbar({ children }: { children: ReactNode }) {
-  return <div className="m-page__toolbar">{children}</div>;
+  return (
+    <div className="m-page__toolbar">
+      <SearchSeat />
+      {children}
+    </div>
+  );
 }
 
 export function PagePanel({
@@ -143,6 +184,7 @@ export function PagePanel({
       )}
       {head && (
         <div className={`m-panel__head${stuck ? ' is-stuck' : ''}`} ref={bar}>
+          <SearchSeat />
           {head}
         </div>
       )}

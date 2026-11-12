@@ -732,3 +732,11 @@
   outline: 2px solid var(--m-focus-ring);
   outline-offset: 2px;
 }
+
+/* phone: an audit row is the action, then "who · when" */
+.m-pref__audit-m {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}

@@ -3003,5 +3003,6 @@
   "Show {{n}} segments_other": "Показати сегменти: {{n}}",
   "Show {{n}} actions": "Показати дії: {{n}}",
   "Show {{n}} actions_one": "Показати дії: {{n}}",
-  "Show {{n}} actions_other": "Показати дії: {{n}}"
+  "Show {{n}} actions_other": "Показати дії: {{n}}",
+  "Clear and close the search": "Очистити й закрити пошук"
 }

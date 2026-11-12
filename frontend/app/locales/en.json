@@ -2885,5 +2885,6 @@
   "Show {{n}} segments_other": "Show {{n}} segments",
   "Show {{n}} actions": "Show {{n}} actions",
   "Show {{n}} actions_one": "Show {{n}} action",
-  "Show {{n}} actions_other": "Show {{n}} actions"
+  "Show {{n}} actions_other": "Show {{n}} actions",
+  "Clear and close the search": "Clear and close the search"
 }

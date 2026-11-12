@@ -7,3 +7,39 @@
     width: 9rem;
   }
 }
+
+/* phone: the search is an icon; opened, the field covers the row it sits in */
+.m-psearch-slot {
+  display: contents;
+}
+:root[data-viewport='phone'] .m-page__head {
+  position: relative;
+}
+.m-phsearch {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-3);
+  padding-inline: var(--m-space-4) var(--m-space-2);
+  background: var(--m-surface-default);
+  border-radius: inherit;
+}
+.m-phsearch__glyph {
+  flex: none;
+  color: var(--m-content-muted);
+}
+.m-phsearch__input {
+  flex: 1;
+  min-width: 0;
+}
+:root[data-viewport='phone'] .m-panel__head:has(> .m-psearch-slot) {
+  position: sticky;
+}
+:root[data-viewport='phone'] .m-page__actions:empty {
+  display: none;
+}
+:root[data-viewport='phone'] .m-page__toolbar:has(> .m-psearch-slot) {
+  position: relative;
+}

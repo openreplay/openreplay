@@ -2826,5 +2826,6 @@
   "Show {{n}} segments_other": "显示 {{n}} 个分群",
   "Show {{n}} actions": "显示 {{n}} 个操作",
   "Show {{n}} actions_one": "显示 {{n}} 个操作",
-  "Show {{n}} actions_other": "显示 {{n}} 个操作"
+  "Show {{n}} actions_other": "显示 {{n}} 个操作",
+  "Clear and close the search": "清除并关闭搜索"
 }
