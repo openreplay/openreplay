@@ -2827,5 +2827,11 @@
   "Show {{n}} actions": "작업 {{n}}개 보기",
   "Show {{n}} actions_one": "작업 {{n}}개 보기",
   "Show {{n}} actions_other": "작업 {{n}}개 보기",
-  "Clear and close the search": "검색 지우고 닫기"
+  "Clear and close the search": "검색 지우고 닫기",
+  "Session details": "세션 세부 정보",
+  "Session details: {{name}}": "세션 세부 정보: {{name}}",
+  "Tap a detail to see every session that has it.": "세부 정보를 탭하면 해당 정보가 있는 모든 세션을 볼 수 있습니다.",
+  "Show sessions with {{label}} {{value}}": "{{label}} {{value}}인 세션 보기",
+  "Hide the panel": "패널 숨기기",
+  "Show the panel": "패널 보기"
 }

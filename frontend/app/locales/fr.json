@@ -2945,5 +2945,11 @@
   "Show {{n}} actions": "Afficher {{n}} actions",
   "Show {{n}} actions_one": "Afficher {{n}} action",
   "Show {{n}} actions_other": "Afficher {{n}} actions",
-  "Clear and close the search": "Effacer et fermer la recherche"
+  "Clear and close the search": "Effacer et fermer la recherche",
+  "Session details": "Détails de la session",
+  "Session details: {{name}}": "Détails de la session : {{name}}",
+  "Tap a detail to see every session that has it.": "Touchez un détail pour voir toutes les sessions qui l'ont.",
+  "Show sessions with {{label}} {{value}}": "Afficher les sessions avec {{label}} {{value}}",
+  "Hide the panel": "Masquer le panneau",
+  "Show the panel": "Afficher le panneau"
 }

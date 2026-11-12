@@ -192,12 +192,31 @@
   color: var(--m-content-disabled);
 }
 
-/* phone: play, the clock, the track, the gear and full screen; the total
-   goes and the gaps close a step */
+/* phone: two rows, the timeline alone on the first (full width, 32px tall
+   to scrub), then play, "0:12 / 4:10", the skips, and settings and full
+   screen at the far end */
 :root[data-viewport='phone'] .m-tl {
-  gap: var(--m-space-2);
-  padding-inline: var(--m-space-3);
+  flex-wrap: wrap;
+  height: auto;
+  gap: 0 var(--m-space-2);
+  padding: var(--m-space-2) var(--m-space-3) var(--m-space-1);
 }
-:root[data-viewport='phone'] .m-tl__time-total {
-  display: none;
+:root[data-viewport='phone'] .m-tl__track {
+  order: -1;
+  flex: 1 0 100%;
+  height: 2rem;
+  margin-inline: var(--m-space-2);
+}
+:root[data-viewport='phone'] .m-tl__clock {
+  flex: none;
+}
+:root[data-viewport='phone'] .m-tl__settings {
+  order: 1;
+  margin-left: auto;
+}
+:root[data-viewport='phone'] .m-tl__full {
+  order: 2;
+}
+.m-tl__full {
+  display: inline-flex;
 }

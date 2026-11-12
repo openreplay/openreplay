@@ -13,7 +13,6 @@ import {
   debounceUpdate,
   getDefaultPanelHeight,
 } from 'Components/Session/Player/ReplayPlayer/PlayerInst';
-import PhoneHorizontalWarn from 'Components/Session/Player/SharedComponents/PhoneHorizontal';
 import { DevToolsFrame } from 'Components/Session/ReplayScreen/DevToolsFrame';
 import { ReplayScreen } from 'Components/Session/ReplayScreen/ReplayScreen';
 import 'Components/Session/ReplayScreen/replay-player.css';
@@ -174,7 +173,6 @@ function SpotPlayer() {
         !loggedIn && 'h-dvh w-screen bg-surface-canvas p-3',
       )}
     >
-      <PhoneHorizontalWarn />
       <ReplayScreen
         back={
           loggedIn

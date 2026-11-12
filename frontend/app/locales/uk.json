@@ -3004,5 +3004,11 @@
   "Show {{n}} actions": "Показати дії: {{n}}",
   "Show {{n}} actions_one": "Показати дії: {{n}}",
   "Show {{n}} actions_other": "Показати дії: {{n}}",
-  "Clear and close the search": "Очистити й закрити пошук"
+  "Clear and close the search": "Очистити й закрити пошук",
+  "Session details": "Відомості про сесію",
+  "Session details: {{name}}": "Відомості про сесію: {{name}}",
+  "Tap a detail to see every session that has it.": "Торкніться деталі, щоб побачити всі сесії з нею.",
+  "Show sessions with {{label}} {{value}}": "Показати сесії з {{label}} {{value}}",
+  "Hide the panel": "Сховати панель",
+  "Show the panel": "Показати панель"
 }

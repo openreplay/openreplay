@@ -183,15 +183,17 @@ function Controls({ setActiveTab, fullView, mobile }: any) {
       </span>
       <Timeline inline isMobile={mobile} />
       <PlaybackSettings disabled={disabled} mobile={mobile} />
-      <IconButton
-        icon={fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
-        label={
-          fullscreen ? t('Leave full screen (Esc)') : t('Full screen (⇧F)')
-        }
-        variant="ghost"
-        pressed={fullscreen}
-        onClick={() => toggleFullscreen()}
-      />
+      <span className="m-tl__full">
+        <IconButton
+          icon={fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+          label={
+            fullscreen ? t('Leave full screen (Esc)') : t('Full screen (⇧F)')
+          }
+          variant="ghost"
+          pressed={fullscreen}
+          onClick={() => toggleFullscreen()}
+        />
+      </span>
     </div>
   );
 }
