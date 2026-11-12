@@ -105,3 +105,19 @@
   color: var(--m-content-primary);
 }
 .m-strip__suggest button:hover { background: var(--m-surface-hover); }
+
+/* phone: the head wraps, the hint under the title */
+:root[data-viewport='phone'] .m-strip__head {
+  flex-wrap: wrap;
+  height: auto;
+  gap: var(--m-space-1) var(--m-space-3);
+  padding: var(--m-space-3) var(--m-space-4);
+}
+:root[data-viewport='phone'] .m-strip__hint {
+  order: 3;
+  flex: 1 1 100%;
+}
+:root[data-viewport='phone'] .m-strip__search {
+  width: auto;
+  flex: 1;
+}

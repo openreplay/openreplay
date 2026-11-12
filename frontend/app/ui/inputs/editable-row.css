@@ -79,3 +79,16 @@
   justify-content: flex-end;
   gap: var(--m-space-2);
 }
+
+/* phone: the label above its value */
+:root[data-viewport='phone'] .m-erow {
+  flex-direction: column;
+  gap: var(--m-space-1);
+}
+:root[data-viewport='phone']
+  :is(.m-erow__label, .m-uprops__list .m-erow__label) {
+  width: auto;
+}
+:root[data-viewport='phone'] .m-erow__value {
+  width: 100%;
+}

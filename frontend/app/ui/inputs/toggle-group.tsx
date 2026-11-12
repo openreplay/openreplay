@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils';
 import { useIndicator } from '@/ui/layout/use-indicator';
+import { useViewport } from '@/ui/layout/use-viewport';
 import * as G from '@radix-ui/react-toggle-group';
 import { type ReactNode, useRef } from 'react';
 
@@ -29,6 +30,9 @@ export function Segmented<T extends string>({
   block?: boolean;
 }) {
   const track = useRef<HTMLDivElement>(null);
+  // segmented controls fill their row on a phone, split evenly
+  const phone = useViewport() === 'phone';
+  const fill = block || phone;
 
   const { box: thumb, live } = useIndicator(track, '[data-state="on"]');
 
@@ -42,7 +46,7 @@ export function Segmented<T extends string>({
       data-slot="segmented"
       className={cn(
         'relative inline-flex items-center rounded-track bg-surface-sunken p-1',
-        block && 'flex w-full',
+        fill && 'flex w-full',
         className,
       )}
     >
@@ -70,7 +74,7 @@ export function Segmented<T extends string>({
             'justify-center gap-2 rounded-control px-4 text-sm whitespace-nowrap text-content-muted',
             'hover:text-content-primary data-[state=on]:text-content-primary',
             'disabled:cursor-not-allowed disabled:text-content-disabled disabled:hover:text-content-disabled',
-            block && 'flex-1',
+            fill && 'flex-1',
           )}
         >
           {o.icon}
