@@ -551,3 +551,51 @@
     background-color var(--m-duration-instant) var(--m-ease-out),
     color var(--m-duration-instant) var(--m-ease-out);
 }
+
+/* the phone's menu sheet: one head row (the mark, the project picker, the
+   close), the list and the foot full width under it */
+.m-nav.is-sheet {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  column-gap: var(--m-space-3);
+  align-items: center;
+  padding-top: var(--m-space-3);
+}
+.m-nav.is-sheet > .m-nav__brand {
+  grid-row: 1;
+  grid-column: 1;
+  align-self: center;
+  height: auto;
+  margin: 0;
+  padding-inline: var(--m-space-2) 0;
+  --m-brand: 1.5rem;
+}
+.m-nav.is-sheet > .m-nav__brand .m-nav__brand-toggle {
+  margin-inline: 0;
+}
+.m-nav.is-sheet > .m-nav__account {
+  grid-row: 1;
+  grid-column: 2;
+  min-width: 0;
+  margin: 0;
+}
+.m-nav.is-sheet > .m-nav__sheet-head {
+  grid-row: 1;
+  grid-column: 3;
+  margin: 0;
+}
+.m-nav.is-sheet > .m-nav__scroll {
+  grid-row: 2;
+  grid-column: 1 / -1;
+  align-self: stretch;
+  min-height: 0;
+  margin-top: var(--m-space-4);
+}
+.m-nav.is-sheet > .m-nav__foot {
+  grid-row: 3;
+  grid-column: 1 / -1;
+}
+.m-nav.is-sheet :is(.m-nav__brand-name, .m-nav__account-badge) {
+  display: none;
+}
