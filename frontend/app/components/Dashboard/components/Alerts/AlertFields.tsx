@@ -1,6 +1,5 @@
 import { ExternalLink } from '@/ui/actions/ExternalLink';
 import { Notice } from '@/ui/feedback/Notice';
-import { CheckRow } from '@/ui/inputs/CheckRow';
 import { Input } from '@/ui/inputs/input';
 import { MultiSelect } from '@/ui/inputs/multi-select';
 import { SimpleSelect } from '@/ui/inputs/select';
@@ -13,22 +12,20 @@ import { useTranslation } from 'react-i18next';
 import { alertConditions } from 'App/constants';
 import { SLACK, TEAMS, WEBHOOK } from 'App/constants/schedule';
 import { useStore } from 'App/mstore';
+import type { TriggerOption } from 'App/mstore/alertsStore';
 import { validateEmail } from 'App/validate';
 
 import '../../product-analytics.css';
+import { MetricPicker } from './MetricPicker';
 
-interface Option {
-  value: string | number;
-  label: string;
-  unit?: string;
-}
+type Channel = 'slack' | 'msteams' | 'email' | 'webhook';
 
-/** The three steps of an alert, editing `alertsStore.instance` in place. */
+/** The steps of an alert, editing `alertsStore.instance` in place. */
 function AlertFields({
   triggerOptions,
   withName,
 }: {
-  triggerOptions: Option[];
+  triggerOptions: TriggerOption[];
   withName?: boolean;
 }) {
   const { t } = useTranslation();
@@ -37,8 +34,8 @@ function AlertFields({
   const { webhooks } = settingsStore;
   const change = instance.detectionMethod === 'change';
   const metric = triggerOptions.find((o) => o.value === instance.query.left);
-  const unit =
-    change && instance.change === 'percent' ? '%' : (metric?.unit ?? '');
+  const metricUnit = metric?.unit === 'count' ? '' : (metric?.unit ?? '');
+  const unit = change && instance.change === 'percent' ? '%' : metricUnit;
   const setQuery = (patch: Record<string, unknown>) =>
     edit({ query: { ...instance.query, ...patch } } as any);
 
@@ -60,17 +57,28 @@ function AlertFields({
   const ids = (list: Array<string | number> = []) => list.map(String);
   const nums = (list: string[]) => list.map(Number);
 
-  const toggles: { key: string; label: string; show: boolean }[] = [
-    { key: 'slack', label: t('Slack'), show: slack.length > 0 },
-    { key: 'msteams', label: t('MS Teams'), show: teams.length > 0 },
-    { key: 'email', label: t('Email'), show: true },
-    { key: 'webhook', label: t('Webhook'), show: true },
+  const channelOptions: { value: Channel; label: string; show: boolean }[] = [
+    { value: 'slack', label: t('Slack'), show: slack.length > 0 },
+    { value: 'msteams', label: t('MS Teams'), show: teams.length > 0 },
+    { value: 'email', label: t('Email'), show: true },
+    { value: 'webhook', label: t('Webhook'), show: true },
   ];
+  const chosenChannels = channelOptions
+    .filter((c) => (instance as any)[c.value])
+    .map((c) => c.value);
+  const setChannels = (next: Channel[]) => {
+    channelOptions.forEach((c) => {
+      const on = next.includes(c.value);
+      if (!!(instance as any)[c.value] !== on) edit({ [c.value]: on } as any);
+    });
+  };
+  // a new alert starts with its name, so the steps count from there
+  const off = withName ? 1 : 0;
 
   return (
     <div className="m-alertf">
       {withName ? (
-        <Step n={0} title={t('Name')}>
+        <Step n={1} title={t('Name')}>
           <Input
             value={instance.name}
             placeholder={t('What this alert watches')}
@@ -79,7 +87,7 @@ function AlertFields({
           />
         </Step>
       ) : null}
-      <Step n={1} title={t('Alert based on')}>
+      <Step n={1 + off} title={t('Alert based on')}>
         <Segmented<'threshold' | 'change'>
           value={instance.detectionMethod as 'threshold' | 'change'}
           onChange={(v) => edit({ detectionMethod: v })}
@@ -100,7 +108,7 @@ function AlertFields({
         </p>
       </Step>
 
-      <Step n={2} title={t('Condition')}>
+      <Step n={2 + off} title={t('Condition')}>
         {change ? (
           <div className="m-alertf__row">
             <span className="m-alertf__word">{t('Trigger when')}</span>
@@ -119,24 +127,13 @@ function AlertFields({
           <span className="m-alertf__word">
             {change ? t('of') : t('Trigger when')}
           </span>
-          <SimpleSelect<string>
-            className="m-alertf__metric"
-            placeholder={t('Select metric')}
-            ariaLabel={t('Metric')}
-            value={
-              instance.query.left != null
-                ? String(instance.query.left)
-                : undefined
-            }
-            onChange={(v) => {
-              const hit = triggerOptions.find((o) => String(o.value) === v);
-              setQuery({ left: hit ? hit.value : v });
-            }}
-            options={triggerOptions.map((o) => ({
-              value: String(o.value),
-              label: o.label,
-            }))}
-          />
+          <span className="m-alertf__metric">
+            <MetricPicker
+              options={triggerOptions}
+              value={instance.query.left ?? undefined}
+              onChange={(o) => setQuery({ left: o.value })}
+            />
+          </span>
           <span className="m-alertf__word">{t('is')}</span>
           <SimpleSelect<string>
             placeholder={t('Select condition')}
@@ -189,28 +186,22 @@ function AlertFields({
         </div>
       </Step>
 
-      <Step n={3} title={t('Notify through')}>
+      <Step n={3 + off} title={t('Notify through')}>
         <p className="m-alertf__help">
           {t(
             "You'll be notified in app. Additionally opt in to receive alerts on:",
           )}
         </p>
-        <div className="m-alertf__channels">
-          {toggles
-            .filter((c) => c.show)
-            .map((c) => (
-              <CheckRow
-                key={c.key}
-                boxed
-                on={!!(instance as any)[c.key]}
-                onToggle={() =>
-                  edit({ [c.key]: !(instance as any)[c.key] } as any)
-                }
-              >
-                {c.label}
-              </CheckRow>
-            ))}
-        </div>
+        <MultiSelect<Channel>
+          className="m-alertf__notify"
+          placeholder={t('Choose where')}
+          ariaLabel={t('Notify through')}
+          value={chosenChannels}
+          onChange={setChannels}
+          options={channelOptions
+            .filter((c) => c.show || chosenChannels.includes(c.value))
+            .map((c) => ({ value: c.value, label: c.label }))}
+        />
         {instance.slack ? (
           <div className="m-alertf__row">
             <span className="m-alertf__word m-alertf__word--label">
@@ -299,7 +290,7 @@ function Step({
   return (
     <section className="m-alertf__step">
       <span className="m-alertf__index" aria-hidden="true">
-        {n || '·'}
+        {n}
       </span>
       <div className="m-alertf__body">
         <h3 className="m-alertf__title">{title}</h3>

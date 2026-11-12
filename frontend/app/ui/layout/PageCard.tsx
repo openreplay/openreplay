@@ -1,4 +1,5 @@
 import { Button } from '@/ui/actions/button';
+import { EditableTitle } from '@/ui/inputs/EditableTitle';
 import { ArrowLeft } from 'lucide-react';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 
@@ -7,6 +8,8 @@ import './page-card.css';
 export interface PageCardProps {
   back?: { label: string; onClick: () => void };
   title: string;
+  /** rename in place: the title gets a pencil on hover */
+  onTitleChange?: (title: string) => void;
 
   subtitle?: string;
 
@@ -27,6 +30,7 @@ export interface PageCardProps {
 export function PageCard({
   back,
   title,
+  onTitleChange,
   subtitle,
   meta,
   lede,
@@ -52,7 +56,15 @@ export function PageCard({
         <div className="m-page__lead">
           {/* the meta is a fact about the title: it rides the title's line */}
           <div className="m-page__titlerow">
-            <h1 className="m-page__title">{title}</h1>
+            {onTitleChange ? (
+              <EditableTitle
+                title={title}
+                onChange={onTitleChange}
+                heading={(text) => <h1 className="m-page__title">{text}</h1>}
+              />
+            ) : (
+              <h1 className="m-page__title">{title}</h1>
+            )}
             {meta != null && <span className="m-page__meta">{meta}</span>}
           </div>
           {subtitle && <p className="m-page__sub">{subtitle}</p>}

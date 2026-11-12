@@ -1,18 +1,11 @@
-import { IconButton } from '@/ui/actions/IconButton';
 import { Button } from '@/ui/actions/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItems,
-  DropdownMenuTrigger,
-} from '@/ui/actions/dropdown-menu';
 import { Chip } from '@/ui/data/Chip';
 import { EmptyState } from '@/ui/feedback/EmptyState';
 import { PageCard, PagePanel } from '@/ui/layout/PageCard';
 import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
 import { toast } from '@/ui/overlays/toast';
 import Alert from 'Types/alert';
-import { Bell, MoreHorizontal, Trash2 } from 'lucide-react';
+import { Bell, Trash2 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -95,6 +88,13 @@ function NewAlert({ siteId }: { siteId: string }) {
       .catch(() => toast.error(t('Failed to delete an alert')));
   };
 
+  const rename = (name: string) => {
+    alertsStore
+      .rename(instance.alertId, name)
+      .then(() => toast.success(t('Alert renamed')))
+      .catch(() => toast.error(t('Failed to rename the alert')));
+  };
+
   const onSave = () => {
     const wasUpdating = instance.exists();
     save(instance)
@@ -137,57 +137,28 @@ function NewAlert({ siteId }: { siteId: string }) {
     );
 
   const exists = instance.exists();
+  const back = () => history.push(withSiteId(alerts(), siteId));
   const trigger = triggerOptions.find(
     (o: any) => o.value === instance.query.left,
   )?.label;
 
   return (
     <PageCard
-      back={{
-        label: t('Alerts'),
-        onClick: () => history.push(withSiteId(alerts(), siteId)),
-      }}
+      back={{ label: t('Alerts'), onClick: back }}
       title={instance.name || t('New alert')}
-      actions={
-        exists ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <span>
-                <IconButton
-                  icon={<MoreHorizontal size={15} />}
-                  label={t('More')}
-                  variant="ghost"
-                />
-              </span>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItems
-                items={[
-                  {
-                    key: 'delete',
-                    icon: <Trash2 size={13} />,
-                    label: t('Delete'),
-                    danger: true,
-                    onClick: () => setDeleting(true),
-                  },
-                ]}
-              />
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : undefined
-      }
+      onTitleChange={exists ? rename : undefined}
       split
     >
       <PagePanel>
         <div className="m-alertf__page">
-          <AlertFields triggerOptions={triggerOptions} withName />
+          <AlertFields triggerOptions={triggerOptions} withName={!exists} />
           <footer className="m-alertf__foot">
             <Button
               variant="primary"
               disabled={loading || !instance.validate()}
               onClick={onSave}
             >
-              {exists ? t('Update') : t('Create')}
+              {exists ? t('Update') : t('Create alert')}
             </Button>
             {exists ? (
               <Button
@@ -197,7 +168,11 @@ function NewAlert({ siteId }: { siteId: string }) {
                 <Trash2 size={13} />
                 {t('Delete')}
               </Button>
-            ) : null}
+            ) : (
+              <Button variant="subtle" onClick={back}>
+                {t('Cancel')}
+              </Button>
+            )}
           </footer>
         </div>
       </PagePanel>
