@@ -2817,5 +2817,18 @@
   "Fold": "첫 화면 경계",
   "{{share}}% reached": "{{share}}% 도달",
   "Page overview": "페이지 개요",
-  "Page {{current}} of {{last}}": "{{last}}페이지 중 {{current}}페이지"
+  "Page {{current}} of {{last}}": "{{last}}페이지 중 {{current}}페이지",
+  "Time range": "기간",
+  "Search and filters": "검색 및 필터",
+  "Add a filter": "필터 추가",
+  "{{lead}}, {{n}} applied": "{{lead}}, {{n}}개 적용됨",
+  "Show {{n}} sessions": "세션 {{n}}개 보기",
+  "Show {{n}} sessions_one": "세션 {{n}}개 보기",
+  "Show {{n}} sessions_other": "세션 {{n}}개 보기",
+  "Show {{n}} issues": "이슈 {{n}}개 보기",
+  "Show {{n}} issues_one": "이슈 {{n}}개 보기",
+  "Show {{n}} issues_other": "이슈 {{n}}개 보기",
+  "Show {{n}} Spots": "Spot {{n}}개 보기",
+  "Show {{n}} Spots_one": "Spot {{n}}개 보기",
+  "Show {{n}} Spots_other": "Spot {{n}}개 보기"
 }

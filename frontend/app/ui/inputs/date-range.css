@@ -103,3 +103,12 @@
 .m-dr__input.is-bad {
   border-color: var(--m-border-danger);
 }
+
+/* in the phone filter drawer: the presets as rows, no box; the section's
+   title already names the field */
+.m-dr__sheet {
+  padding: 0;
+}
+.m-dr__sheet .m-dr__field {
+  display: none;
+}

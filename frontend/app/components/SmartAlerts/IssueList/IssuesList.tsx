@@ -17,6 +17,7 @@ import { ActiveFilters } from '@/ui/filters/ActiveFilters';
 import { DisplayShell } from '@/ui/filters/DisplayMenu';
 import { type FilterDimension, FilterMenu } from '@/ui/filters/FilterMenu';
 import { FilterStrip } from '@/ui/filters/FilterStrip';
+import { PhoneFilters } from '@/ui/filters/PhoneFilters';
 import { DateRange } from '@/ui/inputs/DateRange';
 import { SearchField } from '@/ui/inputs/SearchField';
 import { Switch } from '@/ui/inputs/switch';
@@ -563,56 +564,70 @@ function IssuesList() {
                     : [key as CategoryName],
                 )
               }
+              // at phone Filters › Category says it; no "Show" section
+              folds="menu"
             />
           ) : null}
           <div className="m-page__controls">
             <SegmentsIndicator />
-            <DateRange
-              field={t('Last seen')}
-              period={period}
-              onChange={(p: any) => {
-                setPeriod(p);
-                issuesStore.setRange([p.start, p.end]);
-              }}
-            />
-            <FilterMenu<FilterKey>
-              dimensions={dimensions}
-              isActive={isActive}
-              onToggle={onToggle}
-              activeCount={chips.length}
-            />
-            <DisplayShell
-              changeCount={displayChanges}
-              onReset={() => {
-                issuesStore.setCritOnly(false);
-                issuesStore.setRelevantToMe(false);
-                applyVisibility(false, false);
-              }}
-              rows={[
-                toggleRow(
-                  'iss-crit',
-                  t('Critical only'),
-                  issuesStore.critOnly,
-                  (v) => issuesStore.setCritOnly(v),
-                ),
-                toggleRow(
-                  'iss-mine',
-                  issuesStore.relevantCount
-                    ? t('Critical to me · {{n}}', {
-                        n: issuesStore.relevantCount,
-                      })
-                    : t('Critical to me'),
-                  issuesStore.relevantToMe,
-                  (v) => issuesStore.setRelevantToMe(v),
-                ),
-                toggleRow('iss-hidden', t('Show hidden'), showHidden, (v) =>
-                  applyVisibility(v, showDeleted),
-                ),
-                toggleRow('iss-deleted', t('Show deleted'), showDeleted, (v) =>
-                  applyVisibility(showHidden, v),
-                ),
-              ]}
-            />
+            <PhoneFilters
+              result={t('Show {{n}} issues', {
+                count: issuesStore.total,
+                n: issuesStore.total.toLocaleString(),
+              })}
+              onReset={resetFilters}
+            >
+              <DateRange
+                field={t('Last seen')}
+                resting={LAST_7_DAYS}
+                period={period}
+                onChange={(p: any) => {
+                  setPeriod(p);
+                  issuesStore.setRange([p.start, p.end]);
+                }}
+              />
+              <FilterMenu<FilterKey>
+                dimensions={dimensions}
+                isActive={isActive}
+                onToggle={onToggle}
+                activeCount={chips.length}
+              />
+              <DisplayShell
+                changeCount={displayChanges}
+                onReset={() => {
+                  issuesStore.setCritOnly(false);
+                  issuesStore.setRelevantToMe(false);
+                  applyVisibility(false, false);
+                }}
+                rows={[
+                  toggleRow(
+                    'iss-crit',
+                    t('Critical only'),
+                    issuesStore.critOnly,
+                    (v) => issuesStore.setCritOnly(v),
+                  ),
+                  toggleRow(
+                    'iss-mine',
+                    issuesStore.relevantCount
+                      ? t('Critical to me · {{n}}', {
+                          n: issuesStore.relevantCount,
+                        })
+                      : t('Critical to me'),
+                    issuesStore.relevantToMe,
+                    (v) => issuesStore.setRelevantToMe(v),
+                  ),
+                  toggleRow('iss-hidden', t('Show hidden'), showHidden, (v) =>
+                    applyVisibility(v, showDeleted),
+                  ),
+                  toggleRow(
+                    'iss-deleted',
+                    t('Show deleted'),
+                    showDeleted,
+                    (v) => applyVisibility(showHidden, v),
+                  ),
+                ]}
+              />
+            </PhoneFilters>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <span>

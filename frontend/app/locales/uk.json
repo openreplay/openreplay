@@ -2994,5 +2994,18 @@
   "Fold": "Межа першого екрана",
   "{{share}}% reached": "Дійшли {{share}}%",
   "Page overview": "Огляд сторінки",
-  "Page {{current}} of {{last}}": "Сторінка {{current}} з {{last}}"
+  "Page {{current}} of {{last}}": "Сторінка {{current}} з {{last}}",
+  "Time range": "Період",
+  "Search and filters": "Пошук і фільтри",
+  "Add a filter": "Додати фільтр",
+  "{{lead}}, {{n}} applied": "{{lead}}, застосовано: {{n}}",
+  "Show {{n}} sessions": "Показати сесії: {{n}}",
+  "Show {{n}} sessions_one": "Показати сесії: {{n}}",
+  "Show {{n}} sessions_other": "Показати сесії: {{n}}",
+  "Show {{n}} issues": "Показати проблеми: {{n}}",
+  "Show {{n}} issues_one": "Показати проблеми: {{n}}",
+  "Show {{n}} issues_other": "Показати проблеми: {{n}}",
+  "Show {{n}} Spots": "Показати Spots: {{n}}",
+  "Show {{n}} Spots_one": "Показати Spots: {{n}}",
+  "Show {{n}} Spots_other": "Показати Spots: {{n}}"
 }

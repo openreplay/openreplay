@@ -200,3 +200,28 @@
   margin-left: auto;
   padding-left: var(--m-space-4);
 }
+
+/* the phone's search door: the field's look, opening the filter drawer */
+.m-fbar__opens {
+  justify-content: flex-start;
+  min-width: 0;
+  overflow: hidden;
+  text-align: start;
+}
+.m-fbar__opens-lead {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--m-content-placeholder);
+}
+.m-fbar__opens .m-rulesum {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+.m-fbar__opens-count {
+  position: static;
+  flex: none;
+  margin-inline-start: auto;
+}

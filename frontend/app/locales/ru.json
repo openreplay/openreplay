@@ -2994,5 +2994,18 @@
   "Fold": "Граница первого экрана",
   "{{share}}% reached": "Дошли {{share}}%",
   "Page overview": "Обзор страницы",
-  "Page {{current}} of {{last}}": "Страница {{current}} из {{last}}"
+  "Page {{current}} of {{last}}": "Страница {{current}} из {{last}}",
+  "Time range": "Период",
+  "Search and filters": "Поиск и фильтры",
+  "Add a filter": "Добавить фильтр",
+  "{{lead}}, {{n}} applied": "{{lead}}, применено: {{n}}",
+  "Show {{n}} sessions": "Показать сессии: {{n}}",
+  "Show {{n}} sessions_one": "Показать сессии: {{n}}",
+  "Show {{n}} sessions_other": "Показать сессии: {{n}}",
+  "Show {{n}} issues": "Показать проблемы: {{n}}",
+  "Show {{n}} issues_one": "Показать проблемы: {{n}}",
+  "Show {{n}} issues_other": "Показать проблемы: {{n}}",
+  "Show {{n}} Spots": "Показать Spots: {{n}}",
+  "Show {{n}} Spots_one": "Показать Spots: {{n}}",
+  "Show {{n}} Spots_other": "Показать Spots: {{n}}"
 }

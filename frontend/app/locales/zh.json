@@ -2817,5 +2817,18 @@
   "Fold": "首屏线",
   "{{share}}% reached": "{{share}}% 到达",
   "Page overview": "页面概览",
-  "Page {{current}} of {{last}}": "第 {{current}} 页，共 {{last}} 页"
+  "Page {{current}} of {{last}}": "第 {{current}} 页，共 {{last}} 页",
+  "Time range": "时间范围",
+  "Search and filters": "搜索和筛选",
+  "Add a filter": "添加筛选",
+  "{{lead}}, {{n}} applied": "{{lead}}，已应用 {{n}} 个",
+  "Show {{n}} sessions": "显示 {{n}} 个会话",
+  "Show {{n}} sessions_one": "显示 {{n}} 个会话",
+  "Show {{n}} sessions_other": "显示 {{n}} 个会话",
+  "Show {{n}} issues": "显示 {{n}} 个问题",
+  "Show {{n}} issues_one": "显示 {{n}} 个问题",
+  "Show {{n}} issues_other": "显示 {{n}} 个问题",
+  "Show {{n}} Spots": "显示 {{n}} 个 Spot",
+  "Show {{n}} Spots_one": "显示 {{n}} 个 Spot",
+  "Show {{n}} Spots_other": "显示 {{n}} 个 Spot"
 }

@@ -2935,5 +2935,18 @@
   "Fold": "Pliegue",
   "{{share}}% reached": "Llegó el {{share}}%",
   "Page overview": "Vista general de la página",
-  "Page {{current}} of {{last}}": "Página {{current}} de {{last}}"
+  "Page {{current}} of {{last}}": "Página {{current}} de {{last}}",
+  "Time range": "Rango de tiempo",
+  "Search and filters": "Búsqueda y filtros",
+  "Add a filter": "Añadir un filtro",
+  "{{lead}}, {{n}} applied": "{{lead}}, {{n}} aplicados",
+  "Show {{n}} sessions": "Mostrar {{n}} sesiones",
+  "Show {{n}} sessions_one": "Mostrar {{n}} sesión",
+  "Show {{n}} sessions_other": "Mostrar {{n}} sesiones",
+  "Show {{n}} issues": "Mostrar {{n}} incidencias",
+  "Show {{n}} issues_one": "Mostrar {{n}} incidencia",
+  "Show {{n}} issues_other": "Mostrar {{n}} incidencias",
+  "Show {{n}} Spots": "Mostrar {{n}} Spots",
+  "Show {{n}} Spots_one": "Mostrar {{n}} Spot",
+  "Show {{n}} Spots_other": "Mostrar {{n}} Spots"
 }

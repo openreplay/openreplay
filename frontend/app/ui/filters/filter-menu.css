@@ -89,3 +89,60 @@
   font-size: var(--m-text-xs);
   color: var(--m-content-muted);
 }
+
+/* a page's strip folded into the menu at phone */
+.m-fm__strip {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-space-2);
+  margin-bottom: var(--m-space-2);
+  padding: var(--m-space-2) var(--m-space-2) var(--m-space-4);
+  border-bottom: 1px solid var(--m-border-subtle);
+}
+.m-fm__heading {
+  padding-inline: var(--m-space-2);
+  font-size: var(--m-text-2xs);
+  font-weight: var(--m-weight-medium);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--m-content-muted);
+}
+
+/* in the phone filter drawer: dimensions that open in place, no box,
+   hairlines between them */
+.m-fm-sheet {
+  display: flex;
+  flex-direction: column;
+}
+.m-fm-sheet__dim + .m-fm-sheet__dim {
+  border-top: 1px solid var(--m-border-subtle);
+}
+.m-fm-sheet__row {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-4);
+  width: 100%;
+  min-height: var(--m-control-height-md);
+  padding-inline: var(--m-space-4);
+  font-size: var(--m-text-sm);
+  color: var(--m-content-primary);
+  text-align: start;
+}
+.m-fm-sheet__label {
+  flex: 1;
+  min-width: 0;
+}
+.m-fm-sheet__caret {
+  flex: none;
+  color: var(--m-content-muted);
+  transition: transform var(--m-duration-fast) var(--m-ease-out);
+}
+.m-fm-sheet__dim.is-open .m-fm-sheet__caret {
+  transform: rotate(180deg);
+}
+.m-fm-sheet__opts {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 var(--m-space-3) var(--m-space-3);
+}
