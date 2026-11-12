@@ -2889,5 +2889,17 @@
   "Show {{n}} issues_other": "Show {{n}} issues",
   "Show {{n}} Spots": "Show {{n}} Spots",
   "Show {{n}} Spots_one": "Show {{n}} Spot",
-  "Show {{n}} Spots_other": "Show {{n}} Spots"
+  "Show {{n}} Spots_other": "Show {{n}} Spots",
+  "Show {{n}} tests": "Show {{n}} tests",
+  "Show {{n}} tests_one": "Show {{n}} test",
+  "Show {{n}} tests_other": "Show {{n}} tests",
+  "Show {{n}} runs": "Show {{n}} runs",
+  "Show {{n}} runs_one": "Show {{n}} run",
+  "Show {{n}} runs_other": "Show {{n}} runs",
+  "Show {{n}} segments": "Show {{n}} segments",
+  "Show {{n}} segments_one": "Show {{n}} segment",
+  "Show {{n}} segments_other": "Show {{n}} segments",
+  "Show {{n}} actions": "Show {{n}} actions",
+  "Show {{n}} actions_one": "Show {{n}} action",
+  "Show {{n}} actions_other": "Show {{n}} actions"
 }

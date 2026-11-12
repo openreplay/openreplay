@@ -2830,5 +2830,17 @@
   "Show {{n}} issues_other": "이슈 {{n}}개 보기",
   "Show {{n}} Spots": "Spot {{n}}개 보기",
   "Show {{n}} Spots_one": "Spot {{n}}개 보기",
-  "Show {{n}} Spots_other": "Spot {{n}}개 보기"
+  "Show {{n}} Spots_other": "Spot {{n}}개 보기",
+  "Show {{n}} tests": "테스트 {{n}}개 보기",
+  "Show {{n}} tests_one": "테스트 {{n}}개 보기",
+  "Show {{n}} tests_other": "테스트 {{n}}개 보기",
+  "Show {{n}} runs": "실행 {{n}}개 보기",
+  "Show {{n}} runs_one": "실행 {{n}}개 보기",
+  "Show {{n}} runs_other": "실행 {{n}}개 보기",
+  "Show {{n}} segments": "세그먼트 {{n}}개 보기",
+  "Show {{n}} segments_one": "세그먼트 {{n}}개 보기",
+  "Show {{n}} segments_other": "세그먼트 {{n}}개 보기",
+  "Show {{n}} actions": "작업 {{n}}개 보기",
+  "Show {{n}} actions_one": "작업 {{n}}개 보기",
+  "Show {{n}} actions_other": "작업 {{n}}개 보기"
 }

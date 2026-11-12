@@ -2948,5 +2948,17 @@
   "Show {{n}} issues_other": "Mostrar {{n}} incidencias",
   "Show {{n}} Spots": "Mostrar {{n}} Spots",
   "Show {{n}} Spots_one": "Mostrar {{n}} Spot",
-  "Show {{n}} Spots_other": "Mostrar {{n}} Spots"
+  "Show {{n}} Spots_other": "Mostrar {{n}} Spots",
+  "Show {{n}} tests": "Mostrar {{n}} pruebas",
+  "Show {{n}} tests_one": "Mostrar {{n}} prueba",
+  "Show {{n}} tests_other": "Mostrar {{n}} pruebas",
+  "Show {{n}} runs": "Mostrar {{n}} ejecuciones",
+  "Show {{n}} runs_one": "Mostrar {{n}} ejecución",
+  "Show {{n}} runs_other": "Mostrar {{n}} ejecuciones",
+  "Show {{n}} segments": "Mostrar {{n}} segmentos",
+  "Show {{n}} segments_one": "Mostrar {{n}} segmento",
+  "Show {{n}} segments_other": "Mostrar {{n}} segmentos",
+  "Show {{n}} actions": "Mostrar {{n}} acciones",
+  "Show {{n}} actions_one": "Mostrar {{n}} acción",
+  "Show {{n}} actions_other": "Mostrar {{n}} acciones"
 }

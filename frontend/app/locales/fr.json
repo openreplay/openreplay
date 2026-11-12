@@ -2948,5 +2948,17 @@
   "Show {{n}} issues_other": "Afficher {{n}} problèmes",
   "Show {{n}} Spots": "Afficher {{n}} Spots",
   "Show {{n}} Spots_one": "Afficher {{n}} Spot",
-  "Show {{n}} Spots_other": "Afficher {{n}} Spots"
+  "Show {{n}} Spots_other": "Afficher {{n}} Spots",
+  "Show {{n}} tests": "Afficher {{n}} tests",
+  "Show {{n}} tests_one": "Afficher {{n}} test",
+  "Show {{n}} tests_other": "Afficher {{n}} tests",
+  "Show {{n}} runs": "Afficher {{n}} exécutions",
+  "Show {{n}} runs_one": "Afficher {{n}} exécution",
+  "Show {{n}} runs_other": "Afficher {{n}} exécutions",
+  "Show {{n}} segments": "Afficher {{n}} segments",
+  "Show {{n}} segments_one": "Afficher {{n}} segment",
+  "Show {{n}} segments_other": "Afficher {{n}} segments",
+  "Show {{n}} actions": "Afficher {{n}} actions",
+  "Show {{n}} actions_one": "Afficher {{n}} action",
+  "Show {{n}} actions_other": "Afficher {{n}} actions"
 }
