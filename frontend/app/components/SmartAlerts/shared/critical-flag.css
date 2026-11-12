@@ -54,3 +54,18 @@
   border-color: var(--m-border-subtle);
   border-style: dashed;
 }
+
+.m-crit--bar {
+  width: var(--m-control-height-sm);
+  height: var(--m-control-height-sm);
+  border-radius: var(--m-radius-control);
+  margin-right: var(--m-space-2);
+}
+.m-crit--bar svg {
+  width: 15px;
+  height: 15px;
+}
+/* the base 12px reach would run into the button beside it */
+.m-crit--bar::after {
+  inset: -4px;
+}
