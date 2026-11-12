@@ -2934,5 +2934,6 @@
   "The page": "La page",
   "Fold": "Ligne de flottaison",
   "{{share}}% reached": "{{share}} % l’ont atteint",
-  "Page overview": "Aperçu de la page"
+  "Page overview": "Aperçu de la page",
+  "Page {{current}} of {{last}}": "Page {{current}} sur {{last}}"
 }

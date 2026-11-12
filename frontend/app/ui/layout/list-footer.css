@@ -50,15 +50,20 @@
   border-top: 0;
 }
 
-/* phone: the pager keeps its cells and drops the "go to" field */
+/* phone: one line, the count and "‹ Page 3 of 12 ›"; Fit decides the rows */
 :root[data-viewport='phone'] .m-listfoot {
+  flex-wrap: nowrap;
   padding-inline: var(--m-space-4);
 }
-:root[data-viewport='phone'] .m-pager__goto {
+:root[data-viewport='phone'] .m-listfoot__rows {
   display: none;
 }
-/* phone: the count on its own line, the rows choice and the pager under it */
-:root[data-viewport='phone'] .m-listfoot__end {
-  width: 100%;
-  justify-content: space-between;
+.m-pager__where {
+  min-width: 6.5rem;
+  text-align: center;
+  font-family: var(--m-font-num);
+  font-size: var(--m-text-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--m-content-secondary);
+  white-space: nowrap;
 }

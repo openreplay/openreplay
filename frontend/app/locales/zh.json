@@ -2816,5 +2816,6 @@
   "The page": "页面",
   "Fold": "首屏线",
   "{{share}}% reached": "{{share}}% 到达",
-  "Page overview": "页面概览"
+  "Page overview": "页面概览",
+  "Page {{current}} of {{last}}": "第 {{current}} 页，共 {{last}} 页"
 }

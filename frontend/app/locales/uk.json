@@ -2993,5 +2993,6 @@
   "The page": "Сторінка",
   "Fold": "Межа першого екрана",
   "{{share}}% reached": "Дійшли {{share}}%",
-  "Page overview": "Огляд сторінки"
+  "Page overview": "Огляд сторінки",
+  "Page {{current}} of {{last}}": "Сторінка {{current}} з {{last}}"
 }

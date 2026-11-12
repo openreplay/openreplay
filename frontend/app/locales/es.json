@@ -2934,5 +2934,6 @@
   "The page": "La página",
   "Fold": "Pliegue",
   "{{share}}% reached": "Llegó el {{share}}%",
-  "Page overview": "Vista general de la página"
+  "Page overview": "Vista general de la página",
+  "Page {{current}} of {{last}}": "Página {{current}} de {{last}}"
 }

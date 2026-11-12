@@ -2875,5 +2875,6 @@
   "The page": "The page",
   "Fold": "Fold",
   "{{share}}% reached": "{{share}}% reached",
-  "Page overview": "Page overview"
+  "Page overview": "Page overview",
+  "Page {{current}} of {{last}}": "Page {{current}} of {{last}}"
 }

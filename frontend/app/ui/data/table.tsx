@@ -195,7 +195,7 @@ export function DataTable<T>({
         ))}
       </colgroup>
 
-      <thead>
+      <thead className="m-thead">
         <tr>
           {selection && (
             <th
@@ -292,7 +292,7 @@ export function DataTable<T>({
                     type="button"
                     onClick={() => cycle(c.key)}
                     className={cn(
-                      'group/th m-hover -mx-1 inline-flex h-full max-w-full items-center gap-2 rounded-chip px-1',
+                      'm-th__sort group/th m-hover -mx-1 inline-flex h-full max-w-full items-center gap-2 rounded-chip px-1',
                       'select-none whitespace-nowrap hover:text-content-secondary',
                       c.align === 'right' && 'flex-row-reverse',
                       order && 'text-content-primary',

@@ -2993,5 +2993,6 @@
   "The page": "Страница",
   "Fold": "Граница первого экрана",
   "{{share}}% reached": "Дошли {{share}}%",
-  "Page overview": "Обзор страницы"
+  "Page overview": "Обзор страницы",
+  "Page {{current}} of {{last}}": "Страница {{current}} из {{last}}"
 }

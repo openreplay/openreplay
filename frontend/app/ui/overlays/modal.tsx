@@ -43,7 +43,7 @@ export function Modal({
       <D.Portal>
         <D.Overlay className="m-scrim fixed inset-0 z-[var(--m-z-overlay)] bg-[var(--m-scrim)]" />
         <D.Content
-          style={{ width }}
+          style={{ width, maxWidth: 'calc(100vw - 2rem)' }}
           className={cn(
             'm-dialog fixed left-1/2 top-1/2 z-[var(--m-z-modal)] max-h-[85vh] w-full -translate-x-1/2 -translate-y-1/2',
             'overflow-auto rounded-surface border border-border-subtle bg-surface-default',
@@ -61,7 +61,7 @@ export function Modal({
             <button
               type="button"
               aria-label={t('Close')}
-              className="m-hover absolute right-5 top-5 flex size-6 items-center justify-center rounded-control text-content-decorative hover:bg-surface-hover hover:text-content-primary"
+              className="m-modal__close m-hover absolute right-5 top-5 flex size-6 items-center justify-center rounded-control text-content-decorative hover:bg-surface-hover hover:text-content-primary"
             >
               <X size={14} aria-hidden="true" />
             </button>
