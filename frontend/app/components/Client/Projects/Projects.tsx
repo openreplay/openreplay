@@ -7,11 +7,14 @@ import { Chip } from '@/ui/data/Chip';
 import { SearchField } from '@/ui/inputs/SearchField';
 import { Input } from '@/ui/inputs/input';
 import { Tabs, TabsList, TabsTrigger } from '@/ui/layout/tabs';
+import { useViewport } from '@/ui/layout/use-viewport';
 import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
 import { useToast } from '@/ui/overlays/toast';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import {
+  ArrowLeft,
   ChevronDown,
+  ChevronRight,
   Globe,
   Info,
   Plus,
@@ -44,6 +47,12 @@ function Projects() {
   const { openModal, closeModal } = useModal();
   const [query, setQuery] = React.useState('');
   const [deleting, setDeleting] = React.useState(false);
+  // phone: the project list first; a project opens on its own under a way
+  // back that also carries its Delete (a link with ?pid opens it directly)
+  const phone = useViewport() === 'phone';
+  const [opened, setOpened] = React.useState(() =>
+    new URLSearchParams(history.location.search).has('pid'),
+  );
 
   React.useEffect(() => {
     const params = new URLSearchParams(history.location.search);
@@ -112,115 +121,155 @@ function Projects() {
 
   return (
     <PreferencesPage title={t('Projects')} flush>
+      {phone && opened && project && (
+        <div className="m-pref__subnav">
+          <Button
+            variant="subtle"
+            size="sm"
+            onClick={() => setOpened(false)}
+            className="m-pref__subnav-back"
+          >
+            <ArrowLeft size={15} />
+            {t('All projects')}
+          </Button>
+          <IconButton
+            icon={<Trash2 size={14} />}
+            label={
+              deleteBlocked ?? t('Delete {{name}}', { name: project.name })
+            }
+            variant="ghost"
+            disabled={!!deleteBlocked}
+            onClick={() => setDeleting(true)}
+          />
+        </div>
+      )}
       <div className="m-pref__split">
-        <div className="m-pref__split-rail">
-          <div className="m-pref__rail-search">
-            <SearchField
-              placeholder={t('Search projects')}
-              value={query}
-              onChange={setQuery}
-            />
-          </div>
-          {projects.map((p) => (
-            <Tooltip
-              key={p.projectId}
-              title={t('{{n}}% capture rate', { n: p.sampleRate })}
-              side="right"
-              delay={400}
-            >
-              <button
-                type="button"
-                className={`m-pref__proj m-hover${p.projectId === pid ? ' is-active' : ''}`}
-                onClick={() =>
-                  projectsStore.setConfigProject(p.projectId ?? undefined)
-                }
+        {(!phone || !opened) && (
+          <div className="m-pref__split-rail">
+            <div className="m-pref__rail-search">
+              <SearchField
+                placeholder={t('Search projects')}
+                value={query}
+                onChange={setQuery}
+              />
+            </div>
+            {projects.map((p) => (
+              <Tooltip
+                key={p.projectId}
+                title={t('{{n}}% capture rate', { n: p.sampleRate })}
+                side="right"
+                delay={400}
               >
-                <span className="m-pref__proj-icon">
-                  {p.platform === 'web' ? (
-                    <Globe size={14} />
-                  ) : (
-                    <Smartphone size={14} />
-                  )}
-                </span>
-                <span className="m-pref__proj-name m-truncate">{p.name}</span>
-              </button>
-            </Tooltip>
-          ))}
-          <Blocked reason={addBlocked}>
-            <Button
-              variant="subtle"
-              size="sm"
-              disabled={!!addBlocked}
-              onClick={addProject}
-              className="justify-start"
-            >
-              <Plus size={14} />
-              {t('Add project')}
-            </Button>
-          </Blocked>
-        </div>
-
-        <div className="m-pref__split-body">
-          {project ? (
-            <>
-              <PrefBlock flush>
-                <div className="m-pref__row m-pref__tabrow">
-                  <Tabs
-                    value={current}
-                    onValueChange={(v) => projectsStore.setConfigTab(v)}
-                  >
-                    <TabsList
-                      aria-label={t('Project settings')}
-                      className="border-b-0"
-                    >
-                      <TabsTrigger value="installation">
-                        {t('Installation')}
-                      </TabsTrigger>
-                      <TabsTrigger value="captureRate">
-                        {t('Capture rate')}
-                      </TabsTrigger>
-                      <TabsTrigger value="metadata">
-                        {t('Metadata')}
-                      </TabsTrigger>
-                    </TabsList>
-                  </Tabs>
-                  <span style={{ marginLeft: 'auto' }}>
-                    <Chip>
-                      {project.platform === 'web' ? (
-                        <Globe size={12} aria-hidden="true" />
-                      ) : (
-                        <Smartphone size={12} aria-hidden="true" />
-                      )}
-                      {project.platform === 'web' ? t('Web') : t('Mobile')}
-                    </Chip>
+                <button
+                  type="button"
+                  className={`m-pref__proj m-hover${p.projectId === pid && !phone ? ' is-active' : ''}`}
+                  onClick={() => {
+                    projectsStore.setConfigProject(p.projectId ?? undefined);
+                    if (phone) setOpened(true);
+                  }}
+                >
+                  <span className="m-pref__proj-icon">
+                    {p.platform === 'web' ? (
+                      <Globe size={14} />
+                    ) : (
+                      <Smartphone size={14} />
+                    )}
                   </span>
-                  <IconButton
-                    icon={<Trash2 size={14} />}
-                    label={
-                      deleteBlocked ??
-                      t('Delete {{name}}', { name: project.name })
-                    }
-                    variant="ghost"
-                    disabled={!!deleteBlocked}
-                    onClick={() => setDeleting(true)}
-                  />
-                </div>
-              </PrefBlock>
-              {current === 'installation' ? (
-                <ThisProject key={project.projectId} project={project} />
-              ) : current === 'captureRate' ? (
-                <>
-                  <ProjectCaptureRate project={project} />
-                  <CaptureLimit project={project} />
-                </>
-              ) : (
+                  <span className="m-pref__proj-name m-truncate">{p.name}</span>
+                  {phone && (
+                    <ChevronRight
+                      size={16}
+                      className="m-pref__proj-chev"
+                      aria-hidden="true"
+                    />
+                  )}
+                </button>
+              </Tooltip>
+            ))}
+            <Blocked reason={addBlocked}>
+              <Button
+                variant="subtle"
+                size="sm"
+                disabled={!!addBlocked}
+                onClick={addProject}
+                className="justify-start"
+              >
+                <Plus size={14} />
+                {t('Add project')}
+              </Button>
+            </Blocked>
+          </div>
+        )}
+
+        {(!phone || opened) && (
+          <div className="m-pref__split-body">
+            {project ? (
+              <>
                 <PrefBlock flush>
-                  <CustomFields />
+                  <div className="m-pref__row m-pref__tabrow">
+                    <Tabs
+                      value={current}
+                      onValueChange={(v) => projectsStore.setConfigTab(v)}
+                    >
+                      <TabsList
+                        aria-label={t('Project settings')}
+                        className="border-b-0"
+                      >
+                        <TabsTrigger value="installation">
+                          {t('Installation')}
+                        </TabsTrigger>
+                        <TabsTrigger value="captureRate">
+                          {t('Capture rate')}
+                        </TabsTrigger>
+                        <TabsTrigger value="metadata">
+                          {t('Metadata')}
+                        </TabsTrigger>
+                      </TabsList>
+                    </Tabs>
+                    {!phone && (
+                      <>
+                        <span style={{ marginLeft: 'auto' }}>
+                          <Chip>
+                            {project.platform === 'web' ? (
+                              <Globe size={12} aria-hidden="true" />
+                            ) : (
+                              <Smartphone size={12} aria-hidden="true" />
+                            )}
+                            {project.platform === 'web'
+                              ? t('Web')
+                              : t('Mobile')}
+                          </Chip>
+                        </span>
+                        <IconButton
+                          icon={<Trash2 size={14} />}
+                          label={
+                            deleteBlocked ??
+                            t('Delete {{name}}', { name: project.name })
+                          }
+                          variant="ghost"
+                          disabled={!!deleteBlocked}
+                          onClick={() => setDeleting(true)}
+                        />
+                      </>
+                    )}
+                  </div>
                 </PrefBlock>
-              )}
-            </>
-          ) : null}
-        </div>
+                {current === 'installation' ? (
+                  <ThisProject key={project.projectId} project={project} />
+                ) : current === 'captureRate' ? (
+                  <>
+                    <ProjectCaptureRate project={project} />
+                    <CaptureLimit project={project} />
+                  </>
+                ) : (
+                  <PrefBlock flush>
+                    <CustomFields />
+                  </PrefBlock>
+                )}
+              </>
+            ) : null}
+          </div>
+        )}
       </div>
       <ConfirmDialog
         open={deleting}

@@ -107,29 +107,6 @@
 :root[data-viewport='phone'] .m-pref {
   gap: var(--m-space-4);
 }
-/* phone: the sections are one row that scrolls sideways, above the open one */
-:root[data-viewport='phone'] .m-pref__rail {
-  padding: var(--m-space-2);
-}
-:root[data-viewport='phone'] .m-pref__groups {
-  flex-wrap: nowrap;
-  gap: var(--m-space-1);
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-:root[data-viewport='phone'] .m-pref__cluster,
-:root[data-viewport='phone'] .m-pref__group {
-  display: contents;
-}
-:root[data-viewport='phone'] .m-pref__group-label {
-  display: none;
-}
-:root[data-viewport='phone'] .m-pref__item {
-  width: auto;
-}
-:root[data-viewport='phone'] .m-pref__item-label {
-  overflow: visible;
-}
 .m-pref__section {
   min-width: 0;
 }
@@ -739,4 +716,185 @@
   flex-direction: column;
   gap: 2px;
   min-width: 0;
+}
+
+/* phone: Preferences opens on a list of its sections, each its own page */
+.m-pref-m__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-space-2);
+}
+.m-pref-m__group + .m-pref-m__group {
+  margin-top: var(--m-space-2);
+}
+.m-pref-m__label {
+  padding-inline: var(--m-space-4);
+  font-size: var(--m-text-xs);
+  font-weight: var(--m-weight-medium);
+  color: var(--m-content-muted);
+}
+.m-pref-m__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.m-pref-m__list > li + li {
+  border-top: 1px solid var(--m-border-subtle);
+}
+.m-pref-m__row {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-4);
+  width: 100%;
+  min-height: 3rem;
+  padding: var(--m-space-3) var(--m-space-4);
+  font-size: var(--m-text-md);
+  text-align: left;
+  color: var(--m-content-primary);
+}
+.m-pref-m__row:active {
+  background: var(--m-surface-hover);
+}
+.m-pref-m__icon {
+  flex: none;
+  color: var(--m-content-muted);
+}
+.m-pref-m__name {
+  flex: 1;
+  min-width: 0;
+}
+.m-pref-m__chev {
+  flex: none;
+  color: var(--m-content-decorative);
+}
+
+/* inside a section at phone: heads wrap (words first, controls under), a
+   list row is name and detail first, its controls on the line under */
+.m-pref--phone {
+  display: block;
+}
+.m-pref--phone .m-pref__block {
+  gap: var(--m-space-4);
+  padding: var(--m-space-5) var(--m-space-4);
+}
+.m-pref--phone .m-pref__block.is-flush {
+  padding: 0;
+}
+.m-pref--phone .m-pref__block-head {
+  flex-wrap: wrap;
+  row-gap: var(--m-space-3);
+}
+.m-pref--phone .m-pref__block.is-flush > .m-pref__block-head {
+  padding: var(--m-space-5) var(--m-space-4) 0 !important;
+}
+.m-pref--phone .m-pref__block-actions {
+  flex-wrap: wrap;
+  max-width: 100%;
+}
+.m-pref--phone .m-pref__toolbar-lead {
+  white-space: normal;
+}
+.m-pref--phone .m-pref__list-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--m-space-2) var(--m-space-3);
+  padding: var(--m-space-4);
+}
+.m-pref--phone .m-pref__list-row:not(:first-child)::before {
+  inset-inline: var(--m-space-4);
+}
+.m-pref--phone .m-pref__list-row > .m-pref__list-lead {
+  grid-column: 2 / -1;
+}
+.m-pref--phone .m-pref__list-row > .m-pref__list-lead:first-child {
+  grid-column: 1 / -1;
+}
+.m-pref--phone .m-pref__list-row > .m-pref__list-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  grid-row: 2;
+  grid-column: 2;
+  justify-self: start;
+}
+.m-pref--phone
+  .m-pref__list-row
+  > .m-pref__list-lead:first-child
+  ~ .m-pref__list-meta {
+  grid-column: 1 / 3;
+}
+.m-pref--phone .m-pref__list-row > .m-pref__list-actions {
+  grid-row: 2;
+  grid-column: 3;
+}
+.m-pref--phone
+  .m-pref__list-row:not(:has(> .m-pref__list-meta))
+  > .m-pref__list-actions {
+  grid-row: 1;
+}
+.m-pref--phone
+  .m-pref__list-row:not(:has(> .m-pref__list-meta))
+  > .m-pref__list-lead {
+  grid-column: 2;
+}
+.m-pref--phone
+  .m-pref__list-row:not(:has(> .m-pref__list-meta))
+  > .m-pref__list-lead:first-child {
+  grid-column: 1 / 3;
+}
+.m-pref--phone .m-pref__list-sub {
+  white-space: normal;
+}
+.m-pref--phone
+  :is(.m-pref__field, .m-pref__block, .m-pref__block-body)
+  > [data-slot='segmented'] {
+  align-self: stretch;
+  width: 100%;
+}
+.m-pref--phone
+  .m-pref__row
+  > :is(.m-pref__w-xs, .m-pref__w-sm, .m-pref__w-md) {
+  flex: 1 1 7rem;
+  width: auto;
+  min-width: 0;
+}
+.m-pref--phone .m-pref__split {
+  display: block;
+}
+.m-pref--phone .m-pref__split-rail {
+  padding: var(--m-space-3) var(--m-space-2);
+  border: 0;
+}
+.m-pref--phone .m-pref__action-slot:empty {
+  display: none;
+}
+.m-pref--phone .m-pref__hits {
+  width: auto;
+  min-width: 0;
+  text-align: start;
+}
+
+/* phone Projects: the list, then a project under "‹ All projects" */
+.m-pref--phone .m-pref__proj {
+  min-height: 3rem;
+  padding-inline: var(--m-space-3);
+  font-size: var(--m-text-md);
+  color: var(--m-content-primary);
+}
+.m-pref__proj-chev {
+  flex: none;
+  margin-left: auto;
+  color: var(--m-content-decorative);
+}
+.m-pref__subnav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--m-space-3);
+  padding: var(--m-space-2) var(--m-space-3);
+  border-bottom: 1px solid var(--m-border-subtle);
+}
+.m-pref__subnav-back {
+  color: var(--m-content-muted);
 }

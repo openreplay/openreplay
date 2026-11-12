@@ -1,8 +1,31 @@
 import { PageCard, PagePanel } from '@/ui/layout/PageCard';
 import { useViewport } from '@/ui/layout/use-viewport';
 import type { TFunction } from 'i18next';
+import {
+  Blocks,
+  ChevronRight,
+  CreditCard,
+  Film,
+  FlaskConical,
+  FolderKanban,
+  KeyRound,
+  type LucideIcon,
+  PlayCircle,
+  ScrollText,
+  Settings2,
+  TriangleAlert,
+  UserRound,
+  Users,
+  Webhook,
+} from 'lucide-react';
 import { observer } from 'mobx-react-lite';
-import React, { type ReactNode, useEffect, useMemo, useRef } from 'react';
+import React, {
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { PREFERENCES_MENU } from 'App/layout/data';
@@ -110,6 +133,21 @@ const LEDES = (
   },
 });
 
+const SECTION_ICON: Record<string, LucideIcon> = {
+  [PREFERENCES_MENU.ACCOUNT]: UserRound,
+  [PREFERENCES_MENU.SESSION_SETTINGS]: PlayCircle,
+  [PREFERENCES_MENU.PROJECTS]: FolderKanban,
+  [PREFERENCES_MENU.TEAM]: Users,
+  [PREFERENCES_MENU.ROLES_ACCESS]: KeyRound,
+  [PREFERENCES_MENU.BILLING]: CreditCard,
+  [PREFERENCES_MENU.AUDIT]: ScrollText,
+  [PREFERENCES_MENU.INTEGRATIONS]: Blocks,
+  [PREFERENCES_MENU.WEBHOOKS]: Webhook,
+  [PREFERENCES_MENU.EXPORTED_VIDEOS]: Film,
+  [PREFERENCES_MENU.AGENTS]: TriangleAlert,
+  [PREFERENCES_MENU.TEST_AGENTS]: FlaskConical,
+};
+
 /** Preferences: a grouped rail of sections beside the open one. */
 function PreferencesShell({ children }: { children: ReactNode }) {
   const { t, i18n } = useTranslation();
@@ -153,22 +191,100 @@ function PreferencesShell({ children }: { children: ReactNode }) {
     return out.filter((g) => g.rows.length > 0);
   }, [items, i18n.language]);
 
-  // phone: the sections are a sideways strip, so the open one is brought in
+  // phone: a list of sections, each its own page with the way back; a link
+  // straight to a section (anything but the default) opens its page
   const phone = useViewport() === 'phone';
-  const activeItem = useRef<HTMLButtonElement>(null);
+  const [atList, setAtList] = useState(
+    () => active === PREFERENCES_MENU.ACCOUNT,
+  );
+  const opened = useRef(active);
   useEffect(() => {
-    if (phone)
-      activeItem.current?.scrollIntoView({
-        block: 'nearest',
-        inline: 'center',
-      });
-  }, [phone, active]);
+    if (active !== opened.current) setAtList(false);
+    opened.current = active;
+  }, [active]);
+  const open = (key: string) => {
+    const to = routes[key];
+    if (to) navigate(to());
+    setAtList(false);
+    window.scrollTo(0, 0);
+  };
 
   const known = active ? LEDES(t)[active] : undefined;
   const head = known ?? {
     title: items.find((i) => i.key === active)?.label ?? t('Preferences'),
     lede: '',
   };
+
+  if (phone && atList)
+    return (
+      <PageCard
+        title={t('Preferences')}
+        subtitle={t('Account, workspace and project settings.')}
+        split
+      >
+        {groups.map((g) => (
+          <section
+            key={g.label}
+            className="m-pref-m__group"
+            aria-label={g.label}
+          >
+            <h2 className="m-pref-m__label">{g.label}</h2>
+            <PagePanel>
+              <ul className="m-pref-m__list">
+                {g.rows.map((r) => {
+                  const Icon = SECTION_ICON[r.key] ?? Settings2;
+                  return (
+                    <li key={r.key}>
+                      <button
+                        type="button"
+                        className="m-pref-m__row"
+                        onClick={() => open(r.key)}
+                      >
+                        <Icon
+                          size={16}
+                          className="m-pref-m__icon"
+                          aria-hidden="true"
+                        />
+                        <span className="m-pref-m__name">{r.label}</span>
+                        <ChevronRight
+                          size={16}
+                          className="m-pref-m__chev"
+                          aria-hidden="true"
+                        />
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </PagePanel>
+          </section>
+        ))}
+      </PageCard>
+    );
+
+  if (phone)
+    return (
+      <PageCard
+        back={{
+          label: t('Preferences'),
+          onClick: () => {
+            setAtList(true);
+            window.scrollTo(0, 0);
+          },
+        }}
+        title={head.title}
+        subtitle={head.lede || undefined}
+        split
+      >
+        <PagePanel>
+          <div className="m-pref m-pref--phone">
+            <div className="m-pref__body m-step-in" key={active}>
+              {children}
+            </div>
+          </div>
+        </PagePanel>
+      </PageCard>
+    );
 
   return (
     <PageCard
@@ -188,7 +304,6 @@ function PreferencesShell({ children }: { children: ReactNode }) {
                     {g.rows.map((r) => (
                       <button
                         key={r.key}
-                        ref={r.key === active ? activeItem : undefined}
                         type="button"
                         className={`m-pref__item m-hover${r.key === active ? ' is-active' : ''}`}
                         aria-current={r.key === active ? 'page' : undefined}
