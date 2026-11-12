@@ -5,15 +5,26 @@
   margin-inline-start: auto;
 }
 
+/* floats over the table head: taking room would re-fit the rows under Fit,
+   refetch the page and drop the banner */
+.m-panel:has(> .m-recs__latest) {
+  position: relative;
+}
 .m-recs__latest {
-  display: block;
-  width: 100%;
-  padding: var(--m-space-3) var(--m-space-7);
+  position: absolute;
+  top: calc(var(--m-panel-head-h, 0px) + var(--m-space-2));
+  left: 50%;
+  z-index: 4;
+  transform: translateX(-50%);
+  padding: var(--m-space-2) var(--m-space-5);
   font-size: var(--m-text-xs);
   font-weight: var(--m-weight-medium);
+  white-space: nowrap;
   color: var(--m-content-accent);
   background: var(--m-status-info-bg);
-  border-bottom: var(--m-border-width) solid var(--m-border-subtle);
+  border: var(--m-border-width) solid var(--m-border-subtle);
+  border-radius: var(--m-radius-full);
+  box-shadow: var(--m-shadow-popover);
 }
 .m-recs__latest:hover {
   text-decoration: underline;

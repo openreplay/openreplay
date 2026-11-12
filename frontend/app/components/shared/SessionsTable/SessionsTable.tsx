@@ -111,8 +111,8 @@ export interface SessionsTableProps {
   onHover?: (s: Session | null) => void;
   onFilterToUser?: (s: Session) => void;
   onMetaClick?: (key: string, value: string) => void;
-  /** the last sessions played, newest first: each says so */
-  lastViewedIds?: readonly string[];
+  /** the last session played says so */
+  lastViewedId?: string;
   timezone?: string;
   /** "Which clock": each row in its user's own zone, when the session has one */
   userTimezone?: boolean;
@@ -137,7 +137,7 @@ export function SessionsTable({
   onHover,
   onFilterToUser,
   onMetaClick,
-  lastViewedIds,
+  lastViewedId,
   timezone,
   userTimezone = false,
   stickyHeader = true,
@@ -222,7 +222,7 @@ export function SessionsTable({
               {s.userDisplayName}
             </span>
           )}
-          {lastViewedIds?.includes(s.sessionId) && (
+          {!!lastViewedId && lastViewedId === s.sessionId && (
             <Chip kind="status" tone="neutral">
               <OpenReplayMark variant="plain" filled size={11} />
               {t('Last viewed')}
