@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"unicode/utf8"
 
 	"openreplay/backend/pkg/ingest_keys"
 	"openreplay/backend/pkg/logger"
@@ -61,7 +62,7 @@ func (h *handlersImpl) create(ctx *api.RequestContext) (any, int, error) {
 		return nil, http.StatusBadRequest, fmt.Errorf("invalid request body: %w", err)
 	}
 	req.Name = strings.TrimSpace(req.Name)
-	if len(req.Name) > maxKeyNameLength {
+	if utf8.RuneCountInString(req.Name) > maxKeyNameLength {
 		return nil, http.StatusBadRequest, fmt.Errorf("name is longer than %d characters", maxKeyNameLength)
 	}
 	key, err := h.keys.Create(projectID, req.Name)

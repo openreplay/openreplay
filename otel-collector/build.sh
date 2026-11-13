@@ -14,7 +14,7 @@ elif [[ $ARCH = 'arm64' ]]; then
 fi
 
 git_sha=$(git rev-parse --short HEAD)
-image_tag=${IMAGE_TAG:-git_sha}
+image_tag=${IMAGE_TAG:-$git_sha}
 source ../scripts/lib/_docker.sh
 
 check_prereq() {

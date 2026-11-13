@@ -29,7 +29,7 @@ func newFailureLimiter(perIPPerMinute, ipBurst, globalPerSecond int) *failureLim
 	if perIPPerMinute <= 0 && globalPerSecond <= 0 {
 		return nil
 	}
-	l := &failureLimiter{ipBurst: ipBurst}
+	l := &failureLimiter{ipBurst: max(1, ipBurst)}
 	if perIPPerMinute > 0 {
 		l.perIP = rate.Limit(float64(perIPPerMinute) / 60)
 	}

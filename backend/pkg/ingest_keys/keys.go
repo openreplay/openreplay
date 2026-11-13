@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"openreplay/backend/pkg/cache"
@@ -14,9 +15,10 @@ import (
 )
 
 const (
-	redisTTL  = 5 * time.Minute
-	localTTL  = time.Minute
-	prefixLen = 8
+	redisTTL      = 5 * time.Minute
+	localTTL      = time.Minute
+	prefixLen     = 8
+	revokedMarker = "revoked"
 )
 
 var ErrNotFound = errors.New("ingest key not found")
@@ -39,18 +41,18 @@ type Keys interface {
 }
 
 type keysImpl struct {
-	log   logger.Logger
-	db    pool.Pool
-	redis *redis.Client
-	local cache.Cache
+	log    logger.Logger
+	db     pool.Pool
+	shared sharedCache
+	local  cache.Cache
 }
 
 func New(log logger.Logger, db pool.Pool, redisClient *redis.Client) Keys {
 	return &keysImpl{
-		log:   log,
-		db:    db,
-		redis: redisClient,
-		local: cache.New(localTTL, localTTL),
+		log:    log,
+		db:     db,
+		shared: newSharedCache(redisClient),
+		local:  cache.New(localTTL, localTTL),
 	}
 }
 
@@ -109,13 +111,18 @@ func (k *keysImpl) Revoke(projectID uint32, keyID int) error {
 		}
 		return err
 	}
-	k.local.Set(secret, nil)
-	if k.redis != nil {
-		if err := k.redis.Redis.Del(context.Background(), redisKey(secret)).Err(); err != nil {
-			k.log.Warn(context.Background(), "failed to drop revoked ingest key from redis: %s", err)
-		}
-	}
+	k.forget(secret)
 	return nil
+}
+
+func (k *keysImpl) forget(secret string) {
+	k.local.Set(secret, nil)
+	if k.shared == nil {
+		return
+	}
+	if err := k.shared.set(context.Background(), redisKey(secret), revokedMarker, redisTTL); err != nil {
+		k.log.Warn(context.Background(), "failed to mark revoked ingest key in redis: %s", err)
+	}
 }
 
 func (k *keysImpl) Resolve(secret string) (uint32, error) {
@@ -125,11 +132,8 @@ func (k *keysImpl) Resolve(secret string) (uint32, error) {
 		}
 		return 0, ErrNotFound
 	}
-	if k.redis != nil {
-		if projectID, err := k.redis.Redis.Get(context.Background(), redisKey(secret)).Uint64(); err == nil {
-			k.local.Set(secret, uint32(projectID))
-			return uint32(projectID), nil
-		}
+	if projectID, found, err := k.fromShared(secret); found {
+		return projectID, err
 	}
 	var projectID uint32
 	err := k.db.QueryRow(`
@@ -144,13 +148,39 @@ func (k *keysImpl) Resolve(secret string) (uint32, error) {
 		}
 		return 0, err
 	}
-	k.local.Set(secret, projectID)
-	if k.redis != nil {
-		if err := k.redis.Redis.Set(context.Background(), redisKey(secret), uint64(projectID), redisTTL).Err(); err != nil {
-			k.log.Warn(context.Background(), "failed to cache ingest key in redis: %s", err)
-		}
-	}
+	k.remember(secret, projectID)
 	return projectID, nil
+}
+
+func (k *keysImpl) fromShared(secret string) (uint32, bool, error) {
+	if k.shared == nil {
+		return 0, false, nil
+	}
+	value, found, err := k.shared.get(context.Background(), redisKey(secret))
+	if err != nil || !found {
+		return 0, false, nil
+	}
+	if value == revokedMarker {
+		k.local.Set(secret, nil)
+		return 0, true, ErrNotFound
+	}
+	projectID, err := strconv.ParseUint(value, 10, 32)
+	if err != nil {
+		return 0, false, nil
+	}
+	k.local.Set(secret, uint32(projectID))
+	return uint32(projectID), true, nil
+}
+
+func (k *keysImpl) remember(secret string, projectID uint32) {
+	k.local.Set(secret, projectID)
+	if k.shared == nil {
+		return
+	}
+	value := strconv.FormatUint(uint64(projectID), 10)
+	if err := k.shared.setIfAbsent(context.Background(), redisKey(secret), value, redisTTL); err != nil {
+		k.log.Warn(context.Background(), "failed to cache ingest key in redis: %s", err)
+	}
 }
 
 func redisKey(secret string) string {

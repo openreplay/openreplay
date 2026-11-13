@@ -191,6 +191,6 @@ service:
   pipelines:
     logs:
       receivers: [otlp]
-      processors: [memory_limiter, attributes/project, filter/no_project, transform, batch]
+      processors: [memory_limiter, transform, attributes/project, filter/no_project, batch]
       exporters:
         - ${env:OTLP_LOGS_EXPORTER:-clickhouse}
