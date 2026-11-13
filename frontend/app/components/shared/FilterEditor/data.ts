@@ -14,6 +14,12 @@ export const FilterProjectContext = createContext<string | undefined>(
   undefined,
 );
 
+/** Values a host knows better than the project's top values (a journey's own
+    pages): listed first, matched locally while typing. */
+export const ValueHintsContext = createContext<
+  ((filter: SearchFilter) => readonly string[] | undefined) | undefined
+>(undefined);
+
 /** The project catalogue as picker entries; call inside an observer. */
 export function useCatalogue(scope?: string[]): CatalogueEntry[] {
   const { filterStore } = useStore();
@@ -76,6 +82,7 @@ export function useValueOptions(
 ): { options: ValueOption[]; loading: boolean } {
   const { filterStore } = useStore();
   const projectId = useContext(FilterProjectContext);
+  const hints = useContext(ValueHintsContext)?.(filter);
   const { entry } = filter;
   const [found, setFound] = useState<ValueOption[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -129,6 +136,14 @@ export function useValueOptions(
       ),
       loading: false,
     };
+  }
+  if (hints?.length) {
+    const lower = q.toLowerCase();
+    const own = hints
+      .filter((v) => !lower || v.toLowerCase().includes(lower))
+      .map((v) => ({ value: v, label: v }));
+    const rest = (found ?? []).filter((o) => !hints.includes(o.value));
+    return { options: [...own, ...rest], loading };
   }
   if (found) return { options: found, loading };
   const top = (filterStore.topValues[topValuesKey(entry.id, live, projectId)] ??

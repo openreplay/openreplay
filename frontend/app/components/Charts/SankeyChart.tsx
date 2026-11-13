@@ -14,6 +14,7 @@ import {
   getEventPriority,
   getIcon,
   getNodeName,
+  journeyIconStyles,
   linkIconStyles,
   sankeyTooltip,
 } from './sankeyUtils';
@@ -22,6 +23,20 @@ echarts.use([SankeyChart]);
 
 const NODE_W = 40;
 const ICON_W = 16;
+const mixHex = (hex: string, toward: string, k: number) => {
+  const c = (x: string) =>
+    [1, 3, 5].map((i) => parseInt(x.slice(i, i + 2), 16));
+  const a = c(hex);
+  const b = c(toward);
+  if (a.some(Number.isNaN) || b.some(Number.isNaN)) return hex;
+  return `#${a
+    .map((v, i) =>
+      Math.round(v + (b[i] - v) * k)
+        .toString(16)
+        .padStart(2, '0'),
+    )
+    .join('')}`;
+};
 let measurer: CanvasRenderingContext2D | null = null;
 /** Fits `text` into `px` at `font`, cutting the middle so a URL keeps its end. */
 function fitMiddle(text: string, px: number, font: string) {
@@ -133,6 +148,8 @@ const EChartsSankey = (props: Props) => {
     };
     let { lane, right } = layoutOf(chart.getWidth());
     const labelFont = `600 12px ${theme.font || 'sans-serif'}`;
+    // the border token is ~1.3:1 on a dark card; this grey is 3:1+ on both
+    const dropColor = mixHex(theme.border, theme.axis, 0.62);
     const nodeValues: Record<string, number> = {};
     const echartNodes = filteredNodes
       .map((n, i) => {
@@ -149,7 +166,7 @@ const EChartsSankey = (props: Props) => {
           computedName === 'Others'
             ? theme.series[1]
             : n.eventType === 'DROP'
-              ? theme.grid
+              ? dropColor
               : theme.series[0];
 
         return {
@@ -269,6 +286,7 @@ const EChartsSankey = (props: Props) => {
             },
             rich: {
               ...linkIconStyles,
+              ...journeyIconStyles(theme.textSecondary, theme.textMuted),
               header: { ...linkIconStyles.header, color: theme.text },
               body: { ...linkIconStyles.body, color: theme.text },
               percentage: {

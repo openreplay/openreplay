@@ -1154,3 +1154,15 @@ span.m-fchip__said {
   font-weight: var(--m-weight-regular);
   opacity: 1;
 }
+
+/* the search's chips without the search: a row of a form, not a panel */
+.m-rulechips {
+  min-width: 0;
+  background: transparent;
+}
+.m-fchips--panel .m-fchips__stack.m-rulechips__stack {
+  padding: 0;
+}
+.m-rulechips__add {
+  justify-self: start;
+}

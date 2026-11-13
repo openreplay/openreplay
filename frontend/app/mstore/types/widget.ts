@@ -92,6 +92,22 @@ function cleanFilter(filter: any) {
   delete filter['key'];
 }
 
+/** The journey query compares an exclusion's own value with the step's column
+    (path for a page, label for a click or input), and the chip edits its
+    "where": that is sent as the value too. */
+function excludeJson(f: FilterItem) {
+  const json: any = f.toJson();
+  const wheres = (f.filters ?? []).filter((p) => p.value?.some(Boolean));
+  const where = wheres.find((p) => p.defaultProperty) ?? wheres[0];
+  return where
+    ? {
+        ...json,
+        value: (where.value ?? []).filter(Boolean),
+        operator: where.operator || 'is',
+      }
+    : json;
+}
+
 export default class Widget {
   public static get ID_KEY(): string {
     return 'metricId';
@@ -390,7 +406,7 @@ export default class Widget {
       data.hideExcess = this.hideExcess;
       data.startType = this.startType;
       data.startPoint = this.startPoint ? [this.startPoint.toJson()] : [];
-      data.excludes = this.excludes.map((i: any) => i.toJson());
+      data.excludes = this.excludes.map(excludeJson);
       data.metricOf = 'sessionCount';
     }
 
