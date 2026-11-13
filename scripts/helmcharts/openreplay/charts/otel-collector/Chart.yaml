@@ -1,0 +1,9 @@
+apiVersion: v2
+name: otel-collector
+description: OpenTelemetry Collector that writes OTLP logs received by the http gateway to ClickHouse
+
+type: application
+
+version: 0.1.0
+
+AppVersion: "v1.28.0"
