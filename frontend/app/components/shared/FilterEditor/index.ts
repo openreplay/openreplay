@@ -1,6 +1,7 @@
 export {
   default as FilterBar,
   type FilterBarProps,
+  RuleChips,
   SingleRule,
 } from './FilterBar';
 export { EntryField } from './EntryField';
@@ -10,6 +11,7 @@ export { FilterPanel } from './FilterPanel';
 export { buildFilterEditor } from './editor';
 export {
   FilterProjectContext,
+  ValueHintsContext,
   useCatalogue,
   useEventProperties,
   useValueOptions,

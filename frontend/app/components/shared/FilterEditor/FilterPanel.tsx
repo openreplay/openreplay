@@ -29,6 +29,7 @@ export interface FilterPanelProps {
   anchorRef?: RefObject<HTMLElement | null>;
   placeholder?: string;
   kind?: 'all' | 'event' | 'group';
+  loading?: boolean;
 }
 
 /** The catalogue panel, portalled so no column or drawer clips it. */
@@ -46,6 +47,7 @@ export function FilterPanel({
   anchorRef,
   placeholder,
   kind = 'all',
+  loading,
 }: FilterPanelProps) {
   const { t } = useTranslation();
   const oneKind = kind !== 'all';
@@ -162,6 +164,7 @@ export function FilterPanel({
       <PickerBody
         entries={entries}
         taken={taken}
+        loading={loading}
         onPick={onPick}
         onDone={onClose}
         seed={seed}

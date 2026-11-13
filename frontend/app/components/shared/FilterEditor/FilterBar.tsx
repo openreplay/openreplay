@@ -25,9 +25,11 @@ import {
 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import {
+  type ReactElement,
   type KeyboardEvent as ReactKeyboardEvent,
   type ReactNode,
   type RefObject,
+  cloneElement,
   useEffect,
   useRef,
   useState,
@@ -35,12 +37,7 @@ import {
 import { useTranslation } from 'react-i18next';
 
 import { FilterPanel } from './FilterPanel';
-import {
-  FilterPicker,
-  PickerBody,
-  PickerPopover,
-  entryIcon,
-} from './FilterPicker';
+import { entryIcon } from './FilterPicker';
 import { RuleSummary } from './RuleSummary';
 import ValuePicker from './ValuePicker';
 import {
@@ -432,6 +429,67 @@ function OrderWord({
   );
 }
 
+type DoorChild = ReactElement<{
+  ref?: RefObject<HTMLElement | null>;
+  onClick?: () => void;
+  'aria-expanded'?: boolean;
+  'aria-haspopup'?: 'dialog';
+}>;
+
+/** A door on a chip: opens the search's own FilterPanel under the control,
+    showing one kind. */
+function PanelDoor({
+  entries,
+  taken,
+  kind,
+  placeholder,
+  loading,
+  onOpenChange,
+  onPick,
+  children,
+}: {
+  entries: readonly CatalogueEntry[];
+  taken: readonly string[];
+  kind: 'event' | 'group';
+  placeholder: string;
+  loading?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  onPick: (e: CatalogueEntry) => void;
+  children: DoorChild;
+}) {
+  const [open, setOpenState] = useState(false);
+  const setOpen = (o: boolean) => {
+    setOpenState(o);
+    onOpenChange?.(o);
+  };
+  // the button itself anchors: a wrapper would break the chip's segment rules
+  const anchorRef = useRef<HTMLElement>(null);
+  return (
+    <>
+      {cloneElement(children, {
+        ref: anchorRef,
+        onClick: () => setOpen(!open),
+        'aria-expanded': open,
+        'aria-haspopup': 'dialog',
+      })}
+      <FilterPanel
+        open={open}
+        onClose={() => setOpen(false)}
+        onPick={(e) => {
+          onPick(e);
+          setOpen(false);
+        }}
+        taken={taken}
+        entries={entries}
+        loading={loading}
+        kind={kind}
+        anchorRef={anchorRef}
+        placeholder={placeholder}
+      />
+    </>
+  );
+}
+
 function NameSegment({
   entry,
   entries,
@@ -445,10 +503,10 @@ function NameSegment({
 }) {
   const { t } = useTranslation();
   return (
-    <FilterPicker
+    <PanelDoor
       entries={entries}
       taken={taken}
-      initialCategory={entry.category}
+      kind={entry.isEvent ? 'event' : 'group'}
       onPick={onReplace}
       placeholder={t('Search for a replacement')}
     >
@@ -464,7 +522,7 @@ function NameSegment({
         </Tooltip>
         <Truncated className="m-fchip__label" text={entry.displayName} />
       </button>
-    </FilterPicker>
+    </PanelDoor>
   );
 }
 
@@ -594,6 +652,97 @@ function ValueSegment({
 }
 
 /** One rule on its own, outside a bar: a card's journey start point, an exclusion. */
+/** A few rules that are not a search: the chips and an Add door, without the
+    heads, order word or Clear. */
+export function RuleChips({
+  editor,
+  entries,
+  addLabel,
+  max = Infinity,
+  ariaLabel,
+  placeholder,
+}: {
+  editor: FilterEditor;
+  /** what Add offers, and what a chip's name may be replaced with */
+  entries: readonly CatalogueEntry[];
+  addLabel: string;
+  /** at the limit the Add door goes */
+  max?: number;
+  ariaLabel: string;
+  placeholder?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [seed, setSeed] = useState('');
+  const anchorRef = useRef<HTMLSpanElement>(null);
+  const rules = [...editor.events, ...editor.properties];
+  const taken = editor.properties.map((f) => f.entry.id);
+  const kind = entries.every((e) => e.isEvent)
+    ? 'event'
+    : entries.every((e) => !e.isEvent)
+      ? 'group'
+      : 'all';
+  const close = () => {
+    setOpen(false);
+    setSeed('');
+  };
+  return (
+    <section
+      className="m-fchips m-fchips--panel m-rulechips"
+      aria-label={ariaLabel}
+      data-slot="rule-chips"
+    >
+      <div className="m-fchips__stack m-rulechips__stack">
+        {editor.events.map((f) => (
+          <EventChip
+            key={f.key}
+            filter={f}
+            editor={editor}
+            entries={entries}
+            live={false}
+          />
+        ))}
+        {editor.properties.map((f) => (
+          <GroupChip
+            key={f.key}
+            filter={f}
+            editor={editor}
+            entries={entries}
+            taken={taken}
+            live={false}
+          />
+        ))}
+        {rules.length < max && (
+          <span className="m-fchips__addwrap m-rulechips__add" ref={anchorRef}>
+            <AddControl
+              label={addLabel}
+              plus
+              expanded={open}
+              onOpen={(typed) => {
+                setSeed(typed);
+                setOpen(true);
+              }}
+            />
+          </span>
+        )}
+        <FilterPanel
+          open={open}
+          seed={seed}
+          onClose={close}
+          onPick={(e) => {
+            editor.onAdd(e);
+            close();
+          }}
+          taken={taken}
+          entries={entries}
+          kind={kind}
+          anchorRef={anchorRef}
+          placeholder={placeholder}
+        />
+      </div>
+    </section>
+  );
+}
+
 export function SingleRule({
   filter,
   editor,
@@ -725,32 +874,30 @@ function ActionButton({
 
 function PropertyPicker({
   event,
+  taken,
   onPick,
   children,
 }: {
   event: CatalogueEntry;
+  taken: readonly string[];
   onPick: (e: CatalogueEntry) => void;
-  children: React.ReactElement;
+  children: DoorChild;
 }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const { entries, loading } = useEventProperties(event, open);
   return (
-    <PickerPopover
-      open={open}
+    <PanelDoor
+      entries={entries}
+      taken={taken}
+      loading={loading}
+      kind="group"
       onOpenChange={setOpen}
-      content={
-        <PickerBody
-          entries={entries}
-          loading={loading}
-          onPick={onPick}
-          onDone={() => setOpen(false)}
-          placeholder={t('Search event properties')}
-        />
-      }
+      onPick={onPick}
+      placeholder={t('Search event properties')}
     >
       {children}
-    </PickerPopover>
+    </PanelDoor>
   );
 }
 
@@ -812,26 +959,27 @@ function EventChip({
   editor,
   entries,
   live,
-  draggable,
-  dragging,
-  dropAt,
+  draggable = false,
+  dragging = false,
+  dropAt = null,
   onDragStart,
   onDragOver,
   onDrop,
   onDragEnd,
 }: {
   filter: SearchFilter;
-  index: number;
+  /** its place in a sequence; none for a rule that stands alone */
+  index?: number;
   editor: FilterEditor;
   entries: readonly CatalogueEntry[];
   live: boolean;
-  draggable: boolean;
-  dragging: boolean;
-  dropAt: 'before' | 'after' | null;
-  onDragStart: () => void;
-  onDragOver: (at: 'before' | 'after') => void;
-  onDrop: () => void;
-  onDragEnd: () => void;
+  draggable?: boolean;
+  dragging?: boolean;
+  dropAt?: 'before' | 'after' | null;
+  onDragStart?: () => void;
+  onDragOver?: (at: 'before' | 'after') => void;
+  onDrop?: () => void;
+  onDragEnd?: () => void;
 }) {
   const { t } = useTranslation();
   const { entry } = filter;
@@ -847,26 +995,29 @@ function EventChip({
       onDragStart={(e) => {
         e.dataTransfer.effectAllowed = 'move';
         e.dataTransfer.setData('text/plain', String(index));
-        onDragStart();
+        onDragStart?.();
       }}
       onDragOver={(e) => {
+        if (!onDragOver) return;
         e.preventDefault();
         const box = e.currentTarget.getBoundingClientRect();
         onDragOver(e.clientY < box.top + box.height / 2 ? 'before' : 'after');
       }}
       onDrop={(e) => {
         e.preventDefault();
-        onDrop();
+        onDrop?.();
       }}
       onDragEnd={onDragEnd}
     >
       <span className="m-fchip__main">
-        <span
-          className="m-fchip__seg m-fchip__num"
-          title={draggable ? t('Drag to reorder') : undefined}
-        >
-          {index}
-        </span>
+        {index != null && (
+          <span
+            className="m-fchip__seg m-fchip__num"
+            title={draggable ? t('Drag to reorder') : undefined}
+          >
+            {index}
+          </span>
+        )}
         <NameSegment
           entry={entry}
           entries={entries}
@@ -938,6 +1089,7 @@ function EventChip({
         {entry.hasProperties && (
           <PropertyPicker
             event={entry}
+            taken={props.map((p) => p.entry.id)}
             onPick={(e) => editor.onAddProperty(filter.key, e)}
           >
             <button

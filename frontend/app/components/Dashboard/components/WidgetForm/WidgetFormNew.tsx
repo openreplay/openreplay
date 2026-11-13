@@ -2,11 +2,11 @@ import { IconButton } from '@/ui/actions/IconButton';
 import { Button } from '@/ui/actions/button';
 import { Notice } from '@/ui/feedback/Notice';
 import { MultiSelect } from '@/ui/inputs/multi-select';
-import { InlineSelect, SimpleSelect } from '@/ui/inputs/select';
+import { Segmented } from '@/ui/inputs/toggle-group';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import { FilterCategory, FilterKey } from 'Types/filter/filterType';
 import { eventKeys } from 'Types/filter/newFilter';
-import { ChevronsDownUp, ChevronsUpDown, Plus, X } from 'lucide-react';
+import { ChevronsDownUp, ChevronsUpDown, Plus } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -23,8 +23,20 @@ import {
   WEBVITALS,
 } from 'App/constants/card';
 import { issueCategories } from 'App/constants/filterOptions';
-import { filterStore, projectStore, useStore } from 'App/mstore';
+import { useStore } from 'App/mstore';
+import type { Filter } from 'App/mstore/types/filterConstants';
+import FilterItem from 'App/mstore/types/filterItem';
 import FilterSeries from 'Components/Dashboard/components/FilterSeries/FilterSeries';
+
+import {
+  type FilterTarget,
+  RuleChips,
+  type SearchFilter,
+  ValueHintsContext,
+  buildFilterEditor,
+  seriesTarget,
+  useCatalogue,
+} from 'Shared/FilterEditor';
 
 export const supportsBreakdown = (metric: { metricType: string }) =>
   [TIMESERIES, FUNNEL, TABLE].includes(metric.metricType);
@@ -83,12 +95,15 @@ function WidgetFormNew({ layout }: { layout: string }) {
   ) : (
     <div className="m-cardp__definition">
       <AdditionalFilters />
-      <FilterSection
-        layout={layout}
-        metric={metric}
-        excludeCategory={excludeCategory}
-        excludeFilterKeys={excludeFilterKeys}
-      />
+      {/* a journey's session filters are the last row of its sentence */}
+      {metric.metricType !== USER_PATH && (
+        <FilterSection
+          layout={layout}
+          metric={metric}
+          excludeCategory={excludeCategory}
+          excludeFilterKeys={excludeFilterKeys}
+        />
+      )}
     </div>
   );
 }
@@ -227,36 +242,42 @@ const FilterSection = observer(
   },
 );
 
-const AUTO = '__auto';
+const JOURNEY_EVENTS = [FilterKey.LOCATION, FilterKey.CLICK, FilterKey.INPUT];
 
-/** a page rule's pages: its default property's values, else its own */
-const pagesOf = (rule: any): string[] =>
-  (
-    (rule?.filters ?? []).find((p: any) => p.value?.some(Boolean))?.value ??
-    rule?.value ??
-    []
-  ).filter(Boolean);
-
-/** a LOCATION rule for `pages`, the value on its default property (url_path) */
-async function pageRule(pages: string[]) {
-  const ev: any = filterStore.findEvent({
-    name: FilterKey.LOCATION,
-    autoCaptured: true,
-  });
-  if (!ev) return null;
-  const props = await filterStore.getEventFilters(ev.id);
-  const path = (props ?? []).find((p: any) => p.defaultProperty);
-  return {
-    ...ev,
-    operator: 'is',
-    value: path ? [] : pages,
-    filters: path
-      ? [{ ...path, operator: 'is', value: pages, eventName: ev.name }]
-      : [],
+/** A start or end point, or a list of left-out steps, on the card itself. */
+const journeyTarget = (
+  metric: any,
+  key: 'startPoint' | 'excludes',
+): FilterTarget => {
+  const read = (): FilterItem[] =>
+    key === 'startPoint'
+      ? metric.startPoint
+        ? [metric.startPoint]
+        : []
+      : metric.excludes;
+  const write = (next: Filter[]) => {
+    if (key === 'startPoint')
+      metric.updateKey('startPoint', next[0] ? new FilterItem(next[0]) : null);
+    else metric.updateExcludes(next);
+    metric.updateKey('hasChanged', true);
   };
-}
+  return {
+    owner: { metric, key },
+    get filters() {
+      return read() as unknown as readonly Filter[];
+    },
+    eventsOrder: 'or',
+    add: (f) => write(key === 'startPoint' ? [f] : [...(read() as any[]), f]),
+    update: (i, f) => write((read() as any[]).map((x, j) => (j === i ? f : x))),
+    remove: (i) => write((read() as any[]).filter((_, j) => j !== i)),
+    move: () => {},
+    setEventsOrder: () => {},
+    clear: () => write([]),
+  };
+};
 
-/** One sentence read down a column: Starts at, Showing, Leaving out. */
+/** One sentence read down a column: Journeys, Starts at, Showing, Leaving
+    out, Filters. */
 const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
   const { t } = useTranslation();
   const metricValueOptions = [
@@ -267,151 +288,157 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
     { value: 'custom', label: t('Events') },
   ];
   const fromEnd = metric.startType === 'end';
-  // the pages this journey draws, in column order
-  const nodes: any[] = metric.data?.nodes ?? [];
-  const steps = useMemo(
-    () => [
-      ...new Set(
-        nodes
-          .filter((n) => n.eventType === 'LOCATION' && n.name)
-          .sort((a, b) => (a.depth ?? 0) - (b.depth ?? 0))
-          .map((n) => n.name as string),
+  const catalogue = useCatalogue(['sessions']);
+  // the events a journey draws: Page, Click, Input and custom events
+  const eventEntries = useMemo(
+    () =>
+      catalogue.filter(
+        (e) =>
+          e.isEvent &&
+          e.category !== 'segments' &&
+          e.category !== 'features' &&
+          (!e.autoCaptured || JOURNEY_EVENTS.includes(e.name as FilterKey)),
       ),
-    ],
-    [nodes],
+    [catalogue],
   );
-  const start = pagesOf(metric.startPoint)[0] ?? null;
+  // the journey query leaves out page, click and input steps by value only
+  // (OR-3966): no custom events until the backend reads them
+  const excludeEntries = useMemo(
+    () => eventEntries.filter((e) => e.autoCaptured),
+    [eventEntries],
+  );
+  // session and user properties: the events are the journey
+  const sessionEntries = useMemo(
+    () =>
+      catalogue.filter(
+        (e) =>
+          !e.isEvent && e.category !== FilterCategory.DEVTOOLS.toLowerCase(),
+      ),
+    [catalogue],
+  );
+  const nodes: any[] = metric.data?.nodes ?? [];
+  // a "where" on a step offers the journey's own steps of that kind first
+  const hints = useMemo(() => {
+    const byType = new Map<string, string[]>();
+    [...nodes]
+      .sort((a, b) => (a.depth ?? 0) - (b.depth ?? 0))
+      .forEach((n) => {
+        if (!n.name || !n.eventType) return;
+        const list = byType.get(n.eventType) ?? [];
+        if (!list.includes(n.name)) list.push(n.name);
+        byType.set(n.eventType, list);
+      });
+    return (f: SearchFilter) =>
+      f.eventName && (f.entry.source as any)?.defaultProperty
+        ? byType.get(f.eventName)
+        : undefined;
+  }, [nodes]);
+
+  const observe = () => metric.updateKey('hasChanged', true);
+  const point = buildFilterEditor(journeyTarget(metric, 'startPoint'));
+  const excludes = buildFilterEditor(journeyTarget(metric, 'excludes'));
+  const series = metric.series[0];
+  const filters = series
+    ? buildFilterEditor(seriesTarget(series.filter, observe))
+    : null;
+  const named =
+    metric.startPoint?.value?.some(Boolean) ||
+    (metric.startPoint?.filters ?? []).some((p: any) => p.value?.some(Boolean));
   const auto = nodes.find((n) => n.startingNode && n.name)?.name;
-  const excluded = [
-    ...new Set<string>(metric.excludes.flatMap((r: any) => pagesOf(r))),
-  ];
-
-  const setStart = async (v?: string) => {
-    if (!v || v === AUTO) {
-      metric.updateKey('startPoint', null);
-      metric.updateKey('hasChanged', true);
-      return;
-    }
-    const rule = await pageRule([v]);
-    if (rule) metric.updateStartPoint(rule);
-  };
-  const setExcluded = async (next: string[]) => {
-    if (!next.length) return metric.updateExcludes([]);
-    const rule = await pageRule(next);
-    if (rule) metric.updateExcludes([rule]);
-  };
-
-  const startOptions = [
-    { value: AUTO, label: t('Most common page') },
-    ...(start && !steps.includes(start) ? [start, ...steps] : steps).map(
-      (p) => ({ value: p, label: p }),
-    ),
-  ];
-  const leaveOptions = [
-    ...excluded.filter((p) => !steps.includes(p)),
-    ...steps,
-  ].map((p) => ({
-    value: p,
-    label: <span className="m-mono m-truncate">{p}</span>,
-    text: p,
-  }));
 
   return (
-    <div className="m-jrny">
-      <div className="m-jrny__grid">
-        <InlineSelect<'start' | 'end'>
-          className="m-jrny__lead"
-          value={metric.startType || 'start'}
-          onChange={(value) =>
-            writeOption({ name: 'startType', value: { value } })
-          }
-          ariaLabel={t('Start or end point')}
-          options={[
-            {
-              value: 'start',
-              label: t('Starts at'),
-              hint: t('Where sessions go from here'),
-            },
-            {
-              value: 'end',
-              label: t('Ends at'),
-              hint: t('How sessions arrived here'),
-            },
-          ]}
-        />
-        <div className="m-jrny__ctl">
-          <SimpleSelect<string>
-            className="m-jrny__field"
-            value={start ?? AUTO}
-            onChange={(v) => void setStart(v)}
-            ariaLabel={fromEnd ? t('End page') : t('Start page')}
-            options={startOptions}
-          />
-          {start == null && auto ? (
-            <p className="m-jrny__note">
-              {fromEnd
-                ? t('Most sessions end on {{page}}', { page: auto })
-                : t('Most sessions start on {{page}}', { page: auto })}
-            </p>
-          ) : null}
-        </div>
+    <ValueHintsContext.Provider value={hints}>
+      <div className="m-jrny">
+        <div className="m-jrny__grid">
+          <span className="m-jrny__word">{t('Journeys')}</span>
+          <div className="m-jrny__ctl">
+            <Segmented<'start' | 'end'>
+              className="m-jrny__fit"
+              ariaLabel={t('Start or end point')}
+              value={fromEnd ? 'end' : 'start'}
+              onChange={(value) =>
+                writeOption({ name: 'startType', value: { value } })
+              }
+              options={[
+                {
+                  value: 'start',
+                  label: t('Start point'),
+                  title: t('Where sessions go from here'),
+                },
+                {
+                  value: 'end',
+                  label: t('End point'),
+                  title: t('How sessions arrived here'),
+                },
+              ]}
+            />
+          </div>
 
-        <span className="m-jrny__word">{t('Showing')}</span>
-        <div className="m-jrny__ctl">
-          <MultiSelect<string>
-            className="m-jrny__field"
-            value={metric.metricValue || []}
-            onChange={(value) =>
-              writeOption({
-                name: 'metricValue',
-                value: value.length ? value : ['location'],
-              })
-            }
-            ariaLabel={t('What the steps are')}
-            options={metricValueOptions}
-          />
-        </div>
+          <span className="m-jrny__word">
+            {fromEnd ? t('Ends at') : t('Starts at')}
+          </span>
+          <div className="m-jrny__ctl">
+            <RuleChips
+              editor={point}
+              entries={eventEntries}
+              max={1}
+              addLabel={fromEnd ? t('Set end point') : t('Set start point')}
+              ariaLabel={fromEnd ? t('End point') : t('Start point')}
+              placeholder={t('Search events')}
+            />
+            {!named && auto ? (
+              <p className="m-jrny__note">
+                {fromEnd
+                  ? t('Most sessions end on {{page}}', { page: auto })
+                  : t('Most sessions start on {{page}}', { page: auto })}
+              </p>
+            ) : null}
+          </div>
 
-        <span className="m-jrny__word">{t('Leaving out')}</span>
-        <div className="m-jrny__ctl">
-          <MultiSelect<string>
-            className="m-jrny__field"
-            value={excluded}
-            onChange={(next) => void setExcluded(next)}
-            ariaLabel={t('Pages to leave out of the journey')}
-            placeholder={t('Nothing')}
-            options={leaveOptions}
-            searchable={{
-              placeholder: t('Search pages'),
-              empty: t('No page matches that.'),
-            }}
-          />
-          {excluded.length > 0 && (
-            <ul className="m-jrny__out" aria-label={t('Pages left out')}>
-              {excluded.map((p) => (
-                <li key={p}>
-                  <span className="m-jrny__outname m-mono m-truncate">{p}</span>
-                  <Tooltip title={t('Put this page back')}>
-                    <button
-                      type="button"
-                      className="m-jrny__outx"
-                      aria-label={t('Put {{page}} back in the journey', {
-                        page: p,
-                      })}
-                      onClick={() =>
-                        void setExcluded(excluded.filter((x) => x !== p))
-                      }
-                    >
-                      <X size={11} aria-hidden="true" />
-                    </button>
-                  </Tooltip>
-                </li>
-              ))}
-            </ul>
+          <span className="m-jrny__word">{t('Showing')}</span>
+          <div className="m-jrny__ctl">
+            <MultiSelect<string>
+              className="m-jrny__fit w-auto"
+              value={metric.metricValue || []}
+              onChange={(value) =>
+                writeOption({
+                  name: 'metricValue',
+                  value: value.length ? value : ['location'],
+                })
+              }
+              ariaLabel={t('What the steps are')}
+              options={metricValueOptions}
+            />
+          </div>
+
+          <span className="m-jrny__word">{t('Leaving out')}</span>
+          <div className="m-jrny__ctl">
+            <RuleChips
+              editor={excludes}
+              entries={excludeEntries}
+              addLabel={t('Add')}
+              ariaLabel={t('Left out of the journey')}
+              placeholder={t('Search events')}
+            />
+          </div>
+
+          {filters && (
+            <>
+              <span className="m-jrny__word">{t('Filters')}</span>
+              <div className="m-jrny__ctl">
+                <RuleChips
+                  editor={filters}
+                  entries={sessionEntries}
+                  addLabel={t('Add')}
+                  ariaLabel={t('Session filters')}
+                  placeholder={t('Search filters')}
+                />
+              </div>
+            </>
           )}
         </div>
       </div>
-    </div>
+    </ValueHintsContext.Provider>
   );
 });
 
