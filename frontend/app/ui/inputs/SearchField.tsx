@@ -18,7 +18,8 @@ export interface SearchFieldProps {
   className?: string;
 }
 
-/** Every list search: the magnifier, an input's height, a clear once typed in. */
+/** Every list search, in the filter bar's look: the magnifier (find, where the
+    bar's funnel means filter), a clear once typed in. */
 export function SearchField({
   placeholder,
   value,
@@ -61,7 +62,9 @@ export function SearchField({
             />
           ) : undefined
         }
-        className={size === 'sm' ? 'text-sm' : undefined}
+        className={
+          size === 'sm' ? 'm-search__input text-sm' : 'm-search__input'
+        }
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import { useEffect, useSyncExternalStore } from 'react';
+import { useLayoutEffect, useSyncExternalStore } from 'react';
 
 /**
  * The plane's width band: `wide` (≥ 1080) is the design as is, `narrow`
@@ -19,6 +19,11 @@ const read = (): ViewportBand => {
   return 'wide';
 };
 
+// on <html> before anything renders: a band written from an effect drew the
+// first frame wide and animated the header to the band's
+if (typeof document !== 'undefined')
+  document.documentElement.dataset.viewport = read();
+
 const subscribe = (onChange: () => void) => {
   const queries = [NARROW_Q, PHONE_Q].map((q) => window.matchMedia(q));
   queries.forEach((q) => q.addEventListener('change', onChange));
@@ -34,11 +39,8 @@ export function useViewport(): ViewportBand {
 /** For the shell: the band, written where CSS can read it. */
 export function useViewportAttribute(): ViewportBand {
   const band = useViewport();
-  useEffect(() => {
+  useLayoutEffect(() => {
     document.documentElement.dataset.viewport = band;
-    return () => {
-      delete document.documentElement.dataset.viewport;
-    };
   }, [band]);
   return band;
 }

@@ -11,6 +11,7 @@ import {
   useState,
 } from 'react';
 
+import { useShortWindow } from './compact-head';
 import './page-card.css';
 import { useViewport } from './use-viewport';
 
@@ -47,6 +48,14 @@ export function usePageSearchSlot(): HTMLElement | null {
   return useContext(SearchSlot)?.slot ?? null;
 }
 
+/* While the header is compact, the page's search field (EntryField) sits in
+   its row instead of on its own line under it. */
+const HeadSearchSlot = createContext<HTMLElement | null>(null);
+
+export function useHeadSearchSlot(): HTMLElement | null {
+  return useContext(HeadSearchSlot);
+}
+
 function SearchSeat() {
   const phone = useViewport() === 'phone';
   const ctx = useContext(SearchSlot);
@@ -68,6 +77,28 @@ export function PageCard({
   split,
   children,
 }: PageCardProps) {
+  const short = useShortWindow();
+  const compact = useViewport() !== 'phone' && short;
+  // what moves into the row rises into it only on a crossing, not on load
+  const [was, setWas] = useState(compact);
+  const [folds, setFolds] = useState(false);
+  if (was !== compact) {
+    setWas(compact);
+    setFolds(true);
+  }
+  // the seat exists from the first render, so the field is in the row before
+  // anything below measures; the header's seat takes it in when it mounts
+  const [headSlot] = useState(() => {
+    const el = document.createElement('div');
+    el.style.display = 'contents';
+    return el;
+  });
+  const seat = useCallback(
+    (el: HTMLDivElement | null) => {
+      if (el && headSlot.parentNode !== el) el.appendChild(headSlot);
+    },
+    [headSlot],
+  );
   const [slot, setSlot] = useState<HTMLElement | null>(null);
   // the first seat that offers wins; it withdraws when it unmounts
   const offer = useCallback(
@@ -76,42 +107,62 @@ export function PageCard({
   );
   return (
     <SearchSlot.Provider value={{ slot, offer }}>
-      <section className={`m-page${tabs ? ' m-page--tabbed' : ''}`}>
-        <header className="m-page__head">
-          {back && (
-            <Button
-              variant="subtle"
-              onClick={back.onClick}
-              className="m-page__back"
-            >
-              <ArrowLeft size={15} />
-              {back.label}
-            </Button>
-          )}
-          <div className="m-page__lead">
-            {/* the meta is a fact about the title: it rides the title's line */}
-            <div className="m-page__titlerow">
-              {onTitleChange ? (
-                <EditableTitle
-                  title={title}
-                  onChange={onTitleChange}
-                  heading={(text) => <h1 className="m-page__title">{text}</h1>}
-                />
-              ) : (
-                <h1 className="m-page__title">{title}</h1>
+      <HeadSearchSlot.Provider value={compact ? headSlot : null}>
+        <section
+          className={`m-page${tabs ? ' m-page--tabbed' : ''}${compact ? ' m-page--compact' : ''}${folds ? ' m-page--folds' : ''}`}
+        >
+          <header className="m-page__head">
+            {back && (
+              <Button
+                variant="subtle"
+                onClick={back.onClick}
+                className="m-page__back"
+              >
+                <ArrowLeft size={15} />
+                {back.label}
+              </Button>
+            )}
+            <div className="m-page__lead">
+              {/* the meta is a fact about the title: it rides the title's line */}
+              <div className="m-page__titlerow">
+                {onTitleChange ? (
+                  <EditableTitle
+                    title={title}
+                    onChange={onTitleChange}
+                    heading={(text) => (
+                      <h1 className="m-page__title">{text}</h1>
+                    )}
+                  />
+                ) : (
+                  <h1 className="m-page__title">{title}</h1>
+                )}
+                {meta != null && <span className="m-page__meta">{meta}</span>}
+              </div>
+              {/* a one-row grid, so the fold in the compact header animates */}
+              {subtitle && (
+                <div
+                  className="m-page__subfold"
+                  aria-hidden={compact || undefined}
+                >
+                  <p className="m-page__sub">{subtitle}</p>
+                </div>
               )}
-              {meta != null && <span className="m-page__meta">{meta}</span>}
             </div>
-            {subtitle && <p className="m-page__sub">{subtitle}</p>}
+            {compact && tabs && <div className="m-page__headtabs">{tabs}</div>}
+            {compact && <div className="m-page__headsearch" ref={seat} />}
+            {lede}
+            {actions && <div className="m-page__actions">{actions}</div>}
+          </header>
+          {!compact && tabs && <div className="m-page__tabs">{tabs}</div>}
+          <div className="m-page__body">
+            {split ? (
+              children
+            ) : (
+              <PagePanel head={toolbar}>{children}</PagePanel>
+            )}
           </div>
-          {lede}
-          {actions && <div className="m-page__actions">{actions}</div>}
-        </header>
-        {tabs && <div className="m-page__tabs">{tabs}</div>}
-        <div className="m-page__body">
-          {split ? children : <PagePanel head={toolbar}>{children}</PagePanel>}
-        </div>
-      </section>
+        </section>
+      </HeadSearchSlot.Provider>
     </SearchSlot.Provider>
   );
 }
