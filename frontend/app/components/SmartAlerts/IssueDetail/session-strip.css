@@ -91,7 +91,7 @@
   list-style: none;
   margin: 0;
   padding: var(--m-space-2);
-  border: 1px solid var(--m-border-subtle);
+  border: 1px solid var(--m-border-default);
   border-radius: var(--m-radius-surface);
   background: var(--m-surface-raised);
 }

@@ -60,8 +60,42 @@
   flex-direction: column;
 
   min-width: 14.5rem;
+  max-height: var(--radix-popover-content-available-height, 80vh);
+  overflow-y: auto;
+  scrollbar-width: thin;
 
   padding: var(--m-space-3);
+}
+
+/* with a custom range the picker sits beside the presets: stacked it ran past
+   the bottom of a laptop screen */
+.m-dr__layout.has-picker {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: start;
+}
+.m-dr__layout.has-picker > .m-dr__list {
+  min-width: 11rem;
+}
+.m-dr__layout.has-picker > .m-dr__picker {
+  border-top: 0;
+  margin-top: 0;
+  margin-left: var(--m-space-3);
+  padding-left: var(--m-space-2);
+  border-left: var(--m-border-width) solid var(--m-border-default);
+}
+.m-dr__layout.has-picker .m-dr__fields {
+  padding-top: var(--m-space-3);
+}
+.m-dr__sheet .m-dr__layout.has-picker {
+  display: block;
+}
+.m-dr__sheet .m-dr__layout.has-picker > .m-dr__picker {
+  border-left: 0;
+  margin-left: 0;
+  padding-left: 0;
+  border-top: var(--m-border-width) solid var(--m-border-subtle);
+  margin-top: var(--m-space-3);
 }
 
 .m-dr__field {

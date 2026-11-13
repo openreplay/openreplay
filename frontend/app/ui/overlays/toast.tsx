@@ -168,7 +168,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             onOpenChange={(o) => !o && remove(it.id)}
             className={cn(
               'm-toast pointer-events-auto flex min-h-[var(--m-control-height-md)] items-center gap-4 rounded-control py-2',
-              'border border-border-subtle bg-surface-raised px-5 text-sm text-content-primary m-elevated',
+              'border border-border-default bg-surface-raised px-5 text-sm text-content-primary m-elevated',
             )}
           >
             <Icon

@@ -46,7 +46,7 @@ export function Modal({
           style={{ width, maxWidth: 'calc(100vw - 2rem)' }}
           className={cn(
             'm-dialog fixed left-1/2 top-1/2 z-[var(--m-z-modal)] max-h-[85vh] w-full -translate-x-1/2 -translate-y-1/2',
-            'overflow-auto rounded-surface border border-border-subtle bg-surface-default',
+            'overflow-auto rounded-surface border border-border-default bg-surface-default',
             'm-elevated-modal outline-none',
             className,
           )}

@@ -2622,7 +2622,7 @@
   "Applied filters": "Applied filters",
   "Remove filter {{dim}}: {{value}}": "Remove filter {{dim}}: {{value}}",
   "Clear all": "Clear all",
-  "Columns to hide": "Columns to hide",
+  "Visible columns": "Visible columns",
   "Reset to default": "Reset to default",
   "Display": "Display",
   "Sort ascending": "Sort ascending",
@@ -2893,5 +2893,9 @@
   "Show sessions with {{label}} {{value}}": "Show sessions with {{label}} {{value}}",
   "Hide the panel": "Hide the panel",
   "Show the panel": "Show the panel",
-  "Step {{n}}, {{label}}": "Step {{n}}, {{label}}"
+  "Step {{n}}, {{label}}": "Step {{n}}, {{label}}",
+  "Search {{n}} segments": "Search {{n}} segments",
+  "No segments yet": "No segments yet",
+  "No segment matches “{{q}}”": "No segment matches “{{q}}”",
+  "Segment deleted": "Segment deleted"
 }

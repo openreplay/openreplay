@@ -59,8 +59,8 @@ export function Drawer({
           className={cn(
             'm-sheet fixed inset-y-0 z-[var(--m-z-modal)] flex max-w-full flex-col',
             side === 'left'
-              ? 'left-0 border-r border-border-subtle'
-              : 'right-0 border-l border-border-subtle',
+              ? 'left-0 border-r border-border-default'
+              : 'right-0 border-l border-border-default',
             'bg-surface-default outline-none m-elevated-modal',
             className,
           )}

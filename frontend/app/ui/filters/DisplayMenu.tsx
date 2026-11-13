@@ -112,7 +112,7 @@ export function DisplayShell({
 
       {hideable && (
         <div className="m-dm__section">
-          <p className="m-dm__heading">{t('Columns to hide')}</p>
+          <p className="m-dm__heading">{t('Visible columns')}</p>
           <div className="m-dm__pills">
             {fields.map((f) => (
               <button

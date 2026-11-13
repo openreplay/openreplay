@@ -82,7 +82,7 @@ function RequestingWindow({ getWindowType }: Props) {
         zIndex: INDEXES.PLAYER_REQUEST_WINDOW,
       }}
     >
-      <div className="m-elevated flex max-w-md flex-col items-center gap-3 rounded-surface border border-border-subtle bg-surface-raised px-8 py-6 text-center">
+      <div className="m-elevated flex max-w-md flex-col items-center gap-3 rounded-surface border border-border-default bg-surface-raised px-8 py-6 text-center">
         <Icon
           size={32}
           color={WIN_VARIANTS(t)[windowType].iconColor}

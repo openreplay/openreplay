@@ -2714,7 +2714,7 @@
   "Applied filters": "Застосовані фільтри",
   "Remove filter {{dim}}: {{value}}": "Видалити фільтр {{dim}}: {{value}}",
   "Clear all": "Очистити все",
-  "Columns to hide": "Стовпці для приховування",
+  "Visible columns": "Видимі стовпці",
   "Reset to default": "Скинути до типових",
   "Display": "Відображення",
   "Sort ascending": "Сортувати за зростанням",
@@ -3011,5 +3011,9 @@
   "Show sessions with {{label}} {{value}}": "Показати сесії з {{label}} {{value}}",
   "Hide the panel": "Сховати панель",
   "Show the panel": "Показати панель",
-  "Step {{n}}, {{label}}": "Крок {{n}}, {{label}}"
+  "Step {{n}}, {{label}}": "Крок {{n}}, {{label}}",
+  "Search {{n}} segments": "Пошук серед {{n}} сегментів",
+  "No segments yet": "Сегментів поки немає",
+  "No segment matches “{{q}}”": "Немає сегментів за запитом «{{q}}»",
+  "Segment deleted": "Сегмент видалено"
 }

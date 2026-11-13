@@ -41,6 +41,20 @@ export interface DateRangeProps {
 const iso = (ms?: number) =>
   ms ? DateTime.fromMillis(ms).toFormat('yyyy-MM-dd') : '';
 
+// The calendar draws browser-local days, the window is in the app's timezone
+// (luxon defaultZone): map by calendar day, not by instant, or a click lands on
+// the day before whenever the browser is east of that timezone.
+const toGridDay = (ms: number) => {
+  const d = DateTime.fromMillis(ms);
+  return new Date(d.year, d.month - 1, d.day);
+};
+const fromGridDay = (day: Date) =>
+  DateTime.fromObject({
+    year: day.getFullYear(),
+    month: day.getMonth() + 1,
+    day: day.getDate(),
+  });
+
 export function DateRange({
   period,
   onChange,
@@ -115,11 +129,11 @@ export function DateRange({
   };
 
   const range: DayRange | undefined = from
-    ? { from: new Date(from), to: to ? new Date(to) : undefined }
+    ? { from: toGridDay(from), to: to ? toGridDay(to) : undefined }
     : undefined;
 
   const onPickDay = (day: Date) => {
-    const at = DateTime.fromJSDate(day);
+    const at = fromGridDay(day);
     if (step === 'from' || (from != null && at.toMillis() < from)) {
       emitCustom(at.startOf('day').toMillis(), at.endOf('day').toMillis());
       setStep('to');
@@ -131,38 +145,44 @@ export function DateRange({
   };
 
   const menu = (
-    <div role="menu" onKeyDown={menuKeyDown}>
-      {field && <p className="m-dr__field">{field}</p>}
-      {presets.map((pr) => (
-        <CheckRow
-          key={pr.value}
-          single
-          on={rangeName === pr.value}
-          onToggle={() => {
-            onChange(Period({ rangeName: pr.value }));
-            setOpen(false);
-          }}
-        >
-          {t(pr.label)}
-        </CheckRow>
-      ))}
-      {!disableCustom && (
-        <>
-          <div className="m-dr__rule" />
+    <div
+      role="menu"
+      onKeyDown={menuKeyDown}
+      className={cn('m-dr__layout', custom && 'has-picker')}
+    >
+      <div className="m-dr__list">
+        {field && <p className="m-dr__field">{field}</p>}
+        {presets.map((pr) => (
           <CheckRow
+            key={pr.value}
             single
-            on={custom}
-            onToggle={() =>
-              emitCustom(
-                DateTime.now().minus({ days: 7 }).startOf('day').toMillis(),
-                DateTime.now().endOf('day').toMillis(),
-              )
-            }
+            on={rangeName === pr.value}
+            onToggle={() => {
+              onChange(Period({ rangeName: pr.value }));
+              setOpen(false);
+            }}
           >
-            {t('Custom range')}
+            {t(pr.label)}
           </CheckRow>
-        </>
-      )}
+        ))}
+        {!disableCustom && (
+          <>
+            <div className="m-dr__rule" />
+            <CheckRow
+              single
+              on={custom}
+              onToggle={() =>
+                emitCustom(
+                  DateTime.now().minus({ days: 7 }).startOf('day').toMillis(),
+                  DateTime.now().endOf('day').toMillis(),
+                )
+              }
+            >
+              {t('Custom range')}
+            </CheckRow>
+          </>
+        )}
+      </div>
       {custom && (
         <div className="m-dr__picker">
           <div className="m-dr__fields">

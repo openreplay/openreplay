@@ -2668,7 +2668,7 @@
   "Applied filters": "Filtros aplicados",
   "Remove filter {{dim}}: {{value}}": "Quitar filtro {{dim}}: {{value}}",
   "Clear all": "Borrar todo",
-  "Columns to hide": "Columnas a ocultar",
+  "Visible columns": "Columnas visibles",
   "Reset to default": "Restablecer valores predeterminados",
   "Display": "Visualización",
   "Sort ascending": "Orden ascendente",
@@ -2952,5 +2952,9 @@
   "Show sessions with {{label}} {{value}}": "Mostrar sesiones con {{label}} {{value}}",
   "Hide the panel": "Ocultar el panel",
   "Show the panel": "Mostrar el panel",
-  "Step {{n}}, {{label}}": "Paso {{n}}, {{label}}"
+  "Step {{n}}, {{label}}": "Paso {{n}}, {{label}}",
+  "Search {{n}} segments": "Buscar en {{n}} segmentos",
+  "No segments yet": "Aún no hay segmentos",
+  "No segment matches “{{q}}”": "Ningún segmento coincide con «{{q}}»",
+  "Segment deleted": "Segmento eliminado"
 }

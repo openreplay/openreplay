@@ -2576,7 +2576,7 @@
   "Applied filters": "已应用的筛选条件",
   "Remove filter {{dim}}: {{value}}": "移除筛选条件 {{dim}}：{{value}}",
   "Clear all": "全部清除",
-  "Columns to hide": "要隐藏的列",
+  "Visible columns": "显示的列",
   "Reset to default": "恢复默认",
   "Display": "显示",
   "Sort ascending": "升序排序",
@@ -2834,5 +2834,9 @@
   "Show sessions with {{label}} {{value}}": "显示 {{label}} 为 {{value}} 的会话",
   "Hide the panel": "隐藏面板",
   "Show the panel": "显示面板",
-  "Step {{n}}, {{label}}": "第 {{n}} 步，{{label}}"
+  "Step {{n}}, {{label}}": "第 {{n}} 步，{{label}}",
+  "Search {{n}} segments": "搜索 {{n}} 个分群",
+  "No segments yet": "还没有分群",
+  "No segment matches “{{q}}”": "没有与“{{q}}”匹配的分群",
+  "Segment deleted": "分群已删除"
 }

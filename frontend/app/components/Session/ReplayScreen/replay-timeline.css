@@ -128,7 +128,7 @@
   gap: var(--m-space-5);
   height: var(--m-control-height-lg);
   padding-inline: var(--m-space-5) var(--m-space-3);
-  border: var(--m-border-width) solid var(--m-border-subtle);
+  border: var(--m-border-width) solid var(--m-border-default);
   border-radius: var(--m-radius-control);
   background: var(--m-surface-raised);
   box-shadow: var(--m-shadow-popover);

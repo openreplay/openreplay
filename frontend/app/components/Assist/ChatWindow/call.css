@@ -4,7 +4,7 @@
   width: 18rem;
   margin-top: 4rem;
   overflow: hidden;
-  border: 1px solid var(--m-border-subtle);
+  border: 1px solid var(--m-border-default);
   border-radius: var(--m-radius-surface);
   background: var(--m-surface-raised);
   box-shadow: var(--m-shadow-popover);
