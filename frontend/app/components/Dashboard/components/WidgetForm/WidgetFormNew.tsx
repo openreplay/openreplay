@@ -276,8 +276,8 @@ const journeyTarget = (
   };
 };
 
-/** One sentence read down a column: Journeys, Starts at, Showing, Leaving
-    out, Filters. */
+/** Three groups: Journey (start or end point), Steps (Showing, Leaving out)
+    and Filters (the sessions it is drawn from). */
 const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
   const { t } = useTranslation();
   const metricValueOptions = [
@@ -349,9 +349,9 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
   return (
     <ValueHintsContext.Provider value={hints}>
       <div className="m-jrny">
-        <div className="m-jrny__grid">
-          <span className="m-jrny__word">{t('Journeys')}</span>
-          <div className="m-jrny__ctl">
+        <div className="m-jrny__groups">
+          <section className="m-jrny__group" aria-label={t('Journey')}>
+            <h4 className="m-jrny__head">{t('Journey')}</h4>
             <Segmented<'start' | 'end'>
               className="m-jrny__fit"
               ariaLabel={t('Start or end point')}
@@ -372,12 +372,6 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
                 },
               ]}
             />
-          </div>
-
-          <span className="m-jrny__word">
-            {fromEnd ? t('Ends at') : t('Starts at')}
-          </span>
-          <div className="m-jrny__ctl">
             <RuleChips
               editor={point}
               entries={eventEntries}
@@ -393,48 +387,50 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
                   : t('Most sessions start on {{page}}', { page: auto })}
               </p>
             ) : null}
-          </div>
+          </section>
 
-          <span className="m-jrny__word">{t('Showing')}</span>
-          <div className="m-jrny__ctl">
-            <MultiSelect<string>
-              className="m-jrny__fit w-auto"
-              value={metric.metricValue || []}
-              onChange={(value) =>
-                writeOption({
-                  name: 'metricValue',
-                  value: value.length ? value : ['location'],
-                })
-              }
-              ariaLabel={t('What the steps are')}
-              options={metricValueOptions}
-            />
-          </div>
-
-          <span className="m-jrny__word">{t('Leaving out')}</span>
-          <div className="m-jrny__ctl">
-            <RuleChips
-              editor={excludes}
-              entries={excludeEntries}
-              addLabel={t('Add')}
-              ariaLabel={t('Left out of the journey')}
-              placeholder={t('Search events')}
-            />
-          </div>
-
-          {filters && (
-            <>
-              <span className="m-jrny__word">{t('Filters')}</span>
+          <section className="m-jrny__group" aria-label={t('Steps')}>
+            <h4 className="m-jrny__head">{t('Steps')}</h4>
+            <div className="m-jrny__grid">
+              <span className="m-jrny__word">{t('Showing')}</span>
               <div className="m-jrny__ctl">
-                <RuleChips
-                  editor={filters}
-                  entries={sessionEntries}
-                  addLabel={t('Add')}
-                  ariaLabel={t('Session filters')}
-                  placeholder={t('Search filters')}
+                <MultiSelect<string>
+                  className="m-jrny__fit w-auto"
+                  value={metric.metricValue || []}
+                  onChange={(value) =>
+                    writeOption({
+                      name: 'metricValue',
+                      value: value.length ? value : ['location'],
+                    })
+                  }
+                  ariaLabel={t('What the steps are')}
+                  options={metricValueOptions}
                 />
               </div>
-            </>
+              <span className="m-jrny__word">{t('Leaving out')}</span>
+              <div className="m-jrny__ctl">
+                <RuleChips
+                  editor={excludes}
+                  entries={excludeEntries}
+                  addLabel={t('Add')}
+                  ariaLabel={t('Left out of the journey')}
+                  placeholder={t('Search events')}
+                />
+              </div>
+            </div>
+          </section>
+
+          {filters && (
+            <section className="m-jrny__group" aria-label={t('Filters')}>
+              <h4 className="m-jrny__head">{t('Filters')}</h4>
+              <RuleChips
+                editor={filters}
+                entries={sessionEntries}
+                addLabel={t('Add filter')}
+                ariaLabel={t('Session filters')}
+                placeholder={t('Search filters')}
+              />
+            </section>
           )}
         </div>
       </div>
