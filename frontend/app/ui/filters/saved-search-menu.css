@@ -1,0 +1,59 @@
+.m-saved__trigger {
+  max-width: 14rem;
+  gap: var(--m-space-2);
+}
+.m-saved__caret {
+  flex: none;
+  color: var(--m-content-decorative);
+}
+
+.m-saved__pop {
+  padding: 0;
+  overflow: hidden;
+}
+.m-saved {
+  display: flex;
+  flex-direction: column;
+  width: 20rem;
+  max-width: calc(100vw - 2rem);
+}
+.m-saved__list {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  max-height: min(
+    22rem,
+    calc(var(--radix-popover-content-available-height, 60vh) - 6rem)
+  );
+  overflow-y: auto;
+  padding: var(--m-space-2);
+  scrollbar-width: thin;
+}
+.m-saved__row {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.m-saved__none {
+  margin: 0;
+  padding: var(--m-space-4) var(--m-space-3);
+  font-size: var(--m-text-xs);
+  color: var(--m-content-muted);
+}
+/* the verbs, under a rule, never scrolled away */
+.m-saved__foot {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  padding: var(--m-space-2) var(--m-space-3);
+  border-top: 1px solid var(--m-border-default);
+}
+.m-saved__foot-end {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  margin-left: auto;
+}
+.m-saved__delete .m-iconbtn:hover:not(:disabled) {
+  color: var(--m-content-danger);
+}

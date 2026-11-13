@@ -513,7 +513,7 @@ span.m-fchip__said {
   align-items: center;
   gap: 2px;
   padding: 2px;
-  border: var(--m-border-width) solid var(--m-border-subtle);
+  border: var(--m-border-width) solid var(--m-border-default);
   border-radius: var(--m-radius-full);
   background: var(--m-surface-raised);
   box-shadow: var(--m-shadow-popover);

@@ -25,9 +25,13 @@ function SearchShortcuts({ scope, entries, onAdd }: Props) {
   const { searchStore, filterStore } = useStore();
   const memory = useSearchMemory(scope);
   const { last } = memory;
-  const segment = memory.lastSegmentId
-    ? searchStore.list.find((s) => String(s.searchId) === memory.lastSegmentId)
-    : undefined;
+  // Last search already brings that segment's rules back
+  const segment =
+    memory.lastSegmentId && last?.segmentId !== memory.lastSegmentId
+      ? searchStore.list.find(
+          (s) => String(s.searchId) === memory.lastSegmentId,
+        )
+      : undefined;
   const usual = usualEntries(memory, entries);
   const lastSentence = useMemo(
     () =>

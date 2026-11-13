@@ -2576,7 +2576,7 @@
   "Applied filters": "적용된 필터",
   "Remove filter {{dim}}: {{value}}": "필터 삭제 {{dim}}: {{value}}",
   "Clear all": "모두 지우기",
-  "Columns to hide": "숨길 열",
+  "Visible columns": "표시할 열",
   "Reset to default": "기본값으로 초기화",
   "Display": "표시",
   "Sort ascending": "오름차순 정렬",
@@ -2850,5 +2850,9 @@
   "Show sessions with {{label}} {{value}}": "{{label}} {{value}}인 세션 보기",
   "Hide the panel": "패널 숨기기",
   "Show the panel": "패널 보기",
-  "Step {{n}}, {{label}}": "{{n}}단계, {{label}}"
+  "Step {{n}}, {{label}}": "{{n}}단계, {{label}}",
+  "Search {{n}} segments": "세그먼트 {{n}}개 검색",
+  "No segments yet": "아직 세그먼트가 없습니다",
+  "No segment matches “{{q}}”": "“{{q}}”와 일치하는 세그먼트가 없습니다",
+  "Segment deleted": "세그먼트가 삭제되었습니다"
 }

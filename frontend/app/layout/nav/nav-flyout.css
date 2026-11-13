@@ -7,7 +7,7 @@
   width: 12.5rem;
   padding: var(--m-space-3);
   border-radius: var(--m-radius-surface);
-  border: 1px solid var(--m-border-subtle);
+  border: 1px solid var(--m-border-default);
   background: var(--m-surface-raised);
   box-shadow: var(--m-shadow-popover);
   overflow: clip;

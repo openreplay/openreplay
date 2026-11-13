@@ -3,9 +3,11 @@ import { useSyncExternalStore } from 'react';
 import type { CatalogueEntry } from 'Shared/FilterEditor/types';
 
 /** Per user and project, in this browser: the last search with complete
-    rules, the last segment used or saved, and how often each entry was added. */
+    rules (a segment in use too), the last segment used or saved, and how often
+    each entry was added. */
 export interface SearchMemory {
-  last: { filters: any[]; eventsOrder: string } | null;
+  /** `segmentId`: the search was that segment, unchanged */
+  last: { filters: any[]; eventsOrder: string; segmentId?: string } | null;
   lastSegmentId: string | null;
   uses: Record<string, number>;
 }
@@ -51,9 +53,12 @@ export function rememberSearch(
   scope: string,
   filters: any[],
   eventsOrder: string,
+  segmentId?: string,
 ) {
   if (!filters.length) return;
-  const last = { filters, eventsOrder };
+  const last = segmentId
+    ? { filters, eventsOrder, segmentId }
+    : { filters, eventsOrder };
   if (JSON.stringify(last) === JSON.stringify(read(scope).last)) return;
   write(scope, { last });
 }

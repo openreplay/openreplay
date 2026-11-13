@@ -2714,7 +2714,7 @@
   "Applied filters": "Применённые фильтры",
   "Remove filter {{dim}}: {{value}}": "Удалить фильтр {{dim}}: {{value}}",
   "Clear all": "Очистить всё",
-  "Columns to hide": "Скрываемые столбцы",
+  "Visible columns": "Видимые столбцы",
   "Reset to default": "Сбросить к значениям по умолчанию",
   "Display": "Отображение",
   "Sort ascending": "По возрастанию",
@@ -3027,5 +3027,9 @@
   "Show sessions with {{label}} {{value}}": "Показать сессии с {{label}} {{value}}",
   "Hide the panel": "Скрыть панель",
   "Show the panel": "Показать панель",
-  "Step {{n}}, {{label}}": "Шаг {{n}}, {{label}}"
+  "Step {{n}}, {{label}}": "Шаг {{n}}, {{label}}",
+  "Search {{n}} segments": "Поиск по {{n}} сегментам",
+  "No segments yet": "Сегментов пока нет",
+  "No segment matches “{{q}}”": "Нет сегментов по запросу «{{q}}»",
+  "Segment deleted": "Сегмент удалён"
 }
