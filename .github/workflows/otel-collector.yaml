@@ -1,0 +1,134 @@
+# Builds the OpenTelemetry Collector image and deploys it to the OSS dev cluster
+on:
+  workflow_dispatch:
+    inputs:
+      skip_security_checks:
+        description: "Skip Security checks if there is a unfixable vuln or error. Value: true/false"
+        required: false
+        default: "false"
+  push:
+    branches:
+      - dev
+    paths:
+      - "otel-collector/**"
+
+name: Build and Deploy otel-collector
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 2
+
+      - uses: ./.github/composite-actions/update-keys
+        with:
+          assist_jwt_secret: ${{ secrets.ASSIST_JWT_SECRET }}
+          assist_key: ${{ secrets.ASSIST_KEY }}
+          domain_name: ${{ secrets.OSS_DOMAIN_NAME }}
+          jwt_refresh_secret: ${{ secrets.JWT_REFRESH_SECRET }}
+          jwt_secret: ${{ secrets.OSS_JWT_SECRET }}
+          jwt_spot_refresh_secret: ${{ secrets.JWT_SPOT_REFRESH_SECRET }}
+          jwt_spot_secret: ${{ secrets.JWT_SPOT_SECRET }}
+          license_key: ${{ secrets.OSS_LICENSE_KEY }}
+          minio_access_key: ${{ secrets.OSS_MINIO_ACCESS_KEY }}
+          minio_secret_key: ${{ secrets.OSS_MINIO_SECRET_KEY }}
+          pg_password: ${{ secrets.OSS_PG_PASSWORD }}
+          registry_url: ${{ secrets.OSS_REGISTRY_URL }}
+        name: Update Keys
+
+      - name: Docker login
+        run: |
+          docker login ${{ secrets.OSS_REGISTRY_URL }} -u ${{ secrets.OSS_DOCKER_USERNAME }} -p "${{ secrets.OSS_REGISTRY_TOKEN }}"
+
+      - name: Set image tag
+        run: echo "IMAGE_TAG=${GITHUB_REF_NAME//\//-}_${GITHUB_SHA}" >> $GITHUB_ENV
+
+      - uses: azure/k8s-set-context@v5
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.OSS_KUBECONFIG }}
+        id: setcontext
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Building and Pushing otel-collector image
+        id: build-image
+        env:
+          DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
+          IMAGE_TAG: ${{ env.IMAGE_TAG }}
+          ENVIRONMENT: staging
+        run: |
+          skip_security_checks=${{ github.event.inputs.skip_security_checks }}
+          cd otel-collector
+          PUSH_IMAGE=0 bash -x ./build.sh
+          [[ "x$skip_security_checks" == "xtrue" ]]  || {
+            curl -L https://github.com/aquasecurity/trivy/releases/download/v0.56.2/trivy_0.56.2_Linux-64bit.tar.gz | tar -xzf - -C ./
+            ./trivy image --db-repository ghcr.io/aquasecurity/trivy-db:2 --db-repository public.ecr.aws/aquasecurity/trivy-db:2 --exit-code 1 --security-checks vuln --vuln-type os,library --severity "HIGH,CRITICAL"  --ignore-unfixed $DOCKER_REPO/otel-collector:$IMAGE_TAG
+            err_code=$?
+            [[ $err_code -ne 0 ]] && {
+              exit $err_code
+            }
+          } && {
+            echo "Skipping Security Checks"
+          }
+          docker push $DOCKER_REPO/otel-collector:$IMAGE_TAG
+
+      - name: Creating old image input
+        run: |
+          #
+          # Create yaml with existing image tags
+          #
+          kubectl get pods -n app -o jsonpath="{.items[*].spec.containers[*].image}" |\
+          tr -s '[[:space:]]' '\n' | sort | uniq -c | grep '/foss/' | cut -d '/' -f3 > /tmp/image_tag.txt
+
+          echo > /tmp/image_override.yaml
+
+          for line in `cat /tmp/image_tag.txt`;
+          do
+              image_array=($(echo "$line" | tr ':' '\n'))
+              cat <<EOF >> /tmp/image_override.yaml
+          ${image_array[0]}:
+            image:
+              tag: ${image_array[1]}
+          EOF
+          done
+
+      - name: Deploy to kubernetes
+        run: |
+          cd scripts/helmcharts/
+
+          # Update changed image tag
+          sed -i "/otel-collector/{n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
+          # Ensure otel-collector entry exists even if no pod is running yet
+          if ! grep -q "^otel-collector:" /tmp/image_override.yaml; then
+            printf 'otel-collector:\n  image:\n    tag: %s\n' "${IMAGE_TAG}" >> /tmp/image_override.yaml
+          fi
+
+          cat /tmp/image_override.yaml
+          # Deploy command
+          mkdir -p /tmp/charts
+          mv openreplay/charts/{ingress-nginx,otel-collector,connector} /tmp/charts/
+          rm -rf  openreplay/charts/*
+          mv /tmp/charts/* openreplay/charts/
+          helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true --no-hooks | kubectl apply -n app -f -
+        env:
+          DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
+          IMAGE_TAG: ${{ env.IMAGE_TAG }}
+          ENVIRONMENT: staging
+
+      - name: Alert slack
+        if: failure()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: foss
+          SLACK_TITLE: "Failed ${{ github.workflow }}"
+          SLACK_COLOR: ${{ job.status }}
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEB_HOOK }}
+          SLACK_USERNAME: "OR Bot"
+          SLACK_MESSAGE: "Build failed :bomb:"
