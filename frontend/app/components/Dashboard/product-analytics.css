@@ -643,15 +643,54 @@
 .m-jrny {
   display: flex;
   flex-direction: column;
+  container-type: inline-size;
 }
-/* one sentence read down a column: the word on the left, its control on the
-   right; a control is as wide as what it holds, the chips take the column */
+/* stacked in the side column, three columns when the definition is on top;
+   a control is as wide as what it holds, the chips take the group */
+.m-jrny__groups {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+.m-jrny__group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--m-space-3);
+  min-width: 0;
+  padding: var(--m-space-5);
+}
+.m-jrny__group + .m-jrny__group {
+  border-top: var(--m-border-width) solid var(--m-border-subtle);
+}
+.m-jrny__group > .m-rulechips {
+  align-self: stretch;
+}
+.m-jrny__head {
+  margin: 0;
+  font-size: var(--m-text-xs);
+  font-weight: var(--m-weight-medium);
+  color: var(--m-content-muted);
+}
+@container (min-width: 760px) {
+  .m-jrny__groups {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, 1fr);
+  }
+  .m-jrny__group + .m-jrny__group {
+    border-top: 0;
+    border-left: var(--m-border-width) solid var(--m-border-subtle);
+  }
+}
+/* the word on the left, its control on the right */
 .m-jrny__grid {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
   column-gap: var(--m-space-4);
-  row-gap: var(--m-space-4);
+  row-gap: var(--m-space-3);
   align-items: start;
+  align-self: stretch;
+}
+.m-jrny > .m-jrny__grid {
+  row-gap: var(--m-space-4);
   padding: var(--m-space-4) var(--m-space-5);
 }
 .m-jrny__word {
