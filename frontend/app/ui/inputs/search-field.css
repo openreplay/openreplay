@@ -8,6 +8,64 @@
   }
 }
 
+/* the filter bar's skin (.m-fbar__filter): its tint, edge and hover, the
+   glyph on its inset */
+.m-search .m-search__input {
+  padding-left: calc(var(--m-space-4) + 14px + var(--m-space-4));
+  background: var(--m-surface-canvas);
+  border-color: var(--m-border-default);
+  transition:
+    background var(--m-duration-fast) var(--m-ease-out),
+    border-color var(--m-duration-fast) var(--m-ease-out);
+}
+.m-search .m-search__input:is(:hover, :focus) {
+  background: var(--m-surface-default);
+  border-color: var(--m-border-strong);
+}
+.m-search .m-search__input:not(:placeholder-shown) {
+  padding-right: 1.75rem;
+}
+.m-search [data-slot='input-affix'] > [aria-hidden='true'] {
+  left: calc(var(--m-border-width) + var(--m-space-4));
+  color: var(--m-content-decorative);
+  transition: color var(--m-duration-fast) var(--m-ease-out);
+}
+.m-search [data-slot='input-affix'] > [aria-hidden='true'] svg {
+  width: 14px;
+  height: 14px;
+}
+.m-search:hover [data-slot='input-affix'] > [aria-hidden='true'],
+.m-search:has(input:not(:placeholder-shown))
+  [data-slot='input-affix']
+  > [aria-hidden='true'] {
+  color: var(--m-content-secondary);
+}
+
+/* in a page header it is the bar's size; in the compact header, the row's */
+.m-page__actions .m-search {
+  width: 15rem;
+}
+.m-page__actions .m-search .m-search__input {
+  height: calc(var(--m-control-height-sm) * 1.3);
+  padding-left: calc(var(--m-space-4) + 16px + var(--m-space-4));
+}
+.m-page__actions
+  .m-search
+  [data-slot='input-affix']
+  > [aria-hidden='true']
+  svg {
+  width: 16px;
+  height: 16px;
+}
+.m-page--compact .m-page__actions .m-search .m-search__input {
+  height: var(--m-page-head-row);
+}
+@media (max-width: 900px) {
+  .m-page__actions .m-search {
+    width: 11rem;
+  }
+}
+
 /* phone: the search is an icon; opened, the field covers the row it sits in */
 .m-psearch-slot {
   display: contents;

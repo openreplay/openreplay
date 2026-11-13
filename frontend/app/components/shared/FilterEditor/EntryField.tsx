@@ -1,5 +1,7 @@
+import { useHeadSearchSlot } from '@/ui/layout/PageCard';
 import { Filter } from 'lucide-react';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
 import { FilterPanel } from './FilterPanel';
@@ -53,6 +55,8 @@ export function EntryField({
   const lead = hasRules
     ? t('Add to the filter')
     : (placeholder ?? t('Search recordings'));
+  // the compact header's seat, when the page has one
+  const headSlot = useHeadSearchSlot();
 
   useEffect(() => {
     if (hasRules || opens) return undefined;
@@ -109,7 +113,7 @@ export function EntryField({
       </div>
     );
 
-  return (
+  const field = (
     <div className="m-recs__entryfield" data-trigger="bar">
       <div className="m-fbar__triggerwrap" ref={wrap}>
         <label className="m-fbar__filter m-fbar__filter--bar">
@@ -176,4 +180,5 @@ export function EntryField({
       {trailing && <span className="m-recs__entry-trailing">{trailing}</span>}
     </div>
   );
+  return headSlot ? createPortal(field, headSlot) : field;
 }

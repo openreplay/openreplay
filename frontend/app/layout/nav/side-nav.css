@@ -501,18 +501,41 @@
 .m-nav.is-collapsed .m-meter .m-bar {
   min-width: 0;
 }
+/* collapsed, the meter is a column: the standing bar, then the upgrade as
+   one more footer tile */
+.m-nav.is-collapsed .m-meter {
+  flex-direction: column;
+  gap: var(--m-space-2);
+}
+.m-nav.is-collapsed .m-meter:has(.m-iconbtn) {
+  height: calc(2.75rem + var(--m-space-2) + 1.75rem);
+}
 .m-nav.is-collapsed .m-meter__read {
   flex: none;
   gap: 0;
+  justify-content: center;
+  align-items: center;
+  height: 2.75rem;
 }
 .m-nav.is-collapsed .m-meter .m-iconbtn {
-  display: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin: 0;
+  border-radius: var(--m-radius-control);
 }
 
 @media (max-width: 880px) {
   .m-nav:not(.is-collapsed) {
     width: 11.5rem;
   }
+}
+
+/* a page arriving with its own menu width takes it in the same frame
+   (useNavCollapse): nothing in the menu or the page header animates */
+:root[data-nav-instant]
+  :is(.m-nav, .m-nav *, .m-page, .m-page__head, .m-page__head *) {
+  transition: none !important;
+  animation: none !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -39,7 +39,10 @@ function Layout({
   const { userStore, notificationStore } = useStore();
   const { account, initialDataFetched } = userStore;
   const { t } = useTranslation();
-  const { collapsed, toggle } = useNavCollapse(immersive || needsRoom, !bare);
+  const { collapsed, toggle } = useNavCollapse(
+    { replay: immersive, room: needsRoom },
+    !bare,
+  );
   // at phone the rail is a sheet behind the bar's menu button
   const phone = useViewportAttribute() === 'phone';
   const [mobileOpen, setMobileOpen] = useState(false);
