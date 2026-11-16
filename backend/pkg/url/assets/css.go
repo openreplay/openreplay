@@ -10,7 +10,7 @@ import (
 var cssURLs = regexp.MustCompile(`url\(("[^"]*"|'[^']*'|[^)]*)\)`)
 var cssImports = regexp.MustCompile(`@import "(.*?)"`)
 
-var pseudoClasses = regexp.MustCompile(`@(?:media|custom-media|import)[^{;]*|\\?:(?:hover|focus)`)
+var pseudoClasses = regexp.MustCompile(`(?s)/\*.*?\*/|@(?i:media|custom-media|import)[^{;]*|\\.|:(?:hover|focus)`)
 
 func cssUrlsIndex(css string) [][]int {
 	var idxs [][]int
