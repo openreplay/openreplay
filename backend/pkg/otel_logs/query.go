@@ -280,6 +280,10 @@ func fillBuckets(startMs, endMs, step int64, counts map[int64]map[string]uint64)
 	return buckets
 }
 
+func logID(timestampNs int64, blockNumber, blockOffset uint64) string {
+	return fmt.Sprintf("%d-%d-%d", timestampNs, blockNumber, blockOffset)
+}
+
 func stripInternal(attrs map[string]string) map[string]string {
 	for k := range attrs {
 		if strings.HasPrefix(k, internalKeyPrefix) {

@@ -56,7 +56,7 @@ func wrapErr(err error) error {
 }
 
 const searchColumns = `toUnixTimestamp64Nano(Timestamp), SeverityText, SeverityNumber, ServiceName, Body, TraceId, SpanId,
-	LogAttributes, ResourceAttributes, ScopeName, ScopeAttributes`
+	LogAttributes, ResourceAttributes, ScopeName, ScopeAttributes, _block_number, _block_offset`
 
 func (l *logsImpl) Search(ctx context.Context, projectID uint32, req *SearchRequest) (*SearchResponse, error) {
 	if err := req.validate(); err != nil {
@@ -113,10 +113,12 @@ func (l *logsImpl) searchWindow(ctx context.Context, projectID uint32, f *Filter
 	var logs []Log
 	for rows.Next() {
 		var r Log
+		var blockNumber, blockOffset uint64
 		if err := rows.Scan(&r.Timestamp, &r.SeverityText, &r.SeverityNumber, &r.ServiceName, &r.Body, &r.TraceID, &r.SpanID,
-			&r.LogAttributes, &r.ResourceAttributes, &r.ScopeName, &r.ScopeAttributes); err != nil {
+			&r.LogAttributes, &r.ResourceAttributes, &r.ScopeName, &r.ScopeAttributes, &blockNumber, &blockOffset); err != nil {
 			return nil, err
 		}
+		r.ID = logID(r.Timestamp, blockNumber, blockOffset)
 		r.LogAttributes = stripInternal(r.LogAttributes)
 		logs = append(logs, r)
 	}

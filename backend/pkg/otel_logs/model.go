@@ -29,7 +29,8 @@ type FacetsRequest struct {
 }
 
 type Log struct {
-	Timestamp          int64             `json:"timestamp"`
+	ID                 string            `json:"id"`
+	Timestamp          int64             `json:"timestamp,string"`
 	SeverityText       string            `json:"severityText"`
 	SeverityNumber     uint8             `json:"severityNumber"`
 	ServiceName        string            `json:"serviceName"`
