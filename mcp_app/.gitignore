@@ -4,7 +4,10 @@ node_modules/
 # Build output
 dist/
 *.mcpb
-dist-server/server.mjs
+dist-chatgpt/
+openreplay-chatgpt-plugin.zip
+openreplay-chatgpt-marketplace.zip
+dist-server/
 
 # Logs
 *.log
