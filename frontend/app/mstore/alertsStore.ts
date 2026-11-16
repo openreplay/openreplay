@@ -10,8 +10,8 @@ export interface TriggerOption {
   value: string | number;
   unit?: string;
   group: TriggerGroup;
-  /** a property the project sends, not one OpenReplay captures */
-  custom?: boolean;
+  /** a property OpenReplay captures, not one the project sends */
+  autoCaptured?: boolean;
 }
 
 const groupOf = (o: {
@@ -138,9 +138,9 @@ export default class AlertsStore {
           value: o.value,
           unit: o.unit,
           group,
-          custom:
+          autoCaptured:
             (group === 'events' || group === 'users') &&
-            String(o.value).startsWith('properties.'),
+            !String(o.value).startsWith('properties.'),
         };
       });
     } catch (e) {

@@ -1,0 +1,48 @@
+{
+  "name": "openreplay",
+  "version": "1.0.8",
+  "description": "Query and explore your OpenReplay session replays and product analytics.",
+  "author": {
+    "name": "OpenReplay",
+    "url": "https://openreplay.com"
+  },
+  "homepage": "https://openreplay.com",
+  "repository": "https://github.com/openreplay/openreplay",
+  "license": "MIT",
+  "keywords": [
+    "session replay",
+    "product analytics",
+    "web vitals",
+    "funnels",
+    "user journeys"
+  ],
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "OpenReplay",
+    "shortDescription": "Session replay and analytics",
+    "longDescription": "Query your OpenReplay data in natural language. Search and replay user sessions in an embedded player, and build interactive charts to track trends, explore web analytics, map user journeys, catch drop-offs with funnels, and monitor Core Web Vitals. Review the problems Smart Issues found in your recordings and kick off Smart Tests runs.\n\nWorks with OpenReplay Cloud and self-hosted instances. On first use, sign in to your OpenReplay account in the browser; ask to switch instances to use a self-hosted one. Mobile recordings open in the OpenReplay UI rather than the embedded player.",
+    "developerName": "OpenReplay",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Search recorded user sessions by user, device, location and behavior",
+      "Replay web sessions in an embedded player",
+      "Chart session trends, top pages, browsers and countries",
+      "Map user journeys and measure funnel conversion",
+      "Report Core Web Vitals",
+      "Review Smart Issues and trigger Smart Tests runs"
+    ],
+    "websiteURL": "https://openreplay.com",
+    "supportURL": "https://openreplay.slack.com/",
+    "privacyPolicyURL": "https://openreplay.com/legal/privacy/",
+    "termsOfServiceURL": "https://openreplay.com/legal/terms/",
+    "defaultPrompt": [
+      "Show my most recent sessions",
+      "Chart daily sessions for the last 7 days",
+      "Which pages had the most visits this week?"
+    ],
+    "brandColor": "#394EFF",
+    "composerIcon": "./assets/logo.png",
+    "logo": "./assets/logo.png"
+  },
+  "requires_local_executor": true
+}

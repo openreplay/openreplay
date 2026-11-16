@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "openreplay": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "${PLUGIN_ROOT}/server/server.mjs"
+      ],
+      "cwd": "${PLUGIN_ROOT}",
+      "env": {
+        "MCP_WIDGET_DOMAIN": "https://openreplay.com"
+      }
+    }
+  }
+}

@@ -1,0 +1,113 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "openreplay",
+  "version": "1.0.8",
+  "description": "Query and explore your OpenReplay session replays and product analytics.",
+  "author": {
+    "name": "OpenReplay",
+    "url": "https://openreplay.com"
+  },
+  "homepage": "https://openreplay.com",
+  "repository": "https://github.com/openreplay/openreplay",
+  "license": "MIT",
+  "keywords": [
+    "session replay",
+    "product analytics",
+    "web vitals",
+    "funnels",
+    "user journeys"
+  ],
+  "extensions": {
+    "com.openai": {
+      "requires_local_executor": true,
+      "interface": {
+        "displayName": "OpenReplay",
+        "shortDescription": "Session replay and analytics",
+        "longDescription": "Query your OpenReplay data in natural language. Search and replay user sessions in an embedded player, and build interactive charts to track trends, explore web analytics, map user journeys, catch drop-offs with funnels, and monitor Core Web Vitals. Review the problems Smart Issues found in your recordings and kick off Smart Tests runs.\n\nWorks with OpenReplay Cloud and self-hosted instances. On first use, sign in to your OpenReplay account in the browser; ask to switch instances to use a self-hosted one. Mobile recordings open in the OpenReplay UI rather than the embedded player.",
+        "developerName": "OpenReplay",
+        "category": "Developer Tools",
+        "capabilities": [
+          "Search recorded user sessions by user, device, location and behavior",
+          "Replay web sessions in an embedded player",
+          "Chart session trends, top pages, browsers and countries",
+          "Map user journeys and measure funnel conversion",
+          "Report Core Web Vitals",
+          "Review Smart Issues and trigger Smart Tests runs"
+        ],
+        "websiteURL": "https://openreplay.com",
+        "supportURL": "https://openreplay.slack.com/",
+        "privacyPolicyURL": "https://openreplay.com/legal/privacy/",
+        "termsOfServiceURL": "https://openreplay.com/legal/terms/",
+        "defaultPrompt": [
+          "Show my most recent sessions",
+          "Chart daily sessions for the last 7 days",
+          "Which pages had the most visits this week?"
+        ],
+        "brandColor": "#394EFF",
+        "composerIcon": "./assets/logo.png",
+        "logo": "./assets/logo.png"
+      },
+      "review": {
+        "test_cases": {
+          "positive": [
+            {
+              "description": "List recent sessions",
+              "prompt": "Show me the most recent sessions in OpenReplay",
+              "tools_triggered": [
+                "view_recent_sessions"
+              ],
+              "expected_behavior": "Renders the session list with user, device, location and duration for recent sessions, and summarizes them."
+            },
+            {
+              "description": "Session trend chart",
+              "prompt": "Chart the number of sessions per day over the last 7 days",
+              "tools_triggered": [
+                "view_chart"
+              ],
+              "expected_behavior": "Renders a line chart of daily session counts for the last 7 days."
+            },
+            {
+              "description": "Top pages",
+              "prompt": "Which pages were visited most in the last 7 days?",
+              "tools_triggered": [
+                "view_table_chart"
+              ],
+              "expected_behavior": "Renders a ranked bar list of the most visited pages with their counts."
+            },
+            {
+              "description": "Core Web Vitals",
+              "prompt": "How are our Core Web Vitals looking this month?",
+              "tools_triggered": [
+                "view_web_vitals"
+              ],
+              "expected_behavior": "Renders Core Web Vitals cards (such as LCP, CLS and TTFB) with percentile values and points out any metric rated poor."
+            },
+            {
+              "description": "Replay a session",
+              "prompt": "Replay the most recent session",
+              "tools_triggered": [
+                "view_recent_sessions",
+                "view_session_replay"
+              ],
+              "expected_behavior": "Finds the latest session and opens it in the embedded replay player."
+            }
+          ],
+          "negative": [
+            {
+              "description": "General knowledge question",
+              "prompt": "What is the capital of Australia?"
+            },
+            {
+              "description": "Generic coding task",
+              "prompt": "Write a Python function that reverses a string."
+            },
+            {
+              "description": "Another analytics product",
+              "prompt": "Show my Google Analytics bounce rate for last week."
+            }
+          ]
+        }
+      }
+    }
+  }
+}
