@@ -67,6 +67,21 @@ export function RecordingsMeter({
               pct: Math.round(pct),
             })}
           />
+          {/* the collapsed menu shows this ring instead of the bar */}
+          <svg className="m-meter__ring" viewBox="0 0 20 20" aria-hidden="true">
+            <circle className="m-meter__ring-track" cx="10" cy="10" r="8" />
+            {pct > 0 && (
+              <circle
+                className="m-meter__ring-fill"
+                cx="10"
+                cy="10"
+                r="8"
+                pathLength={100}
+                strokeDasharray={`${pct} 100`}
+                transform="rotate(-90 10 10)"
+              />
+            )}
+          </svg>
           <span className="m-meter__value">
             {compact(captured)} / {compact(included)}
           </span>
