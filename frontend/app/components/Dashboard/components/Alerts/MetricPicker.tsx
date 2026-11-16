@@ -160,8 +160,8 @@ export function MetricPicker({
                     {tagged && (
                       <span className="m-pick2__tag">{labelOf(o.group)}</span>
                     )}
-                    {o.custom && (
-                      <span className="m-pick2__tag">{t('Custom')}</span>
+                    {o.autoCaptured && (
+                      <span className="m-pick2__tag">{t('Autocaptured')}</span>
                     )}
                     {!tagged && o.unit && o.unit !== 'count' && (
                       <span className="m-pick2__tag">{o.unit}</span>
