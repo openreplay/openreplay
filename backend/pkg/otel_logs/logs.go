@@ -42,6 +42,7 @@ func facetContext(ctx context.Context) context.Context {
 	return clickhouse.Context(ctx, clickhouse.WithSettings(clickhouse.Settings{
 		"max_execution_time":            15,
 		"timeout_overflow_mode":         "break",
+		"use_query_cache":               0,
 		"use_skip_indexes_on_data_read": 1,
 	}))
 }
