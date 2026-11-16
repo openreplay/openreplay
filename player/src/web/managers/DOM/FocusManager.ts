@@ -3,6 +3,38 @@ import type { SetNodeFocus } from '../../messages';
 import type { VElement } from './VirtualDOM';
 import ListWalker from '../../../common/ListWalker';
 import { FOCUS_CLASSNAME } from '../../messages/rewriter/constants';
+import {
+  isInputElement,
+  isSelectElement,
+  isTextAreaElement,
+} from '../../../guards';
+
+const FOCUS_VISIBLE_CLASSNAME = `${FOCUS_CLASSNAME}-visible`;
+const NO_TYPING_INPUTS = [
+  'button',
+  'checkbox',
+  'color',
+  'file',
+  'hidden',
+  'image',
+  'radio',
+  'range',
+  'reset',
+  'submit',
+];
+
+/**
+ * The recording has no keyboard-vs-mouse signal, so match only what browsers show
+ * :focus-visible for on any focus: fields that take typed input.
+ */
+function showsFocusRing(el: Element): boolean {
+  if (isInputElement(el)) return !NO_TYPING_INPUTS.includes(el.type);
+  return (
+    isTextAreaElement(el) ||
+    isSelectElement(el) ||
+    (el as HTMLElement).isContentEditable === true
+  );
+}
 
 export default class FocusManager extends ListWalker<SetNodeFocus> {
   constructor(private readonly vElements: Map<number, VElement>) {
@@ -20,7 +52,7 @@ export default class FocusManager extends ListWalker<SetNodeFocus> {
     if (!msg) {
       return undefined;
     }
-    this.focused?.classList.remove(FOCUS_CLASSNAME);
+    this.focused?.classList.remove(FOCUS_CLASSNAME, FOCUS_VISIBLE_CLASSNAME);
     const oldParent = this.focused?.parentElement;
     if (
       oldParent &&
@@ -39,6 +71,9 @@ export default class FocusManager extends ListWalker<SetNodeFocus> {
     }
     this.focused = vn.node;
     this.focused.classList.add(FOCUS_CLASSNAME);
+    if (showsFocusRing(this.focused)) {
+      this.focused.classList.add(FOCUS_VISIBLE_CLASSNAME);
+    }
     const currParent = this.focused.parentElement;
     if (currParent) {
       currParent.classList.add(`${FOCUS_CLASSNAME}-within`);
