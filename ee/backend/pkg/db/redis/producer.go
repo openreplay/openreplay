@@ -43,6 +43,14 @@ func (c *producerImpl) Produce(topic string, key uint64, value []byte) error {
 	return err
 }
 
+func (c *producerImpl) ProduceWithAck(topic string, key uint64, value []byte, ack func(error)) error {
+	if err := c.Produce(topic, key, value); err != nil {
+		return err
+	}
+	ack(nil)
+	return nil
+}
+
 func (c *producerImpl) ProduceToPartition(topic string, partition, key uint64, value []byte) error {
 	return c.Produce(topic, key, value)
 }
