@@ -80,3 +80,34 @@
 .m-meter.is-full .m-iconbtn:hover {
   background: color-mix(in oklab, var(--m-mark-danger) 16%, transparent);
 }
+
+/* hidden in the open meter, laid over the readout so it takes no room */
+.m-meter__read {
+  position: relative;
+}
+.m-meter__ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1.25rem;
+  height: 1.25rem;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.6);
+  pointer-events: none;
+}
+.m-meter__ring circle {
+  fill: none;
+  stroke-width: 2.5;
+}
+.m-meter__ring-track {
+  stroke: var(--m-impact-track);
+}
+.m-meter__ring-fill {
+  stroke: var(--m-content-accent);
+  stroke-linecap: round;
+  transition: stroke-dasharray var(--m-duration-slow) var(--m-ease-out);
+}
+.m-meter.is-near .m-meter__ring-fill,
+.m-meter.is-full .m-meter__ring-fill {
+  stroke: var(--m-mark-danger);
+}
