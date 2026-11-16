@@ -10,10 +10,7 @@ import (
 var cssURLs = regexp.MustCompile(`url\(("[^"]*"|'[^']*'|[^)]*)\)`)
 var cssImports = regexp.MustCompile(`@import "(.*?)"`)
 
-var pseudoReplacer = strings.NewReplacer(
-	":hover", ".-openreplay-hover",
-	":focus", ".-openreplay-focus",
-)
+var pseudoClasses = regexp.MustCompile(`(?s)/\*.*?\*/|@(?i:media|custom-media|import)[^{;]*|\\.|:(?:hover|focus)`)
 
 func cssUrlsIndex(css string) [][]int {
 	var idxs [][]int
@@ -100,5 +97,10 @@ func rewritePseudoclasses(css string) string {
 	if !strings.Contains(css, ":hover") && !strings.Contains(css, ":focus") {
 		return css
 	}
-	return pseudoReplacer.Replace(css)
+	return pseudoClasses.ReplaceAllStringFunc(css, func(m string) string {
+		if m[0] != ':' {
+			return m
+		}
+		return ".-openreplay-" + m[1:]
+	})
 }
