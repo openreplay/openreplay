@@ -31,6 +31,13 @@ export function useSwitchProject() {
   };
 }
 
+// offsets, not rects: the menu opens with a scale animation
+function centerCurrent(list: HTMLDivElement | null) {
+  const row = list?.querySelector<HTMLElement>('.is-active');
+  if (!list || !row) return;
+  list.scrollTop = row.offsetTop - (list.clientHeight - row.offsetHeight) / 2;
+}
+
 interface AccountMenuProps {
   onPreferences: () => void;
   open: boolean;
@@ -86,6 +93,7 @@ function AccountMenu({
         className="m-account-menu__group m-account-menu__projects"
         role="group"
         aria-label={t('Projects')}
+        ref={centerCurrent}
       >
         {sites.map((p) => (
           <NavItem
