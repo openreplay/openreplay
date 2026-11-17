@@ -30,6 +30,7 @@ export function menuRoutes(
     [MENU.PROPS]: () => site(routes.dataManagement.properties()),
     [MENU.SEGMENTS]: () => site(routes.dataManagement.segments()),
     [MENU.TAGS]: () => site(routes.dataManagement.tags()),
+    [MENU.LOGS]: () => site(routes.logs()),
     [PREFERENCES_MENU.ACCOUNT]: () => client(CLIENT_TABS.PROFILE),
     [PREFERENCES_MENU.SESSION_SETTINGS]: () =>
       client(CLIENT_TABS.SESSION_SETTINGS),
@@ -43,6 +44,7 @@ export function menuRoutes(
     [PREFERENCES_MENU.BILLING]: () => client(CLIENT_TABS.BILLING),
     [PREFERENCES_MENU.EXPORTED_VIDEOS]: () => client(CLIENT_TABS.VIDEOS),
     [PREFERENCES_MENU.TEST_AGENTS]: () => client(CLIENT_TABS.TEST_AGENTS),
+    [PREFERENCES_MENU.OPENTELEMETRY]: () => client(CLIENT_TABS.OPENTELEMETRY),
     ...extraRoutes(siteId),
   };
 }

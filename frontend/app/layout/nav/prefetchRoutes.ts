@@ -33,6 +33,7 @@ const loaders: Record<string, () => Promise<unknown>> = {
   [MENU.TEST_AGENTS]: () =>
     import('Components/Client/SmartTests/StandalonePage'),
   [MENU.AUDITS]: () => import('Saas/audits/AuditsPage'),
+  [MENU.LOGS]: () => import('Components/Observability/LogsPage'),
 };
 
 export function prefetchRoute(key: string): void {

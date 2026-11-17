@@ -4,7 +4,8 @@
 import { planFeatures } from 'App/utils/planFeatures';
 
 /** feature keys the backend returns in `/account` -> `plan.features` */
-export type PlanFeature = 'agent-issues' | 'agent-tests' | 'agent-audits';
+export type PlanFeature =
+  'agent-issues' | 'agent-tests' | 'agent-audits' | 'otel-logs';
 
 export const hasPlanFeature = (feature: PlanFeature): boolean =>
   planFeatures().includes(feature);
@@ -20,6 +21,9 @@ export const agentTestsEnabled = (): boolean => hasPlanFeature('agent-tests');
 
 /** Audits agent (SaaS): its page lives in `saas/audits`. */
 export const agentAuditsEnabled = (): boolean => hasPlanFeature('agent-audits');
+
+/** Observability: the Logs page (OpenTelemetry) and its ingest keys. */
+export const otelLogsEnabled = (): boolean => hasPlanFeature('otel-logs');
 
 /** Surfaces shared by both agents: the Agents menu section and its preferences tab. */
 export const anyAgentEnabled = (): boolean =>

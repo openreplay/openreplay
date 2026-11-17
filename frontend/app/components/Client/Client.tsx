@@ -6,7 +6,11 @@ import { useStore } from 'App/mstore';
 import { client as clientRoute } from 'App/routes';
 import { Navigate, withRouter } from 'App/routing';
 import { CLIENT_TABS } from 'App/utils/routeUtils';
-import { agentTestsEnabled, anyAgentEnabled } from 'App/utils/split-utils';
+import {
+  agentTestsEnabled,
+  anyAgentEnabled,
+  otelLogsEnabled,
+} from 'App/utils/split-utils';
 
 import PreferencesShell from './PreferencesShell';
 
@@ -24,6 +28,7 @@ const ExportedVideosList = React.lazy(
   () => import('./ExportedVideos/ExportedVideosList'),
 );
 const Integrations = React.lazy(() => import('./Integrations'));
+const IngestKeys = React.lazy(() => import('./OpenTelemetry/IngestKeys'));
 const ProfileSettings = React.lazy(() => import('./ProfileSettings'));
 const Projects = React.lazy(() => import('./Projects'));
 const Roles = React.lazy(() => import('./Roles'));
@@ -100,6 +105,12 @@ class Client extends React.PureComponent<any> {
           <EnterpriseOnly>
             <ExportedVideosList />
           </EnterpriseOnly>
+        );
+      case CLIENT_TABS.OPENTELEMETRY:
+        return otelLogsEnabled() ? (
+          <IngestKeys />
+        ) : (
+          <Navigate to={clientRoute(CLIENT_TABS.PROFILE)} replace />
         );
       case CLIENT_TABS.TEST_AGENTS:
         return agentTestsEnabled() ? (

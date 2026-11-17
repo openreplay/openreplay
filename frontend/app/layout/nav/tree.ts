@@ -11,6 +11,7 @@ export type NavIconName =
   | 'spot'
   | 'analytics'
   | 'dataManagement'
+  | 'observability'
   | 'exit'
   | PREFERENCES_MENU;
 
@@ -21,6 +22,7 @@ export interface NavEntry {
   count?: number;
   countNoun?: string;
   badge?: string;
+  disabled?: boolean;
   items?: NavEntry[];
 }
 
@@ -39,6 +41,7 @@ export interface NavFlags {
   issues: boolean;
   tests: boolean;
   audits: boolean;
+  logs: boolean;
 }
 
 export const PREFERENCES_PARENT = 'preferences';
@@ -100,6 +103,19 @@ export function navTree(t: TFunction, f: NavFlags): readonly NavGroup[] {
         !f.modules.includes(MODULES.ALERTS) &&
           leaf('analytics', MENU.ALERTS, t('Alerts')),
       ]),
+    },
+    f.logs && {
+      key: 'observability',
+      label: t('Observability'),
+      icon: 'observability',
+      items: [
+        leaf('observability', MENU.LOGS, t('Logs')),
+        {
+          ...leaf('observability', MENU.TRACES, t('Traces')),
+          badge: t('Soon'),
+          disabled: true,
+        },
+      ],
     },
     !menuHidden.dataAnalytics &&
       withItems({
