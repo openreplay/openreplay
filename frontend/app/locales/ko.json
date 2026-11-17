@@ -2860,5 +2860,6 @@
   "Search {{n}} segments": "세그먼트 {{n}}개 검색",
   "No segments yet": "아직 세그먼트가 없습니다",
   "No segment matches “{{q}}”": "“{{q}}”와 일치하는 세그먼트가 없습니다",
-  "Segment deleted": "세그먼트가 삭제되었습니다"
+  "Segment deleted": "세그먼트가 삭제되었습니다",
+  "Predefined": "사전 정의"
 }

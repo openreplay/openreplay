@@ -229,6 +229,17 @@
 .m-panel {
   overflow-clip-margin: 1px;
 }
+/* that margin moves the clip onto the border, so an opaque first or last row
+   would paint its square corner over the curve: they follow the inner curve */
+.m-panel > :first-child:not(.m-panel__sentinel),
+.m-panel > .m-panel__sentinel:first-child + * {
+  border-start-start-radius: calc(var(--m-radius-surface) - 1px);
+  border-start-end-radius: calc(var(--m-radius-surface) - 1px);
+}
+.m-panel > :last-child {
+  border-end-start-radius: calc(var(--m-radius-surface) - 1px);
+  border-end-end-radius: calc(var(--m-radius-surface) - 1px);
+}
 .m-panel__sentinel {
   height: 0;
 }

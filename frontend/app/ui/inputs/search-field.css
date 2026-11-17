@@ -41,24 +41,12 @@
   color: var(--m-content-secondary);
 }
 
-/* in a page header it is the bar's size; in the compact header, the row's */
+/* in a page header it is the height of the buttons beside it */
 .m-page__actions .m-search {
   width: 15rem;
 }
 .m-page__actions .m-search .m-search__input {
-  height: calc(var(--m-control-height-sm) * 1.3);
-  padding-left: calc(var(--m-space-4) + 16px + var(--m-space-4));
-}
-.m-page__actions
-  .m-search
-  [data-slot='input-affix']
-  > [aria-hidden='true']
-  svg {
-  width: 16px;
-  height: 16px;
-}
-.m-page--compact .m-page__actions .m-search .m-search__input {
-  height: var(--m-page-head-row);
+  height: var(--m-control-height-sm);
 }
 @media (max-width: 900px) {
   .m-page__actions .m-search {

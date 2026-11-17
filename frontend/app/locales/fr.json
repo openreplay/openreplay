@@ -2978,5 +2978,6 @@
   "Search {{n}} segments": "Rechercher parmi {{n}} segments",
   "No segments yet": "Aucun segment pour l’instant",
   "No segment matches “{{q}}”": "Aucun segment ne correspond à « {{q}} »",
-  "Segment deleted": "Segment supprimé"
+  "Segment deleted": "Segment supprimé",
+  "Predefined": "Prédéfinies"
 }
