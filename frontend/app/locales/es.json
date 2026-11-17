@@ -2981,5 +2981,6 @@
   "Segment deleted": "Segmento eliminado",
   "Predefined": "Predefinidas",
   "Every filter applies: what shows matches all of them": "Se aplican todos los filtros: lo que se muestra cumple con todos",
-  "Filters combined with and, fixed": "Filtros combinados con «y», fijo"
+  "Filters combined with and, fixed": "Filtros combinados con «y», fijo",
+  "Filter by name, type or method": "Filtrar por nombre, tipo o método"
 }

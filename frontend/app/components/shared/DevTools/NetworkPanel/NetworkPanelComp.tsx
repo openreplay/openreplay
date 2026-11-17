@@ -686,7 +686,7 @@ export const NetworkPanelComp = observer(
             <Keyword
               value={inputFilterValue}
               onChange={onFilterChange}
-              placeholder={t('Filter by name or type')}
+              placeholder={t('Filter by name, type or method')}
             />
             <PanelMenu
               toggles={[
