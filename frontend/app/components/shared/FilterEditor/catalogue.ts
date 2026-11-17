@@ -93,6 +93,9 @@ export const defaultOperator = (t: DataType) =>
   t === 'boolean' ? 'isTrue' : (operatorsFor(t)[0]?.value ?? 'is');
 
 export const CATEGORY_ORDER: readonly string[] = [
+  'log_views',
+  'log',
+  'log_attrs',
   'auto_captured',
   'user_events',
   'features',

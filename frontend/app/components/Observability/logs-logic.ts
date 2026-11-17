@@ -53,6 +53,17 @@ export function lineStamp(ms: number, withDate: boolean): string {
     : t;
 }
 
+export function clockLabel(
+  ms: number,
+  withDate: boolean,
+  withSeconds = false,
+): string {
+  const d = new Date(ms);
+  const hm = `${pad(d.getHours())}:${pad(d.getMinutes())}${withSeconds ? `:${pad(d.getSeconds())}` : ''}`;
+  if (!withDate) return hm;
+  return `${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}, ${hm}`;
+}
+
 export function compactCount(n: number): string {
   if (n < 1000) return String(n);
   if (n < 10_000) return `${(n / 1000).toFixed(1).replace(/\.0$/, '')}K`;
@@ -92,6 +103,61 @@ export function levelOf(log: OtelLog): LogLevel {
       : l === 'unspecified'
         ? 'info'
         : l;
+}
+
+/* ── histogram ──────────────────────────────────────────────────────────── */
+
+export interface Bucket {
+  from: number;
+  to: number;
+  counts: Record<LogLevel, number>;
+  total: number;
+}
+
+const emptyCounts = (): Record<LogLevel, number> => ({
+  error: 0,
+  warn: 0,
+  info: 0,
+  debug: 0,
+});
+
+/** the API's buckets (only the non-empty ones) laid over the whole window */
+export function toBuckets(
+  h: {
+    step: number;
+    buckets: {
+      time: number;
+      total: number;
+      bySeverity: Record<string, number>;
+    }[];
+  } | null,
+  from: number,
+  to: number,
+): { buckets: Bucket[]; step: number } {
+  if (!h || !h.step) return { buckets: [], step: 60_000 };
+  const step = h.step * 1000;
+  const start = Math.floor(from / step) * step;
+  const n = Math.max(1, Math.min(2000, Math.ceil((to - start) / step)));
+  const buckets: Bucket[] = Array.from({ length: n }, (_, i) => ({
+    from: start + i * step,
+    to: start + (i + 1) * step,
+    counts: emptyCounts(),
+    total: 0,
+  }));
+  for (const b of h.buckets) {
+    const at = buckets[Math.floor((b.time - start) / step)];
+    if (!at) continue;
+    for (const [text, c] of Object.entries(b.bySeverity ?? {}))
+      at.counts[levelOfText(text)] += c;
+    at.total += b.total;
+  }
+  return { buckets, step };
+}
+
+export function levelTotals(buckets: readonly Bucket[]) {
+  const out = emptyCounts();
+  for (const b of buckets) for (const l of LEVELS) out[l] += b.counts[l];
+  return out;
 }
 
 /* ── keys ───────────────────────────────────────────────────────────────── */
