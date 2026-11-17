@@ -165,6 +165,12 @@ function measure(
   // a tab that is not shown keeps its footer mounted, with no size
   if (!rows || !rows.row || !foot.offsetHeight) return null;
   const { row } = rows;
+  // the new-rows band comes and goes: counted, it would refetch the page and
+  // drop itself
+  const band = foot.parentElement?.querySelector<HTMLElement>(
+    ':scope > .m-newrows',
+  );
+  rows.top -= band?.offsetHeight ?? 0;
   let top: number;
   let bottom: number;
   if (box) {
