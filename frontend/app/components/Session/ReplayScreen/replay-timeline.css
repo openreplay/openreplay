@@ -220,3 +220,178 @@
 .m-tl__full {
   display: inline-flex;
 }
+
+/* the log line that opened the replay, on the track */
+
+.m-tl__pin {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  translate: -50% -50%;
+  padding: 0;
+  border: 1.5px solid var(--m-content-secondary);
+  border-radius: var(--m-radius-full);
+  background: var(--m-surface-default);
+  color: var(--m-content-secondary);
+  cursor: pointer;
+  animation: m-tl-pin-in var(--m-duration-normal) var(--m-ease-out) 0.6s both;
+}
+.m-tl__pin.is-danger {
+  border-color: var(--m-mark-danger);
+  color: var(--m-content-danger);
+}
+.m-tl__pin.is-warning {
+  border-color: var(--m-mark-warning);
+  color: var(--m-content-warning, var(--m-mark-warning));
+}
+.m-tl__pin {
+  transition:
+    scale var(--m-duration-fast) var(--m-ease-out),
+    background-color var(--m-duration-fast) var(--m-ease-out),
+    box-shadow var(--m-duration-fast) var(--m-ease-out);
+}
+.m-tl__pin:hover,
+.m-tl__pin:focus-visible,
+.m-tl__pin.is-open {
+  scale: 1.22;
+  outline: none;
+}
+.m-tl__pin:not(.is-reached):hover,
+.m-tl__pin:not(.is-reached):focus-visible {
+  background: var(--m-surface-hover);
+}
+.m-tl__pin:hover {
+  box-shadow: 0 1px 6px color-mix(in oklab, black 28%, transparent);
+}
+.m-tl__pin:active {
+  scale: 1.1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .m-tl__pin {
+    transition: background-color var(--m-duration-fast) var(--m-ease-out);
+  }
+}
+.m-tl__pin:focus-visible {
+  box-shadow: 0 0 0 2px var(--m-border-accent);
+}
+@keyframes m-tl-pin-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+.m-tl__pin.is-reached {
+  background: var(--m-content-secondary);
+  color: var(--m-surface-default);
+}
+.m-tl__pin.is-reached.is-danger {
+  background: var(--m-mark-danger);
+  color: #fff;
+}
+.m-tl__pin.is-reached.is-warning {
+  background: var(--m-mark-warning);
+  color: #fff;
+}
+.m-tl__pin.is-open {
+  box-shadow: 0 0 0 3px
+    color-mix(in oklab, var(--m-content-primary) 14%, transparent);
+}
+.m-tl__pin.is-pulsing::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  border: 2px solid currentColor;
+  animation: m-tl-pin-pulse 900ms var(--m-ease-out) both;
+  pointer-events: none;
+}
+.m-tl__pin.is-pulsing.is-reached::after {
+  border-color: var(--m-content-secondary);
+}
+.m-tl__pin.is-pulsing.is-reached.is-danger::after {
+  border-color: var(--m-mark-danger);
+}
+.m-tl__pin.is-pulsing.is-reached.is-warning::after {
+  border-color: var(--m-mark-warning);
+}
+@keyframes m-tl-pin-pulse {
+  from {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(2.2);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .m-tl__pin.is-pulsing::after {
+    animation: none;
+    display: none;
+  }
+}
+
+.m-tl__pincard {
+  width: min(22rem, calc(100vw - 2rem));
+  padding: var(--m-space-4);
+}
+.m-tl__pincard-head {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  min-width: 0;
+  font-size: var(--m-text-xs);
+}
+.m-tl__pincard-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--m-chart-axis);
+}
+.m-tl__pincard-dot.is-danger {
+  background: var(--m-mark-danger);
+}
+.m-tl__pincard-dot.is-warning {
+  background: var(--m-mark-warning);
+}
+.m-tl__pincard-kind {
+  flex: none;
+  font-weight: var(--m-weight-medium);
+  color: var(--m-content-primary);
+}
+.m-tl__pincard-at {
+  flex: none;
+  color: var(--m-content-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.m-tl__pincard-detail {
+  min-width: 0;
+  margin-left: auto;
+  color: var(--m-content-muted);
+}
+.m-tl__pincard-msg {
+  display: -webkit-box;
+  margin: var(--m-space-3) 0 var(--m-space-4);
+  overflow: hidden;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  font-family: var(--m-font-mono);
+  font-size: var(--m-text-xs);
+  line-height: 1.5;
+  color: var(--m-content-primary);
+  overflow-wrap: anywhere;
+}
+.m-tl__pincard-actions {
+  display: flex;
+  gap: var(--m-space-2);
+}
+@media (prefers-reduced-motion: reduce) {
+  .m-tl__pin {
+    animation: none;
+  }
+}
