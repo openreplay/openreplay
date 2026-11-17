@@ -42,10 +42,15 @@ function merge_envs() {
 
 # Secrets added to the template since the old install still hold public
 # change_me_ placeholders after merging; give them random values.
+# JWT signing secrets are 256 chars long (128 bytes, hex-encoded); the rest 20.
 function generate_new_secrets() {
-	local token
+	local token bytes
 	for token in $(grep -o 'change_me_[a-zA-Z0-9_]*' "$new_env_file" | grep -vx 'change_me_domain' | sort -u); do
-		sed -i "s/=${token}$/=$(openssl rand -hex 10)/" "$new_env_file"
+		case "$token" in
+			*jwt*) bytes=128 ;;
+			*) bytes=10 ;;
+		esac
+		sed -i "s/=${token}$/=$(openssl rand -hex "$bytes")/" "$new_env_file"
 	done
 }
 

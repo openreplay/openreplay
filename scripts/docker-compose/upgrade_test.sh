@@ -170,7 +170,7 @@ EOF
 	)
 	local merged="$root/work/common.env"
 	if grep -q 'change_me_' "$merged"; then fail "no change_me_ placeholder left"; else pass "no change_me_ placeholder left"; fi
-	grep -Eq '^COMMON_JWT_MCP_SECRET=[0-9a-f]{20,}$' "$merged" && pass "MCP secret generated" || fail "MCP secret generated"
+	grep -Eq '^COMMON_JWT_MCP_SECRET=[0-9a-f]{128}[0-9a-f]{128}$' "$merged" && pass "MCP secret generated, 256 chars" || fail "MCP secret generated, 256 chars"
 	grep -Fxq 'COMMON_JWT_SECRET=existing-secret' "$merged" && pass "existing secret kept" || fail "existing secret kept"
 	rm -rf "$root"
 }
