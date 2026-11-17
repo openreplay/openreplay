@@ -298,7 +298,7 @@
 .m-logs__ctx { display: flex; flex-direction: column; }
 .m-logs__ctx-row {
   display: grid;
-  grid-template-columns: 6.5rem minmax(0, 1fr);
+  grid-template-columns: max-content minmax(0, 1fr);
   width: calc(100% + 2 * var(--m-space-3));
   box-sizing: border-box;
   align-items: baseline;
@@ -404,7 +404,7 @@
 .m-logs__relbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--m-space-3); }
 .m-logs__relcount { margin-left: auto; font-size: var(--m-text-xs); color: var(--m-content-muted); font-variant-numeric: tabular-nums; }
 .m-logs__relbox { position: relative; max-height: min(28rem, 55vh); overflow-y: auto; overscroll-behavior: contain; padding-inline: var(--m-space-3); margin-inline: calc(-1 * var(--m-space-3)); }
-.m-logs__ctx-row.with-service { grid-template-columns: 6.5rem 7.5rem minmax(0, 1fr); }
+.m-logs__ctx-row.with-service { grid-template-columns: max-content 7.5rem minmax(0, 1fr); }
 .m-logs__relsvc { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--m-text-xs); color: var(--m-content-muted); }
 
 .m-logs__menu-pair { min-width: 0; max-width: 22rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
