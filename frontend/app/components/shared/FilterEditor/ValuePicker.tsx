@@ -5,10 +5,10 @@ import { PopoverPanel } from '@/ui/overlays/popover';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import { ArrowRightToLine, CornerDownLeft } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useValueOptions } from './data';
+import { ValueSourceContext, useValueOptions } from './data';
 import type { SearchFilter } from './types';
 import './value-picker.css';
 
@@ -28,6 +28,7 @@ function ValuePicker({ filter, value, onChange, live }: ValuePickerProps) {
   const freeText = !entry.options;
   const { options, loading } = useValueOptions(filter, query, open, live);
   const shared = options.some((o) => o.share != null);
+  const shareLabel = useContext(ValueSourceContext)?.shareLabel;
   const labelOf = (v: string) =>
     entry.options?.find((o) => o.value === v)?.label ?? v;
 
@@ -130,9 +131,13 @@ function ValuePicker({ filter, value, onChange, live }: ValuePickerProps) {
           >
             {o.share != null ? (
               <Tooltip
-                title={t('{{pct}}% of sessions', {
-                  pct: Math.round(o.share * 100),
-                })}
+                title={
+                  shareLabel
+                    ? shareLabel(Math.round(o.share * 100))
+                    : t('{{pct}}% of sessions', {
+                        pct: Math.round(o.share * 100),
+                      })
+                }
                 delay={300}
               >
                 <span className="m-vp__opt">

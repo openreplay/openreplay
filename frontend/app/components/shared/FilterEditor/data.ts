@@ -20,6 +20,20 @@ export const ValueHintsContext = createContext<
   ((filter: SearchFilter) => readonly string[] | undefined) | undefined
 >(undefined);
 
+/** A list that is not the sessions search answers its own values (Logs from
+    its facets); `share` there is its own, named by `shareLabel`. */
+export interface ValueSource {
+  options: (
+    filter: SearchFilter,
+    query: string,
+    signal: AbortSignal,
+  ) => Promise<ValueOption[]>;
+  shareLabel?: (pct: number) => string;
+}
+export const ValueSourceContext = createContext<ValueSource | undefined>(
+  undefined,
+);
+
 /** The project catalogue as picker entries; call inside an observer. */
 export function useCatalogue(scope?: string[]): CatalogueEntry[] {
   const { filterStore } = useStore();
@@ -83,18 +97,33 @@ export function useValueOptions(
   const { filterStore } = useStore();
   const projectId = useContext(FilterProjectContext);
   const hints = useContext(ValueHintsContext)?.(filter);
+  const source = useContext(ValueSourceContext);
   const { entry } = filter;
   const [found, setFound] = useState<ValueOption[] | null>(null);
+  const [own, setOwn] = useState<ValueOption[] | null>(null);
   const [loading, setLoading] = useState(false);
   const q = query.trim();
 
   useEffect(() => {
-    if (!open || entry.options || entry.isEvent) return;
+    if (!open || entry.options || entry.isEvent || source) return;
     void filterStore.fetchTopValues(entry.id, live, projectId);
   }, [open, entry.id, live, projectId]);
 
   useEffect(() => {
-    if (!open || entry.options || !q) {
+    if (!open || entry.options || !source) return undefined;
+    const ctl = new AbortController();
+    setLoading(true);
+    // typing narrows locally, so only the first open asks
+    source
+      .options(filter, '', ctl.signal)
+      .then((list) => !ctl.signal.aborted && setOwn(list))
+      .catch(() => !ctl.signal.aborted && setOwn([]))
+      .finally(() => !ctl.signal.aborted && setLoading(false));
+    return () => ctl.abort();
+  }, [open, entry.id, source]);
+
+  useEffect(() => {
+    if (!open || entry.options || !q || source) {
       setFound(null);
       return;
     }
@@ -135,6 +164,18 @@ export function useValueOptions(
           o.value.toLowerCase().includes(lower),
       ),
       loading: false,
+    };
+  }
+  if (source) {
+    const lower = q.toLowerCase();
+    return {
+      options: (own ?? []).filter(
+        (o) =>
+          !lower ||
+          o.label.toLowerCase().includes(lower) ||
+          o.value.toLowerCase().includes(lower),
+      ),
+      loading,
     };
   }
   if (hints?.length) {

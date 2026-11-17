@@ -70,3 +70,9 @@
     transition: none;
   }
 }
+
+.m-json__none {
+  font-family: var(--m-font-sans);
+  font-size: var(--m-text-sm);
+  color: var(--m-content-muted);
+}

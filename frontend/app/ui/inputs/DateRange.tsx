@@ -36,10 +36,18 @@ export interface DateRangeProps {
   /** Preset that counts as "at rest" (not highlighted). */
   resting?: string;
   variant?: 'outline' | 'subtle';
+  /** a custom range keeps its time of day: shown, and typed as HH:mm */
+  withTime?: boolean;
 }
 
-const iso = (ms?: number) =>
-  ms ? DateTime.fromMillis(ms).toFormat('yyyy-MM-dd') : '';
+const iso = (ms?: number, withTime?: boolean) =>
+  ms
+    ? DateTime.fromMillis(ms).toFormat(
+        withTime ? 'yyyy-MM-dd HH:mm' : 'yyyy-MM-dd',
+      )
+    : '';
+
+const TYPED = /^\d{4}-\d{2}-\d{2}( \d{1,2}:\d{2})?$/;
 
 // The calendar draws browser-local days, the window is in the app's timezone
 // (luxon defaultZone): map by calendar day, not by instant, or a click lands on
@@ -63,6 +71,7 @@ export function DateRange({
   disableCustom = false,
   resting = 'LAST_24_HOURS',
   variant = 'outline',
+  withTime = false,
 }: DateRangeProps) {
   const { t } = useTranslation();
   const inSheet = useInFilterSheet();
@@ -78,13 +87,16 @@ export function DateRange({
   const from: number | undefined = custom ? period?.start : undefined;
   const to: number | undefined = custom ? period?.end : undefined;
 
-  const [draft, setDraft] = useState({ from: iso(from), to: iso(to) });
+  const [draft, setDraft] = useState({
+    from: iso(from, withTime),
+    to: iso(to, withTime),
+  });
   const [typed, setTyped] = useState<{
     from: boolean | null;
     to: boolean | null;
   }>({ from: null, to: null });
   useEffect(() => {
-    setDraft({ from: iso(from), to: iso(to) });
+    setDraft({ from: iso(from, withTime), to: iso(to, withTime) });
     setTyped({ from: null, to: null });
   }, [from, to]);
 
@@ -99,9 +111,17 @@ export function DateRange({
     );
   };
 
+  const sameDay =
+    from != null &&
+    to != null &&
+    DateTime.fromMillis(from).hasSame(DateTime.fromMillis(to), 'day');
+  const stamp = (ms: number, day = true) =>
+    DateTime.fromMillis(ms).toFormat(
+      withTime ? (day ? 'LLL d, HH:mm' : 'HH:mm') : 'LLL d',
+    );
   const label = custom
     ? from
-      ? `${DateTime.fromMillis(from).toFormat('LLL d')} – ${to ? DateTime.fromMillis(to).toFormat('LLL d') : '…'}`
+      ? `${stamp(from)} – ${to ? stamp(to, !(withTime && sameDay)) : '…'}`
       : t('Custom range')
     : t(options.find((o) => o.value === rangeName)?.label ?? rangeName);
 
@@ -111,11 +131,18 @@ export function DateRange({
       setTyped((s) => ({ ...s, [end]: null }));
       return;
     }
-    const at = /^\d{4}-\d{2}-\d{2}$/.test(text) ? DateTime.fromISO(text) : null;
+    const timed = withTime && text.includes(' ');
+    const at = (withTime ? TYPED : /^\d{4}-\d{2}-\d{2}$/).test(text)
+      ? timed
+        ? DateTime.fromFormat(text, 'yyyy-MM-dd H:mm')
+        : DateTime.fromISO(text)
+      : null;
     const ms = at?.isValid
-      ? end === 'from'
-        ? at.startOf('day').toMillis()
-        : at.endOf('day').toMillis()
+      ? timed
+        ? at.toMillis()
+        : end === 'from'
+          ? at.startOf('day').toMillis()
+          : at.endOf('day').toMillis()
       : null;
     // a bound past the other end would send an inverted range
     const ok =

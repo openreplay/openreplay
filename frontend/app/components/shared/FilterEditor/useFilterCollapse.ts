@@ -6,8 +6,10 @@ const WORTH_COLLAPSING_ON_SCROLL = 2;
 
 const READING_AT = 28;
 
-export function useFilterCollapse(rowCount: number) {
-  const [collapsed, setCollapsed] = useState(false);
+/** `restCollapsed`: the bar rests closed, so a rule added from outside it
+ *  is one more pill on the closed line; the caret still opens it. */
+export function useFilterCollapse(rowCount: number, restCollapsed = false) {
+  const [collapsed, setCollapsed] = useState(restCollapsed);
 
   const overridden = useRef(false);
 
@@ -20,8 +22,8 @@ export function useFilterCollapse(rowCount: number) {
 
   useEffect(() => {
     overridden.current = false;
-    setCollapsed(false);
-  }, [rowCount]);
+    setCollapsed(restCollapsed);
+  }, [rowCount, restCollapsed]);
 
   useEffect(() => {
     const el = anchor.current;

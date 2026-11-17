@@ -1,0 +1,6 @@
+.m-hl {
+  background: color-mix(in oklab, var(--m-mark-search) 34%, transparent);
+  color: inherit;
+  border-radius: 2px;
+  box-decoration-break: clone;
+}
