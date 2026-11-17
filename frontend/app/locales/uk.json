@@ -3024,5 +3024,6 @@
   "Segment deleted": "Сегмент видалено",
   "Predefined": "Попередньо визначені",
   "Every filter applies: what shows matches all of them": "Застосовуються всі фільтри: показане відповідає кожному з них",
-  "Filters combined with and, fixed": "Фільтри поєднуються через «і», не змінюється"
+  "Filters combined with and, fixed": "Фільтри поєднуються через «і», не змінюється",
+  "Filter by name, type or method": "Фільтрувати по імені, типу або методу"
 }

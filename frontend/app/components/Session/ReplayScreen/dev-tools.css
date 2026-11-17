@@ -119,7 +119,13 @@
 }
 
 .m-dt__keyword {
-  width: 13rem;
+  flex: 0 1 auto;
+  width: 17rem;
+  min-width: 10rem;
+  max-width: 100%;
+}
+.m-dt__keyword .m-search {
+  width: 100%;
 }
 
 .m-dt__figures {

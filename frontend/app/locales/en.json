@@ -2906,5 +2906,6 @@
   "Segment deleted": "Segment deleted",
   "Predefined": "Predefined",
   "Every filter applies: what shows matches all of them": "Every filter applies: what shows matches all of them",
-  "Filters combined with and, fixed": "Filters combined with and, fixed"
+  "Filters combined with and, fixed": "Filters combined with and, fixed",
+  "Filter by name, type or method": "Filter by name, type or method"
 }
