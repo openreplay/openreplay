@@ -34,6 +34,14 @@ type Config struct {
 	MobileQuality        string        `env:"MOBILE_QUALITY,default=low"` // (low, standard, high)
 	MobileFps            int           `env:"MOBILE_FPS,default=1"`
 	ProtocolVersion      int           `env:"PROTOCOL_VERSION,default=2"`
+	OTLPCollectorURL     string        `env:"OTLP_COLLECTOR_URL,default=http://localhost:4318"`
+	OTLPBodyLimit        int64         `env:"OTLP_BODY_LIMIT,default=4194304"`
+	OTLPRetentionDays    int           `env:"OTLP_RETENTION_DAYS,default=30"`
+	OTLPRateLimitBytes   int64         `env:"OTLP_RATE_LIMIT_BYTES,default=5242880"`
+	OTLPRateLimitBurst   int64         `env:"OTLP_RATE_LIMIT_BURST,default=20971520"`
+	OTLPAuthFailPerMin   int           `env:"OTLP_AUTH_FAIL_PER_MIN,default=0"`
+	OTLPAuthFailBurst    int           `env:"OTLP_AUTH_FAIL_BURST,default=20"`
+	OTLPAuthFailGlobal   int           `env:"OTLP_AUTH_FAIL_GLOBAL_PER_SEC,default=0"`
 	WorkerID             uint16
 }
 

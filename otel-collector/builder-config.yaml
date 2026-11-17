@@ -1,0 +1,34 @@
+# OpenTelemetry Collector Builder (OCB) manifest: only the components the
+# OpenReplay logs pipeline uses. Component versions follow the upstream
+# otelcol-contrib manifest of the same release:
+#   https://github.com/open-telemetry/opentelemetry-collector-releases/blob/v0.163.1/distributions/otelcol-contrib/manifest.yaml
+
+dist:
+  module: openreplay/otelcol
+  name: otelcol-openreplay
+  description: OpenReplay OpenTelemetry Collector
+  version: 0.163.1
+  output_path: ./_build
+  build_tags: "grpcnotrace"
+
+receivers:
+  - gomod: go.opentelemetry.io/collector/receiver/otlpreceiver v0.163.0
+
+processors:
+  - gomod: go.opentelemetry.io/collector/processor/batchprocessor v0.163.0
+  - gomod: go.opentelemetry.io/collector/processor/memorylimiterprocessor v0.163.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/attributesprocessor v0.163.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor v0.163.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/transformprocessor v0.163.0
+
+exporters:
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/clickhouseexporter v0.163.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/fileexporter v0.163.0
+  - gomod: go.opentelemetry.io/collector/exporter/debugexporter v0.163.0
+
+extensions:
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/healthcheckextension v0.163.0
+
+providers:
+  - gomod: go.opentelemetry.io/collector/confmap/provider/envprovider v1.69.0
+  - gomod: go.opentelemetry.io/collector/confmap/provider/fileprovider v1.69.0
