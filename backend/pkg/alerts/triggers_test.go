@@ -8,6 +8,8 @@ import (
 	"testing"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+
+	"openreplay/backend/pkg/analytics/filters_catalog"
 )
 
 // fakeRows serves fixed rows through the driver.Rows interface.
@@ -90,10 +92,11 @@ func TestPropertyTriggersQuery(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := []Trigger{
+	// catalog rows first, then every predefined event property the catalog did not return
+	want := append([]Trigger{
 		{Name: "Cart total", Value: "properties.cart_total", Source: "events", DataType: "number"},
 		{Name: "seats", Value: "$properties.seats", Source: "users", DataType: "integer"},
-	}
+	}, predefinedPropertyTriggers(nil)...)
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("got %+v want %+v", got, want)
 	}
@@ -105,7 +108,7 @@ func TestPropertyTriggersQuery(t *testing.T) {
 		t.Errorf("projectId param: %+v", ch.args[0])
 	}
 	for _, p := range []string{"FROM product_analytics.all_properties\n", "product_analytics.all_properties_customized", "product_analytics.event_properties", "product_analytics.user_properties",
-		"source IN ('events', 'users')", "HAVING status = 'visible'", "or_property_display_name", "LIMIT 1 BY project_id, source, property_name, auto_captured"} {
+		"source IN ('events', 'users')", "WHERE apc.status = 'visible' OR apc.status = ''", "or_property_display_name", "LIMIT 1 BY project_id, source, property_name, auto_captured"} {
 		if !strings.Contains(ch.query, p) {
 			t.Errorf("query missing %q", p)
 		}
@@ -127,6 +130,69 @@ func TestPropertyTriggersQuery(t *testing.T) {
 	// no ClickHouse wired: no property triggers, no error
 	if got, err := (&alertsImpl{}).propertyTriggers(context.Background(), 1); err != nil || got != nil {
 		t.Errorf("nil ch: %v %v", got, err)
+	}
+}
+
+func TestPredefinedPropertyTriggers(t *testing.T) {
+	all := predefinedPropertyTriggers(nil)
+	if len(all) != len(filters_catalog.PredefinedPropertiesOrder) {
+		t.Fatalf("got %d triggers, want one per predefined property (%d)", len(all), len(filters_catalog.PredefinedPropertiesOrder))
+	}
+	for i, key := range filters_catalog.PredefinedPropertiesOrder {
+		pp := filters_catalog.PredefinedProperties[key]
+		name := filters_catalog.ORPropertyDisplayName(key)
+		if name == "" {
+			name = key
+		}
+		want := Trigger{Name: name, Value: "$properties." + key, Source: "events", DataType: pp.Type}
+		if all[i] != want {
+			t.Errorf("%s: got %+v want %+v", key, all[i], want)
+		}
+		q := QueryToExecute{Left: all[i].Value.(string), Operator: OpGt, Source: all[i].Source}
+		if !q.IsProperty() || q.Validate() != nil {
+			t.Errorf("trigger value %q is not a valid property alert left", all[i].Value)
+		}
+	}
+
+	// keys the catalog returned are not repeated; order of the rest is kept
+	seen := map[string]struct{}{"hesitation_time": {}, "duration": {}}
+	got := predefinedPropertyTriggers(seen)
+	if len(got) != len(all)-2 {
+		t.Fatalf("got %d triggers, want %d", len(got), len(all)-2)
+	}
+	for _, tr := range got {
+		if tr.Value == "$properties.hesitation_time" || tr.Value == "$properties.duration" {
+			t.Errorf("seen property repeated: %+v", tr)
+		}
+	}
+}
+
+func TestPropertyTriggersPredefinedDedup(t *testing.T) {
+	ch := &fakeCH{rows: [][]any{
+		// a predefined property observed by the project, in catalog (snake) and camel spelling
+		{"events", "hesitation_time", true, "Hesitation Time", "visible", "UInt32"},
+		{"events", "speedIndex", true, "Speed Index", "visible", "UInt16"},
+		// a users property sharing a predefined name does not hide the event property
+		{"users", "duration", false, "Duration", "visible", "Int64"},
+	}}
+	got, err := (&alertsImpl{ch: ch}).propertyTriggers(context.Background(), 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	count := map[any]int{}
+	for _, tr := range got {
+		count[tr.Value]++
+	}
+	for _, v := range []string{"$properties.hesitation_time", "$properties.speedIndex", "$properties.duration", "properties.duration"} {
+		if count[v] != 1 {
+			t.Errorf("%s: appears %d times, want 1", v, count[v])
+		}
+	}
+	if count["$properties.speed_index"] != 0 {
+		t.Errorf("speed_index repeated under its catalog spelling: %+v", got)
+	}
+	if len(got) != 3+len(filters_catalog.PredefinedPropertiesOrder)-2 {
+		t.Errorf("got %d triggers", len(got))
 	}
 }
 
