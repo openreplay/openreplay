@@ -23,6 +23,7 @@ import IssuesStore from './issuesStore';
 import LoginStore from './loginStore';
 import MetricStore from './metricStore';
 import NotificationStore from './notificationStore';
+import OtelLogsStore from './otelLogsStore';
 import ProjectsStore from './projectsStore';
 import RecordingsStore from './recordingsStore';
 import RoleStore from './roleStore';
@@ -111,6 +112,7 @@ export class RootStore {
   clipStore: ClipStore;
   analyticsStore: AnalyticsStore;
   issuesStore: IssuesStore;
+  otelLogsStore: OtelLogsStore;
 
   constructor() {
     this.dashboardStore = new DashboardStore();
@@ -143,6 +145,7 @@ export class RootStore {
     this.clipStore = new ClipStore();
     this.analyticsStore = new AnalyticsStore();
     this.issuesStore = new IssuesStore();
+    this.otelLogsStore = new OtelLogsStore();
     // Before any component renders: child effects (the integration callback
     // among them) run ahead of Router's own mount effect.
     this.initClient();

@@ -64,6 +64,8 @@ const newApiUrls = [
   '/webhooks',
   '/assist/credentials',
   '/trails',
+  '/logs/',
+  '/ingest-keys',
 ];
 const except = [
   'integrations/slack/notify',
