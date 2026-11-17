@@ -10,6 +10,7 @@ import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
 import { DisplayShell, SortControl } from '@/ui/filters/DisplayMenu';
 import { DateRange } from '@/ui/inputs/DateRange';
 import { ListFooter } from '@/ui/layout/ListFooter';
+import { NewRowsBand } from '@/ui/layout/NewRowsBand';
 import { PageCard, PagePanel } from '@/ui/layout/PageCard';
 import { setRowsPerPage, useRowsPerPage } from '@/ui/layout/rows-per-page';
 import { Tooltip } from '@/ui/overlays/tooltip';
@@ -340,18 +341,14 @@ function ActivityPage() {
           </>
         }
       >
-        {analyticsStore.newEvents > 0 && (
-          <button
-            type="button"
-            className="m-dmg__latest"
-            onClick={() => void analyticsStore.fetchEvents()}
-          >
-            {t('Show {{n}} new events', {
-              n: numberWithCommas(analyticsStore.newEvents),
-              count: analyticsStore.newEvents,
-            })}
-          </button>
-        )}
+        <NewRowsBand
+          count={analyticsStore.newEvents}
+          label={t('Show {{n}} new events', {
+            n: numberWithCommas(analyticsStore.newEvents),
+            count: analyticsStore.newEvents,
+          })}
+          onShow={() => void analyticsStore.fetchEvents()}
+        />
         {loading && list.length === 0 ? (
           <SkeletonRows rows={6} columns={[26, 16, 24, 17, 17]} />
         ) : total === 0 ? (

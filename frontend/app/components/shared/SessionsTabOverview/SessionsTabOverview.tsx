@@ -16,6 +16,7 @@ import { SavedSearchMenu } from '@/ui/filters/SavedSearchMenu';
 import { SegmentIndicator } from '@/ui/filters/SegmentIndicator';
 import { DateRange } from '@/ui/inputs/DateRange';
 import { ListFooter } from '@/ui/layout/ListFooter';
+import { NewRowsBand } from '@/ui/layout/NewRowsBand';
 import { PageCard, PagePanel } from '@/ui/layout/PageCard';
 import {
   getRowsChoice,
@@ -59,6 +60,7 @@ import { useStore } from 'App/mstore';
 import FilterItem from 'App/mstore/types/filterItem';
 import { CLIENT_TABS, client } from 'App/routes';
 import { useLocation, useNavigate } from 'App/routing';
+import { numberWithCommas } from 'App/utils';
 import { presetReaching, windowPhrase } from 'App/utils/windowPhrase';
 
 import {
@@ -754,20 +756,17 @@ function SessionsTabOverview() {
           )
         }
       >
-        {searchStore.latestSessionCount > 0 && (
-          <button
-            type="button"
-            className="m-recs__latest"
-            onClick={() => {
-              searchStore.updateLatestSessionCount(0);
-              void searchStore.updateCurrentPage(1, true);
-            }}
-          >
-            {t('Show {{count}} new sessions', {
-              count: searchStore.latestSessionCount,
-            })}
-          </button>
-        )}
+        <NewRowsBand
+          count={searchStore.latestSessionCount}
+          label={t('Show {{n}} new sessions', {
+            n: numberWithCommas(searchStore.latestSessionCount),
+            count: searchStore.latestSessionCount,
+          })}
+          onShow={() => {
+            searchStore.updateLatestSessionCount(0);
+            void searchStore.updateCurrentPage(1, true);
+          }}
+        />
         {loading && list.length === 0 ? (
           <SkeletonRows rows={8} />
         ) : list.length === 0 ? (
