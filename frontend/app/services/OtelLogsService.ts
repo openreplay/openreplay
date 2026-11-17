@@ -48,8 +48,10 @@ export interface OtelLogsSearchRequest extends OtelLogsFilter {
 }
 
 export interface OtelLog {
-  /** unix nanoseconds; exceeds Number.MAX_SAFE_INTEGER, so precise to ~µs only */
-  timestamp: number;
+  /** stable per line */
+  id: string;
+  /** unix nanoseconds as a decimal string (beyond Number precision) */
+  timestamp: string;
   severityText: string;
   /** OTel SeverityNumber 0..24, see otelSeverityLevel */
   severityNumber: number;
@@ -126,7 +128,8 @@ export function otelSeverityLevel(severityNumber: number): OtelSeverityLevel {
   return SEVERITY_LEVELS[Math.min(Math.floor((severityNumber - 1) / 4), 5)];
 }
 
-export const otelLogTimeMs = (log: OtelLog) => Math.floor(log.timestamp / 1e6);
+export const otelLogTimeMs = (log: Pick<OtelLog, 'timestamp'>) =>
+  Number(log.timestamp.slice(0, -6) || 0);
 
 export default class OtelLogsService extends BaseService {
   search = async (

@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 
 import OtelLogsStore from '../../app/mstore/otelLogsStore';
-import { otelSeverityLevel } from '../../app/services/OtelLogsService';
+import {
+  otelLogTimeMs,
+  otelSeverityLevel,
+} from '../../app/services/OtelLogsService';
 
 const mockSearch = jest.fn<any>();
 const mockHistogram = jest.fn<any>();
@@ -19,7 +22,12 @@ jest.mock('../../app/services', () => ({
   },
 }));
 
-const log = (body: string) => ({ body, timestamp: 1, severityNumber: 9 });
+const log = (body: string) => ({
+  id: body,
+  body,
+  timestamp: '1700000000123456789',
+  severityNumber: 9,
+});
 
 function deferred<T>() {
   let resolve!: (v: T) => void;
@@ -124,5 +132,14 @@ describe('otelSeverityLevel', () => {
     [24, 'fatal'],
   ])('%i -> %s', (n, level) => {
     expect(otelSeverityLevel(n)).toBe(level);
+  });
+});
+
+describe('otelLogTimeMs', () => {
+  test('cuts nanoseconds to ms without float loss', () => {
+    expect(otelLogTimeMs({ timestamp: '1700000000123456789' })).toBe(
+      1700000000123,
+    );
+    expect(otelLogTimeMs({ timestamp: '999' })).toBe(0);
   });
 });
