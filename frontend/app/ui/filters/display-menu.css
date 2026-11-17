@@ -112,3 +112,32 @@
   min-height: var(--m-control-height-sm);
   padding-inline: var(--m-space-5);
 }
+
+.m-dm__pill--add {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-1);
+  border-style: dashed;
+  background: none;
+  color: var(--m-content-muted);
+}
+.m-dm__more {
+  width: 18rem;
+  padding: 0;
+  overflow: hidden;
+}
+.m-dm__more-list {
+  max-height: 18rem;
+  overflow-y: auto;
+  padding: var(--m-space-2);
+}
+.m-dm__more-group {
+  padding: var(--m-space-3) var(--m-space-3) var(--m-space-1);
+  font-size: var(--m-text-xs);
+  color: var(--m-content-muted);
+}
+.m-dm__more-none {
+  padding: var(--m-space-4) var(--m-space-3);
+  font-size: var(--m-text-sm);
+  color: var(--m-content-muted);
+}

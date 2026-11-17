@@ -1,5 +1,6 @@
 import { IconButton } from '@/ui/actions/IconButton';
 import { Button } from '@/ui/actions/button';
+import { CheckRow } from '@/ui/inputs/CheckRow';
 import {
   Select,
   SelectContent,
@@ -8,10 +9,12 @@ import {
   SelectValue,
 } from '@/ui/inputs/select';
 import { useViewport } from '@/ui/layout/use-viewport';
+import { PopoverSearch } from '@/ui/overlays/PopoverSearch';
 import { PopoverPanel } from '@/ui/overlays/popover';
 import {
   ArrowDownWideNarrow,
   ArrowUpNarrowWide,
+  Plus,
   SlidersHorizontal,
 } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
@@ -58,11 +61,93 @@ export interface DisplayRow {
   control: ReactNode;
 }
 
+export interface MoreField {
+  value: string;
+  label: string;
+  hint?: string;
+  group?: string;
+}
+
+function MoreFields({
+  choices,
+  isOn,
+  onToggle,
+}: {
+  choices: MoreField[];
+  isOn: (value: string) => boolean;
+  onToggle: (value: string) => void;
+}) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const q = query.trim().toLowerCase();
+  const shown = choices.filter(
+    (c) =>
+      !q ||
+      c.label.toLowerCase().includes(q) ||
+      c.value.toLowerCase().includes(q) ||
+      c.hint?.toLowerCase().includes(q),
+  );
+  const groups = [...new Set(shown.map((c) => c.group ?? ''))];
+  return (
+    <PopoverPanel
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o);
+        if (!o) setQuery('');
+      }}
+      placement="bottomLeft"
+      className="m-dm__more"
+      content={
+        <div>
+          <PopoverSearch
+            placeholder={t('Search columns')}
+            value={query}
+            onChange={setQuery}
+          />
+          <div className="m-dm__more-list">
+            {groups.map((g) => (
+              <div key={g} role="group" aria-label={g || undefined}>
+                {g && <p className="m-dm__more-group">{g}</p>}
+                {shown
+                  .filter((c) => (c.group ?? '') === g)
+                  .map((c) => (
+                    <CheckRow
+                      key={c.value}
+                      on={isOn(c.value)}
+                      onToggle={() => onToggle(c.value)}
+                      meta={c.hint}
+                    >
+                      {c.label}
+                    </CheckRow>
+                  ))}
+              </div>
+            ))}
+            {shown.length === 0 && (
+              <p className="m-dm__more-none">
+                {t('No column matches “{{q}}”', { q: query.trim() })}
+              </p>
+            )}
+          </div>
+        </div>
+      }
+    >
+      <button type="button" className="m-dm__pill m-dm__pill--add">
+        <Plus size={12} aria-hidden="true" />
+        {t('Add column')}
+      </button>
+    </PopoverPanel>
+  );
+}
+
 export interface DisplayShellProps {
   rows: DisplayRow[];
 
   fields?: { value: string; label: string; on: boolean }[];
   onToggleField?: (value: string) => void;
+  fieldsHeading?: string;
+  /** columns beyond the pills, behind a searchable "Add column" */
+  moreFields?: MoreField[];
 
   changeCount: number;
   onReset: () => void;
@@ -76,6 +161,8 @@ export function DisplayShell({
   rows,
   fields,
   onToggleField,
+  fieldsHeading,
+  moreFields,
   changeCount: pageChanges,
   onReset,
   label,
@@ -87,7 +174,10 @@ export function DisplayShell({
   const phone = useViewport() === 'phone';
   const folded = phone && strip != null && !inSheet;
   // a phone list shows no columns, so there are none to hide
-  const hideable = !phone && fields != null && fields.length > 0;
+  const hideable =
+    !phone &&
+    ((fields != null && fields.length > 0) ||
+      (moreFields != null && moreFields.length > 0));
   const stripOn = strip != null && stripActive(strip);
   const changeCount = pageChanges + (folded && stripOn ? 1 : 0);
 
@@ -112,9 +202,11 @@ export function DisplayShell({
 
       {hideable && (
         <div className="m-dm__section">
-          <p className="m-dm__heading">{t('Visible columns')}</p>
+          <p className="m-dm__heading">
+            {fieldsHeading ?? t('Visible columns')}
+          </p>
           <div className="m-dm__pills">
-            {fields.map((f) => (
+            {fields?.map((f) => (
               <button
                 key={f.value}
                 type="button"
@@ -125,6 +217,13 @@ export function DisplayShell({
                 {f.label}
               </button>
             ))}
+            {moreFields && moreFields.length > 0 && (
+              <MoreFields
+                choices={moreFields}
+                isOn={(v) => !!fields?.some((f) => f.value === v && f.on)}
+                onToggle={(v) => onToggleField?.(v)}
+              />
+            )}
           </div>
         </div>
       )}
