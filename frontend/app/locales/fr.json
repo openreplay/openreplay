@@ -2979,5 +2979,7 @@
   "No segments yet": "Aucun segment pour l’instant",
   "No segment matches “{{q}}”": "Aucun segment ne correspond à « {{q}} »",
   "Segment deleted": "Segment supprimé",
-  "Predefined": "Prédéfinies"
+  "Predefined": "Prédéfinies",
+  "Every filter applies: what shows matches all of them": "Tous les filtres s’appliquent : ce qui s’affiche les respecte tous",
+  "Filters combined with and, fixed": "Filtres combinés avec « et », fixe"
 }

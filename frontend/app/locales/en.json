@@ -2920,5 +2920,7 @@
   "No segments yet": "No segments yet",
   "No segment matches “{{q}}”": "No segment matches “{{q}}”",
   "Segment deleted": "Segment deleted",
-  "Predefined": "Predefined"
+  "Predefined": "Predefined",
+  "Every filter applies: what shows matches all of them": "Every filter applies: what shows matches all of them",
+  "Filters combined with and, fixed": "Filters combined with and, fixed"
 }

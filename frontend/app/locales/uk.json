@@ -3038,5 +3038,7 @@
   "No segments yet": "Сегментів поки немає",
   "No segment matches “{{q}}”": "Немає сегментів за запитом «{{q}}»",
   "Segment deleted": "Сегмент видалено",
-  "Predefined": "Попередньо визначені"
+  "Predefined": "Попередньо визначені",
+  "Every filter applies: what shows matches all of them": "Застосовуються всі фільтри: показане відповідає кожному з них",
+  "Filters combined with and, fixed": "Фільтри поєднуються через «і», не змінюється"
 }

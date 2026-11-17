@@ -2861,5 +2861,7 @@
   "No segments yet": "还没有分群",
   "No segment matches “{{q}}”": "没有与“{{q}}”匹配的分群",
   "Segment deleted": "分群已删除",
-  "Predefined": "预定义"
+  "Predefined": "预定义",
+  "Every filter applies: what shows matches all of them": "所有筛选条件同时生效：显示的内容满足全部条件",
+  "Filters combined with and, fixed": "筛选条件以“且”组合，固定"
 }
