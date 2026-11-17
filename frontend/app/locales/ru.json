@@ -3021,5 +3021,6 @@
   "Search {{n}} segments": "Поиск по {{n}} сегментам",
   "No segments yet": "Сегментов пока нет",
   "No segment matches “{{q}}”": "Нет сегментов по запросу «{{q}}»",
-  "Segment deleted": "Сегмент удалён"
+  "Segment deleted": "Сегмент удалён",
+  "Predefined": "Предустановленные"
 }

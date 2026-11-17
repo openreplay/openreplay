@@ -117,11 +117,11 @@
   --m-pill-on-border: #bfd0ff;
   --m-pill-on-fg: #232ea0;
   --m-radius-check: 2px;
-  --m-radius-chip: 2px;
-  --m-radius-control: 4px;
+  --m-radius-chip: 3px;
+  --m-radius-control: 6px;
   --m-radius-full: 999px;
   --m-radius-surface: 8px;
-  --m-radius-track: calc(4px + 2px);
+  --m-radius-track: calc(6px + 2px);
   --m-row-height: 2.375rem;
   --m-scrim: rgb(13 25 28 / 0.45);
   --m-shadow-color: 13 25 28;

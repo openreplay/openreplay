@@ -13,7 +13,7 @@ import {
   User,
   Zap,
 } from 'lucide-react';
-import { type ReactNode, useMemo, useState } from 'react';
+import { Fragment, type ReactNode, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { TriggerGroup, TriggerOption } from 'App/mstore/alertsStore';
@@ -21,11 +21,37 @@ import 'Components/shared/FilterEditor/filter-picker.css';
 
 import '../../product-analytics.css';
 
-const GROUPS: { key: TriggerGroup; label: string }[] = [
-  { key: 'cards', label: 'Cards' },
-  { key: 'predefined', label: 'Predefined' },
-  { key: 'events', label: 'Event properties' },
-  { key: 'users', label: 'User properties' },
+type Section = 'predefined' | 'properties';
+const SECTIONS: Record<Section, string> = {
+  predefined: 'Predefined',
+  properties: 'Properties',
+};
+// `rail` sits under its section's head; `label` names the group on its own
+const GROUPS: {
+  key: TriggerGroup;
+  label: string;
+  rail: string;
+  section: Section;
+}[] = [
+  { key: 'cards', label: 'Cards', rail: 'Cards', section: 'predefined' },
+  {
+    key: 'predefined',
+    label: 'Performance',
+    rail: 'Performance',
+    section: 'predefined',
+  },
+  {
+    key: 'events',
+    label: 'Event properties',
+    rail: 'Event',
+    section: 'properties',
+  },
+  {
+    key: 'users',
+    label: 'User properties',
+    rail: 'User',
+    section: 'properties',
+  },
 ];
 const CATEGORY_ICON: Record<TriggerGroup, ReactNode> = {
   cards: <LayoutGrid size={13} />,
@@ -101,36 +127,50 @@ export function MetricPicker({
               role="tablist"
               aria-label={t('Metric groups')}
             >
-              {([ALL, ...GROUPS.map((g) => g.key)] as Cat[]).map((k) => {
-                const n = k === ALL ? 0 : countOf(k);
-                const on = group === k && !q;
-                return (
-                  <button
-                    key={k}
-                    type="button"
-                    role="tab"
-                    aria-selected={on}
-                    className={`m-pick2__cat${on ? ' is-on' : ''}${k !== ALL && n === 0 ? ' is-empty' : ''}`}
-                    onClick={() => {
-                      setGroup(k);
-                      setQuery('');
-                    }}
-                  >
-                    <span className="m-pick2__glyph" aria-hidden="true">
-                      {k === ALL ? <List size={13} /> : CATEGORY_ICON[k]}
-                    </span>
-                    <span className="m-truncate">
-                      {k === ALL ? t('All') : labelOf(k)}
-                    </span>
-                    {k !== ALL && <span className="m-pick2__n">{n}</span>}
-                    <ChevronRight
-                      size={12}
-                      className="m-pick2__chev"
-                      aria-hidden="true"
-                    />
-                  </button>
-                );
-              })}
+              {([ALL, ...GROUPS.map((g) => g.key)] as Cat[]).map(
+                (k, i, all) => {
+                  const n = k === ALL ? 0 : countOf(k);
+                  const on = group === k && !q;
+                  const def = GROUPS.find((g) => g.key === k);
+                  const prev = GROUPS.find((g) => g.key === all[i - 1]);
+                  const head =
+                    def && def.section !== prev?.section
+                      ? SECTIONS[def.section]
+                      : null;
+                  return (
+                    <Fragment key={k}>
+                      {head && (
+                        <span className="m-pick2__rail-head" aria-hidden="true">
+                          {t(head)}
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={on}
+                        className={`m-pick2__cat${on ? ' is-on' : ''}${k !== ALL && n === 0 ? ' is-empty' : ''}`}
+                        onClick={() => {
+                          setGroup(k);
+                          setQuery('');
+                        }}
+                      >
+                        <span className="m-pick2__glyph" aria-hidden="true">
+                          {k === ALL ? <List size={13} /> : CATEGORY_ICON[k]}
+                        </span>
+                        <span className="m-truncate">
+                          {k === ALL ? t('All') : t(def!.rail)}
+                        </span>
+                        {k !== ALL && <span className="m-pick2__n">{n}</span>}
+                        <ChevronRight
+                          size={12}
+                          className="m-pick2__chev"
+                          aria-hidden="true"
+                        />
+                      </button>
+                    </Fragment>
+                  );
+                },
+              )}
             </div>
             <div
               className="m-pick2__list"

@@ -2903,5 +2903,6 @@
   "Search {{n}} segments": "Search {{n}} segments",
   "No segments yet": "No segments yet",
   "No segment matches “{{q}}”": "No segment matches “{{q}}”",
-  "Segment deleted": "Segment deleted"
+  "Segment deleted": "Segment deleted",
+  "Predefined": "Predefined"
 }
