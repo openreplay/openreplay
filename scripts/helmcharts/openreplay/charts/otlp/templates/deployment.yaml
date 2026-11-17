@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "otlp.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "otlp.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "otlp.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "otlp.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "otlp.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      shareProcessNamespace: true
+      {{- include "openreplay.pod.hostAliases" . | nindent 6 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          {{- if .Values.global.enterpriseEditionLicense }}
+          image: "{{ tpl .Values.image.registry . }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}-ee"
+          {{- else }}
+          image: "{{ tpl .Values.image.registry . }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          {{- end }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if .Values.healthCheck}}
+          {{- .Values.healthCheck | toYaml | nindent 10}}
+          {{- end}}
+          env:
+            {{- include "openreplay.env" (dict "ctx" .) | nindent 12}}
+            {{- include "openreplay.secretEnv" (dict "ctx" .) | nindent 12}}
+            - name: pg_password
+              valueFrom:
+                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "postgresql-password" "ctx" .) | nindent 18 }}
+            - name: POSTGRES_STRING
+              value: {{ include "openreplay.pg_connection_string" .}}
+            {{- include "openreplay.env.redis_string" .Values.global.redis | nindent 12 }}
+          ports:
+            {{- range $key, $val := .Values.service.ports }}
+            - name: {{ $key }}
+              containerPort: {{ $val }}
+              protocol: TCP
+            {{- end }}
+          volumeMounts:
+          {{- include "openreplay.volume.redis_ca_certificate.mount" .Values.global.redis | nindent 12 }}
+          {{- with .Values.persistence.mounts  }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+      {{- include "openreplay.volume.redis_ca_certificate" .Values.global.redis | nindent 8 }}
+      {{- with .Values.persistence.volumes  }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
