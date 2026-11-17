@@ -23,6 +23,7 @@ import {
   Plug,
   ScreenShare,
   Settings2,
+  Telescope,
   UserRound,
   Users,
   Video,
@@ -45,6 +46,7 @@ import {
   agentIssuesEnabled,
   agentTestsEnabled,
   hasHealth,
+  otelLogsEnabled,
 } from 'App/utils/split-utils';
 import HealthStatus from 'Components/Header/HealthStatus';
 import SaasHeaderMenuItems from 'Components/Header/SaasHeaderMenuItems/SaasHeaderMenuItems';
@@ -74,6 +76,7 @@ const ICONS: Record<NavIconName, ComponentType<{ size?: number }>> = {
   spot: Video,
   analytics: ChartColumn,
   dataManagement: Database,
+  observability: Telescope,
   exit: ArrowLeft,
   [PREFERENCES_MENU.ACCOUNT]: UserRound,
   [PREFERENCES_MENU.SESSION_SETTINGS]: ListVideo,
@@ -87,6 +90,7 @@ const ICONS: Record<NavIconName, ComponentType<{ size?: number }>> = {
   [PREFERENCES_MENU.EXPORTED_VIDEOS]: Film,
   [PREFERENCES_MENU.TEST_AGENTS]: Bot,
   [PREFERENCES_MENU.AGENTS]: Bot,
+  [PREFERENCES_MENU.OPENTELEMETRY]: Telescope,
 };
 
 interface SideNavProps {
@@ -116,6 +120,7 @@ function SideNav({
   const issues = agentIssuesEnabled();
   const tests = agentTestsEnabled();
   const audits = agentAuditsEnabled();
+  const logs = otelLogsEnabled();
   const phone = useViewport() === 'phone';
 
   const groups = useMemo(() => {
@@ -128,6 +133,7 @@ function SideNav({
       issues,
       tests,
       audits,
+      logs,
     };
     return navTree(t, flags);
   }, [
@@ -137,6 +143,7 @@ function SideNav({
     issues,
     tests,
     audits,
+    logs,
     phone,
     i18n.language,
   ]);

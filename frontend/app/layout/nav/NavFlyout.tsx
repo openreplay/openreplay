@@ -140,6 +140,7 @@ function SectionFlyout({
                 label={s.label}
                 count={s.count}
                 badge={s.badge}
+                disabled={s.disabled}
                 active={
                   active === s.key || (active?.startsWith(`${s.key}/`) ?? false)
                 }

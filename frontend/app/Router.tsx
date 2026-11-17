@@ -216,7 +216,9 @@ const Router: React.FC = () => {
   // dashboard) needs the width: the menu folds while either is open
   const needsRoom =
     pathname.startsWith('/client/') ||
-    /\/metrics\/[^/]+|\/dashboard\/[^/]+\/metric\//.test(pathname);
+    /\/metrics\/[^/]+|\/dashboard\/[^/]+\/metric\/|^\/\d+\/logs(\/|$)/.test(
+      pathname,
+    );
   const bare =
     pathname.includes('/mcp/authorize') || pathname.includes('/onboarding/');
   if (isIframe) {

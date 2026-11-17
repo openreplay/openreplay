@@ -7,6 +7,7 @@ import {
   agentTestsEnabled,
   anyAgentEnabled,
   menuHidden,
+  otelLogsEnabled,
 } from 'App/utils/split-utils';
 
 export interface MenuItem {
@@ -43,6 +44,7 @@ export const enum PREFERENCES_MENU {
   EXPORTED_VIDEOS = 'exported-videos',
   TEST_AGENTS = 'test-agents',
   AGENTS = 'agents',
+  OPENTELEMETRY = 'opentelemetry',
 }
 
 export const enum MENU {
@@ -72,6 +74,8 @@ export const enum MENU {
   SEGMENTS = 'data-segments',
   TAGS = 'data-tags',
   ISSUES = 'issues',
+  LOGS = 'logs',
+  TRACES = 'traces',
 }
 
 export const categories: (t: TFunction) => Category[] = (t) => [
@@ -253,6 +257,12 @@ export const preferences: (t: TFunction) => Category[] = (t) => [
         key: PREFERENCES_MENU.EXPORTED_VIDEOS,
         icon: 'ic-network',
         hidden: menuHidden.videoExport,
+      },
+      {
+        label: t('OpenTelemetry'),
+        key: PREFERENCES_MENU.OPENTELEMETRY,
+        icon: 'plug',
+        hidden: !otelLogsEnabled(),
       },
       {
         // shared preferences for the agents: journey tags, critical rules,

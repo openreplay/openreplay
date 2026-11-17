@@ -156,6 +156,7 @@ export const spot = (id = ':spotId', hash?: string | number): string =>
   hashed(`/view-spot/${id}`, hash);
 
 export const mcpAuthorize = (): string => '/mcp/authorize';
+export const logs = (): string => '/logs';
 export const dataManagement = {
   activity: () => '/data-management/activity',
   userPage: (id = ':userId', hash?: string | number) =>
@@ -173,6 +174,7 @@ export const dataManagement = {
 
 const REQUIRED_SITE_ID_ROUTES = [
   ...routeIdRequired,
+  logs(),
   liveSession(''),
   session(''),
   sessions(),
@@ -261,6 +263,7 @@ const SITE_CHANGE_AVAILABLE_ROUTES = [
   alerts(),
   errors(),
   onboarding(''),
+  logs(),
 ];
 
 export const siteChangeAvailable = (path: string): boolean =>

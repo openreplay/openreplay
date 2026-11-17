@@ -14,6 +14,7 @@ import {
   useLocation,
 } from 'App/routing';
 import { CLIENT_TABS } from 'App/utils/routeUtils';
+import { otelLogsEnabled } from 'App/utils/split-utils';
 import OnboardingGate from 'Components/Onboarding/OnboardingGate';
 
 import { apiClient } from './api_client';
@@ -51,6 +52,7 @@ const components: any = {
   ),
   TagsPage: lazy(() => import('Components/DataManagement/Tags/index')),
   McpAuthorize: lazy(() => import('Components/McpAuthorize/McpAuthorize')),
+  LogsPure: lazy(() => import('Components/Observability/LogsPage')),
 };
 
 const enhancedComponents: any = {
@@ -73,6 +75,7 @@ const enhancedComponents: any = {
   SegmentsPage: withSiteIdUpdater(components.SegmentsPage),
   SegmentPage: withSiteIdUpdater(components.SegmentPage),
   TagsPage: withSiteIdUpdater(components.TagsPage),
+  Logs: withSiteIdUpdater(components.LogsPure),
 };
 
 const { withSiteId } = routes;
@@ -408,6 +411,12 @@ function PrivateRoutes() {
           path={withSiteId(routes.dataManagement.activity(), siteIdList)}
           element={<enhancedComponents.Activity />}
         />
+        {otelLogsEnabled() && (
+          <Route
+            path={withSiteId(routes.logs(), siteIdList)}
+            element={<enhancedComponents.Logs />}
+          />
+        )}
         <Route
           path={withSiteId(routes.dataManagement.userPage(), siteIdList)}
           element={<enhancedComponents.UserPage />}
