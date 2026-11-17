@@ -10,11 +10,9 @@ import (
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/db/redis"
 	"openreplay/backend/pkg/flakeid"
-	"openreplay/backend/pkg/ingest_keys"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/metrics/database"
 	"openreplay/backend/pkg/metrics/web"
-	otlpAPI "openreplay/backend/pkg/otlp/api"
 	"openreplay/backend/pkg/projects"
 	"openreplay/backend/pkg/queue/types"
 	sdkAPI "openreplay/backend/pkg/sdk/api"
@@ -33,11 +31,10 @@ type serviceBuilder struct {
 	conditionsAPI api.Handlers
 	tagsAPI       api.Handlers
 	sdkAPI        api.Handlers
-	otlpAPI       api.Handlers
 }
 
 func (b *serviceBuilder) Handlers() []api.Handlers {
-	return []api.Handlers{b.webAPI, b.mobileAPI, b.conditionsAPI, b.tagsAPI, b.sdkAPI, b.otlpAPI}
+	return []api.Handlers{b.webAPI, b.mobileAPI, b.conditionsAPI, b.tagsAPI, b.sdkAPI}
 }
 
 func New(log logger.Logger, cfg *http.Config, webMetrics web.Web, dbMetrics database.Database, producer types.Producer, pgconn pool.Pool, redis *redis.Client) (api.ServiceBuilder, error) {
@@ -71,9 +68,6 @@ func New(log logger.Logger, cfg *http.Config, webMetrics web.Web, dbMetrics data
 		return nil, err
 	}
 	if builder.sdkAPI, err = sdkAPI.NewHandlers(cfg, log, responser, producer, projs, sessions, geoModule, tokenizer, flaker); err != nil {
-		return nil, err
-	}
-	if builder.otlpAPI, err = otlpAPI.NewHandlers(cfg, log, responser, projs, ingest_keys.New(log, pgconn, redis)); err != nil {
 		return nil, err
 	}
 	return builder, nil

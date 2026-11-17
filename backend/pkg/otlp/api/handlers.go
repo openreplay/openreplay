@@ -14,7 +14,7 @@ import (
 
 	"github.com/tomasen/realip"
 
-	httpCfg "openreplay/backend/internal/config/http"
+	otlpCfg "openreplay/backend/internal/config/otlp"
 	"openreplay/backend/pkg/ingest_keys"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/projects"
@@ -42,26 +42,26 @@ type handlersImpl struct {
 	proxy         *httputil.ReverseProxy
 }
 
-func NewHandlers(cfg *httpCfg.Config, log logger.Logger, responser api.Responser, projs projects.Projects, keys ingest_keys.Keys) (api.Handlers, error) {
-	target, err := url.Parse(cfg.OTLPCollectorURL)
+func NewHandlers(cfg *otlpCfg.Config, log logger.Logger, responser api.Responser, projs projects.Projects, keys ingest_keys.Keys) (api.Handlers, error) {
+	target, err := url.Parse(cfg.CollectorURL)
 	if err != nil {
-		return nil, fmt.Errorf("invalid OTLP collector url %q: %w", cfg.OTLPCollectorURL, err)
+		return nil, fmt.Errorf("invalid OTLP collector url %q: %w", cfg.CollectorURL, err)
 	}
 	if target.Scheme == "" || target.Host == "" {
-		return nil, fmt.Errorf("invalid OTLP collector url %q: scheme and host are required", cfg.OTLPCollectorURL)
+		return nil, fmt.Errorf("invalid OTLP collector url %q: scheme and host are required", cfg.CollectorURL)
 	}
-	if cfg.OTLPRateLimitBytes > 0 && cfg.OTLPRateLimitBurst < cfg.OTLPBodyLimit {
-		return nil, fmt.Errorf("OTLP_RATE_LIMIT_BURST (%d) must be at least OTLP_BODY_LIMIT (%d)", cfg.OTLPRateLimitBurst, cfg.OTLPBodyLimit)
+	if cfg.RateLimitBytes > 0 && cfg.RateLimitBurst < cfg.BodyLimit {
+		return nil, fmt.Errorf("OTLP_RATE_LIMIT_BURST (%d) must be at least OTLP_BODY_LIMIT (%d)", cfg.RateLimitBurst, cfg.BodyLimit)
 	}
 	h := &handlersImpl{
 		log:           log,
 		responser:     responser,
 		projects:      projs,
 		keys:          keys,
-		bodyLimit:     cfg.OTLPBodyLimit,
-		retentionDays: strconv.Itoa(cfg.OTLPRetentionDays),
-		limiter:       newProjectLimiter(cfg.OTLPRateLimitBytes, cfg.OTLPRateLimitBurst),
-		failures:      newFailureLimiter(cfg.OTLPAuthFailPerMin, cfg.OTLPAuthFailBurst, cfg.OTLPAuthFailGlobal),
+		bodyLimit:     cfg.BodyLimit,
+		retentionDays: strconv.Itoa(cfg.RetentionDays),
+		limiter:       newProjectLimiter(cfg.RateLimitBytes, cfg.RateLimitBurst),
+		failures:      newFailureLimiter(cfg.AuthFailPerMin, cfg.AuthFailBurst, cfg.AuthFailGlobal),
 	}
 	if h.failures != nil {
 		go h.failures.runCleanup()

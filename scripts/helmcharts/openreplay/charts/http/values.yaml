@@ -102,7 +102,6 @@ autoscaling:
 env:
   CACHE_ASSETS: true
   BUCKET_NAME: 'uxtesting-records'
-  OTLP_COLLECTOR_URL: 'http://otel-collector-openreplay:4318'
 
 
 nodeSelector: {}
