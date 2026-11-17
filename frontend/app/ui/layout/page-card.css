@@ -336,6 +336,24 @@
   gap: var(--m-space-5);
   padding: 0 var(--m-space-7) var(--m-page-head-pb);
 }
+/* compact, a page with a way back is one row: back, title, verbs */
+.m-page--compact .m-page__head:has(> .m-page__back) {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: 'back lead actions';
+  column-gap: var(--m-space-3);
+  row-gap: 0;
+  padding-top: 0;
+}
+.m-page--compact .m-page__head:has(> .m-page__back) > .m-page__lead,
+.m-page--compact .m-page__head:has(> .m-page__back) .m-page__titlerow {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.m-page--compact .m-page__head:has(> .m-page__back) .m-page__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .m-shell__main:has(> .m-page--compact) {
   padding-top: 0.75rem;
 }
