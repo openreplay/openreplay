@@ -89,9 +89,13 @@ export default class OtelLogsStore {
   refreshEvery: number | null = null;
   paused = false;
   openId: string | null = null;
+  /** an open line from outside the list (a related line, a link) */
+  openExtra: OtelLog | null = null;
   /** the last rules came from outside the bar (rail, legend, drawer) */
   restCollapsed = false;
   newCount = 0;
+  /** counts fetches: what was asked of the last one is stale after it */
+  fetchSeq = 0;
   views: LogView[] = [];
   viewId: string | null = null;
   /** top values per rail key, for the applied filter */
@@ -181,6 +185,7 @@ export default class OtelLogsStore {
     this.facetsLoading = true;
     this.newCount = 0;
     this.generation += 1;
+    this.fetchSeq += 1;
     this.facetValueCache.clear();
 
     const current = () => this.controller === controller;
@@ -530,9 +535,11 @@ export default class OtelLogsStore {
   resize = (size: number) => {
     const s = Math.min(Math.max(size, 1), OTEL_LOGS_LIMITS.maxPageSize);
     if (s === this.pageSize) return;
+    // the first line on screen stays on the page shown
+    const first = (this.page - 1) * this.pageSize;
     this.pageSize = s;
-    this.page = 1;
-    void this.ensure(s);
+    this.page = Math.floor(first / s) + 1;
+    void this.ensure(this.page * s);
   };
 
   setDisplay = (d: LogsDisplay) => {
@@ -662,9 +669,11 @@ export default class OtelLogsStore {
   /* ── the Logs page: the open line ──────────────────────────────────── */
 
   get openLine(): OtelLog | null {
-    return this.openId
-      ? (this.logs.find((l) => l.id === this.openId) ?? null)
-      : null;
+    if (!this.openId) return null;
+    return (
+      this.logs.find((l) => l.id === this.openId) ??
+      (this.openExtra?.id === this.openId ? this.openExtra : null)
+    );
   }
 
   get openIndex(): number {
@@ -673,6 +682,11 @@ export default class OtelLogsStore {
 
   open = (id: string | null) => {
     this.openId = id;
+  };
+
+  openLog = (log: OtelLog) => {
+    this.openExtra = this.logs.some((l) => l.id === log.id) ? null : log;
+    this.openId = log.id;
   };
 
   /** steps through the list, loading the next page at its end */
