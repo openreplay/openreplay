@@ -239,6 +239,23 @@ function FilterBar({
                 />
               )}
               {events.length > 0 && orderNote?.(eventsOrder)}
+              {eventEntries.length === 0 &&
+                events.length === 0 &&
+                properties.length > 0 && (
+                  <Tooltip
+                    title={t(
+                      'Every filter applies: what shows matches all of them',
+                    )}
+                  >
+                    <span
+                      className="m-fchips__orderpick is-fixed"
+                      aria-label={t('Filters combined with and, fixed')}
+                    >
+                      <Combine size={13} aria-hidden="true" />
+                      <span className="m-fchips__ordertag">{t('and')}</span>
+                    </span>
+                  </Tooltip>
+                )}
               {trailing}
             </div>
             {events.map((f, i) => (

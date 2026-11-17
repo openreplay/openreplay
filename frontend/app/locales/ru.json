@@ -3022,5 +3022,7 @@
   "No segments yet": "Сегментов пока нет",
   "No segment matches “{{q}}”": "Нет сегментов по запросу «{{q}}»",
   "Segment deleted": "Сегмент удалён",
-  "Predefined": "Предустановленные"
+  "Predefined": "Предустановленные",
+  "Every filter applies: what shows matches all of them": "Применяются все фильтры: показанное соответствует каждому из них",
+  "Filters combined with and, fixed": "Фильтры объединяются через «и», нельзя изменить"
 }

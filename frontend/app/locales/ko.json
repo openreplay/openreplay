@@ -2845,5 +2845,7 @@
   "No segments yet": "아직 세그먼트가 없습니다",
   "No segment matches “{{q}}”": "“{{q}}”와 일치하는 세그먼트가 없습니다",
   "Segment deleted": "세그먼트가 삭제되었습니다",
-  "Predefined": "사전 정의"
+  "Predefined": "사전 정의",
+  "Every filter applies: what shows matches all of them": "모든 필터가 적용됩니다: 표시되는 항목은 모든 필터와 일치합니다",
+  "Filters combined with and, fixed": "필터가 '그리고'로 결합됨, 고정"
 }
