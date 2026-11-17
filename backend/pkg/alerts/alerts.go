@@ -10,6 +10,7 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/jackc/pgx/v5"
 
+	"openreplay/backend/pkg/analytics/filters_catalog"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
 )
@@ -283,7 +284,8 @@ SELECT ap.source,
 FROM (SELECT project_id, toString(source) AS source, property_name, auto_captured
       FROM product_analytics.all_properties
       WHERE project_id = @projectId
-        AND source IN ('events', 'users')) ap
+        AND source IN ('events', 'users')
+	  GROUP BY ALL) ap
      LEFT JOIN (SELECT project_id, toString(source) AS source, property_name, auto_captured, display_name, status
                 FROM product_analytics.all_properties_customized
                 WHERE project_id = @projectId
@@ -310,11 +312,12 @@ FROM (SELECT project_id, toString(source) AS source, property_name, auto_capture
                    AND vt.source = ap.source
                    AND vt.property_name = ap.property_name
                    AND vt.auto_captured = ap.auto_captured
+WHERE apc.status = 'visible' OR apc.status = ''
 GROUP BY ap.source, ap.property_name, ap.auto_captured, display_name, status
-HAVING status = 'visible'
 ORDER BY ap.source, display_name, ap.property_name`
 
-// propertyTriggers runs propertyTriggersSQL and maps every row to a trigger.
+// propertyTriggers runs propertyTriggersSQL and maps every row to a trigger, then appends
+// the predefined event properties the catalog did not return (see predefinedPropertyTriggers).
 func (s *alertsImpl) propertyTriggers(ctx context.Context, projectID uint32) ([]Trigger, error) {
 	if s.ch == nil {
 		return nil, nil
@@ -326,6 +329,7 @@ func (s *alertsImpl) propertyTriggers(ctx context.Context, projectID uint32) ([]
 	defer rows.Close()
 
 	var out []Trigger
+	seen := make(map[string]struct{})
 	for rows.Next() {
 		var (
 			source, name, displayName, status, dataType string
@@ -337,11 +341,33 @@ func (s *alertsImpl) propertyTriggers(ctx context.Context, projectID uint32) ([]
 		if tr, ok := propertyTrigger(source, name, autoCaptured, displayName, dataType); ok {
 			out = append(out, tr)
 		}
+		if source == SourceEvents {
+			seen[filters_catalog.StoredPropertyKey(name)] = struct{}{}
+		}
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("iterate property triggers: %w", err)
 	}
-	return out, nil
+	return append(out, predefinedPropertyTriggers(seen)...), nil
+}
+
+// predefinedPropertyTriggers returns a trigger for every predefined event property
+// (filters_catalog.PredefinedProperties) whose snake_case key is not in seen, in catalog
+// order. The filters catalog appends the same entries to /filters so a property the project
+// has not observed yet is still offered; those properties are auto-captured, so the value
+// is "$properties.<key>" and the data type is the ClickHouse type of the catalog entry.
+func predefinedPropertyTriggers(seen map[string]struct{}) []Trigger {
+	var out []Trigger
+	for _, key := range filters_catalog.PredefinedPropertiesOrder {
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		pp := filters_catalog.PredefinedProperties[key]
+		if tr, ok := propertyTrigger(SourceEvents, key, true, filters_catalog.ORPropertyDisplayName(key), pp.Type); ok {
+			out = append(out, tr)
+		}
+	}
+	return out
 }
 
 // propertyTrigger maps one catalog property to a trigger. The trigger value is the
