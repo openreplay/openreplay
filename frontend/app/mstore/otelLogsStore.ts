@@ -67,6 +67,8 @@ export default class OtelLogsStore {
   appliedFilter: OtelLogsFilter | null = null;
 
   loading = false;
+  /** a quiet refetch is out: the list stays as it is, paging waits */
+  refreshing = false;
   loadingMore = false;
   histogramLoading = false;
   facetsLoading = false;
@@ -101,7 +103,7 @@ export default class OtelLogsStore {
   /** top values per rail key, for the applied filter */
   facetValueCache = observable.map<
     string,
-    { values: OtelValueCount[]; loading: boolean }
+    { values: OtelValueCount[]; loading: boolean; generation: number }
   >();
 
   /** builds a rule's chip label; the page sets it with its translations */
@@ -168,8 +170,9 @@ export default class OtelLogsStore {
     };
   };
 
-  /** Runs search, histogram and facets for the current filter; aborts any in-flight run. */
-  fetch = async () => {
+  /** Runs search, histogram and facets for the current filter; aborts any in-flight run.
+      `quiet` keeps what is shown until the new results land (auto-refresh). */
+  fetch = async (quiet = false) => {
     this.controller?.abort();
     const controller = new AbortController();
     this.controller = controller;
@@ -177,16 +180,19 @@ export default class OtelLogsStore {
     const { signal } = controller;
 
     this.appliedFilter = filter;
-    this.logs = [];
-    this.nextCursor = null;
     this.error = null;
-    this.loading = true;
-    this.histogramLoading = true;
-    this.facetsLoading = true;
+    this.loading = !quiet;
+    this.refreshing = quiet;
     this.newCount = 0;
     this.generation += 1;
     this.fetchSeq += 1;
-    this.facetValueCache.clear();
+    if (!quiet) {
+      this.logs = [];
+      this.nextCursor = null;
+      this.histogramLoading = true;
+      this.facetsLoading = true;
+      this.facetValueCache.clear();
+    }
 
     const current = () => this.controller === controller;
     const fail = (e: any) => {
@@ -208,7 +214,11 @@ export default class OtelLogsStore {
         })
         .catch(fail)
         .finally(() => {
-          if (current()) runInAction(() => (this.loading = false));
+          if (current())
+            runInAction(() => {
+              this.loading = false;
+              this.refreshing = false;
+            });
         }),
       otelLogsService
         .histogram(filter, signal)
@@ -239,6 +249,7 @@ export default class OtelLogsStore {
       !nextCursor ||
       !controller ||
       this.loading ||
+      this.refreshing ||
       this.loadingMore
     ) {
       return;
@@ -280,7 +291,7 @@ export default class OtelLogsStore {
       this.nextCursor &&
       !this.error
     ) {
-      if (this.loading || this.loadingMore) {
+      if (this.loading || this.refreshing || this.loadingMore) {
         await new Promise((r) => setTimeout(r, 50));
         continue;
       }
@@ -315,6 +326,7 @@ export default class OtelLogsStore {
     this.facets = null;
     this.appliedFilter = null;
     this.loading = false;
+    this.refreshing = false;
     this.loadingMore = false;
     this.histogramLoading = false;
     this.facetsLoading = false;
@@ -345,7 +357,7 @@ export default class OtelLogsStore {
   }
 
   /** applies the rules and window, then fetches the first page */
-  run = (now = Date.now()) => {
+  run = (now = Date.now(), quiet = false) => {
     const parts = rulesToFilter(this.ruleList);
     this.query = parts.query;
     this.services = parts.services;
@@ -361,7 +373,7 @@ export default class OtelLogsStore {
       getRowsPerPage('logs'),
       OTEL_LOGS_LIMITS.maxPageSize,
     );
-    return this.fetch();
+    return this.fetch(quiet);
   };
 
   setRules = (rules: Filter[], outside = false) => {
@@ -573,25 +585,39 @@ export default class OtelLogsStore {
     const generation = this.generation;
     for (const key of keys) {
       if (key === 'service' || key === 'level') continue;
-      if (this.facetValueCache.has(key) || !this.appliedFilter) continue;
+      const held = this.facetValueCache.get(key);
+      if (held?.generation === generation || !this.appliedFilter) continue;
       const scope: OtelAttributeScope | null = key.startsWith('attr.')
         ? 'log'
         : key.startsWith('res.')
           ? 'resource'
           : null;
       if (!scope) continue;
-      this.facetValueCache.set(key, { values: [], loading: true });
+      // a quiet refresh keeps the last values on screen meanwhile
+      this.facetValueCache.set(key, {
+        values: held?.values ?? [],
+        loading: !held,
+        generation,
+      });
       this.fetchFacetValues(scope, key.slice(scope === 'log' ? 5 : 4))
         .then((r) => {
           if (generation !== this.generation) return;
           runInAction(() =>
-            this.facetValueCache.set(key, { values: r.values, loading: false }),
+            this.facetValueCache.set(key, {
+              values: r.values,
+              loading: false,
+              generation,
+            }),
           );
         })
         .catch(() => {
           if (generation !== this.generation) return;
           runInAction(() =>
-            this.facetValueCache.set(key, { values: [], loading: false }),
+            this.facetValueCache.set(key, {
+              values: held?.values ?? [],
+              loading: false,
+              generation,
+            }),
           );
         });
     }
@@ -636,7 +662,7 @@ export default class OtelLogsStore {
   tick = () => {
     if (!('preset' in this.window)) return;
     if (this.page === 1 && !this.openId) {
-      void this.run();
+      void this.run(Date.now(), true);
       return;
     }
     void this.countNew();
