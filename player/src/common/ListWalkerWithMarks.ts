@@ -22,10 +22,16 @@ export default class ListWalkerWithMarks<
   }
 
   append(item: T) {
-    if (this.isMarked(item)) {
+    const marked = this.isMarked(item);
+    if (marked) {
       this._markCount++;
     }
+    const countNow = this.countNow;
     super.append(item);
+    // Inserted behind the pointer: the pointer moved past it.
+    if (marked && this.countNow > countNow) {
+      this._markCountNow++;
+    }
   }
 
   protected moveNext() {

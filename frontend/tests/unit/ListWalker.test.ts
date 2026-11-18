@@ -1,5 +1,6 @@
 import { describe, test, expect, beforeEach, jest } from '@jest/globals';
 import ListWalker from '../../../player/src/common/ListWalker';
+import ListWalkerWithMarks from '../../../player/src/common/ListWalkerWithMarks';
 import type { Timed } from '../../../player/src/common/types';
 
 interface Item extends Timed {
@@ -14,14 +15,53 @@ describe('ListWalker', () => {
     jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
-  test('append maintains order and prevents out of order inserts', () => {
+  test('append maintains order and inserts out of order items by time', () => {
     walker.append({ time: 1 });
     walker.append({ time: 3 });
     expect(walker.list.map((i) => i.time)).toEqual([1, 3]);
 
     walker.append({ time: 2 });
-    expect(walker.list.map((i) => i.time)).toEqual([1, 3]);
-    expect((console.error as jest.Mock).mock.calls.length).toBe(1);
+    expect(walker.list.map((i) => i.time)).toEqual([1, 2, 3]);
+    expect((console.error as jest.Mock).mock.calls.length).toBe(0);
+  });
+
+  test('append puts an older item after the items with the same time', () => {
+    walker.append({ time: 1 });
+    walker.append({ time: 3, value: 'a' });
+    walker.append({ time: 5 });
+    walker.append({ time: 3, value: 'b' });
+    walker.append({ time: 0 });
+
+    expect(walker.list.map((i) => `${i.time}${i.value ?? ''}`)).toEqual([
+      '0',
+      '1',
+      '3a',
+      '3b',
+      '5',
+    ]);
+  });
+
+  test('append behind the pointer keeps the current item', () => {
+    walker = new ListWalker<Item>([{ time: 1 }, { time: 3 }, { time: 5 }]);
+    walker.moveGetLast(3);
+    expect(walker.current?.time).toBe(3);
+
+    walker.append({ time: 2 });
+    expect(walker.current?.time).toBe(3);
+    expect(walker.countNow).toBe(3);
+
+    walker.append({ time: 4 });
+    expect(walker.countNow).toBe(3);
+    expect(walker.moveGetLast(4)?.time).toBe(4);
+  });
+
+  // dom.mobs can hold an assets batch that ends after dom.mobe starts.
+  test('a second file starting before the first one ends loses nothing', () => {
+    const first = [{ time: 0 }, { time: 10 }, { time: 15 }, { time: 29 }];
+    const second = [{ time: 16 }, { time: 20 }, { time: 30 }];
+    [...first, ...second].forEach((m) => walker.append(m));
+
+    expect(walker.list.map((i) => i.time)).toEqual([0, 10, 15, 16, 20, 29, 30]);
   });
 
   test('unshift prepends items', () => {
@@ -79,5 +119,23 @@ describe('ListWalker', () => {
     walker.moveApply(1.5, (m) => collected.push(m.time));
     expect(collected).toEqual([1, 2, 1]);
     expect(walker.countNow).toBe(1);
+  });
+});
+
+describe('ListWalkerWithMarks', () => {
+  test('an item appended behind the pointer counts as passed', () => {
+    const walker = new ListWalkerWithMarks<Item>(
+      (i) => i.value === 'mark',
+      [{ time: 1 }, { time: 3 }, { time: 5 }],
+    );
+    walker.moveGetLast(3);
+
+    walker.append({ time: 2, value: 'mark' });
+    walker.append({ time: 4, value: 'mark' });
+    expect(walker.markedCount).toBe(2);
+    expect(walker.markedCountNow).toBe(1);
+
+    walker.moveGetLast(5);
+    expect(walker.markedCountNow).toBe(2);
   });
 });

@@ -6,20 +6,34 @@ export default class ListWalker<T extends Timed> {
 
   constructor(private _list: Array<T> = []) {}
 
+  /**
+   * Adds an item in time order. Mob files are sorted one by one, but a file can
+   * start before the previous one ends: the sink files a batch into dom.mobs or
+   * dom.mobe by its first timestamp, and an assets batch can run on for up to
+   * the tracker's flush interval. An older item is inserted after the items
+   * with the same time instead of being dropped. If it lands behind the
+   * pointer, the pointer moves with it, so the current item stays the same.
+   */
   append(m: T): void {
-    if (this.length > 0 && this.last && m.time < this.last.time) {
-      console.error(
-        'Trying to append message with the less time then the list tail:',
-        m.time,
-        'vs',
-        this.last.time,
-        m,
-        this.last,
-        this,
-      );
+    const last = this.last;
+    if (last === null || m.time >= last.time) {
+      this.list.push(m);
       return;
     }
-    this.list.push(m);
+    let low = 0;
+    let high = this.length;
+    while (low < high) {
+      const mid = (low + high) >>> 1;
+      if (this.list[mid].time <= m.time) {
+        low = mid + 1;
+      } else {
+        high = mid;
+      }
+    }
+    this.list.splice(low, 0, m);
+    if (low < this.p) {
+      this.p++;
+    }
   }
 
   unshift(m: T): void {
