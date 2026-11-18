@@ -119,6 +119,11 @@
   border: var(--m-border-width) solid var(--m-border-subtle);
   border-radius: var(--m-radius-chip);
 }
+/* share lines are a % of the label: every row keeps the first row's Tab
+   width so the lines compare */
+.m-vp__key.is-slot {
+  visibility: hidden;
+}
 
 .m-vp__typed {
   font-size: var(--m-text-2xs);
