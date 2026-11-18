@@ -1003,6 +1003,7 @@ function EventChip({
   const isSegment = entry.category === 'segments';
   const isFeature = entry.category === 'features';
   const props = filter.properties ?? [];
+  const takenProps = props.map((p) => p.entry.id);
 
   return (
     <span
@@ -1071,15 +1072,27 @@ function EventChip({
                   {filter.propertyOrder ?? 'and'}
                 </span>
               )}
-              <span className="m-fchip__seg m-fchip__propname">
-                <span className="m-fchip__glyph" aria-hidden="true">
-                  {entryIcon(p.entry, 12)}
-                </span>
-                <Truncated
-                  className="m-fchip__label"
-                  text={p.entry.displayName}
-                />
-              </span>
+              <PropertyPicker
+                event={entry}
+                taken={takenProps}
+                onPick={(e) => editor.onReplaceProperty(filter.key, p.key, e)}
+              >
+                <button
+                  type="button"
+                  className="m-fchip__seg m-fchip__propname"
+                  aria-label={t('Replace {{name}}', {
+                    name: p.entry.displayName,
+                  })}
+                >
+                  <span className="m-fchip__glyph" aria-hidden="true">
+                    {entryIcon(p.entry, 12)}
+                  </span>
+                  <Truncated
+                    className="m-fchip__label"
+                    text={p.entry.displayName}
+                  />
+                </button>
+              </PropertyPicker>
               <Predicate
                 filter={p}
                 live={live}
@@ -1106,7 +1119,7 @@ function EventChip({
         {entry.hasProperties && (
           <PropertyPicker
             event={entry}
-            taken={props.map((p) => p.entry.id)}
+            taken={takenProps}
             onPick={(e) => editor.onAddProperty(filter.key, e)}
           >
             <button
