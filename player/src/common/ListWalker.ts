@@ -14,7 +14,7 @@ export default class ListWalker<T extends Timed> {
    */
   append(m: T): void {
     const last = this.last;
-    if (last && m.time < last.time) {
+    if (last && !this.fitsAfter(m, last)) {
       if (!this.warnedOutOfOrder) {
         this.warnedOutOfOrder = true;
         console.warn(
@@ -40,11 +40,11 @@ export default class ListWalker<T extends Timed> {
     }
   }
 
-  /** Sorted insert (after items with equal time). O(log n) search, O(1) for in-order items. */
+  /** Sorted insert (after items with equal time unless goesBefore). O(log n) search, O(1) for in-order items. */
   insert(m: T): void {
     const list = this.list;
     this.onAdd(m);
-    if (list.length === 0 || list[list.length - 1].time <= m.time) {
+    if (list.length === 0 || this.fitsAfter(m, list[list.length - 1])) {
       list.push(m);
       return;
     }
@@ -57,6 +57,13 @@ export default class ListWalker<T extends Timed> {
       } else {
         hi = mid;
       }
+    }
+    while (
+      lo > 0 &&
+      list[lo - 1].time === m.time &&
+      this.goesBefore(m, list[lo - 1])
+    ) {
+      lo--;
     }
     list.splice(lo, 0, m);
     if (lo < this.p) {
@@ -78,6 +85,21 @@ export default class ListWalker<T extends Timed> {
       this.onPassedRemove(removed);
     }
     return removed;
+  }
+
+  private fitsAfter(m: T, prev: T): boolean {
+    return !(
+      m.time < prev.time ||
+      (m.time === prev.time && this.goesBefore(m, prev))
+    );
+  }
+
+  /**
+   * Tie-break for items with equal time arriving out of order (e.g. an asset
+   * message in dom.mobs and the node it targets created in dom.mobe).
+   */
+  protected goesBefore(_m: T, _other: T): boolean {
+    return false;
   }
 
   /** Hooks for subclasses tracking per-item state. */
