@@ -30,6 +30,7 @@ import {
   VText,
 } from './VirtualDOM';
 import { deleteRule, insertRule } from './safeCSSRules';
+import { getMsgPriority } from '../../messages/messageOrder';
 import {
   REPLAY_CSP,
   REPLAY_IFRAME_SANDBOX,
@@ -165,6 +166,11 @@ export default class DOMManager extends ListWalker<Message> {
       return; // Ignoring
     }
     super.append(m);
+  }
+
+  // same CREATE -> MODIFY -> DELETE order fixMessageOrder gives a time group within one file
+  protected goesBefore(m: Message, other: Message): boolean {
+    return getMsgPriority(m.tp) < getMsgPriority(other.tp);
   }
 
   private removeBodyScroll(id: number, vElem: VElement): void {

@@ -1,5 +1,6 @@
-import { describe, test, expect, beforeEach, jest } from '@jest/globals';
+import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import ListWalker from '../../../player/src/common/ListWalker';
+import ListWalkerWithMarks from '../../../player/src/common/ListWalkerWithMarks';
 import type { Timed } from '../../../player/src/common/types';
 
 interface Item extends Timed {
@@ -11,17 +12,55 @@ describe('ListWalker', () => {
 
   beforeEach(() => {
     walker = new ListWalker<Item>([]);
-    jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
-  test('append maintains order and prevents out of order inserts', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  test('append keeps order and inserts out-of-order items by time', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
     walker.append({ time: 1 });
     walker.append({ time: 3 });
     expect(walker.list.map((i) => i.time)).toEqual([1, 3]);
 
     walker.append({ time: 2 });
-    expect(walker.list.map((i) => i.time)).toEqual([1, 3]);
-    expect((console.error as jest.Mock).mock.calls.length).toBe(1);
+    walker.append({ time: 0 });
+    expect(walker.list.map((i) => i.time)).toEqual([0, 1, 2, 3]);
+    expect(warn.mock.calls.length).toBe(1);
+  });
+
+  test('out-of-order item goes after items with equal time', () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    walker.append({ time: 1 });
+    walker.append({ time: 3, value: 'a' });
+    walker.append({ time: 5 });
+    walker.append({ time: 3, value: 'b' });
+    expect(walker.list.map((i) => `${i.time}${i.value ?? ''}`)).toEqual([
+      '1',
+      '3a',
+      '3b',
+      '5',
+    ]);
+  });
+
+  test('overlapping files (dom.mobs tail after dom.mobe head) lose nothing', () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const mobs = [{ time: 0 }, { time: 10 }, { time: 15 }, { time: 29 }];
+    const mobe = [{ time: 16 }, { time: 20 }, { time: 30 }];
+    [...mobs, ...mobe].forEach((m) => walker.append(m));
+    expect(walker.list.map((i) => i.time)).toEqual([0, 10, 15, 16, 20, 29, 30]);
+  });
+
+  test('insert before the pointer keeps the current item', () => {
+    walker.append({ time: 1, value: 'a' });
+    walker.append({ time: 5, value: 'b' });
+    walker.moveGetLast(5);
+    expect(walker.current?.value).toBe('b');
+    walker.insert({ time: 3, value: 'c' });
+    expect(walker.current?.value).toBe('b');
+    expect(walker.countNow).toBe(3);
+    expect(walker.moveGetLast(5)).toBeNull();
   });
 
   test('unshift prepends items', () => {
@@ -79,5 +118,26 @@ describe('ListWalker', () => {
     walker.moveApply(1.5, (m) => collected.push(m.time));
     expect(collected).toEqual([1, 2, 1]);
     expect(walker.countNow).toBe(1);
+  });
+});
+
+describe('ListWalkerWithMarks', () => {
+  test('marked counts stay consistent on insert behind the pointer', () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const w = new ListWalkerWithMarks<{ time: number; red?: boolean }>(
+      (i) => !!i.red,
+    );
+    w.append({ time: 1, red: true });
+    w.append({ time: 10 });
+    w.moveGetLast(10);
+    expect(w.markedCountNow).toBe(1);
+    w.append({ time: 5, red: true });
+    w.insert({ time: 7, red: true });
+    w.append({ time: 12, red: true });
+    expect(w.markedCount).toBe(4);
+    expect(w.markedCountNow).toBe(3);
+    w.moveGetLast(12);
+    expect(w.markedCountNow).toBe(4);
+    jest.restoreAllMocks();
   });
 });
