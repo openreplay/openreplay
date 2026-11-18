@@ -2,6 +2,12 @@ import Tracker, { App, Options } from './index.js'
 import { IN_BROWSER } from './utils.js'
 import type { StartOptions, StartPromiseReturn } from './app/index.js'
 
+/**
+ * OpenReplay tracker singleton: `tracker.configure({ projectKey })`, then `tracker.start()`.
+ *
+ * Docs for AI agents and quick reference ship with the package:
+ * `node_modules/@openreplay/tracker/docs/usage.md` (setup) and `docs/api.md` (methods, options).
+ */
 class TrackerSingleton {
   private instance: Tracker | null = null
   private isConfigured = false
@@ -368,6 +374,7 @@ class TrackerSingleton {
   }
 }
 
+/** OpenReplay tracker. Reference for agents: `node_modules/@openreplay/tracker/docs/api.md` */
 const tracker = new TrackerSingleton()
 
 export default tracker

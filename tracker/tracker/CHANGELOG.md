@@ -1,3 +1,7 @@
+## 19.1.3
+
+- `docs/usage.md` and `docs/api.md` ship with the package (short setup guide and API reference for AI agents), exported as `@openreplay/tracker/docs/*`
+
 ## 19.1.2
 
 - Assist: web animations stopped being recorded once an agent joined (Assist restarts tracking, and the stop restored the original `Element.prototype.animate` for good), so Ionic modals, popovers, select and datetime overlays stayed invisible for the agent; animations that already finished with `fill: forwards/both` when tracking (re)starts are recorded too, including inside shadow roots (#5105)
