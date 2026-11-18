@@ -55,6 +55,11 @@ export interface FilterActions {
   onRemove: (key: string) => void;
   onMoveEvent: (from: number, to: number) => void;
   onAddProperty: (eventKey: string, entry: CatalogueEntry) => void;
+  onReplaceProperty: (
+    eventKey: string,
+    propKey: string,
+    entry: CatalogueEntry,
+  ) => void;
   onUpdateProperty: (
     eventKey: string,
     propKey: string,

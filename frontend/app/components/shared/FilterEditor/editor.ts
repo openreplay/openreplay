@@ -99,6 +99,14 @@ export function buildFilterEditor(
         ...props,
         storeFilterFor(entry, current(eventKey)?.name),
       ]),
+    onReplaceProperty: (eventKey, propKey, entry) =>
+      updateProps(eventKey, (props) =>
+        props.map((p, j) =>
+          j === propIndexOf(propKey)
+            ? storeFilterFor(entry, current(eventKey)?.name)
+            : p,
+        ),
+      ),
     onUpdateProperty: (eventKey, propKey, patch) =>
       updateProps(eventKey, (props) =>
         props.map((p, j) =>
