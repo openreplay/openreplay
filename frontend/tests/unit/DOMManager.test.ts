@@ -9,6 +9,7 @@ import {
 import DOMManager from '../../../player/src/web/managers/DOM/DOMManager';
 import { VElement } from '../../../player/src/web/managers/DOM/VirtualDOM';
 import { MType } from '../../../player/src/web/messages/raw.gen';
+import { fixMessageOrder } from '../../../player/src/web/messages/messageOrder';
 
 class FrameVElement extends VElement {
   constructor(
@@ -180,5 +181,50 @@ describe('SetInputValue rejections', () => {
     const error = jest.spyOn(console, 'error').mockImplementation(() => {});
     expect(() => setInputValue(999, '2')).not.toThrow();
     expect(error).toHaveBeenCalled();
+  });
+});
+
+// dom.mobs is cut by a batch's first timestamp, so an assets batch in it can end
+// after dom.mobe starts; the style below was set in the commit that created h1.
+describe('dom.mobs assets batch overlapping dom.mobe', () => {
+  const create = { tp: MType.CreateElementNode, id: 10, parentID: 5, index: 0, tag: 'H1', svg: false, time: 20 };
+  const style = { tp: MType.SetNodeAttribute, id: 10, name: 'style', value: 'color: red', time: 20 };
+
+  async function replay(mobs: any[], mobe: any[]) {
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    mount('div', 5);
+    [...fixMessageOrder(mobs), ...fixMessageOrder(mobe)].forEach((m) => manager.append(m));
+    await manager.moveReady(40);
+    // @ts-ignore private access
+    const h1 = manager.vElements.get(10);
+    h1?.applyChanges();
+    return h1?.node as Element | undefined;
+  }
+
+  it('creates the node before its same-time attribute at the mobs tail', async () => {
+    const h1 = await replay([{ ...style }], [{ ...create }]);
+    expect(h1?.getAttribute('style')).toBe('color: red');
+  });
+
+  it('creates the node before its same-time attribute inside the mobs range', async () => {
+    const later = { tp: MType.SetNodeAttribute, id: 5, name: 'style', value: 'top: 0', time: 30 };
+    const h1 = await replay([{ ...style }, later], [{ ...create }]);
+    expect(h1?.getAttribute('style')).toBe('color: red');
+    expect(manager.list.map((m: any) => m.tp)).toEqual([
+      MType.CreateElementNode,
+      MType.SetNodeAttribute,
+      MType.SetNodeAttribute,
+    ]);
+  });
+
+  it('keeps a same-time removal after the attribute', async () => {
+    const remove = { tp: MType.RemoveNode, id: 10, time: 20 };
+    await replay([{ ...create }, { ...style }], [remove]);
+    expect(manager.list.map((m: any) => m.tp)).toEqual([
+      MType.CreateElementNode,
+      MType.SetNodeAttribute,
+      MType.RemoveNode,
+    ]);
   });
 });
