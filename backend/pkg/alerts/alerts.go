@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	"openreplay/backend/pkg/analytics/filters_catalog"
+	fcmodel "openreplay/backend/pkg/analytics/filters_catalog/model"
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
 )
@@ -317,7 +318,8 @@ GROUP BY ap.source, ap.property_name, ap.auto_captured, display_name, status
 ORDER BY ap.source, display_name, ap.property_name`
 
 // propertyTriggers runs propertyTriggersSQL and maps every row to a trigger, then appends
-// the predefined event properties the catalog did not return (see predefinedPropertyTriggers).
+// the predefined event properties and the built-in identified-user attributes the catalog
+// did not return (see predefinedPropertyTriggers and identifiedUserTriggers).
 func (s *alertsImpl) propertyTriggers(ctx context.Context, projectID uint32) ([]Trigger, error) {
 	if s.ch == nil {
 		return nil, nil
@@ -329,7 +331,7 @@ func (s *alertsImpl) propertyTriggers(ctx context.Context, projectID uint32) ([]
 	defer rows.Close()
 
 	var out []Trigger
-	seen := make(map[string]struct{})
+	seenEvents, seenUsers := make(map[string]struct{}), make(map[string]struct{})
 	for rows.Next() {
 		var (
 			source, name, displayName, status, dataType string
@@ -341,14 +343,40 @@ func (s *alertsImpl) propertyTriggers(ctx context.Context, projectID uint32) ([]
 		if tr, ok := propertyTrigger(source, name, autoCaptured, displayName, dataType); ok {
 			out = append(out, tr)
 		}
-		if source == SourceEvents {
-			seen[filters_catalog.StoredPropertyKey(name)] = struct{}{}
+		switch source {
+		case SourceEvents:
+			seenEvents[filters_catalog.StoredPropertyKey(name)] = struct{}{}
+		case SourceUsers:
+			seenUsers[name] = struct{}{}
 		}
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("iterate property triggers: %w", err)
 	}
-	return append(out, predefinedPropertyTriggers(seen)...), nil
+	out = append(out, predefinedPropertyTriggers(seenEvents)...)
+	return append(out, identifiedUserTriggers(seenUsers)...), nil
+}
+
+// identifiedUserTriggers returns a trigger for every built-in identified-user attribute
+// (the Users section of /filters, filters_catalog.GetUsersIdentifiedFilters) whose name is
+// not in seen, in catalog order. Those attributes are auto-captured columns of
+// product_analytics.users ($email, $country, $last_seen, ...), so the value is
+// "$properties.<name>" with the catalog's data type.
+func identifiedUserTriggers(seen map[string]struct{}) []Trigger {
+	var out []Trigger
+	for _, item := range filters_catalog.GetUsersIdentifiedFilters().List {
+		f, ok := item.(fcmodel.StaticFilterItem)
+		if !ok {
+			continue
+		}
+		if _, ok := seen[f.Name]; ok {
+			continue
+		}
+		if tr, ok := propertyTrigger(SourceUsers, f.Name, f.AutoCaptured, f.DisplayName, f.DataType); ok {
+			out = append(out, tr)
+		}
+	}
+	return out
 }
 
 // predefinedPropertyTriggers returns a trigger for every predefined event property

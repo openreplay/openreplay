@@ -10,6 +10,7 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 
 	"openreplay/backend/pkg/analytics/filters_catalog"
+	fcmodel "openreplay/backend/pkg/analytics/filters_catalog/model"
 )
 
 // fakeRows serves fixed rows through the driver.Rows interface.
@@ -92,11 +93,13 @@ func TestPropertyTriggersQuery(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// catalog rows first, then every predefined event property the catalog did not return
+	// catalog rows first, then every predefined event property and built-in identified-user
+	// attribute the catalog did not return
 	want := append([]Trigger{
 		{Name: "Cart total", Value: "properties.cart_total", Source: "events", DataType: "number"},
 		{Name: "seats", Value: "$properties.seats", Source: "users", DataType: "integer"},
 	}, predefinedPropertyTriggers(nil)...)
+	want = append(want, identifiedUserTriggers(nil)...)
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("got %+v want %+v", got, want)
 	}
@@ -174,6 +177,8 @@ func TestPropertyTriggersPredefinedDedup(t *testing.T) {
 		{"events", "speedIndex", true, "Speed Index", "visible", "UInt16"},
 		// a users property sharing a predefined name does not hide the event property
 		{"users", "duration", false, "Duration", "visible", "Int64"},
+		// a built-in user attribute the catalog already returned is not repeated
+		{"users", "$email", true, "Email", "visible", "String"},
 	}}
 	got, err := (&alertsImpl{ch: ch}).propertyTriggers(context.Background(), 1)
 	if err != nil {
@@ -183,7 +188,7 @@ func TestPropertyTriggersPredefinedDedup(t *testing.T) {
 	for _, tr := range got {
 		count[tr.Value]++
 	}
-	for _, v := range []string{"$properties.hesitation_time", "$properties.speedIndex", "$properties.duration", "properties.duration"} {
+	for _, v := range []string{"$properties.hesitation_time", "$properties.speedIndex", "$properties.duration", "properties.duration", "$properties.$email"} {
 		if count[v] != 1 {
 			t.Errorf("%s: appears %d times, want 1", v, count[v])
 		}
@@ -191,8 +196,47 @@ func TestPropertyTriggersPredefinedDedup(t *testing.T) {
 	if count["$properties.speed_index"] != 0 {
 		t.Errorf("speed_index repeated under its catalog spelling: %+v", got)
 	}
-	if len(got) != 3+len(filters_catalog.PredefinedPropertiesOrder)-2 {
-		t.Errorf("got %d triggers", len(got))
+	if want := 4 + len(predefinedPropertyTriggers(nil)) - 2 + len(identifiedUserTriggers(nil)) - 1; len(got) != want {
+		t.Errorf("got %d triggers, want %d", len(got), want)
+	}
+}
+
+func TestIdentifiedUserTriggers(t *testing.T) {
+	static := filters_catalog.GetUsersIdentifiedFilters().List
+	all := identifiedUserTriggers(nil)
+	if len(all) != len(static) || len(all) == 0 {
+		t.Fatalf("got %d triggers, want one per identified-user filter (%d)", len(all), len(static))
+	}
+	for i, item := range static {
+		f := item.(fcmodel.StaticFilterItem)
+		want := Trigger{Name: f.DisplayName, Value: "$properties." + f.Name, Source: "users", DataType: f.DataType}
+		if all[i] != want {
+			t.Errorf("%s: got %+v want %+v", f.Name, all[i], want)
+		}
+		q := QueryToExecute{Left: all[i].Value.(string), Operator: OpGt, Source: all[i].Source}
+		if !q.IsProperty() || q.Validate() != nil {
+			t.Errorf("trigger value %q is not a valid property alert left", all[i].Value)
+		}
+	}
+	for _, v := range []string{"$properties.$user_id", "$properties.$email", "$properties.$country", "$properties.initial_utm_source", "$properties.$last_seen"} {
+		found := false
+		for _, tr := range all {
+			found = found || tr.Value == v
+		}
+		if !found {
+			t.Errorf("missing %s", v)
+		}
+	}
+
+	// attributes the catalog returned are not repeated
+	got := identifiedUserTriggers(map[string]struct{}{"$email": {}, "$country": {}})
+	if len(got) != len(all)-2 {
+		t.Fatalf("got %d triggers, want %d", len(got), len(all)-2)
+	}
+	for _, tr := range got {
+		if tr.Value == "$properties.$email" || tr.Value == "$properties.$country" {
+			t.Errorf("seen attribute repeated: %+v", tr)
+		}
 	}
 }
 
