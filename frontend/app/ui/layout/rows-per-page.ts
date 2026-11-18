@@ -52,10 +52,16 @@ const ANY = '*';
 const countOf = (room: number, row: number) =>
   Math.max(MIN_FIT, Math.floor(room / row + 0.01));
 
+// a count the list's own layout bounced back from, until the window resizes
+const held: Record<string, number> = {};
+
 function fitted(list: string): number | null {
   const f = fits[fitKey(list)] ?? fits[fitKey(ANY)];
   if (!f || typeof f !== 'object' || !(f.row > 0)) return null;
-  return countOf(window.innerHeight - f.chrome, f.row);
+  return Math.min(
+    countOf(window.innerHeight - f.chrome, f.row),
+    held[list] ?? Infinity,
+  );
 }
 
 function estimate(): number {
@@ -131,20 +137,32 @@ function scrollParent(el: HTMLElement): HTMLElement | null {
   return p;
 }
 
-function firstRows(prev: Element | null): { top: number; row: number } | null {
+function firstRows(
+  prev: Element | null,
+): { top: number; row: number; end: number; shown: number } | null {
   const table =
     prev instanceof HTMLTableElement ? prev : prev?.querySelector('table');
   const body = table?.tBodies[0];
   if (body && body.rows.length > 0) {
     const rect = body.getBoundingClientRect();
-    return { top: rect.top, row: rect.height / body.rows.length };
+    return {
+      top: rect.top,
+      row: rect.height / body.rows.length,
+      end: rect.bottom,
+      shown: body.rows.length,
+    };
   }
   // a list that is not a table marks its rows; group headings after the
   // first one are not reserved for
-  const first = prev?.querySelector('[data-fit-row]');
-  if (!first) return null;
-  const rect = first.getBoundingClientRect();
-  return { top: rect.top, row: rect.height };
+  const marked = prev?.querySelectorAll('[data-fit-row]');
+  if (!marked?.length) return null;
+  const rect = marked[0].getBoundingClientRect();
+  return {
+    top: rect.top,
+    row: rect.height,
+    end: marked[marked.length - 1].getBoundingClientRect().bottom,
+    shown: marked.length,
+  };
 }
 
 /** How many rows of the list right before `foot` fit between its head and
@@ -154,12 +172,17 @@ function firstRows(prev: Element | null): { top: number; row: number } | null {
 function measure(
   foot: HTMLElement,
   box: HTMLElement | null,
-): (Fit & { n: number }) | null {
+  cap = Infinity,
+): (Fit & { n: number; shown: number }) | null {
   const list = foot.previousElementSibling as HTMLElement | null;
   // the row's own height: the share is taken off for the reading
   const share = list?.style.getPropertyValue('--m-fit-extra') ?? '';
   list?.style.setProperty('--m-fit-extra', '0px');
   const rows = firstRows(list);
+  // under the last row, e.g. half a collapsed border: missed, a full fit
+  // overflowed and showed a classic scrollbar
+  const under =
+    rows && list ? list.getBoundingClientRect().bottom - rows.end : 0;
   if (share) list?.style.setProperty('--m-fit-extra', share);
   else list?.style.removeProperty('--m-fit-extra');
   // a tab that is not shown keeps its footer mounted, with no size
@@ -192,8 +215,8 @@ function measure(
     const cs = getComputedStyle(p);
     tail += parseFloat(cs.paddingBottom) + parseFloat(cs.borderBottomWidth);
   }
-  const room = bottom - top - foot.offsetHeight - tail;
-  const n = countOf(room, row);
+  const room = bottom - top - under - foot.offsetHeight - tail;
+  const n = Math.min(countOf(room, row), cap);
   const left = room - n * row;
   const extra = left > 0 ? Math.floor((left / n) * 100) / 100 : 0;
   // under half a pixel is the same share: a re-measure must not resize the
@@ -202,6 +225,7 @@ function measure(
     list.style.setProperty('--m-fit-extra', `${extra}px`);
   return {
     n,
+    shown: rows.shown,
     chrome: Math.round((window.innerHeight - room) * 100) / 100,
     row: Math.round(row * 100) / 100,
   };
@@ -221,12 +245,45 @@ export function useFitRows(
     const el = foot.current;
     if (!fitted || !list || !el) return undefined;
     const box = scrollParent(el);
+    // the count the list was given: read live, a new window height with the
+    // same fit already counted as the new one and never refetched
+    let count = getRowsPerPage(list);
+    let resized = false;
+    let left = 0; // the count before the last change
+    let since = 0; // when the list last took a new count or new rows
+    let shown = 0;
     const run = () => {
-      const fit = measure(el, box);
+      if (resized) {
+        resized = false;
+        delete held[list];
+        left = 0;
+      }
+      let fit = measure(el, box, held[list]);
       if (fit == null) return;
-      const was = getRowsPerPage(list);
+      const now = performance.now();
+      if (fit.shown !== shown) {
+        shown = fit.shown;
+        since = now;
+      }
+      if (fit.n !== count) {
+        // straight back to the count just left: the count moves what it is
+        // measured against (a footer that wraps at "1–10" but not at "1–9", a
+        // scrollbar that narrows the page and wraps its head), and each turn
+        // refetched; the smaller one stays
+        if (fit.n === left && now - since < 1000) {
+          held[list] = Math.min(fit.n, count);
+          fit = measure(el, box, held[list]) ?? fit;
+        }
+        left = count;
+        since = now;
+      }
       publishFit(list, fit);
-      if (fit.n !== was) changed();
+      const next = getRowsPerPage(list);
+      if (next !== count) {
+        count = next;
+        emit();
+        changed();
+      }
     };
     let timer = 0;
     const later = () => {
@@ -236,16 +293,21 @@ export function useFitRows(
         flushSync(run);
       else timer = window.setTimeout(run, 150);
     };
+    const onResize = () => {
+      resized = true;
+      later();
+    };
     run();
     const ro = new ResizeObserver(later);
     ro.observe(el);
     ro.observe(box ?? document.documentElement);
     if (box) for (const child of Array.from(box.children)) ro.observe(child);
-    window.addEventListener('resize', later);
+    window.addEventListener('resize', onResize);
     return () => {
+      delete held[list];
       window.clearTimeout(timer);
       ro.disconnect();
-      window.removeEventListener('resize', later);
+      window.removeEventListener('resize', onResize);
       (el.previousElementSibling as HTMLElement | null)?.style.removeProperty(
         '--m-fit-extra',
       );
