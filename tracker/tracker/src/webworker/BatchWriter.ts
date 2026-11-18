@@ -167,10 +167,7 @@ export default class BatchWriter {
       return
     }
     // Soft-budget hit: flush this stream's batch, retry once on the same builder.
-    // Pair-emit player before assets so the DOM tree always lands first — if the
-    // tab closes between batches, an asset-only batch on the server is useless.
-    if (builder === this.assetBuilder) this.flushBuilder(this.playerBuilder)
-    this.flushBuilder(builder)
+    this.flushStream(builder)
     if (builder.push(message, ctx)) {
       this.nextIndex++
       if (this.unversioned && builder === this.playerBuilder) this.unversioned.push({ message, ctx })
@@ -183,10 +180,27 @@ export default class BatchWriter {
       return
     }
     this.nextIndex++
+    // flushStream above emptied this builder (and its player/assets partner), so the
+    // one-shot follows everything older in its stream.
     const batch = big.flush()
-    if (batch) {
-      if (builder === this.assetBuilder) this.flushBuilder(this.playerBuilder)
-      this.emitBatch(batch, builder.dataType, false)
+    if (batch) this.emitBatch(batch, builder.dataType, false)
+  }
+
+  /**
+   * Player and assets are always cut together, player first so the DOM tree lands
+   * before the assets that reference it. Flushing only the full one let the other
+   * hold its messages until the next finaliseBatch (up to flushInterval). The sink
+   * files a batch by its first timestamp (dom.mobs up to FILE_SPLIT_TIME, then
+   * dom.mobe), so such an assets batch went to dom.mobs while ending after the
+   * first dom.mobe batches started, and the player dropped those as older than
+   * its list tail.
+   */
+  private flushStream(builder: BatchBuilder): void {
+    if (builder === this.playerBuilder || builder === this.assetBuilder) {
+      this.flushBuilder(this.playerBuilder)
+      this.flushBuilder(this.assetBuilder)
+    } else {
+      this.flushBuilder(builder)
     }
   }
 

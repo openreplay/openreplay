@@ -261,6 +261,47 @@ describe('BatchWriter', () => {
       expect(onBatch).toHaveBeenCalledTimes(1)
       expect(onBatch.mock.calls[0][2]).toBe('assets')
     })
+
+    // The sink files a batch into dom.mobs or dom.mobe by its first timestamp, and
+    // the player drops messages older than what it already read. An asset batch
+    // held back while player batches go out ends up behind them.
+    test('player soft-cap flush also emits the pending asset batch', () => {
+      const writer = createWriter({ protocolVersion: 2 })
+      writer.writeMessage([MType.SetNodeAttributeURLBased, 1, 'style', 'color: red', 'http://b.com'])
+      writer.writeMessage([MType.SetNodeAttribute, 2, 'title', 'x'.repeat(150_000)])
+      // Pushes the player builder past the soft cap.
+      writer.writeMessage([MType.SetNodeAttribute, 3, 'title', 'y'.repeat(80_000)])
+
+      expect(onBatch.mock.calls.map((c) => c[2])).toEqual(['player', 'assets'])
+
+      writer.finaliseBatch()
+      // Only the trailing player message is left.
+      expect(onBatch.mock.calls.map((c) => c[2])).toEqual(['player', 'assets', 'player'])
+    })
+
+    test('oversized player one-shot follows the pending player and asset batches', () => {
+      const writer = createWriter({ protocolVersion: 2 })
+      writer.writeMessage([MType.MouseMove, 100, 200])
+      writer.writeMessage([MType.SetNodeAttributeURLBased, 1, 'style', 'color: red', 'http://b.com'])
+      writer.writeMessage([MType.SetNodeAttribute, 2, 'title', 'z'.repeat(250_000)])
+
+      expect(onBatch.mock.calls.map((c) => c[2])).toEqual(['player', 'assets', 'player'])
+      const [, , big] = onBatch.mock.calls.map((c) => parseBatch(c[0]))
+      expect(big.types).toEqual([MType.Timestamp, MType.TabData, MType.SetNodeAttribute])
+
+      writer.finaliseBatch()
+      expect(onBatch).toHaveBeenCalledTimes(3)
+    })
+
+    test('a devtools overflow does not cut the player and asset batches', () => {
+      const writer = createWriter({ protocolVersion: 2 })
+      writer.writeMessage([MType.MouseMove, 100, 200])
+      writer.writeMessage([MType.SetNodeAttributeURLBased, 1, 'style', 'color: red', 'http://b.com'])
+      writer.writeMessage([22, 'info', 'x'.repeat(150_000)])
+      writer.writeMessage([22, 'info', 'y'.repeat(80_000)])
+
+      expect(onBatch.mock.calls.map((c) => c[2])).toEqual(['devtools'])
+    })
   })
 
   describe('protocol v1: asset messages are regular', () => {
