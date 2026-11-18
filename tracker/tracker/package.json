@@ -38,11 +38,13 @@
       "types": "./dist/cjs/entry.d.ts",
       "default": "./dist/cjs/entry.js"
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./docs/*": "./docs/*"
   },
   "files": [
     "dist/lib/**/*",
-    "dist/cjs/**/*"
+    "dist/cjs/**/*",
+    "docs/*.md"
   ],
   "main": "./dist/cjs/entry.js",
   "module": "./dist/lib/entry.js",

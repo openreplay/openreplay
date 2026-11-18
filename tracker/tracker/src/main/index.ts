@@ -124,6 +124,12 @@ const canAccessTop = () => {
   }
 }
 
+/**
+ * OpenReplay tracker class. Prefer the `tracker` singleton export.
+ *
+ * Docs for AI agents and quick reference ship with the package:
+ * `node_modules/@openreplay/tracker/docs/usage.md` (setup) and `docs/api.md` (methods, options).
+ */
 export default class API {
   private readonly app: App | null = null
   public readonly analytics: AnalyticsSDK | null = null
