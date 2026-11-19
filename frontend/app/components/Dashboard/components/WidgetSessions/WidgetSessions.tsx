@@ -31,6 +31,7 @@ import { sessions as sessionsRoute, withSiteId } from 'App/routes';
 import { useHistory } from 'App/routing';
 import Session from 'App/types/session/session';
 import { debounce } from 'App/utils';
+import { hasRuleValue } from 'App/utils/hasRuleValue';
 import { windowPhrase } from 'App/utils/windowPhrase';
 
 import {
@@ -95,12 +96,20 @@ function WidgetSessions() {
   const pageSize = useRowsPerPage();
   const isMounted = useIsMounted();
   const listRef = useRef<HTMLDivElement>(null);
+  const requestSeq = useRef(0);
 
   const [activeSeries, setActiveSeries] = useState('all');
   const [seriesOptions, setSeriesOptions] = useState([
     { label: t('All'), value: 'all' },
   ]);
-  const [data, setData] = useState<Session[]>([]);
+  const [data, setData] = useState<
+    {
+      sessions: Session[];
+      total: number;
+      seriesId: string;
+      seriesName: string;
+    }[]
+  >([]);
   const [loading, setLoading] = useState(false);
 
   const filter = dashboardStore.drillDownFilter;
@@ -175,11 +184,12 @@ function WidgetSessions() {
   const fetchSessions = useCallback(
     (metricId, flt) => {
       if (!isMounted()) return;
+      const seq = ++requestSeq.current;
       const isDrilldown = !!flt.isDrilldown;
       if (
         !isDrilldown &&
         widget.metricType === FUNNEL &&
-        flt.series?.[0]?.filter?.filters?.length === 0
+        !flt.series?.[0]?.filter?.filters?.some((f: any) => f.isEvent)
       ) {
         setLoading(false);
         return setData([]);
@@ -203,6 +213,7 @@ function WidgetSessions() {
       widget
         .fetchSessions(metricId, params)
         .then((res) => {
+          if (seq !== requestSeq.current) return;
           setData(res ?? []);
           if (metricStore.drillDown) {
             toast.info(t('Sessions refreshed!'));
@@ -211,12 +222,13 @@ function WidgetSessions() {
           }
         })
         .catch((e) => {
+          if (seq !== requestSeq.current) return;
           setData([]);
           console.error(e);
           toast.error(t('Failed to refresh sessions, try again later.'));
         })
         .finally(() => {
-          setLoading(false);
+          if (seq === requestSeq.current) setLoading(false);
         });
     },
     [isMounted, widget, metricStore, t],
@@ -276,19 +288,21 @@ function WidgetSessions() {
       });
     } else {
       const seriesJson = listedSeries().map((s) => s.toJson());
+      const hasDrilldown = filter.filters.length > 0;
 
-      if (widget.metricType === USER_PATH) {
-        if (
-          !seriesJson[0].filter.filters[0]?.value[0] &&
-          widget.data.nodes?.[0]
-        ) {
-          if (seriesJson[0].filter.filters[0]) {
-            seriesJson[0].filter.filters[0].value = [widget.data.nodes[0].name];
-          }
-        }
+      // a journey's start point lives on the card, not in its series
+      if (
+        widget.metricType === USER_PATH &&
+        !hasDrilldown &&
+        seriesJson[0] &&
+        hasRuleValue(widget.startPoint)
+      ) {
+        seriesJson[0].filter.filters = [
+          widget.startPoint!.toJson(),
+          ...seriesJson[0].filter.filters,
+        ];
       }
 
-      const hasDrilldown = filter.filters.length > 0;
       const isFunnel = widget.metricType === FUNNEL;
 
       let finalFilters = filter.filters;
@@ -302,7 +316,7 @@ function WidgetSessions() {
               ...seriesJson[0],
               filter: {
                 ...seriesJson[0].filter,
-                filters: filter.filters.map((f) => ({ ...f })),
+                filters: filter.filters.map((f) => f.toJson()),
                 eventsOrder: 'then',
               },
             },
@@ -344,7 +358,6 @@ function WidgetSessions() {
     metricStore.clickMapSearch,
     focused,
     widget.startPoint,
-    widget.data.nodes,
     metricStore.disabledSeries.length,
   ]);
 

@@ -275,21 +275,12 @@ function WidgetChart(props: Props) {
     }
   };
 
-  const depsString =
-    _metric.metricType === USER_PATH
-      ? JSON.stringify({
-          ..._metric.series,
-          ..._metric.excludes,
-          ..._metric.startPoint,
-          viewType: _metric.viewType,
-          hideExcess: false,
-        })
-      : JSON.stringify({
-          ..._metric.series,
-          ..._metric.excludes,
-          ..._metric.startPoint,
-          hideExcess: false,
-        });
+  const depsString = JSON.stringify({
+    series: _metric.series,
+    excludes: _metric.excludes,
+    startPoint: _metric.startPoint,
+    viewType: _metric.metricType === USER_PATH ? _metric.viewType : undefined,
+  });
   const fetchMetricChartData = (
     metric: any,
     payload: any,
@@ -745,10 +736,6 @@ function WidgetChart(props: Props) {
           ? !(_metric.hideExcess ?? true)
           : false;
         const height = props.isPreview ? 550 : 240;
-        const startUrl =
-          metric.startPoint?.filter?.filters.find(
-            (f: any) => f.name === 'url_path',
-          )?.value[0] ?? 'unref';
         const getFilter = (name: string) => filterStore.findEvent({ name });
         return (
           <LargerScreenOnly what={t('The journey chart')}>
@@ -758,7 +745,6 @@ function WidgetChart(props: Props) {
               inGrid={!props.isPreview}
               onChartClick={onJourneyClick}
               isUngrouped={isUngrouped}
-              startUrl={startUrl}
               getFilter={getFilter}
               drilldownFilter={dashboardStore.drillDownFilter.filters}
             />
