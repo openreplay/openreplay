@@ -2971,5 +2971,7 @@
   "starts with": "empieza por",
   "ends with": "termina en",
   "More details": "Más detalles",
-  "Location from the IP address.": "Ubicación a partir de la dirección IP."
+  "Location from the IP address.": "Ubicación a partir de la dirección IP.",
+  "Set it up with one command": "Set it up with one command",
+  "Run it in your app folder: it finds your framework, installs the packages and adds the tracker, showing every change first. Or follow the steps below.": "Run it in your app folder: it finds your framework, installs the packages and adds the tracker, showing every change first. Or follow the steps below."
 }

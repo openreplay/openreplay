@@ -2912,5 +2912,7 @@
   "starts with": "starts with",
   "ends with": "ends with",
   "More details": "More details",
-  "Location from the IP address.": "Location from the IP address."
+  "Location from the IP address.": "Location from the IP address.",
+  "Set it up with one command": "Set it up with one command",
+  "Run it in your app folder: it finds your framework, installs the packages and adds the tracker, showing every change first. Or follow the steps below.": "Run it in your app folder: it finds your framework, installs the packages and adds the tracker, showing every change first. Or follow the steps below."
 }

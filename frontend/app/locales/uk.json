@@ -3030,5 +3030,7 @@
   "starts with": "починається з",
   "ends with": "закінчується на",
   "More details": "Докладніше",
-  "Location from the IP address.": "Розташування за IP-адресою."
+  "Location from the IP address.": "Розташування за IP-адресою.",
+  "Set it up with one command": "Set it up with one command",
+  "Run it in your app folder: it finds your framework, installs the packages and adds the tracker, showing every change first. Or follow the steps below.": "Run it in your app folder: it finds your framework, installs the packages and adds the tracker, showing every change first. Or follow the steps below."
 }

@@ -26,6 +26,7 @@ import {
   mobileSteps,
   snippetPlacement,
   trackerSnippet,
+  wizardCommand,
 } from './install';
 import './onboarding.css';
 
@@ -141,6 +142,23 @@ function InstallGuide({
             </label>
           )}
         </div>
+      )}
+
+      {isWeb && (
+        <Step title={t('Set it up with one command')}>
+          <CodeBlock
+            code={wizardCommand(opts.projectKey, method)}
+            inline
+            plain
+            copyLabel={t('Copy command')}
+            onCopied={onCopied}
+          />
+          <p className="m-ob__muted text-xs">
+            {t(
+              'Run it in your app folder: it finds your framework, installs the packages and adds the tracker, showing every change first. Or follow the steps below.',
+            )}
+          </p>
+        </Step>
       )}
 
       {showInstall && (
