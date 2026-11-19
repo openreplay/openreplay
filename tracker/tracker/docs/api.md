@@ -146,7 +146,7 @@ Current level of a recorded node: `0` Plain, `1` Obscured, `2` Hidden; `undefine
 ## Other
 
 ### `use<T>(plugin: (app: App | null, options?: Partial<Options>) => T): T`
-Attaches a plugin and returns its result. Plugins: `@openreplay/tracker-assist`, `-redux`, `-vuex`, `-zustand`, `-mobx`, `-ngrx`, `-graphql`, `-profiler`.
+Attaches a plugin and returns its result (what each state plugin returns and where it goes: [usage.md §7](./usage.md#7-plugins)). Plugins: `@openreplay/tracker-assist`, `-redux`, `-vuex`, `-zustand`, `-mobx`, `-ngrx`, `-graphql`, `-profiler`. Call it after `configure()`: before that (and on the server) the singleton passes `null` to the plugin, which then returns an inert version that records nothing, without a warning.
 
 ```ts
 import trackerAssist from '@openreplay/tracker-assist'
@@ -175,7 +175,7 @@ Passed to `configure()` / `new Tracker()`. All optional except `projectKey`.
 | `respectDoNotTrack` | `false` | Don't record when the browser sends DNT. |
 | `forceSingleTab` | `false` | Every tab is its own session. |
 | `__debug__` | `0` | Console log level: 2 errors, 3 +warnings, 4 +logs, 5 verbose. |
-| `__DISABLE_SECURE_MODE` | `false` | Allow non-HTTPS pages. **Local development only.** |
+| `__DISABLE_SECURE_MODE` | `false` | Allow non-HTTPS pages. **Local development only**: set it from your dev-build flag, e.g. `import.meta.env.DEV`. |
 | `privateMode` | `false` | Mask everything: text, inputs, URLs, titles, console, network URLs/headers/bodies. Opt subtrees back in with `data-openreplay-unmask`. |
 | `obscureTextEmails` / `obscureTextNumbers` | `true` / `false` | Mask emails/numbers in page text. |
 | `obscureInputEmails` / `obscureInputNumbers` / `obscureInputDates` | `true` / `true` / `false` | Mask those values in inputs. |
@@ -194,10 +194,11 @@ Passed to `configure()` / `new Tracker()`. All optional except `projectKey`.
 | `longTasks` | `false` | Long animation frame tracking. |
 | `captureIFrames` | `true` | Record same-origin iframes. |
 | `crossdomain` | `{ enabled: false, parentDomain: '*', childDomains? }` | Cross-origin iframes: set `enabled` in the parent page and inside the iframe, which runs its own tracker. |
+| `nextObserver` | `false` | Experimental DOM core: one MutationObserver for the page, iframes and shadow roots, no node maintainer, same recording format. Needs `WeakRef`; without it the default core is used. |
 | `canvas` | `{ disableCanvas: false, fixedCanvasScaling: false, useAnimationFrame: false, fileExt: 'webp' }` | Canvas/WebGL capture. |
 | `mouse` | `{ disableClickmaps?, trackingOffset? }` | Click/movement capture. |
 | `disableScrollmaps` | `false` | Don't send scroll depth. |
-| `inlineCss` | auto (`3` on localhost, `0` elsewhere) | How stylesheets are recorded: `0` backend fetches, `1` adopted sheet, `2` fetch + adopted, `3` fetch + `<style>`. Use 1–3 when CSS isn't publicly reachable. |
+| `inlineCss` | auto (`3` on localhost, `0` elsewhere) | How stylesheets are recorded: `0` the backend downloads the CSS file (it must be public); `1` the tracker reads the loaded stylesheet in the browser, falling back to fetching it; `2` fetches it, sent as an adopted sheet; `3` fetches it, sent as `<style>`. Use `1` for CSS behind a VPN or login. Cross-origin CSS can only be read or fetched with CORS. |
 | `css` | `{ scanInMemoryCSS: false, checkCssInterval: 200, checkLimit? }` | CSS-in-JS (emotion, MUI): turn on `scanInMemoryCSS` if styles are missing in replays. |
 | `autoResetOnWindowOpen` | `false` | Start a new session in tabs opened with `window.open`. |
 | `analytics` | `{ active: false, ingestPoint? }` | Enable `track()` / `analytics`. |
@@ -213,8 +214,8 @@ network?: {
   capturePayload?: boolean          // false — record request/response bodies (sanitize first!)
   ignoreHeaders?: string[] | boolean // ['cookie','set-cookie','authorization']; false = keep all
   sanitizer?: (data: RequestResponseData) => RequestResponseData | null // edit, or null to drop the request
-  sessionTokenHeader?: string | boolean // false; true = 'X-OpenReplay-SessionToken' on outgoing requests
-  tokenUrlMatcher?: (url: string) => boolean // limit sessionTokenHeader to matching URLs
+  sessionTokenHeader?: string | boolean // false; true = 'X-OpenReplay-SessionToken' on outgoing requests (cross-origin APIs must allow it: CORS preflight)
+  tokenUrlMatcher?: (url: string) => boolean // gets the absolute request URL; limits sessionTokenHeader to matches (default: every request)
   captureInIframes?: boolean        // true
   axiosInstances?: AxiosInstance[]  // only for axios instances with a custom adapter
   disabled?: boolean                // turn network capture off
