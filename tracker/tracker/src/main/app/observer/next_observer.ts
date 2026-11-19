@@ -1040,6 +1040,8 @@ export default class NextObserver
       this.app.send(SetCSSDataURLBased(id, data, this.app.getBaseHref()))
       return
     }
+    // textarea text is its default value, replayed with input masking by the input module
+    if (parentElement && hasTag(parentElement, 'textarea')) return
     this.app.send(SetNodeData(id, this.app.sanitizer.sanitize(id, data)))
   }
 

@@ -1,5 +1,6 @@
 ## 20.0.0
 
+- privacy: text typed into a React-controlled `<textarea value>` and text a `<textarea>` starts with (a saved draft) were sent unmasked as page text, since React rewrites the textarea's text node on every keystroke; a textarea's text node is no longer recorded, its value is replayed with input masking like `<input>`
 - `docs/usage.md` and `docs/api.md` ship with the package (short setup guide and API reference for AI agents), exported as `@openreplay/tracker/docs/*`
 - crossdomain: the parent page answers child iframes only with `crossdomain.enabled` (as documented); new `crossdomain.childDomains` limits which child origins can join; replies go to the child's origin instead of `*`; a child accepts commands only from its parent window, and only from `parentDomain` when set
 - `app.getSanitizedTitle()`: the page title as recorded (`privateMode` / `urls.titleSanitizer` applied)

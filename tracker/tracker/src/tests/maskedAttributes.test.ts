@@ -211,6 +211,17 @@ describe.each(['default', 'next'] as const)('%s observer: attributes of masked c
     expect(textData()).toHaveLength(count + 1)
     expect(allData()).not.toContain('5555')
   })
+
+  test('textarea text (initial, or rewritten by React on each keystroke) is not sent', async () => {
+    setup(core, '<p>Apply now</p><textarea id="t">draft secret</textarea>')
+    const ta = $('#t') as HTMLTextAreaElement
+    ta.defaultValue = 'typed secret'
+    await flush()
+    ;(ta.firstChild as Text).data = 'typed secret 2'
+    await flush()
+    expect(sent.filter((m) => m[0] === Type.CreateTextNode).length).toBeGreaterThan(1)
+    expect(textData()).toEqual(['Apply now'])
+  })
 })
 
 describe('next observer: privateMode explicit masks', () => {
