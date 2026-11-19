@@ -5,6 +5,8 @@ import { X } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { layerRoot } from './layer-root';
+
 export interface ModalProps {
   title: ReactNode;
   open: boolean;
@@ -40,7 +42,7 @@ export function Modal({
   const { t } = useTranslation();
   return (
     <D.Root open={open} onOpenChange={(o) => !o && onCancel()}>
-      <D.Portal>
+      <D.Portal container={layerRoot()}>
         <D.Overlay className="m-scrim fixed inset-0 z-[var(--m-z-overlay)] bg-[var(--m-scrim)]" />
         <D.Content
           style={{ width, maxWidth: 'calc(100vw - 2rem)' }}

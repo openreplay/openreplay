@@ -2,6 +2,8 @@ import { cn } from '@/lib/utils';
 import * as D from '@radix-ui/react-dialog';
 import type { ReactNode } from 'react';
 
+import { layerRoot } from './layer-root';
+
 export interface DrawerProps {
   open: boolean;
   onClose: () => void;
@@ -35,7 +37,7 @@ export function Drawer({
 }: DrawerProps) {
   return (
     <D.Root open={open} onOpenChange={(o) => !o && onClose()}>
-      <D.Portal>
+      <D.Portal container={layerRoot()}>
         <D.Overlay
           data-slot="drawer-mask"
           className="m-scrim fixed inset-0 z-[var(--m-z-overlay)] bg-[var(--m-scrim)]"
