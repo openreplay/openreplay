@@ -3025,5 +3025,13 @@
   "Predefined": "Предустановленные",
   "Every filter applies: what shows matches all of them": "Применяются все фильтры: показанное соответствует каждому из них",
   "Filters combined with and, fixed": "Фильтры объединяются через «и», нельзя изменить",
-  "Filter by name, type or method": "Фильтровать по имени, типу или методу"
+  "Filter by name, type or method": "Фильтровать по имени, типу или методу",
+  "greater than": "больше",
+  "less than": "меньше",
+  "greater than or equal to": "больше или равно",
+  "less than or equal to": "меньше или равно",
+  "contains": "содержит",
+  "does not contain": "не содержит",
+  "starts with": "начинается с",
+  "ends with": "заканчивается на"
 }

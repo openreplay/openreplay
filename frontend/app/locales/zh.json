@@ -2848,5 +2848,13 @@
   "Predefined": "预定义",
   "Every filter applies: what shows matches all of them": "所有筛选条件同时生效：显示的内容满足全部条件",
   "Filters combined with and, fixed": "筛选条件以“且”组合，固定",
-  "Filter by name, type or method": "按名称、类型或方法筛选"
+  "Filter by name, type or method": "按名称、类型或方法筛选",
+  "greater than": "大于",
+  "less than": "小于",
+  "greater than or equal to": "大于等于",
+  "less than or equal to": "小于等于",
+  "contains": "包含",
+  "does not contain": "不包含",
+  "starts with": "开头为",
+  "ends with": "结尾为"
 }

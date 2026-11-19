@@ -2966,5 +2966,13 @@
   "Predefined": "Prédéfinies",
   "Every filter applies: what shows matches all of them": "Tous les filtres s’appliquent : ce qui s’affiche les respecte tous",
   "Filters combined with and, fixed": "Filtres combinés avec « et », fixe",
-  "Filter by name, type or method": "Filtrer par nom, type ou méthode"
+  "Filter by name, type or method": "Filtrer par nom, type ou méthode",
+  "greater than": "supérieur à",
+  "less than": "inférieur à",
+  "greater than or equal to": "supérieur ou égal à",
+  "less than or equal to": "inférieur ou égal à",
+  "contains": "contient",
+  "does not contain": "ne contient pas",
+  "starts with": "commence par",
+  "ends with": "se termine par"
 }

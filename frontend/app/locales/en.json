@@ -2907,5 +2907,13 @@
   "Predefined": "Predefined",
   "Every filter applies: what shows matches all of them": "Every filter applies: what shows matches all of them",
   "Filters combined with and, fixed": "Filters combined with and, fixed",
-  "Filter by name, type or method": "Filter by name, type or method"
+  "Filter by name, type or method": "Filter by name, type or method",
+  "greater than": "greater than",
+  "less than": "less than",
+  "greater than or equal to": "greater than or equal to",
+  "less than or equal to": "less than or equal to",
+  "contains": "contains",
+  "does not contain": "does not contain",
+  "starts with": "starts with",
+  "ends with": "ends with"
 }

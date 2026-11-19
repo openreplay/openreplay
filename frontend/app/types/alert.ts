@@ -1,9 +1,11 @@
-import { notEmptyString, validateNumber } from 'App/validate';
-import {
-  alertMetrics as metrics,
-  alertConditions as conditions,
-} from 'App/constants';
 import { makeAutoObservable } from 'mobx';
+
+import {
+  alertConditions as conditions,
+  alertMetrics as metrics,
+} from 'App/constants';
+import { isStringCondition } from 'App/constants/alertConditions';
+import { notEmptyString, validateNumber } from 'App/validate';
 
 const metricsMap = {};
 const conditionsMap = {};
@@ -181,10 +183,12 @@ export default class Alert {
     return (
       notEmptyString(this.name) &&
       this.query.left &&
-      this.query.right &&
-      validateNumber(this.query.right) &&
-      parseInt(this.query.right, 10) > 0 &&
       this.query.operator &&
+      (isStringCondition(this.query.operator)
+        ? notEmptyString(this.query.right)
+        : this.query.right &&
+          validateNumber(this.query.right) &&
+          parseInt(this.query.right, 10) > 0) &&
       (this.slack ? this.slackInput.length > 0 : true) &&
       (this.email ? this.emailInput.length > 0 : true) &&
       (this.msteams ? this.msteamsInput.length > 0 : true) &&

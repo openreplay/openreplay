@@ -2966,5 +2966,13 @@
   "Predefined": "Predefinidas",
   "Every filter applies: what shows matches all of them": "Se aplican todos los filtros: lo que se muestra cumple con todos",
   "Filters combined with and, fixed": "Filtros combinados con «y», fijo",
-  "Filter by name, type or method": "Filtrar por nombre, tipo o método"
+  "Filter by name, type or method": "Filtrar por nombre, tipo o método",
+  "greater than": "mayor que",
+  "less than": "menor que",
+  "greater than or equal to": "mayor o igual que",
+  "less than or equal to": "menor o igual que",
+  "contains": "contiene",
+  "does not contain": "no contiene",
+  "starts with": "empieza por",
+  "ends with": "termina en"
 }

@@ -9,7 +9,11 @@ import { observer } from 'mobx-react-lite';
 import React, { type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { alertConditions } from 'App/constants';
+import {
+  type ConditionKind,
+  conditionsFor,
+  isStringCondition,
+} from 'App/constants/alertConditions';
 import { SLACK, TEAMS, WEBHOOK } from 'App/constants/schedule';
 import { useStore } from 'App/mstore';
 import type { TriggerOption } from 'App/mstore/alertsStore';
@@ -34,10 +38,26 @@ function AlertFields({
   const { webhooks } = settingsStore;
   const change = instance.detectionMethod === 'change';
   const metric = triggerOptions.find((o) => o.value === instance.query.left);
+  // a change is a number whatever the metric; before the options load, an
+  // edited alert's operator tells its kind
+  const kindOf = (method: string, m?: TriggerOption): ConditionKind => {
+    if (method === 'change') return 'number';
+    if (m) return m.kind;
+    return isStringCondition(instance.query.operator) ? 'string' : 'number';
+  };
+  const kind = kindOf(instance.detectionMethod, metric);
+  const isString = kind === 'string';
   const metricUnit = metric?.unit === 'count' ? '' : (metric?.unit ?? '');
-  const unit = change && instance.change === 'percent' ? '%' : metricUnit;
+  const unit = isString
+    ? ''
+    : change && instance.change === 'percent'
+      ? '%'
+      : metricUnit;
   const setQuery = (patch: Record<string, unknown>) =>
     edit({ query: { ...instance.query, ...patch } } as any);
+  // operator and value of the other kind make no sense, so they start over
+  const resetFor = (next: ConditionKind) =>
+    next === kind ? {} : { operator: '', right: '' };
 
   const channels = (type: string) =>
     webhooks
@@ -90,7 +110,11 @@ function AlertFields({
       <Step n={1 + off} title={t('Alert based on')}>
         <Segmented<'threshold' | 'change'>
           value={instance.detectionMethod as 'threshold' | 'change'}
-          onChange={(v) => edit({ detectionMethod: v })}
+          onChange={(v) => {
+            const reset = resetFor(kindOf(v, metric));
+            edit({ detectionMethod: v });
+            if ('operator' in reset) setQuery(reset);
+          }}
           ariaLabel={t('Detection method')}
           options={[
             { value: 'threshold', label: t('Threshold') },
@@ -131,16 +155,21 @@ function AlertFields({
             <MetricPicker
               options={triggerOptions}
               value={instance.query.left ?? undefined}
-              onChange={(o) => setQuery({ left: o.value })}
+              onChange={(o) =>
+                setQuery({
+                  left: o.value,
+                  ...resetFor(kindOf(instance.detectionMethod, o)),
+                })
+              }
             />
           </span>
-          <span className="m-alertf__word">{t('is')}</span>
+          {isString ? null : <span className="m-alertf__word">{t('is')}</span>}
           <SimpleSelect<string>
             placeholder={t('Select condition')}
             ariaLabel={t('Condition')}
             value={instance.query.operator || undefined}
             onChange={(v) => v && setQuery({ operator: v })}
-            options={alertConditions.map((c) => ({
+            options={conditionsFor(kind).map((c) => ({
               value: c.value,
               label: t(c.label),
             }))}
@@ -150,7 +179,7 @@ function AlertFields({
               className={unit ? 'pr-8' : undefined}
               placeholder={t('Specify value')}
               aria-label={t('Threshold value')}
-              inputMode="decimal"
+              inputMode={isString ? 'text' : 'decimal'}
               value={instance.query.right ?? ''}
               onChange={(e) => setQuery({ right: e.target.value })}
             />

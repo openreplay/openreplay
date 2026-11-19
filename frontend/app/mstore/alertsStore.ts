@@ -1,7 +1,9 @@
 import Alert, { IAlert } from 'Types/alert';
 import { action, makeAutoObservable, runInAction } from 'mobx';
 
+import type { ConditionKind } from 'App/constants/alertConditions';
 import { alertsService } from 'App/services';
+import { normalizeDataType } from 'App/utils';
 
 export type TriggerGroup = 'cards' | 'predefined' | 'events' | 'users';
 
@@ -12,7 +14,13 @@ export interface TriggerOption {
   group: TriggerGroup;
   /** a property OpenReplay captures, not one the project sends */
   autoCaptured?: boolean;
+  /** which operators apply: cards and predefined metrics are numbers */
+  kind: ConditionKind;
 }
+
+const NUMERIC = new Set(['number', 'date', 'timestamp']);
+const kindOf = (dataType?: string): ConditionKind =>
+  !dataType || NUMERIC.has(normalizeDataType(dataType)) ? 'number' : 'string';
 
 const groupOf = (o: {
   value: string | number;
@@ -141,6 +149,7 @@ export default class AlertsStore {
           autoCaptured:
             (group === 'events' || group === 'users') &&
             !String(o.value).startsWith('properties.'),
+          kind: kindOf(o.dataType),
         };
       });
     } catch (e) {

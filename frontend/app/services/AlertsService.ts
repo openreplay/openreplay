@@ -30,6 +30,7 @@ export default class AlertsService {
       unit?: string;
       source?: string;
       predefined?: boolean;
+      dataType?: string;
     }[]
   > {
     return this.client
