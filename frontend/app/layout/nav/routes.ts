@@ -31,6 +31,7 @@ export function menuRoutes(
     [MENU.SEGMENTS]: () => site(routes.dataManagement.segments()),
     [MENU.TAGS]: () => site(routes.dataManagement.tags()),
     [MENU.LOGS]: () => site(routes.logs()),
+    [MENU.OTEL_METRICS]: () => site(routes.otelMetrics()),
     [PREFERENCES_MENU.ACCOUNT]: () => client(CLIENT_TABS.PROFILE),
     [PREFERENCES_MENU.SESSION_SETTINGS]: () =>
       client(CLIENT_TABS.SESSION_SETTINGS),

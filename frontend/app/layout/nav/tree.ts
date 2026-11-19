@@ -115,6 +115,10 @@ export function navTree(t: TFunction, f: NavFlags): readonly NavGroup[] {
           badge: t('Soon'),
           disabled: true,
         },
+        {
+          ...leaf('observability', MENU.OTEL_METRICS, t('Metrics')),
+          badge: t('Soon'),
+        },
       ],
     },
     !menuHidden.dataAnalytics &&

@@ -11,6 +11,7 @@ export type Area =
   | 'Product Analytics'
   | 'Data Management'
   | 'Preferences'
+  | 'Observability'
   | 'Everywhere';
 
 export interface EmptyEntry {
@@ -595,6 +596,18 @@ export const EMPTY_STATES: EmptyEntry[] = [
     title: 'Nothing is described as critical yet',
     size: 'page',
     subject: 'critical',
+  },
+
+  {
+    id: 'metrics-soon',
+    area: 'Observability',
+    where: 'Metrics, before it ships',
+    title: 'Metrics are on the way',
+    size: 'page',
+    subject: 'metrics',
+    pose: 'work',
+    side: 'right',
+    prop: 'wrench',
   },
 
   {

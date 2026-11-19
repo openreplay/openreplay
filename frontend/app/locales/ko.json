@@ -3048,5 +3048,8 @@
   "Log line at {{at}}: {{label}}": "{{at}}의 로그 줄: {{label}}",
   "at {{at}}": "{{at}}",
   "Play from {{at}}": "{{at}}부터 재생",
-  "Open in Logs": "로그에서 열기"
+  "Open in Logs": "로그에서 열기",
+  "Metrics are on the way": "메트릭이 곧 제공됩니다",
+  "CPU, memory and request rates as charts, on the same window and filters as Logs. Until then, the logs show what your services did.": "CPU, 메모리, 요청 비율을 Logs와 같은 기간과 필터로 차트에 표시합니다. 그때까지는 로그에서 서비스가 한 일을 확인할 수 있습니다.",
+  "Open Logs": "Logs 열기"
 }

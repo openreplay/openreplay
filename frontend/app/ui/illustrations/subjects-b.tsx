@@ -132,6 +132,138 @@ export const SUBJECTS_B = {
       ];
     },
   },
+  metrics: {
+    label: 'Metrics',
+    prop: 'wrench',
+    draw: () => {
+      const card = rrect(6, 10, 84, 56, 4);
+      const cx = 28;
+      const cy = 50;
+      const arc: P[] = Array.from({ length: 13 }, (_, i) => {
+        const a = Math.PI + (i / 12) * Math.PI;
+        return [cx + 15 * Math.cos(a), cy + 15 * Math.sin(a)] as P;
+      });
+      const tick = (deg: number): P[] => {
+        const a = (deg * Math.PI) / 180;
+        return [
+          [cx + 11 * Math.cos(a), cy + 11 * Math.sin(a)],
+          [cx + 13.5 * Math.cos(a), cy + 13.5 * Math.sin(a)],
+        ];
+      };
+      const needle: P[] = [
+        [cx, cy],
+        [cx + 8, cy - 9.5],
+      ];
+      const bars: [number, number][] = [
+        [54, 56],
+        [60, 52],
+        [66, 58],
+        [72, 50],
+        [78, 54],
+      ];
+      return [
+        {
+          fill: (
+            <>
+              {shadow(48, 42)}
+              <path d={poly(card)} className={PAPER} />
+              {bars.map(([x, y]) => (
+                <path
+                  key={x}
+                  d={poly(rrect(x, y, 4, 60 - y, 1))}
+                  className="m-ill__fill-side"
+                />
+              ))}
+            </>
+          ),
+          line: (r) => (
+            <>
+              <path d={inked(card, true, r, 0.55)} />
+              <path
+                d={inked(
+                  [
+                    [14, 19],
+                    [40, 19],
+                  ],
+                  false,
+                  r,
+                  0.35,
+                )}
+                className="m-ill__soft"
+              />
+              <path d={inked(arc, false, r, 0.35)} />
+              {[200, 240, 270, 300, 340].map((d) => (
+                <path
+                  key={d}
+                  d={inked(tick(d), false, r, 0.15)}
+                  className="m-ill__hair"
+                />
+              ))}
+              <path
+                d={inked(
+                  [
+                    [48, 18],
+                    [48, 62],
+                  ],
+                  false,
+                  r,
+                  0.3,
+                )}
+                className="m-ill__soft m-ill__dash"
+              />
+              <path
+                d={inked(
+                  [
+                    [54, 36],
+                    [60, 30],
+                    [65, 33],
+                    [71, 24],
+                    [76, 28],
+                    [83, 22],
+                  ],
+                  false,
+                  r,
+                  0.4,
+                )}
+              />
+              <path
+                d={inked(
+                  [
+                    [54, 60],
+                    [84, 60],
+                  ],
+                  false,
+                  r,
+                  0.35,
+                )}
+                className="m-ill__soft"
+              />
+              {bars.map(([x, y]) => (
+                <path
+                  key={x}
+                  d={inked(rrect(x, y, 4, 60 - y, 1), true, r, 0.2)}
+                />
+              ))}
+            </>
+          ),
+        },
+        {
+          fill: <path d={poly(disc(cx, cy, 3))} className={ACCENT} />,
+          line: (r) => (
+            <>
+              <path
+                d={inked(needle, false, r, 0.2)}
+                className="m-ill__accent m-ill__thick"
+              />
+              <path d={ring(cx, cy, 3, r, 0.15)} className="m-ill__hair" />
+            </>
+          ),
+          move: 'swing',
+          origin: [cx, cy],
+        },
+      ];
+    },
+  },
   alerts: {
     label: 'Alerts',
     prop: 'bell',

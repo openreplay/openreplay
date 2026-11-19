@@ -3115,5 +3115,8 @@
   "at {{at}}": "at {{at}}",
   "Play from {{at}}": "Play from {{at}}",
   "Open in Logs": "Open in Logs",
-  "{{name}}: {{n}} lines, {{pct}}%._one": "{{name}}: {{n}} line, {{pct}}%."
+  "{{name}}: {{n}} lines, {{pct}}%._one": "{{name}}: {{n}} line, {{pct}}%.",
+  "Metrics are on the way": "Metrics are on the way",
+  "CPU, memory and request rates as charts, on the same window and filters as Logs. Until then, the logs show what your services did.": "CPU, memory and request rates as charts, on the same window and filters as Logs. Until then, the logs show what your services did.",
+  "Open Logs": "Open Logs"
 }
