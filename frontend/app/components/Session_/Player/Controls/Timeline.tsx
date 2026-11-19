@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next';
 
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { useStore } from 'App/mstore';
-import { signalService } from 'App/services';
 import { debounce } from 'App/utils';
 import { getLocalHourFormat } from 'App/utils/intlUtils';
 import TimelineTracker from 'Components/Session_/Player/Controls/TimelineTracker';
@@ -39,7 +38,6 @@ function Timeline({
   const exportEventsEnabled = uiPlayerStore.exportEventsSelection.enabled;
   const { ready, endTime, devtoolsLoading, domLoading, skipIntervals } =
     store.get();
-  const sessionId = sessionStore.current.sessionId;
   const loadingEvents = !sessionStore.current.addedEvents;
 
   const progressRef = useRef<HTMLDivElement>(null);
@@ -57,7 +55,6 @@ function Timeline({
     const time = Math.round((pct / 100) * endTime);
     player.jump(time);
     hideTimeTooltip();
-    signalService.send({ source: 'jump', value: time }, sessionId);
   };
 
   const showTimeTooltip = (e: React.MouseEvent<HTMLDivElement>) => {

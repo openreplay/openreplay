@@ -15,7 +15,6 @@ import { useStore } from 'App/mstore';
 import { formatClock } from 'App/player-ui/clock';
 import { CLIENT_TABS, client as clientRoute } from 'App/routes';
 import { useNavigate } from 'App/routing';
-import { signalService } from 'App/services';
 
 import './share-dialog.css';
 
@@ -84,7 +83,6 @@ function useShare(time: number | undefined, onDone: () => void) {
         data: { comment },
       });
       toast.success(t('Sent to {{name}}.', { name }));
-      signalService.send({ source: 'share', value: target }, sessionId);
       onDone();
     } catch {
       toast.error(t('Failed to send to {{name}}.', { name }));
