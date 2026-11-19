@@ -1,6 +1,7 @@
 ## 19.1.3
 
 - `docs/usage.md` and `docs/api.md` ship with the package (short setup guide and API reference for AI agents), exported as `@openreplay/tracker/docs/*`
+- `network` option accepts a partial object in TypeScript (`network: { capturePayload: true }` failed to compile: the app-level type required every field)
 
 ## 19.1.2
 

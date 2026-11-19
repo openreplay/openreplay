@@ -190,7 +190,7 @@ type AppOptions = {
     childDomains?: string[]
   }
 
-  network?: NetworkOptions
+  network?: Partial<NetworkOptions>
   /**
    * use this flag to force angular detection to be offline
    *
@@ -289,7 +289,7 @@ export default class App {
   private readonly stopCallbacks: Array<() => any> = []
   private readonly commitCallbacks: Array<CommitCallback> = []
   public readonly options: Options
-  public readonly networkOptions?: NetworkOptions
+  public readonly networkOptions?: Partial<NetworkOptions>
   private readonly revID: string
   private activityState: ActivityState = ActivityState.NotActive
   private readonly version = 'TRACKER_VERSION' // TODO: version compatability check inside each plugin.
