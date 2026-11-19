@@ -1,6 +1,7 @@
 import { IconButton } from '@/ui/actions/IconButton';
 import { Button } from '@/ui/actions/button';
 import { useViewport } from '@/ui/layout/use-viewport';
+import { layerRoot } from '@/ui/overlays/layer-root';
 import * as D from '@radix-ui/react-dialog';
 import { ListFilter, X } from 'lucide-react';
 import {
@@ -196,7 +197,7 @@ function SheetFrame({
   const { t } = useTranslation();
   return (
     <D.Root open={open} onOpenChange={(o) => !o && onClose()}>
-      <D.Portal>
+      <D.Portal container={layerRoot()}>
         <D.Overlay className="m-scrim m-pf__scrim" onClick={onClose} />
         {/* the sheet takes the focus, not its first control: a focused Close
             opened its tooltip the moment the sheet arrived */}
