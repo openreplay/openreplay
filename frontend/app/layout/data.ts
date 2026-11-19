@@ -76,6 +76,7 @@ export const enum MENU {
   ISSUES = 'issues',
   LOGS = 'logs',
   TRACES = 'traces',
+  OTEL_METRICS = 'otel-metrics',
 }
 
 export const categories: (t: TFunction) => Category[] = (t) => [

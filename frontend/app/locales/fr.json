@@ -3169,5 +3169,8 @@
   "at {{at}}": "à {{at}}",
   "Play from {{at}}": "Lire à partir de {{at}}",
   "Open in Logs": "Ouvrir dans Logs",
-  "{{name}}: {{n}} lines, {{pct}}%._one": "{{name}} : {{n}} ligne, {{pct}} %."
+  "{{name}}: {{n}} lines, {{pct}}%._one": "{{name}} : {{n}} ligne, {{pct}} %.",
+  "Metrics are on the way": "Les métriques arrivent bientôt",
+  "CPU, memory and request rates as charts, on the same window and filters as Logs. Until then, the logs show what your services did.": "Le CPU, la mémoire et le débit des requêtes en graphiques, sur la même période et avec les mêmes filtres que Logs. En attendant, les logs montrent ce que vos services ont fait.",
+  "Open Logs": "Ouvrir Logs"
 }

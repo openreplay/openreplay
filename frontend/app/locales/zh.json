@@ -3043,5 +3043,8 @@
   "Log line at {{at}}: {{label}}": "{{at}} 的日志：{{label}}",
   "at {{at}}": "于 {{at}}",
   "Play from {{at}}": "从 {{at}} 播放",
-  "Open in Logs": "在日志中打开"
+  "Open in Logs": "在日志中打开",
+  "Metrics are on the way": "指标即将推出",
+  "CPU, memory and request rates as charts, on the same window and filters as Logs. Until then, the logs show what your services did.": "以图表展示 CPU、内存和请求速率，与 Logs 使用相同的时间范围和筛选条件。在此之前，日志会显示您的服务做了什么。",
+  "Open Logs": "打开 Logs"
 }

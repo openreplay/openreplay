@@ -3241,5 +3241,8 @@
   "Log line at {{at}}: {{label}}": "Рядок логу о {{at}}: {{label}}",
   "at {{at}}": "о {{at}}",
   "Play from {{at}}": "Відтворити з {{at}}",
-  "Open in Logs": "Відкрити в логах"
+  "Open in Logs": "Відкрити в логах",
+  "Metrics are on the way": "Метрики незабаром з’являться",
+  "CPU, memory and request rates as charts, on the same window and filters as Logs. Until then, the logs show what your services did.": "CPU, пам’ять і частота запитів у вигляді графіків, з тим самим періодом і фільтрами, що й у Logs. А поки логи показують, що робили ваші сервіси.",
+  "Open Logs": "Відкрити Logs"
 }

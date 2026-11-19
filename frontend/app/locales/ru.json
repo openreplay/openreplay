@@ -3241,5 +3241,8 @@
   "Log line at {{at}}: {{label}}": "Строка лога в {{at}}: {{label}}",
   "at {{at}}": "в {{at}}",
   "Play from {{at}}": "Воспроизвести с {{at}}",
-  "Open in Logs": "Открыть в логах"
+  "Open in Logs": "Открыть в логах",
+  "Metrics are on the way": "Метрики скоро появятся",
+  "CPU, memory and request rates as charts, on the same window and filters as Logs. Until then, the logs show what your services did.": "CPU, память и частота запросов в виде графиков, с тем же периодом и фильтрами, что и в Logs. А пока логи показывают, что делали ваши сервисы.",
+  "Open Logs": "Открыть Logs"
 }
