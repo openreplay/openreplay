@@ -3043,5 +3043,13 @@
   "Filters combined with and, fixed": "Фільтри поєднуються через «і», не змінюється",
   "Filter by name, type or method": "Фільтрувати по імені, типу або методу",
   "Set it up with one command": "Set it up with one command",
-  "Run it in your app folder: it finds your framework, installs the packages and adds the tracker, showing every change first. Or follow the steps below.": "Run it in your app folder: it finds your framework, installs the packages and adds the tracker, showing every change first. Or follow the steps below."
+  "Run it in your app folder: it finds your framework, installs the packages and adds the tracker, showing every change first. Or follow the steps below.": "Run it in your app folder: it finds your framework, installs the packages and adds the tracker, showing every change first. Or follow the steps below.",
+  "greater than": "більше",
+  "less than": "менше",
+  "greater than or equal to": "більше або дорівнює",
+  "less than or equal to": "менше або дорівнює",
+  "contains": "містить",
+  "does not contain": "не містить",
+  "starts with": "починається з",
+  "ends with": "закінчується на"
 }

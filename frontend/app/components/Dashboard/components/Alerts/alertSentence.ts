@@ -1,5 +1,9 @@
 import type Alert from 'Types/alert';
 
+import {
+  isStringCondition,
+  stringConditions,
+} from 'App/constants/alertConditions';
 import { numberWithCommas } from 'App/utils';
 
 export const getThreshold = (threshold: number) => {
@@ -53,7 +57,11 @@ export function alertSentence(
   trigger?: string,
 ): string {
   const unit = alert.change === 'percent' ? '%' : (alert.metric?.unit ?? '');
-  const base = `When the ${alert.detectionMethod} of ${trigger ?? alert.seriesName ?? alert.query.left} is ${alert.query.operator}${numberWithCommas(alert.query.right)}${unit} over the past ${getThreshold(alert.currentPeriod)}`;
+  const { operator, right } = alert.query;
+  const condition = isStringCondition(operator)
+    ? `${stringConditions.find((c) => c.value === operator)!.label} "${right}"`
+    : `is ${operator}${numberWithCommas(right)}${unit}`;
+  const base = `When the ${alert.detectionMethod} of ${trigger ?? alert.seriesName ?? alert.query.left} ${condition} over the past ${getThreshold(alert.currentPeriod)}`;
   const prev =
     alert.detectionMethod === 'change'
       ? ` compared to the previous ${getThreshold(alert.previousPeriod)}`

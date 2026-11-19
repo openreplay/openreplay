@@ -2984,5 +2984,13 @@
   "Filters combined with and, fixed": "Filtros combinados con «y», fijo",
   "Filter by name, type or method": "Filtrar por nombre, tipo o método",
   "Set it up with one command": "Set it up with one command",
-  "Run it in your app folder: it finds your framework, installs the packages and adds the tracker, showing every change first. Or follow the steps below.": "Run it in your app folder: it finds your framework, installs the packages and adds the tracker, showing every change first. Or follow the steps below."
+  "Run it in your app folder: it finds your framework, installs the packages and adds the tracker, showing every change first. Or follow the steps below.": "Run it in your app folder: it finds your framework, installs the packages and adds the tracker, showing every change first. Or follow the steps below.",
+  "greater than": "mayor que",
+  "less than": "menor que",
+  "greater than or equal to": "mayor o igual que",
+  "less than or equal to": "menor o igual que",
+  "contains": "contiene",
+  "does not contain": "no contiene",
+  "starts with": "empieza por",
+  "ends with": "termina en"
 }

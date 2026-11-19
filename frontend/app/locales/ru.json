@@ -3043,5 +3043,13 @@
   "Filters combined with and, fixed": "Фильтры объединяются через «и», нельзя изменить",
   "Filter by name, type or method": "Фильтровать по имени, типу или методу",
   "Set it up with one command": "Set it up with one command",
-  "Run it in your app folder: it finds your framework, installs the packages and adds the tracker, showing every change first. Or follow the steps below.": "Run it in your app folder: it finds your framework, installs the packages and adds the tracker, showing every change first. Or follow the steps below."
+  "Run it in your app folder: it finds your framework, installs the packages and adds the tracker, showing every change first. Or follow the steps below.": "Run it in your app folder: it finds your framework, installs the packages and adds the tracker, showing every change first. Or follow the steps below.",
+  "greater than": "больше",
+  "less than": "меньше",
+  "greater than or equal to": "больше или равно",
+  "less than or equal to": "меньше или равно",
+  "contains": "содержит",
+  "does not contain": "не содержит",
+  "starts with": "начинается с",
+  "ends with": "заканчивается на"
 }

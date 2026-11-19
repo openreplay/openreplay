@@ -2866,5 +2866,13 @@
   "Filters combined with and, fixed": "필터가 '그리고'로 결합됨, 고정",
   "Filter by name, type or method": "이름, 유형 또는 메서드로 필터링",
   "Set it up with one command": "Set it up with one command",
-  "Run it in your app folder: it finds your framework, installs the packages and adds the tracker, showing every change first. Or follow the steps below.": "Run it in your app folder: it finds your framework, installs the packages and adds the tracker, showing every change first. Or follow the steps below."
+  "Run it in your app folder: it finds your framework, installs the packages and adds the tracker, showing every change first. Or follow the steps below.": "Run it in your app folder: it finds your framework, installs the packages and adds the tracker, showing every change first. Or follow the steps below.",
+  "greater than": "초과",
+  "less than": "미만",
+  "greater than or equal to": "이상",
+  "less than or equal to": "이하",
+  "contains": "포함",
+  "does not contain": "포함하지 않음",
+  "starts with": "다음으로 시작",
+  "ends with": "다음으로 끝남"
 }
