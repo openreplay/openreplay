@@ -348,7 +348,6 @@ function PanelComponent({
             <FeatureSelection
               list={selectedFeatures}
               updateList={setSelectedFeatures}
-              sessionId={sessionId}
               counts={counts}
             />
           )}

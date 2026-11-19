@@ -12,7 +12,6 @@ import { prefetchRoute } from 'App/layout/nav/prefetchRoutes';
 import { useStore } from 'App/mstore';
 import { sessions as sessionsRoute, withSiteId } from 'App/routes';
 import { useNavigate, useParams } from 'App/routing';
-import { signalService } from 'App/services';
 import { wrapPlayerStore } from 'Components/Session/playerStore';
 import RecordingNotices from 'Components/Session_/RecordingNotices';
 
@@ -80,7 +79,6 @@ function WebPlayer(props: any) {
   const switching =
     !!session.sessionId && session.sessionId !== params.sessionId;
   const [fullView, setFullView] = useState(false);
-  const openedAt = React.useRef<number>(null);
 
   React.useEffect(() => {
     if (
@@ -109,16 +107,6 @@ function WebPlayer(props: any) {
       document.removeEventListener('visibilitychange', handleActivation);
     };
   }, []);
-
-  // how long each session was watched, autoplay moves included
-  React.useEffect(() => {
-    openedAt.current = Date.now();
-    const watched = params.sessionId;
-    return () => {
-      const durWatching = Date.now() - (openedAt.current || performance.now());
-      signalService.send({ source: 'duration', value: durWatching }, watched);
-    };
-  }, [params.sessionId]);
 
   React.useEffect(() => {
     uiPlayerStore.setSwitchingSession(switching);
@@ -166,12 +154,6 @@ function WebPlayer(props: any) {
     if (freeze) {
       void WebPlayerInst.freeze();
     }
-    signalService.send(
-      {
-        source: 'replay',
-      },
-      session.sessionId,
-    );
   }, [session.sessionId, params.sessionId]);
 
   const domFiles = session?.domURL?.length ?? 0;

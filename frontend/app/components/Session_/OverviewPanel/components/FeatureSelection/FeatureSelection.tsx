@@ -3,8 +3,6 @@ import { TFunction } from 'i18next';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { signalService } from 'App/services';
-
 const NETWORK = 'NETWORK';
 const ERRORS = 'ERRORS';
 const EVENTS = 'EVENTS';
@@ -24,7 +22,6 @@ export const HELP_MESSAGE: any = (t: TFunction) => ({
 interface Props {
   list: any[];
   updateList: any;
-  sessionId: string;
   counts?: Record<string, number>;
 }
 
@@ -37,7 +34,7 @@ const sortPriority = {
 };
 
 function FeatureSelection(props: Props) {
-  const { sessionId, counts } = props;
+  const { counts } = props;
   const { t } = useTranslation();
   const labels: Record<string, string> = {
     [PERFORMANCE]: t('Performance'),
@@ -56,10 +53,6 @@ function FeatureSelection(props: Props) {
           [...props.list, feat].sort(
             (a, b) => sortPriority[a] - sortPriority[b],
           ),
-    );
-    void signalService.send(
-      { source: `xray_${feat.toLowerCase()}`, value: !on },
-      sessionId,
     );
   };
 

@@ -18,23 +18,10 @@ import {
   STACKEVENTS,
   STORAGE,
 } from 'App/mstore/uiPlayerStore';
-import { signalService } from 'App/services';
 import DropdownAudioPlayer from 'Components/Session/Player/ReplayPlayer/AudioPlayer';
 import SummaryButton from 'Components/Session_/Player/Controls/SummaryButton';
 
 import { DevToolsFrame } from './DevToolsFrame';
-
-const TRACE: Record<number, string> = {
-  [OVERVIEW]: 'xray',
-  [CONSOLE]: 'console',
-  [NETWORK]: 'network',
-  [PERFORMANCE]: 'performance',
-  [GRAPHQL]: 'graphql',
-  [STORAGE]: 'storage',
-  [STACKEVENTS]: 'stack_events',
-  [PROFILER]: 'profiler',
-  [BACKENDLOGS]: 'backend_logs',
-};
 
 const storageName = (type: StorageType) =>
   ({
@@ -85,10 +72,6 @@ function DevTools({ disabled, height, onHeight, children }: Props) {
   const toggle = (block: number) => {
     player.toggleInspectorMode(false);
     toggleBottomBlock(block);
-    signalService.send(
-      { source: TRACE[block] ?? 'unknown' },
-      sessionStore.current.sessionId,
-    );
   };
 
   const tabs: {
