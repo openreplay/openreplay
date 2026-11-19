@@ -3041,5 +3041,7 @@
   "Predefined": "Предустановленные",
   "Every filter applies: what shows matches all of them": "Применяются все фильтры: показанное соответствует каждому из них",
   "Filters combined with and, fixed": "Фильтры объединяются через «и», нельзя изменить",
-  "Filter by name, type or method": "Фильтровать по имени, типу или методу"
+  "Filter by name, type or method": "Фильтровать по имени, типу или методу",
+  "Set it up with one command": "Set it up with one command",
+  "Run it in your app folder: it finds your framework, installs the packages and adds the tracker, showing every change first. Or follow the steps below.": "Run it in your app folder: it finds your framework, installs the packages and adds the tracker, showing every change first. Or follow the steps below."
 }

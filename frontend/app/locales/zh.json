@@ -2864,5 +2864,7 @@
   "Predefined": "预定义",
   "Every filter applies: what shows matches all of them": "所有筛选条件同时生效：显示的内容满足全部条件",
   "Filters combined with and, fixed": "筛选条件以“且”组合，固定",
-  "Filter by name, type or method": "按名称、类型或方法筛选"
+  "Filter by name, type or method": "按名称、类型或方法筛选",
+  "Set it up with one command": "Set it up with one command",
+  "Run it in your app folder: it finds your framework, installs the packages and adds the tracker, showing every change first. Or follow the steps below.": "Run it in your app folder: it finds your framework, installs the packages and adds the tracker, showing every change first. Or follow the steps below."
 }

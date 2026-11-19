@@ -2982,5 +2982,7 @@
   "Predefined": "Prédéfinies",
   "Every filter applies: what shows matches all of them": "Tous les filtres s’appliquent : ce qui s’affiche les respecte tous",
   "Filters combined with and, fixed": "Filtres combinés avec « et », fixe",
-  "Filter by name, type or method": "Filtrer par nom, type ou méthode"
+  "Filter by name, type or method": "Filtrer par nom, type ou méthode",
+  "Set it up with one command": "Set it up with one command",
+  "Run it in your app folder: it finds your framework, installs the packages and adds the tracker, showing every change first. Or follow the steps below.": "Run it in your app folder: it finds your framework, installs the packages and adds the tracker, showing every change first. Or follow the steps below."
 }

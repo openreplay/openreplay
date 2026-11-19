@@ -45,6 +45,23 @@ const lastMajor = ENV.TRACKER_MAJOR_VERSION
     ? ENV.TRACKER_VERSION.split('.')[0]
     : null;
 
+/**
+ * `npx @openreplay/wizard`, prefilled so it skips the key and hosting questions.
+ * Assist isn't passed: `--assist` would also skip the wizard's plugin question,
+ * which is where it offers the state plugins.
+ */
+export function wizardCommand(
+  projectKey: string,
+  method: InstallMethod,
+): string {
+  const args = [
+    `--key=${projectKey}`,
+    isSaas() ? '--cloud' : `--host=https://${window.location.hostname}`,
+  ];
+  if (method === 'script') args.push('--script');
+  return `npx @openreplay/wizard ${args.join(' ')}`;
+}
+
 export const ASSIST_INSTALL = 'npm i @openreplay/tracker-assist';
 export const ASSIST_USE = 'tracker.use(trackerAssist(options));';
 
