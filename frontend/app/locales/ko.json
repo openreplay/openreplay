@@ -2874,5 +2874,7 @@
   "contains": "포함",
   "does not contain": "포함하지 않음",
   "starts with": "다음으로 시작",
-  "ends with": "다음으로 끝남"
+  "ends with": "다음으로 끝남",
+  "More details": "자세히 보기",
+  "Location from the IP address.": "IP 주소로 확인한 위치입니다."
 }

@@ -2992,5 +2992,7 @@
   "contains": "contiene",
   "does not contain": "no contiene",
   "starts with": "empieza por",
-  "ends with": "termina en"
+  "ends with": "termina en",
+  "More details": "Más detalles",
+  "Location from the IP address.": "Ubicación a partir de la dirección IP."
 }

@@ -3051,5 +3051,7 @@
   "contains": "содержит",
   "does not contain": "не содержит",
   "starts with": "начинается с",
-  "ends with": "заканчивается на"
+  "ends with": "заканчивается на",
+  "More details": "Подробнее",
+  "Location from the IP address.": "Местоположение по IP-адресу."
 }

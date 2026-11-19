@@ -2933,5 +2933,7 @@
   "contains": "contains",
   "does not contain": "does not contain",
   "starts with": "starts with",
-  "ends with": "ends with"
+  "ends with": "ends with",
+  "More details": "More details",
+  "Location from the IP address.": "Location from the IP address."
 }
