@@ -2856,5 +2856,7 @@
   "contains": "包含",
   "does not contain": "不包含",
   "starts with": "开头为",
-  "ends with": "结尾为"
+  "ends with": "结尾为",
+  "More details": "更多详情",
+  "Location from the IP address.": "根据 IP 地址推断的位置。"
 }

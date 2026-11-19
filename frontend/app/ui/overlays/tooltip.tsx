@@ -22,6 +22,7 @@ export function Tooltip({
   side?: ComponentProps<typeof T.Content>['side'];
   delay?: number;
   open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   /** keeps the trigger mounted as it is, without the tip */
   disabled?: boolean;
 }) {

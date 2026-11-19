@@ -1,4 +1,5 @@
 import { cityAfterCode } from '@/lib/geo';
+import { GeoCredit, GeoPlace } from '@/ui/data/GeoCredit';
 import { RelativeTime } from '@/ui/data/RelativeTime';
 import { SessionAvatar } from '@/ui/data/SessionAvatar';
 import { seedFor } from '@/ui/data/avatar';
@@ -148,11 +149,14 @@ function ReplayLead({ width, height }: { width?: number; height?: number }) {
     value: React.ReactNode,
     by?: [Partial<{ name: string; displayName: string }>, string],
     mono?: boolean,
+    credit?: boolean,
   ) =>
     !value ? null : !by ? (
       <div key={label}>
         <dt>{label}</dt>
-        <dd className={mono ? 'm-rs__facts-mono' : undefined}>{value}</dd>
+        <dd className={mono ? 'm-rs__facts-mono' : undefined}>
+          {credit ? <GeoPlace>{value}</GeoPlace> : value}
+        </dd>
       </div>
     ) : (
       <div key={label} className="is-filter">
@@ -176,6 +180,7 @@ function ReplayLead({ width, height }: { width?: number; height?: number }) {
               className="m-rs__fact-glyph"
             />
           </button>
+          {credit && <GeoCredit />}
         </dd>
       </div>
     );
@@ -227,6 +232,8 @@ function ReplayLead({ width, height }: { width?: number; height?: number }) {
               t('City'),
               place,
               userCity ? [{ name: FilterKey.USER_CITY }, userCity] : undefined,
+              false,
+              true,
             )}
             {fact(
               t('Browser'),
@@ -294,7 +301,12 @@ function ReplayLead({ width, height }: { width?: number; height?: number }) {
         </span>
         <span className="m-rs__meta m-truncate">
           <span>{tech}</span>
-          {place && <span>· {place}</span>}
+          {place && (
+            <>
+              <span>· {place}</span>
+              <GeoCredit />
+            </>
+          )}
           <span>
             · <RelativeTime at={startedAt} timezone={timezone?.value} />
           </span>

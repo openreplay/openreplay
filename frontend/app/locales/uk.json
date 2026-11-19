@@ -3033,5 +3033,7 @@
   "contains": "містить",
   "does not contain": "не містить",
   "starts with": "починається з",
-  "ends with": "закінчується на"
+  "ends with": "закінчується на",
+  "More details": "Докладніше",
+  "Location from the IP address.": "Розташування за IP-адресою."
 }

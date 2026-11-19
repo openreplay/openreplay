@@ -2974,5 +2974,7 @@
   "contains": "contient",
   "does not contain": "ne contient pas",
   "starts with": "commence par",
-  "ends with": "se termine par"
+  "ends with": "se termine par",
+  "More details": "Plus de détails",
+  "Location from the IP address.": "Emplacement déduit de l’adresse IP."
 }

@@ -58,6 +58,7 @@ export interface IssueSessionCard {
   durMs: number;
   dur: string;
   date: string;
+  startTs: number | null;
   device: string;
   events: number;
   plan: string;

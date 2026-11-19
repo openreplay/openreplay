@@ -389,3 +389,10 @@
   flex: none;
   color: var(--m-content-decorative);
 }
+/* the credit sits above the row-wide filter target */
+.m-rs__fact ~ .m-geocredit {
+  position: relative;
+  z-index: 1;
+  margin-inline-start: var(--m-space-3);
+  vertical-align: middle;
+}
