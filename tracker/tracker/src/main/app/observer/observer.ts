@@ -570,6 +570,11 @@ export default abstract class Observer {
       this.app.send(SetCSSDataURLBased(id, data, this.app.getBaseHref()))
       return
     }
+    // textarea text is its default value (React rewrites it on each keystroke);
+    // the input module replays the value with input masking, like <input value>
+    if (hasTag(parentElement, 'textarea')) {
+      return
+    }
     data = this.app.sanitizer.sanitize(id, data)
     this.app.send(SetNodeData(id, data))
   }

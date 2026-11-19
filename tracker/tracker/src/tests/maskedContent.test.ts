@@ -280,3 +280,24 @@ describe('selection', () => {
     expect(select(text('#a'), text('#a'))[3]).toBe('****')
   })
 })
+
+describe('textarea content', () => {
+  const nodeData = () => sent.filter((m) => m[0] === Type.SetNodeData).map((m) => m[2])
+
+  test('does not send the text a textarea starts with', () => {
+    setup('<p>Apply now</p><textarea id="t">draft secret</textarea>')
+    expect(nodeData()).toEqual(['Apply now'])
+  })
+
+  test('does not send text React writes into a controlled textarea', async () => {
+    setup('<textarea id="t"></textarea>')
+    sent = []
+    const ta = $('#t') as HTMLTextAreaElement
+    ta.defaultValue = 'typed secret'
+    await Promise.resolve()
+    ;(ta.firstChild as Text).data = 'typed secret 2'
+    await Promise.resolve()
+    expect(sent.some((m) => m[0] === Type.CreateTextNode)).toBe(true)
+    expect(nodeData()).toEqual([])
+  })
+})
