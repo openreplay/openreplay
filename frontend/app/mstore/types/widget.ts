@@ -318,10 +318,6 @@ export default class Widget {
             });
             this.startPoint = event;
           }
-
-          if (json.startPoint == typeof Object) {
-            this.startPoint = json.startPoint;
-          }
         }
 
         this.excludes =

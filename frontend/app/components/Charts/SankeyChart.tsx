@@ -67,7 +67,6 @@ interface Props {
   onChartClick?: (filters: any[]) => void;
   isUngrouped?: boolean;
   inGrid?: boolean;
-  startUrl: string;
   getFilter: (name: string) => Record<string, any>;
   drilldownFilter?: any[];
 }
@@ -92,9 +91,7 @@ type tHighlightedLink = { id: number; shape: 'link' | 'node' };
 const EChartsSankey = (props: Props) => {
   const { t } = useTranslation();
   const theme = useChartTheme();
-  const highlightOn = props.drilldownFilter?.some((f) =>
-    f.filters.find((subf: any) => subf.name === 'url_path'),
-  );
+  const highlightOn = !!props.drilldownFilter?.length;
   const [highlightedLink, setHighlightedLink] =
     React.useState<tHighlightedLink | null>(null);
   const [savedOriginalLinks, setOriginalLinks] = React.useState<any[]>([]);
@@ -150,17 +147,11 @@ const EChartsSankey = (props: Props) => {
     const labelFont = `600 12px ${theme.font || 'sans-serif'}`;
     // the border token is ~1.3:1 on a dark card; this grey is 3:1+ on both
     const dropColor = mixHex(theme.border, theme.axis, 0.62);
-    const nodeValues: Record<string, number> = {};
     const echartNodes = filteredNodes
-      .map((n, i) => {
+      .map((n) => {
         let computedName = getNodeName(n.eventType || 'Minor Paths', n.name);
         if (computedName === 'Other') {
           computedName = 'Others';
-        }
-        if (n.id) {
-          nodeValues[n.id] = 0;
-        } else {
-          nodeValues[i] = 0;
         }
         const itemColor =
           computedName === 'Others'
@@ -189,7 +180,7 @@ const EChartsSankey = (props: Props) => {
       });
 
     const echartLinks = filteredLinks.map((l) => ({
-      ...filteredLinks,
+      ...l,
       source: echartNodes.findIndex((n) => n.id === l.source),
       target: echartNodes.findIndex((n) => n.id === l.target),
       value: l.sessionsCount,
@@ -215,15 +206,16 @@ const EChartsSankey = (props: Props) => {
       )
       .reduce((sum, link) => sum + link.value, 0);
 
-    Object.keys(nodeValues).forEach((nodeId) => {
-      const intId = parseInt(nodeId as string);
+    // links point at echartNodes indices, so the values are keyed the same way
+    const nodeValues: Record<number, number> = {};
+    echartNodes.forEach((_, idx) => {
       const outgoingValues = echartLinks
-        .filter((l) => l.source === intId)
+        .filter((l) => l.source === idx)
         .reduce((p, c) => p + c.value, 0);
       const incomingValues = echartLinks
-        .filter((l) => l.target === intId)
+        .filter((l) => l.target === idx)
         .reduce((p, c) => p + c.value, 0);
-      nodeValues[nodeId] = Math.max(outgoingValues, incomingValues);
+      nodeValues[idx] = Math.max(outgoingValues, incomingValues);
     });
 
     const option = {
