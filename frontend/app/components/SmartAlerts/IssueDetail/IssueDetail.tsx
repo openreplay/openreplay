@@ -2,7 +2,6 @@ import withPageTitle from '@/components/hocs/withPageTitle';
 import withPermissions from '@/components/hocs/withPermissions';
 import { Button } from '@/ui/actions/button';
 import { OpenReplayMark } from '@/ui/brand/OpenReplayMark';
-import { CountSuffix } from '@/ui/data/CountSuffix';
 import { EmptyState } from '@/ui/feedback/EmptyState';
 import { type FilterDimension, FilterMenu } from '@/ui/filters/FilterMenu';
 import { Input } from '@/ui/inputs/input';
@@ -183,33 +182,25 @@ function IssueDetail() {
             aria-label={t('Sessions that hit this issue')}
           >
             <header className="m-strip__head">
-              <h2 className="m-strip__label">
-                {t('Sessions that hit it')}
-                {shown.length === total ? (
-                  <CountSuffix n={total} />
-                ) : (
+              {shown.length !== total && (
+                <h2 className="m-strip__label">
                   <span className="m-strip__of">
                     {t('{{shown}} of {{total}}', {
                       shown: shown.length,
                       total: total.toLocaleString(),
                     })}
                   </span>
-                )}
-                <Tooltip
-                  title={t(
-                    'A sample of the sessions where the agent detected this issue, not the full set. Search or load more to see other examples.',
-                  )}
-                >
-                  <Info
-                    size={13}
-                    className="self-center text-content-decorative"
-                  />
-                </Tooltip>
-              </h2>
-              {!searching && (
-                <p className="m-strip__hint">
-                  {t('Pick the one you want to watch.')}
-                </p>
+                  <Tooltip
+                    title={t(
+                      'A sample of the sessions where the agent detected this issue, not the full set. Search or load more to see other examples.',
+                    )}
+                  >
+                    <Info
+                      size={13}
+                      className="self-center text-content-decorative"
+                    />
+                  </Tooltip>
+                </h2>
               )}
               <div className="m-strip__tools">
                 {searching || searchQuery ? (
