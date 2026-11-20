@@ -1,17 +1,17 @@
 import { cn } from '@/lib/utils';
+import { CaptureIcon } from '@/ui/icons/CaptureIcon';
 import { PopoverSearch } from '@/ui/overlays/PopoverSearch';
 import { PopoverPanel } from '@/ui/overlays/popover';
 import {
   ALargeSmall,
+  Activity,
   ChevronDown,
   ChevronRight,
   Gauge,
   LayoutGrid,
   List,
-  MousePointerClick,
   Search,
   User,
-  Zap,
 } from 'lucide-react';
 import { Fragment, type ReactNode, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -56,13 +56,13 @@ const GROUPS: {
 const CATEGORY_ICON: Record<TriggerGroup, ReactNode> = {
   cards: <LayoutGrid size={13} />,
   predefined: <Gauge size={13} />,
-  events: <Zap size={13} />,
+  events: <Activity size={13} />,
   users: <User size={13} />,
 };
 const ROW_ICON: Record<TriggerGroup, ReactNode> = {
   cards: <LayoutGrid size={13} />,
   predefined: <Gauge size={13} />,
-  events: <MousePointerClick size={13} />,
+  events: null,
   users: <ALargeSmall size={13} />,
 };
 const ALL = 'all';
@@ -192,7 +192,11 @@ export function MetricPicker({
                     }}
                   >
                     <span className="m-pick2__glyph" aria-hidden="true">
-                      {ROW_ICON[o.group]}
+                      {ROW_ICON[o.group] ?? (
+                        <CaptureIcon
+                          kind={o.autoCaptured ? 'auto' : 'custom'}
+                        />
+                      )}
                     </span>
                     <span className="m-pick2__name m-truncate" title={o.label}>
                       {o.label}
