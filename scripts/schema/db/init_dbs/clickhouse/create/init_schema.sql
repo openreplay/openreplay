@@ -960,40 +960,46 @@ FROM product_analytics.users
 WHERE isNotNull(t.2)
   AND notEmpty(toString(t.2))
 GROUP BY ALL;
+
+-- OTEL:
 CREATE DATABASE IF NOT EXISTS otel;
 
 CREATE TABLE IF NOT EXISTS otel.logs
 (
-    Timestamp                                         DateTime64(9) CODEC (Delta(8), ZSTD(1)),
-    TraceId                                           String CODEC (ZSTD(1)),
-    SpanId                                            String CODEC (ZSTD(1)),
-    TraceFlags                                        UInt8,
-    SeverityText                                      LowCardinality(String) CODEC (ZSTD(1)),
-    SeverityNumber                                    UInt8,
-    ServiceName                                       LowCardinality(String) CODEC (ZSTD(1)),
-    Body                                              String CODEC (ZSTD(1)),
-    ResourceSchemaUrl                                 LowCardinality(String) CODEC (ZSTD(1)),
-    ResourceAttributes                                Map(LowCardinality(String), String) CODEC (ZSTD(1)),
-    ScopeSchemaUrl                                    LowCardinality(String) CODEC (ZSTD(1)),
-    ScopeName                                         String CODEC (ZSTD(1)),
-    ScopeVersion                                      LowCardinality(String) CODEC (ZSTD(1)),
-    ScopeAttributes                                   Map(LowCardinality(String), String) CODEC (ZSTD(1)),
-    LogAttributes                                     Map(LowCardinality(String), String) CODEC (ZSTD(1)),
-    EventName                                         String CODEC (ZSTD(1)),
-    ProjectId                                         UInt32 MATERIALIZED toUInt32OrZero(LogAttributes['openreplay.project_id']),
-    TenantId                                          UInt32 MATERIALIZED toUInt32OrZero(LogAttributes['openreplay.tenant_id']),
-    _retention_days                                   UInt16 MATERIALIZED toUInt16OrZero(LogAttributes['openreplay.retention_days']),
-    `__otel_materialized_k8s.cluster.name`            LowCardinality(String) MATERIALIZED ResourceAttributes['k8s.cluster.name'] CODEC (ZSTD(1)),
-    `__otel_materialized_k8s.container.name`          LowCardinality(String) MATERIALIZED ResourceAttributes['k8s.container.name'] CODEC (ZSTD(1)),
-    `__otel_materialized_k8s.deployment.name`         LowCardinality(String) MATERIALIZED ResourceAttributes['k8s.deployment.name'] CODEC (ZSTD(1)),
-    `__otel_materialized_k8s.namespace.name`          LowCardinality(String) MATERIALIZED ResourceAttributes['k8s.namespace.name'] CODEC (ZSTD(1)),
-    `__otel_materialized_k8s.node.name`               LowCardinality(String) MATERIALIZED ResourceAttributes['k8s.node.name'] CODEC (ZSTD(1)),
-    `__otel_materialized_k8s.pod.name`                LowCardinality(String) MATERIALIZED ResourceAttributes['k8s.pod.name'] CODEC (ZSTD(1)),
-    `__otel_materialized_k8s.pod.uid`                 LowCardinality(String) MATERIALIZED ResourceAttributes['k8s.pod.uid'] CODEC (ZSTD(1)),
+    Timestamp              DateTime64(9) CODEC (Delta(8), ZSTD(1)),
+    TraceId                String CODEC (ZSTD(1)),
+    SpanId                 String CODEC (ZSTD(1)),
+    TraceFlags             UInt8,
+    SeverityText           LowCardinality(String) CODEC (ZSTD(1)),
+    SeverityNumber         UInt8,
+    ServiceName            LowCardinality(String) CODEC (ZSTD(1)),
+    Body                   String CODEC (ZSTD(1)),
+    ResourceSchemaUrl      LowCardinality(String) CODEC (ZSTD(1)),
+    ResourceAttributes     Map(LowCardinality(String), String) CODEC (ZSTD(1)),
+    ScopeSchemaUrl         LowCardinality(String) CODEC (ZSTD(1)),
+    ScopeName              String CODEC (ZSTD(1)),
+    ScopeVersion           LowCardinality(String) CODEC (ZSTD(1)),
+    ScopeAttributes        Map(LowCardinality(String), String) CODEC (ZSTD(1)),
+    LogAttributes          Map(LowCardinality(String), String) CODEC (ZSTD(1)),
+    EventName              String CODEC (ZSTD(1)),
+    ProjectId              UInt32 MATERIALIZED toUInt32OrZero(LogAttributes['openreplay.project_id']),
+    TenantId               UInt32 MATERIALIZED toUInt32OrZero(LogAttributes['openreplay.tenant_id']),
+    _retention_days        UInt16 MATERIALIZED toUInt16OrZero(LogAttributes['openreplay.retention_days']),
+    `__otel_materialized_k8s.cluster.name` LowCardinality(String) MATERIALIZED ResourceAttributes['k8s.cluster.name'] CODEC (ZSTD(1)),
+    `__otel_materialized_k8s.container.name` LowCardinality(String) MATERIALIZED ResourceAttributes['k8s.container.name'] CODEC (ZSTD(1)),
+    `__otel_materialized_k8s.deployment.name` LowCardinality(String) MATERIALIZED ResourceAttributes['k8s.deployment.name'] CODEC (ZSTD(1)),
+    `__otel_materialized_k8s.namespace.name` LowCardinality(String) MATERIALIZED ResourceAttributes['k8s.namespace.name'] CODEC (ZSTD(1)),
+    `__otel_materialized_k8s.node.name` LowCardinality(String) MATERIALIZED ResourceAttributes['k8s.node.name'] CODEC (ZSTD(1)),
+    `__otel_materialized_k8s.pod.name` LowCardinality(String) MATERIALIZED ResourceAttributes['k8s.pod.name'] CODEC (ZSTD(1)),
+    `__otel_materialized_k8s.pod.uid` LowCardinality(String) MATERIALIZED ResourceAttributes['k8s.pod.uid'] CODEC (ZSTD(1)),
     `__otel_materialized_deployment.environment.name` LowCardinality(String) MATERIALIZED ResourceAttributes['deployment.environment.name'] CODEC (ZSTD(1)),
-    ResourceAttributeItems                            Array(String) ALIAS arrayMap((arr) -> concat(arr.1, '=', arr.2), ResourceAttributes::Array(Tuple(String, String))),
-    ScopeAttributeItems                               Array(String) ALIAS arrayMap((arr) -> concat(arr.1, '=', arr.2), ScopeAttributes::Array(Tuple(String, String))),
-    LogAttributeItems                                 Array(String) ALIAS arrayMap((arr) -> concat(arr.1, '=', arr.2), LogAttributes::Array(Tuple(String, String))),
+    ResourceAttributeItems Array(String) ALIAS arrayMap((arr) -> concat(arr.1, '=', arr.2),
+                                                        ResourceAttributes::Array(Tuple(String, String))),
+    ScopeAttributeItems    Array(String) ALIAS arrayMap((arr) -> concat(arr.1, '=', arr.2),
+                                                        ScopeAttributes::Array(Tuple(String, String))),
+    LogAttributeItems      Array(String) ALIAS arrayMap((arr) -> concat(arr.1, '=', arr.2),
+                                                        LogAttributes::Array(Tuple(String, String))),
+    _timestamp             DateTime DEFAULT now(),
     INDEX idx_trace_id TraceId TYPE text(tokenizer = 'array'),
     INDEX idx_res_attr_key mapKeys(ResourceAttributes) TYPE text(tokenizer = 'array'),
     INDEX idx_res_attr_items ResourceAttributeItems TYPE text(tokenizer = 'array'),
@@ -1025,6 +1031,43 @@ CREATE TABLE IF NOT EXISTS otel.logs_kv_rollup_15m
       TTL Timestamp + toIntervalDay(_retention_days) DELETE WHERE _retention_days > 0
       SETTINGS index_granularity = 8192, ttl_only_drop_parts = 1;
 
+
+-- The full list of attributes
+CREATE TABLE IF NOT EXISTS otel.all_attributes
+(
+    ProjectId     UInt16,
+    Source        Enum8('resource'=0,'scope'=1,'log'=2),--Maps to ResourceAttributes, ScopeAttributes, LogAttributes
+    AttributeName String,
+    DataCount     UInt32   DEFAULT 1,
+    QueryCount    UInt32   DEFAULT 0,
+
+    CreatedAt     DateTime64,
+    _timestamp    DateTime DEFAULT now()
+) ENGINE = ReplacingMergeTree(_timestamp)
+      PARTITION BY toYYYYMM(_timestamp)
+      ORDER BY (ProjectId, Source, AttributeName);
+
+-- Autocomplete
+
+-- Autocomplete for all values
+CREATE TABLE IF NOT EXISTS otel.autocomplete_grouped
+(
+    ProjectId  UInt16,
+    Source     Enum8('log_global'=-1,'resource'=0,'scope'=1,'log'=2), -- log_global are separate columns, the rest are for attributes
+    Name       LowCardinality(String),
+    Value      String,
+    DataCount  AggregateFunction(sum, UInt16) COMMENT 'The number of appearance during the past month',
+    _timestamp DateTime
+) ENGINE = AggregatingMergeTree()
+      ORDER BY (ProjectId, Source, Name, Value)
+      PARTITION BY toYYYYMM(_timestamp)
+      TTL _timestamp + INTERVAL 1 MONTH;
+
+-- =====================================================================================
+-- OTEL MATERIALIZED VIEWS
+-- All materialized views are placed at the end of the script to ensure
+-- all referenced tables and functions exist before the views are created.
+-- =====================================================================================
 CREATE MATERIALIZED VIEW IF NOT EXISTS otel.logs_kv_rollup_15m_mv TO otel.logs_kv_rollup_15m
 AS
 SELECT ProjectId,
@@ -1035,23 +1078,65 @@ SELECT ProjectId,
        count()                            AS count,
        _retention_days
 FROM otel.logs
-     ARRAY JOIN [
-         ('SeverityText', CAST(SeverityText AS String)),
-         ('ServiceName', CAST(ServiceName AS String)),
-         ('ScopeName', ScopeName),
-         ('ScopeVersion', CAST(ScopeVersion AS String)),
-         ('ResourceSchemaUrl', CAST(ResourceSchemaUrl AS String)),
-         ('ScopeSchemaUrl', CAST(ScopeSchemaUrl AS String)),
-         ('__otel_materialized_k8s.cluster.name', CAST(`__otel_materialized_k8s.cluster.name` AS String)),
-         ('__otel_materialized_k8s.container.name', CAST(`__otel_materialized_k8s.container.name` AS String)),
-         ('__otel_materialized_k8s.deployment.name', CAST(`__otel_materialized_k8s.deployment.name` AS String)),
-         ('__otel_materialized_k8s.namespace.name', CAST(`__otel_materialized_k8s.namespace.name` AS String)),
-         ('__otel_materialized_k8s.node.name', CAST(`__otel_materialized_k8s.node.name` AS String)),
-         ('__otel_materialized_k8s.pod.name', CAST(`__otel_materialized_k8s.pod.name` AS String)),
-         ('__otel_materialized_k8s.pod.uid', CAST(`__otel_materialized_k8s.pod.uid` AS String)),
-         ('__otel_materialized_deployment.environment.name', CAST(`__otel_materialized_deployment.environment.name` AS String))
-         ] AS kv
+         ARRAY JOIN [
+    ('SeverityText', CAST(SeverityText AS String)),
+    ('ServiceName', CAST(ServiceName AS String)),
+    ('ScopeName', ScopeName),
+    ('ScopeVersion', CAST(ScopeVersion AS String)),
+    ('ResourceSchemaUrl', CAST(ResourceSchemaUrl AS String)),
+    ('ScopeSchemaUrl', CAST(ScopeSchemaUrl AS String)),
+    ('__otel_materialized_k8s.cluster.name', CAST(`__otel_materialized_k8s.cluster.name` AS String)),
+    ('__otel_materialized_k8s.container.name', CAST(`__otel_materialized_k8s.container.name` AS String)),
+    ('__otel_materialized_k8s.deployment.name', CAST(`__otel_materialized_k8s.deployment.name` AS String)),
+    ('__otel_materialized_k8s.namespace.name', CAST(`__otel_materialized_k8s.namespace.name` AS String)),
+    ('__otel_materialized_k8s.node.name', CAST(`__otel_materialized_k8s.node.name` AS String)),
+    ('__otel_materialized_k8s.pod.name', CAST(`__otel_materialized_k8s.pod.name` AS String)),
+    ('__otel_materialized_k8s.pod.uid', CAST(`__otel_materialized_k8s.pod.uid` AS String)),
+    ('__otel_materialized_deployment.environment.name',
+     CAST(`__otel_materialized_deployment.environment.name` AS String))
+    ] AS kv
 GROUP BY ProjectId, Timestamp, ColumnIdentifier, Key, Value, _retention_days;
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS otel.log_all_attributes_extractor_mv
+    TO otel.all_attributes AS
+SELECT logs.ProjectId,
+       attr.1         AS Source,
+       attr.2         AS AttributeName,
+       0              AS DataCount,
+       0              AS QueryCount,
+       logs.Timestamp AS CreatedAt
+FROM otel.logs
+         ARRAY JOIN arrayConcat(
+        arrayMap((k) -> ('resource', toString(k)), mapKeys(ResourceAttributes)),
+        arrayMap((k) -> ('scope', toString(k)), mapKeys(ScopeAttributes)),
+        arrayMap((k) -> ('log', toString(k)), mapKeys(LogAttributes))) AS attr;
+
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS otel.autocomplete_grouped_mv
+            TO otel.autocomplete_grouped AS
+SELECT ProjectId,
+       t.1                   AS Source,
+       t.2                   AS Name,
+       toString(t.3)         AS Value,
+       sumState(toUInt16(1)) AS DataCount,
+       _timestamp
+FROM otel.logs
+         ARRAY JOIN
+     arrayConcat([ ('log_global', 'ServiceName', ServiceName),
+                     ('log_global', 'ResourceSchemaUrl', ResourceSchemaUrl),
+                     ('log_global', 'ScopeSchemaUrl', ScopeSchemaUrl),
+                     ('log_global', 'ScopeName', ScopeName),
+                     ('log_global', 'ScopeVersion', ScopeVersion),
+                     ('log_global', 'EventName', EventName)],
+                 arrayMap((k, v) -> ('resource',concat('ResourceAttributes.', toString(k)), v),
+                          mapKeys(ResourceAttributes), mapValues(ResourceAttributes)),
+                 arrayMap((k, v) -> ('scope',concat('ScopeAttributes.', toString(k)), v),
+                          mapKeys(ScopeAttributes), mapValues(ScopeAttributes)),
+                 arrayMap((k, v) -> ('log',concat('LogAttributes.', toString(k)), v),
+                          mapKeys(LogAttributes), mapValues(LogAttributes))) AS t
+WHERE isNotNull(t.3)
+  AND notEmpty(toString(t.3))
+GROUP BY ALL;
 
 CREATE OR REPLACE FUNCTION openreplay_migration_state AS() ->
     -1;
