@@ -60,6 +60,7 @@ function InstallGuide({
   const [ownMethod, setOwnMethod] = React.useState<InstallMethod>('npm');
   const method = methodProp ?? ownMethod;
   const setMethod = onMethod ?? setOwnMethod;
+  const [setup, setSetup] = React.useState<'command' | 'manual'>('command');
   const [ssr, setSsr] = React.useState(false);
   const [assist, setAssist] = React.useState(false);
   const [privacyOpen, setPrivacyOpen] = React.useState(false);
@@ -89,6 +90,7 @@ function InstallGuide({
   const language = PLATFORMS.find((p) => p.key === platform)!.language;
   const install = installCommand(platform);
   const isWeb = platform === 'web';
+  const manual = !isWeb || setup === 'manual';
   const showInstall = !isWeb || method === 'npm';
   const privacySummary = [
     t(INPUT_MODES.find((m) => m.value === inputMode)?.label ?? ''),
@@ -121,6 +123,17 @@ function InstallGuide({
             />
           )}
           {isWeb && (
+            <Segmented<'command' | 'manual'>
+              value={setup}
+              onChange={setSetup}
+              ariaLabel={t('Setup')}
+              options={[
+                { value: 'command', label: t('One command') },
+                { value: 'manual', label: t('Manual') },
+              ]}
+            />
+          )}
+          {isWeb && (
             <label className="m-ob__switch">
               <Switch
                 checked={method === 'script'}
@@ -130,7 +143,7 @@ function InstallGuide({
               {t('Install with a script tag')}
             </label>
           )}
-          {full && isWeb && (
+          {full && isWeb && manual && (
             <label className="m-ob__switch">
               <Switch
                 checked={assist}
@@ -144,8 +157,8 @@ function InstallGuide({
         </div>
       )}
 
-      {isWeb && (
-        <Step title={t('Set it up with one command')}>
+      {!manual && (
+        <Step title={t('Run it in your app folder')}>
           <CodeBlock
             code={wizardCommand(opts.projectKey, method)}
             inline
@@ -155,13 +168,13 @@ function InstallGuide({
           />
           <p className="m-ob__muted text-xs">
             {t(
-              'Run it in your app folder: it finds your framework, installs the packages and adds the tracker, showing every change first. Or follow the steps below.',
+              'It finds your framework, installs the packages and adds the tracker, showing every change first.',
             )}
           </p>
         </Step>
       )}
 
-      {showInstall && (
+      {manual && showInstall && (
         <Step
           n={next()}
           title={isWeb ? t('Install the package') : t('Install the SDK')}
@@ -182,107 +195,111 @@ function InstallGuide({
         </Step>
       )}
 
-      <Step
-        n={showInstall ? next() : undefined}
-        title={
-          isWeb && method === 'script'
-            ? t('Paste the snippet')
-            : t('Start the tracker')
-        }
-        aside={
-          isWeb && method === 'npm' ? (
-            <label className="m-ob__switch">
-              <Switch
-                checked={ssr}
-                onCheckedChange={setSsr}
-                aria-label={t('Server-side rendered')}
-              />
-              {t('Server-side rendered')}{' '}
-              <span className="m-ob__muted">(Next, Nuxt)</span>
-            </label>
-          ) : undefined
-        }
-      >
-        <CodeBlock
-          code={trackerSnippet(opts)}
-          language={method === 'script' && isWeb ? 'HTML' : language}
-          caption={t(snippetPlacement(platform, method))}
-          highlight={project.projectKey}
-          onCopied={onCopied}
-          copyLabel={t('Copy snippet')}
-        />
-        {isWeb && (
-          <div className={`m-ob__privacy${privacyOpen ? ' is-open' : ''}`}>
-            <button
-              type="button"
-              className="m-ob__disclose m-hover"
-              onClick={() => setPrivacyOpen((o) => !o)}
-              aria-expanded={privacyOpen}
-            >
-              <ChevronDown
-                size={14}
-                className="m-ob__chev"
-                aria-hidden="true"
-              />
-              <span>{t('Privacy options')}</span>
-              <span className="m-ob__muted">{privacySummary}</span>
-            </button>
-            {privacyOpen && (
-              <div className="m-ob__privacy-row m-step-in">
-                <label className="m-ob__field-inline">
-                  <span className="m-ob__muted">{t('Inputs')}</span>
-                  <SimpleSelect<InputMode>
-                    value={inputMode}
-                    onChange={(v) => v && setGdpr({ defaultInputMode: v })}
-                    options={INPUT_MODES.map((m) => ({
-                      value: m.value,
-                      label: t(m.label),
-                    }))}
-                    ariaLabel={t('Default input mode')}
-                    className="m-ob__select"
-                  />
-                </label>
-                <label className="m-ob__check">
-                  <Checkbox
-                    checked={maskNumbers}
-                    onCheckedChange={(v) =>
-                      setGdpr({ maskNumbers: v === true })
-                    }
-                  />
-                  {t('Do not record any numeric text')}
-                </label>
-                <label className="m-ob__check">
-                  <Checkbox
-                    checked={maskEmails}
-                    onCheckedChange={(v) => setGdpr({ maskEmails: v === true })}
-                  />
-                  {t('Do not record email addresses')}
-                </label>
-              </div>
-            )}
-          </div>
-        )}
-        {full && isWeb && method === 'npm' && (
-          <p className="m-ob__muted text-xs">
-            {t('Learn more about available options')}{' '}
-            <ExternalLink className="m-ob__link" href={DOCS.options}>
-              {t('in the docs')}
-            </ExternalLink>
-            .
-          </p>
-        )}
-        {full && isWeb && method === 'script' && (
-          <p className="m-ob__muted text-xs">
-            {t('Also available through')}{' '}
-            <ExternalLink className="m-ob__link" href={DOCS.gtm}>
-              Google Tag Manager
-            </ExternalLink>
-            .
-          </p>
-        )}
-      </Step>
+      {manual && (
+        <Step
+          n={showInstall ? next() : undefined}
+          title={
+            isWeb && method === 'script'
+              ? t('Paste the snippet')
+              : t('Start the tracker')
+          }
+          aside={
+            isWeb && method === 'npm' ? (
+              <label className="m-ob__switch">
+                <Switch
+                  checked={ssr}
+                  onCheckedChange={setSsr}
+                  aria-label={t('Server-side rendered')}
+                />
+                {t('Server-side rendered')}{' '}
+                <span className="m-ob__muted">(Next, Nuxt)</span>
+              </label>
+            ) : undefined
+          }
+        >
+          <CodeBlock
+            code={trackerSnippet(opts)}
+            language={method === 'script' && isWeb ? 'HTML' : language}
+            caption={t(snippetPlacement(platform, method))}
+            highlight={project.projectKey}
+            onCopied={onCopied}
+            copyLabel={t('Copy snippet')}
+          />
+          {isWeb && (
+            <div className={`m-ob__privacy${privacyOpen ? ' is-open' : ''}`}>
+              <button
+                type="button"
+                className="m-ob__disclose m-hover"
+                onClick={() => setPrivacyOpen((o) => !o)}
+                aria-expanded={privacyOpen}
+              >
+                <ChevronDown
+                  size={14}
+                  className="m-ob__chev"
+                  aria-hidden="true"
+                />
+                <span>{t('Privacy options')}</span>
+                <span className="m-ob__muted">{privacySummary}</span>
+              </button>
+              {privacyOpen && (
+                <div className="m-ob__privacy-row m-step-in">
+                  <label className="m-ob__field-inline">
+                    <span className="m-ob__muted">{t('Inputs')}</span>
+                    <SimpleSelect<InputMode>
+                      value={inputMode}
+                      onChange={(v) => v && setGdpr({ defaultInputMode: v })}
+                      options={INPUT_MODES.map((m) => ({
+                        value: m.value,
+                        label: t(m.label),
+                      }))}
+                      ariaLabel={t('Default input mode')}
+                      className="m-ob__select"
+                    />
+                  </label>
+                  <label className="m-ob__check">
+                    <Checkbox
+                      checked={maskNumbers}
+                      onCheckedChange={(v) =>
+                        setGdpr({ maskNumbers: v === true })
+                      }
+                    />
+                    {t('Do not record any numeric text')}
+                  </label>
+                  <label className="m-ob__check">
+                    <Checkbox
+                      checked={maskEmails}
+                      onCheckedChange={(v) =>
+                        setGdpr({ maskEmails: v === true })
+                      }
+                    />
+                    {t('Do not record email addresses')}
+                  </label>
+                </div>
+              )}
+            </div>
+          )}
+          {full && isWeb && method === 'npm' && (
+            <p className="m-ob__muted text-xs">
+              {t('Learn more about available options')}{' '}
+              <ExternalLink className="m-ob__link" href={DOCS.options}>
+                {t('in the docs')}
+              </ExternalLink>
+              .
+            </p>
+          )}
+          {full && isWeb && method === 'script' && (
+            <p className="m-ob__muted text-xs">
+              {t('Also available through')}{' '}
+              <ExternalLink className="m-ob__link" href={DOCS.gtm}>
+                Google Tag Manager
+              </ExternalLink>
+              .
+            </p>
+          )}
+        </Step>
+      )}
 
-      {full && isWeb && assist && method === 'npm' && (
+      {full && manual && isWeb && assist && method === 'npm' && (
         <Step n={next()} title={t('Enable CoBrowse')}>
           <CodeBlock
             code={ASSIST_INSTALL}
