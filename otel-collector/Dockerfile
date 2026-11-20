@@ -9,7 +9,7 @@ WORKDIR /build
 COPY builder-config.yaml .
 RUN CGO_ENABLED=0 builder --config=builder-config.yaml
 
-FROM alpine:3.23
+FROM alpine:3.24
 RUN apk add --no-cache ca-certificates && \
     addgroup -S -g 10001 otel && \
     adduser -S -u 10001 -G otel otel
