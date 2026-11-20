@@ -2,6 +2,7 @@ import { IconButton } from '@/ui/actions/IconButton';
 import { Button } from '@/ui/actions/button';
 import { EmptyState } from '@/ui/feedback/EmptyState';
 import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
+import { CaptureIcon } from '@/ui/icons/CaptureIcon';
 import { CheckRow } from '@/ui/inputs/CheckRow';
 import { DateRange } from '@/ui/inputs/DateRange';
 import { ListFooter } from '@/ui/layout/ListFooter';
@@ -21,7 +22,6 @@ import { useStore } from 'App/mstore';
 import type Event from 'App/mstore/types/Analytics/Event';
 import { getLocalHourFormat } from 'App/utils/intlUtils';
 import EventDetailsDrawer from 'Components/DataManagement/Activity/EventDetailsDrawer';
-import { getEventIcon } from 'Components/DataManagement/Activity/getEventIcon';
 
 import UserSessionsDrawer from 'Shared/UserSessionsDrawer';
 
@@ -184,7 +184,10 @@ function UserActivity({ userId, name }: { userId: string; name: string }) {
                       {formatTs(e.created_at, getLocalHourFormat())}
                     </span>
                     <span className="m-ptl__icon">
-                      {getEventIcon(e.isAutoCapture, e.event_name, 12)}
+                      <CaptureIcon
+                        kind={e.isAutoCapture ? 'auto' : 'custom'}
+                        size={12}
+                      />
                     </span>
                     <span className="m-ptl__name m-truncate">
                       {filterStore.getFilterDisplayName(e.event_name)}

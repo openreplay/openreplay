@@ -8,6 +8,7 @@ import { type Column, DataTable, type TableSort } from '@/ui/data/table';
 import { EmptyState } from '@/ui/feedback/EmptyState';
 import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
 import { DisplayShell, SortControl } from '@/ui/filters/DisplayMenu';
+import { CaptureIcon } from '@/ui/icons/CaptureIcon';
 import { DateRange } from '@/ui/inputs/DateRange';
 import { ListFooter } from '@/ui/layout/ListFooter';
 import { NewRowsBand } from '@/ui/layout/NewRowsBand';
@@ -35,7 +36,6 @@ import {
 
 import '../data-management.css';
 import EventDetailsDrawer from './EventDetailsDrawer';
-import { getEventIcon } from './getEventIcon';
 
 const ORDER_KEY = '$__activity_columns_order__$';
 const HIDDEN_KEY = '$__activity_columns_hidden__$';
@@ -175,7 +175,7 @@ function ActivityPage() {
             delay={300}
           >
             <span className="m-dmg__hidden-icon inline-flex">
-              {getEventIcon(e.isAutoCapture, e.event_name)}
+              <CaptureIcon kind={e.isAutoCapture ? 'auto' : 'custom'} />
             </span>
           </Tooltip>
           <span className="m-truncate m-dmg__mono">
