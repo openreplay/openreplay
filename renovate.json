@@ -1,5 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "baseBranchPatterns": ["main", "dev"],
   "ignoreDeps": [
     "docker.io/bitnamilegacy/bitnami-shell",
     "docker.io/bitnamilegacy/kafka-exporter",
@@ -12,7 +13,19 @@
     "docker-compose",
     "github-actions",
     "helm-requirements",
-    "npm"
+    "npm",
+    "custom.regex"
+  ],
+  "customManagers": [
+    {
+      "description": "nginx-ingress controller tag; the image repository is only set in the subchart, so helm-values cannot see it.",
+      "customType": "regex",
+      "managerFilePatterns": ["/^scripts/helmcharts/openreplay/values\\.yaml$/"],
+      "matchStrings": ["ingress-nginx:\\s*\\n(?:.*\\n)*?\\s+controller:\\s*\\n\\s+image:\\s*\\n\\s+tag:\\s*[\"']?(?<currentValue>[^\\s\"']+)"],
+      "datasourceTemplate": "docker",
+      "depNameTemplate": "nginx/nginx-ingress",
+      "versioningTemplate": "docker"
+    }
   ],
   "packageRules": [
     {
