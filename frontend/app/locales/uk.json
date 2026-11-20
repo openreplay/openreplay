@@ -3249,5 +3249,7 @@
   "Open in Logs": "Відкрити в логах",
   "Metrics are on the way": "Метрики незабаром з’являться",
   "CPU, memory and request rates as charts, on the same window and filters as Logs. Until then, the logs show what your services did.": "CPU, пам’ять і частота запитів у вигляді графіків, з тим самим періодом і фільтрами, що й у Logs. А поки логи показують, що робили ваші сервіси.",
-  "Open Logs": "Відкрити Logs"
+  "Open Logs": "Відкрити Logs",
+  "Traces are on the way": "Трасування незабаром з’явиться",
+  "Every request as a waterfall of spans, on the same window and filters as Logs. Until then, a log line carries its trace id and the search finds it.": "Кожен запит у вигляді каскаду спанів, з тим самим періодом і фільтрами, що й у Logs. А поки рядок логу містить свій trace id, і пошук його знаходить."
 }

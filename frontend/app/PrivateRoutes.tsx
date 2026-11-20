@@ -53,7 +53,7 @@ const components: any = {
   TagsPage: lazy(() => import('Components/DataManagement/Tags/index')),
   McpAuthorize: lazy(() => import('Components/McpAuthorize/McpAuthorize')),
   LogsPure: lazy(() => import('Components/Observability/LogsPage')),
-  MetricsPure: lazy(() => import('Components/Observability/MetricsPage')),
+  SoonPure: lazy(() => import('Components/Observability/SoonPage')),
 };
 
 const enhancedComponents: any = {
@@ -77,7 +77,7 @@ const enhancedComponents: any = {
   SegmentPage: withSiteIdUpdater(components.SegmentPage),
   TagsPage: withSiteIdUpdater(components.TagsPage),
   Logs: withSiteIdUpdater(components.LogsPure),
-  Metrics: withSiteIdUpdater(components.MetricsPure),
+  Soon: withSiteIdUpdater(components.SoonPure),
 };
 
 const { withSiteId } = routes;
@@ -416,8 +416,14 @@ function PrivateRoutes() {
         )}
         {otelLogsEnabled() && (
           <Route
+            path={withSiteId(routes.otelTraces(), siteIdList)}
+            element={<enhancedComponents.Soon what="traces" />}
+          />
+        )}
+        {otelLogsEnabled() && (
+          <Route
             path={withSiteId(routes.otelMetrics(), siteIdList)}
-            element={<enhancedComponents.Metrics />}
+            element={<enhancedComponents.Soon what="metrics" />}
           />
         )}
         <Route

@@ -153,6 +153,7 @@ export const spot = (id = ':spotId', hash?: string | number): string =>
 export const mcpAuthorize = (): string => '/mcp/authorize';
 export const logs = (): string => '/logs';
 export const otelMetrics = (): string => '/observability/metrics';
+export const otelTraces = (): string => '/observability/traces';
 export const dataManagement = {
   activity: () => '/data-management/activity',
   userPage: (id = ':userId', hash?: string | number) =>
@@ -172,6 +173,7 @@ const REQUIRED_SITE_ID_ROUTES = [
   ...routeIdRequired,
   logs(),
   otelMetrics(),
+  otelTraces(),
   liveSession(''),
   session(''),
   sessions(),
@@ -261,6 +263,7 @@ const SITE_CHANGE_AVAILABLE_ROUTES = [
   onboarding(''),
   logs(),
   otelMetrics(),
+  otelTraces(),
 ];
 
 export const siteChangeAvailable = (path: string): boolean =>

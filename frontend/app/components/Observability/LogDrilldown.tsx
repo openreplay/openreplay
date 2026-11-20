@@ -21,7 +21,12 @@ import { useTranslation } from 'react-i18next';
 
 import type { OtelValueCount } from 'App/services/OtelLogsService';
 
-import { type DrillCard as Card, DRILL_VALUES, keyLabel } from './logs-logic';
+import {
+  type DrillCard as Card,
+  DRILL_VALUES,
+  compactCount,
+  keyLabel,
+} from './logs-logic';
 import { copyText } from 'App/lib/use-copy';
 
 export interface LogDrilldownProps {
@@ -154,7 +159,7 @@ export const LogDrilldown = observer(function LogDrilldown({
           {t('{{n}} attributes across {{lines}} lines', {
             n: shown.length,
             count: shown.length,
-            lines: total.toLocaleString(),
+            lines: compactCount(total),
           })}
         </span>
       </div>

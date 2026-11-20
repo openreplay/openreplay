@@ -109,7 +109,6 @@ export function navTree(t: TFunction, f: NavFlags): readonly NavGroup[] {
         {
           ...leaf('observability', MENU.TRACES, t('Traces')),
           badge: t('Soon'),
-          disabled: true,
         },
         {
           ...leaf('observability', MENU.OTEL_METRICS, t('Metrics')),

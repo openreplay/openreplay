@@ -264,6 +264,95 @@ export const SUBJECTS_B = {
       ];
     },
   },
+  traces: {
+    label: 'Traces',
+    prop: 'stopwatch',
+    draw: () => {
+      const card = rrect(6, 8, 84, 58, 4);
+      const spans: [number, number, number][] = [
+        [14, 22, 70],
+        [18, 30, 34],
+        [24, 38, 20],
+        [52, 46, 22],
+        [60, 54, 20],
+      ];
+      const x0 = 28;
+      return [
+        {
+          fill: (
+            <>
+              {shadow(48, 42)}
+              <path d={poly(card)} className={PAPER} />
+              {spans.map(([x, y, w]) => (
+                <path
+                  key={y}
+                  d={poly(rrect(x, y, w, 4.5, 1))}
+                  className="m-ill__fill-side"
+                />
+              ))}
+            </>
+          ),
+          line: (r) => (
+            <>
+              <path d={inked(card, true, r, 0.55)} />
+              <path
+                d={inked(
+                  [
+                    [14, 16],
+                    [84, 16],
+                  ],
+                  false,
+                  r,
+                  0.35,
+                )}
+                className="m-ill__soft"
+              />
+              {[14, 31.5, 49, 66.5, 84].map((x) => (
+                <path
+                  key={x}
+                  d={inked(
+                    [
+                      [x, 14],
+                      [x, 16],
+                    ],
+                    false,
+                    r,
+                    0.1,
+                  )}
+                  className="m-ill__hair"
+                />
+              ))}
+              {spans.map(([x, y, w]) => (
+                <path key={y} d={inked(rrect(x, y, w, 4.5, 1), true, r, 0.2)} />
+              ))}
+            </>
+          ),
+        },
+        {
+          fill: <path d={poly(disc(x0, 16, 2.6))} className={ACCENT} />,
+          line: (r) => (
+            <>
+              <path d={ring(x0, 16, 2.6, r, 0.2)} className="m-ill__hair" />
+              <path
+                d={inked(
+                  [
+                    [x0, 19],
+                    [x0, 61],
+                  ],
+                  false,
+                  r,
+                  0.15,
+                )}
+                className="m-ill__accent m-ill__dash"
+              />
+            </>
+          ),
+          move: 'scrub',
+          origin: [x0, 16],
+        },
+      ];
+    },
+  },
   alerts: {
     label: 'Alerts',
     prop: 'bell',
