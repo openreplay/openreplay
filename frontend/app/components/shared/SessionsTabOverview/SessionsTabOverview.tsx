@@ -230,6 +230,17 @@ function SessionsTabOverview() {
     else searchStore.detachSegment();
   };
 
+  const deleteSegment = async () => {
+    if (!segment) return;
+    try {
+      await searchStore.removeSavedSearch(segment.id);
+      void filterStore.fetchFilters(String(projectsStore.activeSiteId), true);
+      toast.success(t('Segment deleted'));
+    } catch {
+      toast.error(t('Something went wrong, please try again'));
+    }
+  };
+
   const { filters: searchFilters, eventsOrder: searchOrder } =
     searchStore.instance;
   const usedSegment = searchStore.activeSegmentId;
@@ -612,6 +623,7 @@ function SessionsTabOverview() {
           expanded={segOpen}
           onToggle={() => setSegOpen((o) => !o)}
           onEdit={editSegment}
+          onDelete={segmentMine ? () => void deleteSegment() : undefined}
           onClear={() => searchStore.clearSearch()}
           onSaveChanges={segmentMine ? saveSegmentChanges : undefined}
           saving={savingSegment}
