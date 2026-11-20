@@ -189,7 +189,9 @@ function SideNav({
   };
   const onNavigate = (key: string) => {
     const entry = groups.flatMap((g) => g.entries).find((e) => e.key === key);
-    const last = entry?.items?.find((i) => i.key === lastChild.current[key]);
+    const last = entry?.items?.find(
+      (i) => i.key === lastChild.current[key] && !i.disabled,
+    );
     const target = (last ?? entry?.items?.[0])?.key ?? key;
     const route = routeTable[leafOf(target)];
     if (route) go(route());
