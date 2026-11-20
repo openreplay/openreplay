@@ -9,6 +9,7 @@ import { VList, VListHandle } from 'virtua';
 
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { useStore } from 'App/mstore';
+import { lastIndexAtOrBefore } from 'App/utils/timeIndex';
 import { PanelBar } from 'Components/Session/ReplayScreen/PanelBar';
 import 'Components/Session/ReplayScreen/activity-panel.css';
 
@@ -102,19 +103,10 @@ function EventsBlock(_props: IProps) {
 
   // runs every player tick: binary search over the time-sorted list (it used
   // to copy the list with the incidents appended again and scan it linearly)
-  const currentTimeEventIndex = React.useMemo(() => {
-    let lo = 0;
-    let hi = usedEvents.length - 1;
-    let found = 0;
-    while (lo <= hi) {
-      const mid = (lo + hi) >> 1;
-      if ((usedEvents[mid]?.time ?? 0) <= time) {
-        found = mid;
-        lo = mid + 1;
-      } else hi = mid - 1;
-    }
-    return found;
-  }, [usedEvents, time]);
+  const currentTimeEventIndex = React.useMemo(
+    () => Math.max(0, lastIndexAtOrBefore(usedEvents, time)),
+    [usedEvents, time],
+  );
 
   const scrollTop = () =>
     setTimeout(() => scroller.current?.scrollToIndex(0), 100);

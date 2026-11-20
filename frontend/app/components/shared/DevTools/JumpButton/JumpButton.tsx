@@ -1,10 +1,10 @@
 import { Tooltip } from '@/ui/overlays/tooltip';
-import copy from 'copy-to-clipboard';
 import { Check, Copy } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { shortDurationFromMs } from 'App/date';
+import { useCopy } from 'App/lib/use-copy';
 
 import './jump-button.css';
 
@@ -44,9 +44,7 @@ function JumpButton({ onClick, time, tooltip, extra }: Props) {
 
 export function RowCopy({ text }: { text: string }) {
   const { t } = useTranslation();
-  const [copied, setCopied] = React.useState(false);
-  const timer = React.useRef<ReturnType<typeof setTimeout>>(undefined);
-  React.useEffect(() => () => clearTimeout(timer.current), []);
+  const { copy, done: copied } = useCopy(1000);
   return (
     <Tooltip title={copied ? t('Copied') : t('Copy this line')}>
       <button
@@ -55,10 +53,7 @@ export function RowCopy({ text }: { text: string }) {
         aria-label={t('Copy this line')}
         onClick={(e) => {
           e.stopPropagation();
-          copy(text);
-          setCopied(true);
-          clearTimeout(timer.current);
-          timer.current = setTimeout(() => setCopied(false), 1000);
+          void copy(text);
         }}
       >
         {copied ? <Check size={12} /> : <Copy size={12} />}

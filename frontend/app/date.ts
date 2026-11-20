@@ -1,5 +1,3 @@
-import { CUSTOM_RANGE } from '@/dateRange';
-import { LAST_7_DAYS, LAST_24_HOURS, LAST_30_DAYS } from 'Types/app/period';
 import type { TFunction } from 'i18next';
 import { DateTime, Duration } from 'luxon';
 
@@ -77,44 +75,6 @@ export function durationFromMs(ms: number, isFull?: boolean): string {
 
   return dur.toFormat(`hh:mm:ss${isFull ? '.SSS' : ''}`);
 }
-
-export const durationFormattedFull = (duration: Duration): string => {
-  if (duration.as('minutes') < 1) {
-    // show in seconds
-    const d = duration.toFormat('s');
-    duration = d + (d > 1 ? ' seconds' : ' second');
-  } else if (duration.as('hours') < 1) {
-    // show in minutes
-    const d = duration.toFormat('m');
-    duration = d + (d > 1 ? ' minutes' : ' minute');
-  } else if (duration.as('days') < 1) {
-    // show in hours and minutes
-    const d = duration.toFormat('h');
-    duration = d + (d > 1 ? ' hours' : ' hour');
-  } else if (duration.as('months') < 1) {
-    // show in days and hours
-    const d = duration.toFormat('d');
-    duration = d + (d > 1 ? ' days' : ' day');
-  } else {
-    const d = Math.trunc(duration.as('months'));
-    duration = d + (d > 1 ? ' months' : ' month');
-  }
-
-  return duration;
-};
-
-export const msToMin = (ms: number): number => Math.round(ms / 60000);
-export const msToSec = (ms: number): number => Math.round(ms / 1000);
-
-export const diffFromNowString = (ts: number): string =>
-  durationFormattedFull(
-    DateTime.fromMillis(Date.now()).diff(DateTime.fromMillis(ts)),
-  );
-
-export const diffFromNowShortString = (ts: number): string =>
-  durationFormatted(
-    DateTime.fromMillis(Date.now()).diff(DateTime.fromMillis(ts)),
-  );
 
 export const getDateFromMill = (date) =>
   typeof date === 'number' ? DateTime.fromMillis(date) : undefined;
@@ -218,16 +178,11 @@ export const resentOrDate = (ts, short?: boolean) => {
   return date.toFormat(`LLL dd, yyyy${short ? '' : ', hh:mm a'}`);
 };
 
-export const checkRecentTime = (date, format) => date.toRelative();
-
 export const formatMs = (ms: number): string =>
   ms < 1000 ? `${Math.trunc(ms)}ms` : `${Math.trunc(ms / 100) / 10}s`;
 
 export const convertTimestampToUtcTimestamp = (timestamp: number): number =>
   DateTime.fromMillis(timestamp).toUTC().toMillis();
-
-export const nowFormatted = (format?: string): string =>
-  DateTime.local().toFormat(format || 'LLL dd, yyyy, hh:mm a');
 
 export const countDaysFrom = (timestamp: number): number => {
   const date = DateTime.fromMillis(timestamp);
@@ -235,44 +190,6 @@ export const countDaysFrom = (timestamp: number): number => {
   return Math.round(
     Math.abs(d.getTime() - date.toJSDate().getTime()) / (1000 * 3600 * 24),
   );
-};
-
-export const getDateRangeUTC = (
-  rangeName: string,
-  customStartDate?: number,
-  customEndDate?: number,
-): {
-  startDate: number;
-  endDate: number;
-} => {
-  let endDate = new Date().getTime();
-  let startDate: number;
-
-  switch (rangeName) {
-    case LAST_7_DAYS:
-      startDate = endDate - 7 * 24 * 60 * 60 * 1000;
-      break;
-    case LAST_30_DAYS:
-      startDate = endDate - 30 * 24 * 60 * 60 * 1000;
-      break;
-    case CUSTOM_RANGE:
-      if (!customStartDate || !customEndDate) {
-        throw new Error(
-          'Start date and end date must be provided for CUSTOM_RANGE.',
-        );
-      }
-      startDate = customStartDate;
-      endDate = customEndDate;
-      break;
-    case LAST_24_HOURS:
-    default:
-      startDate = endDate - 24 * 60 * 60 * 1000;
-  }
-
-  return {
-    startDate,
-    endDate,
-  };
 };
 
 /**
@@ -298,14 +215,3 @@ export function formatIsoForColumn(input: string | number): string {
     : date.toFormat('dd/MM');
   return `${date.toFormat('ccc')}, ${dateStr}`;
 }
-
-export const diffIfRecent = (ts: number): string => {
-  const now = Date.now();
-  const diffInHours = (now - ts) / (1000 * 60 * 60);
-
-  if (diffInHours < 24 * 3) {
-    return diffFromNowString(ts);
-  } else {
-    return resentOrDate(ts);
-  }
-};

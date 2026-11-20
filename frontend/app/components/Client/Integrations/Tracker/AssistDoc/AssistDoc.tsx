@@ -19,13 +19,13 @@ const TABS = [
 function AssistDoc({ onClose }: { onClose?: () => void }) {
   const { t } = useTranslation();
   const scope = usePluginProject();
-  const { projectKey } = scope;
+  const { projectKey, host } = scope;
   const [activeTab, setActiveTab] = useState(SCRIPT);
 
   const renderActiveTab = () => {
     switch (activeTab) {
       case SCRIPT:
-        return <AssistScript projectKey={projectKey} />;
+        return <AssistScript projectKey={projectKey} host={host} />;
       case NPM:
         return <AssistNpm projectKey={projectKey} />;
     }

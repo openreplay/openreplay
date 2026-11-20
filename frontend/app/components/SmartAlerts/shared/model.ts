@@ -78,20 +78,6 @@ export interface IssueSessionCard {
 
 export const CAT_ORDER: CategoryName[] = ['Errors', 'UI/UX', 'Slowness'];
 
-/* Autocomplete hints for the journey search. Suggestions only — the typed text
-   is what's sent to the search. */
-export const JOURNEY_SEARCH_SUGGESTIONS: string[] = [];
-
-/* Uniform teal for the category avatar/icon (the `tealx` token). The
-   per-category CAT_COLOR below is only the tab-highlight. */
-export const CAT_AVATAR_COLOR = 'var(--color-tealx)';
-
-/* The issue player is a `fixed inset-0` overlay above the whole app, so it
-   needs an extreme z-index. The overlay sits just below the popup layer so its
-   popovers/tooltips (PLAYER_POPUP_Z) stack above the player chrome. */
-export const PLAYER_OVERLAY_Z = 2147483000;
-export const PLAYER_POPUP_Z = 2147483647;
-
 export const HIDE_REASONS = [
   'Not a real issue',
   'Already fixed',
@@ -121,30 +107,11 @@ export const CAT_ICON: Record<
   Slowness: Gauge,
 };
 
-export const CAT_COLOR: Record<CategoryName, string> = {
-  Errors: '#CC0000',
-  'UI/UX': '#615FFF',
-  Slowness: '#E28940',
-};
-
 export function impactLevel(v: number): ImpactLevel {
   if (v >= 45) return 'High';
   if (v >= 25) return 'Medium';
   return 'Low';
 }
-
-/** filled-segment count per level (out of 3) */
-export const IMPACT_FILLED: Record<ImpactLevel, number> = {
-  High: 3,
-  Medium: 2,
-  Low: 1,
-};
-
-export const IMPACT_COLOR: Record<ImpactLevel, string> = {
-  High: 'var(--color-red)',
-  Medium: 'var(--color-orange)',
-  Low: 'var(--color-gray-medium)',
-};
 
 const MIN_PER_DAY = 1440;
 

@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next';
 import type { OtelValueCount } from 'App/services/OtelLogsService';
 
 import { type DrillCard as Card, DRILL_VALUES, keyLabel } from './logs-logic';
+import { copyText } from 'App/lib/use-copy';
 
 export interface LogDrilldownProps {
   cards: readonly Card[];
@@ -353,7 +354,7 @@ function DrillValueRow({
       icon: <Copy size={14} />,
       label: t('Copy value'),
       onClick: () =>
-        void navigator.clipboard?.writeText(value).catch(() => undefined),
+        void copyText(value),
     },
   ];
   return (

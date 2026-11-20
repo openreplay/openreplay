@@ -22,7 +22,6 @@ import { Modal } from '@/ui/overlays/modal';
 import { useToast } from '@/ui/overlays/toast';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import { FilterKey } from 'Types/filter/filterType';
-import copy from 'copy-to-clipboard';
 import {
   Bell,
   Grid2x2Plus,
@@ -48,6 +47,7 @@ import {
   USER_PATH,
   WEBVITALS,
 } from 'App/constants/card';
+import { copyWithToast } from 'App/lib/use-copy';
 import { useStore } from 'App/mstore';
 import Widget from 'App/mstore/types/widget';
 import { dashboardMetricDetails, metricDetails, withSiteId } from 'App/routes';
@@ -327,8 +327,7 @@ function WidgetView({
   };
 
   const copyLink = () => {
-    copy(window.location.href);
-    toast.success(t('Link copied to clipboard'));
+    void copyWithToast(window.location.href, t('Link copied to clipboard'));
   };
 
   const remove = () => {

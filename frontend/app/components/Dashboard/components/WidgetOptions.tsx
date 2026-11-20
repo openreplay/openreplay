@@ -62,18 +62,12 @@ function WidgetOptions() {
     [],
   );
 
-  const metricFormatLabel = ((mf: MetricFormat | undefined) => {
-    switch (mf) {
-      case 'sessionCount':
-        return t('All Sessions');
-      case 'eventCount':
-        return t('Event Count');
-      case 'userCount':
-        return t('Unique Users');
-      default:
-        return t('Unique Users'); // fallback
-    }
-  })(metric.metricFormat as MetricFormat);
+  const metricFormat = metric.metricFormat ?? 'sessionCount';
+  const metricFormatOptions: { value: MetricFormat; label: string }[] = [
+    { value: 'sessionCount', label: t('All Sessions') },
+    { value: 'userCount', label: t('Unique Users') },
+    { value: 'eventCount', label: t('Total Events') },
+  ];
 
   // const hasSeriesTypes = [TIMESERIES, FUNNEL, TABLE].includes(metric.metricType);
   const hasViewTypes = [TIMESERIES, FUNNEL, USER_PATH].includes(
@@ -135,14 +129,12 @@ function WidgetOptions() {
           <MenuButton<string>
             ariaLabel={t('Metric format')}
             icon={<Library />}
-            label={metricFormatLabel}
-            value={metric.metricFormat ?? 'sessionCount'}
+            label={
+              metricFormatOptions.find((o) => o.value === metricFormat)?.label
+            }
+            value={metricFormat}
             onChange={handleChange}
-            options={[
-              { value: 'sessionCount', label: t('All Sessions') },
-              { value: 'userCount', label: t('Unique Users') },
-              { value: 'eventCount', label: t('Total Events') },
-            ]}
+            options={metricFormatOptions}
             align="end"
           />
         )}

@@ -5,7 +5,10 @@ import { VList, VListHandle } from 'virtua';
 
 import { capitalize } from 'App/utils';
 import BottomBlock from 'Components/shared/DevTools/BottomBlock';
-import { TABS } from 'Components/shared/DevTools/ConsolePanel/ConsolePanel';
+import {
+  LEVEL_TAB,
+  TABS,
+} from 'Components/shared/DevTools/ConsolePanel/ConsolePanel';
 import ConsoleRow from 'Components/shared/DevTools/ConsoleRow';
 import { NoData, PanelTabs } from 'Components/shared/DevTools/PanelKit';
 
@@ -23,12 +26,10 @@ function SpotConsole({ onClose }: { onClose: () => void }) {
   const { logs } = spotPlayerStore;
   const filteredList = React.useMemo(
     () =>
-      logs.filter((log) => {
-        const tabType = activeTab.text.toLowerCase();
-        if (tabType === 'all') return true;
-        return tabType.includes(log.level);
-      }),
-    [activeTab],
+      activeTab.key === 'ALL'
+        ? logs
+        : logs.filter((log) => LEVEL_TAB[log.level] === activeTab.key),
+    [activeTab, logs],
   );
 
   const jump = (t: number) => {

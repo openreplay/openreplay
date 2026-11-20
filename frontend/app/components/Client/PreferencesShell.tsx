@@ -31,15 +31,9 @@ import { useTranslation } from 'react-i18next';
 
 import { PREFERENCES_MENU } from 'App/layout/data';
 import { activeMenuKey, menuRoutes } from 'App/layout/nav/routes';
-import { leafOf, preferencesTree } from 'App/layout/nav/tree';
+import { preferenceItems } from 'App/layout/nav/tree';
 import { useStore } from 'App/mstore';
 import { useLocation, useNavigate } from 'App/routing';
-import { mobileScreen } from 'App/utils/isMobile';
-import {
-  agentIssuesEnabled,
-  agentTestsEnabled,
-  otelLogsEnabled,
-} from 'App/utils/split-utils';
 
 import './preferences.css';
 
@@ -72,7 +66,7 @@ const GROUPS: { label: (t: TFunction) => string; keys: string[] }[] = [
   },
   {
     label: (t) => t('Armada'),
-    keys: [PREFERENCES_MENU.AGENTS, PREFERENCES_MENU.TEST_AGENTS],
+    keys: [PREFERENCES_MENU.AGENTS],
   },
 ];
 
@@ -169,25 +163,12 @@ function PreferencesShell({ children }: { children: ReactNode }) {
   const { userStore, projectsStore } = useStore();
   const { account, isEnterprise } = userStore;
   const isAdmin = account.admin || account.superAdmin;
-  const modules: string[] = account.settings?.modules ?? [];
   const routes = menuRoutes(projectsStore.siteId);
   const active = activeMenuKey(location.pathname, routes);
 
   const items = useMemo(
-    () =>
-      preferencesTree(t, {
-        isEnterprise,
-        isAdmin,
-        modules,
-        isMobile: mobileScreen,
-        issues: agentIssuesEnabled(),
-        tests: agentTestsEnabled(),
-        logs: otelLogsEnabled(),
-      })
-        .flatMap((g) => g.entries)
-        .filter((e) => leafOf(e.key) !== 'exit')
-        .map((e) => ({ key: leafOf(e.key), label: e.label })),
-    [isEnterprise, isAdmin, modules, i18n.language],
+    () => preferenceItems(t, { isEnterprise, isAdmin }),
+    [isEnterprise, isAdmin, i18n.language],
   );
 
   const groups = useMemo(() => {

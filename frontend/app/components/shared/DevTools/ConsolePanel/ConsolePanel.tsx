@@ -1,5 +1,4 @@
 import { LogLevel } from 'Player';
-import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -22,7 +21,7 @@ const INFO = 'INFO';
 const WARNINGS = 'WARNINGS';
 const ERRORS = 'ERRORS';
 
-const LEVEL_TAB = {
+export const LEVEL_TAB = {
   [LogLevel.INFO]: INFO,
   [LogLevel.LOG]: INFO,
   [LogLevel.WARN]: WARNINGS,
@@ -35,64 +34,6 @@ export const TABS = [ALL, ERRORS, WARNINGS, INFO].map((tab) => ({
   text: tab,
   key: tab,
 }));
-
-const urlRegex = /(https?:\/\/[^\s)]+)/g;
-
-export function renderWithNL(s: string | null = '') {
-  if (typeof s !== 'string') return '';
-
-  return s.split('\n').map((line, i) => {
-    const parts = line.split(urlRegex);
-
-    const formattedLine = parts.map((part, index) => {
-      if (urlRegex.test(part)) {
-        return (
-          <a
-            key={`link-${index}`}
-            className="link text-main"
-            href={part}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {part}
-          </a>
-        );
-      }
-      return part;
-    });
-
-    return (
-      <div key={i + line.slice(0, 6)} className={cn({ 'ml-20': i !== 0 })}>
-        {formattedLine}
-      </div>
-    );
-  });
-}
-
-export const getIconProps = (level: LogLevel) => {
-  switch (level) {
-    case LogLevel.INFO:
-    case LogLevel.LOG:
-      return {
-        name: 'console/info',
-        color: 'blue2',
-      };
-    case LogLevel.WARN:
-      return {
-        name: 'console/warning',
-        color: 'red2',
-      };
-    case LogLevel.ERROR:
-      return {
-        name: 'console/error',
-        color: 'red',
-      };
-    default:
-      return {
-        name: 'console/info',
-      };
-  }
-};
 
 const INDEX_KEY = 'console';
 const ERORRS_STORAGE_KEY = '_$_console_errors_only';

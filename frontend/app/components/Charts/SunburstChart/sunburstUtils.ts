@@ -1,6 +1,34 @@
 import { escapeHtml } from 'App/utils';
 
-import { colors } from '../utils';
+const colors = [
+  '#394EFF',
+  '#3EAAAF',
+  '#9276da',
+  '#ceba64',
+  '#bc6f9d',
+  '#966fbc',
+  '#64ce86',
+  '#e06da3',
+  '#6dabe0',
+  '#6D7DFF',
+  '#6AD7D3',
+  '#B9A4F3',
+  '#E7D890',
+  '#DFA0B9',
+  '#B896D6',
+  '#8FE5A9',
+  '#F19DC2',
+  '#9DC6F0',
+  '#1E2FD7',
+  '#27888F',
+  '#6449B7',
+  '#A48A36',
+  '#924A74',
+  '#724A91',
+  '#3EAC65',
+  '#B13C7F',
+  '#3E8BC4',
+];
 
 export interface SunburstChild {
   name: string;

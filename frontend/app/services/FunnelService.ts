@@ -50,11 +50,4 @@ export default class FunnelService {
       .then((response) => response.json())
       .then((response) => response.data || []);
   }
-
-  fetchIssue(funnelId: string, issueId: string): Promise<any> {
-    return this.client
-      .post(`/funnels/${funnelId}/issues/${issueId}/sessions`, {})
-      .then((response) => response.json())
-      .then((response) => response.data || {});
-  }
 }

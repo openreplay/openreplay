@@ -8,14 +8,13 @@ import { PlayTime, RealPlayTime } from 'App/player-ui';
 interface IProps {
   format: string;
   name: 'time' | 'endTime';
-  isCustom?: boolean;
 }
 
-const ReduxTime: React.FC<IProps> = observer(({ format, name, isCustom }) => {
+const ReduxTime: React.FC<IProps> = observer(({ format, name }) => {
   const { store } = React.useContext(PlayerContext);
   const time = store.get()[name] || 0;
 
-  return <PlayTime format={format} time={time} isCustom={isCustom} />;
+  return <PlayTime format={format} time={time} />;
 });
 
 const RealReplayTimeConnected: React.FC<{ startedAt: number }> = observer(

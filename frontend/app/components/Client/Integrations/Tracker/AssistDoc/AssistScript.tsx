@@ -2,27 +2,24 @@ import { CodeBlock } from '@/ui/data/CodeBlock';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import ENV from '../../../../../../env';
+import { trackerSnippet } from 'Components/Onboarding/install';
 
-function AssistScript(props) {
+function AssistScript({
+  projectKey,
+  host,
+}: {
+  projectKey: string;
+  host: string;
+}) {
   const { t } = useTranslation();
-  const scriptCode = `<!-- OpenReplay Tracking Code -->
-<script>
-(function(A,s,a,y,e,r){
-  r=window.OpenReplay=[s,r,e,[y-1]];
-  s=document.createElement('script');s.src=a;s.async=!A;
-  document.getElementsByTagName('head')[0].appendChild(s);
-  r.start=function(v){r.push([0])};
-  r.stop=function(v){r.push([1])};
-  r.setUserID=function(id){r.push([2,id])};
-  r.setUserAnonymousID=function(id){r.push([3,id])};
-  r.setMetadata=function(k,v){r.push([4,k,v])};
-  r.event=function(k,p,i){r.push([5,k,p,i])};
-  r.issue=function(k,p){r.push([6,k,p])};
-  r.isActive=function(){return false};
-  r.getSessionToken=function(){};
-})(0, "${props.projectKey}", "${ENV.TRACKER_HOST || '//static.openreplay.com'}/${ENV.TRACKER_VERSION}/openreplay-assist.js", 1, 28);
-</script>`;
+  const scriptCode = trackerSnippet({
+    projectKey,
+    host,
+    platform: 'web',
+    method: 'script',
+    ssr: false,
+    assist: true,
+  });
   return (
     <>
       <p className="m-int__blurb">

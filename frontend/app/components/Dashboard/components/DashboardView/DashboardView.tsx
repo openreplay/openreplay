@@ -1,11 +1,5 @@
-import { IconButton } from '@/ui/actions/IconButton';
 import { Button } from '@/ui/actions/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItems,
-  DropdownMenuTrigger,
-} from '@/ui/actions/dropdown-menu';
+import { MoreMenu } from '@/ui/actions/dropdown-menu';
 import { Chip } from '@/ui/data/Chip';
 import { Loader } from '@/ui/feedback/Loader';
 import { PhoneFilters } from '@/ui/filters/PhoneFilters';
@@ -19,15 +13,7 @@ import { Modal } from '@/ui/overlays/modal';
 import { PopoverPanel } from '@/ui/overlays/popover';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import withPageTitle from 'HOCs/withPageTitle';
-import {
-  Download,
-  Lock,
-  MoreHorizontal,
-  Pencil,
-  Plus,
-  Trash2,
-  Users,
-} from 'lucide-react';
+import { Download, Lock, Pencil, Plus, Trash2, Users } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -161,59 +147,44 @@ function DashboardView({ siteId, dashboardId, renderReport }: Props) {
                 onChange={(p) => dashboardStore.setPeriod(p)}
               />
             </PhoneFilters>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <span>
-                  <IconButton
-                    icon={<MoreHorizontal size={15} />}
-                    label={t('More')}
-                    variant="ghost"
-                  />
-                </span>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItems
-                  items={[
-                    {
-                      key: 'rename',
-                      icon: <Pencil size={13} />,
-                      label: t('Rename'),
-                      onClick: () => setRenaming(true),
-                    },
-                    {
-                      key: 'access',
-                      icon: <Users size={13} />,
-                      label: t('Visibility & access'),
-                      onClick: () => setAccess(true),
-                    },
-                    {
-                      key: 'report',
-                      icon: <Download size={13} />,
-                      label: userStore.isEnterprise ? (
-                        t('Download report')
-                      ) : (
-                        <Tooltip
-                          title={t('Available on Enterprise')}
-                          side="left"
-                        >
-                          <span>{t('Download report')}</span>
-                        </Tooltip>
-                      ),
-                      disabled: !userStore.isEnterprise,
-                      onClick: renderReport,
-                    },
-                    { key: 'd1', type: 'divider' },
-                    {
-                      key: 'delete',
-                      icon: <Trash2 size={13} />,
-                      label: t('Delete'),
-                      danger: true,
-                      onClick: () => setDeleting(true),
-                    },
-                  ]}
-                />
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <MoreMenu
+              label={t('More')}
+              items={[
+                {
+                  key: 'rename',
+                  icon: <Pencil size={13} />,
+                  label: t('Rename'),
+                  onClick: () => setRenaming(true),
+                },
+                {
+                  key: 'access',
+                  icon: <Users size={13} />,
+                  label: t('Visibility & access'),
+                  onClick: () => setAccess(true),
+                },
+                {
+                  key: 'report',
+                  icon: <Download size={13} />,
+                  label: userStore.isEnterprise ? (
+                    t('Download report')
+                  ) : (
+                    <Tooltip title={t('Available on Enterprise')} side="left">
+                      <span>{t('Download report')}</span>
+                    </Tooltip>
+                  ),
+                  disabled: !userStore.isEnterprise,
+                  onClick: renderReport,
+                },
+                { key: 'd1', type: 'divider' },
+                {
+                  key: 'delete',
+                  icon: <Trash2 size={13} />,
+                  label: t('Delete'),
+                  danger: true,
+                  onClick: () => setDeleting(true),
+                },
+              ]}
+            />
           </>
         }
         split

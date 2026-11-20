@@ -45,20 +45,24 @@ export function CreateDashboardDrawer({
     () => new Map(),
   );
 
-  const load = React.useMemo(
-    () =>
-      debounce((q: string) => {
-        void metricService
-          .getMetricsPaginated({ page: 1, limit: 50, name: q })
-          .then((resp: any) =>
-            setCards(
-              (resp.list ?? []).map((m: any) => new Widget().fromJson(m)),
-            ),
-          )
-          .catch(() => setCards([]));
-      }, 250),
-    [],
-  );
+  const load = React.useMemo(() => {
+    // only the latest search's answer is shown
+    let latest = 0;
+    return debounce((q: string) => {
+      const id = ++latest;
+      void metricService
+        .getMetricsPaginated({ page: 1, limit: 50, name: q })
+        .then((resp: any) => {
+          if (id !== latest) return;
+          setCards(
+            (resp.list ?? []).map((m: any) => new Widget().fromJson(m)),
+          );
+        })
+        .catch(() => {
+          if (id === latest) setCards([]);
+        });
+    }, 250);
+  }, []);
 
   React.useEffect(() => {
     if (open) load(query);

@@ -1,12 +1,6 @@
 import { trackerInstance } from '@/init/openreplay';
-import { IconButton } from '@/ui/actions/IconButton';
 import { Button } from '@/ui/actions/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItems,
-  DropdownMenuTrigger,
-} from '@/ui/actions/dropdown-menu';
+import { MoreMenu } from '@/ui/actions/dropdown-menu';
 import { EmptyState } from '@/ui/feedback/EmptyState';
 import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
 import { DisplayShell, MenuSelect } from '@/ui/filters/DisplayMenu';
@@ -38,7 +32,6 @@ import {
   BookOpen,
   CircleAlert,
   MessageCircleWarning,
-  MoreHorizontal,
   Settings2,
   Share2,
   Skull,
@@ -56,6 +49,7 @@ import {
 } from 'App/components/DataManagement/Segments/api';
 import type { SavedSegment } from 'App/components/SmartAlerts/api';
 import SegmentDrawer from 'App/components/SmartAlerts/segments/SegmentDrawer';
+import { copyWithToast } from 'App/lib/use-copy';
 import { useStore } from 'App/mstore';
 import FilterItem from 'App/mstore/types/filterItem';
 import { CLIENT_TABS, client } from 'App/routes';
@@ -402,10 +396,10 @@ function SessionsTabOverview() {
     try {
       const id = await searchStore.saveAsShare();
       if (!id) return;
-      await navigator.clipboard.writeText(
+      await copyWithToast(
         `${window.location.origin}${window.location.pathname}?sid=${id}`,
+        t('Link copied to clipboard'),
       );
-      toast.success(t('Link copied to clipboard'));
     } catch {
       toast.error(t('Failed to share segment'));
     }
@@ -546,46 +540,34 @@ function SessionsTabOverview() {
     />
   );
   const more = (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <span>
-          <IconButton
-            icon={<MoreHorizontal size={15} />}
-            label={t('More')}
-            variant="ghost"
-          />
-        </span>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItems
-          items={[
-            {
-              key: 'share',
-              icon: <Share2 size={13} />,
-              label: t('Copy link to this search'),
-              disabled: noRules,
-              onClick: share,
-            },
-            {
-              key: 'settings',
-              icon: <Settings2 size={13} />,
-              label: t('Session settings'),
-              onClick: () => navigate(client(CLIENT_TABS.SESSION_SETTINGS)),
-            },
-            {
-              key: 'docs',
-              icon: <BookOpen size={13} />,
-              label: t('Documentation'),
-              onClick: () =>
-                window.open(
-                  'https://docs.openreplay.com/en/session-replay/',
-                  '_blank',
-                ),
-            },
-          ]}
-        />
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <MoreMenu
+      label={t('More')}
+      items={[
+        {
+          key: 'share',
+          icon: <Share2 size={13} />,
+          label: t('Copy link to this search'),
+          disabled: noRules,
+          onClick: share,
+        },
+        {
+          key: 'settings',
+          icon: <Settings2 size={13} />,
+          label: t('Session settings'),
+          onClick: () => navigate(client(CLIENT_TABS.SESSION_SETTINGS)),
+        },
+        {
+          key: 'docs',
+          icon: <BookOpen size={13} />,
+          label: t('Documentation'),
+          onClick: () =>
+            window.open(
+              'https://docs.openreplay.com/en/session-replay/',
+              '_blank',
+            ),
+        },
+      ]}
+    />
   );
 
   return (

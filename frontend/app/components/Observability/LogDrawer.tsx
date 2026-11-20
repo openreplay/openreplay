@@ -37,6 +37,7 @@ import {
   otelRow,
   sessionOf,
 } from './logs-logic';
+import { copyText } from 'App/lib/use-copy';
 
 export type RelatedMatch = 'service' | 'pod' | 'all';
 const RELATED_SPANS = [1_000, 5_000, 30_000, 60_000];
@@ -164,7 +165,7 @@ export function LogDrawer({
       icon: <Copy size={14} />,
       label: t('Copy value'),
       onClick: () =>
-        void navigator.clipboard?.writeText(f.value).catch(() => undefined),
+        void copyText(f.value),
     });
     if (f.key && !f.multiline) {
       const k = f.key;

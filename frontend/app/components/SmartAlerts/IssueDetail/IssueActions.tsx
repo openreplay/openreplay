@@ -1,12 +1,7 @@
 import { CopyMarkdown } from '@/ui/actions/CopyMarkdown';
 import { IconButton } from '@/ui/actions/IconButton';
 import { Button } from '@/ui/actions/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItems,
-  DropdownMenuTrigger,
-} from '@/ui/actions/dropdown-menu';
+import { MoreMenu } from '@/ui/actions/dropdown-menu';
 import { useToast } from '@/ui/overlays/toast';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import {
@@ -16,7 +11,6 @@ import {
   ExternalLink,
   Eye,
   EyeOff,
-  MoreHorizontal,
   Pencil,
 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
@@ -123,62 +117,50 @@ function IssueActions({
         label={t('Copy the issue as markdown')}
         icon={<Copy size={15} />}
       />
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <span>
-            <IconButton
-              icon={<MoreHorizontal size={15} />}
-              label={t('Issue actions')}
-              variant="ghost"
-            />
-          </span>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItems
-            items={[
-              {
-                key: 'rename',
-                label: t('Rename'),
-                icon: <Pencil size={13} />,
-                onClick: onRename,
-              },
-              ...(state === 'mine' || state === 'team'
-                ? [
-                    {
-                      key: 'drop',
-                      label: t('Not critical for me'),
-                      icon: <BellOff size={13} />,
-                      onClick: onNotCritical,
-                    },
-                  ]
-                : state === 'dismissed'
-                  ? [
-                      {
-                        key: 'restore',
-                        label: t('Show as critical again'),
-                        icon: <Bell size={13} />,
-                        onClick: () => issuesStore.restoreCritical(issue.id),
-                      },
-                    ]
-                  : []),
-              { key: 'd1', type: 'divider' as const },
-              issue.hidden
-                ? {
-                    key: 'unhide',
-                    label: t('Unhide'),
-                    icon: <Eye size={13} />,
-                    onClick: () => issuesStore.unhide(issue.id),
-                  }
-                : {
-                    key: 'hide',
-                    label: t('Hide'),
-                    icon: <EyeOff size={13} />,
-                    onClick: onHide,
+      <MoreMenu
+        label={t('Issue actions')}
+        items={[
+          {
+            key: 'rename',
+            label: t('Rename'),
+            icon: <Pencil size={13} />,
+            onClick: onRename,
+          },
+          ...(state === 'mine' || state === 'team'
+            ? [
+                {
+                  key: 'drop',
+                  label: t('Not critical for me'),
+                  icon: <BellOff size={13} />,
+                  onClick: onNotCritical,
+                },
+              ]
+            : state === 'dismissed'
+              ? [
+                  {
+                    key: 'restore',
+                    label: t('Show as critical again'),
+                    icon: <Bell size={13} />,
+                    onClick: () => issuesStore.restoreCritical(issue.id),
                   },
-            ]}
-          />
-        </DropdownMenuContent>
-      </DropdownMenu>
+                ]
+              : []),
+          { key: 'd1', type: 'divider' as const },
+          issue.hidden
+            ? {
+                key: 'unhide',
+                label: t('Unhide'),
+                icon: <Eye size={13} />,
+                onClick: () => issuesStore.unhide(issue.id),
+              }
+            : {
+                key: 'hide',
+                label: t('Hide'),
+                icon: <EyeOff size={13} />,
+                onClick: onHide,
+              },
+        ]}
+      />
     </>
   );
 }

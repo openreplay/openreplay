@@ -1,5 +1,5 @@
 import { IconButton } from '@/ui/actions/IconButton';
-import cn from 'classnames';
+import { clsx as cn } from 'clsx';
 import {
   ChevronsLeft,
   ChevronsRight,
@@ -54,8 +54,7 @@ function Controls({ setActiveTab, fullView, mobile }: any) {
   const { skipInterval } = uiPlayerStore;
   const history = useHistory();
   const { siteId } = projectsStore;
-  const { playing, completed, messagesLoading, inspectorMode } =
-    store.get();
+  const { playing, completed, messagesLoading, inspectorMode } = store.get();
 
   const session = sessionStore.current;
   const previousSessionId = sessionStore.previousId;
@@ -109,9 +108,9 @@ function Controls({ setActiveTab, fullView, mobile }: any) {
         )}
         data-test-id="timer"
       >
-        <ReduxTime isCustom name="time" format="mm:ss" />
+        <ReduxTime name="time" format="mm:ss" />
         <span className="px-1">/</span>
-        <ReduxTime isCustom name="endTime" format="mm:ss" />
+        <ReduxTime name="endTime" format="mm:ss" />
       </div>
     );
   }

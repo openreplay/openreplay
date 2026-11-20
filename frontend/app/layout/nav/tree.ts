@@ -11,9 +11,7 @@ export type NavIconName =
   | 'spot'
   | 'analytics'
   | 'dataManagement'
-  | 'observability'
-  | 'exit'
-  | PREFERENCES_MENU;
+  | 'observability';
 
 export interface NavEntry {
   key: string;
@@ -43,8 +41,6 @@ export interface NavFlags {
   audits: boolean;
   logs: boolean;
 }
-
-export const PREFERENCES_PARENT = 'preferences';
 
 const leaf = (parent: string, key: string, label: string): NavEntry => ({
   key: `${parent}/${key}`,
@@ -138,11 +134,12 @@ export function navTree(t: TFunction, f: NavFlags): readonly NavGroup[] {
   return [{ entries }];
 }
 
-export function preferencesTree(
+/** the preference pages this account can open */
+export function preferenceItems(
   t: TFunction,
-  f: NavFlags,
-): readonly NavGroup[] {
-  const items = preferences(t)
+  f: Pick<NavFlags, 'isAdmin' | 'isEnterprise'>,
+) {
+  return preferences(t)
     .flatMap((c) => c.items)
     .filter(
       (i) =>
@@ -150,20 +147,8 @@ export function preferencesTree(
         !(i.isAdmin && !f.isAdmin) &&
         !(i.isEnterprise && !f.isEnterprise) &&
         !(i.key === PREFERENCES_MENU.EXPORTED_VIDEOS && !f.isEnterprise),
-    );
-  return [
-    {
-      entries: items.map((i) =>
-        i.key === MENU.EXIT
-          ? { key: MENU.EXIT, label: String(i.label), icon: 'exit' as const }
-          : {
-              key: `${PREFERENCES_PARENT}/${String(i.key)}`,
-              label: String(i.label),
-              icon: i.key as PREFERENCES_MENU,
-            },
-      ),
-    },
-  ];
+    )
+    .map((i) => ({ key: String(i.key), label: String(i.label) }));
 }
 
 export const leafOf = (key: string) => key.slice(key.lastIndexOf('/') + 1);

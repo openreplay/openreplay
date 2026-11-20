@@ -1,5 +1,4 @@
 import { ILog, LogLevel } from 'Player';
-import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -31,37 +30,6 @@ const LEVEL_TAB = {
   [LogLevel.ERROR]: ERRORS,
   [LogLevel.EXCEPTION]: ERRORS,
 } as const;
-
-function renderWithNL(s: string | null = '') {
-  if (typeof s !== 'string') return '';
-  return s.split('\n').map((line, i) => (
-    <div key={i + line.slice(0, 6)} className={cn({ 'ml-20': i !== 0 })}>
-      {line}
-    </div>
-  ));
-}
-
-const getIconProps = (level: any) => {
-  switch (level) {
-    case LogLevel.INFO:
-    case LogLevel.LOG:
-      return {
-        name: 'console/info',
-        color: 'blue2',
-      };
-    case LogLevel.WARN:
-      return {
-        name: 'console/warning',
-        color: 'red2',
-      };
-    case LogLevel.ERROR:
-      return {
-        name: 'console/error',
-        color: 'red',
-      };
-  }
-  return null;
-};
 
 const INDEX_KEY = 'console';
 
@@ -187,8 +155,6 @@ function MobileConsolePanel() {
                 key={log.time + index}
                 log={log}
                 jump={jump}
-                iconProps={getIconProps(log.level)}
-                renderWithNL={renderWithNL}
                 onClick={() => showDetails(log)}
                 sessionId={sessionId}
                 showSingleTab

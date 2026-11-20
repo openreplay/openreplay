@@ -25,15 +25,6 @@ export const httpHref = (url?: string | null): string | undefined => {
   }
 };
 
-export const formatExpirationTime = (seconds: number) => {
-  if (seconds >= WEEK_SECS) {
-    return `${Math.floor(seconds / DAY_SECS)} days`;
-  }
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  return `${hours > 0 ? `${hours}h` : ''}${minutes > 0 ? `${minutes}m` : ''}`.trim();
-};
-
 export function debounce(callback, wait, context = this) {
   let timeout = null;
   let callbackArgs = null;
@@ -56,46 +47,13 @@ export function debounceCall(func, wait) {
   };
 }
 
-export function randomInt(a, b) {
-  const min = (b ? a : 0) - 0.5;
-  const max = b || a || Number.MAX_SAFE_INTEGER;
-  const rand = min - 0.5 + Math.random() * (max - min + 1);
-  return Math.round(rand);
-}
-
 export const fileNameFormat = (str = '', ext = '') => {
   const name = str.replace(/[^a-zA-Z0-9]/g, '_');
   return `${name}${ext}`;
 };
 
-export const toUnderscore = (s) =>
-  s
-    .split(/(?=[A-Z])/)
-    .join('_')
-    .toLowerCase();
-
-export const getUniqueFilter = (keys) => (item, i, list) =>
-  !list.some(
-    (item2, j) =>
-      j < i &&
-      keys.every((key) => item[key] === item2[key] && item[key] !== undefined),
-  );
-
 export const numberWithCommas = (x) =>
   x ? x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : 0;
-
-export const numberCompact = (x) => {
-  if (x < 1000) {
-    return x;
-  }
-  if (x < 1000000) {
-    return `${Math.floor(x / 1000)}K`;
-  }
-  return `${Math.floor(x / 1000000)}M`;
-};
-
-export const cutURL = (url, prefix = '.../') =>
-  `${prefix + url.split('/').slice(3).join('/')}`;
 
 export const escapeRegExp = (string) =>
   string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -125,83 +83,6 @@ export const filterList = <T extends Record<string, any>>(
   );
 };
 
-export const getStateColor = (state) => {
-  switch (state) {
-    case 'passed':
-      return 'green';
-    case 'failed':
-      return 'red';
-    default:
-      return 'gray-medium';
-  }
-};
-
-export const convertNumberRange = (
-  oldMax,
-  oldMin,
-  newMin,
-  newMax,
-  currentValue,
-) => {
-  let newValue;
-  let newRange;
-  const oldRange = oldMax - oldMin;
-
-  if (oldRange === 0) {
-    newValue = newMin;
-  } else {
-    newRange = newMax - newMin;
-    newValue = ((currentValue - oldMin) * newRange) / oldRange + newMin;
-  }
-  return newValue;
-};
-
-export const prorata = ({ parts, elements, startDivisorFn, divisorFn }) => {
-  const byElement = Object.entries(elements).reduce(
-    (ack, [element, numElements]) => ({
-      ...ack,
-      [element]: {
-        parts: 0,
-        elements: numElements,
-        divisor: startDivisorFn(numElements),
-      },
-    }),
-    {},
-  );
-
-  while (parts > 0) {
-    const element = Object.entries(byElement).reduce(
-      (a, [k, v]) => (a.divisor > v.divisor ? a : v),
-      { divisor: 0 },
-    );
-
-    element.parts++;
-    element.divisor = divisorFn(element.elements, element.parts);
-
-    parts--;
-  }
-  return Object.entries(byElement).reduce(
-    (a, [k, v]) => ({ ...a, [k]: v.parts }),
-    {},
-  );
-};
-
-export const titleCase = (str) => {
-  str = str.toLowerCase();
-  str = str.split('_');
-  for (let i = 0; i < str.length; i++) {
-    str[i] = str[i].charAt(0).toUpperCase() + str[i].slice(1);
-  }
-
-  return str.join(' ');
-};
-
-export const confirm = (message, callback) => {
-  const sure = window.confirm(message);
-  if (!sure) return;
-  callback();
-};
-
 const KB = 1 << 10;
 const MB = KB << 10;
 const GB = MB << 10;
@@ -222,89 +103,10 @@ export function percentOf(part: number, whole: number): number {
   return whole > 0 ? (part * 100) / whole : 0;
 }
 
-export function fileType(url: string) {
-  const filename = url.split(/[#?]/);
-  if (!filename || filename.length == 0) return '';
-  const parts = filename[0].split('.');
-  if (!parts || parts.length == 0) return '';
-  return parts.pop().trim();
-}
-
-export function fileName(url: string) {
-  if (url) {
-    const m = url.toString().match(/.*\/(.+?)\./);
-    if (m && m.length > 1) {
-      return `${m[1]}.${fileType(url)}`;
-    }
-  }
-  return '';
-}
-
-export const camelCased = (val) =>
-  val.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
-
 export function capitalize(s: string) {
   if (!s || !s.length) return s;
   return s[0].toUpperCase() + s.slice(1);
 }
-
-export const titleize = (str) => {
-  let upper = true;
-  let newStr = '';
-  for (let i = 0, l = str.length; i < l; i++) {
-    // Note that you can also check for all kinds of spaces  with
-    // str[i].match(/\s/)
-    if (str[i] == ' ') {
-      upper = true;
-      newStr += str[i];
-      continue;
-    }
-    if (str[i] == '_') {
-      upper = true;
-      newStr += ' ';
-      continue;
-    }
-    newStr += upper ? str[i].toUpperCase() : str[i].toLowerCase();
-    upper = false;
-  }
-  return newStr;
-};
-
-export const truncate = (input, max = 10) =>
-  input.length > max ? `${input.substring(0, max)}...` : input;
-
-export const iceServerConfigFromString = (str) => {
-  if (!str || typeof str !== 'string' || str.length === 0) {
-    return null;
-  }
-
-  return str.split('|').map((c) => {
-    let server = null;
-    const arr = c.split(',');
-
-    if (!!arr[0] !== '') {
-      server = {};
-      server.urls = arr[0];
-      if (arr[1]) {
-        server.username = arr[1];
-        if (arr[2]) {
-          server.credential = arr[2];
-        }
-      }
-      return server;
-    }
-  });
-};
-
-export const isGreaterOrEqualVersion = (version, compareTo) => {
-  const [major, minor, patch] = version.split('-')[0].split('.');
-  const [majorC, minorC, patchC] = compareTo.split('-')[0].split('.');
-  return (
-    major > majorC ||
-    (major === majorC && minor > minorC) ||
-    (major === majorC && minor === minorC && patch >= patchC)
-  );
-};
 
 export const sliceListPerPage = <T extends Array<any>>(
   list: T,
@@ -314,12 +116,6 @@ export const sliceListPerPage = <T extends Array<any>>(
   const start = page * perPage;
   const end = start + perPage;
   return list.slice(start, end) as T;
-};
-
-export const positionOfTheNumber = (min, max, value, length) => {
-  const interval = (max - min) / length;
-  const position = Math.round((value - min) / interval);
-  return position;
 };
 
 export const convertElementToImage = async (el: HTMLElement) => {
@@ -435,22 +231,6 @@ export function millisToMinutesAndSeconds(millis: any) {
   return `${minutes}m${seconds < 10 ? '0' : ''}${seconds}s`;
 }
 
-export function simpleThrottle(
-  func: (...args: any[]) => void,
-  limit: number,
-): (...args: any[]) => void {
-  let inThrottle;
-  return function () {
-    const args = arguments;
-    const context = this;
-    if (!inThrottle) {
-      func.apply(context, args);
-      inThrottle = true;
-      setTimeout(() => (inThrottle = false), limit);
-    }
-  };
-}
-
 export const throttle = <R, A extends any[]>(
   fn: (...args: A) => R,
   delay: number,
@@ -536,33 +316,6 @@ export const checkParam = (
 
   return existsAndTrue;
 };
-
-export const isValidUrl = (url) =>
-  /((([A-Za-z]{3,9}:(?:\/\/)?)(?:[-;:&=\+\$,\w]+@)?[A-Za-z0-9.-]+|(?:www.|[-;:&=\+\$,\w]+@)[A-Za-z0-9.-]+)((?:\/[\+~%\/.\w-_]*)?\??(?:[-\+=&;%@.\w_]*)#?(?:[\w]*))?)/.test(
-    url,
-  );
-
-export function truncateStringToFit(
-  string: string,
-  screenWidth: number,
-  charWidth: number = 5,
-): string {
-  if (string.length * charWidth <= screenWidth) {
-    return string;
-  }
-
-  const ellipsis = '...';
-  const maxLen = Math.floor(screenWidth / charWidth);
-
-  if (maxLen <= ellipsis.length) {
-    return ellipsis.slice(0, maxLen);
-  }
-
-  const frontLen = Math.floor((maxLen - ellipsis.length) / 2);
-  const backLen = maxLen - ellipsis.length - frontLen;
-
-  return string.slice(0, frontLen) + ellipsis + string.slice(-backLen);
-}
 
 let sendingRequest = false;
 export const handleSpotJWT = (jwt: string) => {

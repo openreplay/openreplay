@@ -1,3 +1,5 @@
+import { lastIndexAtOrBefore } from 'App/utils/timeIndex';
+
 export function mergeListsWithZoom<
   T extends Record<string, any>,
   Y extends Record<string, any>,
@@ -36,31 +38,11 @@ export function mergeListsWithZoom<
   );
 }
 
-function binarySearchStartIndex<T extends Record<string, any>>(
-  arr: T[],
+/** the first item at or after `threshold` */
+const binarySearchStartIndex = (
+  arr: Record<string, any>[],
   threshold: number,
-): number {
-  if (arr.length === 0) return 0;
-
-  let low = 0;
-  let high = arr.length - 1;
-
-  // Handle edge cases first for better performance
-  if (arr[high].time < threshold) return arr.length;
-  if (arr[low].time >= threshold) return 0;
-
-  while (low <= high) {
-    const mid = Math.floor((low + high) / 2);
-
-    if (arr[mid].time < threshold) {
-      low = mid + 1;
-    } else {
-      high = mid - 1;
-    }
-  }
-
-  return low;
-}
+) => lastIndexAtOrBefore(arr as { time: number }[], threshold, true) + 1;
 
 function mergeThreeSortedArrays<
   T extends Record<string, any>,
