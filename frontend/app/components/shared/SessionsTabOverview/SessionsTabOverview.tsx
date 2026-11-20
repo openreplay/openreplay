@@ -12,7 +12,6 @@ import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
 import { DisplayShell, MenuSelect } from '@/ui/filters/DisplayMenu';
 import { FilterStrip, type FilterStripProps } from '@/ui/filters/FilterStrip';
 import { PhoneFilters, SheetSection } from '@/ui/filters/PhoneFilters';
-import { SavedSearchMenu } from '@/ui/filters/SavedSearchMenu';
 import { SegmentIndicator } from '@/ui/filters/SegmentIndicator';
 import { DateRange } from '@/ui/inputs/DateRange';
 import { ListFooter } from '@/ui/layout/ListFooter';
@@ -25,7 +24,6 @@ import {
   useRowsPerPage,
 } from '@/ui/layout/rows-per-page';
 import { useViewport } from '@/ui/layout/use-viewport';
-import { confirm } from '@/ui/overlays/confirm';
 import { useToast } from '@/ui/overlays/toast';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import withPermissions from 'HOCs/withPermissions';
@@ -42,7 +40,6 @@ import {
   Settings2,
   Share2,
   Skull,
-  Split,
   WifiOff,
 } from 'lucide-react';
 import { DateTime } from 'luxon';
@@ -237,50 +234,6 @@ function SessionsTabOverview() {
     const fresh = freshSaved();
     if (fresh) searchStore.applySavedSearch(fresh);
     else searchStore.detachSegment();
-  };
-
-  const savedItems = React.useMemo(
-    () =>
-      searchStore.list
-        .filter((s) => !s.isShare && s.searchId != null)
-        .map((s) => {
-          const seg = segmentOf(s);
-          return {
-            id: seg.id,
-            name: seg.name,
-            sentence: describeFilters(t, seg.filters as any[], seg.eventsOrder),
-          };
-        }),
-    [searchStore.list, t],
-  );
-  const applySegmentById = (id: string) => {
-    const saved = searchStore.list.find((s) => String(s.searchId) === id);
-    if (saved) searchStore.applySavedSearch(saved);
-  };
-  const saveAsSegment = () => {
-    // the modal updates the open segment; a new one starts detached from it
-    if (segment) searchStore.detachSegment();
-    setSaving(true);
-  };
-  const deleteSegment = async () => {
-    if (!segment) return;
-    const ok = await confirm({
-      header: t('Delete “{{name}}”?', { name: segment.name }),
-      confirmation: t(
-        'The search is deleted. The sessions it describes are not affected.',
-      ),
-      confirmButton: t('Delete'),
-      cancelButton: t('Cancel'),
-      danger: true,
-    });
-    if (!ok) return;
-    try {
-      await searchStore.removeSavedSearch(segment.id);
-      void filterStore.fetchFilters(String(projectsStore.activeSiteId), true);
-      toast.success(t('Segment deleted'));
-    } catch {
-      toast.error(t('Something went wrong, please try again'));
-    }
   };
 
   const { filters: searchFilters, eventsOrder: searchOrder } =
@@ -660,28 +613,6 @@ function SessionsTabOverview() {
                 onAdd={editor.onAdd}
               />
             ) : undefined
-          }
-          trailing={
-            <SavedSearchMenu
-              items={savedItems}
-              activeId={segment ? segment.id : null}
-              edited={searchStore.segmentEdited}
-              label={t('Segments')}
-              searchPlaceholder={t('Search {{n}} segments', {
-                n: savedItems.length,
-              })}
-              empty={t('No segments yet')}
-              noMatch={(q) => t('No segment matches “{{q}}”', { q })}
-              saveLabel={t('Save as segment')}
-              icon={<Split size={13} aria-hidden="true" />}
-              canSave={!noRules && !usesSegment}
-              onApply={applySegmentById}
-              onSave={saveAsSegment}
-              onUpdate={segment && segmentMine ? saveSegmentChanges : undefined}
-              onDelete={
-                segment && segmentMine ? () => void deleteSegment() : undefined
-              }
-            />
           }
         />
       )}
