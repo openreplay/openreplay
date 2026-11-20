@@ -1,13 +1,7 @@
 import withPageTitle from '@/components/hocs/withPageTitle';
 import withPermissions from '@/components/hocs/withPermissions';
-import { IconButton } from '@/ui/actions/IconButton';
 import { Button } from '@/ui/actions/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItems,
-  DropdownMenuTrigger,
-} from '@/ui/actions/dropdown-menu';
+import { MoreMenu } from '@/ui/actions/dropdown-menu';
 import { Chip } from '@/ui/data/Chip';
 import { MoreCount } from '@/ui/data/MoreCount';
 import { type Column, DataTable, type TableSort } from '@/ui/data/table';
@@ -38,7 +32,6 @@ import {
   EyeOff,
   Flag,
   Globe,
-  MoreHorizontal,
   Pencil,
   Plus,
   Radio,
@@ -354,92 +347,81 @@ function IssuesList() {
       width: 48,
       align: 'center',
       render: (r) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <span>
-              <IconButton
-                icon={<MoreHorizontal size={15} />}
-                label={t('Actions for {{name}}', { name: r.head })}
-                variant="ghost"
-              />
-            </span>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-            <DropdownMenuItems
-              items={
-                r.deleted
-                  ? [
-                      {
-                        key: 'open',
-                        icon: <ArrowUpRight size={13} />,
-                        label: t('Open'),
-                        onClick: () => openDetail(r.id),
-                      },
-                      {
-                        key: 'restore',
-                        icon: <RotateCcw size={13} />,
-                        label: t('Restore'),
-                        onClick: () => issuesStore.restore(r.id),
-                      },
-                    ]
-                  : [
-                      {
-                        key: 'open',
-                        icon: <ArrowUpRight size={13} />,
-                        label: t('Open'),
-                        onClick: () => openDetail(r.id),
-                      },
-                      {
-                        key: 'rename',
-                        icon: <Pencil size={13} />,
-                        label: t('Rename'),
-                        onClick: () => setRenameTarget(r),
-                      },
-                      ...(issuesStore.notCritical[r.id] != null
-                        ? [
-                            {
-                              key: 'restoreCritical',
-                              icon: <AlertTriangle size={13} />,
-                              label: t('Show as critical again'),
-                              onClick: () => issuesStore.restoreCritical(r.id),
-                            },
-                          ]
-                        : issuesStore.critState(r.id) !== 'none'
-                          ? [
-                              {
-                                key: 'notCritical',
-                                icon: <AlertTriangle size={13} />,
-                                label: t('Not critical for me'),
-                                onClick: () => setNotCritTarget(r),
-                              },
-                            ]
-                          : []),
-                      { key: 'd1', type: 'divider' as const },
-                      r.hidden
-                        ? {
-                            key: 'unhide',
-                            icon: <Eye size={13} />,
-                            label: t('Unhide'),
-                            onClick: () => issuesStore.unhide(r.id),
-                          }
-                        : {
-                            key: 'hide',
-                            icon: <EyeOff size={13} />,
-                            label: t('Hide'),
-                            onClick: () => setHideTarget(r),
+        <MoreMenu
+          label={t('Actions for {{name}}', { name: r.head })}
+          items={
+            r.deleted
+              ? [
+                  {
+                    key: 'open',
+                    icon: <ArrowUpRight size={13} />,
+                    label: t('Open'),
+                    onClick: () => openDetail(r.id),
+                  },
+                  {
+                    key: 'restore',
+                    icon: <RotateCcw size={13} />,
+                    label: t('Restore'),
+                    onClick: () => issuesStore.restore(r.id),
+                  },
+                ]
+              : [
+                  {
+                    key: 'open',
+                    icon: <ArrowUpRight size={13} />,
+                    label: t('Open'),
+                    onClick: () => openDetail(r.id),
+                  },
+                  {
+                    key: 'rename',
+                    icon: <Pencil size={13} />,
+                    label: t('Rename'),
+                    onClick: () => setRenameTarget(r),
+                  },
+                  ...(issuesStore.notCritical[r.id] != null
+                    ? [
+                        {
+                          key: 'restoreCritical',
+                          icon: <AlertTriangle size={13} />,
+                          label: t('Show as critical again'),
+                          onClick: () => issuesStore.restoreCritical(r.id),
+                        },
+                      ]
+                    : issuesStore.critState(r.id) !== 'none'
+                      ? [
+                          {
+                            key: 'notCritical',
+                            icon: <AlertTriangle size={13} />,
+                            label: t('Not critical for me'),
+                            onClick: () => setNotCritTarget(r),
                           },
-                      {
-                        key: 'delete',
-                        icon: <Trash2 size={13} />,
-                        label: t('Delete'),
-                        danger: true,
-                        onClick: () => setDeleteTarget(r),
+                        ]
+                      : []),
+                  { key: 'd1', type: 'divider' as const },
+                  r.hidden
+                    ? {
+                        key: 'unhide',
+                        icon: <Eye size={13} />,
+                        label: t('Unhide'),
+                        onClick: () => issuesStore.unhide(r.id),
+                      }
+                    : {
+                        key: 'hide',
+                        icon: <EyeOff size={13} />,
+                        label: t('Hide'),
+                        onClick: () => setHideTarget(r),
                       },
-                    ]
-              }
-            />
-          </DropdownMenuContent>
-        </DropdownMenu>
+                  {
+                    key: 'delete',
+                    icon: <Trash2 size={13} />,
+                    label: t('Delete'),
+                    danger: true,
+                    onClick: () => setDeleteTarget(r),
+                  },
+                ]
+          }
+          stopPropagation
+        />
       ),
     },
   ];
@@ -626,37 +608,24 @@ function IssuesList() {
                 ]}
               />
             </PhoneFilters>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <span>
-                  <IconButton
-                    icon={<MoreHorizontal size={15} />}
-                    label={t('More')}
-                    variant="ghost"
-                  />
-                </span>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItems
-                  items={[
-                    {
-                      key: 'settings',
-                      icon: <Settings2 size={13} />,
-                      label: t('Issues settings'),
-                      onClick: () =>
-                        history.push('/client/agents?agent=issues'),
-                    },
-                    {
-                      key: 'docs',
-                      icon: <BookOpen size={13} />,
-                      label: t('Documentation'),
-                      onClick: () =>
-                        window.open('https://docs.openreplay.com/', '_blank'),
-                    },
-                  ]}
-                />
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <MoreMenu
+              label={t('More')}
+              items={[
+                {
+                  key: 'settings',
+                  icon: <Settings2 size={13} />,
+                  label: t('Issues settings'),
+                  onClick: () => history.push('/client/agents?agent=issues'),
+                },
+                {
+                  key: 'docs',
+                  icon: <BookOpen size={13} />,
+                  label: t('Documentation'),
+                  onClick: () =>
+                    window.open('https://docs.openreplay.com/', '_blank'),
+                },
+              ]}
+            />
           </div>
         </>
       }

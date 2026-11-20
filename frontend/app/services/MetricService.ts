@@ -150,17 +150,4 @@ export default class MetricService {
     const json: any = await resp.json();
     return json.data || {};
   }
-
-  async fetchIssue(
-    metricId: string,
-    issueId: string,
-    params: any,
-  ): Promise<any> {
-    const response = await this.client.post(
-      `/cards/${metricId}/issues/${issueId}/sessions`,
-      params,
-    );
-    const json = await response.json();
-    return json.data || {};
-  }
 }

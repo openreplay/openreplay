@@ -5,28 +5,16 @@ import { useViewport } from '@/ui/layout/use-viewport';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import RecordingsMeter from 'Saas/nav/RecordingsMeter';
 import {
-  ArrowLeft,
   Bell,
-  Bot,
   ChartColumn,
   ChevronsUpDown,
-  CreditCard,
   Database,
-  Film,
-  FolderClosed,
-  ListChecks,
-  ListVideo,
-  Network,
   PanelLeftClose,
   PanelLeftOpen,
   PlayCircle,
-  Plug,
   ScreenShare,
   Settings2,
-  UserRound,
-  Users,
   Video,
-  Webhook,
   X,
 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
@@ -74,19 +62,6 @@ const ICONS: Record<NavIconName, ComponentType<{ size?: number }>> = {
   spot: Video,
   analytics: ChartColumn,
   dataManagement: Database,
-  exit: ArrowLeft,
-  [PREFERENCES_MENU.ACCOUNT]: UserRound,
-  [PREFERENCES_MENU.SESSION_SETTINGS]: ListVideo,
-  [PREFERENCES_MENU.INTEGRATIONS]: Plug,
-  [PREFERENCES_MENU.WEBHOOKS]: Webhook,
-  [PREFERENCES_MENU.PROJECTS]: FolderClosed,
-  [PREFERENCES_MENU.ROLES_ACCESS]: Network,
-  [PREFERENCES_MENU.AUDIT]: ListChecks,
-  [PREFERENCES_MENU.TEAM]: Users,
-  [PREFERENCES_MENU.BILLING]: CreditCard,
-  [PREFERENCES_MENU.EXPORTED_VIDEOS]: Film,
-  [PREFERENCES_MENU.TEST_AGENTS]: Bot,
-  [PREFERENCES_MENU.AGENTS]: Bot,
 };
 
 interface SideNavProps {

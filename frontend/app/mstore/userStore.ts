@@ -1,11 +1,11 @@
 import { toast } from '@/ui/overlays/toast';
 import Account from 'Types/account';
 import Client from 'Types/client';
-import copy from 'copy-to-clipboard';
 import i18next, { TFunction } from 'i18next';
 import { makeAutoObservable, runInAction } from 'mobx';
 import { makePersistable } from 'mobx-persist-store';
 
+import { copyText, copyWithToast } from 'App/lib/use-copy';
 import User from 'App/mstore/types/user';
 import { userService } from 'App/services';
 import { deleteCookie } from 'App/utils';
@@ -308,8 +308,7 @@ class UserStore {
   copyInviteCode = (userId: string): void => {
     const content = this.list.find((u) => u.userId === userId)?.invitationLink;
     if (content) {
-      copy(content);
-      toast.success(this.t('Invite code copied successfully'));
+      void copyWithToast(content, this.t('Invite code copied successfully'));
     } else {
       toast.error(this.t('Invite code not found'));
     }
@@ -330,7 +329,7 @@ class UserStore {
                 response.invitationLink,
               );
             }
-            copy(response.invitationLink);
+            void copyText(response.invitationLink);
           });
           resolve(response);
         })

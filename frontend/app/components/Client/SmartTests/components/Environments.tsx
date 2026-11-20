@@ -1,18 +1,12 @@
 import { useLast } from '@/lib/use-last';
-import { IconButton } from '@/ui/actions/IconButton';
 import { Button } from '@/ui/actions/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItems,
-  DropdownMenuTrigger,
-} from '@/ui/actions/dropdown-menu';
+import { MoreMenu } from '@/ui/actions/dropdown-menu';
 import { Chip } from '@/ui/data/Chip';
 import { EmptyState } from '@/ui/feedback/EmptyState';
 import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
 import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
 import { useToast } from '@/ui/overlays/toast';
-import { Globe, MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Globe, Pencil, Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -130,37 +124,25 @@ function Environments() {
                     {env.url}
                   </span>
                 </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <span>
-                      <IconButton
-                        icon={<MoreHorizontal size={15} />}
-                        label={t('Actions for {{name}}', { name: env.name })}
-                        variant="ghost"
-                      />
-                    </span>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItems
-                      items={[
-                        {
-                          key: 'edit',
-                          icon: <Pencil size={13} />,
-                          label: t('Edit'),
-                          onClick: () => setEditing(env),
-                        },
-                        { key: 'd', type: 'divider' },
-                        {
-                          key: 'delete',
-                          icon: <Trash2 size={13} />,
-                          label: t('Delete'),
-                          danger: true,
-                          onClick: () => setTarget(env),
-                        },
-                      ]}
-                    />
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <MoreMenu
+                  label={t('Actions for {{name}}', { name: env.name })}
+                  items={[
+                    {
+                      key: 'edit',
+                      icon: <Pencil size={13} />,
+                      label: t('Edit'),
+                      onClick: () => setEditing(env),
+                    },
+                    { key: 'd', type: 'divider' },
+                    {
+                      key: 'delete',
+                      icon: <Trash2 size={13} />,
+                      label: t('Delete'),
+                      danger: true,
+                      onClick: () => setTarget(env),
+                    },
+                  ]}
+                />
               </li>
             );
           })}

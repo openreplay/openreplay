@@ -1,9 +1,4 @@
-import { Button } from '@/ui/actions/button';
-import { Tooltip } from '@/ui/overlays/tooltip';
-import { Keyboard } from 'lucide-react';
 import React from 'react';
-
-import { useModal } from 'Components/Modal';
 
 function Key({ label }: { label: string }) {
   return (
@@ -25,55 +20,6 @@ function Cell({ shortcut, text }: any) {
   );
 }
 
-export function LaunchConsoleShortcut() {
-  return <Key label="⇧ + C" />;
-}
-export function LaunchNetworkShortcut() {
-  return <Key label="⇧ + N" />;
-}
-export function LaunchPerformanceShortcut() {
-  return <Key label="⇧ + P" />;
-}
-export function LaunchStateShortcut() {
-  return <Key label="⇧ + R" />;
-}
-export function LaunchEventsShortcut() {
-  return <Key label="⇧ + E" />;
-}
-export function PlaySessionInFullscreenShortcut() {
-  return <Key label="⇧ + F" />;
-}
-export function PlayPauseSessionShortcut() {
-  return <Key label="Space" />;
-}
-export function LaunchXRaShortcut() {
-  return <Key label="⇧ + X" />;
-}
-export function LaunchUserActionsShortcut() {
-  return <Key label="⇧ + A" />;
-}
-export function LaunchMoreUserInfoShortcut() {
-  return <Key label="⇧ + I" />;
-}
-export function LaunchOptionsMenuShortcut() {
-  return <Key label="⇧ + M" />;
-}
-export function PlayNextSessionShortcut() {
-  return <Key label="⇧ + >" />;
-}
-export function PlayPreviousSessionShortcut() {
-  return <Key label="⇧ + <" />;
-}
-export function SkipForwardShortcut() {
-  return <Key label="→" />;
-}
-export function SkipBackwardShortcut() {
-  return <Key label="←" />;
-}
-export function PlaybackSpeedShortcut() {
-  return <Key label="↑ / ↓" />;
-}
-
 export function ShortcutGrid() {
   return (
     <div className=" grid grid-cols-1 grid-flow-row-dense auto-cols-max gap-4 justify-items-start">
@@ -89,7 +35,6 @@ export function ShortcutGrid() {
       <Cell shortcut="⇧ + X" text="Launch X-Ray" />
       <Cell shortcut="⇧ + A" text="Launch User Actions" />
       <Cell shortcut="⇧ + I" text="Launch More User Info" />
-      <Cell shortcut="⇧ + M" text="Launch Options Menu" />
       <Cell shortcut="⇧ + >" text="Play Next Session" />
       <Cell shortcut="⇧ + <" text="Play Previous Session" />
       <Cell shortcut="→" text="Skip Forward" />
@@ -99,21 +44,3 @@ export function ShortcutGrid() {
     </div>
   );
 }
-
-function KeyboardHelp() {
-  const { showModal } = useModal();
-  return (
-    <Tooltip side="bottom" title="Keyboard Shortcuts">
-      <Button
-        className="flex items-center justify-center"
-        onClick={() => {
-          showModal(<ShortcutGrid />, { right: true, width: 320 });
-        }}
-      >
-        <Keyboard size={18} />
-      </Button>
-    </Tooltip>
-  );
-}
-
-export default KeyboardHelp;

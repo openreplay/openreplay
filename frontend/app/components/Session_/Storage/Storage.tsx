@@ -7,7 +7,7 @@ import {
   selectStorageListNow,
   selectStorageType,
 } from 'Player';
-import cn from 'classnames';
+import { clsx as cn } from 'clsx';
 import diff from 'microdiff';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
@@ -277,7 +277,8 @@ function Storage() {
         </BottomBlock.Header>
         <BottomBlock.Content className="flex">
           {list.length === 0 ? (
-            <NoData mark="layers"
+            <NoData
+              mark="layers"
               title={t('Nothing to display yet')}
               hint={
                 !hintIsHidden ? (

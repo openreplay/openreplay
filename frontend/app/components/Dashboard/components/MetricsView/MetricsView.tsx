@@ -25,7 +25,14 @@ import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { CATEGORIES, DROPDOWN_OPTIONS, TYPE_NAMES } from 'App/constants/card';
+import {
+  CATEGORIES,
+  FUNNEL,
+  HEATMAP,
+  TIMESERIES,
+  TYPE_NAMES,
+  USER_PATH,
+} from 'App/constants/card';
 import { useStore } from 'App/mstore';
 import type Widget from 'App/mstore/types/widget';
 import { withSiteId } from 'App/routes';
@@ -243,9 +250,9 @@ function MetricsView({ siteId }: { siteId: string }) {
             label={t('Filter by type')}
             items={[
               { key: 'all', label: t('All types') },
-              ...DROPDOWN_OPTIONS(t).map((o) => ({
-                key: o.value,
-                label: o.label,
+              ...[TIMESERIES, HEATMAP, FUNNEL, USER_PATH].map((key) => ({
+                key,
+                label: typeNames[key],
               })),
               { key: CATEGORIES.monitors, label: t('Monitors') },
               { key: CATEGORIES.web_analytics, label: t('Web Analytics') },

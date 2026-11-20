@@ -1,4 +1,4 @@
-import { calculateGranularities } from '@/components/Dashboard/components/WidgetDateRange/RangeGranularity';
+import { defaultDensity } from '@/components/Dashboard/components/WidgetDateRange/RangeGranularity';
 import { HEATMAP } from '@/constants/card';
 import { CUSTOM_RANGE } from '@/dateRange';
 import { toast } from '@/ui/overlays/toast';
@@ -81,12 +81,7 @@ export default class DashboardStore {
   };
 
   createDensity = (duration: number) => {
-    const densityOpts = calculateGranularities(duration).filter(
-      (opt) => !opt.disabled,
-    );
-    const defaultOption = densityOpts[densityOpts.length - 2];
-
-    this.setDensity(defaultOption.key);
+    this.setDensity(defaultDensity(duration));
   };
 
   setDensity = (density: number) => {

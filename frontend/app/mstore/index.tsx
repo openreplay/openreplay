@@ -5,6 +5,7 @@ import ClipStore from '@/mstore/clipStore';
 import React from 'react';
 
 import { apiClient } from 'App/api_client';
+import { copyText } from 'App/lib/use-copy';
 import { services } from 'App/services';
 
 import AiFiltersStore from './aiFiltersStore';
@@ -42,33 +43,11 @@ const searchStoreLive = new SearchStoreLive();
 const settingsStore = new SettingsStore();
 const filterStore = new FilterStore();
 
-function copyToClipboard(text: string) {
-  const textArea = document.createElement('textarea');
-  textArea.value = text;
-
-  textArea.style.top = '0';
-  textArea.style.left = '0';
-  textArea.style.position = 'fixed';
-
-  document.body.appendChild(textArea);
-  textArea.focus();
-  textArea.select();
-
-  try {
-    const successful = document.execCommand('copy');
-    const msg = successful ? 'successful' : 'unsuccessful';
-  } catch (err) {
-    logger.error('unable to copy', err);
-  }
-
-  document.body.removeChild(textArea);
-}
-
 window.getJWT = () => {
   const jwtToken = userStore.getJwt() ?? null;
   if (jwtToken) {
     logger.log(jwtToken);
-    copyToClipboard(jwtToken);
+    void copyText(jwtToken);
   } else {
     logger.log('not logged in');
   }

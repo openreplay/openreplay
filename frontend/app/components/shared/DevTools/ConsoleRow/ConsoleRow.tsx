@@ -1,4 +1,4 @@
-import cn from 'classnames';
+import { clsx as cn } from 'clsx';
 import { ChevronRight, CircleAlert, Info, TriangleAlert } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -10,9 +10,7 @@ import TabTag from '../TabTag';
 
 interface Props {
   log: any;
-  iconProps?: any;
   jump?: any;
-  renderWithNL?: any;
   style?: any;
   onClick?: () => void;
   getTabNum?: (tab: string) => number;

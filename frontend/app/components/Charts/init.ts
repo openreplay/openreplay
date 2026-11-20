@@ -76,37 +76,4 @@ const defaultOptions = {
   backgroundColor: 'transparent',
 };
 
-export function initWindowStorages(
-  chartUuid: string,
-  categories: string[] = [],
-  chartArr: any[] = [],
-  compChartArr: any[] = [],
-) {
-  (window as any).__seriesValueMap = (window as any).__seriesValueMap ?? {};
-  (window as any).__seriesColorMap = (window as any).__seriesColorMap ?? {};
-  (window as any).__timestampMap = (window as any).__timestampMap ?? {};
-  (window as any).__timestampCompMap = (window as any).__timestampCompMap ?? {};
-  (window as any).__categoryMap = (window as any).__categoryMap ?? {};
-
-  if (!(window as any).__seriesColorMap[chartUuid]) {
-    (window as any).__seriesColorMap[chartUuid] = {};
-  }
-  if (!(window as any).__seriesValueMap[chartUuid]) {
-    (window as any).__seriesValueMap[chartUuid] = {};
-  }
-  if (!(window as any).__categoryMap[chartUuid]) {
-    (window as any).__categoryMap[chartUuid] = categories;
-  }
-  if (!(window as any).__timestampMap[chartUuid]) {
-    (window as any).__timestampMap[chartUuid] = chartArr.map(
-      (item) => item.timestamp,
-    );
-  }
-  if (!(window as any).__timestampCompMap[chartUuid]) {
-    (window as any).__timestampCompMap[chartUuid] = compChartArr.map(
-      (item) => item.timestamp,
-    );
-  }
-}
-
 export { echarts, defaultOptions };

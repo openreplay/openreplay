@@ -123,15 +123,6 @@ export function listEnvironments(
     .then(toJson<ListResponse<Environment>>);
 }
 
-export function getEnvironment(
-  projectId: string | number,
-  environmentId: string,
-): Promise<Environment> {
-  return client
-    .get(`${base(projectId)}/environments/${environmentId}`)
-    .then(toJson<Environment>);
-}
-
 export function createEnvironment(
   projectId: string | number,
   body: EnvironmentRequest,

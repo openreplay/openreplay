@@ -2,13 +2,13 @@ import { Button } from '@/ui/actions/button';
 import { StatTile } from '@/ui/data/StatTile';
 import { EmptyState } from '@/ui/feedback/EmptyState';
 import { FilterStrip } from '@/ui/filters/FilterStrip';
-import { useToast } from '@/ui/overlays/toast';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import { ChevronLeft, Copy, Download } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { formatMs } from 'App/date';
+import { copyWithToast } from 'App/lib/use-copy';
 import { formatBytes } from 'App/utils';
 
 import { NetworkRequest } from '../shared/types';
@@ -125,11 +125,7 @@ function CodeBlock({ text }: { text?: string }) {
 }
 
 type DetailTab =
-  | 'reqHeaders'
-  | 'resHeaders'
-  | 'payload'
-  | 'response'
-  | 'timing';
+  'reqHeaders' | 'resHeaders' | 'payload' | 'response' | 'timing';
 
 function Detail({
   req,
@@ -141,7 +137,6 @@ function Detail({
   onClose: () => void;
 }) {
   const { t } = useTranslation();
-  const toast = useToast();
   const [tab, setTab] = useState<DetailTab>('reqHeaders');
   const errored = isNetError(req);
 
@@ -170,8 +165,7 @@ function Detail({
   ];
 
   const copyUrl = () => {
-    navigator.clipboard?.writeText(req.url);
-    toast.success(t('URL copied'));
+    void copyWithToast(req.url, t('URL copied'));
   };
 
   const timingRows: { label: string; value?: number }[] = [

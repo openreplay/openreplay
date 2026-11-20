@@ -1,12 +1,6 @@
 import { CopyButton } from '@/ui/actions/CopyButton';
-import { IconButton } from '@/ui/actions/IconButton';
 import { Button } from '@/ui/actions/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItems,
-  DropdownMenuTrigger,
-} from '@/ui/actions/dropdown-menu';
+import { MoreMenu } from '@/ui/actions/dropdown-menu';
 import { RelativeTime } from '@/ui/data/RelativeTime';
 import { EmptyState } from '@/ui/feedback/EmptyState';
 import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
@@ -16,7 +10,7 @@ import { PopoverPanel } from '@/ui/overlays/popover';
 import { useToast } from '@/ui/overlays/toast';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import withPermissions from 'HOCs/withPermissions';
-import { MoreHorizontal, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -217,30 +211,18 @@ function UserPage() {
               <Button variant="subtle" onClick={() => setPropsOpen(true)}>
                 {t('+{{n}} properties', { n: propCount, count: propCount })}
               </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <span>
-                    <IconButton
-                      icon={<MoreHorizontal size={15} />}
-                      label={t('More')}
-                      variant="ghost"
-                    />
-                  </span>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItems
-                    items={[
-                      {
-                        key: 'delete',
-                        icon: <Trash2 size={13} />,
-                        label: t('Delete user'),
-                        danger: true,
-                        onClick: () => setDeleting(true),
-                      },
-                    ]}
-                  />
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <MoreMenu
+                label={t('More')}
+                items={[
+                  {
+                    key: 'delete',
+                    icon: <Trash2 size={13} />,
+                    label: t('Delete user'),
+                    danger: true,
+                    onClick: () => setDeleting(true),
+                  },
+                ]}
+              />
             </div>
           </div>
         )}

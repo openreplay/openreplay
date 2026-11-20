@@ -2,6 +2,7 @@ import { Log as PLog, getResourceFromNetworkRequest } from 'Player';
 import { makeAutoObservable } from 'mobx';
 
 import { PlayingState } from 'App/player-ui';
+import { lastIndexAtOrBefore } from 'App/utils/timeIndex';
 
 interface Event {
   time: number;
@@ -37,21 +38,6 @@ const byTime = (a: { time: number }, b: { time: number }) => a.time - b.time;
 
 const mapSpotNetworkToEv = (ev: SpotNetworkRequest): any => {
   const { type, statusCode } = ev;
-  const mapType = (type: string) => {
-    switch (type) {
-      case 'xmlhttprequest':
-        return 'xhr';
-      case 'fetch':
-        return 'fetch';
-      case 'graphql':
-        return 'graphql';
-      case 'resource':
-        return 'resource';
-      default:
-        return type;
-    }
-  };
-
   const request = JSON.stringify({
     headers: ev.requestHeaders,
     body: ev.body,
@@ -66,7 +52,7 @@ const mapSpotNetworkToEv = (ev: SpotNetworkRequest): any => {
     ...ev,
     request,
     response,
-    type: mapType(type),
+    type: type === 'xmlhttprequest' ? 'xhr' : type,
     status: statusCode,
   };
 };
@@ -84,15 +70,9 @@ class SpotPlayerStore {
 
   duration = 0;
 
-  durationString = '';
-
   isPlaying = true;
 
   state = PlayingState.Playing;
-
-  isMuted = false;
-
-  volume = 1;
 
   playbackRate = 1;
 
@@ -125,11 +105,8 @@ class SpotPlayerStore {
   clearData = () => {
     this.time = 0;
     this.duration = 0;
-    this.durationString = '';
     this.isPlaying = true;
     this.state = PlayingState.Playing;
-    this.isMuted = false;
-    this.volume = 1;
     this.playbackRate = 1;
     this.isFullScreen = false;
     this.logs = [];
@@ -160,7 +137,6 @@ class SpotPlayerStore {
 
   setDuration(durString: string) {
     const [minutes, seconds] = durString.split(':').map(Number);
-    this.durationString = durString;
     this.duration = minutes * 60 + seconds;
   }
 
@@ -184,14 +160,6 @@ class SpotPlayerStore {
   onComplete = () => {
     this.state = PlayingState.Completed;
   };
-
-  setIsMuted(isMuted: boolean): void {
-    this.isMuted = isMuted;
-  }
-
-  setVolume(volume: number): void {
-    this.volume = volume;
-  }
 
   setIsFullScreen(isFullScreen: boolean): void {
     this.isFullScreen = isFullScreen;
@@ -248,10 +216,6 @@ class SpotPlayerStore {
     this.network.sort(byTime);
   }
 
-  get currentLogIndex() {
-    return this.logs.findIndex((log) => log.time >= this.time);
-  }
-
   getHighlightedEvent<T extends Log | Location | Click | SpotNetworkRequest>(
     time: number,
     events: T[],
@@ -261,17 +225,7 @@ class SpotPlayerStore {
     }
     // called every tick: binary search for the last event at or before now
     // (events are time-sorted); before the first one it stays on index 0
-    const currentTs = time * 1000;
-    let index = 0;
-    let lo = 0;
-    let hi = events.length - 1;
-    while (lo <= hi) {
-      const mid = (lo + hi) >> 1;
-      if (events[mid].time <= currentTs) {
-        index = mid;
-        lo = mid + 1;
-      } else hi = mid - 1;
-    }
+    const index = Math.max(0, lastIndexAtOrBefore(events, time * 1000));
     const highlightedEvent = events[index];
 
     return { event: highlightedEvent, index };
@@ -280,29 +234,6 @@ class SpotPlayerStore {
   getClosestLocation(time: number): Location {
     const { event } = this.getHighlightedEvent(time, this.locations);
     return event ?? { location: 'loading', time: 0 };
-  }
-
-  getClosestClick(time: number): Click {
-    const { event } = this.getHighlightedEvent(time, this.clicks);
-    return event ?? { label: 'loading', time: 0 };
-  }
-
-  getClosestNetworkIndex(time: number): SpotNetworkRequest {
-    // @ts-ignore
-    const event = this.getHighlightedEvent(time, this.network);
-    // @ts-ignore
-    return event ?? { type: 'loading', time: 0 };
-  }
-
-  getClosestLog(time: number): Log {
-    const { event } = this.getHighlightedEvent(time, this.logs);
-    return (
-      event ?? {
-        msg: 'loading',
-        time: 0,
-        level: 'info',
-      }
-    );
   }
 }
 

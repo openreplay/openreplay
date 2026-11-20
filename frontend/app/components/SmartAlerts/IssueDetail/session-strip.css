@@ -75,30 +75,6 @@
   }
 }
 
-.m-strip__suggest {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  z-index: var(--m-z-dropdown);
-  list-style: none;
-  margin: 0;
-  padding: var(--m-space-2);
-  border: 1px solid var(--m-border-default);
-  border-radius: var(--m-radius-surface);
-  background: var(--m-surface-raised);
-}
-.m-strip__suggest button {
-  display: block;
-  width: 100%;
-  padding: var(--m-space-2) var(--m-space-3);
-  border-radius: var(--m-radius-control);
-  text-align: left;
-  font-size: var(--m-text-xs);
-  color: var(--m-content-primary);
-}
-.m-strip__suggest button:hover { background: var(--m-surface-hover); }
-
 /* phone: the head wraps, the hint under the title */
 :root[data-viewport='phone'] .m-strip__head {
   flex-wrap: wrap;

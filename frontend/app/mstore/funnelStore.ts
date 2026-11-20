@@ -5,7 +5,6 @@ import { funnelService } from 'App/services';
 
 import Funnel, { IFunnel } from './types/funnel';
 import FunnelIssue from './types/funnelIssue';
-import Session from './types/session';
 
 export default class FunnelStore {
   isLoading: boolean = false;
@@ -29,8 +28,6 @@ export default class FunnelStore {
   isLoadingIssues: boolean = false;
 
   issuesFilter: any = [];
-
-  issueInstance: FunnelIssue | null = null;
 
   issuesSort = {
     sort: 'afectedUsers',
@@ -139,28 +136,6 @@ export default class FunnelStore {
         .then((response) => {
           this.issues = response.map((i) => new FunnelIssue().fromJSON(i));
           resolve(this.issues);
-        })
-        .catch((error) => {
-          reject(error);
-        })
-        .finally(() => {
-          this.isLoadingIssues = false;
-        });
-    });
-  }
-
-  fetchIssue(funnelId: string, issueId: string): Promise<any> {
-    this.isLoadingIssues = true;
-    return new Promise((resolve, reject) => {
-      // funnelService.fetchIssue(funnelId, issueId)
-      funnelService
-        .fetchIssue('143', '91515f9118ed803291f87133e2cb49a16ea')
-        .then((response) => {
-          this.issueInstance = new FunnelIssue().fromJSON(response.issue);
-          this.issueInstance.sessions = response.sessions.sessions.map((i) =>
-            new Session().fromJson(i),
-          );
-          resolve(this.issueInstance);
         })
         .catch((error) => {
           reject(error);

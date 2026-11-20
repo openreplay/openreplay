@@ -2,10 +2,8 @@ import {
   clickSelectorOperators,
   issueOptions,
 } from 'App/constants/filterOptions';
-import Record from 'Types/Record';
 import filterOptions, { countries, platformOptions } from 'App/constants';
 import { observable } from 'mobx';
-import Search from '@/mstore/types/search';
 import { FilterType, FilterKey, FilterCategory } from './filterType';
 
 const countryOptions = Object.keys(countries).map((i) => ({
@@ -31,7 +29,7 @@ const filterOrder = {
   [FilterCategory.METADATA]: 6,
 };
 
-export const mobileFilters = [
+const mobileFilters = [
   {
     key: FilterKey.CLICK_MOBILE,
     type: FilterType.MULTIPLE,
@@ -574,149 +572,7 @@ export const filters = [
   return aOrder - bOrder;
 });
 
-export const flagConditionFilters = [
-  {
-    key: FilterKey.USER_OS,
-    type: FilterType.MULTIPLE,
-    category: FilterCategory.SESSION,
-    label: 'OS',
-    operator: 'is',
-    operatorOptions: filterOptions.stringOperators,
-    icon: 'filters/os',
-  },
-  {
-    key: FilterKey.USER_BROWSER,
-    type: FilterType.MULTIPLE,
-    category: FilterCategory.SESSION,
-    label: 'Browser',
-    operator: 'is',
-    operatorOptions: filterOptions.stringOperators,
-    icon: 'filters/browser',
-  },
-  {
-    key: FilterKey.USER_DEVICE,
-    type: FilterType.MULTIPLE,
-    category: FilterCategory.SESSION,
-    label: 'Device',
-    operator: 'is',
-    operatorOptions: filterOptions.stringOperators,
-    icon: 'filters/device',
-  },
-  {
-    key: FilterKey.REFERRER,
-    type: FilterType.MULTIPLE,
-    category: FilterCategory.SESSION,
-    label: 'Referrer',
-    operator: 'is',
-    operatorOptions: filterOptions.stringOperators,
-    icon: 'filters/arrow-return-right',
-  },
-  {
-    key: FilterKey.USER_COUNTRY,
-    type: FilterType.MULTIPLE_DROPDOWN,
-    category: FilterCategory.SESSION,
-    label: 'Country',
-    operator: 'is',
-    operatorOptions: filterOptions.getOperatorsByKeys(['is', 'isAny', 'isNot']),
-    icon: 'filters/country',
-    options: countryOptions,
-  },
-  {
-    key: FilterKey.USER_CITY,
-    type: FilterType.MULTIPLE,
-    category: FilterCategory.SESSION,
-    label: 'City',
-    operator: 'is',
-    operatorOptions: filterOptions.getOperatorsByKeys(['is', 'isAny', 'isNot']),
-    icon: 'filters/country',
-    options: countryOptions,
-  },
-  {
-    key: FilterKey.USER_STATE,
-    type: FilterType.MULTIPLE,
-    category: FilterCategory.SESSION,
-    label: 'State / Province',
-    operator: 'is',
-    operatorOptions: filterOptions.getOperatorsByKeys(['is', 'isAny', 'isNot']),
-    icon: 'filters/country',
-    options: countryOptions,
-  },
-  {
-    key: FilterKey.USERID,
-    type: FilterType.MULTIPLE,
-    category: FilterCategory.USER,
-    label: 'User Id',
-    operator: 'isUndefined',
-    operatorOptions: [
-      { label: 'is undefined', value: 'isUndefined' },
-      {
-        key: 'isAny',
-        label: 'is any',
-        value: 'isAny',
-      },
-    ],
-    icon: 'filters/userid',
-  },
-].sort((a, b) => {
-  const aOrder = filterOrder[a.category] ?? 9;
-  const bOrder = filterOrder[b.category] ?? 9;
-  return aOrder - bOrder;
-});
-
-export const conditionalFilterKeys = [
-  FilterKey.CLICK,
-  FilterKey.LOCATION,
-  FilterKey.CUSTOM,
-  FilterKey.FETCH,
-  FilterKey.FETCH_URL,
-  FilterKey.FETCH_STATUS_CODE,
-  FilterKey.FETCH_METHOD,
-  FilterKey.FETCH_DURATION,
-  FilterKey.ERROR,
-  FilterKey.DURATION,
-  FilterKey.USERID,
-  FilterKey.TAGGED_ELEMENT,
-  'selector',
-  'name',
-  'label',
-  'url',
-  'url_path',
-  FilterKey.USER_BROWSER,
-  FilterKey.USER_OS,
-  FilterKey.USER_DEVICE,
-  FilterKey.USER_COUNTRY,
-].map((k) => k.toLocaleLowerCase());
-export const mobileConditionalFilterKeys = [
-  FilterKey.DURATION,
-  FilterKey.FETCH,
-  FilterKey.FETCH_URL,
-  FilterKey.FETCH_STATUS_CODE,
-  FilterKey.FETCH_METHOD,
-  FilterKey.FETCH_DURATION,
-  FilterKey.CUSTOM,
-  FilterKey.USERID,
-  'thermalState',
-  'mainThreadCPU',
-  'viewComponent',
-  'logEvent',
-  'clickEvent',
-  'memoryUsage',
-].map((k) => k.toLocaleLowerCase());
-
 export const eventKeys = filters.filter((i) => i.isEvent).map((i) => i.key);
-
-export const clickmapFilter = {
-  key: FilterKey.LOCATION,
-  type: FilterType.MULTIPLE,
-  category: FilterCategory.EVENTS,
-  subCategory: FilterCategory.AUTOCAPTURE,
-  label: 'Visited URL',
-  placeholder: 'Enter URL or path',
-  operator: filterOptions.pageUrlOperators[0].value,
-  operatorOptions: filterOptions.pageUrlOperators,
-  icon: 'filters/location',
-  isEvent: true,
-};
 
 const mapFilters = (list) =>
   list.reduce((acc, filter) => {
@@ -845,78 +701,6 @@ export const addElementToLiveFiltersMap = (
   };
 };
 
-export default Record(
-  {
-    timestamp: 0,
-    key: '',
-    label: '',
-    placeholder: '',
-    icon: '',
-    type: '',
-    value: [''],
-    category: '',
-
-    custom: '',
-    level: '',
-
-    hasNoValue: false,
-    isFilter: false,
-    actualValue: '',
-
-    hasSource: false,
-    source: [''],
-    sourceType: '',
-    sourceOperator: '=',
-    sourcePlaceholder: '',
-    sourceUnit: '',
-    sourceOperatorOptions: [],
-
-    operator: '',
-    operatorOptions: [],
-    operatorDisabled: false,
-    isEvent: false,
-    index: 0,
-    options: [],
-    filters: [],
-    excludes: [],
-  },
-  {
-    keyKey: '_key',
-    fromJS: ({ value, type, subFilter = false, ...filter }) => {
-      let _filter = {};
-      if (subFilter) {
-        const mainFilter = filtersMap[subFilter];
-        const subFilterMap = {};
-        mainFilter.filters.forEach((option) => {
-          subFilterMap[option.key] = option;
-        });
-        _filter = subFilterMap[type];
-      } else if (type === FilterKey.METADATA) {
-        _filter = filtersMap[`_${filter.source}`];
-      } else if (filtersMap[filter.key]) {
-        _filter = filtersMap[filter.key];
-      } else {
-        _filter = filtersMap[type];
-      }
-
-      if (!_filter) {
-        _filter = {
-          key: filter.key,
-          type: 'MULTIPLE',
-        };
-      }
-
-      return {
-        ..._filter,
-        ...filter,
-        key: _filter.key,
-        type: _filter.type, // camelCased(filter.type.toLowerCase()),
-        value: value.length === 0 || !value ? [''] : value,
-      };
-    },
-  },
-);
-
 const WEB_EXCLUDE = [
   FilterKey.CLICK_MOBILE,
   FilterKey.SWIPE_MOBILE,
@@ -972,68 +756,4 @@ export const generateFilterOptions = (map, isMobile = false) => {
     }
   });
   return filterSection;
-};
-
-export const generateFlagConditionOptions = (map) => {
-  const filterSection = {};
-  Object.keys(map).forEach((key) => {
-    const filter = map[key];
-    if (filterSection.hasOwnProperty(filter.category)) {
-      filterSection[filter.category].push(filter);
-    } else {
-      filterSection[filter.category] = [filter];
-    }
-  });
-  return filterSection;
-};
-
-export const generateLiveFilterOptions = (map) => {
-  const filterSection = {};
-
-  Object.keys(map)
-    .filter((i) => map[i].isLive)
-    .forEach((key) => {
-      const filter = map[key];
-      filter.operator = 'contains';
-      filter.operatorDisabled = true;
-      if (filterSection.hasOwnProperty(filter.category)) {
-        filterSection[filter.category].push(filter);
-      } else {
-        filterSection[filter.category] = [filter];
-      }
-    });
-  return filterSection;
-};
-
-export const getFilterFromJson = (json) => {
-  const mapFilters = (filters) =>
-    filters.map((f) => {
-      const filter = { ...filtersMap[f.key], ...f };
-
-      if (f.filters) {
-        const mainFilterOptions = filtersMap[f.key]?.filters || [];
-        const subFilterMap = Object.fromEntries(
-          mainFilterOptions.map((option) => [option.key, option]),
-        );
-
-        filter.filters = f.filters.map((subFilter) => {
-          const baseFilter =
-            subFilterMap[subFilter.key] || filtersMap[subFilter.type] || {};
-          return {
-            ...baseFilter,
-            ...subFilter,
-            key: baseFilter.key || subFilter.key,
-            type: baseFilter.type || subFilter.type,
-            value: subFilter.value?.length ? subFilter.value : [''],
-          };
-        });
-      }
-
-      return filter;
-    });
-
-  return new Search({
-    ...json,
-    filters: mapFilters(json.filters),
-  });
 };

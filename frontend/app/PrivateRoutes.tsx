@@ -79,7 +79,6 @@ const { withSiteId } = routes;
 
 const METRICS_PATH = routes.metrics();
 const METRICS_DETAILS = routes.metricDetails();
-const METRICS_DETAILS_SUB = routes.metricDetailsSub();
 
 const ALERTS_PATH = routes.alerts();
 const ALERT_CREATE_PATH = routes.alertCreate();
@@ -347,10 +346,6 @@ function PrivateRoutes() {
         />
         <Route
           path={withSiteId(`${METRICS_DETAILS}/*`, siteIdList)}
-          element={<enhancedComponents.Dashboard />}
-        />
-        <Route
-          path={withSiteId(`${METRICS_DETAILS_SUB}/*`, siteIdList)}
           element={<enhancedComponents.Dashboard />}
         />
         <Route

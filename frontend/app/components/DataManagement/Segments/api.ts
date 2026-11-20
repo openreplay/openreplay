@@ -104,14 +104,6 @@ interface ApiSegment {
   filter?: { filters: Record<string, unknown>[] };
 }
 
-export interface SearchSegmentsParams {
-  limit: number;
-  page: number;
-  name?: string;
-  sortBy: 'name' | 'createdAt' | 'updatedAt';
-  sortOrder: 'asc' | 'desc';
-}
-
 const ensureFilterFields = (filter: any): any => ({
   ...filter,
   name: filter.name || filter.type,
@@ -149,50 +141,10 @@ const toPayload = (
   },
 });
 
-const byNameFilter = (list: ApiSegment[], name?: string) =>
-  name
-    ? list.filter((s) => s.name?.toLowerCase().includes(name.toLowerCase()))
-    : list;
-
-const sortSegments = (
-  list: Segment[],
-  sortBy: SearchSegmentsParams['sortBy'],
-  sortOrder: SearchSegmentsParams['sortOrder'],
-): Segment[] => {
-  const sign = sortOrder === 'asc' ? 1 : -1;
-  return [...list].sort((a, b) => {
-    const av = (a as any)[sortBy] ?? 0;
-    const bv = (b as any)[sortBy] ?? 0;
-    if (typeof av === 'string' && typeof bv === 'string') {
-      return av.localeCompare(bv) * sign;
-    }
-    return (Number(av) - Number(bv)) * sign;
-  });
-};
-
 /** Server rows -> Segment models. Rows are held by the search store, which owns
     the single saved-search request the whole app shares. */
 export function mapSegments(rows: unknown[]): Segment[] {
   return (rows as ApiSegment[]).map((s) => new Segment(s));
-}
-
-/* Name filter, sort and paging all run over the whole set — the saved-search
-   list is loaded in full, and server paging would have sorted within a page. */
-export function selectSegments(
-  rows: unknown[],
-  params: SearchSegmentsParams,
-): { segments: Segment[]; total: number } {
-  const filtered = byNameFilter(rows as ApiSegment[], params.name);
-  const sorted = sortSegments(
-    mapSegments(filtered),
-    params.sortBy,
-    params.sortOrder,
-  );
-  const offset = params.limit * (params.page - 1);
-  return {
-    segments: sorted.slice(offset, offset + params.limit),
-    total: sorted.length,
-  };
 }
 
 export function fetchSegment(segmentId: string): Promise<Segment> {

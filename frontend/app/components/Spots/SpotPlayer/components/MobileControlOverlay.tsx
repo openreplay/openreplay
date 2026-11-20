@@ -1,4 +1,4 @@
-import cn from 'classnames';
+import { clsx as cn } from 'clsx';
 import { FastForward, Pause, Play } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';

@@ -1,12 +1,6 @@
 import { IconButton } from '@/ui/actions/IconButton';
 import { Button } from '@/ui/actions/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItems,
-  DropdownMenuTrigger,
-  type MenuItem,
-} from '@/ui/actions/dropdown-menu';
+import { type MenuItem, MoreMenu } from '@/ui/actions/dropdown-menu';
 import { MoreCount } from '@/ui/data/MoreCount';
 import { RelativeTime } from '@/ui/data/RelativeTime';
 import { type Column, DataTable, type TableSort } from '@/ui/data/table';
@@ -29,7 +23,6 @@ import {
   ClipboardCheck,
   Footprints,
   Merge,
-  MoreHorizontal,
   Play,
   Plus,
   Route,
@@ -727,23 +720,11 @@ function TestsTab() {
               </span>
             </Tooltip>
           )}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <span>
-                <IconButton
-                  icon={<MoreHorizontal size={15} />}
-                  label={t('Actions for {{name}}', { name: tc.title })}
-                  variant="ghost"
-                />
-              </span>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <DropdownMenuItems items={rowMenu(tc)} />
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <MoreMenu
+            label={t('Actions for {{name}}', { name: tc.title })}
+            items={rowMenu(tc)}
+            stopPropagation
+          />
         </div>
       ),
     },

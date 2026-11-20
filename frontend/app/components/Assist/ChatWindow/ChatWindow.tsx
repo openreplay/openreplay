@@ -1,6 +1,6 @@
 import { useDraggable } from '@neodrag/react';
 import type { LocalStream } from 'Player';
-import cn from 'classnames';
+import { clsx as cn } from 'clsx';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

@@ -1,13 +1,12 @@
 import { ContextMenu } from '@/ui/actions/context-menu';
 import type { MenuItem } from '@/ui/actions/dropdown-menu';
 import { Icon } from '@/ui/icons/Icon';
-import { toast } from '@/ui/overlays/toast';
-import copy from 'copy-to-clipboard';
 import { Link2, ScanLine } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 
 import { PlayerContext } from 'App/components/Session/playerContext';
+import { copyWithToast } from 'App/lib/use-copy';
 import { useStore } from 'App/mstore';
 import {
   CONSOLE,
@@ -147,16 +146,18 @@ function Overlay({ nextId, isClickmap }: Props) {
       //   );
       //   break;
       case ItemKey.CopySessionUrl:
-        copy(window.location.origin + window.location.pathname);
-        toast.success('Session URL copied to clipboard');
+        void copyWithToast(
+          window.location.origin + window.location.pathname,
+          'Session URL copied to clipboard',
+        );
         break;
       case ItemKey.CopySessionUrlTs:
-        copy(
+        void copyWithToast(
           `${window.location.origin + window.location.pathname}?jumpto=${String(
             Math.round(store.get().time),
           )}`,
+          'Session URL at current time copied to clipboard',
         );
-        toast.success('Session URL at current time copied to clipboard');
         break;
       default:
     }

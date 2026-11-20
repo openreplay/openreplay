@@ -1,7 +1,7 @@
 import { IconButton } from '@/ui/actions/IconButton';
 import { Loader } from '@/ui/feedback/Loader';
 import { Tooltip } from '@/ui/overlays/tooltip';
-import cn from 'classnames';
+import { clsx as cn } from 'clsx';
 import { Download, Table2 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { Suspense, lazy } from 'react';
