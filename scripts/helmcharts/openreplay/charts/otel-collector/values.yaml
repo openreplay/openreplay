@@ -66,6 +66,20 @@ autoscaling:
   maxReplicas: 5
   targetCPUUtilizationPercentage: 80
 
+# EE only
+kafka:
+  enabled: false
+  topic: otel-logs
+  writer:
+    replicaCount: 1
+    terminationGracePeriodSeconds: 30
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 1Gi
+
 terminationGracePeriodSeconds: 60
 
 env: {}

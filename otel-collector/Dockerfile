@@ -14,7 +14,7 @@ RUN apk add --no-cache ca-certificates && \
     addgroup -S -g 10001 otel && \
     adduser -S -u 10001 -G otel otel
 COPY --from=build /build/_build/otelcol-openreplay /otelcol-openreplay
-COPY config.yaml /etc/otelcol/config.yaml
+COPY config.yaml config-kafka-ingest.yaml config-kafka-writer.yaml /etc/otelcol/
 USER 10001:10001
 WORKDIR /tmp
 EXPOSE 4318 8888 13133

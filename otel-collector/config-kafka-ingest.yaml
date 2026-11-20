@@ -1,0 +1,37 @@
+# Overlay for the ingest half of the Kafka-buffered pipeline: OTLP -> Kafka.
+# The gateway gets 200 only after the brokers acknowledged the write.
+#
+#   otelcol-openreplay --config config.yaml --config config-kafka-ingest.yaml
+
+exporters:
+  kafka:
+    brokers: ${env:OTLP_KAFKA_BROKERS}
+    logs:
+      topic: ${env:OTLP_KAFKA_TOPIC:-otel-logs}
+    tls:
+      insecure: ${env:OTLP_KAFKA_TLS_INSECURE:-true}
+    timeout: 5s
+    retry_on_failure:
+      enabled: true
+      initial_interval: 1s
+      max_interval: 5s
+      max_elapsed_time: 20s
+    sending_queue:
+      wait_for_result: true
+      batch:
+        sizer: bytes
+        flush_timeout: 200ms
+        min_size: 1048576
+        max_size: 2097152
+    producer:
+      required_acks: -1
+      compression: zstd
+      max_message_bytes: 3000000
+      allow_auto_topic_creation: false
+
+service:
+  pipelines:
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, transform, attributes/project, filter/no_project]
+      exporters: [kafka]
