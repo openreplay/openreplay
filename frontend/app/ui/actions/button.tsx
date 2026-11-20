@@ -37,9 +37,14 @@ const button = cva(
         'danger-subtle':
           '[--m-wave-color:var(--m-status-danger-border)] ' +
           'bg-transparent text-content-danger hover:bg-[var(--m-status-danger-bg)] hover:text-content-danger',
+        // a word in a line of text; pair with size="inline"
+        text:
+          'bg-transparent font-normal text-content-secondary hover:bg-transparent hover:text-content-primary ' +
+          'aria-expanded:text-content-primary',
       },
 
       size: {
+        inline: 'h-auto p-0 text-[length:inherit] leading-[inherit]',
         sm: 'h-control-sm px-4 text-xs',
         md: 'h-control-md px-5 text-sm',
         lg: 'h-control-lg px-6 text-sm',

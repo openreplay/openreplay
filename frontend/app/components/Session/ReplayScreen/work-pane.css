@@ -37,8 +37,8 @@
   flex-direction: column;
 }
 .m-work__scroll > .m-wu {
-  flex: none;
+  flex: 1 0 auto;
 }
 .m-work__scroll > .m-strip--cards {
-  flex: 1;
+  flex: none;
 }
