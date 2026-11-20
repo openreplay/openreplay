@@ -1,13 +1,13 @@
 import { cityAfterCode } from '@/lib/geo';
 import { useCopy } from '@/lib/use-copy';
-import { IconButton } from '@/ui/actions/IconButton';
+import { Button } from '@/ui/actions/button';
 import { Chip } from '@/ui/data/Chip';
 import { GeoPlace, focusPanelOnOpen } from '@/ui/data/GeoCredit';
 import { MoreCount } from '@/ui/data/MoreCount';
 import { RelativeTime } from '@/ui/data/RelativeTime';
 import { PopoverPanel } from '@/ui/overlays/popover';
 import { Tooltip } from '@/ui/overlays/tooltip';
-import { Check, Link2, MoreHorizontal, Play } from 'lucide-react';
+import { Check, Link2, Play } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -35,9 +35,9 @@ export default function SessionCard({
     .join(', ');
   const meta = Object.fromEntries(s.metadata.map((m) => [m.label, m.value]));
   const details: [string, React.ReactNode][] = [
+    [t('Location'), place && <GeoPlace>{place}</GeoPlace>],
     [t('Browser'), s.browser],
     [t('OS'), s.os],
-    [t('Location'), place && <GeoPlace>{place}</GeoPlace>],
     [
       t('Metadata'),
       s.metadata.length > 0 && (
@@ -103,43 +103,45 @@ export default function SessionCard({
       )}
       <span className="m-scard__foot">
         <span className="m-scard__who m-truncate">{s.email}</span>
+        <span className="m-scard__more" onClick={(e) => e.stopPropagation()}>
+          {s.email && <span aria-hidden="true">·</span>}
+          <PopoverPanel
+            open={more}
+            onOpenChange={setMore}
+            placement="bottomLeft"
+            onOpenAutoFocus={focusPanelOnOpen}
+            content={
+              // the panel is portaled, but its events still bubble to the card
+              <dl
+                className="m-scard__details"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {details
+                  .filter(([, v]) => v)
+                  .map(([k, v]) => (
+                    <React.Fragment key={k}>
+                      <dt>{k}</dt>
+                      <dd>{v}</dd>
+                    </React.Fragment>
+                  ))}
+              </dl>
+            }
+          >
+            <Button
+              variant="text"
+              size="inline"
+              aria-expanded={more}
+              aria-label={t('More details')}
+            >
+              {t('More')}
+            </Button>
+          </PopoverPanel>
+        </span>
         {s.startTs ? (
           <span className="m-scard__when">
             <RelativeTime at={s.startTs} />
           </span>
         ) : null}
-        <PopoverPanel
-          open={more}
-          onOpenChange={setMore}
-          placement="bottomRight"
-          onOpenAutoFocus={focusPanelOnOpen}
-          content={
-            // the panel is portaled, but its events still bubble to the card
-            <dl
-              className="m-scard__details"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {details
-                .filter(([, v]) => v)
-                .map(([k, v]) => (
-                  <React.Fragment key={k}>
-                    <dt>{k}</dt>
-                    <dd>{v}</dd>
-                  </React.Fragment>
-                ))}
-            </dl>
-          }
-        >
-          <span className="m-scard__more" onClick={(e) => e.stopPropagation()}>
-            <IconButton
-              icon={<MoreHorizontal size={14} />}
-              label={t('More details')}
-              variant="ghost"
-              size="xs"
-              open={more}
-            />
-          </span>
-        </PopoverPanel>
       </span>
     </div>
   );

@@ -88,6 +88,8 @@
 }
 .m-jrn__wire--tail {
   min-height: var(--m-space-4);
+  /* through the step's bottom padding, so the line reaches the next step */
+  margin-bottom: calc(var(--m-space-1) * -1);
 }
 
 .m-jrn__node {
@@ -104,6 +106,40 @@
   transition:
     border-color var(--m-duration-fast) var(--m-ease-out),
     color var(--m-duration-fast) var(--m-ease-out);
+}
+
+/* a dot keeps the node's box so the thread's geometry holds; the wire runs through it */
+.m-jrn__node--dot {
+  position: relative;
+  border: 0;
+  background: none;
+}
+.m-jrn__node--dot::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto;
+  left: calc(50% - 0.5px);
+  width: 1px;
+  background: var(--m-border-strong);
+}
+.m-jrn__node--dot::after {
+  content: '';
+  position: relative;
+  width: 7px;
+  height: 7px;
+  border: 1px solid var(--m-border-strong);
+  border-radius: var(--m-radius-full);
+  background: var(--m-surface-default);
+}
+.m-jrn__node--dot.is-past::before {
+  background: var(--m-border-accent);
+}
+.m-jrn__node--dot.is-past::after {
+  border-color: var(--m-border-accent);
+  background: var(--m-border-accent);
+}
+.m-jrn__node.is-now {
+  color: var(--m-content-accent);
 }
 
 .m-jrn__step {

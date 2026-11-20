@@ -63,6 +63,9 @@ export function NavFlyout({
   );
 }
 
+// one card at a time: opening a card shuts the last at once, not after its grace
+const openFlyout: { close?: () => void } = {};
+
 function SectionFlyout({
   label,
   badge,
@@ -93,9 +96,15 @@ function SectionFlyout({
     return () => cancelAnimationFrame(raf);
   }, [open, nudge]);
 
-  const openAfter = (ms: number) => {
+  const close = useRef(() => {
     window.clearTimeout(timer.current);
-    timer.current = window.setTimeout(() => setOpen(true), ms);
+    setOpen(false);
+  }).current;
+  const show = () => {
+    window.clearTimeout(timer.current);
+    if (openFlyout.close !== close) openFlyout.close?.();
+    openFlyout.close = close;
+    setOpen(true);
   };
   const closeAfter = (ms: number) => {
     window.clearTimeout(timer.current);
@@ -107,9 +116,9 @@ function SectionFlyout({
       <PopoverAnchor asChild>
         <div
           ref={anchorRef}
-          onMouseEnter={() => openAfter(220)}
+          onMouseEnter={show}
           onMouseLeave={() => closeAfter(240)}
-          onFocusCapture={() => setOpen(true)}
+          onFocusCapture={show}
           onBlurCapture={() => closeAfter(240)}
         >
           {children}

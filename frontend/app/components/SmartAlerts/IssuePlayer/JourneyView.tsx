@@ -45,9 +45,20 @@ const Step = React.memo(function Step({
           <span
             className={`m-jrn__wire m-jrn__wire--lead${past ? ' is-past' : ''}`}
           />
-          <span className="m-jrn__node">
-            <Play size={10} strokeWidth={2} aria-hidden="true" />
-          </span>
+          {active ? (
+            <span className="m-jrn__node is-now">
+              <Play
+                size={10}
+                strokeWidth={2.25}
+                fill="currentColor"
+                aria-hidden="true"
+              />
+            </span>
+          ) : (
+            <span
+              className={`m-jrn__node m-jrn__node--dot${past ? ' is-past' : ''}`}
+            />
+          )}
           {!last && (
             <span
               className={`m-jrn__wire m-jrn__wire--tail${past ? ' is-past' : ''}`}
@@ -64,7 +75,7 @@ const Step = React.memo(function Step({
   );
 });
 
-/** The session's journey; each step seeks the player, the current one is lit. */
+/** The session's journey; each step seeks the player, the current one plays. */
 const JourneyView = observer(({ card }: { card?: IssueSessionCard }) => {
   const { t } = useTranslation();
   const { player, store } = React.useContext(PlayerContext);
