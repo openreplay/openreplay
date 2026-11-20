@@ -2854,6 +2854,9 @@
   "ends with": "结尾为",
   "More details": "更多详情",
   "Location from the IP address.": "根据 IP 地址推断的位置。",
-  "Set it up with one command": "Set it up with one command",
-  "Run it in your app folder: it finds your framework, installs the packages and adds the tracker, showing every change first. Or follow the steps below.": "Run it in your app folder: it finds your framework, installs the packages and adds the tracker, showing every change first. Or follow the steps below."
+  "Run it in your app folder": "Run it in your app folder",
+  "One command": "One command",
+  "Manual": "Manual",
+  "Setup": "Setup",
+  "It finds your framework, installs the packages and adds the tracker, showing every change first.": "It finds your framework, installs the packages and adds the tracker, showing every change first."
 }

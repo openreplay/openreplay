@@ -2854,6 +2854,9 @@
   "ends with": "다음으로 끝남",
   "More details": "자세히 보기",
   "Location from the IP address.": "IP 주소로 확인한 위치입니다.",
-  "Set it up with one command": "Set it up with one command",
-  "Run it in your app folder: it finds your framework, installs the packages and adds the tracker, showing every change first. Or follow the steps below.": "Run it in your app folder: it finds your framework, installs the packages and adds the tracker, showing every change first. Or follow the steps below."
+  "Run it in your app folder": "Run it in your app folder",
+  "One command": "One command",
+  "Manual": "Manual",
+  "Setup": "Setup",
+  "It finds your framework, installs the packages and adds the tracker, showing every change first.": "It finds your framework, installs the packages and adds the tracker, showing every change first."
 }
