@@ -56,6 +56,7 @@ import {
   catalogue,
   clampWindow,
   clockLabel,
+  compactCount,
   drillCards,
   isInternal,
   keyLabel,
@@ -391,7 +392,7 @@ function LogsPage() {
             icon={<Bookmark size={15} />}
             count={store.total}
             countText={t('{{n}} lines', {
-              n: store.total.toLocaleString(),
+              n: compactCount(store.total),
               count: store.total,
             })}
             edited={store.viewEdited}
@@ -557,7 +558,7 @@ function LogsPage() {
               <NewRowsBand
                 count={store.newCount}
                 label={t('Show {{n}} new lines', {
-                  n: store.newCount.toLocaleString(),
+                  n: compactCount(store.newCount),
                   count: store.newCount,
                 })}
                 stickyTop="3rem"

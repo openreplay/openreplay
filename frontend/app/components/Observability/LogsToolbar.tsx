@@ -14,6 +14,7 @@ import type { OtelLog } from 'App/services/OtelLogsService';
 import {
   EXPORT_LIMIT,
   type ExportFormat,
+  compactCount,
   exportFileName,
   exportLines,
 } from './logs-logic';
@@ -77,13 +78,13 @@ export function ExportControl({
         <p className="m-logs__export-what">
           {ruleCount > 0
             ? t('{{n}} lines, {{span}}, with {{f}} filters.', {
-                n: n.toLocaleString(),
+                n: compactCount(n),
                 count: n,
                 span,
                 f: ruleCount,
               })
             : t('{{n}} lines, {{span}}.', {
-                n: n.toLocaleString(),
+                n: compactCount(n),
                 count: n,
                 span,
               })}
@@ -115,7 +116,7 @@ export function ExportControl({
             ? t('Time, the columns on screen, and the message.')
             : t('Every field of each line, one line per row.')}
           {capped
-            ? ` ${t('The newest {{n}} of {{total}}; narrow the window for the rest.', { n: EXPORT_LIMIT.toLocaleString(), total: total.toLocaleString() })}`
+            ? ` ${t('The newest {{n}} of {{total}}; narrow the window for the rest.', { n: compactCount(EXPORT_LIMIT), total: compactCount(total) })}`
             : ''}
         </p>
       </div>

@@ -3167,5 +3167,7 @@
   "{{name}}: {{n}} lines, {{pct}}%._one": "{{name}}: {{n}} línea, {{pct}}%.",
   "Metrics are on the way": "Las métricas están en camino",
   "CPU, memory and request rates as charts, on the same window and filters as Logs. Until then, the logs show what your services did.": "CPU, memoria y tasas de solicitudes en gráficos, con la misma ventana y los mismos filtros que Logs. Mientras tanto, los logs muestran lo que hicieron tus servicios.",
-  "Open Logs": "Abrir Logs"
+  "Open Logs": "Abrir Logs",
+  "Traces are on the way": "Las trazas están en camino",
+  "Every request as a waterfall of spans, on the same window and filters as Logs. Until then, a log line carries its trace id and the search finds it.": "Cada solicitud como una cascada de spans, con la misma ventana y los mismos filtros que Logs. Mientras tanto, cada línea de log lleva su trace id y la búsqueda la encuentra."
 }

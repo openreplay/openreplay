@@ -599,6 +599,17 @@ export const EMPTY_STATES: EmptyEntry[] = [
   },
 
   {
+    id: 'traces-soon',
+    area: 'Observability',
+    where: 'Traces, before it ships',
+    title: 'Traces are on the way',
+    size: 'page',
+    subject: 'traces',
+    pose: 'work',
+    side: 'right',
+    prop: 'stopwatch',
+  },
+  {
     id: 'metrics-soon',
     area: 'Observability',
     where: 'Metrics, before it ships',
