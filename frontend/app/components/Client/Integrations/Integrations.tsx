@@ -14,7 +14,6 @@ import { useStore } from 'App/mstore';
 import { namedStore } from 'App/mstore/integrationsStore';
 import { integrationsService } from 'App/services';
 
-import DocCard from 'Shared/DocCard/DocCard';
 
 import { PrefBlock } from '../PrefSection';
 import PreferencesPage from '../PreferencesPage';
@@ -267,7 +266,6 @@ const integrations = (t: TFunction) => [
         title: t('Jira'),
         subtitle: t('Tickets in Jira Cloud or Server, through an API token.'),
         slug: 'jira',
-        category: 'Errors',
         icon: 'integrations/jira',
         component: <JiraForm />,
       },
@@ -275,7 +273,6 @@ const integrations = (t: TFunction) => [
         title: t('GitHub'),
         subtitle: t('Issues in any repository your token can reach.'),
         slug: 'github',
-        category: 'Errors',
         icon: 'integrations/github',
         component: <GithubForm />,
       },
@@ -283,7 +280,6 @@ const integrations = (t: TFunction) => [
         title: t('Linear'),
         subtitle: t('Issues in one of your Linear teams.'),
         slug: 'linear',
-        category: 'Errors',
         icon: 'integrations/linear',
         component: <LinearForm />,
       },
@@ -295,18 +291,6 @@ const integrations = (t: TFunction) => [
     isProject: true,
     icon: 'terminal',
     description: t('Put your server errors and logs on the session timeline.'),
-    docs: () => (
-      <DocCard
-        title={t('Why use integrations?')}
-        icon="question-lg"
-        iconBgColor="bg-red-lightest"
-        iconColor="red"
-      >
-        {t(
-          'Sync your backend errors with sessions replays and see what happened front-to-back.',
-        )}
-      </DocCard>
-    ),
     integrations: [
       {
         title: t('Sentry'),
@@ -350,47 +334,23 @@ const integrations = (t: TFunction) => [
         title: t('Slack'),
         subtitle: t('Any Slack channel with an incoming webhook.'),
         slug: 'slack',
-        category: 'Errors',
         icon: 'integrations/slack',
         component: <SlackForm />,
-        shared: true,
       },
       {
         title: t('Microsoft Teams'),
         subtitle: t('Any Teams channel with an incoming webhook.'),
         slug: 'msteams',
-        category: 'Errors',
         icon: 'integrations/teams',
         component: <MSTeams />,
-        shared: true,
       },
     ],
   },
-  // {
-  //   title: 'State Management',
-  //   key: 'state-management',
-  //   isProject: true,
-  //   icon: 'layers-half',
-  //   description: 'Sync your Redux or VueX store with sessions replays and see what happened front-to-back.',
-  //   integrations: []
-  // },
   {
     title: t('Plugins'),
     key: 'plugins',
     isProject: true,
     icon: 'chat-left-text',
-    docs: () => (
-      <DocCard
-        title={t('What are plugins?')}
-        icon="question-lg"
-        iconBgColor="bg-red-lightest"
-        iconColor="red"
-      >
-        {t(
-          'Plugins capture your application’s store, monitor queries, track performance issues and even assist your end user through live sessions.',
-        )}
-      </DocCard>
-    ),
     description: t(
       'Capture more of your app in each recording: state, queries, timings.',
     ),
@@ -453,62 +413,9 @@ const integrations = (t: TFunction) => [
         title: t('Zustand'),
         subtitle: t('Zustand store changes, before and after.'),
         icon: 'integrations/zustand',
-        // header: '🐻',
         component: <ZustandDoc />,
       },
     ],
   },
 ];
 
-/**
- *
- * @deprecated
- * */
-// {
-//   title: 'Sumo Logic',
-//     subtitle:
-//   'Integrate Sumo Logic with session replays to seamlessly observe backend errors.',
-//     slug: 'sumologic',
-//   icon: 'integrations/sumologic',
-//   component: <SumoLogicForm />,
-// },
-// {
-//   title: 'Bugsnag',
-//     subtitle:
-//   'Integrate Bugsnag to access the OpenReplay session linked to the JS exception within its interface.',
-//     slug: 'bugsnag',
-//   icon: 'integrations/bugsnag',
-//   component: <BugsnagForm />,
-// },
-// {
-//   title: 'Rollbar',
-//     subtitle:
-//   'Integrate Rollbar with session replays to seamlessly observe backend errors.',
-//     slug: 'rollbar',
-//   icon: 'integrations/rollbar',
-//   component: <RollbarForm />,
-// },
-// {
-//   title: 'Google Cloud',
-//     subtitle:
-//   'Integrate Google Cloud to view backend logs and errors in conjunction with session replay',
-//     slug: 'stackdriver',
-//   icon: 'integrations/google-cloud',
-//   component: <StackdriverForm />,
-// },
-// {
-//   title: 'CloudWatch',
-//     subtitle:
-//   'Integrate CloudWatch to see backend logs and errors alongside session replay.',
-//     slug: 'cloudwatch',
-//   icon: 'integrations/aws',
-//   component: <CloudwatchForm />,
-// },
-// {
-//   title: 'Newrelic',
-//     subtitle:
-//   'Integrate NewRelic with session replays to seamlessly observe backend errors.',
-//     slug: 'newrelic',
-//   icon: 'integrations/newrelic',
-//   component: <NewrelicForm />,
-// },

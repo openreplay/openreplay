@@ -1,5 +1,5 @@
 import { Button } from '@/ui/actions/button';
-import cn from 'classnames';
+import { clsx as cn } from 'clsx';
 import React from 'react';
 
 import stl from './table.module.css';
@@ -40,7 +40,7 @@ export default class Table extends React.PureComponent {
           className={cn(stl.content, 'thin-scrollbar')}
           style={{ maxHeight: `${maxHeight}px` }}
         >
-          {rows.take(showAll ? rows.length : small ? 3 : 5).map((row) => (
+          {(showAll ? rows : rows.slice(0, small ? 3 : 5)).map((row) => (
             <div
               className={cn(
                 rowClass,

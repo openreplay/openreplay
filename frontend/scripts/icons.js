@@ -10,11 +10,6 @@ const ICONS_DIRNAME = path.join(__dirname, '../app/svg/icons');
 const UI_DIRNAME = path.join(__dirname, '../app/ui/icons');
 const icons = collectFilenames(ICONS_DIRNAME, (n) => svgRE.test(n));
 
-const getDirectories = (source) =>
-  fs
-    .readdirSync(source, { withFileTypes: true })
-    .filter((dirent) => dirent.isDirectory())
-    .map((dirent) => dirent.name);
 const titleCase = (string) => {
   return string[0].toUpperCase() + string.slice(1).toLowerCase();
 };
@@ -65,14 +60,10 @@ const plugins = (removeFill = true) => {
 };
 
 const iconPaths = [];
-const dirs = getDirectories(ICONS_DIRNAME);
 
+// rebuilt from scratch, so icons removed from app/svg/icons don't linger
+fs.rmSync(`${UI_DIRNAME}/Icons`, { recursive: true, force: true });
 fs.mkdirSync(`${UI_DIRNAME}/Icons`, { recursive: true });
-dirs.forEach((dir) => {
-  fs.mkdirSync(`${UI_DIRNAME}/Icons/${dir.replaceAll('-', '_')}`, {
-    recursive: true,
-  });
-});
 
 icons.forEach((icon) => {
   const fileName = icon.slice(0, -4).replaceAll('-', '_').replaceAll('/', '_');

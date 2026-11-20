@@ -9,6 +9,7 @@ import Layout from 'App/layout/Layout';
 import { useStore } from 'App/mstore';
 import { Route, StableRoutes } from 'App/routing';
 import { ModalProvider } from 'Components/Modal';
+import { ModalProvider as NewModalProvider } from 'Components/ModalContext';
 
 import NotFoundPage from 'Shared/NotFoundPage';
 
@@ -43,26 +44,28 @@ function IFrameRoutes(props: Props) {
 
   if (isLoggedIn) {
     return (
-      <ModalProvider>
-        <Layout bare>
-          <Loader loading={!!loading} className="flex-1">
-            <Tracker />
-            <Suspense fallback={<Loader loading className="flex-1" />}>
-              <StableRoutes>
-                <Route
-                  path={withSiteId(SESSION_PATH, siteIdList)}
-                  element={<enhancedComponents.Session />}
-                />
-                <Route
-                  path={withSiteId(LIVE_SESSION_PATH, siteIdList)}
-                  element={<enhancedComponents.LiveSession />}
-                />
-                <Route path="*" element={<NotFoundPage />} />
-              </StableRoutes>
-            </Suspense>
-          </Loader>
-        </Layout>
-      </ModalProvider>
+      <NewModalProvider>
+        <ModalProvider>
+          <Layout bare>
+            <Loader loading={!!loading} className="flex-1">
+              <Tracker />
+              <Suspense fallback={<Loader loading className="flex-1" />}>
+                <StableRoutes>
+                  <Route
+                    path={withSiteId(SESSION_PATH, siteIdList)}
+                    element={<enhancedComponents.Session />}
+                  />
+                  <Route
+                    path={withSiteId(LIVE_SESSION_PATH, siteIdList)}
+                    element={<enhancedComponents.LiveSession />}
+                  />
+                  <Route path="*" element={<NotFoundPage />} />
+                </StableRoutes>
+              </Suspense>
+            </Loader>
+          </Layout>
+        </ModalProvider>
+      </NewModalProvider>
     );
   }
 

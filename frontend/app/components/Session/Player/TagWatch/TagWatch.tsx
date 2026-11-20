@@ -10,7 +10,6 @@ import { DrawerFooter } from '@/ui/overlays/EntityDrawer';
 import { useToast } from '@/ui/overlays/toast';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import copy from 'copy-to-clipboard';
 import {
   ChevronLeft,
   Copy,
@@ -24,6 +23,7 @@ import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { copyWithToast } from 'App/lib/use-copy';
 import { useStore } from 'App/mstore';
 import { sessions, withSiteId } from 'App/routes';
 import { useHistory } from 'App/routing';
@@ -367,8 +367,7 @@ const TagForm = observer(
                     className="m-feat__picked-act"
                     aria-label={t('Copy the selector')}
                     onClick={() => {
-                      copy(selector);
-                      toast.success(t('Copied'));
+                      void copyWithToast(selector, t('Copied'));
                     }}
                   >
                     <Copy size={12} aria-hidden="true" />

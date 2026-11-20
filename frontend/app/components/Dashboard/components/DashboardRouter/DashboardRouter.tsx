@@ -11,14 +11,12 @@ import DashboardView from '../DashboardView';
 const Alerts = lazy(() => import('../Alerts'));
 const CreateAlert = lazy(() => import('../Alerts/NewAlert'));
 const MetricsView = lazy(() => import('../MetricsView'));
-const WidgetSubDetailsView = lazy(() => import('../WidgetSubDetailsView'));
 const WidgetView = lazy(() => import('../WidgetView'));
 
 type RouterParams = {
   siteId?: string;
   dashboardId?: string;
   metricId?: string;
-  subId?: string;
   alertId?: string;
 };
 
@@ -27,7 +25,7 @@ function DashboardRouter() {
   const location = useLocation();
   const params = useParams<RouterParams>();
 
-  const { siteId, dashboardId, metricId, subId } = params;
+  const { siteId, dashboardId, metricId } = params;
 
   const section = location.pathname.split('/')[2];
 
@@ -41,8 +39,6 @@ function DashboardRouter() {
 
   const renderView = () => {
     if (section === 'metrics') {
-      if (subId)
-        return <WidgetSubDetailsView siteId={siteId} {...routeProps} />;
       if (metricId) return <WidgetView siteId={siteId} {...routeProps} />;
       return <MetricsView siteId={siteId} />;
     }

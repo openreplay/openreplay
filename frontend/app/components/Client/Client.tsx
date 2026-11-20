@@ -47,14 +47,6 @@ const EnterpriseOnly = observer(({ children }: { children: ReactNode }) => {
 });
 
 class Client extends React.PureComponent<any> {
-  constructor(props) {
-    super(props);
-  }
-
-  setTab = (tab) => {
-    this.props.history.push(clientRoute(tab));
-  };
-
   renderActiveTab = (activeTab) => {
     switch (activeTab) {
       case CLIENT_TABS.PROFILE:

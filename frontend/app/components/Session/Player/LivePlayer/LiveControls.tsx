@@ -1,4 +1,4 @@
-import cn from 'classnames';
+import { clsx as cn } from 'clsx';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -7,8 +7,10 @@ import {
   ILivePlayerContext,
   PlayerContext,
 } from 'App/components/Session/playerContext';
+import useLatestRef from 'App/hooks/useLatestRef';
 import { useStore } from 'App/mstore';
 import { useLocation } from 'App/routing';
+import { ownsKeys } from 'App/utils/keys';
 import 'Components/Session/ReplayScreen/replay-timeline.css';
 import { SKIP_INTERVALS } from 'Components/Session_/Player/Controls/Controls';
 
@@ -34,23 +36,16 @@ function Controls(props: any) {
   const totalAssistSessions = sessionStore.totalLiveSessions;
   const closedLive = !!sessionStore.errorStack?.length || !sessionStore.current;
 
-  const onKeyDown = (e: any) => {
-    if (
-      e.target instanceof HTMLInputElement ||
-      e.target instanceof HTMLTextAreaElement
-    ) {
-      return;
-    }
-    if (e.key === 'ArrowRight') {
-      forthTenSeconds();
-    }
-    if (e.key === 'ArrowLeft') {
-      backTenSeconds();
-    }
-  };
+  const skipRef = useLatestRef(skipInterval);
 
   React.useEffect(() => {
-    document.addEventListener('keydown', onKeyDown.bind(this));
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (ownsKeys(e.target)) return;
+      const step = SKIP_INTERVALS[skipRef.current];
+      if (e.key === 'ArrowRight') player.jumpInterval(step);
+      if (e.key === 'ArrowLeft') player.jumpInterval(-step);
+    };
+    document.addEventListener('keydown', onKeyDown);
     if (totalAssistSessions === 0) {
       fetchAssistSessions();
     }
@@ -63,19 +58,9 @@ function Controls(props: any) {
       setNoGrid(true);
     }
     return () => {
-      document.removeEventListener('keydown', onKeyDown.bind(this));
+      document.removeEventListener('keydown', onKeyDown);
     };
   }, []);
-
-  const forthTenSeconds = () => {
-    // @ts-ignore
-    player.jumpInterval(SKIP_INTERVALS[skipInterval]);
-  };
-
-  const backTenSeconds = () => {
-    // @ts-ignore
-    player.jumpInterval(-SKIP_INTERVALS[skipInterval]);
-  };
 
   if (noControls) return null;
   return (

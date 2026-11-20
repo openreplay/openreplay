@@ -50,6 +50,7 @@ import {
 import { DrawerFooter, EntityDrawer, Section } from './EntityDrawer';
 import NetworkPanel from './NetworkPanel';
 import './run-drawer.css';
+import { LiveDuration } from '../shared/LiveDuration';
 
 interface Props {
   run: RunData | null;
@@ -774,14 +775,5 @@ function StepMark({ status }: { status: StepMarkStatus }) {
   );
 }
 
-/** Live elapsed counter for an in-flight run. */
-function LiveDuration({ start }: { start: number }) {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
-  }, []);
-  return <>{formatDuration(Math.max(0, now - start))}</>;
-}
 
 export default RunDrawer;

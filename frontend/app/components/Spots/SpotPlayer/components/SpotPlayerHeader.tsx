@@ -1,29 +1,17 @@
 import { IconButton } from '@/ui/actions/IconButton';
 import { Button } from '@/ui/actions/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItems,
-  DropdownMenuTrigger,
-} from '@/ui/actions/dropdown-menu';
+import { MoreMenu } from '@/ui/actions/dropdown-menu';
 import { SessionAvatar } from '@/ui/data/SessionAvatar';
 import { useViewport } from '@/ui/layout/use-viewport';
 import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
 import { PopoverPanel } from '@/ui/overlays/popover';
 import { useToast } from '@/ui/overlays/toast';
-import copy from 'copy-to-clipboard';
-import {
-  Copy,
-  Download,
-  MoreHorizontal,
-  Settings2,
-  Trash2,
-  Users,
-} from 'lucide-react';
+import { Copy, Download, Settings2, Trash2, Users } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { copyWithToast } from 'App/lib/use-copy';
 import { useStore } from 'App/mstore';
 import { spotsList } from 'App/routes';
 import { useHistory } from 'App/routing';
@@ -84,8 +72,10 @@ export const SpotActions = observer(() => {
   const spot = spotStore.currentSpot!;
 
   const onCopy = () => {
-    copy(window.location.href);
-    toast.success(t('Internal sharing link copied to clipboard'));
+    void copyWithToast(
+      window.location.href,
+      t('Internal sharing link copied to clipboard'),
+    );
   };
   const download = async () => {
     toast.info(t('Retrieving Spot video...'));
@@ -136,46 +126,34 @@ export const SpotActions = observer(() => {
           )}
         </PopoverPanel>
       ) : null}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <span>
-            <IconButton
-              icon={<MoreHorizontal size={15} />}
-              label={t('More')}
-              variant="ghost"
-            />
-          </span>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItems
-            items={[
-              ...(phone
-                ? [
-                    {
-                      key: 'copy',
-                      icon: <Copy size={13} />,
-                      label: t('Copy link'),
-                      onClick: onCopy,
-                    },
-                  ]
-                : []),
-              {
-                key: 'download',
-                icon: <Download size={13} />,
-                label: t('Download video'),
-                onClick: () => void download(),
-              },
-              {
-                key: 'delete',
-                icon: <Trash2 size={13} />,
-                label: t('Delete'),
-                danger: true,
-                onClick: () => setConfirmDelete(true),
-              },
-            ]}
-          />
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <MoreMenu
+        label={t('More')}
+        items={[
+          ...(phone
+            ? [
+                {
+                  key: 'copy',
+                  icon: <Copy size={13} />,
+                  label: t('Copy link'),
+                  onClick: onCopy,
+                },
+              ]
+            : []),
+          {
+            key: 'download',
+            icon: <Download size={13} />,
+            label: t('Download video'),
+            onClick: () => void download(),
+          },
+          {
+            key: 'delete',
+            icon: <Trash2 size={13} />,
+            label: t('Delete'),
+            danger: true,
+            onClick: () => setConfirmDelete(true),
+          },
+        ]}
+      />
       <span className="m-rs__sep" aria-hidden="true" />
       <ConfirmDialog
         open={confirmDelete}

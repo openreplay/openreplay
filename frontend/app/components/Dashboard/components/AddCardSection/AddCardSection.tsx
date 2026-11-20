@@ -1,4 +1,3 @@
-import { Button } from '@/ui/actions/button';
 import { Segmented } from '@/ui/inputs/toggle-group';
 import { PopoverSearch } from '@/ui/overlays/PopoverSearch';
 import { FilterKey } from 'Types/filter/filterType';
@@ -11,7 +10,6 @@ import {
   Combine,
   FileStack,
   Filter,
-  FolderOpen,
   Globe,
   LineChart,
   MonitorSmartphone,
@@ -24,7 +22,6 @@ import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useModal } from 'App/components/Modal';
 import {
   CATEGORIES,
   FUNNEL,
@@ -39,7 +36,6 @@ import { useNavigate } from 'App/routing';
 
 import { Heatmap, UserJourney } from '../../cardIcons';
 import '../../product-analytics.css';
-import MetricsLibraryModal from '../MetricsLibraryModal/MetricsLibraryModal';
 
 interface TabItem {
   icon: React.ReactNode;
@@ -158,20 +154,6 @@ export const tabItems: (t: TFunction) => Record<string, TabItem[]> = (t) => ({
 export const mobileTabItems: (t: TFunction) => Record<string, TabItem[]> = (
   t,
 ) => ({
-  // [CATEGORIES.product_analytics]: [
-  //   {
-  //     icon: <LineChart width={16} />,
-  //     title: 'Trends',
-  //     type: TIMESERIES,
-  //     description: 'Track session and user trends over time.'
-  //   },
-  //   {
-  //     icon: <Filter width={16} />,
-  //     title: 'Funnels',
-  //     type: FUNNEL,
-  //     description: 'Visualize user progression through critical steps.'
-  //   }
-  // ],
   [CATEGORIES.web_analytics]: [
     {
       icon: <Users width={16} />,
@@ -197,19 +179,16 @@ export const mobileTabItems: (t: TFunction) => Record<string, TabItem[]> = (
 const AddCardSection = observer(
   ({
     inCards,
-    hideExisting,
     handleOpenChange,
     step,
   }: {
     inCards?: boolean;
-    hideExisting?: boolean;
     handleOpenChange?: (isOpen: boolean) => void;
     /** the second step of another popover: it owns the search and its query */
     step?: { query: string };
   }) => {
     const { t } = useTranslation();
-    const { showModal } = useModal();
-    const { metricStore, dashboardStore, projectsStore } = useStore();
+    const { dashboardStore, projectsStore } = useStore();
     const navigate = useNavigate();
     const { isMobile } = projectsStore;
     const [tab, setTab] = React.useState(
@@ -252,22 +231,6 @@ const AddCardSection = observer(
         },
         { relative: 'route' },
       );
-    };
-
-    const onExistingClick = () => {
-      const dashboardId = dashboardStore.selectedDashboard?.dashboardId;
-      const siteId = projectsStore.activeSiteId;
-      showModal(
-        <MetricsLibraryModal siteId={siteId} dashboardId={dashboardId} />,
-        {
-          right: true,
-          width: 800,
-          onClose: () => {
-            metricStore.updateKey('metricsSearch', '');
-          },
-        },
-      );
-      handleOpenChange?.(false);
     };
 
     return (
@@ -321,18 +284,6 @@ const AddCardSection = observer(
             </li>
           ))}
         </ul>
-        {inCards || hideExisting ? null : (
-          <div className="m-addcard__foot">
-            <Button
-              variant="subtle"
-              className="w-full"
-              onClick={onExistingClick}
-            >
-              <FolderOpen size={14} />
-              {t('Add existing card')}
-            </Button>
-          </div>
-        )}
       </div>
     );
   },

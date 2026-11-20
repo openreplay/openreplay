@@ -45,16 +45,13 @@ function InsightsCard({ data, inGrid }: any) {
       case IssueCategory.NETWORK:
         filter = { ...filtersMap[FilterKey.FETCH] };
         filter.value = [];
-        filter.filters.forEach((f: any) => {
-          f.value = [];
-          if (f.key === FilterKey.FETCH_URL) {
-            f.value = [item.name];
-          }
-
+        // copies: filtersMap is the shared catalogue
+        filter.filters = filter.filters.map((f: any) => {
+          if (f.key === FilterKey.FETCH_URL) return { ...f, value: [item.name] };
           if (f.key === FilterKey.FETCH_DURATION) {
-            f.operator = '>=';
-            f.value = [item.oldValue];
+            return { ...f, operator: '>=', value: [item.oldValue] };
           }
+          return { ...f, value: [] };
         });
         break;
       case IssueCategory.ERRORS:

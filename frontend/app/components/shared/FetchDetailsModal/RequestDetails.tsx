@@ -31,6 +31,7 @@ import { getLocalHourFormat } from 'App/utils/intlUtils';
 import 'Components/Session/ReplayScreen/request-sheet.css';
 
 import { AnyResource, toCurl, toFetch } from './utils';
+import { copyText } from 'App/lib/use-copy';
 
 type Headers = Record<string, string>;
 interface Part {
@@ -110,12 +111,11 @@ export const RequestDetails = observer(function RequestDetails({
 
   const copy = async (kind: 'curl' | 'fetch') => {
     const text = kind === 'curl' ? toCurl(r) : toFetch(r);
-    try {
-      await navigator.clipboard.writeText(text);
+    if (await copyText(text)) {
       toast.success(
         kind === 'curl' ? t('Copied as cURL') : t('Copied as JS fetch'),
       );
-    } catch {
+    } else {
       toast.info(t('Could not reach the clipboard'));
     }
   };

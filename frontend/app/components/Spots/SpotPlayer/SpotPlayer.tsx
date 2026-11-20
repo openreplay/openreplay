@@ -1,6 +1,6 @@
 import { Loader } from '@/ui/feedback/Loader';
 import { Icon } from '@/ui/icons/Icon';
-import cn from 'classnames';
+import { clsx as cn } from 'clsx';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';

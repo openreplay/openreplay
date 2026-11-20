@@ -978,24 +978,6 @@ export default class Widget {
     this.compareTo = range;
   }
 
-  fetchIssue(funnelId: any, issueId: any, params: any): Promise<any> {
-    return new Promise((resolve, reject) => {
-      metricService
-        .fetchIssue(funnelId, issueId, params)
-        .then((response: any) => {
-          resolve({
-            issue: new Funnelissue().fromJSON(response.issue),
-            sessions: response.sessions.sessions.map((s: any) =>
-              new Session().fromJson(s),
-            ),
-          });
-        })
-        .catch((error: any) => {
-          reject(error);
-        });
-    });
-  }
-
   private metricValueFromArray(metricValue: any, metricType: string) {
     if (!Array.isArray(metricValue)) return metricValue;
     if (metricType === TABLE) {

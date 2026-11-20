@@ -22,7 +22,6 @@ import {
   CriticalDialog,
   HideIssueModal,
   type IssueSessionCard,
-  JOURNEY_SEARCH_SUGGESTIONS,
   NotCriticalDialog,
   RenameIssueModal,
 } from '../shared';
@@ -83,17 +82,6 @@ function IssueDetail() {
   React.useEffect(() => {
     if (issue) void issuesStore.loadSessions(issue.id, searchQuery);
   }, [issue?.id, searchQuery, filterKey]);
-
-  const ql = query.trim().toLowerCase();
-  const suggestions = React.useMemo(
-    () =>
-      ql
-        ? JOURNEY_SEARCH_SUGGESTIONS.filter(
-            (s) => s.toLowerCase().includes(ql) && s.toLowerCase() !== ql,
-          ).slice(0, 6)
-        : [],
-    [ql],
-  );
 
   const back = () => history.push(withSiteId(smartIssues(), siteId));
   const sessionPath = (s: IssueSessionCard) =>
@@ -249,23 +237,6 @@ function IssueDetail() {
                     >
                       <X size={13} />
                     </button>
-                    {suggestions.length > 0 && (
-                      <ul className="m-strip__suggest m-pop m-elevated">
-                        {suggestions.map((s) => (
-                          <li key={s}>
-                            <button
-                              type="button"
-                              onMouseDown={(e) => {
-                                e.preventDefault();
-                                runSearch(s);
-                              }}
-                            >
-                              {s}
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
                   </div>
                 ) : (
                   <Tooltip title={t('Search these sessions')}>

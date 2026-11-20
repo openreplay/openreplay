@@ -1,9 +1,11 @@
-import cn from 'classnames';
+import { clsx as cn } from 'clsx';
 import { FastForward, Pause, Play } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
+import useLatestRef from 'App/hooks/useLatestRef';
 import { useStore } from 'App/mstore';
+import { ownsKeys } from 'App/utils/keys';
 
 import { SKIP_INTERVALS } from '../Controls/Controls';
 import cls from './PlayIconLayer.module.css';
@@ -25,33 +27,30 @@ function PlayIconLayer({ playing, togglePlay, jumpInterval }: Props) {
   const leftLastTap = React.useRef(0);
   const rightLastTap = React.useRef(0);
 
+  const toggleRef = useLatestRef(togglePlay);
   useEffect(() => {
-    // TODO Find a better way to do this
-    document.addEventListener('keydown', onKeyDown);
-
-    return () => {
-      document.removeEventListener('keydown', onKeyDown);
+    if (notesEdit) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        e.key !== ' ' ||
+        (ownsKeys(target) && !target?.closest('[role="slider"]'))
+      )
+        return;
+      setBezel((n) => n + 1);
+      // useShortcuts also toggles on Space: whichever listener runs first wins
+      if (e.defaultPrevented) return;
+      e.preventDefault();
+      toggleRef.current();
     };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
   }, [notesEdit]);
 
-  const getIsEdit = React.useCallback(() => notesEdit, [notesEdit]);
-
-  const onKeyDown = (e: any) => {
-    if (
-      getIsEdit() ||
-      e.target instanceof HTMLInputElement ||
-      e.target instanceof HTMLTextAreaElement
-    )
-      return;
-    if (e.key === ' ') {
-      togglePlayAnimated();
-    }
-  };
-
-  const togglePlayAnimated = useCallback(() => {
+  const togglePlayAnimated = () => {
     setBezel((n) => n + 1);
     togglePlay();
-  }, []);
+  };
 
   const doubleLeft = () => {
     jumpInterval(-SKIP_INTERVALS[15]);

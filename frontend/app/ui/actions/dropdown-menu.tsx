@@ -1,7 +1,9 @@
 import { cn } from '@/lib/utils';
+import { IconButton } from '@/ui/actions/IconButton';
 import { useViewportFit } from '@/ui/overlays/use-viewport-fit';
 import * as D from '@radix-ui/react-dropdown-menu';
-import type { ComponentProps } from 'react';
+import { MoreHorizontal } from 'lucide-react';
+import React, { type ComponentProps } from 'react';
 
 export const DropdownMenu = D.Root;
 export const DropdownMenuTrigger = D.Trigger;
@@ -94,5 +96,39 @@ export function DropdownMenuItems({ items }: { items: readonly MenuItem[] }) {
         ),
       )}
     </>
+  );
+}
+
+/** The "⋯" button of a row or a page, with its menu. */
+export function MoreMenu({
+  items,
+  label,
+  iconSize = 15,
+  stopPropagation,
+}: {
+  items: readonly MenuItem[];
+  label: string;
+  iconSize?: number;
+  /** keeps menu clicks from reaching a clickable row */
+  stopPropagation?: boolean;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <span>
+          <IconButton
+            icon={<MoreHorizontal size={iconSize} />}
+            label={label}
+            variant="ghost"
+          />
+        </span>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        onClick={stopPropagation ? (e) => e.stopPropagation() : undefined}
+      >
+        <DropdownMenuItems items={items} />
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

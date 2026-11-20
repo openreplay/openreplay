@@ -1,7 +1,7 @@
 import { Icon } from '@/ui/icons/Icon';
 import { Input as KitInput } from '@/ui/inputs/input';
 import { Textarea } from '@/ui/inputs/textarea';
-import cn from 'classnames';
+import { clsx as cn } from 'clsx';
 import React from 'react';
 
 interface Props {

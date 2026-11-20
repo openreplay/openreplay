@@ -20,12 +20,8 @@ function RangeGranularity({
   }, [period]);
 
   React.useEffect(() => {
-    if (granularityOptions.length === 0) return;
-    const defaultOption = Math.max(
-      granularityOptions.filter((opt) => !opt.disabled).length - 2,
-      0,
-    );
-    onDensityChange(granularityOptions[defaultOption].key);
+    if (!period) return;
+    onDensityChange(defaultDensity(period.getDuration()));
   }, [period, granularityOptions.length]);
 
   return (
@@ -63,14 +59,19 @@ export function calculateGranularities(periodDurationMs: number) {
 
   const result: { label: string; key: number; disabled: boolean }[] = [];
   for (const granularity of granularities) {
-    const density = Math.floor(
-      Number(BigInt(periodDurationMs) / BigInt(granularity.durationMs)),
-    );
+    const density = Math.floor(periodDurationMs / granularity.durationMs);
     const disabled = periodDurationMs >= granularity.durationMs ? false : true;
     result.push({ label: granularity.label, key: density, disabled });
   }
 
   return result;
+}
+
+/** the second-longest granularity the window can hold */
+export function defaultDensity(periodDurationMs: number) {
+  const options = calculateGranularities(periodDurationMs);
+  const enabled = options.filter((opt) => !opt.disabled).length;
+  return options[Math.max(enabled - 2, 0)].key;
 }
 
 export default RangeGranularity;

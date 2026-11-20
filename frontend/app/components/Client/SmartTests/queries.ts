@@ -22,7 +22,6 @@ import {
   Resolution,
   RunDefaults,
   RunStatus,
-  TestCreateRequest,
   TestUpdateRequest,
   TestsBulkRequest,
 } from './components/shared/types';
@@ -167,15 +166,6 @@ export function useTest(testId: string | undefined) {
     queryKey: browserTestsKeys.test(projectId, testId ?? ''),
     queryFn: () => api.getTest(projectId, testId as string),
     enabled: !!projectId && !!testId,
-  });
-}
-
-export function useCreateTest() {
-  const projectId = useProjectId();
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (body: TestCreateRequest) => api.createTest(projectId, body),
-    onSuccess: () => invalidateTestData(queryClient, projectId),
   });
 }
 

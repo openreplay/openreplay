@@ -272,7 +272,7 @@ function ListPage() {
             <Button
               onClick={() => {
                 setQuery('');
-                setShowHidden(true);
+                toggleHidden(true);
               }}
             >
               {t('Show all properties')}

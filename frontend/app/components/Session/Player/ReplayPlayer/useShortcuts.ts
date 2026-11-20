@@ -1,7 +1,6 @@
-import { toast } from '@/ui/overlays/toast';
-import copy from 'copy-to-clipboard';
 import { useContext, useEffect } from 'react';
 
+import { copyWithToast } from 'App/lib/use-copy';
 import { blockValues, blocks } from 'App/mstore/uiPlayerStore';
 import { ownsKeys } from 'App/utils/keys';
 import { PlayerContext } from 'Components/Session/playerContext';
@@ -29,14 +28,10 @@ function useShortcuts({
   const { player, store } = useContext(PlayerContext);
 
   const copySessionUrl = (withTs?: boolean) => {
-    if (withTs) {
-      const { time } = store.get();
-      const sessUrl = `${window.location.href}?jumpto=${time}`;
-      copy(sessUrl);
-    } else {
-      copy(window.location.href);
-    }
-    toast.success('Copied session url to clipboard');
+    const url = withTs
+      ? `${window.location.href}?jumpto=${store.get().time}`
+      : window.location.href;
+    void copyWithToast(url, 'Copied session url to clipboard');
   };
   const forthTenSeconds = () => {
     player.jumpInterval(SKIP_INTERVALS[skipInterval]);
@@ -87,7 +82,8 @@ function useShortcuts({
       if (e.key === 'Esc' || e.key === 'Escape') {
         fullScreenOff();
       }
-      if (e.key === ' ') {
+      if (e.key === ' ' && !e.defaultPrevented) {
+        e.preventDefault();
         (document.activeElement as HTMLInputElement | null)?.blur?.();
         player.togglePlay();
       }

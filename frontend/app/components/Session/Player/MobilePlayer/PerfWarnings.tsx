@@ -1,7 +1,7 @@
 import { Icon } from '@/ui/icons/Icon';
 import { mapIphoneModel } from 'Player/mobile/utils';
 import { MobilePerformanceEvent } from 'Player/web/messages';
-import cn from 'classnames';
+import { clsx as cn } from 'clsx';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 

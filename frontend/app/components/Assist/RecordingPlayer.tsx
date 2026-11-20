@@ -1,16 +1,10 @@
-import { IconButton } from '@/ui/actions/IconButton';
 import { Button } from '@/ui/actions/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItems,
-  DropdownMenuTrigger,
-} from '@/ui/actions/dropdown-menu';
+import { MoreMenu } from '@/ui/actions/dropdown-menu';
 import { OpenReplayMark } from '@/ui/brand/OpenReplayMark';
 import { RelativeTime } from '@/ui/data/RelativeTime';
 import { EmptyState } from '@/ui/feedback/EmptyState';
 import { Loader } from '@/ui/feedback/Loader';
-import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -86,36 +80,24 @@ function RecordingPlayer({ record }: { record: IRecord }) {
                 {t('Open the session')}
               </Button>
             ) : null}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <span>
-                  <IconButton
-                    icon={<MoreHorizontal size={15} />}
-                    label={t('More')}
-                    variant="ghost"
-                  />
-                </span>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItems
-                  items={[
-                    {
-                      key: 'rename',
-                      icon: <Pencil size={13} />,
-                      label: t('Rename'),
-                      onClick: () => setRenaming(record),
-                    },
-                    {
-                      key: 'delete',
-                      icon: <Trash2 size={13} />,
-                      label: t('Delete'),
-                      danger: true,
-                      onClick: () => setDeleting(record),
-                    },
-                  ]}
-                />
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <MoreMenu
+              label={t('More')}
+              items={[
+                {
+                  key: 'rename',
+                  icon: <Pencil size={13} />,
+                  label: t('Rename'),
+                  onClick: () => setRenaming(record),
+                },
+                {
+                  key: 'delete',
+                  icon: <Trash2 size={13} />,
+                  label: t('Delete'),
+                  danger: true,
+                  onClick: () => setDeleting(record),
+                },
+              ]}
+            />
           </>
         }
       >
