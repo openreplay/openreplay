@@ -1,0 +1,40 @@
+# Overlay for the writer half of the Kafka-buffered pipeline: Kafka -> ClickHouse.
+# The exporter retries forever and blocks when its queue is full, so a
+# ClickHouse outage pauses consumption and the logs stay in the topic.
+#
+#   otelcol-openreplay --config config.yaml --config config-kafka-writer.yaml
+
+receivers:
+  kafka:
+    brokers: ${env:OTLP_KAFKA_BROKERS}
+    group_id: ${env:OTLP_KAFKA_GROUP:-otel-logs-writer}
+    initial_offset: earliest
+    logs:
+      topics:
+        - ${env:OTLP_KAFKA_TOPIC:-otel-logs}
+    tls:
+      insecure: ${env:OTLP_KAFKA_TLS_INSECURE:-true}
+    message_marking:
+      after: true
+      on_error: false
+    error_backoff:
+      enabled: true
+      initial_interval: 1s
+      max_interval: 30s
+      max_elapsed_time: 0s
+
+exporters:
+  clickhouse:
+    retry_on_failure:
+      max_elapsed_time: 0s
+    sending_queue:
+      queue_size: 2
+      block_on_overflow: true
+
+service:
+  pipelines:
+    logs:
+      receivers: [kafka]
+      processors: [memory_limiter, batch]
+      exporters:
+        - ${env:OTLP_LOGS_EXPORTER:-clickhouse}

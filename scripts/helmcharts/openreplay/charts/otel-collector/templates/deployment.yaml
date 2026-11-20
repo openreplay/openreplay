@@ -39,15 +39,16 @@ spec:
           {{- if .Values.healthCheck }}
           {{- .Values.healthCheck | toYaml | nindent 10 }}
           {{- end }}
+          {{- if .Values.kafka.enabled }}
+          args: ["--config", "/etc/otelcol/config.yaml", "--config", "/etc/otelcol/config-kafka-ingest.yaml"]
+          {{- end }}
           env:
             {{- include "openreplay.env" (dict "ctx" .) | nindent 12 }}
-            - name: OTLP_CLICKHOUSE_ENDPOINT
-              value: 'tcp://{{ .Values.global.clickhouse.chHost }}:{{ .Values.global.clickhouse.service.dataPort }}{{ if .Values.global.clickhouse.use_tls }}?secure=true{{ end }}'
-            - name: OTLP_CLICKHOUSE_USER
-              value: '{{ .Values.clickhouse.username | default .Values.global.clickhouse.username }}'
-            - name: OTLP_CLICKHOUSE_PASSWORD
-              valueFrom:
-                secretKeyRef: {{- include "openreplay.secrets" (dict "key" "clickhouse-password" "ctx" .) | nindent 18 }}
+            {{- if .Values.kafka.enabled }}
+            {{- include "otel-collector.kafkaEnv" . | nindent 12 }}
+            {{- else }}
+            {{- include "otel-collector.clickhouseEnv" . | nindent 12 }}
+            {{- end }}
           ports:
             {{- range $key, $val := .Values.service.ports }}
             - name: {{ $key }}

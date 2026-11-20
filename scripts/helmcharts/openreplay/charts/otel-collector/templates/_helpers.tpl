@@ -63,3 +63,30 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Selector labels of the writer half (Kafka -> ClickHouse)
+*/}}
+{{- define "otel-collector.writerSelectorLabels" -}}
+app.kubernetes.io/name: {{ include "otel-collector.name" . }}-writer
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+
+{{- define "otel-collector.kafkaEnv" -}}
+- name: OTLP_KAFKA_BROKERS
+  value: '{{ .Values.global.kafka.kafkaHost }}:{{ .Values.global.kafka.kafkaPort }}'
+- name: OTLP_KAFKA_TOPIC
+  value: '{{ .Values.kafka.topic }}'
+- name: OTLP_KAFKA_TLS_INSECURE
+  value: '{{ ne (toString .Values.global.kafka.kafkaUseSsl) "true" }}'
+{{- end }}
+
+{{- define "otel-collector.clickhouseEnv" -}}
+- name: OTLP_CLICKHOUSE_ENDPOINT
+  value: 'tcp://{{ .Values.global.clickhouse.chHost }}:{{ .Values.global.clickhouse.service.dataPort }}{{ if .Values.global.clickhouse.use_tls }}?secure=true{{ end }}'
+- name: OTLP_CLICKHOUSE_USER
+  value: '{{ .Values.clickhouse.username | default .Values.global.clickhouse.username }}'
+- name: OTLP_CLICKHOUSE_PASSWORD
+  valueFrom:
+    secretKeyRef: {{- include "openreplay.secrets" (dict "key" "clickhouse-password" "ctx" .) | nindent 6 }}
+{{- end }}
