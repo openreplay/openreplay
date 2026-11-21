@@ -14,10 +14,12 @@ import (
 
 	"github.com/Masterminds/semver"
 	gzip "github.com/klauspost/pgzip"
+	"github.com/tomasen/realip"
 
 	httpCfg "openreplay/backend/internal/config/http"
 	"openreplay/backend/internal/http/geoip"
 	"openreplay/backend/internal/http/ios"
+	"openreplay/backend/internal/http/ipfilter"
 	"openreplay/backend/internal/http/uaparser"
 	"openreplay/backend/internal/http/uuid"
 	"openreplay/backend/pkg/cleanup/registry"
@@ -60,6 +62,7 @@ type handlersImpl struct {
 	sessions   sessions.Sessions
 	uaParser   *uaparser.UAParser
 	geoIP      geoip.GeoParser
+	excludeIPs *ipfilter.Filter
 	tokenizer  *token.Tokenizer
 	conditions conditions.Conditions
 	flaker     *flakeid.Flaker
@@ -68,7 +71,7 @@ type handlersImpl struct {
 }
 
 func NewHandlers(cfg *httpCfg.Config, log logger.Logger, responser api.Responser, producer types.Producer, projects projects.Projects,
-	sessions sessions.Sessions, uaParser *uaparser.UAParser, geoIP geoip.GeoParser, tokenizer *token.Tokenizer,
+	sessions sessions.Sessions, uaParser *uaparser.UAParser, geoIP geoip.GeoParser, excludeIPs *ipfilter.Filter, tokenizer *token.Tokenizer,
 	conditions conditions.Conditions, flaker *flakeid.Flaker, cleanupReg registry.Registry, metrics webmetrics.Web) (api.Handlers, error) {
 	return &handlersImpl{
 		log:        log,
@@ -79,6 +82,7 @@ func NewHandlers(cfg *httpCfg.Config, log logger.Logger, responser api.Responser
 		sessions:   sessions,
 		uaParser:   uaParser,
 		geoIP:      geoIP,
+		excludeIPs: excludeIPs,
 		tokenizer:  tokenizer,
 		conditions: conditions,
 		flaker:     flaker,
@@ -142,6 +146,11 @@ func (e *handlersImpl) startMobileSessionHandler(w http.ResponseWriter, r *http.
 	// Check if the project supports mobile sessions
 	if !p.IsMobile() {
 		e.rejectStart(w, r, http.StatusForbidden, errors.New("project doesn't support mobile sessions"), startTime, webmetrics.RejectPlatformUnsupported)
+		return
+	}
+
+	if e.excludeIPs.Contains(realip.FromRequest(r)) {
+		e.rejectStart(w, r, http.StatusForbidden, errors.New("recording is disabled for this IP address"), startTime, webmetrics.RejectExcludedIP)
 		return
 	}
 

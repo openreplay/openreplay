@@ -15,6 +15,7 @@ const (
 	RejectPlatformUnsupported = "platform_unsupported"
 	RejectBrowserUnrecognized = "browser_unrecognized"
 	RejectSampleRateMiss      = "sample_rate_miss"
+	RejectExcludedIP          = "excluded_ip"
 	RejectInternalError       = "internal_error"
 )
 
