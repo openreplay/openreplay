@@ -1,0 +1,114 @@
+# Builds the OpenTelemetry Collector image and deploys it to the EE dev cluster
+# with Kafka buffering enabled (ingest + writer deployments).
+on:
+  workflow_dispatch:
+    inputs:
+      skip_security_checks:
+        description: "Skip Security checks if there is a unfixable vuln or error. Value: true/false"
+        required: false
+        default: "false"
+  push:
+    branches:
+      - dev
+    paths:
+      - "otel-collector/**"
+
+name: Build and Deploy otel-collector EE
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 2
+
+      - uses: ./.github/composite-actions/update-keys
+        with:
+          assist_jwt_secret: ${{ secrets.ASSIST_JWT_SECRET }}
+          assist_key: ${{ secrets.ASSIST_KEY }}
+          domain_name: ${{ secrets.EE_DOMAIN_NAME }}
+          jwt_refresh_secret: ${{ secrets.JWT_REFRESH_SECRET }}
+          jwt_secret: ${{ secrets.EE_JWT_SECRET }}
+          jwt_spot_refresh_secret: ${{ secrets.JWT_SPOT_REFRESH_SECRET }}
+          jwt_spot_secret: ${{ secrets.JWT_SPOT_SECRET }}
+          license_key: ${{ secrets.EE_LICENSE_KEY }}
+          minio_access_key: ${{ secrets.EE_MINIO_ACCESS_KEY }}
+          minio_secret_key: ${{ secrets.EE_MINIO_SECRET_KEY }}
+          pg_password: ${{ secrets.EE_PG_PASSWORD }}
+          registry_url: ${{ secrets.OSS_REGISTRY_URL }}
+        name: Update Keys
+
+      - name: Docker login
+        run: |
+          docker login ${{ secrets.EE_REGISTRY_URL }} -u ${{ secrets.EE_DOCKER_USERNAME }} -p "${{ secrets.EE_REGISTRY_TOKEN }}"
+
+      # The collector image is the same for both editions, so the tag has no -ee suffix.
+      - name: Set image tag
+        run: echo "IMAGE_TAG=${GITHUB_REF_NAME//\//-}_${GITHUB_SHA}" >> $GITHUB_ENV
+
+      - uses: azure/k8s-set-context@v5
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.EE_KUBECONFIG }}
+        id: setcontext
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Building and Pushing otel-collector image
+        id: build-image
+        env:
+          DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
+          IMAGE_TAG: ${{ env.IMAGE_TAG }}
+          ENVIRONMENT: staging
+        run: |
+          set -e
+          skip_security_checks=${{ github.event.inputs.skip_security_checks }}
+          cd otel-collector
+          PUSH_IMAGE=0 bash -x ./build.sh
+          if [[ "x$skip_security_checks" == "xtrue" ]]; then
+            echo "Skipping Security Checks"
+          else
+            curl -L https://github.com/aquasecurity/trivy/releases/download/v0.56.2/trivy_0.56.2_Linux-64bit.tar.gz | tar -xzf - -C ./
+            ./trivy image --db-repository ghcr.io/aquasecurity/trivy-db:2 --db-repository public.ecr.aws/aquasecurity/trivy-db:2 --exit-code 1 --security-checks vuln --vuln-type os,library --severity "HIGH,CRITICAL" --ignore-unfixed $DOCKER_REPO/otel-collector:$IMAGE_TAG
+          fi
+          docker push $DOCKER_REPO/otel-collector:$IMAGE_TAG
+
+      - name: Deploy to kubernetes
+        env:
+          IMAGE_TAG: ${{ env.IMAGE_TAG }}
+          ENVIRONMENT: staging
+        run: |
+          set -e
+          cd scripts/helmcharts/
+
+          cat <<EOF > /tmp/image_override.yaml
+          otel-collector:
+            image:
+              tag: ${IMAGE_TAG}
+            kafka:
+              enabled: true
+          EOF
+          cat /tmp/image_override.yaml
+
+          # Deploy only the otel-collector chart
+          mkdir -p /tmp/charts
+          mv openreplay/charts/{ingress-nginx,otel-collector,connector} /tmp/charts/
+          rm -rf openreplay/charts/*
+          mv /tmp/charts/* openreplay/charts/
+          helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true --no-hooks | kubectl apply -n app -f -
+
+      - name: Alert slack
+        if: failure()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: ee
+          SLACK_TITLE: "Failed ${{ github.workflow }}"
+          SLACK_COLOR: ${{ job.status }}
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEB_HOOK }}
+          SLACK_USERNAME: "OR Bot"
+          SLACK_MESSAGE: "Build failed :bomb:"
