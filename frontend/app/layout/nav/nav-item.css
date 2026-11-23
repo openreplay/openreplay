@@ -58,6 +58,9 @@
   justify-content: center;
   flex: none;
   width: 0.9375rem;
+  /* Inter's caps sit ~1px above the line box's centre; the margin lifts the
+     glyph onto them and keeps it on whole pixels (OR-3957) */
+  margin-bottom: 1px;
   color: var(--m-content-decorative);
   transition: width var(--m-duration-normal) var(--m-ease-out);
 }
@@ -110,6 +113,8 @@
   width: 1.125rem;
   height: 1.125rem;
   margin-right: -2px;
+  /* onto the caps, like the icon */
+  margin-bottom: 2px;
   overflow: hidden;
   border-radius: var(--m-radius-control);
   color: var(--m-content-decorative);

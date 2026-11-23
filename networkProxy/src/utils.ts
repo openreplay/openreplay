@@ -1,3 +1,5 @@
+import { obscureFormFields, obscureParam } from './sanitizers.js'
+
 export const genResponseByType = (
   responseType: XMLHttpRequest['responseType'],
   response: any,
@@ -33,6 +35,15 @@ export const genResponseByType = (
   return result
 }
 
+// a larger body would not fit in a batch anyway
+export const BODY_LIMIT = 1_000_000
+
+/** Class tag, like instanceof but also for objects from another realm (iframe) */
+export const tagOf = (x: unknown) => Object.prototype.toString.call(x).slice(8, -1)
+
+const isBinary = (x: unknown) =>
+  ArrayBuffer.isView(x) || ['Blob', 'File', 'ArrayBuffer', 'ReadableStream'].includes(tagOf(x))
+
 export const getStringResponseByType = (
   responseType: XMLHttpRequest['responseType'],
   response: any,
@@ -46,7 +57,7 @@ export const getStringResponseByType = (
         result = response
       } else if (isPureObject(response) || Array.isArray(response)) {
         result = JSON.stringify(response)
-      } else if (typeof response !== 'undefined') {
+      } else if (response != null) {
         result = Object.prototype.toString.call(response)
       }
       break
@@ -69,31 +80,17 @@ export const genStringBody = (body?: BodyInit) => {
   let result: string
   try {
     if (typeof body === 'string') {
-      if (body[0] === '{' || body[0] === '[') {
-        result = body
-      }
-      // 'a=1&b=2' => try to parse as query
-      const arr = body.split('&')
-      if (arr.length === 1) {
-        // not a query, parse as original string
-        result = body
-      } else {
-        // 'a=1&b=2&c' => parse as query
-        result = arr.join(',')
-      }
+      const first = body.trimStart()[0]
+      // JSON is masked by filterBody, and may contain '&' in its values
+      result = first === '{' || first === '[' ? body : obscureFormFields(body)
     } else if (isIterable(body)) {
       // FormData or URLSearchParams or Array
       const arr = []
       for (const [key, value] of <FormData | URLSearchParams>body) {
-        arr.push(`${key}=${typeof value === 'string' ? value : '[object Object]'}`)
+        arr.push(`${key}=${typeof value === 'string' ? obscureParam(key, value) : '[object Object]'}`)
       }
       result = arr.join(',')
-    } else if (
-      body instanceof Blob ||
-      body instanceof ReadableStream ||
-      ArrayBuffer.isView(body) ||
-      body instanceof ArrayBuffer
-    ) {
+    } else if (isBinary(body)) {
       result = 'byte data'
     } else if (isPureObject(body)) {
       // overriding ArrayBufferView which is not convertable to string
@@ -156,12 +153,7 @@ export const genFormattedBody = (body?: BodyInit) => {
     for (const [key, value] of <FormData | URLSearchParams>body) {
       result[key] = typeof value === 'string' ? value : '[object Object]'
     }
-  } else if (
-    ArrayBuffer.isView(body) ||
-    body instanceof Blob ||
-    body instanceof ReadableStream ||
-    body instanceof ArrayBuffer
-  ) {
+  } else if (isBinary(body)) {
     result = '[byte data]'
   } else if (isPureObject(body)) {
     result = <any>body
@@ -199,14 +191,33 @@ export function formatByteSize(bytes: number) {
   return `${bytes}B`
 }
 
-export const getURL = (urlString: string) => {
-  if (urlString.startsWith('//')) {
-    const baseUrl = new URL(window.location.href)
-    urlString = `${baseUrl.protocol}${urlString}`
+export const getURL = (url: string | URL, base: string = window.location.href) => new URL(String(url), base)
+
+/** What relative urls of a context resolve against: <base href>, else the location. */
+export const documentBase = (context: typeof globalThis) =>
+  context.document?.baseURI || context.location?.href || window.location.href
+
+export function utf8Length(str: string) {
+  let bytes = 0
+  for (let i = 0; i < str.length; i++) {
+    const c = str.charCodeAt(i)
+    if (c < 0x80) bytes += 1
+    else if (c < 0x800) bytes += 2
+    else if (c >= 0xd800 && c < 0xdc00 && i + 1 < str.length) {
+      bytes += 4
+      i++
+    } else bytes += 3
   }
-  if (urlString.startsWith('http')) {
-    return new URL(urlString)
-  } else {
-    return new URL(urlString, window.location.href)
+  return bytes
+}
+
+export const shouldCapture = (capture: boolean | ((url: string) => boolean) | undefined, url: string) => {
+  if (typeof capture === 'function') {
+    try {
+      return capture(url)
+    } catch {
+      return false
+    }
   }
+  return capture !== false
 }

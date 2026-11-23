@@ -12,6 +12,9 @@ const (
 	MetricWebVitals      model.MetricType = "webVital"
 )
 
+// MetricOfScrollMap turns a heatmap card into a scroll map.
+const MetricOfScrollMap = "scrollMapUrl"
+
 type MetricOfTable string
 
 const (

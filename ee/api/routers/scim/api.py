@@ -69,7 +69,7 @@ scim_app = MultiTenantApplication(
     service=OpenReplayScimService(provider),
 )
 
-public_app, app, app_apikey = get_routers(prefix="/sso/scim/v2")
+public_app, _, _ = get_routers(prefix="/sso/scim/v2")
 
 # Lifetime of an authorization code issued by /authorize (RFC 6749 §4.1.2 recommends <= 10 minutes)
 AUTH_CODE_EXPIRE_SECONDS = config("SCIM_AUTH_CODE_EXPIRE_SECONDS", default=600, cast=int)
@@ -150,7 +150,7 @@ async def post_token(r: Request):
                       AND tenant_id = %(tenant_id)s
                       AND NOT used
                       AND created_at > (now() AT TIME ZONE 'utc') - %(expire_seconds)s * INTERVAL '1 second'
-                    RETURNING auth_code_id;
+                        RETURNING auth_code_id;
                     """,
                     {
                         "auth_code": code,

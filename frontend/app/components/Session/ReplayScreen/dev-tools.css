@@ -119,7 +119,13 @@
 }
 
 .m-dt__keyword {
-  width: 13rem;
+  flex: 0 1 auto;
+  width: 17rem;
+  min-width: 10rem;
+  max-width: 100%;
+}
+.m-dt__keyword .m-search {
+  width: 100%;
 }
 
 .m-dt__figures {
@@ -703,4 +709,23 @@
 :root[data-viewport='phone'] .m-dt__bar {
   padding-inline: var(--m-space-3);
   gap: var(--m-space-3);
+}
+
+/* phone: one type scale with the 16px search (iOS zooms under it): rows
+   14px on 40, figures 13, column heads 12 */
+:root[data-viewport='phone'] .m-dt__row {
+  min-height: 2.5rem;
+  font-size: var(--m-text-md);
+}
+:root[data-viewport='phone'] .m-dt__figures {
+  gap: var(--m-space-5);
+  padding-block: var(--m-space-4);
+  font-size: var(--m-text-sm);
+}
+:root[data-viewport='phone'] .m-dt__thead {
+  min-height: 2.25rem;
+  font-size: var(--m-text-xs);
+}
+:root[data-viewport='phone'] .m-dt__logbody {
+  font-size: var(--m-text-xs);
 }

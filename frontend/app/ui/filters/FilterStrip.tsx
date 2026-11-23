@@ -1,4 +1,6 @@
 import { CountSuffix } from '@/ui/data/CountSuffix';
+import { CheckRow } from '@/ui/inputs/CheckRow';
+import { useViewport } from '@/ui/layout/use-viewport';
 import {
   type ReactNode,
   useEffect,
@@ -6,7 +8,14 @@ import {
   useRef,
   useState,
 } from 'react';
+import { useTranslation } from 'react-i18next';
 
+import {
+  PhoneFilters,
+  SheetSection,
+  useInFilterSheet,
+  useSheetCount,
+} from './PhoneFilters';
 import './filter-strip.css';
 
 export interface StripItem {
@@ -24,14 +33,72 @@ export interface FilterStripProps {
   onSelect: (key: string) => void;
 
   label: string;
+  /** at phone: `menu` when the page's Filters or Display menu draws the
+      choices, else the strip is its own Filters drawer */
+  folds?: 'menu';
 }
 
-export function FilterStrip({
+export const stripActive = ({
+  items,
+  selected,
+}: Pick<FilterStripProps, 'items' | 'selected'>) =>
+  selected.some((k) => k !== 'all' && items.some((i) => i.key === k));
+
+/** The strip as option rows: a drawer's "Show", or a folded menu's. */
+export function StripChoices({
   items,
   selected,
   onSelect,
   label,
 }: FilterStripProps) {
+  const single = selected.length <= 1;
+  const marked = items.some((it) => it.icon);
+  return (
+    <div className="m-seg-list" role="group" aria-label={label}>
+      {items.map((it) => (
+        <CheckRow
+          key={it.key}
+          single={single}
+          on={selected.includes(it.key)}
+          icon={
+            it.icon ??
+            (marked ? (
+              <span className="m-seg-list__blank" aria-hidden="true" />
+            ) : undefined)
+          }
+          meta={it.count != null ? <CountSuffix n={it.count} /> : undefined}
+          onToggle={() => onSelect(it.key)}
+        >
+          {it.label}
+        </CheckRow>
+      ))}
+    </div>
+  );
+}
+
+export function FilterStrip(props: FilterStripProps) {
+  const { t } = useTranslation();
+  const phone = useViewport() === 'phone';
+  const inSheet = useInFilterSheet();
+  useSheetCount(
+    inSheet && props.folds !== 'menu' && stripActive(props) ? 1 : 0,
+  );
+  if (inSheet)
+    return props.folds === 'menu' ? null : (
+      <SheetSection title={t('Show')} first>
+        <StripChoices {...props} />
+      </SheetSection>
+    );
+  if (phone)
+    return props.folds === 'menu' ? null : (
+      <PhoneFilters>
+        <FilterStrip {...props} />
+      </PhoneFilters>
+    );
+  return <StripLine {...props} />;
+}
+
+function StripLine({ items, selected, onSelect, label }: FilterStripProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [thumb, setThumb] = useState<{
     x: number;

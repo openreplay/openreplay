@@ -51,6 +51,10 @@ const ClickMapCard = lazy(
   () =>
     import('App/components/Dashboard/Widgets/CustomMetricsWidgets/ClickMapCard'),
 );
+const PageThumbnail = lazy(
+  () =>
+    import('App/components/Dashboard/Widgets/CustomMetricsWidgets/ClickMapCard/PageThumbnail'),
+);
 const InsightsCard = lazy(
   () =>
     import('App/components/Dashboard/Widgets/CustomMetricsWidgets/InsightsCard'),
@@ -275,21 +279,12 @@ function WidgetChart(props: Props) {
     }
   };
 
-  const depsString =
-    _metric.metricType === USER_PATH
-      ? JSON.stringify({
-          ..._metric.series,
-          ..._metric.excludes,
-          ..._metric.startPoint,
-          viewType: _metric.viewType,
-          hideExcess: false,
-        })
-      : JSON.stringify({
-          ..._metric.series,
-          ..._metric.excludes,
-          ..._metric.startPoint,
-          hideExcess: false,
-        });
+  const depsString = JSON.stringify({
+    series: _metric.series,
+    excludes: _metric.excludes,
+    startPoint: _metric.startPoint,
+    viewType: _metric.metricType === USER_PATH ? _metric.viewType : undefined,
+  });
   const fetchMetricChartData = (
     metric: any,
     payload: any,
@@ -418,6 +413,7 @@ function WidgetChart(props: Props) {
     _metric.stepsBefore,
     _metric.stepsAfter,
     _metric.breakdowns,
+    _metric.includeClickRage,
     inView,
   ]);
   useEffect(loadPage, [_metric.page]);
@@ -706,9 +702,11 @@ function WidgetChart(props: Props) {
     if (metricType === HEATMAP) {
       if (!props.isPreview) {
         return _metric.thumbnail ? (
-          <div className="m-cmap__thumb">
-            <img src={_metric.thumbnail} alt={t('Click map thumbnail')} />
-          </div>
+          <PageThumbnail
+            thumbnail={_metric.thumbnail}
+            points={data?.points}
+            scroll={data?.scroll}
+          />
         ) : (
           <NoDataInWindow inGrid />
         );
@@ -745,10 +743,6 @@ function WidgetChart(props: Props) {
           ? !(_metric.hideExcess ?? true)
           : false;
         const height = props.isPreview ? 550 : 240;
-        const startUrl =
-          metric.startPoint?.filter?.filters.find(
-            (f: any) => f.name === 'url_path',
-          )?.value[0] ?? 'unref';
         const getFilter = (name: string) => filterStore.findEvent({ name });
         return (
           <LargerScreenOnly what={t('The journey chart')}>
@@ -758,7 +752,6 @@ function WidgetChart(props: Props) {
               inGrid={!props.isPreview}
               onChartClick={onJourneyClick}
               isUngrouped={isUngrouped}
-              startUrl={startUrl}
               getFilter={getFilter}
               drilldownFilter={dashboardStore.drillDownFilter.filters}
             />
@@ -869,15 +862,24 @@ function WidgetChart(props: Props) {
     }
   }, [mergedBreakdownData, metricStore.breakdownLevelTopN]);
 
+  // a loaded heatmap stays mounted while it refetches: the same definition picks
+  // the same session, so its replay doesn't have to download again
+  const keepHeatmap =
+    _metric.metricType === HEATMAP && !!_metric.data?.sessionId;
+  const refetching = loading && keepHeatmap;
+
   return (
     <div ref={ref}>
-      {loading ? (
+      {loading && !keepHeatmap ? (
         <ChartLoading
           slow={stale}
           onSample={showSampling ? () => void loadSample() : undefined}
         />
       ) : (
-        <div>
+        <div
+          className={refetching ? 'm-chart-refetch' : undefined}
+          aria-busy={refetching || undefined}
+        >
           <Suspense fallback={<Loader loading style={{ height: '240px' }} />}>
             {nothingInWindow(_metric, data) ? (
               <NoDataInWindow inGrid={!props.isPreview} />
@@ -895,6 +897,15 @@ function WidgetChart(props: Props) {
               />
             ) : null}
           </Suspense>
+          {refetching ? (
+            <div className="m-chart-refetch__veil">
+              <ChartLoading
+                height={0}
+                slow={stale}
+                onSample={showSampling ? () => void loadSample() : undefined}
+              />
+            </div>
+          ) : null}
         </div>
       )}
     </div>

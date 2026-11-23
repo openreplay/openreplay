@@ -1,3 +1,60 @@
+## 20.0.0
+
+- privacy: text typed into a React-controlled `<textarea value>` and text a `<textarea>` starts with (a saved draft) were sent unmasked as page text, since React rewrites the textarea's text node on every keystroke; a textarea's text node is no longer recorded, its value is replayed with input masking like `<input>`
+- `docs/usage.md` and `docs/api.md` ship with the package (short setup guide and API reference for AI agents), exported as `@openreplay/tracker/docs/*`
+- crossdomain: the parent page answers child iframes only with `crossdomain.enabled` (as documented); new `crossdomain.childDomains` limits which child origins can join; replies go to the child's origin instead of `*`; a child accepts commands only from its parent window, and only from `parentDomain` when set
+- `app.getSanitizedTitle()`: the page title as recorded (`privateMode` / `urls.titleSanitizer` applied)
+- addition of scrollmap related messages
+- experimental `nextObserver: true` option: alternative DOM core that tracks node liveness structurally (no id map, no node maintainer), uses one MutationObserver for the page, iframes and shadow roots, and computes sibling indexes without recursion; same recording format, off by default
+- WebGL canvases are recorded (were blank frames): contexts are noted when created and a frame is captured right after the page draws; idle WebGL canvases no longer resend frames. Contexts created before the tracker was constructed, or with `preserveDrawingBuffer`, keep the timer capture
+- `adoptedStyleSheets.push()` / `splice()` / index writes are recorded (only assignment was), so Stencil/Ionic components first used after start keep their styles
+- Assist: web animations stopped being recorded once an agent joined (Assist restarts tracking, and the stop restored the original `Element.prototype.animate` for good), so Ionic modals, popovers, select and datetime overlays stayed invisible for the agent; animations that already finished with `fill: forwards/both` when tracking (re)starts are recorded too, including inside shadow roots
+- DOM: nodes slotted into scoped Stencil components (Ionic `ion-input`, `ion-textarea`, `ion-searchbar`, ...) were recorded under the component host instead of the element they sit in, because Stencil redefines `parentNode`/`nextSibling` on them; replays and Assist showed a broken layout
+- constructed stylesheets: rules whose browser serialization drops a `var()` shorthand followed by one of its longhands (`background: var(--background); background-clip: padding-box`, e.g. Ionic FAB buttons) are sent with their source text
+- shadow DOM: a shadow host removed and inserted again (cached route views, Ionic inline modals and popovers moved to `ion-app` when presented) was replayed with an empty shadow root, which hid its content
+- shadow DOM: slotted web components rendered after the tracker started (Ionic/Stencil pages, lazy-loaded components) no longer stop the page recording; a `slotchange` unbound `<html>` and every later change outside shadow roots was dropped silently, so replays and Assist stayed on the first page (fixes #5105)
+- attribute string dictionary hits no longer re-insert into the LRU map on every lookup (~4µs → ~30ns per attribute)
+- privacy: selection text inside masked content, a password field switched to `type=text`, and the content of an iframe or shadow root under a masked host or ancestor are no longer recorded in plain; a hidden iframe's document or hidden host's shadow root is no longer recorded at all, also when masked or hidden later through `resanitize()`; `data-openreplay-hidden`/`-masked` on `<html>` applies to the whole page (was ignored)
+- privacy: attributes that can hold page text (`title`, `alt`, `placeholder`, `label`, `aria-label` and similar, `<option>`/button `value`, iframe `srcdoc`) are masked on masked and hidden nodes, also when changed or masked later; `data-*` and `<li>`/`<meter>`/`<progress>` values are masked too, except under the `privateMode` default since styles often select or draw on them: there only `data-openreplay-obscured`/`-masked`, a `domSanitizer` mask (also on a shadow or same-origin iframe host above) or a hidden node masks them, and `resanitize()` re-sends them when such a mask comes or goes. In `privateMode`, `alt`/`placeholder` inside `data-openreplay-unmask` are no longer starred, and `data-openreplay-unmask` no longer lifts a `domSanitizer` mask above it or the mask of a same-origin iframe's host
+- `replaceHashSymbol` no longer resends the page location on every tick
+- JS errors and rejections from same-origin iframes are recorded (were dropped / sent as `{}`), their console logs are recorded again after a stop/start
+- font sources with relative `url()` are resolved against the page, web vitals aren't duplicated after a restart
+- in-memory CSS scan (`scanInMemoryCSS`) no longer re-sends every rule; inlined CSS keeps `@layer`/`@import` statements
+- canvases inside shadow roots and iframes keep recording; frames pending when a canvas is removed are sent
+- commits keep flowing in background tabs; pending messages are flushed before unload
+- crossdomain: child mouse events are no longer sent twice, idle frames don't post empty batches, large child batches can't overflow the stack
+- network: removed the `useProxy` option, the legacy fetch/XHR patching and the axios spy; axios (0.x and 1.x, XHR and fetch adapters) is captured by the network proxy with no setup. `axiosInstances` is only needed for instances with a custom adapter (native HTTP bridge, mock, `env.fetch`) and no longer records requests twice or sends the session token header twice
+- network (network-proxy 1.2.8): with `sessionTokenHeader`, `fetch(request, { signal })` / `fetch(request, {})` no longer drops the request's own headers (e.g. `Authorization`); textual bodies of `Request` inputs (json/text/xml/urlencoded/graphql), `+json`/xml/untyped responses and chunked responses are recorded (text bodies up to 1MB); streaming (`event-stream`, NDJSON, `x-mixed-replace`) and binary responses aren't copied, binary ones are sized by `content-length`; a reused XHR is recorded once per request; axios `baseURL` is resolved for axios < 0.27
+- network (network-proxy 1.2.9): sensitive fields (`password`, `token`, …) of url-encoded, `FormData` and `URLSearchParams` request bodies and url-encoded responses are masked; the session token header is recorded only on requests it was sent with (not on `tokenUrlMatcher`-excluded urls or beacons), and fetch no longer adds it to the app's own headers object, which leaked it to excluded urls reusing that object
+- network (network-proxy 1.3.2): without `capturePayload` (or in `privateMode`) bodies are no longer read only to be dropped (network capture CPU on large responses down ~65%), response sizes stay the same; fetch network errors are recorded with status 0; XHR and beacon urls are recorded absolute; GraphQL responses keep their HTTP status and only a non-empty `errors` array marks them 400; nested and camelCase sensitive fields and `*token` headers are masked; url-encoded bodies keep their `&`; XHR keeps working with pace.js, Sentry, vConsole-style proxies, another copy of the network proxy (the Spot extension) and subclasses with `#private` fields, and is recorded through them
+- mouse: clicks inside same-origin iframes are recorded (were dropped; same for finished web animations of elements there), `data-*` selectors are used only when unique, class uniqueness isn't cached forever, thrashing detection resets after idle
+- sanitizer levels of removed nodes are dropped; stylesheet and font maps no longer retain detached iframe documents
+- worker: a quick stop/start can't null the new sender or reset the new session's status, and a start during the 30-minute-hidden restart no longer restarts a tracker that was stopped meanwhile
+
+## 19.0.7
+
+- canvas: snapshots are encoded in a dedicated worker (`createImageBitmap` + `OffscreenCanvas.convertToBlob`) instead of `toBlob` on the main thread, which removes periodic frame drops on Safari/iOS WebGL pages (fixes #5119); frames are packed and uploaded from the worker too
+- canvas: browsers without a WebP encoder (Safari/iOS) send JPEG instead of silently falling back to PNG; transparent areas are painted with the background color behind the canvas
+- canvas: on the main-thread fallback, canvases whose capture blocks for more than 16ms are captured less often; no capture while the tab is hidden
+- canvas: `fixedCanvasScaling` no longer stops capturing a canvas when the helper canvas has no 2d context; tainted (cross-origin) canvases stop capturing instead of throwing on every tick; empty canvases are skipped until they get a size; canvases that never became visible no longer start recording after `stop()`
+- lifecycle: `stop()` cancels a pending `start()` — a start response arriving after `stop()` no longer activates the tracker, the start resolves `{ success: false, reason: 'canceled' }`; worker 401 recovery, commit-error retry, cross-tab reset, bfcache restore and cold-start cycles no longer bring a stopped tracker back
+
+## 19.0.6
+
+- crossdomain: the parent page answers child iframes only with `crossdomain.enabled` (as documented); new `crossdomain.childDomains` limits which child origins can join; replies go to the child's origin instead of `*`; a child accepts commands only from its parent window, and only from `parentDomain` when set
+
+## 19.0.5
+
+- sanitize masked content in attributes and selected text (#5099 by [@josh08h](https://github.com/josh08h))
+
+## 19.0.4
+
+- flush pending messages in forceFlushBatch, add flushInterval (#5082 by [@josh08h](https://github.com/josh08h))
+
+## 19.0.3
+
+- images keep their `src`/`srcset` in replay before they load (lazy images no longer collapse layouts, e.g. `sizes="auto"` sliders), `<picture>` `<source srcset>` is recorded, masked images no longer leak real URLs on `src`/`srcset` changes or runtime masking (fixes #5062)
+
 ## 19.0.2
 
 - keep people actions in order when squashing a batch (by [@RaphaelFakhri](https://github.com/RaphaelFakhri) #5046)

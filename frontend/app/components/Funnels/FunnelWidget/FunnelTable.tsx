@@ -14,6 +14,8 @@ import Funnel from 'App/mstore/types/funnel';
 import Widget from 'App/mstore/types/widget';
 import { exportAntCsv } from 'App/utils';
 
+import { stageText } from './FunnelWidget';
+
 interface Props {
   metric?: Widget;
   data: { funnel: Funnel };
@@ -34,7 +36,7 @@ function FunnelTable(props: Props) {
         <div className="w-full justify-between flex">
           <div>
             {t('Overall')}
-            {index > 0 ? `(${t('previous')})` : ''}
+            {index > 0 ? ` (${t('previous')})` : ''}
           </div>
           <div>{text}%</div>
         </div>
@@ -50,31 +52,13 @@ function FunnelTable(props: Props) {
   const [tableData, setTableData] =
     React.useState<Record<string, any>[]>(defaultData);
 
-  const joinWithOr = (vals: any[]) =>
-    (vals || []).map((v) => String(v)).join(` ${t('or')} `);
-
-  const buildStageTitle = (st: any) => {
-    const hasSubs = Array.isArray(st.subfilters) && st.subfilters.length > 0;
-    if (hasSubs) {
-      const parts: string[] = [];
-      st.subfilters.forEach((sf: any, idx: number) => {
-        parts.push(`${sf.name} ${sf.operator} ${joinWithOr(sf.value)}`);
-        if (idx < st.subfilters.length - 1) {
-          parts.push(sf.propertyOrder || 'and');
-        }
-      });
-      return `${st.label} where ${parts.join(' ')}`;
-    }
-    return `${st.label} ${st.operator} ${joinWithOr(st.value)}`;
-  };
-
   React.useEffect(() => {
     const { funnel } = props.data;
     const tablePropsCopy = [...defaultTableProps];
     const tableDataCopy: any[] = [{ ...defaultData[0] }];
 
     funnel.stages.forEach((st: any, ind: number) => {
-      const title = buildStageTitle(st);
+      const title = stageText(st, t);
       tablePropsCopy.push({
         title: (
           <div className="max-w-[500px] overflow-hidden text-ellipsis">

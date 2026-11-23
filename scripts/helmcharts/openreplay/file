@@ -1,4 +1,3 @@
-charts/alerts/values.yaml
 charts/assets/values.yaml
 charts/db/values.yaml
 charts/ender/values.yaml

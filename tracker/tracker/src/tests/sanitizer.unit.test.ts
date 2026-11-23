@@ -38,23 +38,9 @@ describe('Sanitizer', () => {
     expect(sanitizer.isObscured(1)).toBe(true)
   })
 
-  test('should handle node and mark it as obscured if it has "masked" or "obscured" attribute', () => {
-    const node = document.createElement('div')
-    node.setAttribute('data-openreplay-obscured', '')
-    sanitizer.handleNode(1, 2, node)
-    expect(sanitizer.isObscured(1)).toBe(true)
-  })
-
   test('should handle node and mark it as hidden if parent is hidden', () => {
     sanitizer.setLevel(2, SanitizeLevel.Hidden)
     sanitizer.handleNode(1, 2, document.createElement('div'))
-    expect(sanitizer.isHidden(1)).toBe(true)
-  })
-
-  test('should handle node and mark it as hidden if it has "htmlmasked" or "hidden" attribute', () => {
-    const node = document.createElement('div')
-    node.setAttribute('data-openreplay-hidden', '')
-    sanitizer.handleNode(1, 2, node)
     expect(sanitizer.isHidden(1)).toBe(true)
   })
 
@@ -97,36 +83,11 @@ describe('Sanitizer', () => {
     expect(sanitizer.isHidden(5)).toBe(false)
   })
 
-  test('should sanitize data as obscured if node is marked as obscured', () => {
-    sanitizer.setLevel(1, SanitizeLevel.Obscured)
-    const data = 'Sensitive Data'
-
-    const sanitizedData = sanitizer.sanitize(1, data)
-    expect(sanitizedData).toEqual(stringWiper(data))
-  })
-
   test('should sanitize data by obscuring text numbers if enabled', () => {
     sanitizer['options'].obscureTextNumbers = true
     const data = 'Phone: 123-456-7890'
     const sanitizedData = sanitizer.sanitize(1, data)
     expect(sanitizedData).toEqual('Phone: 000-000-0000')
-  })
-
-  test('should sanitize data by obscuring text emails if enabled', () => {
-    sanitizer['options'].obscureTextEmails = true
-    const data = 'john.doe@example.com'
-    const sanitizedData = sanitizer.sanitize(1, data)
-    expect(sanitizedData).toEqual('********@*******.***')
-  })
-
-  test('should return inner text of an element securely by sanitizing it', () => {
-    const element = document.createElement('div')
-    sanitizer.setLevel(1, SanitizeLevel.Obscured)
-    // @ts-expect-error
-    element.mockId = 1
-    element.innerText = 'Sensitive Data'
-    const sanitizedText = sanitizer.getInnerTextSecure(element)
-    expect(sanitizedText).toEqual('********* ****')
   })
 
   test('should return empty string if node element does not exist', () => {

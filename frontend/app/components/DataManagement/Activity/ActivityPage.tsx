@@ -8,8 +8,10 @@ import { type Column, DataTable, type TableSort } from '@/ui/data/table';
 import { EmptyState } from '@/ui/feedback/EmptyState';
 import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
 import { DisplayShell, SortControl } from '@/ui/filters/DisplayMenu';
+import { CaptureIcon } from '@/ui/icons/CaptureIcon';
 import { DateRange } from '@/ui/inputs/DateRange';
 import { ListFooter } from '@/ui/layout/ListFooter';
+import { NewRowsBand } from '@/ui/layout/NewRowsBand';
 import { PageCard, PagePanel } from '@/ui/layout/PageCard';
 import { setRowsPerPage, useRowsPerPage } from '@/ui/layout/rows-per-page';
 import { Tooltip } from '@/ui/overlays/tooltip';
@@ -34,7 +36,6 @@ import {
 
 import '../data-management.css';
 import EventDetailsDrawer from './EventDetailsDrawer';
-import { getEventIcon } from './getEventIcon';
 
 const ORDER_KEY = '$__activity_columns_order__$';
 const HIDDEN_KEY = '$__activity_columns_hidden__$';
@@ -174,7 +175,7 @@ function ActivityPage() {
             delay={300}
           >
             <span className="m-dmg__hidden-icon inline-flex">
-              {getEventIcon(e.isAutoCapture, e.event_name)}
+              <CaptureIcon kind={e.isAutoCapture ? 'auto' : 'custom'} />
             </span>
           </Tooltip>
           <span className="m-truncate m-dmg__mono">
@@ -340,18 +341,14 @@ function ActivityPage() {
           </>
         }
       >
-        {analyticsStore.newEvents > 0 && (
-          <button
-            type="button"
-            className="m-dmg__latest"
-            onClick={() => void analyticsStore.fetchEvents()}
-          >
-            {t('Show {{n}} new events', {
-              n: numberWithCommas(analyticsStore.newEvents),
-              count: analyticsStore.newEvents,
-            })}
-          </button>
-        )}
+        <NewRowsBand
+          count={analyticsStore.newEvents}
+          label={t('Show {{n}} new events', {
+            n: numberWithCommas(analyticsStore.newEvents),
+            count: analyticsStore.newEvents,
+          })}
+          onShow={() => void analyticsStore.fetchEvents()}
+        />
         {loading && list.length === 0 ? (
           <SkeletonRows rows={6} columns={[26, 16, 24, 17, 17]} />
         ) : total === 0 ? (

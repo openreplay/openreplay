@@ -55,7 +55,16 @@ randomPass() {
         sudo apt update &>/dev/null
         sudo apt install openssl -y &>/dev/null
     }
-    openssl rand -hex 10
+    openssl rand -hex "${1:-10}"
+}
+
+# JWT signing secrets are 256 chars long (128 bytes, hex-encoded);
+# everything else keeps the 20-char default.
+secretBytes() {
+    case "$1" in
+        *jwt*) echo 128 ;;
+        *) echo 10 ;;
+    esac
 }
 
 # Create dynamic passwords and update the environment file
@@ -71,7 +80,7 @@ function create_passwords() {
     # NOTE: grep exits non-zero when no matches; with pipefail enabled that would abort the script.
     mapfile -t _tokens < <(grep -o 'change_me_[a-zA-Z0-9_]*' common.env | sort -u || true)
     for token in "${_tokens[@]}"; do
-        random_pass=$(randomPass)
+        random_pass=$(randomPass "$(secretBytes "${token}")")
         sed -i "s/${token}/${random_pass}/g" common.env
         info "Generated password for ${token}"
     done

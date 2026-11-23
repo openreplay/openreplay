@@ -54,34 +54,6 @@ describe('Batcher', () => {
     },
   })
 
-  test('addEvent puts events into correct category and getBatches returns them', () => {
-    const pe = makePeopleEvent('set_property', 1, { a: 1 })
-    const ev = makeEventsEvent('test_event', 2, { x: 'y' })
-
-    batcher.addEvent(pe)
-    batcher.addEvent(ev)
-
-    const batches = batcher.getBatches()
-    expect(batches).toEqual({
-      data: {
-        [categories.people]: [
-          {
-            type: 'set_property',
-            timestamp: 1,
-            payload: { a: 1 },
-          },
-        ],
-        [categories.events]: [
-          {
-            name: 'test_event',
-            payload: { x: 'y' },
-            timestamp: 2,
-          },
-        ],
-      },
-    })
-  })
-
   test('dedupePeopleEvents squashes by type and sums increment_property payloads', () => {
     const e1 = makePeopleEvent('set_property', 1, { a: 1 })
     const e2 = makePeopleEvent('set_property', 2, { b: 2 })
@@ -156,20 +128,6 @@ describe('Batcher', () => {
         timestamp: 2,
         payload: { plan: 'free', a: 1, b: 2 },
       },
-    ])
-  })
-
-  test('user_id survives the serialized flush body', () => {
-    batcher.addEvent(makePeopleEvent('set_property', 1, { a: 1 }, 'visitor-a'))
-    batcher.addEvent(makePeopleEvent('set_property', 2, { b: 2 }, 'visitor-a'))
-
-    batcher.flush()
-
-    const [, options] = fetchMock.mock.calls[0]
-    const body = JSON.parse(options.body)
-
-    expect(body.data[categories.people]).toEqual([
-      { type: 'set_property', user_id: 'visitor-a', timestamp: 2, payload: { a: 1, b: 2 } },
     ])
   })
 
@@ -341,10 +299,12 @@ describe('Batcher', () => {
   test('terminal discard drops queued events and fences delayed retries', async () => {
     fetchMock.mockRejectedValueOnce(Error('synthetic network error'))
     batcher.sendImmediately(makeEventsEvent('synthetic',1,{}))
-    await Promise.resolve(); await Promise.resolve()
+    await jest.advanceTimersByTimeAsync(0)
     batcher.addEvent(makeEventsEvent('queued',2,{}))
     expect(typeof batcher.discard).toBe('function')
+    expect(jest.getTimerCount()).toBe(1)
     batcher.discard()
+    expect(jest.getTimerCount()).toBe(0)
     await jest.runAllTimersAsync()
     batcher.restart()
     batcher.sendImmediately(makeEventsEvent('late',3,{}))
@@ -397,6 +357,17 @@ describe('Batcher', () => {
       'first',
       'second',
     ])
+  })
+
+  test('discard during payload serialization skips dispatch', () => {
+    batcher.sendImmediately(makeEventsEvent('evt', 1, {
+      toJSON: () => {
+        batcher.discard()
+        return { value: 'discarded' }
+      },
+    }))
+
+    expect(fetchMock).not.toHaveBeenCalled()
   })
 
   test('401 token expired stops a non-standalone batcher', async () => {

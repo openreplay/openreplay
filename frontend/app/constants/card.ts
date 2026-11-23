@@ -18,6 +18,9 @@ export const TIMESERIES = 'timeseries';
 export const TABLE = 'table';
 export const HEATMAP_CLICKS = 'heatmaps_session';
 export const HEATMAP = 'heatMap';
+/** A heatmap card's metricOf: where people click, or how far down they scroll. */
+export const HEATMAP_CLICK_MAP = 'heatMapUrl';
+export const HEATMAP_SCROLL_MAP = 'scrollMapUrl';
 export const FUNNEL = 'funnel';
 export const ERRORS = 'errors';
 export const USER_PATH = 'pathAnalysis';

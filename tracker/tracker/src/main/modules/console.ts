@@ -159,6 +159,21 @@ export default function (app: App, opts: Partial<Options>): void {
     patchConsole(context.console, context),
   )
 
+  // iframe windows get their context callback once: re-patch them on a later start
+  let frames: Array<{ deref(): typeof globalThis | undefined }> = []
+  const patchFrame = (context: typeof globalThis) => {
+    // without WeakRef the refs are strong: closed frames are dropped here
+    frames = frames.filter((ref) => {
+      const frame = ref.deref()
+      return frame !== undefined && !frame.closed
+    })
+    // a navigated iframe calls back again with the same window
+    if (!frames.some((ref) => ref.deref() === context)) {
+      frames.push(typeof WeakRef === 'function' ? new WeakRef(context) : { deref: () => context })
+    }
+    patchContext(context)
+  }
+
   let patched = false
   const startPatching = () => {
     if (patched) {
@@ -166,6 +181,10 @@ export default function (app: App, opts: Partial<Options>): void {
     }
     patched = true
     patchContext(window)
+    for (const ref of frames) {
+      const frame = ref.deref()
+      if (frame && !frame.closed) patchContext(frame)
+    }
   }
   // Patch immediately, and re-patch on any later start; restore on stop so the
   // host console isn't left wrapped for the page's lifetime and capture is
@@ -177,5 +196,5 @@ export default function (app: App, opts: Partial<Options>): void {
     restores.forEach((restore) => restore())
     restores.length = 0
   })
-  app.observer.attachContextCallback(patchContext)
+  app.observer.attachContextCallback(patchFrame)
 }

@@ -12,7 +12,7 @@ import (
 
 // agentToken builds the JWT the frontend agent uses to join a live session,
 // the same way for both editions.
-func agentToken(cfg *api.Config, projectID uint32, projectKey string, sessionID uint64) (string, error) {
+func agentToken(cfg *api.Config, projectID uint32, projectKey string, sessionID uint64, canCall bool) (string, error) {
 	var method jwt.SigningMethod
 	switch cfg.AssistJwtAlgorithm {
 	case "HS256":
@@ -35,6 +35,7 @@ func agentToken(cfg *api.Config, projectID uint32, projectKey string, sessionID 
 		"projectKey": projectKey,
 		"projectId":  projectID,
 		"sessionId":  fmt.Sprintf("%d", sessionID),
+		"canCall":    canCall,
 		"iat":        iat,
 		"exp":        exp,
 		"iss":        cfg.AssistJwtIssuer,

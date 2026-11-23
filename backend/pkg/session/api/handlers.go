@@ -11,8 +11,16 @@ import (
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/replays/service"
 	"openreplay/backend/pkg/server/api"
+	"openreplay/backend/pkg/server/user"
 	"openreplay/backend/pkg/session"
 )
+
+func hasAssistPermission(u *user.User, perm string) bool {
+	if u.ServiceAccount {
+		perm = "SERVICE_" + perm
+	}
+	return u.HasPermission(perm)
+}
 
 type handlersImpl struct {
 	log           logger.Logger
@@ -70,8 +78,12 @@ func (e *handlersImpl) getReplay(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		if !hasAssistPermission(currUser, "ASSIST_LIVE") {
+			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, errors.New("session not found"), startTime, r.URL.Path, bodySize)
+			return
+		}
 		e.log.Info(r.Context(), "stored session not found, checking assist for live session")
-		liveData, liveErr := e.assist.GetLiveSessionByID(projID, sessID)
+		liveData, liveErr := e.assist.GetLiveSessionByID(projID, sessID, hasAssistPermission(currUser, "ASSIST_CALL"))
 		if liveErr != nil {
 			if errors.Is(liveErr, assist.ErrNoLiveSession) {
 				e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, errors.New("session not found"), startTime, r.URL.Path, bodySize)
@@ -154,7 +166,8 @@ func (e *handlersImpl) getLiveSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err := e.assist.GetLiveSessionByID(projID, sessionID)
+	currUser := api.GetUser(r)
+	data, err := e.assist.GetLiveSessionByID(projID, sessionID, hasAssistPermission(currUser, "ASSIST_CALL"))
 	if err != nil {
 		if !errors.Is(err, assist.ErrNoLiveSession) {
 			e.log.Error(r.Context(), "Error getting live session: %v", err)
@@ -162,7 +175,6 @@ func (e *handlersImpl) getLiveSession(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		currUser := api.GetUser(r)
 		data, err = e.sessions.GetReplay(projID, sessionID, currUser.GetIDAsString())
 		if err != nil {
 			if errors.Is(err, session.ErrNoSession) {

@@ -43,7 +43,7 @@ func newProxy(log logger.Logger, cfg *api.Config, projects projects.Projects) (A
 }
 
 // assist.get_live_session_by_id(project_id=project_id, session_id=session_id)
-func (a *proxyImpl) GetLiveSessionByID(projID uint32, sessID uint64) (interface{}, error) {
+func (a *proxyImpl) GetLiveSessionByID(projID uint32, sessID uint64, canCall bool) (interface{}, error) {
 	switch {
 	case projID == 0:
 		return nil, errors.New("projID is 0")
@@ -90,7 +90,7 @@ func (a *proxyImpl) GetLiveSessionByID(projID uint32, sessID uint64) (interface{
 	}
 
 	response.Data["live"] = true
-	if token, err := agentToken(a.cfg, projID, proj.ProjectKey, sessID); err != nil {
+	if token, err := agentToken(a.cfg, projID, proj.ProjectKey, sessID, canCall); err != nil {
 		a.log.Error(context.Background(), "[proxy] GetLiveSessionByID: %v", err)
 	} else {
 		response.Data["agentToken"] = token
@@ -229,14 +229,18 @@ func (r *GetLiveSessionsRequest) parse() *getAssistSessionsPayload {
 		Sort:       map[string]string{"key": r.Sort, "order": r.Order},
 	}
 	for _, filter := range r.Filters {
-		switch f := filter.(type) {
-		case map[string]interface{}:
-			filterType := f["name"].(string) // it was 'type'
-			if strings.HasPrefix(filterType, "metadata_") {
-				filterType = f["source"].(string) // temp hack with a frontend support
-			}
-			res.Filter[filterType] = map[string]interface{}{"values": f["value"], "operator": f["operator"]}
+		f, ok := filter.(map[string]interface{})
+		if !ok {
+			continue
 		}
+		filterType, _ := f["name"].(string) // it was 'type'
+		if strings.HasPrefix(filterType, "metadata_") {
+			filterType, _ = f["source"].(string) // temp hack with a frontend support
+		}
+		if filterType == "" {
+			continue
+		}
+		res.Filter[filterType] = map[string]interface{}{"values": f["value"], "operator": f["operator"]}
 	}
 	return res
 }

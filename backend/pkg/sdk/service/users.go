@@ -30,6 +30,7 @@ const (
 
 type Users interface {
 	Add(session *sessions.Session, userID string) error
+	AddOnStart(session *sessions.Session, userID string) error
 	Set(session *sessions.Session, userID string, props map[string]interface{}) error
 	SetOnce(session *sessions.Session, userID string, props map[string]interface{}) error
 	Increment(session *sessions.Session, userID string, props map[string]interface{}) error
@@ -258,6 +259,22 @@ func (u *usersImpl) Add(session *sessions.Session, userID string) error {
 		return nil
 	}
 	u.identify(session, userID)
+	return u.touch(session, userID)
+}
+
+func (u *usersImpl) AddOnStart(session *sessions.Session, userID string) error {
+	userID = strings.TrimSpace(userID)
+	if userID == "" {
+		return nil
+	}
+	if session.UserID == nil || *session.UserID != userID {
+		return u.Add(session, userID)
+	}
+	u.bindDevice(session, userID)
+	return u.touch(session, userID)
+}
+
+func (u *usersImpl) touch(session *sessions.Session, userID string) error {
 	_, err := u.mutate(session, userID, func(user *model.User, isNew bool) {
 		if !isNew {
 			user.LastSeen = time.Now()

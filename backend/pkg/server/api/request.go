@@ -17,7 +17,15 @@ import (
 	"openreplay/backend/pkg/server/user"
 )
 
+// MaxProjectID is the highest project_id the platform supports
+// (project_id is stored as UInt16 in ClickHouse).
+const MaxProjectID = 65000
+
 var ErrNoProjectInPath = errors.New("no project in request path")
+
+func validProjectID(id uint32) bool {
+	return id != 0 && id <= MaxProjectID
+}
 
 func GetProject(r *http.Request) (uint32, error) {
 	raw, ok := mux.Vars(r)["projectId"]
@@ -28,7 +36,7 @@ func GetProject(r *http.Request) (uint32, error) {
 		return 0, ErrNoProjectInPath
 	}
 	projectID, err := ParseUint32(raw)
-	if err != nil || projectID == 0 {
+	if err != nil || !validProjectID(projectID) {
 		return 0, fmt.Errorf("invalid project id: %s", raw)
 	}
 	return projectID, nil
@@ -237,6 +245,9 @@ func (rc *RequestContext) GetProjectID() (uint32, error) {
 	projID, err := GetPathParam(rc.Request, "project", ParseUint32)
 	if err != nil {
 		return 0, err
+	}
+	if !validProjectID(projID) {
+		return 0, fmt.Errorf("invalid project id: %d", projID)
 	}
 	rc.ProjectID = projID
 	return projID, nil

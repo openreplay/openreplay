@@ -14,15 +14,3 @@ def get_scope(tenant_id) -> int:
                             {"tenant_id": tenant_id})
         cur.execute(query)
         return cur.fetchone()["scope_state"]
-
-
-def update_scope(tenant_id, scope: int):
-    with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(f"""UPDATE public.tenants
-                                SET scope_state = %(scope_state)s
-                                WHERE tenant_id=%(tenant_id)s;""",
-                            {"scope_state": scope, "tenant_id": tenant_id})
-        cur.execute(query)
-    if tenant_id in cache:
-        cache.pop(tenant_id)
-    return scope

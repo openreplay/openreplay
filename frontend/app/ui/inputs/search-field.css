@@ -7,3 +7,85 @@
     width: 9rem;
   }
 }
+
+/* the filter bar's skin (.m-fbar__filter): its tint, edge and hover, the
+   glyph on its inset */
+.m-search .m-search__input {
+  padding-left: calc(var(--m-space-4) + 14px + var(--m-space-4));
+  background: var(--m-surface-canvas);
+  border-color: var(--m-border-default);
+  transition:
+    background var(--m-duration-fast) var(--m-ease-out),
+    border-color var(--m-duration-fast) var(--m-ease-out);
+}
+.m-search .m-search__input:is(:hover, :focus) {
+  background: var(--m-surface-default);
+  border-color: var(--m-border-strong);
+}
+.m-search .m-search__input:not(:placeholder-shown) {
+  padding-right: 1.75rem;
+}
+.m-search [data-slot='input-affix'] > [aria-hidden='true'] {
+  left: calc(var(--m-border-width) + var(--m-space-4));
+  color: var(--m-content-decorative);
+  transition: color var(--m-duration-fast) var(--m-ease-out);
+}
+.m-search [data-slot='input-affix'] > [aria-hidden='true'] svg {
+  width: 14px;
+  height: 14px;
+}
+.m-search:hover [data-slot='input-affix'] > [aria-hidden='true'],
+.m-search:has(input:not(:placeholder-shown))
+  [data-slot='input-affix']
+  > [aria-hidden='true'] {
+  color: var(--m-content-secondary);
+}
+
+/* in a page header it is the height of the buttons beside it */
+.m-page__actions .m-search {
+  width: 15rem;
+}
+.m-page__actions .m-search .m-search__input {
+  height: var(--m-control-height-sm);
+}
+@media (max-width: 900px) {
+  .m-page__actions .m-search {
+    width: 11rem;
+  }
+}
+
+/* phone: the search is an icon; opened, the field covers the row it sits in */
+.m-psearch-slot {
+  display: contents;
+}
+:root[data-viewport='phone'] .m-page__head {
+  position: relative;
+}
+.m-phsearch {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-3);
+  padding-inline: var(--m-space-4) var(--m-space-2);
+  background: var(--m-surface-default);
+  border-radius: inherit;
+}
+.m-phsearch__glyph {
+  flex: none;
+  color: var(--m-content-muted);
+}
+.m-phsearch__input {
+  flex: 1;
+  min-width: 0;
+}
+:root[data-viewport='phone'] .m-panel__head:has(> .m-psearch-slot) {
+  position: sticky;
+}
+:root[data-viewport='phone'] .m-page__actions:empty {
+  display: none;
+}
+:root[data-viewport='phone'] .m-page__toolbar:has(> .m-psearch-slot) {
+  position: relative;
+}

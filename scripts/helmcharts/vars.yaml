@@ -125,13 +125,13 @@ global:
   openReplayContainerRegistry: "public.ecr.aws/p1t3u8a3"
   # secret key to inject to assist and peers service
   assistKey: "{{ randAlphaNum 20}}"
-  assistJWTSecret: "{{ randAlphaNum 20}}"
-  jwtSecret: "{{ randAlphaNum 20}}"
-  jwtSpotSecret: "{{ randAlphaNum 20}}"
+  assistJWTSecret: "{{ randAlphaNum 256 }}"
+  jwtSecret: "{{ randAlphaNum 256 }}"
+  jwtSpotSecret: "{{ randAlphaNum 256 }}"
   tokenSecret: "{{randAlphaNum 20}}"
-  jwtRefreshSecret: "{{randAlphaNum 20}}"
-  jwtSpotRefreshSecret: "{{randAlphaNum 20}}"
-  jwtMcpSecret: "{{randAlphaNum 20}}"
+  jwtRefreshSecret: "{{ randAlphaNum 256 }}"
+  jwtSpotRefreshSecret: "{{ randAlphaNum 256 }}"
+  jwtMcpSecret: "{{ randAlphaNum 256 }}"
   # SCIM authentication secrets for chalice service (optional)
   # Uncomment and set these values if SCIM authentication is required
   # scimAccessSecretKey: "{{randAlphaNum 20}}"

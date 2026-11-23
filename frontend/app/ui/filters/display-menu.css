@@ -97,3 +97,18 @@
   padding: var(--m-space-2) var(--m-space-3);
   border-top: 1px solid var(--m-border-subtle);
 }
+
+/* in the phone filter drawer: the same rows as wide as the drawer, no box */
+.m-dm.is-sheet {
+  width: 100%;
+}
+.m-dm.is-sheet .m-dm__section {
+  padding-inline: 0;
+}
+.m-dm.is-sheet .m-dm__row {
+  min-height: var(--m-control-height-md);
+}
+.m-dm.is-sheet .m-dm__pill {
+  min-height: var(--m-control-height-sm);
+  padding-inline: var(--m-space-5);
+}

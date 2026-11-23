@@ -7,31 +7,21 @@ import {
 import type { SpotNetworkRequest } from "./networkTrackingUtils";
 import { pageMessages } from "~/utils/pageMessages";
 
-let defaultFetch: typeof fetch | undefined;
-let defaultXhr: typeof XMLHttpRequest | undefined;
-let defaultBeacon: typeof navigator.sendBeacon | undefined;
+let restoreNetwork: (() => void) | undefined;
 
 export function startNetwork() {
-  const context = getTopWindow();
-  defaultXhr = context.XMLHttpRequest;
-  defaultBeacon = context.navigator.sendBeacon;
-  defaultFetch = context.fetch;
-  createNetworkProxy(
-    context,
-    [], // headers
-    () => null,
-    (reqRes) => reqRes,
-    (msg) => {
+  restoreNetwork?.();
+  restoreNetwork = createNetworkProxy(getTopWindow(), {
+    sendMessage: (msg) => {
       const event = createSpotNetworkRequest(msg);
       window.postMessage(
         { type: pageMessages.injected.bumpNetwork, event },
         "*",
       );
     },
-    (url) =>
+    isServiceUrl: (url) =>
       url.includes("/spot/") || url.includes(".mob?") || url.includes(".mobe?"),
-    { xhr: true, fetch: true, beacon: true },
-  );
+  });
 }
 
 function getBody(req: { body?: string | Record<string, any> }): string {
@@ -93,13 +83,6 @@ export function createSpotNetworkRequest(
 }
 
 export function stopNetwork() {
-  if (defaultFetch) {
-    window.fetch = defaultFetch;
-  }
-  if (defaultXhr) {
-    window.XMLHttpRequest = defaultXhr;
-  }
-  if (defaultBeacon) {
-    window.navigator.sendBeacon = defaultBeacon;
-  }
+  restoreNetwork?.();
+  restoreNetwork = undefined;
 }

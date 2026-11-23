@@ -35,6 +35,7 @@ type Connector interface {
 	InsertWebSession(session *sessions.Session) error
 	InsertWebPageEvent(session *sessions.Session, msg *messages.PageEvent) error
 	InsertWebClickEvent(session *sessions.Session, msg *messages.MouseClick) error
+	InsertWebScrollEvent(session *sessions.Session, msg *messages.ScrollEvent) error
 	InsertWebJSException(session *sessions.Session, msg *messages.JSException) error
 	InsertWebPerformanceTrackAggr(session *sessions.Session, msg *messages.PerformanceTrackAggr) error
 	InsertRequest(session *sessions.Session, msg *messages.NetworkRequest, savePayload bool) error
@@ -944,6 +945,71 @@ func (c *connectorImpl) InsertWebClickEvent(session *sessions.Session, msg *mess
 	); err != nil {
 		c.checkError("clicks", err)
 		return fmt.Errorf("can't append to clicks batch: %s", err)
+	}
+	return nil
+}
+
+// scrollFoldPct is the share of the page visible without scrolling.
+func scrollFoldPct(pageHeight, viewportHeight uint64) uint64 {
+	if pageHeight == 0 || viewportHeight >= pageHeight {
+		return 100
+	}
+	return (viewportHeight*100 + pageHeight/2) / pageHeight
+}
+
+func (c *connectorImpl) InsertWebScrollEvent(session *sessions.Session, msg *messages.ScrollEvent) error {
+	host, path, hostpath, err := extractUrlParts(msg.Url)
+	if err != nil {
+		return fmt.Errorf("can't extract url parts: %s", err)
+	}
+	jsonString, err := json.Marshal(sanitizePayload(map[string]interface{}{
+		"depth_pct":        min(msg.Percent, 100),
+		"fold_pct":         scrollFoldPct(msg.PageHeight, msg.ViewportHeight),
+		"page_height":      msg.PageHeight,
+		"viewport_height":  msg.ViewportHeight,
+		"url":              cropString(msg.Url),
+		"url_host":         host,
+		"url_path":         path,
+		"url_hostpath":     hostpath,
+		"user_device":      session.UserDevice,
+		"user_device_type": session.UserDeviceType,
+		"page_title":       strings.TrimSpace(msg.PageTitle),
+	}))
+	if err != nil {
+		return fmt.Errorf("can't marshal scroll event: %s", err)
+	}
+	eventTime := datetime(msg.Timestamp)
+	if err := c.appendTo("web_events",
+		session.SessionID,
+		uint16(session.ProjectID),
+		getUUID(msg),
+		"SCROLL",
+		eventTime,
+		eventTime.Unix(),
+		getDistinctID(session),
+		session.UserUUID,
+		session.UserID,
+		true,
+		session.Platform,
+		session.UserOSVersion,
+		session.UserOS,
+		session.UserBrowser,
+		session.Referrer,
+		session.UserCountry,
+		session.UserState,
+		session.UserCity,
+		cropString(msg.Url),
+		defaultDurationS,
+		defaultErrorID,
+		defaultIssueType,
+		defaultIssueID,
+		session.ScreenWidth,
+		session.ScreenHeight,
+		jsonString,
+		defaultProperties,
+	); err != nil {
+		c.checkError("scrolls", err)
+		return fmt.Errorf("can't append to scrolls batch: %s", err)
 	}
 	return nil
 }

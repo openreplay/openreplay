@@ -1,0 +1,196 @@
+# Collector config for the OpenReplay logs pipeline: receives OTLP logs from the
+# `http` gateway and writes them to ClickHouse (default), a JSONL file or stdout.
+#
+#   OTLP_CLICKHOUSE_ENDPOINT=tcp://localhost:9001 otelcol-openreplay --config otel-collector/config.yaml
+#   OTLP_LOGS_EXPORTER=file otelcol-openreplay --config otel-collector/config.yaml
+#   OTLP_LOGS_EXPORTER=debug otelcol-openreplay --config otel-collector/config.yaml
+#
+# The gateway (OTLP_COLLECTOR_URL, default http://localhost:4318) validates the
+# ingest key and sets X-Project-Id, X-Tenant-Id and X-Retention-Days; the
+# attributes/project processor turns them into openreplay.* log attributes,
+# from which otel.logs materializes ProjectId, TenantId and _retention_days.
+
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+        include_metadata: true
+
+processors:
+  memory_limiter:
+    limit_percentage: 80
+    spike_limit_percentage: 20
+    check_interval: 5s
+
+  attributes/project:
+    actions:
+      - key: openreplay.project_id
+        action: delete
+      - key: openreplay.project_id
+        from_context: metadata.x-project-id
+        action: insert
+      - key: openreplay.tenant_id
+        action: delete
+      - key: openreplay.tenant_id
+        from_context: metadata.x-tenant-id
+        action: insert
+      - key: openreplay.retention_days
+        action: delete
+      - key: openreplay.retention_days
+        from_context: metadata.x-retention-days
+        action: insert
+
+  # Drop anything that reached the collector without passing the gateway.
+  filter/no_project:
+    error_mode: ignore
+    logs:
+      log_record:
+        - attributes["openreplay.project_id"] == nil
+
+  # JSON body parsing and severity inference, copied from HyperDX
+  # docker/otel-collector/config.yaml (hyperdxio/hyperdx, main).
+  transform:
+    log_statements:
+      - context: log
+        error_mode: silent
+        statements:
+          - set(log.cache, ExtractPatterns(log.body, "(?P<0>(\\{\\s*\".*\\}))"))
+            where IsString(log.body)
+          - merge_maps(log.attributes, ParseJSON(log.cache["0"]), "upsert")
+            where IsMap(log.cache) and IsString(log.cache["0"])
+          - flatten(log.attributes) where IsMap(log.cache)
+          - merge_maps(log.attributes, log.body, "upsert") where IsMap(log.body)
+      - context: log
+        error_mode: ignore
+        conditions:
+          - severity_number == 0 and severity_text == ""
+        statements:
+          - set(log.severity_text, log.attributes["level"])     where
+            log.severity_text == "" and
+            IsString(log.attributes["level"])     and
+            Len(log.attributes["level"]) > 0
+          - set(log.severity_text, log.attributes["Level"])     where
+            log.severity_text == "" and
+            IsString(log.attributes["Level"])     and
+            Len(log.attributes["Level"]) > 0
+          - set(log.severity_text, log.attributes["LEVEL"])     where
+            log.severity_text == "" and
+            IsString(log.attributes["LEVEL"])     and
+            Len(log.attributes["LEVEL"]) > 0
+          - set(log.severity_text, log.attributes["severity"])  where
+            log.severity_text == "" and
+            IsString(log.attributes["severity"])  and
+            Len(log.attributes["severity"]) > 0
+          - set(log.severity_text, log.attributes["Severity"])  where
+            log.severity_text == "" and
+            IsString(log.attributes["Severity"])  and
+            Len(log.attributes["Severity"]) > 0
+          - set(log.severity_text, log.attributes["SEVERITY"])  where
+            log.severity_text == "" and
+            IsString(log.attributes["SEVERITY"])  and
+            Len(log.attributes["SEVERITY"]) > 0
+          - set(log.severity_text, log.attributes["log.level"]) where
+            log.severity_text == "" and IsString(log.attributes["log.level"])
+            and Len(log.attributes["log.level"]) > 0
+          - set(log.severity_number, SEVERITY_NUMBER_FATAL) where
+            IsMatch(log.severity_text, "(?i)(alert|crit|emerg|fatal)")
+          - set(log.severity_number, SEVERITY_NUMBER_ERROR) where
+            IsMatch(log.severity_text, "(?i)(error|err)")
+          - set(log.severity_number, SEVERITY_NUMBER_WARN)  where
+            IsMatch(log.severity_text, "(?i)(warn|notice)")
+          - set(log.severity_number, SEVERITY_NUMBER_INFO)  where
+            IsMatch(log.severity_text, "(?i)(info)")
+          - set(log.severity_number, SEVERITY_NUMBER_DEBUG) where
+            IsMatch(log.severity_text, "(?i)(debug|dbug)")
+          - set(log.severity_number, SEVERITY_NUMBER_TRACE) where
+            IsMatch(log.severity_text, "(?i)(trace)")
+          - set(log.severity_number, SEVERITY_NUMBER_INFO) where
+            log.severity_number == 0 and log.severity_text != ""
+      - context: log
+        error_mode: ignore
+        conditions:
+          - severity_number == 0 and severity_text == ""
+        statements:
+          - set(log.cache["substr"], log.body.string) where Len(log.body.string)
+            < 256
+          - set(log.cache["substr"], Substring(log.body.string, 0, 256)) where
+            Len(log.body.string) >= 256
+          - set(log.cache, ExtractPatterns(log.cache["substr"],
+            "(?i)(?P<0>\\b(alert|crit|emerg|fatal|error|err|warn|notice|debug|dbug|trace))"))
+          - set(log.severity_number, SEVERITY_NUMBER_FATAL) where
+            IsMatch(log.cache["0"], "(?i)(alert|crit|emerg|fatal)")
+          - set(log.severity_text, "fatal") where log.severity_number ==
+            SEVERITY_NUMBER_FATAL
+          - set(log.severity_number, SEVERITY_NUMBER_ERROR) where
+            IsMatch(log.cache["0"], "(?i)(error|err)")
+          - set(log.severity_text, "error") where log.severity_number ==
+            SEVERITY_NUMBER_ERROR
+          - set(log.severity_number, SEVERITY_NUMBER_WARN) where
+            IsMatch(log.cache["0"], "(?i)(warn|notice)")
+          - set(log.severity_text, "warn") where log.severity_number ==
+            SEVERITY_NUMBER_WARN
+          - set(log.severity_number, SEVERITY_NUMBER_DEBUG) where
+            IsMatch(log.cache["0"], "(?i)(debug|dbug)")
+          - set(log.severity_text, "debug") where log.severity_number ==
+            SEVERITY_NUMBER_DEBUG
+          - set(log.severity_number, SEVERITY_NUMBER_TRACE) where
+            IsMatch(log.cache["0"], "(?i)(trace)")
+          - set(log.severity_text, "trace") where log.severity_number ==
+            SEVERITY_NUMBER_TRACE
+          - set(log.severity_text, "info") where log.severity_number == 0
+          - set(log.severity_number, SEVERITY_NUMBER_INFO) where
+            log.severity_number == 0
+      - context: log
+        error_mode: ignore
+        statements:
+          - set(log.severity_text, ConvertCase(log.severity_text, "lower"))
+
+  batch:
+    send_batch_size: 10000
+    timeout: 5s
+
+exporters:
+  file:
+    path: ${env:OTLP_FILE_PATH:-./otel-logs.jsonl}
+    rotation:
+      max_megabytes: 100
+      max_backups: 3
+
+  debug:
+    verbosity: ${env:OTLP_DEBUG_VERBOSITY:-detailed}
+
+  clickhouse:
+    endpoint: ${env:OTLP_CLICKHOUSE_ENDPOINT:-tcp://localhost:9001}
+    username: ${env:OTLP_CLICKHOUSE_USER:-default}
+    password: ${env:OTLP_CLICKHOUSE_PASSWORD:-}
+    database: otel
+    logs_table_name: logs
+    create_schema: false
+    timeout: 5s
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+service:
+  extensions: [health_check]
+  telemetry:
+    metrics:
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: 0.0.0.0
+                port: 8888
+  pipelines:
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, transform, attributes/project, filter/no_project, batch]
+      exporters:
+        - ${env:OTLP_LOGS_EXPORTER:-clickhouse}

@@ -1,20 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 const flushPromises = async () => {
-  await Promise.resolve();
-  await Promise.resolve();
+  for (let i = 0; i < 5; i++) await Promise.resolve();
 };
 
-
-vi.mock("./utils", () => {
-  return {
-    formatByteSize: (n: number) => `${n}B`,
-    genStringBody: (b: any) => (typeof b === "string" ? b : "[non-string-body]"),
-    getStringResponseByType: (_t: any, v: any) =>
-      typeof v === "string" ? v : JSON.stringify(v),
-    getURL: (u: string) => new URL(u, "http://example.test"),
-  };
-});
 
 import FetchProxy from "../src/fetchProxy";
 
@@ -69,7 +58,7 @@ describe("FetchProxy", () => {
     expect(globalThis.fetch).toHaveBeenCalledTimes(1);
   });
 
-  it("records a successful JSON response and proxies response methods", async () => {
+  it("records a successful JSON response", async () => {
     const body = { hello: "world" };
     const response = new Response(JSON.stringify(body), {
       status: 200,
@@ -191,35 +180,7 @@ describe("FetchProxy", () => {
     expect(msg.status).toBe(0);
   });
 
-  it("reads arrayBuffer for non-text content", async () => {
-    const payload = new Uint8Array([1, 2, 3]).buffer;
-    const response = new Response(payload, {
-      status: 200,
-      headers: { "content-type": "application/octet-stream" },
-    });
-    (globalThis.fetch as any).mockResolvedValue(response);
-
-    const wrapped = FetchProxy.create(
-      false,
-      setSessionTokenHeader,
-      sanitize,
-      sendMessage,
-      () => false,
-      tokenUrlMatcher,
-    );
-
-    const res = await wrapped("https://api.example.com/bin", {});
-    await res.arrayBuffer();
-    await flushPromises();
-
-    expect(sendMessage).toHaveBeenCalledTimes(1);
-    const msg = sendMessage.mock.calls[0][0];
-
-    expect(msg.status).toBe(200);
-    expect(msg.responseSize).toBe(3);
-  });
-
-  it("does not clone for chunked responses and still returns the Response", async () => {
+  it("records chunked responses and still returns the Response", async () => {
     const response = new Response("streaming", {
       status: 200,
       headers: {
@@ -227,7 +188,6 @@ describe("FetchProxy", () => {
         "transfer-encoding": "chunked",
       },
     });
-    const cloneSpy = vi.spyOn(Response.prototype, "clone");
     (globalThis.fetch as any).mockResolvedValue(response);
 
     const wrapped = FetchProxy.create(
@@ -240,9 +200,9 @@ describe("FetchProxy", () => {
     );
 
     const resp = await wrapped("https://api.example.com/stream", {});
-    expect(resp).toBeInstanceOf(Response);
-    expect(cloneSpy).not.toHaveBeenCalled();
-    expect(sendMessage).not.toHaveBeenCalled();
-    cloneSpy.mockRestore();
+    expect(resp).toBe(response);
+    expect(await resp.text()).toBe("streaming");
+    await flushPromises();
+    expect(sendMessage).toHaveBeenCalledTimes(1);
   });
 });

@@ -212,8 +212,11 @@ const Router: React.FC = () => {
     pathname.includes('multiview') ||
     pathname.includes('/view-spot/') ||
     pathname.includes('/spots/');
-  // Preferences has its own rail: the menu folds while it is open
-  const needsRoom = pathname.startsWith('/client/');
+  // Preferences has its own rail and a card (new, saved, or opened from a
+  // dashboard) needs the width: the menu folds while either is open
+  const needsRoom =
+    pathname.startsWith('/client/') ||
+    /\/metrics\/[^/]+|\/dashboard\/[^/]+\/metric\//.test(pathname);
   const bare =
     pathname.includes('/mcp/authorize') || pathname.includes('/onboarding/');
   if (isIframe) {

@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Conditions } from 'App/mstore/types/FeatureFlag';
 
 import ConditionSet from 'Shared/ConditionSet';
+import { FilterProjectContext } from 'Shared/FilterEditor';
 
 function ConditionalRecordingSettings({
   conditions,
@@ -19,6 +20,7 @@ function ConditionalRecordingSettings({
   isMobile?: boolean;
 }) {
   const { t } = useTranslation();
+  const projectId = React.useContext(FilterProjectContext);
   const addConditionSet = () => {
     setChanged(true);
     setConditions([
@@ -26,6 +28,8 @@ function ConditionalRecordingSettings({
       new Conditions(
         { name: `${t('Condition Set')} ${conditions.length + 1}` },
         false,
+        false,
+        projectId,
       ),
     ]);
   };

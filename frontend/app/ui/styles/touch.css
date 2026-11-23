@@ -1,0 +1,297 @@
+/* Touch devices only (pointer: coarse / hover: none): a desktop never matches.
+   Every selector starts with `:root` so it beats the component sheets on
+   specificity: their order differs between the dev server and a build. */
+
+/* iOS zooms into any field under 16px on focus and stays zoomed */
+@media (pointer: coarse) {
+  :root
+    :is(
+      input:not(
+        [type='checkbox'],
+        [type='radio'],
+        [type='range'],
+        [type='button'],
+        [type='submit'],
+        [type='reset'],
+        [type='color'],
+        [type='file'],
+        [type='image']
+      ),
+      textarea,
+      select
+    ) {
+    font-size: max(16px, 1em);
+  }
+}
+
+/* the control ladder moves up a step for a finger; doubled `:root` outranks
+   the density layer's `:root[data-density]` */
+@media (pointer: coarse) {
+  :root:root,
+  :root:root[data-density] {
+    --m-control-height-xs: 2rem;
+    --m-control-height-sm: 2.5rem;
+    --m-control-height-md: 2.75rem;
+    --m-control-height-lg: 3rem;
+    --m-row-height: 2.75rem;
+    --m-nav-row-height: 2.75rem;
+  }
+
+  :root [data-trigger='bar'] .m-fbar__filter {
+    height: var(--m-control-height-md);
+  }
+}
+
+/* kit pieces that draw their own box: a bigger box where there is room, else
+   a hit area past the drawing (an ::after, or padding paid back by a negative
+   margin) so the line it sits in does not move */
+@media (pointer: coarse) {
+  :root .m-tab {
+    padding-block: 0.75rem;
+  }
+  :root .m-pwd__eye {
+    width: var(--m-control-height-sm);
+    height: var(--m-control-height-sm);
+  }
+  :root .m-pref__proj {
+    min-height: var(--m-control-height-md);
+  }
+
+  :root .m-seg__item {
+    position: relative;
+    height: var(--m-control-height-xs);
+  }
+  :root .m-seg__item::after {
+    content: '';
+    position: absolute;
+    inset: -4px 0;
+  }
+  /* the strip clips when it scrolls sideways: its track holds the reach */
+  :root .m-seg {
+    padding-block: 4px;
+  }
+
+  :root :is(.m-auth__link, .m-coninst__link, .m-pref__quiet-link) {
+    display: inline-flex;
+    align-items: center;
+    padding-block: 0.6875rem;
+    margin-block: -0.6875rem;
+  }
+  :root :is(.m-coninst__link, .m-pref__quiet-link) {
+    padding-inline: 0.375rem;
+    margin-inline: -0.375rem;
+  }
+  :root .m-th__sort {
+    position: relative;
+  }
+  :root .m-th__sort::after {
+    content: '';
+    position: absolute;
+    inset: -5px 0;
+  }
+  :root :is(.m-pref__tip, .m-coninst__info) {
+    position: relative;
+  }
+  :root :is(.m-pref__tip, .m-coninst__info)::after {
+    content: '';
+    position: absolute;
+    inset: -13px;
+  }
+}
+
+/* what hover reveals rests visible without hover (drag grips stay hidden) */
+@media (hover: none) {
+  :root:root:root
+    :is(
+      .m-spanel__verb,
+      .m-clause__prop-add,
+      .m-clause__remove,
+      .m-fchip__x,
+      .m-fchip__plus,
+      .m-fchip__actions,
+      .m-inline-caret,
+      .m-scard__play,
+      .m-conteam__actions,
+      .m-con__reveal,
+      .m-con__provider-go,
+      .m-spot-card__pick,
+      .m-spot-card__acts,
+      .m-spot-card__more,
+      .m-dt__rowcopy,
+      .m-dt__rowjump,
+      .m-pref__list-actions,
+      .m-roles__actions,
+      .m-segs__use,
+      .m-ss__queue,
+      .m-ss__play,
+      .m-ss__acts,
+      .m-sdock__close,
+      .m-ptl__chev,
+      .m-rd__shots,
+      .m-step__act.is-quiet,
+      .m-brk__remove,
+      .m-erow__pencil,
+      .m-json__copy
+    ) {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+/* no double-tap zoom on controls; a list in a popover stops at its end */
+@media (pointer: coarse) {
+  :root
+    :is(
+      a,
+      button,
+      input,
+      select,
+      textarea,
+      label,
+      summary,
+      [role='button'],
+      [role='tab'],
+      [role='option'],
+      [role='menuitem'],
+      [role='switch'],
+      [role='checkbox']
+    ) {
+    touch-action: manipulation;
+  }
+  :root [data-radix-popper-content-wrapper] * {
+    overscroll-behavior: contain;
+  }
+}
+
+/* option rows: the box rests drawn (it only arrives on hover otherwise), a
+   finger tall, with a gap so a tap cannot land on the neighbour */
+@media (hover: none) {
+  :root:root .m-checkrow:not(.m-checkrow--on) .m-checkrow__box {
+    border-color: var(--m-border-strong);
+    background: var(--m-surface-default);
+  }
+}
+@media (pointer: coarse) {
+  :root .m-checkrow {
+    min-height: var(--m-control-height-md);
+    gap: var(--m-space-5);
+  }
+  :root .m-checkrow__box {
+    width: 18px;
+    height: 18px;
+  }
+  :root :is(.m-fm-sheet__opts, .m-seg-list, .m-dr__sheet [role='menu']) {
+    display: flex;
+    flex-direction: column;
+    gap: var(--m-space-3);
+  }
+}
+
+@media (pointer: coarse) {
+  :root button[role='switch'] {
+    position: relative;
+  }
+  :root button[role='switch']::after {
+    content: '';
+    position: absolute;
+    inset: -14px -8px;
+  }
+
+  :root [data-slot='segmented'] > [data-state] {
+    position: relative;
+  }
+  :root [data-slot='segmented'] > [data-state]::after {
+    content: '';
+    position: absolute;
+    inset: -3px 0;
+  }
+}
+
+/* drawings under 40 keep their size; the ::after takes the hit to 44:
+   offset = (44 - drawing) / 2 */
+@media (pointer: coarse) {
+  :root
+    :is(
+      .m-nav-item__caret,
+      .m-nav__avatar,
+      .m-nav__tool,
+      .m-nav__brand-toggle,
+      .m-iconbtn--xs,
+      .m-rs__who,
+      .m-rtabs__tab,
+      .m-dt__collapse,
+      .m-dt__rowjump,
+      .m-dt__rowcopy
+    ) {
+    position: relative;
+  }
+  :root :is(.m-nav__avatar, .m-nav__tool, .m-nav__brand-toggle)::after {
+    content: '';
+    position: absolute;
+    inset: -8px;
+  }
+  :root .m-dt__collapse::after {
+    content: '';
+    position: absolute;
+    inset: -10px;
+  }
+  :root .m-iconbtn--xs::after {
+    content: '';
+    position: absolute;
+    inset: -11px;
+  }
+  :root .m-nav-item__caret::after {
+    content: '';
+    position: absolute;
+    inset: -13px;
+  }
+  :root .m-rtabs__tab::after {
+    content: '';
+    position: absolute;
+    inset: -10px 0;
+  }
+  :root .m-rs__who::after {
+    content: '';
+    position: absolute;
+    inset: -6px 0;
+  }
+  :root :is(.m-dt__rowjump, .m-dt__rowcopy)::after {
+    content: '';
+    position: absolute;
+    inset: -10px -2px;
+  }
+  :root .m-tl__mark::after {
+    content: '';
+    position: absolute;
+    inset: -17px -10px;
+  }
+}
+
+/* a dialog on a phone: padding steps in, the footer wraps with its buttons
+   sharing the row, the close reaches 44 */
+@media (pointer: coarse) {
+  :root [data-slot='modal'] .m-modal__foot {
+    flex-wrap: wrap;
+    padding-inline: var(--m-space-6);
+    padding-bottom: var(--m-space-6);
+  }
+  :root [data-slot='modal'] .m-modal__foot > * {
+    flex: 1 1 auto;
+  }
+  :root [data-slot='modal'] .m-dlg__foot {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+  :root [data-slot='modal'] .m-dlg__foot > * {
+    flex: 1 1 auto;
+  }
+  :root [data-slot='modal'] > div:not(.m-modal__foot) {
+    padding-inline: var(--m-space-6);
+  }
+  :root [data-slot='modal'] .m-modal__close {
+    width: 2.75rem;
+    height: 2.75rem;
+    right: 0.25rem;
+    top: 0.25rem;
+  }
+}

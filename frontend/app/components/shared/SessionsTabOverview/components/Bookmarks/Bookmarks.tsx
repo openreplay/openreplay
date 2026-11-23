@@ -19,7 +19,7 @@ function Bookmarks() {
   const { sessionStore, userStore, settingsStore, projectsStore } = useStore();
   const queue = useSessionQueue(String(projectsStore.activeSiteId ?? ''));
   const { isEnterprise } = userStore;
-  const { bookmarks, lastPlayedSessionIds } = sessionStore;
+  const { bookmarks, lastPlayedSessionId } = sessionStore;
   const pageSize = useRowsPerPage('bookmarks');
   const { open, hover } = useOpenSession();
 
@@ -66,7 +66,7 @@ function Bookmarks() {
             onOpen={open}
             queue={queue}
             onHover={hover}
-            lastViewedIds={lastPlayedSessionIds}
+            lastViewedId={lastPlayedSessionId}
             timezone={settingsStore.sessionSettings.timezone?.value}
           />
           <ListFooter

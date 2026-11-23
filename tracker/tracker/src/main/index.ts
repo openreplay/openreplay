@@ -21,6 +21,7 @@ import Mouse from './modules/mouse.js'
 import Timing from './modules/timing.js'
 import Performance from './modules/performance.js'
 import Scroll from './modules/scroll.js'
+import ScrollDepth from './modules/scrollDepth.js'
 import Viewport from './modules/viewport.js'
 import CSSRules from './modules/cssrules.js'
 import Focus from './modules/focus.js'
@@ -46,6 +47,7 @@ import type { MouseHandlerOptions } from './modules/mouse.js'
 import type { SessionInfo } from './app/session.js'
 import type { CssRulesOptions } from './modules/cssrules.js'
 import type { LATOptions } from './modules/longAnimationTask.js'
+import type { Options as ScrollDepthOptions } from './modules/scrollDepth.js'
 import type { Options as WapOptions } from './modules/webAnimations.js'
 import type { Options as ViewportOptions } from './modules/viewport.js'
 
@@ -60,7 +62,8 @@ export type Options = Partial<
     InputOptions &
     PerformanceOptions &
     TimingOptions &
-    LATOptions
+    LATOptions &
+    ScrollDepthOptions
 > & {
   projectID?: number // For the back compatibility only (deprecated)
   projectKey: string
@@ -122,6 +125,12 @@ const canAccessTop = () => {
   }
 }
 
+/**
+ * OpenReplay tracker class. Prefer the `tracker` singleton export.
+ *
+ * Docs for AI agents and quick reference ship with the package:
+ * `node_modules/@openreplay/tracker/docs/usage.md` (setup) and `docs/api.md` (methods, options).
+ */
 export default class API {
   private app: App | null = null
   public readonly analytics: AnalyticsSDK | null = null
@@ -193,24 +202,29 @@ export default class API {
       return
     }
 
+    let clearSharedStorage = true
     const app = new App(
       options.projectKey,
       options.sessionToken,
       options,
       this.signalStartIssue,
       this.crossdomainMode,
+      () => {
+        clearSharedStorage = false
+        this.discardTracker(false)
+      },
     )
     this.app = app
     if (options.projectKey && options.analytics?.active) {
-      let isSaas = false
+      let isSaas = false;
       if (!options.ingestPoint) {
-        isSaas = true
+        isSaas = true;
       }
       if (options.ingestPoint) {
-        const saasHost = 'api.openreplay.com'
-        const urlObj = new URL(options.ingestPoint)
+        const saasHost = 'api.openreplay.com';
+        const urlObj = new URL(options.ingestPoint);
         if (urlObj.hostname === saasHost) {
-          isSaas = true
+          isSaas = true;
         }
       }
       const defaultEdp = 'https://api.openreplay.com/ingest'
@@ -232,13 +246,16 @@ export default class API {
         this.analytics?.onStart()
       })
       app.attachStopCallback(() => {
-        if (app.isDisposed()) this.analytics?.onDiscard()
+        if (app.isDisposed()) this.analytics?.onDiscard(clearSharedStorage)
         else this.analytics?.onStop()
       })
     }
     if (!this.crossdomainMode) {
       // no need to send iframe viewport data since its a node for us
       Viewport(app, options.urls)
+      if (!options.disableScrollmaps) {
+        ScrollDepth(app)
+      }
       // calculated in main window
       Connection(app)
       // while we can calculate it here, trying to compute it for all parts is hard
@@ -377,7 +394,7 @@ export default class API {
         return Promise.reject("Browser doesn't support required api, or doNotTrack is active.")
       }
       if (startOpts?.userID) {
-        this.app.session.setUserID(startOpts.userID)
+        this.app.session.setUserID(startOpts.userID);
         this.analytics?.people.identify(startOpts.userID, { fromTracker: true })
       }
       return this.app.start(startOpts)
@@ -460,12 +477,16 @@ export default class API {
 
   /** Terminally drop pending capture; dispatched requests cannot be retracted. */
   discard(): void {
+    this.discardTracker(true)
+  }
+
+  private discardTracker(clearSharedStorage: boolean): void {
     const app = this.app
     if (app === null) return
     this.app = null
     this.analyticsToken = null
     try {
-      app.discard()
+      app.discard(clearSharedStorage)
     } finally {
       // A new constructor must not race the old global-patch detach callbacks.
       if (IN_BROWSER && (window as any).__OPENREPLAY__ === this) {

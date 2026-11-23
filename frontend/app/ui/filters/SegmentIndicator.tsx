@@ -1,6 +1,6 @@
 import { IconButton } from '@/ui/actions/IconButton';
 import { Button } from '@/ui/actions/button';
-import { ChevronsDownUp, ChevronsUpDown, Split } from 'lucide-react';
+import { Check, ChevronsDownUp, ChevronsUpDown, Split } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -61,6 +61,12 @@ export function SegmentIndicator({
           {edited && onSaveChanges && (
             <Button variant="primary" loading={saving} onClick={onSaveChanges}>
               {t('Save changes')}
+            </Button>
+          )}
+          {!edited && (
+            <Button disabled className="m-segind__saved">
+              <Check size={13} aria-hidden="true" />
+              {t('Segment saved')}
             </Button>
           )}
           <Button variant="subtle" onClick={onClear}>

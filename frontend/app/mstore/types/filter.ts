@@ -99,14 +99,18 @@ export default class FilterStore implements IFilterStore {
 
   private readonly isConditional: boolean;
   private readonly isMobile: boolean;
+  /** the project whose catalogue the filters come from; the active one when unset */
+  private readonly projectId?: string;
 
   constructor(
     initialFilters: FilterData[] = [],
     isConditional = false,
     isMobile = false,
+    projectId?: string,
   ) {
     this.isConditional = isConditional;
     this.isMobile = isMobile;
+    this.projectId = projectId;
     this.filters = initialFilters.map((filterData) =>
       this.createFilterItemFromData(filterData),
     );
@@ -121,7 +125,8 @@ export default class FilterStore implements IFilterStore {
           typeof (this as any)[key] !== 'function' &&
           key !== 'eventsOrderSupport' &&
           key !== 'isConditional' &&
-          key !== 'isMobile',
+          key !== 'isMobile' &&
+          key !== 'projectId',
       );
       for (const key in filterData) {
         if (validKeys.includes(key)) {
@@ -179,7 +184,7 @@ export default class FilterStore implements IFilterStore {
     }
 
     if (!hasDefaults && filter.isEvent && filter.filters) {
-      filterStore.getEventFilters(filter.id).then((props) => {
+      filterStore.getEventFilters(filter.id, this.projectId).then((props) => {
         filter.filters = props
           ?.filter((prop) => prop.defaultProperty)
           .map((prop) => {
@@ -243,10 +248,10 @@ export default class FilterStore implements IFilterStore {
       //     )
       //   : [];
       this.filters = Array.isArray(json.filters)
-        ? filterStore.processFiltersFromData(json.filters)
+        ? filterStore.processFiltersFromData(json.filters, this.projectId)
         : [];
       this.excludes = Array.isArray(json.excludes)
-        ? filterStore.processFiltersFromData(json.excludes)
+        ? filterStore.processFiltersFromData(json.excludes, this.projectId)
         : [];
       this.eventsOrder = json.eventsOrder ?? 'then';
       this.startTimestamp = json.startTimestamp ?? 0;

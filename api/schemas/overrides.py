@@ -1,8 +1,6 @@
-from typing import TypeVar, Annotated, Union
 from enum import Enum as _Enum
 from pydantic import BaseModel as _BaseModel
-from pydantic import ConfigDict, TypeAdapter, Field
-from pydantic.types import AnyType
+from pydantic import ConfigDict
 from decouple import config, Choices
 
 
@@ -33,10 +31,3 @@ class Enum(_Enum):
         return value in cls._value2member_map_
 
 
-T = TypeVar('T')
-
-
-class ORUnion:
-    def __new__(cls, union_types: Union[AnyType], discriminator: str) -> T:
-        return lambda **args: TypeAdapter(Annotated[union_types, Field(discriminator=discriminator)]) \
-            .validate_python(args)

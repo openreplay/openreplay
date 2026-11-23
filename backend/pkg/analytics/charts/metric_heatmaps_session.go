@@ -25,114 +25,65 @@ type HeatmapSessionQueryBuilder struct {
 }
 
 func (h *HeatmapSessionQueryBuilder) Execute(ctx context.Context, p *Payload, conn driver.Conn) (interface{}, error) {
-	shortestQ, params, err := h.buildQuery(p)
+	query, params, err := h.buildQuery(p)
 	if err != nil {
 		h.Logger.Error(ctx, "Failed to build query: %v", err)
 		return nil, err
 	}
 
-	h.Logger.Debug(ctx, "Executing Heatmap query: %s", shortestQ)
+	h.Logger.Debug(ctx, "Executing Heatmap query: %s", query)
 	_start := time.Now()
-	row := conn.QueryRow(ctx, shortestQ, convertParams(params)...)
+	row := conn.QueryRow(ctx, query, convertParams(params)...)
 	if time.Since(_start) > 2*time.Second {
-		h.Logger.Warn(ctx, "Heatmap query execution took longer than 2s: %s", shortestQ)
+		h.Logger.Warn(ctx, "Heatmap query execution took longer than 2s: %s", query)
 	}
 	if err = row.Err(); err != nil {
 		h.Logger.Error(ctx, "QueryRow error: %v", err)
 		return nil, err
 	}
 
-	var (
-		sid      string
-		startTs  uint64
-		duration uint32
-		eventTs  uint64
-		urlPath  string
-	)
-	if err = row.Scan(&sid, &startTs, &duration, &eventTs, &urlPath); err != nil {
+	var res HeatmapSessionResponse
+	if err = row.Scan(&res.SessionID, &res.StartTs, &res.Duration, &res.EventTimestamp, &res.UrlPath); err != nil {
 		h.Logger.Error(ctx, "Row scan error: %v", err)
 		return HeatmapSessionResponse{}, nil
 	}
-
-	return HeatmapSessionResponse{
-		SessionID:      sid,
-		StartTs:        startTs,
-		Duration:       duration,
-		EventTimestamp: eventTs,
-		UrlPath:        urlPath,
-	}, nil
+	return res, nil
 }
 
-const (
-	sqlWithLocationTemplate = `SELECT
-    toString(session_id) AS session_id,
-    startTs,
-    duration,
-    eventTs,
-    url_path
+// minRenderableSessionMs: shorter sessions are usually bounces whose page never finished
+// rendering; they are only picked when nothing longer matches.
+const minRenderableSessionMs = 5000
+
+// heatmapSessionTemplate picks the session the heatmap is drawn on: one of the shortest
+// renderable sessions with clicks (scroll depth, on a scroll map) on the page, chosen by
+// hash so a card keeps showing the same replay until the seed changes ("get a new
+// image"). The event timestamp is the session's last such event on the page, when the
+// page is the most complete.
+const heatmapSessionTemplate = `%s
+SELECT session_id, startTs, duration, eventTs, url_path
 FROM (
     SELECT
         toString(s.session_id) AS session_id,
         toUnixTimestamp(s.datetime) * 1000 AS startTs,
-        s.duration,
-        toUnixTimestamp(e.created_at) * 1000 AS eventTs,
-        e.url_path
+        s.duration AS duration,
+        toUInt64(toUnixTimestamp64Milli(e.last_click)) AS eventTs,
+        e.url_path AS url_path
     FROM (
         SELECT
-            session_id,
-            created_at,
-            "$current_path" AS url_path
+            e.session_id AS session_id,
+            max(e.created_at) AS last_click,
+            argMax(e."$current_path", e.created_at) AS url_path
         FROM product_analytics.events AS e
         WHERE %s
+        GROUP BY e.session_id
     ) AS e
-    INNER JOIN experimental.sessions AS s USING (session_id)
+    INNER JOIN experimental.sessions AS s ON s.session_id = e.session_id
     WHERE %s
-    ORDER BY s.duration ASC, e.created_at ASC
+    ORDER BY s.duration < @minRenderableSessionMs, s.duration ASC, s.session_id ASC
     LIMIT 10
-) AS subquery
-ORDER BY rand()
+) AS candidates
+ORDER BY duration < @minRenderableSessionMs, cityHash64(session_id, @heatmapSeed)
 LIMIT 1;`
-
-	sqlWithoutLocationTemplate = `WITH top_url_path AS (
-    SELECT
-        "$current_path" AS url_path,
-        COUNT(*) AS cnt
-    FROM product_analytics.events AS e
-    WHERE %s
-    GROUP BY url_path
-    ORDER BY cnt DESC
-    LIMIT 1
-)
-
-SELECT
-    toString(session_id) AS session_id,
-    startTs,
-    duration,
-    eventTs,
-    url_path
-FROM (
-    SELECT
-        toString(s.session_id) AS session_id,
-        toUnixTimestamp(s.datetime) * 1000 AS startTs,
-        s.duration,
-        toUnixTimestamp(e.created_at) * 1000 AS eventTs,
-        e.url_path
-    FROM (
-        SELECT
-            session_id,
-            created_at,
-            "$current_path" AS url_path
-        FROM product_analytics.events AS e
-        WHERE %s
-    ) AS e
-    INNER JOIN experimental.sessions AS s USING (session_id)
-    WHERE %s
-    ORDER BY e.created_at ASC, s.duration ASC
-    LIMIT 10
-) AS subquery
-ORDER BY rand()
-LIMIT 1;`
-)
 
 func (h *HeatmapSessionQueryBuilder) buildQuery(p *Payload) (string, map[string]any, error) {
 	projectId := p.ProjectId
@@ -158,7 +109,6 @@ func (h *HeatmapSessionQueryBuilder) buildQuery(p *Payload) (string, map[string]
 				if nested.Name == "url_path" && len(nested.Value) > 0 && nested.Value[0] != "" {
 					hasLocationFilter = true
 					locationFilter = nested
-					filters = append(filters, filter)
 				}
 			}
 		}
@@ -183,57 +133,45 @@ func (h *HeatmapSessionQueryBuilder) buildQuery(p *Payload) (string, map[string]
 	_, filtersWhere, _, extraSessions := BuildWhere(filters, string(series.Filter.EventsOrder), "e", "s", qp)
 	sessionsWhere = append(sessionsWhere, extraSessions...)
 
-	var query string
+	qp.Set("minRenderableSessionMs", minRenderableSessionMs)
+	qp.Set("heatmapSeed", p.HeatmapSeed)
+
+	eventsWhere := []string{
+		"e.project_id = @projectId",
+		"e.created_at BETWEEN toDateTime(@startSec) AND toDateTime(@endSec)",
+	}
+	if p.MetricOf == MetricOfScrollMap {
+		eventsWhere = append(eventsWhere, "e.`$event_name` = 'SCROLL'", "e.`$auto_captured`")
+	} else {
+		eventsWhere = append(eventsWhere, "e.`$event_name` = 'CLICK'")
+	}
+	if p.SampleRate > 0 && p.SampleRate < 100 {
+		eventsWhere = append(eventsWhere, "e.sample_key < @sampleRate")
+	}
+	eventsWhere = append(eventsWhere, filtersWhere...)
+
+	var pathCTE string
 	if hasLocationFilter {
-		eventsWhere := []string{
-			"e.project_id = @projectId",
-			"e.created_at BETWEEN toDateTime(@startSec) AND toDateTime(@endSec)",
-			"e.`$event_name` = 'CLICK'",
-		}
 		if cond := buildCond(`e."$current_path"`, locationFilter.Value, locationFilter.Operator, false, "singleColumn", qp); cond != "" {
 			eventsWhere = append(eventsWhere, cond)
 		}
-		if p.SampleRate > 0 && p.SampleRate < 100 {
-			eventsWhere = append(eventsWhere, "e.sample_key < @sampleRate")
-		}
-		eventsWhere = append(eventsWhere, filtersWhere...)
-
-		query = fmt.Sprintf(
-			sqlWithLocationTemplate,
-			strings.Join(eventsWhere, " AND "),
-			strings.Join(sessionsWhere, " AND "),
-		)
 	} else {
-		// Use CTE to find top URL path
-		eventsWhere := []string{
-			"e.project_id = @projectId",
-			"e.created_at BETWEEN toDateTime(@startSec) AND toDateTime(@endSec)",
-			"e.`$event_name` = 'CLICK'",
-		}
-		if p.SampleRate > 0 && p.SampleRate < 100 {
-			eventsWhere = append(eventsWhere, "e.sample_key < @sampleRate")
-		}
-		eventsWhere = append(eventsWhere, filtersWhere...)
-		cteWhere := strings.Join(eventsWhere, " AND ")
-
-		subWhereConditions := []string{
-			"created_at BETWEEN toDateTime(@startSec) AND toDateTime(@endSec)",
-			"project_id = @projectId",
-			"`$event_name` = 'CLICK'",
-			"`$current_path` = (SELECT url_path FROM top_url_path)",
-		}
-		if p.SampleRate > 0 && p.SampleRate < 100 {
-			subWhereConditions = append(subWhereConditions, "sample_key < @sampleRate")
-		}
-		subWhere := strings.Join(subWhereConditions, " AND ")
-
-		query = fmt.Sprintf(
-			sqlWithoutLocationTemplate,
-			cteWhere,
-			subWhere,
-			strings.Join(sessionsWhere, " AND "),
-		)
+		pathCTE = fmt.Sprintf(`WITH top_url_path AS (
+    SELECT e."$current_path" AS url_path, count() AS cnt
+    FROM product_analytics.events AS e
+    WHERE %s
+    GROUP BY url_path
+    ORDER BY cnt DESC
+    LIMIT 1
+)`, strings.Join(eventsWhere, " AND "))
+		eventsWhere = append(eventsWhere, `e."$current_path" = (SELECT url_path FROM top_url_path)`)
 	}
+
+	query := fmt.Sprintf(heatmapSessionTemplate,
+		pathCTE,
+		strings.Join(eventsWhere, " AND "),
+		strings.Join(sessionsWhere, " AND "),
+	)
 
 	h.Logger.Debug(context.Background(), "Built query: %s", query)
 	return query, qp.Values(), nil

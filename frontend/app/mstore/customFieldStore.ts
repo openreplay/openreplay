@@ -20,8 +20,6 @@ class CustomFieldStore {
 
   allList: CustomField[] = [];
 
-  instance: CustomField = new CustomField();
-
   sources: CustomField[] = [];
 
   fetchedMetadata: boolean = false;
@@ -32,19 +30,12 @@ class CustomFieldStore {
     makeAutoObservable(this);
   }
 
-  edit = (field: Partial<CustomField>) => {
-    Object.assign(this.instance!, field);
-  };
-
   /** The project `list` belongs to; switching clears it so a stale row can't
       be removed from the newly selected project. */
   listFor: string | undefined = undefined;
 
   /** a key was added, edited or removed since the session filters were built */
   changed = false;
-
-  /** the project the global metadata filters were last built for */
-  filtersFor: string | undefined = undefined;
 
   private listSeq = 0;
 
@@ -80,7 +71,6 @@ class CustomFieldStore {
     try {
       const response = await customFieldService.fetchList(siteId);
       if (seq !== this.listSeq) return;
-      this.filtersFor = siteId;
       clearMetaFilters();
       response.forEach((item: any) => {
         const calls = [addElementToFiltersMap, addElementToLiveFiltersMap];
@@ -166,15 +156,6 @@ class CustomFieldStore {
       });
     } finally {
       this.isSaving = false;
-    }
-  }
-
-  init(instance?: any) {
-    // this.instance = new CustomField(instance);
-    if (instance) {
-      this.instance = new CustomField().fromJson(instance);
-    } else {
-      this.instance = new CustomField();
     }
   }
 }

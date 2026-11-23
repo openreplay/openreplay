@@ -6,18 +6,20 @@ export function inlineRemoteCss(
   id: number,
   baseHref: string,
   getNextID: () => number,
-  insertRule: (id: number, cssText: string, index: number, baseHref: string) => any[],
-  addOwner: (sheetId: number, ownerId: number) => any[],
+  insertRule: (id: number, cssText: string, index: number, baseHref: string) => void,
+  addOwner: (sheetId: number, ownerId: number) => void,
   forceFetch?: boolean,
   sendPlain?: boolean,
   onPlain?: (cssText: string, id: number) => void,
   capture?: { sanitizer: CaptureSanitizer | undefined; href: string; original: string },
+  signal?: AbortSignal,
 ) {
-  const isCurrent = () => !capture || node.getAttribute('href') === capture.original
-  if (!isCurrent()) return
+  const isStale = () => signal?.aborted ||
+    (capture !== undefined && node.getAttribute('href') !== capture.original)
+  if (isStale()) return
   const href = capture?.href ?? node.href
   const deliver = (cssText: string) => {
-    if (!isCurrent()) return
+    if (isStale()) return
     const approved = sanitizeCapture(capture?.sanitizer, {
       kind: 'css',
       source: 'text',
@@ -35,7 +37,7 @@ export function inlineRemoteCss(
 
   // The observer already approved this raw href; unchanged relative URLs retain sheet access.
   const mayReadSheet = !capture || capture.href === capture.original
-  const sheet = mayReadSheet && isCurrent() ? node.sheet : null
+  const sheet = mayReadSheet ? node.sheet : null
 
   if (sheet && !forceFetch) {
     try {
@@ -51,8 +53,10 @@ export function inlineRemoteCss(
   }
 
   // Fall back to fetching if we couldn't get or stringify the sheet
-  if (href && isCurrent()) {
-    fetch(mayReadSheet ? node.href : href)
+  if (href && !isStale()) {
+    const url = mayReadSheet ? node.href : href
+    const request = signal ? fetch(url, { signal }) : fetch(url)
+    request
       .then(response => {
         if (!response.ok) {
           throw new Error(`response status ${response.status}`);
@@ -63,6 +67,7 @@ export function inlineRemoteCss(
         deliver(cssText)
       })
       .catch(error => {
+        if (signal?.aborted) return
         if (capture?.sanitizer !== undefined)
           console.error('OpenReplay: failed to capture stylesheet')
         else console.error(`OpenReplay: Failed to fetch CSS from ${node.href}:`, error);
@@ -74,9 +79,9 @@ export function inlineRemoteCss(
   }
 
   function retryViaLoadEvent() {
-    if (!mayReadSheet || !isCurrent()) return
+    if (!mayReadSheet || isStale()) return
     const trySheet = () => {
-      if (!isCurrent()) return
+      if (isStale()) return
       const loadedSheet = node.sheet;
       if (loadedSheet) {
         try {
@@ -93,10 +98,7 @@ export function inlineRemoteCss(
     if (node.sheet) {
       trySheet();
     } else {
-      node.addEventListener('load', function onLoad() {
-        node.removeEventListener('load', onLoad);
-        trySheet();
-      });
+      node.addEventListener('load', trySheet, { once: true, signal })
     }
   }
 
@@ -119,6 +121,8 @@ export function inlineRemoteCss(
     let inString = false;
     let stringChar = '';
     let braceLevel = 0;
+    // unquoted url(...) may hold ';' (e.g. Google Fonts `wght@400;700`)
+    let parenLevel = 0;
     let currentRule = '';
 
     for (let i = 0; i < cssText.length; i++) {
@@ -159,7 +163,11 @@ export function inlineRemoteCss(
 
       currentRule += char;
 
-      if (char === '{') {
+      if (char === '(') {
+        parenLevel++;
+      } else if (char === ')') {
+        parenLevel--;
+      } else if (char === '{') {
         braceLevel++;
       } else if (char === '}') {
         braceLevel--;
@@ -168,7 +176,13 @@ export function inlineRemoteCss(
           // End of a top-level rule
           rules.push(currentRule.trim());
           currentRule = '';
+          parenLevel = 0;
         }
+      } else if (char === ';' && braceLevel === 0 && parenLevel <= 0) {
+        // brace-less statement (@layer a, b; @import ...; @namespace ...;)
+        rules.push(currentRule.trim());
+        currentRule = '';
+        parenLevel = 0;
       }
     }
 

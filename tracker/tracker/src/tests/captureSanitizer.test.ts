@@ -1,8 +1,10 @@
 import { afterEach, describe, expect, jest, test } from '@jest/globals'
 import AttributeSender from '../main/modules/attributeSender.js'
 import TopObserver from '../main/app/observer/top_observer.js'
+import NextObserver from '../main/app/observer/next_observer.js'
 import Nodes from '../main/app/nodes/index.js'
-import Sanitizer, { SanitizeLevel } from '../main/app/sanitizer.js'
+import NextNodes from '../main/app/nodes/next_nodes.js'
+import Sanitizer, { stringWiper } from '../main/app/sanitizer.js'
 import images from '../main/modules/img.js'
 import fonts from '../main/modules/fonts.js'
 import { Type } from '../common/messages.gen.js'
@@ -46,41 +48,85 @@ function appFixture() {
   })
   app.sanitizer = new Sanitizer({
     app,
-    options: { privateMode: true, domSanitizer: () => SanitizeLevel.Obscured },
+    options: {},
   })
   app.attributeSender = new AttributeSender({ app, isDictDisabled: false })
   return { app, sent, sanitize }
 }
-function observe(html: string, policy?: (data: any) => string | null) {
+function makeObserver(core: string, app: any, inlineCss = 0) {
+  const options = { disableThrottling: true, inlineCss }
+  if (core === 'next') {
+    app.nodes = new NextNodes({ forceNgOff: true })
+    return new NextObserver({ app, options })
+  }
+  return new TopObserver({ app, options })
+}
+
+function observe(html: string, policy?: (data: any) => string | null, core = 'legacy') {
   const fixture = appFixture()
   if (policy) fixture.sanitize.mockImplementation(policy)
   document.documentElement.innerHTML = '<head></head><body>' + html + '</body>'
-  const observer = new TopObserver({ app: fixture.app, options: { disableThrottling: true } })
+  const observer = makeObserver(core, fixture.app)
   cleanups.push(() => observer.disconnect())
   observer.observe()
   return fixture
 }
 
-describe('native capture sanitizer boundaries', () => {
+describe.each(['legacy', 'next'])('%s native capture sanitizer boundaries', (core) => {
   test('rejects attribute value before dictionary insertion while preserving allowed class', () => {
-    const { app, sent, sanitize } = appFixture()
-    app.attributeSender.sendSetAttribute(1, 'title', secret)
-    app.attributeSender.sendSetAttribute(1, 'class', 'safe-panel')
+    const { sent, sanitize } = observe(`<p title="${secret}" class="safe-panel"></p>`, undefined, core)
     expect(sanitize).toHaveBeenCalledWith(
       expect.objectContaining({ kind: 'attribute', name: 'title', value: secret }),
     )
     expect(JSON.stringify(sent)).not.toContain(secret)
     expect(sent.some((m) => m[0] === Type.StringDictGlobal && m[2] === 'safe-panel')).toBe(true)
   })
+
+  test('rejecting a mutation removes a previously recorded value without adding it to the dictionary', async () => {
+    const { sent } = observe('<p title="safe"></p>', (data) =>
+      data.value === secret ? null : data.value, core)
+    const node = document.querySelector('p')!
+    node.setAttribute('title', secret)
+    await Promise.resolve()
+    expect(sent.some((message) => message[0] === Type.RemoveNodeAttribute && message[2] === 'title')).toBe(true)
+    expect(JSON.stringify(sent)).not.toContain(secret)
+  })
+
+  test('removing a never-recorded attribute does not emit its name', async () => {
+    const name = 'data-' + secret.toLowerCase()
+    const { sent } = observe(`<p ${name}="hidden"></p>`, () => null, core)
+    document.querySelector('p')!.removeAttribute(name)
+    await Promise.resolve()
+    expect(JSON.stringify(sent)).not.toContain(name)
+  })
+
+  test('replacing the document root resets previously emitted attribute names', async () => {
+    const { app, sent } = observe('<p title="safe"></p>', (data) =>
+      data.value === secret ? null : data.value, core)
+    const p = document.querySelector('p')!
+    const id = app.nodes.getID(p)
+    const root = document.createElement('html')
+    root.innerHTML = '<head></head><body></body>'
+    p.setAttribute('title', secret)
+    root.querySelector('body')!.appendChild(p)
+    document.documentElement.replaceWith(root)
+    await Promise.resolve()
+    expect(app.nodes.getID(p)).toBe(id)
+    expect(sent.some((message) => message[0] === Type.RemoveNodeAttribute)).toBe(false)
+  })
+
   test('initial hidden-root attributes do not bypass policy or alter the real DOM', () => {
     const { sent, sanitize } = observe(
       `<section title="${secret}" data-openreplay-hidden><p>child</p></section>`,
+      undefined,
+      core,
     )
     expect(JSON.stringify(sent)).not.toContain(secret)
     expect(sanitize).toHaveBeenCalledWith(
       expect.objectContaining({
         kind: 'attribute',
         name: 'title',
+        value: stringWiper(secret),
         node: document.querySelector('section'),
       }),
     )
@@ -88,7 +134,7 @@ describe('native capture sanitizer boundaries', () => {
     expect(document.querySelector('section')!.getAttribute('title')).toBe(secret)
   })
   test('dynamic attribute mutation uses the same pre-dictionary policy', async () => {
-    const { sent, sanitize } = observe('<p class="safe-panel"></p>')
+    const { sent, sanitize } = observe('<p class="safe-panel"></p>', undefined, core)
     sent.length = 0
     document.querySelector('p')!.setAttribute('aria-label', secret)
     await Promise.resolve()
@@ -100,6 +146,8 @@ describe('native capture sanitizer boundaries', () => {
   test('inline CSS text and style attributes are filtered before emission', () => {
     const { sent, sanitize } = observe(
       `<style>p::after{content:"${secret}"}</style><p style="background:url(/${secret})"></p>`,
+      undefined,
+      core,
     )
     expect(sanitize).toHaveBeenCalledWith(expect.objectContaining({ kind: 'css', source: 'text' }))
     expect(sanitize).toHaveBeenCalledWith(
@@ -108,25 +156,9 @@ describe('native capture sanitizer boundaries', () => {
     expect(sent.some((m) => m[0] === Type.CreateElementNode && m[4] === 'P')).toBe(true)
     expect(JSON.stringify(sent)).not.toContain(secret)
   })
-  test('image-error URL is filtered even when the node is Hidden', () => {
-    const { app, sent, sanitize } = appFixture()
-    const image = document.createElement('img')
-    image.src = 'https://example.invalid/' + secret
-    Object.defineProperty(image, 'complete', { value: true })
-    const [id] = app.nodes.registerNode(image)
-    app.sanitizer.setLevel(id, SanitizeLevel.Hidden)
-    images(app)
-    app.nodes.callNodeCallbacks(image, true)
-    expect(
-      sent.some(
-        (m) =>
-          m[0] === Type.StringDictGlobal &&
-          m[2] === 'https://static.openreplay.com/tracker/placeholder.jpeg',
-      ),
-    ).toBe(true)
-    expect(sent.some((m) => m[0] === Type.ResourceTiming)).toBe(false)
-    expect(JSON.stringify(sent)).not.toContain(secret)
-  })
+})
+
+describe('module capture sanitizer boundaries', () => {
   test('image mutation URL is filtered before emission', async () => {
     const { app, sent, sanitize } = appFixture()
     const image = document.createElement('img')
@@ -138,7 +170,7 @@ describe('native capture sanitizer boundaries', () => {
     image.src = 'https://example.invalid/' + secret
     await Promise.resolve()
     expect(sanitize).toHaveBeenCalledWith(
-      expect.objectContaining({ kind: 'attribute', name: 'src' }),
+      expect.objectContaining({ kind: 'resource', resourceType: 'image' }),
     )
     expect(JSON.stringify(sent)).not.toContain(secret)
   })
@@ -167,10 +199,11 @@ describe('native capture sanitizer boundaries', () => {
   })
 })
 
-test('callback sees existing alt/placeholder masking, blank href and truncated style rather than original values', () => {
+test.each(['legacy', 'next'])('%s callback sees existing alt/placeholder masking, blank href and truncated style', (core) => {
   const { sent, sanitize } = observe(
-    `<head></head><img alt="${secret}"><input placeholder="${secret}"><a href="/${secret}"></a><p style="${'X'.repeat(100001)}"></p>`,
+    `<div data-openreplay-obscured><img alt="${secret}"><input placeholder="${secret}"></div><a href="/${secret}"></a><p style="${'X'.repeat(100001)}"></p>`,
     (data) => data.value,
+    core,
   )
   expect(sanitize).toHaveBeenCalledWith(
     expect.objectContaining({ kind: 'attribute', name: 'alt', value: '*'.repeat(secret.length) }),
@@ -186,12 +219,12 @@ test('callback sees existing alt/placeholder masking, blank href and truncated s
     expect.objectContaining({ kind: 'attribute', name: 'href', value: '' }),
   )
   expect(sanitize).toHaveBeenCalledWith(
-    expect.objectContaining({ kind: 'attribute', name: 'style', value: '' }),
+    expect.objectContaining({ kind: 'css', source: 'attribute', value: '' }),
   )
   expect(JSON.stringify(sent)).not.toContain(secret)
 })
 
-test('SVG sprite resource veto runs before fetch while the structural use node remains', async () => {
+test.each(['legacy', 'next'])('%s SVG sprite resource veto runs before fetch while the structural use node remains', async (core) => {
   const fetcher = jest.fn()
   const previous = globalThis.fetch
   ;(globalThis as any).fetch = fetcher
@@ -200,6 +233,8 @@ test('SVG sprite resource veto runs before fetch while the structural use node r
   })
   const { sent, sanitize } = observe(
     `<svg><use href="https://example.invalid/${secret}.svg#icon"></use></svg>`,
+    undefined,
+    core,
   )
   await Promise.resolve()
   expect(sanitize).toHaveBeenCalledWith(
@@ -214,7 +249,7 @@ test('SVG sprite resource veto runs before fetch while the structural use node r
   expect(JSON.stringify(sent)).not.toContain(secret)
 })
 
-test('FontFace buffer stores approved fields only, rechecks each replay and leaves native constructor untouched', () => {
+test('FontFace buffers approved fields and leaves constructor arguments untouched', () => {
   const original = Object.getOwnPropertyDescriptor(window, 'FontFace')
   class NativeFont {
     constructor(
@@ -243,19 +278,16 @@ test('FontFace buffer stores approved fields only, rechecks each replay and leav
   expect(sent).toHaveLength(0)
   sanitize.mockClear()
   app.nodes.callNodeCallbacks(document, true)
-  expect(sent).toContainEqual([Type.LoadFontFace, 0, 'safe', 'url(/safe)', ''])
-  expect(sanitize.mock.calls.every(([d]: any) => !d.value.includes(secret))).toBe(true)
-  expect(sanitize).toHaveBeenCalledTimes(3)
-  sent.length = 0
-  sanitize.mockImplementation(() => null)
-  app.nodes.callNodeCallbacks(document, true)
-  expect(sent).toHaveLength(0)
+  expect(sent).toContainEqual([Type.LoadFontFace, 0, 'safe', 'url("http://localhost/safe")', ''])
+  expect(sanitize).not.toHaveBeenCalled()
 })
 
 // Observer-level regression: raw relative hrefs must preserve the existing sheet/load path.
-test.each(['absent', 'approve', 'rewrite', 'fallback', 'deny'])(
-  'relative linked stylesheet preserves source semantics: %s',
-  async (mode) => {
+test.each(['legacy', 'next'].flatMap((core) =>
+  ['absent', 'approve', 'rewrite', 'fallback', 'deny'].map((mode) => [core, mode]),
+))(
+  '%s relative linked stylesheet preserves source semantics: %s',
+  async (core, mode) => {
     const { app, sent } = appFixture()
     const policy = jest.fn((d: any) =>
       d.kind === 'resource' && d.resourceType === 'stylesheet'
@@ -281,7 +313,7 @@ test.each(['absent', 'approve', 'rewrite', 'fallback', 'deny'])(
     const previous = globalThis.fetch
     ;(globalThis as any).fetch = fetcher
     const log = jest.spyOn(console, 'error').mockImplementation(() => {})
-    const observer = new TopObserver({ app, options: { disableThrottling: true, inlineCss: 1 } })
+    const observer = makeObserver(core, app, 1)
     try {
       observer.observe()
       await new Promise((r) => setTimeout(r, 15))
@@ -322,7 +354,7 @@ test.each(['absent', 'approve', 'rewrite', 'fallback', 'deny'])(
   },
 )
 
-test('font replay never applies a rewriting callback twice or bypasses revocation', () => {
+test('font replay reuses the approved tuple without applying the callback twice', () => {
   const original = Object.getOwnPropertyDescriptor(window, 'FontFace')
   Object.defineProperty(window, 'FontFace', { configurable: true, writable: true, value: class {} })
   const { app, sent, sanitize } = appFixture()
@@ -334,18 +366,18 @@ test('font replay never applies a rewriting callback twice or bypasses revocatio
     Type.LoadFontFace,
     0,
     'approved:Family',
-    'approved:url(/safe)',
-    'approved:',
+    'approved:url("http://localhost/safe")',
+    '',
   ])
   sent.length = 0
   app.nodes.callNodeCallbacks(document, true)
-  expect(sent).toHaveLength(0)
+  expect(sent).toContainEqual([Type.LoadFontFace, 0, 'approved:Family', 'approved:url("http://localhost/safe")', ''])
   if (original) Object.defineProperty(window, 'FontFace', original)
   else delete (window as any).FontFace
 })
 
-test('iframe node unregistration forgets approved attribute names', () => {
-  const { app } = appFixture()
+test('a new registration of a former iframe node cannot reuse prior attribute emissions', () => {
+  const { app, sent } = appFixture()
   const oldDocument = document.implementation.createHTMLDocument('synthetic')
   const p = oldDocument.createElement('p')
   oldDocument.body.appendChild(p)
@@ -353,11 +385,14 @@ test('iframe node unregistration forgets approved attribute names', () => {
   app.nodes.registerNode(oldDocument.documentElement)
   app.nodes.registerNode(oldDocument.body)
   const [id] = app.nodes.registerNode(p)
-  const forgot = jest.spyOn(app.attributeSender, 'forgetNode')
+  app.attributeSender.sendSetAttribute(id, 'title', 'approved', false, p)
   jest.spyOn(oldDocument, 'contains').mockReturnValue(false)
   const observer = new TopObserver({ app, options: { disableThrottling: true } })
   ;(observer as any).handleIframeSrcChange({ contentDocument: oldDocument })
-  expect(forgot).toHaveBeenCalledWith(id)
+  const [newId] = app.nodes.registerNode(p)
+  expect(newId).not.toBe(id)
+  app.attributeSender.removeAttribute(newId, 'title', p)
+  expect(sent.some((message) => message[0] === Type.RemoveNodeAttribute)).toBe(false)
   observer.disconnect()
 })
 
@@ -391,9 +426,11 @@ test.each([false, true])(
   },
 )
 
-test.each(['timer', 'load', 'rewritten-load'])(
-  'a changed stylesheet href cannot reuse earlier approval at deferred %s',
-  async (phase) => {
+test.each(['legacy', 'next'].flatMap((core) =>
+  ['timer', 'load', 'rewritten-load'].map((phase) => [core, phase]),
+))(
+  '%s changed stylesheet href cannot reuse earlier approval at deferred %s',
+  async (core, phase) => {
     const { app, sent } = appFixture()
     const policy = jest.fn((d: any) =>
       d.kind === 'resource' && d.resourceType === 'stylesheet'
@@ -422,7 +459,7 @@ test.each(['timer', 'load', 'rewritten-load'])(
     })
     ;(globalThis as any).fetch = fetcher
     const log = jest.spyOn(console, 'error').mockImplementation(() => {})
-    const observer = new TopObserver({ app, options: { disableThrottling: true, inlineCss: 1 } })
+    const observer = makeObserver(core, app, 1)
     try {
       observer.observe()
       if (phase !== 'timer') {

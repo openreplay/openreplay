@@ -27,6 +27,7 @@ function ValuePicker({ filter, value, onChange, live }: ValuePickerProps) {
   const name = entry.displayName;
   const freeText = !entry.options;
   const { options, loading } = useValueOptions(filter, query, open, live);
+  const shared = options.some((o) => o.share != null);
   const labelOf = (v: string) =>
     entry.options?.find((o) => o.value === v)?.label ?? v;
 
@@ -104,15 +105,9 @@ function ValuePicker({ filter, value, onChange, live }: ValuePickerProps) {
             </CheckRow>
           ))}
 
-        {options.length === 0 && (
+        {options.length === 0 && (loading || !freeText) && (
           <p className="m-vp__none">
-            {loading
-              ? t('Loading…')
-              : freeText
-                ? t('Type a {{name}} to filter by it.', {
-                    name: name.toLowerCase(),
-                  })
-                : t('Nothing matches that.')}
+            {loading ? t('Loading…') : t('Nothing matches that.')}
           </p>
         )}
 
@@ -122,8 +117,11 @@ function ValuePicker({ filter, value, onChange, live }: ValuePickerProps) {
             on={value.includes(o.value)}
             onToggle={() => toggle(o.value)}
             meta={
-              i === 0 ? (
-                <kbd className="m-vp__key" aria-hidden="true">
+              i === 0 || shared ? (
+                <kbd
+                  className={`m-vp__key${i > 0 ? ' is-slot' : ''}`}
+                  aria-hidden="true"
+                >
                   <ArrowRightToLine size={10} />
                   Tab
                 </kbd>

@@ -340,6 +340,23 @@ cdef class PageRenderTiming(PyMessage):
         self.time_to_interactive = time_to_interactive
 
 
+cdef class ScrollEvent(PyMessage):
+    cdef public int __id__
+    cdef public unsigned long message_id
+    cdef public unsigned long timestamp
+    cdef public unsigned long percent
+    cdef public unsigned long page_height
+    cdef public unsigned long viewport_height
+
+    def __init__(self, unsigned long message_id, unsigned long timestamp, unsigned long percent, unsigned long page_height, unsigned long viewport_height):
+        self.__id__ = 26
+        self.message_id = message_id
+        self.timestamp = timestamp
+        self.percent = percent
+        self.page_height = page_height
+        self.viewport_height = viewport_height
+
+
 cdef class CustomEvent(PyMessage):
     cdef public int __id__
     cdef public str name
@@ -1109,6 +1126,15 @@ cdef class ResourceTiming(PyMessage):
         self.stalled = stalled
 
 
+cdef class ScrollDepth(PyMessage):
+    cdef public int __id__
+    cdef public unsigned long percent
+
+    def __init__(self, unsigned long percent):
+        self.__id__ = 86
+        self.percent = percent
+
+
 cdef class Incident(PyMessage):
     cdef public int __id__
     cdef public str label
@@ -1120,6 +1146,17 @@ cdef class Incident(PyMessage):
         self.label = label
         self.start_time = start_time
         self.end_time = end_time
+
+
+cdef class PageHeight(PyMessage):
+    cdef public int __id__
+    cdef public unsigned long height
+    cdef public unsigned long viewport_height
+
+    def __init__(self, unsigned long height, unsigned long viewport_height):
+        self.__id__ = 88
+        self.height = height
+        self.viewport_height = viewport_height
 
 
 cdef class LongAnimationTask(PyMessage):

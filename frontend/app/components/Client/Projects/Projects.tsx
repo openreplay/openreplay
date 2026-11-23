@@ -1,15 +1,26 @@
+import usePageTitle from '@/hooks/usePageTitle';
 import { useStore } from '@/mstore';
 import Project from '@/mstore/types/project';
 import { IconButton } from '@/ui/actions/IconButton';
 import { Button } from '@/ui/actions/button';
+import { Chip } from '@/ui/data/Chip';
 import { SearchField } from '@/ui/inputs/SearchField';
 import { Input } from '@/ui/inputs/input';
-import { Segmented } from '@/ui/inputs/toggle-group';
 import { Tabs, TabsList, TabsTrigger } from '@/ui/layout/tabs';
+import { useViewport } from '@/ui/layout/use-viewport';
 import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
 import { useToast } from '@/ui/overlays/toast';
 import { Tooltip } from '@/ui/overlays/tooltip';
-import { Globe, Plus, Smartphone, Trash2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  ChevronDown,
+  ChevronRight,
+  Globe,
+  Info,
+  Plus,
+  Smartphone,
+  Trash2,
+} from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -36,6 +47,12 @@ function Projects() {
   const { openModal, closeModal } = useModal();
   const [query, setQuery] = React.useState('');
   const [deleting, setDeleting] = React.useState(false);
+  // phone: the project list first; a project opens on its own under a way
+  // back that also carries its Delete (a link with ?pid opens it directly)
+  const phone = useViewport() === 'phone';
+  const [opened, setOpened] = React.useState(() =>
+    new URLSearchParams(history.location.search).has('pid'),
+  );
 
   React.useEffect(() => {
     const params = new URLSearchParams(history.location.search);
@@ -47,12 +64,8 @@ function Projects() {
     return () => {
       // the session filters and the player list the active project's metadata
       // keys: rebuild them (a global filter map reset) only if they were edited
-      // here or another project's keys were loaded in their place
-      const active = `${projectsStore.activeSiteId}`;
-      const other = (v?: string) => v !== undefined && v !== active;
-      const { changed, listFor, filtersFor } = customFieldStore;
-      if (changed || other(listFor) || other(filtersFor))
-        void customFieldStore.fetchListActive(active);
+      if (customFieldStore.changed)
+        void customFieldStore.fetchListActive(`${projectsStore.activeSiteId}`);
     };
   }, []);
 
@@ -108,133 +121,155 @@ function Projects() {
 
   return (
     <PreferencesPage title={t('Projects')} flush>
+      {phone && opened && project && (
+        <div className="m-pref__subnav">
+          <Button
+            variant="subtle"
+            size="sm"
+            onClick={() => setOpened(false)}
+            className="m-pref__subnav-back"
+          >
+            <ArrowLeft size={15} />
+            {t('All projects')}
+          </Button>
+          <IconButton
+            icon={<Trash2 size={14} />}
+            label={
+              deleteBlocked ?? t('Delete {{name}}', { name: project.name })
+            }
+            variant="ghost"
+            disabled={!!deleteBlocked}
+            onClick={() => setDeleting(true)}
+          />
+        </div>
+      )}
       <div className="m-pref__split">
-        <div className="m-pref__split-rail">
-          <div className="m-pref__rail-search">
-            <SearchField
-              placeholder={t('Search projects')}
-              value={query}
-              onChange={setQuery}
-            />
-          </div>
-          {projects.map((p) => (
-            <Tooltip
-              key={p.projectId}
-              title={t('{{n}}% capture rate', { n: p.sampleRate })}
-              side="right"
-              delay={400}
-            >
-              <button
-                type="button"
-                className={`m-pref__proj m-hover${p.projectId === pid ? ' is-active' : ''}`}
-                onClick={() =>
-                  projectsStore.setConfigProject(p.projectId ?? undefined)
-                }
+        {(!phone || !opened) && (
+          <div className="m-pref__split-rail">
+            <div className="m-pref__rail-search">
+              <SearchField
+                placeholder={t('Search projects')}
+                value={query}
+                onChange={setQuery}
+              />
+            </div>
+            {projects.map((p) => (
+              <Tooltip
+                key={p.projectId}
+                title={t('{{n}}% capture rate', { n: p.sampleRate })}
+                side="right"
+                delay={400}
               >
-                <span className="m-pref__proj-icon">
-                  {p.platform === 'web' ? (
-                    <Globe size={14} />
-                  ) : (
-                    <Smartphone size={14} />
-                  )}
-                </span>
-                <span className="m-pref__proj-name m-truncate">{p.name}</span>
-              </button>
-            </Tooltip>
-          ))}
-          <Blocked reason={addBlocked}>
-            <Button
-              variant="subtle"
-              size="sm"
-              disabled={!!addBlocked}
-              onClick={addProject}
-              className="justify-start"
-            >
-              <Plus size={14} />
-              {t('Add project')}
-            </Button>
-          </Blocked>
-        </div>
-
-        <div className="m-pref__split-body">
-          {project ? (
-            <>
-              <PrefBlock flush>
-                <div className="m-pref__row m-pref__tabrow">
-                  <Tabs
-                    value={current}
-                    onValueChange={(v) => projectsStore.setConfigTab(v)}
-                  >
-                    <TabsList
-                      aria-label={t('Project settings')}
-                      className="border-b-0"
-                    >
-                      <TabsTrigger value="installation">
-                        {t('Installation')}
-                      </TabsTrigger>
-                      <TabsTrigger value="captureRate">
-                        {t('Capture rate')}
-                      </TabsTrigger>
-                      <TabsTrigger value="metadata">
-                        {t('Metadata')}
-                      </TabsTrigger>
-                    </TabsList>
-                  </Tabs>
-                  <span
-                    className="m-pref__scope"
-                    style={{ marginLeft: 'auto' }}
-                  >
-                    {project.platform === 'web' ? t('Web') : t('Mobile')}
-                  </span>
-                  <IconButton
-                    icon={<Trash2 size={14} />}
-                    label={
-                      deleteBlocked ??
-                      t('Delete {{name}}', { name: project.name })
-                    }
-                    variant="ghost"
-                    disabled={!!deleteBlocked}
-                    onClick={() => setDeleting(true)}
-                  />
-                </div>
-              </PrefBlock>
-              {current === 'installation' ? (
-                <>
-                  <ThisProject key={project.projectId} project={project} />
-                  <PrefBlock
-                    title={t('Project key')}
-                    hint={t(
-                      'The one value the tracker needs. It is not a secret - it ships in your page.',
+                <button
+                  type="button"
+                  className={`m-pref__proj m-hover${p.projectId === pid && !phone ? ' is-active' : ''}`}
+                  onClick={() => {
+                    projectsStore.setConfigProject(p.projectId ?? undefined);
+                    if (phone) setOpened(true);
+                  }}
+                >
+                  <span className="m-pref__proj-icon">
+                    {p.platform === 'web' ? (
+                      <Globe size={14} />
+                    ) : (
+                      <Smartphone size={14} />
                     )}
-                  >
-                    <PrefField>
-                      <SecretValue
-                        value={project.projectKey ?? ''}
-                        secret={false}
-                        label={t('project key')}
-                      />
-                    </PrefField>
-                  </PrefBlock>
-                  <PrefBlock
-                    title={t('Install the tracker')}
-                    hint={t('The steps, in order.')}
-                  >
-                    <ProjectTabTracking project={project} />
-                  </PrefBlock>
-                </>
-              ) : current === 'captureRate' ? (
-                <>
-                  <ProjectCaptureRate project={project} />
-                  <CaptureLimit project={project} />
-                </>
-              ) : (
+                  </span>
+                  <span className="m-pref__proj-name m-truncate">{p.name}</span>
+                  {phone && (
+                    <ChevronRight
+                      size={16}
+                      className="m-pref__proj-chev"
+                      aria-hidden="true"
+                    />
+                  )}
+                </button>
+              </Tooltip>
+            ))}
+            <Blocked reason={addBlocked}>
+              <Button
+                variant="subtle"
+                size="sm"
+                disabled={!!addBlocked}
+                onClick={addProject}
+                className="justify-start"
+              >
+                <Plus size={14} />
+                {t('Add project')}
+              </Button>
+            </Blocked>
+          </div>
+        )}
+
+        {(!phone || opened) && (
+          <div className="m-pref__split-body">
+            {project ? (
+              <>
                 <PrefBlock flush>
-                  <CustomFields />
+                  <div className="m-pref__row m-pref__tabrow">
+                    <Tabs
+                      value={current}
+                      onValueChange={(v) => projectsStore.setConfigTab(v)}
+                    >
+                      <TabsList
+                        aria-label={t('Project settings')}
+                        className="border-b-0"
+                      >
+                        <TabsTrigger value="installation">
+                          {t('Installation')}
+                        </TabsTrigger>
+                        <TabsTrigger value="captureRate">
+                          {t('Capture rate')}
+                        </TabsTrigger>
+                        <TabsTrigger value="metadata">
+                          {t('Metadata')}
+                        </TabsTrigger>
+                      </TabsList>
+                    </Tabs>
+                    {!phone && (
+                      <>
+                        <span style={{ marginLeft: 'auto' }}>
+                          <Chip>
+                            {project.platform === 'web' ? (
+                              <Globe size={12} aria-hidden="true" />
+                            ) : (
+                              <Smartphone size={12} aria-hidden="true" />
+                            )}
+                            {project.platform === 'web'
+                              ? t('Web')
+                              : t('Mobile')}
+                          </Chip>
+                        </span>
+                        <IconButton
+                          icon={<Trash2 size={14} />}
+                          label={
+                            deleteBlocked ??
+                            t('Delete {{name}}', { name: project.name })
+                          }
+                          variant="ghost"
+                          disabled={!!deleteBlocked}
+                          onClick={() => setDeleting(true)}
+                        />
+                      </>
+                    )}
+                  </div>
                 </PrefBlock>
-              )}
-            </>
-          ) : null}
-        </div>
+                {current === 'installation' ? (
+                  <ThisProject key={project.projectId} project={project} />
+                ) : current === 'captureRate' ? (
+                  <>
+                    <ProjectCaptureRate project={project} />
+                    <CaptureLimit project={project} />
+                  </>
+                ) : (
+                  <PrefBlock flush>
+                    <CustomFields />
+                  </PrefBlock>
+                )}
+              </>
+            ) : null}
+          </div>
+        )}
       </div>
       <ConfirmDialog
         open={deleting}
@@ -268,18 +303,20 @@ function Blocked({
 }
 
 const ThisProject = observer(({ project }: { project: Project }) => {
+  usePageTitle('Installation - OpenReplay Preferences');
   const { t } = useTranslation();
   const toast = useToast();
   const { projectsStore, userStore } = useStore();
   const [name, setName] = React.useState(project.name);
-  const [platform, setPlatform] = React.useState(project.platform);
-  const dirty = name.trim() !== project.name || platform !== project.platform;
-  // the fields lead nowhere without the right to save them
+  const [showInstall, setShowInstall] = React.useState(false);
   const locked = !userStore.isAdmin;
 
   const save = () =>
     projectsStore
-      .updateProject(project.id!, { name: name.trim(), platform })
+      .updateProject(project.id!, {
+        name: name.trim(),
+        platform: project.platform,
+      })
       .then(() => toast.success(t('Project updated successfully')))
       .catch((e: Error) =>
         toast.error(
@@ -288,64 +325,105 @@ const ThisProject = observer(({ project }: { project: Project }) => {
       );
 
   return (
-    <PrefBlock
-      title={t('This project')}
-      hint={
-        locked
-          ? t('Only an admin can rename the project or change its type.')
-          : t(
-              'The name is yours and changes nothing; the key never changes at all.',
-            )
-      }
-    >
-      <PrefField label={t('Project name')} htmlFor="pref-project-name">
-        <Input
-          id="pref-project-name"
-          value={name}
-          maxLength={40}
-          disabled={locked}
-          onChange={(e) => setName(e.target.value)}
-        />
-      </PrefField>
-      <PrefField
-        label={t('Project type')}
-        note={t(
-          'It decides which tracker you install. Changing it changes the steps below.',
-        )}
-      >
-        <Segmented<string>
-          value={platform}
-          onChange={setPlatform}
-          ariaLabel={t('Project type')}
-          options={[
-            { value: 'web', label: t('Web'), disabled: locked },
-            { value: 'ios', label: t('Mobile'), disabled: locked },
-          ]}
-        />
-      </PrefField>
-      <div className="m-pref__row">
-        <Blocked
-          reason={
-            userStore.isAdmin
-              ? undefined
-              : t('You don’t have the permissions to perform this action.')
+    <>
+      <PrefBlock>
+        <PrefField label={t('Project name')} htmlFor="pref-project-name">
+          <div className="m-pref__row">
+            <Input
+              id="pref-project-name"
+              value={name}
+              maxLength={40}
+              disabled={locked}
+              className="m-pref__grow"
+              onChange={(e) => setName(e.target.value)}
+            />
+            <Blocked
+              reason={
+                locked
+                  ? t('You don’t have the permissions to perform this action.')
+                  : undefined
+              }
+            >
+              <Button
+                variant="primary"
+                disabled={
+                  locked ||
+                  name.trim() === project.name ||
+                  !name.trim() ||
+                  projectsStore.loading
+                }
+                onClick={() => void save()}
+              >
+                {t('Save')}
+              </Button>
+            </Blocked>
+          </div>
+        </PrefField>
+        <PrefField
+          label={
+            <span className="m-pref__label-tip">
+              {t('Project type')}
+              <Tooltip
+                title={t(
+                  'A project’s type can’t change. To record another platform, add a new project.',
+                )}
+              >
+                <span
+                  className="m-pref__tip"
+                  tabIndex={0}
+                  aria-label={t('Why can’t I change this?')}
+                >
+                  <Info size={13} aria-hidden="true" />
+                </span>
+              </Tooltip>
+            </span>
           }
         >
+          <Input
+            value={project.platform === 'web' ? t('Web') : t('Mobile')}
+            readOnly
+            className="m-pref__readonly"
+            aria-label={t('Project type')}
+          />
+        </PrefField>
+        <PrefField
+          label={t('Project key')}
+          note={t(
+            'The one value the tracker needs. It is not a secret, it ships in your page.',
+          )}
+        >
+          <SecretValue
+            value={project.projectKey ?? ''}
+            secret={false}
+            label={t('project key')}
+          />
+        </PrefField>
+        <div>
           <Button
-            variant="primary"
-            disabled={
-              !userStore.isAdmin ||
-              !dirty ||
-              !name.trim() ||
-              projectsStore.loading
-            }
-            onClick={() => void save()}
+            variant="subtle"
+            aria-expanded={showInstall}
+            onClick={() => setShowInstall((v) => !v)}
           >
-            {t('Save')}
+            <ChevronDown
+              size={14}
+              aria-hidden="true"
+              className={`m-pref__disclose${showInstall ? ' is-open' : ''}`}
+            />
+            {showInstall
+              ? t('Hide the install steps')
+              : t('See how to install the tracker')}
           </Button>
-        </Blocked>
-      </div>
-    </PrefBlock>
+        </div>
+      </PrefBlock>
+      {showInstall && (
+        <PrefBlock
+          title={t('Install the tracker')}
+          hint={t('The steps, in order.')}
+        >
+          <ProjectTabTracking project={project} />
+        </PrefBlock>
+      )}
+    </>
   );
 });
 

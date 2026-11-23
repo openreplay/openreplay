@@ -56,7 +56,11 @@ func (h *handlersImpl) favorite(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.favorites.DoFavorite(r.Context(), projID, sessID, userID); err != nil {
-		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
+		code := http.StatusInternalServerError
+		if errors.Is(err, favorite.ErrSessionNotFound) {
+			code = http.StatusNotFound
+		}
+		h.responser.ResponseWithError(h.log, r.Context(), w, code, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 

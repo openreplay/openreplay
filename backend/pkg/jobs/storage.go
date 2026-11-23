@@ -153,7 +153,9 @@ func (j *jobsImpl) Cancel(jobID int, projectID uint32) (*Job, error) {
 	return job, nil
 }
 
-func (j *jobsImpl) ExecuteScheduledJobs() error {
+// ExecuteScheduledJobs is the port of chalicelib.core.jobs.execute_jobs: every scheduled
+// job whose start_at has passed is run and marked completed or failed with its error.
+func (j *jobsImpl) ExecuteScheduledJobs(ctx context.Context) error {
 	jobsToExecute, err := collectJobs(j.db.Query(`
 		SELECT `+jobColumns+`
 		FROM public.jobs
@@ -164,16 +166,17 @@ func (j *jobsImpl) ExecuteScheduledJobs() error {
 	}
 
 	for _, job := range jobsToExecute {
-		j.log.Info(context.Background(), "executing jobId:%d", job.JobID)
-		j.executeJob(job)
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		j.log.Info(ctx, "executing jobId:%d", job.JobID)
+		j.executeJob(ctx, job)
 	}
 
 	return nil
 }
 
-func (j *jobsImpl) executeJob(job *Job) {
-	ctx := context.Background()
-
+func (j *jobsImpl) executeJob(ctx context.Context, job *Job) {
 	if job.Action != ActionDeleteUserData {
 		errMsg := fmt.Sprintf("unsupported action: %s", job.Action)
 		j.log.Error(ctx, "%s", errMsg)
@@ -216,6 +219,9 @@ func (j *jobsImpl) deleteUserSessionsInBatches(ctx context.Context, projectID ui
 		j.log.Info(ctx, "deleting %d sessions for jobId:%d", len(ids), jobID)
 		if err := j.deleteSessionsByIDs(ids); err != nil {
 			return fmt.Errorf("failed to delete sessions: %w", err)
+		}
+		if err := j.tagMobsForDeletion(ctx, ids); err != nil {
+			return fmt.Errorf("failed to tag replay files: %w", err)
 		}
 		if len(ids) < deletionBatchSize {
 			return nil

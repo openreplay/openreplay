@@ -1,4 +1,4 @@
-import { describe, expect, test } from '@jest/globals'
+import { describe, expect, test, afterEach } from '@jest/globals'
 import { getCustomAttributeSelector, getTextualLabel } from '../main/utils.js'
 import { getCSSPath, isDeepClickable, resolvePointerRoot } from '../main/modules/mouse.js'
 
@@ -102,10 +102,12 @@ describe('getCSSPath', () => {
   })
 
   test('prefers a custom attribute over any data attribute', () => {
-    const el = document.createElement('button')
-    el.setAttribute('data-animation', 'fade')
-    el.setAttribute('data-testid', 'submit')
+    // attached: data attributes are used only when unique in the document
+    document.body.innerHTML = '<button data-animation="fade" data-testid="submit"></button>'
+    const el = document.querySelector('button') as Element
+    expect(getCSSPath(el)).toBe('[data-animation="fade"]')
     expect(getCSSPath(el, ['data-testid'])).toBe('[data-testid="submit"]')
+    document.body.innerHTML = ''
   })
 
   test('anchors the path on an ancestor custom attribute', () => {
@@ -169,5 +171,20 @@ describe('resolvePointerRoot', () => {
     const span = document.querySelector('span') as Element
     expect(resolvePointerRoot(span)).toBe(span)
     document.body.innerHTML = ''
+  })
+})
+
+describe('getCSSPath data attributes', () => {
+  afterEach(() => {
+    document.body.innerHTML = ''
+  })
+
+  test('skips a data attribute shared with other elements', () => {
+    document.body.innerHTML =
+      '<div><button data-v-7ba5bd90="">Save</button><button data-v-7ba5bd90="" data-action="cancel">Cancel</button></div>'
+    const [save, cancel] = Array.from(document.querySelectorAll('button'))
+    expect(getCSSPath(cancel)).toBe('[data-action="cancel"]')
+    const saveMatches = document.querySelectorAll(getCSSPath(save) as string)
+    expect(Array.from(saveMatches)).toEqual([save])
   })
 })

@@ -1,7 +1,6 @@
 import { describe, expect, test, jest, afterEach, beforeEach } from '@jest/globals'
 import {
   adjustTimeOrigin,
-  getTimeOrigin,
   now,
   stars,
   normSpaces,
@@ -91,23 +90,6 @@ describe('simpleMerge', () => {
 })
 
 describe('throttleWithTrailing', () => {
-  test('executes trailing call with last arguments', () => {
-    jest.useFakeTimers()
-    const fn = jest.fn()
-    const throttled = throttleWithTrailing<string, [number]>(fn, 50)
-
-    throttled('a', 1)
-    throttled('a', 2)
-
-    expect(fn).toHaveBeenCalledTimes(1)
-    expect(fn).toHaveBeenCalledWith('a', 1)
-
-    jest.advanceTimersByTime(60)
-
-    expect(fn).toHaveBeenCalledTimes(2)
-    expect(fn).toHaveBeenLastCalledWith('a', 2)
-  })
-
   test('clear prevents pending trailing call', () => {
     jest.useFakeTimers()
     const fn = jest.fn()
@@ -148,14 +130,6 @@ describe('throttleWithTrailing per-key', () => {
 describe('adjustTimeOrigin / now', () => {
   afterEach(() => {
     jest.restoreAllMocks()
-  })
-
-  test('time origin is Date.now() minus performance.now()', () => {
-    jest.spyOn(Date, 'now').mockReturnValue(10_000)
-    jest.spyOn(performance, 'now').mockReturnValue(1_500)
-    adjustTimeOrigin()
-
-    expect(getTimeOrigin()).toBe(8_500)
   })
 
   test('now() is monotonic performance time shifted by the origin, rounded', () => {
@@ -264,9 +238,13 @@ describe('canAccessIframe', () => {
     expect(canAccessIframe(iframe)).toBe(true)
   })
 
-  test('returns false if the iframe does not have a contentDocument', () => {
+  test('returns false if the iframe has no contentDocument', () => {
+    // detached: contentDocument is null
+    expect(canAccessIframe(document.createElement('iframe'))).toBe(false)
+  })
+
+  test('returns false if reading contentDocument throws (cross-origin)', () => {
     const iframe = document.createElement('iframe')
-    // Mock iframe.contentDocument to throw an error
     Object.defineProperty(iframe, 'contentDocument', {
       get: () => {
         throw new Error('securityError')

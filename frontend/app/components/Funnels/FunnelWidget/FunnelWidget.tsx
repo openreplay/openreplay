@@ -28,6 +28,8 @@ interface Props {
 
 const INSIDE_MIN = 12;
 const fmt = (n: number) => (n ?? 0).toLocaleString();
+const eventCount = (filters: any[] = []) =>
+  filters.filter((f) => f.isEvent).length;
 
 export function stageText(stage: FunnelStage, t: TFunction): string {
   const subs = Array.isArray(stage.subfilters) ? stage.subfilters : [];
@@ -62,7 +64,7 @@ function FunnelWidget({
   // start from the stage it still points at, so the next click clears it
   const [focusedFilter, setFocusedFilter] = React.useState<number | null>(
     () => {
-      const n = dashboardStore.drillDownFilter.filters?.length ?? 0;
+      const n = eventCount(dashboardStore.drillDownFilter.filters);
       return n > 0 ? n - 1 : null;
     },
   );
@@ -76,7 +78,9 @@ function FunnelWidget({
     ? dashboardStore.comparisonPeriods[metric.metricId]
     : undefined;
   const metricFilters = metric?.series[0]?.filter.filters || [];
-  const noEvents = metricFilters.length === 0;
+  // stages are the series' events only; its session filters hold for every stage
+  const steps = metricFilters.filter((f) => f.isEvent);
+  const noEvents = steps.length === 0;
 
   useEffect(
     () => () => {
@@ -92,7 +96,7 @@ function FunnelWidget({
   }, [stages]);
 
   // a drill applied from outside (a dashboard's stage) marks its stage
-  const drilledStages = dashboardStore.drillDownFilter.filters?.length ?? 0;
+  const drilledStages = eventCount(dashboardStore.drillDownFilter.filters);
   useEffect(() => {
     const want = drilledStages > 0 ? drilledStages - 1 : null;
     if (want === focusedFilter) return;
@@ -105,7 +109,13 @@ function FunnelWidget({
   const applyDrillDown = (index: number) => {
     const ts = (drillPeriod ?? drillDownPeriod).toTimestamps();
     drillDownFilter.merge({
-      filters: metricFilters.slice(0, index + 1),
+      filters:
+        index < 0
+          ? []
+          : [
+              ...steps.slice(0, index + 1),
+              ...metricFilters.filter((f) => !f.isEvent),
+            ],
       startTimestamp: ts.startTimestamp,
       endTimestamp: ts.endTimestamp,
     });

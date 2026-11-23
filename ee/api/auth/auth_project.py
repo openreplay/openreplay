@@ -25,6 +25,7 @@ class ProjectAuthorizer:
         current_project = None
         if self.project_identifier == "projectId" \
                 and (isinstance(value, int) or (isinstance(value, str) and value.isnumeric())) \
+                and int(value) <= projects.MAX_PROJECT_ID \
                 and projects.is_authorized(project_id=value, tenant_id=current_user.tenant_id,
                                            user_id=user_id):
             current_project = projects.get_project(tenant_id=current_user.tenant_id, project_id=value)

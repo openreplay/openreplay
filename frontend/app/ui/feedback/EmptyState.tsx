@@ -2,6 +2,7 @@ import { Illustration } from '@/ui/illustrations/Illustration';
 import { Mark, type MarkKind } from '@/ui/illustrations/Mark';
 import { stateById, stateByTitle } from '@/ui/illustrations/states';
 import { SUBJECTS, type SubjectKind } from '@/ui/illustrations/subjects';
+import { useViewport } from '@/ui/layout/use-viewport';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -48,6 +49,7 @@ export function EmptyState({
   large,
   className,
 }: EmptyStateProps) {
+  const phone = useViewport() === 'phone';
   const { t, i18n } = useTranslation();
   if (mark)
     return (
@@ -71,7 +73,8 @@ export function EmptyState({
     (entry && entry.subject in SUBJECTS ? (
       <Illustration
         subject={entry.subject as SubjectKind}
-        robot={entry.robot !== false}
+        // the robot only peeks on hover; a phone has none, so it would sit
+        robot={!phone && entry.robot !== false}
         prop={entry.prop}
         pose={entry.pose}
         side={entry.side}

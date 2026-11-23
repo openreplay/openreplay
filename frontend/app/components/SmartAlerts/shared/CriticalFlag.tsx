@@ -12,6 +12,8 @@ export interface CriticalFlagProps {
 
   matchedBy?: string;
   onClick: () => void;
+  /** `bar`: one of a toolbar's icon buttons; default is the 20px table-row mark */
+  size?: 'mark' | 'bar';
 }
 
 const label = (
@@ -33,14 +35,19 @@ const label = (
   }
 };
 
-export function CriticalFlag({ state, matchedBy, onClick }: CriticalFlagProps) {
+export function CriticalFlag({
+  state,
+  matchedBy,
+  onClick,
+  size = 'mark',
+}: CriticalFlagProps) {
   const { t } = useTranslation();
   const text = label(t, state, matchedBy);
   return (
     <Tooltip title={text} delay={300}>
       <button
         type="button"
-        className={`m-crit m-crit--${state}`}
+        className={`m-crit m-crit--${state}${size === 'bar' ? ' m-crit--bar' : ''}`}
         aria-label={text}
         aria-pressed={state === 'mine' || state === 'team'}
         onClick={(e) => {

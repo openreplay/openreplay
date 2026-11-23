@@ -1,0 +1,20 @@
+{
+  "name": "@openreplay/tracker-harness",
+  "private": true,
+  "type": "module",
+  "description": "Browser harness for the tracker: DOM-core correctness through the real player, perf, memory, full-tracker e2e, baseline comparisons against any git ref",
+  "scripts": {
+    "harness": "node cli.mjs",
+    "core": "node cli.mjs core --replay",
+    "perf": "node cli.mjs perf --reps=3",
+    "memory": "node cli.mjs memory",
+    "e2e": "node cli.mjs e2e",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "install-browser": "playwright-core install chromium"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "playwright-core": "1.61.0",
+    "typescript": "^5.9.3"
+  }
+}

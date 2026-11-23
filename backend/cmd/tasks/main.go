@@ -12,6 +12,7 @@ import (
 	"openreplay/backend/pkg/metrics"
 	"openreplay/backend/pkg/metrics/database"
 	schedulerMetrics "openreplay/backend/pkg/metrics/scheduler"
+	"openreplay/backend/pkg/objectstorage/store"
 	"openreplay/backend/pkg/scheduler"
 	"openreplay/backend/pkg/terminator"
 
@@ -55,7 +56,12 @@ func main() {
 		return chConn.Ping(ctx)
 	})
 
-	service, err := tasks.New(log, cfg, overrides, pgConn, chConn, schedMetric)
+	objStore, err := store.NewStore(&cfg.ObjectsConfig)
+	if err != nil {
+		log.Fatal(ctx, "can't init object storage: %s", err)
+	}
+
+	service, err := tasks.New(log, cfg, overrides, pgConn, chConn, objStore, schedMetric)
 	if err != nil {
 		log.Fatal(ctx, "can't init scheduler: %s", err)
 	}

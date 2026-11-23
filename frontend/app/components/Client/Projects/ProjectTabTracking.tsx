@@ -1,4 +1,3 @@
-import usePageTitle from '@/hooks/usePageTitle';
 import Project from '@/mstore/types/project';
 import React from 'react';
 
@@ -6,7 +5,6 @@ import InstallGuide from 'Components/Onboarding/InstallGuide';
 import type { Platform } from 'Components/Onboarding/install';
 
 function ProjectTabTracking({ project }: { project: Project }) {
-  usePageTitle('Installation - OpenReplay Preferences');
   const mobile = project.platform !== 'web';
   const [platform, setPlatform] = React.useState<Platform>(
     mobile ? 'ios' : 'web',

@@ -6,6 +6,8 @@
 @import '../ui/styles/theme.css';
 @import '../ui/styles/light.css';
 @import '../ui/styles/motion.css';
+@import '../ui/styles/touch.css';
+@import '../ui/styles/phone-sheets.css';
 
 @config '../../tailwind.config.js';
 

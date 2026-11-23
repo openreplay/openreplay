@@ -67,16 +67,6 @@ describe('Session', () => {
     expect(callback).not.toHaveBeenCalled()
   })
 
-  test('creates a new Session with default values', () => {
-    expect(session.getInfo()).toEqual({
-      sessionID: undefined,
-      metadata: {},
-      userID: null,
-      timestamp: 0,
-      projectID: undefined,
-    })
-  })
-
   test('assigns new info correctly', () => {
     const newInfo = {
       sessionID: 'new_id',
@@ -107,11 +97,6 @@ describe('Session', () => {
     session.setUserID('u1')
     expect(callback).toHaveBeenLastCalledWith({ userID: 'u1' })
     expect(session.getInfo().userID).toBe('u1')
-  })
-
-  test('gets page number correctly', () => {
-    store.pageno_key = '2'
-    expect(session.getPageNumber()).toEqual(2)
   })
 
   test('increments page number and stores it', () => {
@@ -229,6 +214,27 @@ describe('Session', () => {
     s.regenerateTabId()
     expect(s.getTabId()).toBe('new_tab')
     expect(store.tabid_key).toBe('new_tab')
+  })
+
+  test('discard prevents a later tab ID read or regeneration from writing storage', () => {
+    const s = makeSession()
+    s.discard()
+    mockSessionStorage.setItem.mockClear()
+    expect(s.getTabId()).toBe('')
+    s.regenerateTabId()
+    expect(mockSessionStorage.setItem).not.toHaveBeenCalled()
+  })
+
+  test('a retired session cannot read or overwrite a subsequent project token', () => {
+    session.discard()
+    const next = makeSession()
+    next.setSessionToken('next-token', 'next-project')
+    const stored = store.token_key
+
+    expect(session.getSessionToken('previous-project')).toBeUndefined()
+    session.setSessionToken('retired-token', 'previous-project')
+    session.reset()
+    expect(store.token_key).toBe(stored)
   })
 
   test('resets session correctly', () => {

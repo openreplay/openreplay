@@ -3,6 +3,25 @@ import { hasOpenreplayAttribute } from "./utils.js"
 type XY = [number, number]
 type XYDXDY = [number, number, number, number]
 
+/** The innermost element at a point, inside open shadow roots too (web components, Ionic). */
+function elementFromPoint(x: number, y: number): Element | null {
+  let el = document.elementFromPoint(x, y)
+  while (el?.shadowRoot) {
+    const inner = el.shadowRoot.elementFromPoint(x, y)
+    if (!inner || inner === el) break
+    el = inner
+  }
+  return el
+}
+
+/** Parent in the rendered (flat) tree: slotted nodes live in their slot, shadow roots in their host. */
+function flatParent(el: Element): Element | null {
+  if (el.assignedSlot) return el.assignedSlot
+  if (el.parentElement) return el.parentElement
+  const parent = el.parentNode
+  return parent && parent.nodeType === Node.DOCUMENT_FRAGMENT_NODE ? (parent as ShadowRoot).host ?? null : null
+}
+
 
 export default class Mouse {
   private readonly mouse: HTMLDivElement
@@ -69,12 +88,13 @@ export default class Mouse {
   }
 
   click(pos: XY) {
-    const el = document.elementFromPoint(pos[0], pos[1])
+    const el = elementFromPoint(pos[0], pos[1])
     if (el instanceof HTMLElement || el instanceof SVGElement) {
       try {
         const clickEvent = new MouseEvent('click', {
           bubbles: true,
           cancelable: true,
+          composed: true,
           view: window,
           clientX: pos[0],
           clientY: pos[1]
@@ -93,11 +113,12 @@ export default class Mouse {
 
   startDrag(pos: XY) {
     this.move(pos)
-    const el = document.elementFromPoint(pos[0], pos[1])
+    const el = elementFromPoint(pos[0], pos[1])
     if (el) {
       const downEvt = new MouseEvent("mousedown", {
         bubbles: true,
         cancelable: true,
+        composed: true,
         clientX: pos[0],
         clientY: pos[1],
         buttons: 1,
@@ -113,11 +134,12 @@ export default class Mouse {
 
     if (!this.isDragging) return;
 
-    const el = document.elementFromPoint(x, y);
+    const el = elementFromPoint(x, y);
     if (el) {
       const moveEvt = new MouseEvent("mousemove", {
         bubbles: true,
         cancelable: true,
+        composed: true,
         clientX: x,
         clientY: y,
         buttons: 1,
@@ -132,11 +154,12 @@ export default class Mouse {
   stopDrag() {
     if (!this.isDragging) return;
     const [x, y] = this.position;
-    const el = document.elementFromPoint(x, y);
+    const el = elementFromPoint(x, y);
     if (el) {
       const upEvt = new MouseEvent("mouseup", {
         bubbles: true,
         cancelable: true,
+        composed: true,
         clientX: x,
         clientY: y,
         buttons: 0,
@@ -173,7 +196,7 @@ export default class Mouse {
       return
     }
 
-    el = document.elementFromPoint(
+    el = elementFromPoint(
       mouseX-this.pScrEl.scrollLeft,
       mouseY-this.pScrEl.scrollTop,
     )
@@ -192,7 +215,7 @@ export default class Mouse {
           }
         }
       }
-      el = el.parentElement
+      el = flatParent(el)
     }
 
     // If not scrolled

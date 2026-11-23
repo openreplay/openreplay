@@ -15,6 +15,8 @@ import (
 
 const toggleAttempts = 3
 
+var ErrSessionNotFound = errors.New("session not found")
+
 type Favorites interface {
 	DoFavorite(ctx context.Context, projectID uint32, sessionID uint64, userID string) error
 }
@@ -36,10 +38,25 @@ func New(log logger.Logger, conn pool.Pool, chConn driver.Conn, objStorage objec
 }
 
 func (f *favoritesImpl) DoFavorite(ctx context.Context, projectID uint32, sessionID uint64, userID string) error {
+	if err := f.checkSession(projectID, sessionID); err != nil {
+		return err
+	}
 	if _, err := f.toggle(sessionID, userID); err != nil {
 		return err
 	}
 	f.syncVault(projectID, sessionID)
+	return nil
+}
+
+func (f *favoritesImpl) checkSession(projectID uint32, sessionID uint64) error {
+	var exists bool
+	sql := `SELECT EXISTS(SELECT 1 FROM public.sessions WHERE session_id = $1 AND project_id = $2);`
+	if err := f.conn.QueryRow(sql, sessionID, projectID).Scan(&exists); err != nil {
+		return fmt.Errorf("can't check session: %s", err)
+	}
+	if !exists {
+		return ErrSessionNotFound
+	}
 	return nil
 }
 

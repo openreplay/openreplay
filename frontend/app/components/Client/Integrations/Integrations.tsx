@@ -1,6 +1,7 @@
 import { Icon } from '@/ui/icons/Icon';
 import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
 import { toast } from '@/ui/overlays/toast';
+import { Tooltip } from '@/ui/overlays/tooltip';
 import { useQuery } from '@tanstack/react-query';
 import withPageTitle from 'HOCs/withPageTitle';
 import { TFunction } from 'i18next';
@@ -80,31 +81,18 @@ function Integrations(props: Props) {
 
   // a connection covers projects of its own choosing: a card is connected
   // where any project has it, and a backend one says how many
-  const projectIds = projectsStore.list.map((p) => String(p.projectId));
-  const { data: byProject, refetch: refetchByProject } = useQuery({
-    queryKey: ['integrationsByProject', projectIds],
-    queryFn: async () =>
-      Object.fromEntries(
-        await Promise.all(
-          projectIds.map(async (id) => {
-            const { data } = await integrationsService
-              .fetchList(undefined, id)
-              .catch(() => ({ data: [] }));
-            const names = (Array.isArray(data) ? data : [])
-              .filter((i: any) => i.integrated)
-              .map((i: any) => i.name as string);
-            return [id, names] as const;
-          }),
-        ),
-      ) as Record<string, string[]>,
-    enabled: projectIds.length > 0,
+  const { data: status, refetch: refetchStatus } = useQuery({
+    queryKey: ['integrationStatus'],
+    queryFn: integrationsService.fetchStatus,
   });
-  const projectsWith = (slug: string) =>
-    byProject
-      ? projectIds.filter((id) => byProject[id]?.includes(slug)).length
-      : integratedList.includes(slug)
-        ? 1
-        : 0;
+  const projectsWith = (slug: string): string[] => {
+    const s = status?.[slug];
+    if (s?.projectIds) return s.projectIds.map(String);
+    const on = s ? s.integrated : integratedList.includes(slug);
+    return on ? [String(siteId)] : [];
+  };
+  const projectName = (id: string) =>
+    projectsStore.list.find((p) => String(p.projectId) === id)?.name ?? id;
 
   const onClick = (integration: any) => {
     if (
@@ -129,7 +117,7 @@ function Integrations(props: Props) {
 
     const close = () => {
       hideModal();
-      void refetchByProject();
+      void refetchStatus();
     };
     showModal(
       React.cloneElement(integration.component, {
@@ -137,7 +125,7 @@ function Integrations(props: Props) {
         siteId,
         onClose: close,
       }),
-      { right: true, onClose: () => void refetchByProject() },
+      { right: true, onClose: () => void refetchStatus() },
     );
   };
 
@@ -150,7 +138,7 @@ function Integrations(props: Props) {
       toast.error(t('Failed to remove integration'));
     } finally {
       void fetchIntegrationList(siteId);
-      void refetchByProject();
+      void refetchStatus();
     }
   };
 
@@ -171,10 +159,13 @@ function Integrations(props: Props) {
         <PrefBlock key={cat.key} title={cat.title} hint={cat.description}>
           <div className="m-pref__cards">
             {cat.integrations.map((integration: any) => {
-              const covered = integration.slug
+              const covered: string[] = integration.slug
                 ? projectsWith(integration.slug)
-                : 0;
-              const on = covered > 0;
+                : [];
+              const on = covered.length > 0;
+              // tenant-wide connections (trackers, chat) reach every project
+              const everywhere =
+                !cat.isProject || covered.length >= projectsStore.list.length;
               const blocked =
                 integration.slug in issueTrackers &&
                 activeTracker &&
@@ -203,16 +194,27 @@ function Integrations(props: Props) {
                   </span>
                   <span className="m-pref__card-lead">
                     <span className="m-pref__card-title">
-                      {integration.title}
+                      <span className="m-truncate">{integration.title}</span>
                       {on ? (
-                        <span className="m-pref__on">
-                          {cat.isProject && covered > 1
-                            ? t('Connected · {{n}} projects', {
-                                n: covered,
-                                count: covered,
-                              })
-                            : t('Connected')}
-                        </span>
+                        <Tooltip
+                          title={
+                            everywhere
+                              ? t('Connected to every project')
+                              : t('Connected to {{names}}', {
+                                  names: covered
+                                    .map((id) => projectName(id))
+                                    .join(', '),
+                                })
+                          }
+                        >
+                          <span className="m-pref__on m-pref__card-status">
+                            {everywhere
+                              ? t('All projects')
+                              : t('{{count}} projects', {
+                                  count: covered.length,
+                                })}
+                          </span>
+                        </Tooltip>
                       ) : null}
                     </span>
                     <span className="m-pref__card-sub">

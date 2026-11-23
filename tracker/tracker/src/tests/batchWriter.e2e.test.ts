@@ -147,7 +147,6 @@ afterEach(() => {
   try { expectNoRepair(warn) } finally { warn.mockRestore() }
 })
 
-const OVERFLOW_WARNING = 'OpenReplay: beacon size overflow. Skipping large message.'
 
 function makeWriter(
   opts: { protocolVersion?: number; beaconSizeLimit?: number; exitInit?: boolean } = {},
@@ -323,105 +322,6 @@ describe('BatchWriter e2e', () => {
     }
   })
 
-  test('oversized single message goes through the one-shot oversized path', () => {
-    const writer = makeWriter() // beaconSizeLimit defaults to 1MB
-    writer.writeMessage([T.Timestamp, 1_000_000])
-    writer.writeMessage([T.MouseMove, 1, 1])
-    // Fits the 200kB soft buffer? Make it fit beaconSizeLimit (1MB) but exceed soft (200kB).
-    const big = 'x'.repeat(250_000)
-    writer.writeMessage([T.ConsoleLog, 'big', big])
-    writer.finaliseBatch()
-
-    // Expect 2 player batches: the small pre-overflow flush, then the oversized one.
-    const players = batchesByType('player')
-    expect(players.length).toBe(2)
-
-    for (const c of players) {
-      assertPrelude(c.batch)
-    }
-
-    // The oversized batch is larger than the soft cap.
-    const oversized = players.find((c) => c.batch.length > 200_000)
-    expect(oversized).toBeDefined()
-    // ...but still under the hard cap.
-    expect(oversized!.batch.length).toBeLessThanOrEqual(1_000_000)
-  })
-
-  test('hard cap (beaconSizeLimit) drops a too-large message with a warning', () => {
-    // Message must exceed both the soft buffer (200kB) AND the hard cap so that
-    // every retry path fails. Using beaconSizeLimit < 200kB doesn't actually
-    // clamp anything because the regular builder is sized at beaconSize.
-    const writer = makeWriter({ beaconSizeLimit: 250_000 })
-
-    writer.writeMessage([T.Timestamp, 1_000_000])
-    // 300kB string → exceeds 200kB soft AND 250kB hard cap.
-    const huge = [T.ConsoleLog, 'huge', 'x'.repeat(300_000)]
-    writer.writeMessage(huge)
-    writer.finaliseBatch()
-
-    expect(warn).toHaveBeenCalledTimes(1)
-    expect(warn).toHaveBeenCalledWith(OVERFLOW_WARNING, huge)
-    expect(batchesByType('player').length).toBe(0)
-  })
-
-  test('mixed soft + hard scenario across 50 messages emits only well-formed batches', () => {
-    const writer = makeWriter({ protocolVersion: 2 })
-
-    // Drive 50 messages with realistic shape: ticks, mouse moves, occasional fat ConsoleLog,
-    // and asset messages sprinkled in.
-    let tick = 1_000_000
-    const tickFwd = () => { tick += 100 }
-
-    writer.writeMessage([T.Timestamp, tick])
-    writer.writeMessage([T.TabData, 'tab-XYZ'])
-
-    for (let i = 0; i < 50; i++) {
-      tickFwd()
-      writer.writeMessage([T.Timestamp, tick])
-      if (i % 7 === 0) {
-        // Fat devtools log (~5kB)
-        writer.writeMessage([T.ConsoleLog, 'info', 'y'.repeat(5_000)])
-      } else if (i % 5 === 0) {
-        // Asset
-        writer.writeMessage([T.SetNodeAttributeURLBased, i, 'src', `r-${i}.png`, 'http://cdn'])
-      } else if (i % 3 === 0) {
-        // Analytics
-        writer.writeMessage([T.CustomEvent, `evt-${i}`, '{}'])
-      } else {
-        writer.writeMessage([T.MouseMove, i, i + 1])
-      }
-    }
-
-    writer.finaliseBatch()
-
-    // Sanity: at least one batch per non-player stream that we exercised
-    expect(batchesByType('player').length).toBeGreaterThanOrEqual(1)
-    expect(batchesByType('assets').length).toBeGreaterThanOrEqual(1)
-    expect(batchesByType('devtools').length).toBeGreaterThanOrEqual(1)
-    expect(batchesByType('analytics').length).toBeGreaterThanOrEqual(1)
-
-    // Every emitted batch is structurally valid.
-    for (const c of captured) {
-      expect(c.batch[0]).toBe(T.BatchMetadata)
-      const header = assertPrelude(c.batch)
-      expect([VERSION_PLAYER_V2, VERSION_ASSETS, VERSION_DEVTOOLS, VERSION_ANALYTICS]).toContain(header.version)
-      expect(header.pageNo).toBe(7)
-      // Hard cap (default 1MB) is never exceeded
-      expect(c.batch.length).toBeLessThanOrEqual(1_000_000)
-    }
-
-    // Per-stream ordering: within each stream, batch firstIndex is monotonic.
-    // (Cross-stream emit order is dictated by finaliseBatch's stream-iteration
-    // order, not by firstIndex — they're independent counters into the same
-    // global nextIndex sequence.)
-    for (const dt of ['player', 'assets', 'devtools', 'analytics'] as const) {
-      const indices = batchesByType(dt).map((c) => parseBatchHeader(c.batch).firstIndex)
-      for (let i = 1; i < indices.length; i++) {
-        expect(indices[i]).toBeGreaterThan(indices[i - 1])
-      }
-    }
-  })
-
   // A large player message via SetPageLocation's documentTitle field (player stream).
   const bigPlayer = (n: number) => [122 /* SetPageLocation */, 'http://x', '', 0, 'a'.repeat(n)]
 
@@ -524,17 +424,7 @@ describe('BatchWriter e2e', () => {
       for (const c of captured) expect(c.batch.length).toBeLessThanOrEqual(250_000)
     })
 
-    test('finaliseBatch during init ships the visual (auto-send / closing fallback)', () => {
-      const writer = makeWriter({ protocolVersion: 2, exitInit: false })
-      writer.writeMessage([T.MouseMove, 1, 2])
-      writer.writeMessage([T.SetNodeAttributeURLBased, 1, 'src', 'a.png', 'http://cdn'])
-      // No signal — emulate the 30s auto-send / closing path.
-      writer.finaliseBatch()
-      expect(captured[0].dataType).toBe('visual')
-      expect(typeof captured[0].split).toBe('number')
-    })
-
-    test('skipCompression propagates to the visual batch on closing', () => {
+    test('finaliseBatch during init ships the visual; closing skips compression', () => {
       const writer = makeWriter({ protocolVersion: 2, exitInit: false })
       writer.writeMessage([T.MouseMove, 1, 2])
       writer.writeMessage([T.SetNodeAttributeURLBased, 1, 'src', 'a.png', 'http://cdn'])

@@ -3,9 +3,9 @@
 .m-strip--cards {
   display: flex;
   flex-direction: column;
-  gap: var(--m-space-5);
+  gap: var(--m-space-4);
   container-type: inline-size;
-  padding: var(--m-space-7) 0 var(--m-space-9);
+  padding: var(--m-space-6) 0;
   border-top: 1px solid var(--m-border-default);
   background: var(--m-surface-sunken);
 }
@@ -14,7 +14,7 @@
   display: flex;
   align-items: center;
   gap: var(--m-space-6);
-  height: var(--m-control-height-lg);
+  height: var(--m-control-height-sm);
   flex: none;
   padding-inline: var(--m-space-8);
 }
@@ -34,22 +34,15 @@
   font-variant-numeric: tabular-nums;
 }
 
-.m-strip__hint { font-size: var(--m-text-xs); color: var(--m-content-muted); }
-
 .m-strip__tools { display: flex; align-items: center; gap: var(--m-space-3); flex: none; margin-left: auto; }
 .m-strip__search { width: 14rem; }
 
-/* no room for the hint beside the title: it takes its own line under it */
 @container (max-width: 36rem) {
   .m-strip__head {
     flex-wrap: wrap;
     height: auto;
-    min-height: var(--m-control-height-lg);
+    min-height: var(--m-control-height-sm);
     row-gap: 0;
-  }
-  .m-strip__hint {
-    order: 1;
-    flex-basis: 100%;
   }
 }
 
@@ -91,7 +84,7 @@
   list-style: none;
   margin: 0;
   padding: var(--m-space-2);
-  border: 1px solid var(--m-border-subtle);
+  border: 1px solid var(--m-border-default);
   border-radius: var(--m-radius-surface);
   background: var(--m-surface-raised);
 }
@@ -105,3 +98,15 @@
   color: var(--m-content-primary);
 }
 .m-strip__suggest button:hover { background: var(--m-surface-hover); }
+
+/* phone: the head wraps, the hint under the title */
+:root[data-viewport='phone'] .m-strip__head {
+  flex-wrap: wrap;
+  height: auto;
+  gap: var(--m-space-1) var(--m-space-3);
+  padding: var(--m-space-3) var(--m-space-4);
+}
+:root[data-viewport='phone'] .m-strip__search {
+  width: auto;
+  flex: 1;
+}

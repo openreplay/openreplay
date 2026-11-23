@@ -303,7 +303,8 @@ func TestBuildPropertyQuery(t *testing.T) {
 
 	// sources without the requested JSON column are rejected before any query is sent
 	rejected := []QueryToExecute{
-		{Left: "$properties.x", Operator: OpGt, Source: "users"},   // users has no $properties
+		{Left: "$properties.x", Operator: OpGt, Source: "users"}, // users has no $properties and x is not a built-in attribute
+		{Left: "$properties.$email; DROP TABLE x", Operator: OpGt, Source: "users"},
 		{Left: "properties.x", Operator: OpGt, Source: "sessions"}, // sessions has no JSON columns
 		{Left: "properties.", Operator: OpGt},                      // empty key
 		{Left: "properties.x", Operator: OpGt, Source: "nope"},
@@ -331,5 +332,69 @@ func TestSupported(t *testing.T) {
 	seriesID := int64(1)
 	if !Supported(&AlertToExecute{Query: QueryToExecute{Left: LeftCustom}, SeriesID: &seriesID}) {
 		t.Error("series alert should be supported")
+	}
+}
+
+// Built-in identified-user attributes ("$properties.<name>" on users, see identifiedUserTriggers)
+// are read from their users-table column: the name is spliced as a quoted identifier only
+// when it is in the static catalog, and no @propKey is bound.
+func TestBuildPropertyQueryIdentifiedUserAttributes(t *testing.T) {
+	const now = int64(1_700_000_000_000)
+	cases := []struct {
+		left, want string
+	}{
+		{"$properties.$email", `toFloat64OrNull(toString("$email")) AS v`},
+		{"$properties.$country", `toFloat64OrNull(toString("$country")) AS v`},
+		{"$properties.initial_utm_source", `toFloat64OrNull(toString("initial_utm_source")) AS v`},
+		{"$properties.$last_seen", `toFloat64(toUnixTimestamp("$last_seen")) AS v`},
+		{"$properties.$created_at", `toFloat64(toUnixTimestamp("$created_at")) AS v`},
+	}
+	for _, tc := range cases {
+		t.Run(tc.left, func(t *testing.T) {
+			a := &AlertToExecute{ProjectID: 42, DetectionMethod: DetectionChange,
+				Query:   QueryToExecute{Left: tc.left, Operator: OpGt, Right: 123456, Source: "users"},
+				Options: OptionsToExecute{CurrentPeriod: 15}}
+			w := windowsFor(a, now)
+			q, args, err := buildPropertyQuery(a, w)
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, p := range []string{tc.want, "FROM product_analytics.users", `LIMIT 1 BY "$user_id"`, "WHERE NOT _is_deleted", "avgIf(v, t < toDateTime(@curStart))"} {
+				if !strings.Contains(q, p) {
+					t.Errorf("missing %q in:\n%s", p, q)
+				}
+			}
+			if strings.Contains(q, "getSubcolumn") || strings.Contains(q, "@propKey") || strings.Contains(q, "123456") {
+				t.Errorf("unexpected JSON access or leaked threshold in:\n%s", q)
+			}
+			names := argNames(args)
+			if _, ok := names["propKey"]; ok {
+				t.Errorf("propKey must not be bound for a column attribute: %v", names)
+			}
+			if names["projectId"] != uint16(42) || names["now"] != now/1000 || names["curStart"] != w.CurStart/1000 || names["rangeStart"] != w.PrevStart/1000 {
+				t.Errorf("params: %v", names)
+			}
+		})
+	}
+
+	// every users trigger /triggers offers builds a query
+	for _, tr := range identifiedUserTriggers(nil) {
+		a := &AlertToExecute{ProjectID: 1, DetectionMethod: DetectionThreshold,
+			Query:   QueryToExecute{Left: tr.Value.(string), Operator: OpGt, Source: tr.Source},
+			Options: OptionsToExecute{CurrentPeriod: 15}}
+		if _, _, err := buildPropertyQuery(a, windowsFor(a, now)); err != nil {
+			t.Errorf("%s: %v", tr.Value, err)
+		}
+	}
+	// the column mapping is only for users; on events "$properties" stays a JSON column
+	a := &AlertToExecute{ProjectID: 1, DetectionMethod: DetectionThreshold,
+		Query:   QueryToExecute{Left: "$properties.$email", Operator: OpGt, Source: "events"},
+		Options: OptionsToExecute{CurrentPeriod: 15}}
+	q, args, err := buildPropertyQuery(a, windowsFor(a, now))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(q, `getSubcolumn("$properties", @propKey)`) || argNames(args)["propKey"] != "$email" {
+		t.Errorf("events must read $properties as JSON:\n%s\n%v", q, args)
 	}
 }

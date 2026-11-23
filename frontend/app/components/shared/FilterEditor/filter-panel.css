@@ -48,3 +48,47 @@
     animation: none;
   }
 }
+
+/* phone: the picker rises from the bottom, full width */
+:root[data-viewport='phone'] .m-fpanel.is-grown {
+  position: fixed;
+  inset: auto 0 0 0 !important;
+  z-index: calc(var(--m-z-modal) + 10);
+  flex-direction: column;
+  width: 100% !important;
+  max-width: none;
+  height: min(80dvh, 40rem) !important;
+  max-height: none;
+  border-inline: 0;
+  border-bottom: 0;
+  border-radius: var(--m-radius-surface) var(--m-radius-surface) 0 0;
+  box-shadow: 0 -8px 32px rgb(0 0 0 / 0.16);
+}
+/* in the filter drawer it takes the drawer's place, not a sheet over it */
+:root[data-viewport='phone'] body:has(.m-fpanel.is-in-sheet.is-grown) .m-pf {
+  height: 92dvh;
+}
+:root[data-viewport='phone'] .m-fpanel.is-in-sheet.is-grown {
+  position: absolute;
+  inset: 0 !important;
+  height: auto !important;
+  padding-top: var(--m-space-4);
+  box-shadow: none;
+}
+.m-fpanel__back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  align-self: flex-start;
+  min-height: var(--m-control-height-md);
+  margin-bottom: var(--m-space-2);
+  padding-inline: var(--m-space-3) var(--m-space-4);
+  border-radius: var(--m-radius-control);
+  font-size: var(--m-text-md);
+  font-weight: var(--m-weight-semibold);
+  color: var(--m-content-primary);
+}
+/* a sheet over the drawer reads as one: no second scrim */
+:root[data-viewport='phone'] body:has(.m-pf) .m-pop {
+  box-shadow: 0 -8px 32px rgb(0 0 0 / 0.16) !important;
+}

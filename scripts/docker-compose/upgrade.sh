@@ -40,6 +40,20 @@ function merge_envs() {
 	done <"$original_env_file"
 }
 
+# Secrets added to the template since the old install still hold public
+# change_me_ placeholders after merging; give them random values.
+# JWT signing secrets are 256 chars long (128 bytes, hex-encoded); the rest 20.
+function generate_new_secrets() {
+	local token bytes
+	for token in $(grep -o 'change_me_[a-zA-Z0-9_]*' "$new_env_file" | grep -vx 'change_me_domain' | sort -u); do
+		case "$token" in
+			*jwt*) bytes=128 ;;
+			*) bytes=10 ;;
+		esac
+		sed -i "s/=${token}$/=$(openssl rand -hex "$bytes")/" "$new_env_file"
+	done
+}
+
 # Function to normalize version numbers for comparison
 function normalise_version {
 	echo "$1" | awk -F. '{ printf("%03d%03d%03d\n", $1, $2, $3); }'
@@ -114,6 +128,7 @@ function migrate() {
 
 # Merge environment variables and perform migration
 merge_envs
+generate_new_secrets
 migrate
 
 # Load variables from common.env into the current shell's environment

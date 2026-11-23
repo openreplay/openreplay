@@ -85,6 +85,9 @@ func NewQueryBuilder(logger logger.Logger, p *Payload, sessionConn chdb.SessionF
 	case MetricTypeHeatmap:
 		return &HeatmapSessionQueryBuilder{Logger: logger}, nil
 	case MetricTypeSession:
+		if p.MetricOf == MetricOfScrollMap {
+			return &ScrollmapQueryBuilder{Logger: logger}, nil
+		}
 		return &HeatmapQueryBuilder{Logger: logger}, nil
 	case MetricUserJourney:
 		return &UserJourneyQueryBuilder{Logger: logger, SessionConn: sessionConn}, nil

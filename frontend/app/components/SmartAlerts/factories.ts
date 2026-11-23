@@ -77,6 +77,7 @@ export function makeIssueSessionCard(s: RawIssueSession): IssueSessionCard {
   return {
     sessionId: s.sessionId,
     date: fmtDate(ts),
+    startTs: ts,
     email: s.userId ?? '',
     browser: s.userBrowser ?? '',
     os: s.userOs ?? '',
@@ -121,6 +122,7 @@ export function makeJourneyCard(j: SessionJourney): IssueSessionCard {
   return {
     sessionId: String(j.sessionId),
     date: '',
+    startTs: null,
     email: '',
     browser: '',
     os: '',

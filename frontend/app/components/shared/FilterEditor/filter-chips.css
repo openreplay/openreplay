@@ -513,7 +513,7 @@ span.m-fchip__said {
   align-items: center;
   gap: 2px;
   padding: 2px;
-  border: var(--m-border-width) solid var(--m-border-subtle);
+  border: var(--m-border-width) solid var(--m-border-default);
   border-radius: var(--m-radius-full);
   background: var(--m-surface-raised);
   box-shadow: var(--m-shadow-popover);
@@ -1153,4 +1153,16 @@ span.m-fchip__said {
   font-size: inherit;
   font-weight: var(--m-weight-regular);
   opacity: 1;
+}
+
+/* the search's chips without the search: a row of a form, not a panel */
+.m-rulechips {
+  min-width: 0;
+  background: transparent;
+}
+.m-fchips--panel .m-fchips__stack.m-rulechips__stack {
+  padding: 0;
+}
+.m-rulechips__add {
+  justify-self: start;
 }

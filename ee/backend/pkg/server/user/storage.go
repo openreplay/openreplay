@@ -16,7 +16,7 @@ func getUserFromDB(conn pool.Pool, userID, tenantID int, tokenType TokenType) (*
 	   	FROM public.users as users
 	   	JOIN tenants on users.tenant_id = tenants.tenant_id
 		JOIN roles on users.role_id = roles.role_id
-	   	WHERE users.user_id = $1 AND users.tenant_id = $2 AND users.deleted_at IS NULL`, tokenType)
+	   	WHERE users.user_id = $1 AND users.tenant_id = $2 AND users.deleted_at IS NULL AND tenants.deleted_at IS NULL`, tokenType)
 
 	user := &User{AuthMethod: "jwt"}
 	var permissions []string

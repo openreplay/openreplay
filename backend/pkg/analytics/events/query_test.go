@@ -211,6 +211,7 @@ func TestBuildSearchQueryParamsOrdering(t *testing.T) {
 		t.Errorf("base conditions: %s", where)
 	}
 	want := `e."$event_name" != 'TAG_TRIGGER'` +
+		` AND NOT (e."$event_name" = 'SCROLL' AND e."$auto_captured")` +
 		` AND (e."$event_name", e."$auto_captured") NOT IN (('h1', true), ('h2', false))` +
 		` AND (e."$event_name" = 'click' AND (` + wantUserCond(proj, `"$email"`, `''`, `u."$email" = 'a'`) + `))` +
 		` AND ` + wantUserCond(proj, `"$name"`, `''`, `u."$name" ILIKE '%bo%'`) +

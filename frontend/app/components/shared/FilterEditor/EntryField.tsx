@@ -1,5 +1,7 @@
+import { useHeadSearchSlot } from '@/ui/layout/PageCard';
 import { Filter } from 'lucide-react';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
 import { FilterPanel } from './FilterPanel';
@@ -24,6 +26,9 @@ export interface EntryFieldProps {
   trailing?: ReactNode;
   /** right after the field, on its line */
   after?: ReactNode;
+  /** the phone's door: a button in the field's look that opens the filter
+      drawer, where the rules are edited */
+  opens?: { onOpen: () => void; summary?: ReactNode; count?: number };
 }
 
 /** The search field under a page title; typing opens the catalogue. */
@@ -35,6 +40,7 @@ export function EntryField({
   placeholder,
   trailing,
   after,
+  opens,
 }: EntryFieldProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -48,10 +54,12 @@ export function EntryField({
   };
   const lead = hasRules
     ? t('Add to the filter')
-    : (placeholder ?? t('Filter the recordings'));
+    : (placeholder ?? t('Search recordings'));
+  // the compact header's seat, when the page has one
+  const headSlot = useHeadSearchSlot();
 
   useEffect(() => {
-    if (hasRules) return undefined;
+    if (hasRules || opens) return undefined;
     const onKey = (e: KeyboardEvent) => {
       if (e.key.toLowerCase() !== 'k' || !(e.metaKey || e.ctrlKey)) return;
       const el = document.activeElement;
@@ -66,9 +74,46 @@ export function EntryField({
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [hasRules]);
+  }, [hasRules, opens]);
 
-  return (
+  if (opens)
+    return (
+      <div className="m-recs__entryfield" data-trigger="bar">
+        <div className="m-fbar__triggerwrap">
+          <button
+            type="button"
+            className="m-fbar__filter m-fbar__filter--bar m-fbar__opens"
+            onClick={opens.onOpen}
+            aria-label={
+              opens.count
+                ? t('{{lead}}, {{n}} applied', { lead, n: opens.count })
+                : lead
+            }
+          >
+            <Filter
+              size={16}
+              className="m-fbar__filter-glyph"
+              aria-hidden="true"
+            />
+            {opens.summary ?? (
+              <span className="m-fbar__opens-lead">{lead}</span>
+            )}
+            {!!opens.count && (
+              <span
+                className="m-iconbtn__count m-fbar__opens-count"
+                aria-hidden="true"
+              >
+                {opens.count}
+              </span>
+            )}
+          </button>
+        </div>
+        {after}
+        {trailing && <span className="m-recs__entry-trailing">{trailing}</span>}
+      </div>
+    );
+
+  const field = (
     <div className="m-recs__entryfield" data-trigger="bar">
       <div className="m-fbar__triggerwrap" ref={wrap}>
         <label className="m-fbar__filter m-fbar__filter--bar">
@@ -135,4 +180,5 @@ export function EntryField({
       {trailing && <span className="m-recs__entry-trailing">{trailing}</span>}
     </div>
   );
+  return headSlot ? createPortal(field, headSlot) : field;
 }

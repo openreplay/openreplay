@@ -23,7 +23,7 @@ import React, {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { FUNNEL, HEATMAP, TABLE, USER_PATH } from 'App/constants/card';
+import { FUNNEL, TABLE, USER_PATH } from 'App/constants/card';
 import { CUSTOM_RANGE } from 'App/dateRange';
 import useIsMounted from 'App/hooks/useIsMounted';
 import { useStore } from 'App/mstore';
@@ -31,6 +31,7 @@ import { sessions as sessionsRoute, withSiteId } from 'App/routes';
 import { useHistory } from 'App/routing';
 import Session from 'App/types/session/session';
 import { debounce } from 'App/utils';
+import { hasRuleValue } from 'App/utils/hasRuleValue';
 import { windowPhrase } from 'App/utils/windowPhrase';
 
 import {
@@ -95,12 +96,20 @@ function WidgetSessions() {
   const pageSize = useRowsPerPage();
   const isMounted = useIsMounted();
   const listRef = useRef<HTMLDivElement>(null);
+  const requestSeq = useRef(0);
 
   const [activeSeries, setActiveSeries] = useState('all');
   const [seriesOptions, setSeriesOptions] = useState([
     { label: t('All'), value: 'all' },
   ]);
-  const [data, setData] = useState<Session[]>([]);
+  const [data, setData] = useState<
+    {
+      sessions: Session[];
+      total: number;
+      seriesId: string;
+      seriesName: string;
+    }[]
+  >([]);
   const [loading, setLoading] = useState(false);
 
   const filter = dashboardStore.drillDownFilter;
@@ -175,11 +184,12 @@ function WidgetSessions() {
   const fetchSessions = useCallback(
     (metricId, flt) => {
       if (!isMounted()) return;
+      const seq = ++requestSeq.current;
       const isDrilldown = !!flt.isDrilldown;
       if (
         !isDrilldown &&
         widget.metricType === FUNNEL &&
-        flt.series?.[0]?.filter?.filters?.length === 0
+        !flt.series?.[0]?.filter?.filters?.some((f: any) => f.isEvent)
       ) {
         setLoading(false);
         return setData([]);
@@ -203,6 +213,7 @@ function WidgetSessions() {
       widget
         .fetchSessions(metricId, params)
         .then((res) => {
+          if (seq !== requestSeq.current) return;
           setData(res ?? []);
           if (metricStore.drillDown) {
             toast.info(t('Sessions refreshed!'));
@@ -211,35 +222,21 @@ function WidgetSessions() {
           }
         })
         .catch((e) => {
+          if (seq !== requestSeq.current) return;
           setData([]);
           console.error(e);
           toast.error(t('Failed to refresh sessions, try again later.'));
         })
         .finally(() => {
-          setLoading(false);
+          if (seq === requestSeq.current) setLoading(false);
         });
     },
     [isMounted, widget, metricStore, t],
   );
 
-  const fetchClickmapSessions = useCallback(
-    (customFilters) => {
-      sessionStore
-        .getSessions(customFilters)
-        .then((res) =>
-          setData([{ ...res, seriesId: 1, seriesName: 'Clicks' }]),
-        );
-    },
-    [sessionStore],
-  );
-
   const debounceSessions = useMemo(
     () => debounce(fetchSessions, 1000),
     [fetchSessions],
-  );
-  const debounceClicks = useMemo(
-    () => debounce(fetchClickmapSessions, 1000),
-    [fetchClickmapSessions],
   );
 
   // the series the list stands for: the focused one, less the hidden ones
@@ -258,77 +255,61 @@ function WidgetSessions() {
     .flatMap((s) => s.filter.filters.map((f) => JSON.stringify(f)))
     .join('$');
   const loadData = () => {
-    if (widget.metricType === HEATMAP && metricStore.clickMapSearch) {
-      const clickFilter = {
-        value: [metricStore.clickMapSearch],
-        name: 'CLICK',
-        operator: 'onSelector',
-        isEvent: true,
-        filters: [],
-      };
-      const { rangeValue, start, end } = dashboardStore.drillDownPeriod;
-      debounceClicks({
-        ...filter,
-        rangeValue,
-        startDate: start,
-        endDate: end,
-        filters: [...sessionStore.userFilter.filters, clickFilter],
-      });
-    } else {
-      const seriesJson = listedSeries().map((s) => s.toJson());
+    const seriesJson = listedSeries().map((s) => s.toJson());
+    const hasDrilldown = filter.filters.length > 0;
 
-      if (widget.metricType === USER_PATH) {
-        if (
-          !seriesJson[0].filter.filters[0]?.value[0] &&
-          widget.data.nodes?.[0]
-        ) {
-          if (seriesJson[0].filter.filters[0]) {
-            seriesJson[0].filter.filters[0].value = [widget.data.nodes[0].name];
-          }
-        }
-      }
-
-      const hasDrilldown = filter.filters.length > 0;
-      const isFunnel = widget.metricType === FUNNEL;
-
-      let finalFilters = filter.filters;
-      let finalSeries: any[] = seriesJson;
-      let isDrilldownRequest = false;
-
-      if (hasDrilldown) {
-        if (isFunnel && seriesJson.length > 0) {
-          finalSeries = [
-            {
-              ...seriesJson[0],
-              filter: {
-                ...seriesJson[0].filter,
-                filters: filter.filters.map((f) => ({ ...f })),
-                eventsOrder: 'then',
-              },
-            },
-          ];
-          finalFilters = [];
-        } else {
-          const seriesFilters = seriesJson.flatMap(
-            (s) => s.filter?.filters || [],
-          );
-          finalFilters = [...filter.filters, ...seriesFilters];
-          finalSeries = [];
-          isDrilldownRequest = true;
-        }
-      }
-
-      debounceSessions(widget.metricId, {
-        ...filter,
-        filters: finalFilters,
-        series: finalSeries,
-        isDrilldown: isDrilldownRequest,
-        metricType: widget.metricType,
-        metricOf: widget.metricOf,
-        page: metricStore.sessionsPage,
-        limit: getRowsPerPage(),
-      });
+    // a journey's start point lives on the card, not in its series
+    if (
+      widget.metricType === USER_PATH &&
+      !hasDrilldown &&
+      seriesJson[0] &&
+      hasRuleValue(widget.startPoint)
+    ) {
+      seriesJson[0].filter.filters = [
+        widget.startPoint!.toJson(),
+        ...seriesJson[0].filter.filters,
+      ];
     }
+
+    const isFunnel = widget.metricType === FUNNEL;
+
+    let finalFilters = filter.filters;
+    let finalSeries: any[] = seriesJson;
+    let isDrilldownRequest = false;
+
+    if (hasDrilldown) {
+      if (isFunnel && seriesJson.length > 0) {
+        finalSeries = [
+          {
+            ...seriesJson[0],
+            filter: {
+              ...seriesJson[0].filter,
+              filters: filter.filters.map((f) => f.toJson()),
+              eventsOrder: 'then',
+            },
+          },
+        ];
+        finalFilters = [];
+      } else {
+        const seriesFilters = seriesJson.flatMap(
+          (s) => s.filter?.filters || [],
+        );
+        finalFilters = [...filter.filters, ...seriesFilters];
+        finalSeries = [];
+        isDrilldownRequest = true;
+      }
+    }
+
+    debounceSessions(widget.metricId, {
+      ...filter,
+      filters: finalFilters,
+      series: finalSeries,
+      isDrilldown: isDrilldownRequest,
+      metricType: widget.metricType,
+      metricOf: widget.metricOf,
+      page: metricStore.sessionsPage,
+      limit: getRowsPerPage(),
+    });
   };
 
   const filterStr = JSON.stringify(filter.filters ?? []);
@@ -341,10 +322,8 @@ function WidgetSessions() {
     filterStr,
     widget.series.length,
     filterDeps,
-    metricStore.clickMapSearch,
     focused,
     widget.startPoint,
-    widget.data.nodes,
     metricStore.disabledSeries.length,
   ]);
 
@@ -451,16 +430,9 @@ function WidgetSessions() {
         head={
           <>
             <span className="m-pa__head-title">
-              {metricStore.clickMapSearch
-                ? t('Clicks')
-                : drilledRow
-                  ? drillTitle(drilledRow)
-                  : t('Sessions')}
+              {drilledRow ? drillTitle(drilledRow) : t('Sessions')}
             </span>
             <span className="m-cardp__between">
-              {metricStore.clickMapLabel
-                ? `${t('on')} "${metricStore.clickMapLabel}" · `
-                : ''}
               {drilledRow && !loading
                 ? `${t('{{n}} sessions', {
                     n: filteredSessions.total.toLocaleString(),

@@ -27,7 +27,7 @@ def is_mcp_token(token: str) -> bool:
         audience = decoded_token.get("aud")
         return audience == AUDIENCE
     except jwt.InvalidTokenError:
-        logger.error(f"Invalid token for is_spot_token: {sanitize(token, max_length=16)}...")
+        logger.error(f"Invalid token for is_mcp_token: {sanitize(token, max_length=16)}...")
         raise
 
 
@@ -86,6 +86,7 @@ def store_token_request(data: MCP.AuthorizeSchema, cotext: schemas.CurrentContex
 def get_token_by_state(client_id, state):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
+            # @formatter:off
             """
             UPDATE public.mcp_authentication_tokens
             SET generated= TRUE
@@ -97,6 +98,7 @@ def get_token_by_state(client_id, state):
                  FROM public.users 
                  WHERE users.user_id = mcp_authentication_tokens.user_id 
                     AND users.deleted_at IS NULL) AS tenant_id;""",
+            # @formatter:on
             {"client_id": client_id, "state": state},
         )
         cur.execute(query=query)
@@ -104,7 +106,22 @@ def get_token_by_state(client_id, state):
 
     if row is None:
         raise HTTPException(status_code=404, detail="State not found or token already generated")
-    if MCP_LOGIN_TIMEOUT_S > 0 and (row["iat"] + MCP_LOGIN_TIMEOUT_S) >= TimeUTC.now():
+    # row["iat"] is in epoch seconds, TimeUTC.now() is in epoch milliseconds
+    if MCP_LOGIN_TIMEOUT_S > 0 and TimeUTC.now() > (row["iat"] + MCP_LOGIN_TIMEOUT_S) * 1000:
         raise HTTPException(status_code=408, detail="Login timed out")
 
-    return generate_jwt(user_id=row["user_id"], tenant_id=row["tenant_id"], iat=row["iat"], client_id=client_id, jti=row["jti"])
+    return generate_jwt(user_id=row["user_id"], tenant_id=row["tenant_id"], iat=row["iat"], client_id=client_id,
+                        jti=row["jti"])
+
+
+def logout(user_id):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(
+            """
+            UPDATE public.mcp_authentication_tokens
+            SET iat= NULL
+            WHERE user_id = %(user_id)s
+              AND state = %(state)s;""",
+            {"user_id": user_id},
+        )
+        cur.execute(query=query)

@@ -31,7 +31,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
             <button
               type="button"
               className={cn(
-                'm-hover inline-flex size-[var(--m-control-height-xs)] items-center justify-center rounded-control',
+                'm-pwd__eye m-hover inline-flex size-[var(--m-control-height-xs)] items-center justify-center rounded-control',
                 shown
                   ? 'text-content-primary'
                   : 'text-content-placeholder hover:text-content-secondary',

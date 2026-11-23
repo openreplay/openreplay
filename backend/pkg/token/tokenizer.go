@@ -25,9 +25,10 @@ func NewTokenizer(secret string) *Tokenizer {
 }
 
 type TokenData struct {
-	ID      uint64
-	Delay   int64
-	ExpTime int64
+	ID        uint64
+	Delay     int64
+	ExpTime   int64
+	ProjectID uint32
 }
 
 func (tokenizer *Tokenizer) sign(body string) []byte {
@@ -39,14 +40,16 @@ func (tokenizer *Tokenizer) sign(body string) []byte {
 func (tokenizer *Tokenizer) Compose(d TokenData) string {
 	body := strconv.FormatUint(d.ID, 36) +
 		"." + strconv.FormatInt(d.Delay, 36) +
-		"." + strconv.FormatInt(d.ExpTime, 36)
+		"." + strconv.FormatInt(d.ExpTime, 36) +
+		"." + strconv.FormatUint(uint64(d.ProjectID), 36)
 	sign := base58.Encode(tokenizer.sign(body))
 	return body + "." + sign
 }
 
 func (tokenizer *Tokenizer) Parse(token string) (*TokenData, error) {
 	data := strings.Split(token, ".")
-	if len(data) != 4 {
+	// 4 parts: legacy token without project, 5 parts: current format
+	if len(data) != 4 && len(data) != 5 {
 		return nil, errors.New("wrong token format")
 	}
 	if !hmac.Equal(
@@ -67,7 +70,14 @@ func (tokenizer *Tokenizer) Parse(token string) (*TokenData, error) {
 	if err != nil {
 		return nil, err
 	}
-	res := &TokenData{id, delay, expTime}
+	var projectID uint64
+	if len(data) == 5 {
+		projectID, err = strconv.ParseUint(data[3], 36, 32)
+		if err != nil {
+			return nil, err
+		}
+	}
+	res := &TokenData{ID: id, Delay: delay, ExpTime: expTime, ProjectID: uint32(projectID)}
 	if expTime <= time.Now().UnixMilli() {
 		// If token is expired less than 30 seconds ago, we still consider it semi-valid
 		if expTime+30000 > time.Now().UnixMilli() {

@@ -29,7 +29,10 @@ import { useHistory } from 'App/routing';
 import { dashboardService } from 'App/services';
 import AlertFormModal from 'Components/Alerts/AlertFormModal/AlertFormModal';
 import { useMasonrySpan } from 'Components/Dashboard/components/DashboardWidgetGrid/masonry';
-import { isFullWidget } from 'Components/Dashboard/components/DashboardWidgetGrid/placement';
+import {
+  isFullWidget,
+  isTallWidget,
+} from 'Components/Dashboard/components/DashboardWidgetGrid/placement';
 import { useModal } from 'Components/ModalContext';
 
 import { cardTypeLabel } from '../../cardIcons';
@@ -136,7 +139,7 @@ function WidgetWrapperDashboard({
     <section
       ref={ref}
       id={`widget-${widget.metricId}`}
-      className={`m-dash__widget${drawnFull ? ' is-full' : ''}${isDragging ? ' is-dragging' : ''}${canDrop && isOver ? ' is-drop' : ''}`}
+      className={`m-dash__widget${drawnFull ? ' is-full' : ''}${isTallWidget(widget) ? ' is-tall' : ''}${isDragging ? ' is-dragging' : ''}${canDrop && isOver ? ' is-drop' : ''}`}
       style={widget.metricType === USER_PATH ? { minHeight: 600 } : undefined}
     >
       <header className="m-dash__widget-head">

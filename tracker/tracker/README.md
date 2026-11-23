@@ -10,6 +10,8 @@ Please use [bun](https://bun.sh/) to install and build this library. Any submitt
 
 For launch options and available public methods, [refer to the documentation](https://docs.openreplay.com/en/sdk/methods)
 
+For AI coding agents, a short setup guide and API reference ship inside the package: [`docs/usage.md`](./docs/usage.md) and [`docs/api.md`](./docs/api.md) (installed at `node_modules/@openreplay/tracker/docs/`, resolvable as `@openreplay/tracker/docs/api.md`).
+
 ## Installation
 
 ```bash

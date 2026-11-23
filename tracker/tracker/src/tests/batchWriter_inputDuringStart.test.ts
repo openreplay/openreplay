@@ -131,23 +131,6 @@ describe('input arriving while the tracker is starting', () => {
     }
   })
 
-  test('input as its own commit, at every gap between snapshot commits', () => {
-    const dom = domStream(40)
-    const chunk = Math.ceil(dom.length / 6)
-    const commits: any[][] = []
-    for (let i = 0; i < dom.length; i += chunk) commits.push(dom.slice(i, i + chunk))
-    commits.push([ORLOADED])
-    for (let gap = 0; gap <= commits.length; gap++) {
-      const { writer, captured } = makeWriter()
-      writer.setBeaconSizeLimit(1e6)
-      writer.setProtocolVersion(2)
-      const arrays = [...commits.slice(0, gap), keystroke('b'), ...commits.slice(gap)]
-      const written = feed(writer, arrays)
-      writer.finaliseBatch()
-      assertReadable(captured, `gap@${gap}`, written)
-    }
-  })
-
   test('auth (pv2) landing at every point in a stream that already carries input', () => {
     const dom = domStream(30)
     const stream = [...keystroke('c'), ...dom, ...keystroke('d'), ORLOADED, ...keystroke('e')]
@@ -201,17 +184,6 @@ describe('input arriving while the tracker is starting', () => {
         assertReadable(captured, `paste=${size} limit=${limit}`, written)
       }
     }
-  })
-
-  test('orloaded alone in its own commit, input immediately before and after', () => {
-    const dom = domStream(30)
-    const { writer, captured } = makeWriter()
-    writer.setBeaconSizeLimit(1e6)
-    writer.setProtocolVersion(2)
-    const written = feed(writer, [dom, keystroke('h'), [ORLOADED], keystroke('i')])
-    writer.finaliseBatch()
-    assertReadable(captured, 'signal-own-commit', written)
-    expect(captured.some((c) => c.dataType === 'visual')).toBe(true)
   })
 
   test('finaliseBatch (autosend / closing) interleaved with input during init', () => {

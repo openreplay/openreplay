@@ -1,3 +1,4 @@
+import { CaptureIcon, captureKind } from '@/ui/icons/CaptureIcon';
 import { PopoverSearch } from '@/ui/overlays/PopoverSearch';
 import { menuKeyDown } from '@/ui/overlays/menuKeys';
 import { PopoverPanel } from '@/ui/overlays/popover';
@@ -12,14 +13,12 @@ import {
   Hash,
   List,
   ListTree,
-  MousePointerClick,
   Search,
   Split,
   Tags,
   Timer,
   ToggleLeft,
   User,
-  Zap,
 } from 'lucide-react';
 import {
   Fragment,
@@ -45,7 +44,13 @@ const ROW_PAGE = 150;
 export function entryIcon(e: CatalogueEntry, size = 13): ReactNode {
   if (e.category === 'segments') return <Split size={size} />;
   if (e.category === 'features') return <Flag size={size} />;
-  if (e.isEvent) return <MousePointerClick size={size} />;
+  if (e.isEvent)
+    return (
+      <CaptureIcon
+        kind={captureKind(e.name, e.autoCaptured, true)}
+        size={size}
+      />
+    );
   switch (e.dataType) {
     case 'number':
       return <Hash size={size} />;
@@ -63,8 +68,8 @@ export function entryIcon(e: CatalogueEntry, size = 13): ReactNode {
 }
 
 const CATEGORY_ICON: Record<string, ReactNode> = {
-  auto_captured: <MousePointerClick size={13} />,
-  user_events: <Zap size={13} />,
+  auto_captured: <CaptureIcon kind="auto" />,
+  user_events: <CaptureIcon kind="custom" />,
   features: <Flag size={13} />,
   segments: <Split size={13} />,
   user: <User size={13} />,
@@ -184,6 +189,8 @@ export function PickerBody({
     return slope >= slopeTop && slope <= slopeBottom;
   };
   const aimAt = (key: string, e: ReactPointerEvent<HTMLElement>) => {
+    // a finger passing over a chip is a swipe, not an aim: touch changes on tap
+    if (e.pointerType !== 'mouse') return;
     if (q) return;
     cancelAim();
     if (key === cat) return;

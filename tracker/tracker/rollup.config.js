@@ -9,7 +9,11 @@ const require = createRequire(import.meta.url)
 const packageConfig = require('./package.json')
 
 export default async () => {
-  const webworkerContent = await buildWebWorker()
+  const webworkerContent = await buildWebWorker('src/webworker/index.ts', 'src/webworker/tsconfig.json')
+  const canvasWorkerContent = await buildWebWorker(
+    'src/canvasworker/index.ts',
+    'src/canvasworker/tsconfig.json',
+  )
 
   const commonPlugins = [
     resolve(),
@@ -18,6 +22,7 @@ export default async () => {
       values: {
         TRACKER_VERSION: packageConfig.version,
         'global.WEBWORKER_BODY': JSON.stringify(webworkerContent),
+        'global.CANVAS_WORKER_BODY': JSON.stringify(canvasWorkerContent),
       },
     }),
   ]
@@ -44,14 +49,14 @@ export default async () => {
   }))
 }
 
-async function buildWebWorker() {
-  console.log('building wworker')
+async function buildWebWorker(input, tsconfig) {
+  console.log('building', input)
   const bundle = await rollup({
-    input: 'src/webworker/index.ts',
+    input,
     plugins: [
       resolve(),
       typescript({
-        tsconfig: 'src/webworker/tsconfig.json',
+        tsconfig,
       }),
       terser(),
     ],
@@ -64,7 +69,7 @@ async function buildWebWorker() {
   })
   const webWorkerCode = output[0].code
 
-  console.log('webworker done!', output.length)
+  console.log(input, 'done!', output.length)
 
   return webWorkerCode
 }

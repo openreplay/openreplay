@@ -1,4 +1,5 @@
 import { makeAutoObservable } from 'mobx';
+
 import Filter from 'App/mstore/types/filter';
 
 export class Conditions {
@@ -12,12 +13,20 @@ export class Conditions {
     data?: Record<string, any>,
     isConditional?: boolean,
     isMobile?: boolean,
+    projectId?: string,
   ) {
     makeAutoObservable(this);
     this.name = data?.name;
     if (data && (data.rolloutPercentage || data.captureRate)) {
       this.rolloutPercentage = data.rolloutPercentage ?? data.captureRate;
-      this.filter = new Filter([], isConditional, isMobile).fromJson(data);
+      this.filter = new Filter([], isConditional, isMobile, projectId).fromJson(
+        data,
+      );
+    } else if (projectId) {
+      this.filter = new Filter([], false, false, projectId).fromJson({
+        name: 'Rollout conditions',
+        filters: [],
+      });
     }
   }
 

@@ -323,10 +323,14 @@ func (h *UserJourneyQueryBuilder) buildQuery(p *Payload) ([]string, map[string]a
 	// events scan; only session-only filters require the sub_sessions CTE on
 	// experimental.sessions.
 	sessionFiltersOnEvents, sessionOnlyFilters := SplitSessionFilters(extractSessionFilters(p.Series[0].Filter.Filters))
+	// The duration filter carries a [min, max] range that BuildEventConditions
+	// cannot express (and deliberately skips), so render it separately.
+	durationConditions, sessionOnlyFilters := BuildDurationWhere(sessionOnlyFilters, qp, "sessions")
 	var sessionsConditions []string
 	if len(sessionOnlyFilters) > 0 {
 		_, _, sessionsConditions = BuildEventConditions(sessionOnlyFilters, BuildConditionsOptions{DefinedColumns: mainSessionsColumns, MainTableAlias: "sessions"}, qp)
 	}
+	sessionsConditions = append(sessionsConditions, durationConditions...)
 	chSubQuery := []string{"events.project_id = toUInt16(@projectId)",
 		"events.created_at >= toDateTime(@startTimestamp / 1000)",
 		"events.created_at < toDateTime(@endTimestamp / 1000)"}

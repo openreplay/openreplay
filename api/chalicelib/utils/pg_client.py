@@ -5,7 +5,7 @@ from threading import Semaphore
 import psycopg2
 import psycopg2.extras
 from decouple import config
-from psycopg2 import pool
+import psycopg2.pool
 
 logger = logging.getLogger(__name__)
 
@@ -141,7 +141,6 @@ class PostgresClient:
             self.cursor = self.connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             self.cursor.cursor_execute = self.cursor.execute
             self.cursor.execute = self.__execute
-            self.cursor.recreate = self.recreate_cursor
         return self.cursor
 
     def __exit__(self, *args):

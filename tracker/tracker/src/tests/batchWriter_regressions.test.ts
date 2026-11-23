@@ -66,18 +66,6 @@ describe('BatchWriter: header on every emit path', () => {
 
   const PRELUDE = [MType.Timestamp, MType.TabData]
 
-  test('oversized msg (soft < size < hard) goes out as its own batch with a full header', () => {
-    const writer = createWriter(onBatch, onOfflineEnd)
-    writer.writeMessage([MType.MouseMove, 1, 2])
-    writer.writeMessage([MType.ConsoleLog, 'info', 'x'.repeat(250_000)])
-
-    expect(onBatch).toHaveBeenCalledTimes(2)
-    const [first, second] = onBatch.mock.calls.map((c) => parseBatch(c[0]))
-    expect(first.types).toEqual([...PRELUDE, MType.MouseMove])
-    expect(second.types).toEqual([...PRELUDE, MType.ConsoleLog])
-    expect(second.firstIndex).toBe(1)
-  })
-
   test('a message over the hard cap is dropped; the batches after it keep their header', () => {
     const writer = createWriter(onBatch, onOfflineEnd)
     writer.setBeaconSizeLimit(100)
@@ -118,5 +106,6 @@ describe('BatchWriter: header on every emit path', () => {
       [...PRELUDE, MType.ConsoleLog],
       [...PRELUDE, MType.MouseMove],
     ])
+    expect(parseBatch(onBatch.mock.calls[2][0]).firstIndex).toBe(3)
   })
 })

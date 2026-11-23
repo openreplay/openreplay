@@ -190,7 +190,6 @@
 }
 .m-person__acthead .m-page__controls { margin-left: auto; }
 
-.m-ptl { padding: 0 0 var(--m-space-3); }
 .m-ptl__day {
   display: flex;
   align-items: center;
@@ -226,7 +225,6 @@
 }
 .m-ptl__icon { flex: none; color: var(--m-content-decorative); display: inline-flex; }
 .m-ptl__name { flex: 1; min-width: 0; font-size: var(--m-text-sm); }
-.m-ptl__env { flex: none; font-size: var(--m-text-2xs); color: var(--m-content-placeholder); }
 .m-ptl__chev { flex: none; color: var(--m-content-decorative); opacity: 0; transition: opacity var(--m-duration-fast) var(--m-ease-out); }
 .m-ptl__row:hover .m-ptl__chev { opacity: 1; }
 
@@ -234,18 +232,6 @@
 .m-uprops__tools { display: flex; align-items: center; gap: var(--m-space-3); }
 .m-uprops__tools .m-search { flex: 1; }
 .m-uprops__list .m-erow__label { width: 9.5rem; }
-
-.m-dmg__latest {
-  display: block;
-  width: 100%;
-  padding: var(--m-space-3) var(--m-space-7);
-  font-size: var(--m-text-xs);
-  font-weight: var(--m-weight-medium);
-  color: var(--m-content-accent);
-  background: var(--m-status-info-bg);
-  border-bottom: 1px solid var(--m-border-subtle);
-}
-.m-dmg__latest:hover { text-decoration: underline; }
 
 .m-dmg__where {
   display: flex;
@@ -279,4 +265,32 @@
 .m-person__types-foot {
   padding: var(--m-space-2) var(--m-space-3);
   border-top: 1px solid var(--m-border-subtle);
+}
+
+/* phone: who first, the facts in two columns, then the actions */
+:root[data-viewport='phone'] .m-person__card {
+  flex-wrap: wrap;
+  gap: var(--m-space-4);
+  padding: var(--m-space-4);
+}
+:root[data-viewport='phone'] .m-person__who {
+  flex: 1 1 100%;
+}
+:root[data-viewport='phone'] .m-person__facts {
+  flex: 1 1 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--m-space-4) var(--m-space-5);
+}
+:root[data-viewport='phone'] .m-person__fact dd {
+  min-width: 0;
+  max-width: 100%;
+}
+:root[data-viewport='phone'] .m-person__actions {
+  margin-inline-start: 0;
+}
+:root[data-viewport='phone'] .m-person__acthead {
+  flex-wrap: wrap;
+  row-gap: var(--m-space-2);
+  padding-block: var(--m-space-2);
 }

@@ -1,0 +1,7 @@
+{
+  "name": "or-bundle-browtest",
+  "private": true,
+  "type": "module",
+  "description": "Playwright harness: drives the OpenReplay tracker to produce a real session for the bundle smoke test.",
+  "dependencies": { "playwright": "^1.61.1" }
+}

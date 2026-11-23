@@ -107,3 +107,41 @@
 .m-runs__dur.is-live {
   color: var(--m-content-accent);
 }
+
+/* phone: a run is one cell, the result icon beside its lines */
+.m-runs__m {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--m-space-1) var(--m-space-3);
+  min-width: 0;
+}
+.m-runs__m > .m-run-icon {
+  grid-row: 1;
+  grid-column: 1;
+}
+.m-runs__m > :not(.m-run-icon) {
+  grid-column: 2;
+}
+.m-runs__m .m-runs__title {
+  max-width: 100%;
+}
+.m-runs__m-facts {
+  min-width: 0;
+  font-size: var(--m-text-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--m-content-muted);
+}
+.m-run-icon {
+  display: inline-flex;
+  flex: none;
+}
+.m-run-icon--danger {
+  color: var(--m-status-danger-fg);
+}
+.m-run-icon--success {
+  color: var(--m-status-success-fg);
+}
+.m-run-icon--info {
+  color: var(--m-status-info-fg);
+}

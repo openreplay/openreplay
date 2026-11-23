@@ -1,3 +1,5 @@
+import { useInFilterSheet } from '@/ui/filters/PhoneFilters';
+import { ChevronLeft } from 'lucide-react';
 import {
   type MutableRefObject,
   type RefObject,
@@ -27,6 +29,7 @@ export interface FilterPanelProps {
   anchorRef?: RefObject<HTMLElement | null>;
   placeholder?: string;
   kind?: 'all' | 'event' | 'group';
+  loading?: boolean;
 }
 
 /** The catalogue panel, portalled so no column or drawer clips it. */
@@ -44,11 +47,14 @@ export function FilterPanel({
   anchorRef,
   placeholder,
   kind = 'all',
+  loading,
 }: FilterPanelProps) {
   const { t } = useTranslation();
   const oneKind = kind !== 'all';
   const box = useRef<HTMLDivElement>(null);
   const portal = !!anchorRef;
+  // in the phone filter drawer the picker is the drawer's next page
+  const inSheet = useInFilterSheet();
   const [at, setAt] = useState<{ top: number; left: number } | null>(null);
   const [host, setHost] = useState<HTMLElement | null>(null);
 
@@ -88,7 +94,9 @@ export function FilterPanel({
       }
       const t = Math.round(top);
       const l = Math.round(left);
-      setAt((p) => (p && p.top === t && p.left === l ? p : { top: t, left: l }));
+      setAt((p) =>
+        p && p.top === t && p.left === l ? p : { top: t, left: l },
+      );
     };
     place();
     window.addEventListener('scroll', place, true);
@@ -141,15 +149,22 @@ export function FilterPanel({
   const node = (
     <div
       ref={box}
-      className={`m-fpanel is-still is-grown${oneKind ? ' is-one-kind' : ''}${portal ? (inContainer ? ' is-portal is-portal-in' : ' is-portal') : ''}`}
+      className={`m-fpanel is-still is-grown${oneKind ? ' is-one-kind' : ''}${portal ? (inContainer ? ' is-portal is-portal-in' : ' is-portal') : ''}${inSheet ? ' is-in-sheet' : ''}`}
       style={portal && at ? { top: at.top, left: at.left } : undefined}
       role="dialog"
       aria-label={t('Add to the filter')}
       data-slot="filter-panel"
     >
+      {inSheet && (
+        <button type="button" className="m-fpanel__back" onClick={onClose}>
+          <ChevronLeft size={16} aria-hidden="true" />
+          {t('Add a filter')}
+        </button>
+      )}
       <PickerBody
         entries={entries}
         taken={taken}
+        loading={loading}
         onPick={onPick}
         onDone={onClose}
         seed={seed}

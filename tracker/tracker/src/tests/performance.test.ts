@@ -63,25 +63,8 @@ describe('Performance plugin', () => {
     window.cancelAnimationFrame = realCaf
   })
 
-  test('a synchronous requestAnimationFrame does not recurse into a hang', () => {
-    // Reproduces the reported freeze: a rAF implementation that invokes its
-    // callback synchronously would, without a guard, recurse forever.
-    let calls = 0
-    window.requestAnimationFrame = jest.fn((cb: FrameRequestCallback) => {
-      calls++
-      cb(0) // fire synchronously
-      return calls
-    }) as any
-    window.cancelAnimationFrame = jest.fn()
-
-    setupPerformance(app as any, {})
-
-    expect(() => app.start()).not.toThrow()
-    // The re-entrancy guard stops the loop after one synchronous frame instead of recursing.
-    expect(window.requestAnimationFrame).toHaveBeenCalledTimes(1)
-  })
-
-  test('a synchronous requestAnimationFrame still reschedules on the next sample', () => {
+  test('a synchronous requestAnimationFrame neither hangs nor stops rescheduling', () => {
+    // a rAF that runs its callback synchronously used to recurse forever (page freeze)
     window.requestAnimationFrame = jest.fn((cb: FrameRequestCallback) => {
       cb(0)
       return 7
@@ -90,7 +73,7 @@ describe('Performance plugin', () => {
     const spy = jest.spyOn(TrackerMessages, 'PerformanceTrack')
 
     setupPerformance(app as any, {})
-    app.start()
+    expect(() => app.start()).not.toThrow()
     expect(window.requestAnimationFrame).toHaveBeenCalledTimes(1)
 
     // sample ticker: the frame loop must be re-armed, not blocked by a stale handle
@@ -213,6 +196,9 @@ describe('Performance plugin', () => {
     expect(app.startCallbacks).toHaveLength(0)
 
     setupPerformance(app as any, {})
+    app.start()
+    app.stop()
+    app.send.mockClear()
     app.tickerCallbacks[1]()
     expect(app.send).not.toHaveBeenCalled()
   })

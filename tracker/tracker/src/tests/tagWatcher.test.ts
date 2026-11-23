@@ -99,11 +99,15 @@ describe('TagWatcher', () => {
 
   test('discard aborts and fences late tags without interval or storage resurrection', async () => {
     let resolve: (value: any) => void = () => {}
-    ;(globalThis as any).fetch = jest.fn(() => new Promise((r) => { resolve = r }))
+    const fetchMock = jest.fn((_url: string, _init: RequestInit) =>
+      new Promise((r) => { resolve = r }),
+    )
+    ;(globalThis as any).fetch = fetchMock
     const watcher = makeWatcher()
     const pending = watcher.fetchTags('https://example.invalid', 'synthetic')
     expect(typeof (watcher as any).discard).toBe('function')
-    ;(watcher as any).discard()
+    watcher.discard()
+    expect(fetchMock.mock.calls[0][1].signal?.aborted).toBe(true)
     resolve({ json: async () => ({ tags: [{id: 1, selector: 'div'}] }) })
     await pending
     expect(watcher.interval).toBeNull()

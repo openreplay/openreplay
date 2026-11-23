@@ -23,6 +23,7 @@
 }
 
 .m-account-menu__projects {
+  position: relative;
   max-height: calc(7.5 * (var(--m-nav-row-height) + var(--m-space-1)));
   overflow-y: auto;
   overscroll-behavior: contain;

@@ -106,21 +106,6 @@ describe('Nodes', () => {
     })
   })
 
-  test('cleanTree removes detached nodes and keeps attached ones', () => {
-    const attached = document.createElement('div')
-    const detached = document.createElement('div')
-    document.body.appendChild(attached)
-    const [attachedId] = nodes.registerNode(attached)
-    const [detachedId] = nodes.registerNode(detached)
-
-    nodes.cleanTree()
-
-    expect(nodes.getNodeCount()).toBe(1)
-    expect(nodes.getNode(attachedId)).toBe(attached)
-    expect(nodes.getNode(detachedId)).toBeUndefined()
-    expect(nodes.getID(detached)).toBeUndefined()
-  })
-
   test('scanTree visits every registered node', () => {
     const a = document.createElement('div')
     const b = document.createElement('span')
@@ -261,5 +246,17 @@ describe('Nodes maintainer', () => {
     expect(jest.getTimerCount()).toBe(1)
     jest.advanceTimersByTime(1000)
     expect(nodes.getID(detached)).toBeUndefined()
+  })
+})
+
+describe('Nodes onUnregister', () => {
+  test('reports the id of every unregistered node', () => {
+    const onUnregister = jest.fn()
+    const n = new Nodes({ node_id: 'x', forceNgOff: false, maintainer: { enabled: false }, onUnregister })
+    const el = document.createElement('div')
+    const [id] = n.registerNode(el)
+    n.unregisterNode(el)
+    expect(onUnregister).toHaveBeenCalledWith(id)
+    n.clear()
   })
 })

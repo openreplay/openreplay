@@ -90,6 +90,7 @@ function IssueActions({
         state={state}
         matchedBy={matchedBy}
         onClick={onOpenCritical}
+        size="bar"
       />
       {ticket ? (
         <Button onClick={() => window.open(ticket.url, '_blank', 'noopener')}>

@@ -1,5 +1,12 @@
 import BaseService from './BaseService';
 
+export interface IntegrationStatus {
+  scope: 'user' | 'tenant' | 'project';
+  integrated: boolean;
+  /** project scope only */
+  projectIds?: number[];
+}
+
 export default class IntegrationsService extends BaseService {
   fetchList = async (name?: string, siteId?: string) => {
     const r = await this.client.get(
@@ -8,6 +15,13 @@ export default class IntegrationsService extends BaseService {
     const data = await r.json();
 
     return data;
+  };
+
+  fetchStatus = async (): Promise<Record<string, IntegrationStatus>> => {
+    const r = await this.client.get('/integration/status');
+    const { data } = await r.json();
+
+    return data ?? {};
   };
 
   fetchIntegration = async (name: string, siteId: string) => {

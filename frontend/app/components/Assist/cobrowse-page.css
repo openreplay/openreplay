@@ -10,6 +10,11 @@
   cursor: inherit;
 }
 
+/* the call's name leads the row, so its visitor is secondary here */
+.m-cb__rec-visitor {
+  color: var(--m-content-secondary);
+}
+
 /* who took the call: the name only, the robot would read as a visitor */
 .m-cb__owner {
   display: block;

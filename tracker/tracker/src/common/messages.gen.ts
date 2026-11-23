@@ -67,7 +67,9 @@ export declare const enum Type {
   NetworkRequest = 83,
   WSChannel = 84,
   ResourceTiming = 85,
+  ScrollDepth = 86,
   Incident = 87,
+  PageHeight = 88,
   LongAnimationTask = 89,
   InputChange = 112,
   SelectionChange = 113,
@@ -554,11 +556,22 @@ export type ResourceTiming = [
   /*stalled:*/ number,
 ]
 
+export type ScrollDepth = [
+  /*type:*/ Type.ScrollDepth,
+  /*percent:*/ number,
+]
+
 export type Incident = [
   /*type:*/ Type.Incident,
   /*label:*/ string,
   /*startTime:*/ number,
   /*endTime:*/ number,
+]
+
+export type PageHeight = [
+  /*type:*/ Type.PageHeight,
+  /*height:*/ number,
+  /*viewportHeight:*/ number,
 ]
 
 export type LongAnimationTask = [
@@ -723,5 +736,5 @@ export const ANALYTICS_MESSAGES: ReadonlySet<number> = new Set([
   125,
 ])
 
-type Message =  Timestamp | SetPageLocationDeprecated | SetViewportSize | SetViewportScroll | CreateDocument | CreateElementNode | CreateTextNode | MoveNode | RemoveNode | SetNodeAttribute | RemoveNodeAttribute | SetNodeData | SetNodeScroll | SetInputTarget | SetInputValue | SetInputChecked | MouseMove | NetworkRequestDeprecated | ConsoleLog | PageLoadTiming | PageRenderTiming | CustomEvent | UserID | UserAnonymousID | Metadata | StringDictGlobal | SetNodeAttributeDictGlobal | NodeAnimationResult | Profiler | OTable | StateAction | ReduxDeprecated | Vuex | MobX | NgRx | GraphQLDeprecated | PerformanceTrack | StringDictDeprecated | SetNodeAttributeDictDeprecated | StringDict | SetNodeAttributeDict | ResourceTimingDeprecatedDeprecated | ConnectionInformation | SetPageVisibility | LoadFontFace | SetNodeFocus | SetNodeAttributeURLBased | SetCSSDataURLBased | TechnicalInfo | CustomIssue | SetNodeSlot | MouseClick | MouseClickDeprecated | CreateIFrameDocument | AdoptedSSReplaceURLBased | AdoptedSSInsertRuleURLBased | AdoptedSSDeleteRule | AdoptedSSAddOwner | AdoptedSSRemoveOwner | JSException | Zustand | BatchMetadata | NetworkRequest | WSChannel | ResourceTiming | Incident | LongAnimationTask | InputChange | SelectionChange | MouseThrashing | UnbindNodes | ResourceTimingDeprecated | TabChange | TabData | CanvasNode | TagTrigger | Redux | SetPageLocation | GraphQL | WebVitals | IssueEvent
+type Message =  Timestamp | SetPageLocationDeprecated | SetViewportSize | SetViewportScroll | CreateDocument | CreateElementNode | CreateTextNode | MoveNode | RemoveNode | SetNodeAttribute | RemoveNodeAttribute | SetNodeData | SetNodeScroll | SetInputTarget | SetInputValue | SetInputChecked | MouseMove | NetworkRequestDeprecated | ConsoleLog | PageLoadTiming | PageRenderTiming | CustomEvent | UserID | UserAnonymousID | Metadata | StringDictGlobal | SetNodeAttributeDictGlobal | NodeAnimationResult | Profiler | OTable | StateAction | ReduxDeprecated | Vuex | MobX | NgRx | GraphQLDeprecated | PerformanceTrack | StringDictDeprecated | SetNodeAttributeDictDeprecated | StringDict | SetNodeAttributeDict | ResourceTimingDeprecatedDeprecated | ConnectionInformation | SetPageVisibility | LoadFontFace | SetNodeFocus | SetNodeAttributeURLBased | SetCSSDataURLBased | TechnicalInfo | CustomIssue | SetNodeSlot | MouseClick | MouseClickDeprecated | CreateIFrameDocument | AdoptedSSReplaceURLBased | AdoptedSSInsertRuleURLBased | AdoptedSSDeleteRule | AdoptedSSAddOwner | AdoptedSSRemoveOwner | JSException | Zustand | BatchMetadata | NetworkRequest | WSChannel | ResourceTiming | ScrollDepth | Incident | PageHeight | LongAnimationTask | InputChange | SelectionChange | MouseThrashing | UnbindNodes | ResourceTimingDeprecated | TabChange | TabData | CanvasNode | TagTrigger | Redux | SetPageLocation | GraphQL | WebVitals | IssueEvent
 export default Message

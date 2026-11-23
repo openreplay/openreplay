@@ -15,7 +15,8 @@ import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
 import { ActiveFilters } from '@/ui/filters/ActiveFilters';
 import { DisplayShell } from '@/ui/filters/DisplayMenu';
 import { type FilterDimension, FilterMenu } from '@/ui/filters/FilterMenu';
-import { FilterStrip } from '@/ui/filters/FilterStrip';
+import { FilterStrip, type FilterStripProps } from '@/ui/filters/FilterStrip';
+import { PhoneFilters } from '@/ui/filters/PhoneFilters';
 import { SearchField } from '@/ui/inputs/SearchField';
 import { ListFooter } from '@/ui/layout/ListFooter';
 import { setRowsPerPage, useRowsPerPage } from '@/ui/layout/rows-per-page';
@@ -834,6 +835,12 @@ function TestsTab() {
     { key: 'active', label: t('Active'), count: activeCount },
     { key: 'paused', label: t('Paused'), count: pausedCount },
   ];
+  const statusStrip: FilterStripProps = {
+    label: t('Filter by status'),
+    items: statusItems,
+    selected: [statusTab],
+    onSelect: (key) => setStatusTab(key as StatusTab),
+  };
 
   const filtered =
     statusTab !== 'all' ||
@@ -922,12 +929,7 @@ function TestsTab() {
       }
       toolbar={
         <>
-          <FilterStrip
-            label={t('Filter by status')}
-            items={statusItems}
-            selected={[statusTab]}
-            onSelect={(key) => setStatusTab(key as StatusTab)}
-          />
+          <FilterStrip {...statusStrip} folds="menu" />
           {/* a selection swaps the controls for what applies to it, each with its count */}
           <div className="m-page__controls">
             {selectedKeys.length > 0 ? (
@@ -977,13 +979,25 @@ function TestsTab() {
                 </Button>
               </>
             ) : (
-              <>
+              <PhoneFilters
+                result={t('Show {{n}} tests', {
+                  count: total,
+                  n: total.toLocaleString(),
+                })}
+                onReset={() => {
+                  setStatusTab('all');
+                  setEnvFilter('all');
+                  setTagFilter('all');
+                  saveHidden([]);
+                }}
+              >
                 <FilterMenu<FilterKey>
                   dimensions={dimensions}
                   isActive={isActive}
                   onToggle={onToggle}
                   activeCount={chips.length}
                   label={t('Filter tests')}
+                  strip={statusStrip}
                 />
                 <DisplayShell
                   label={t('Display tests')}
@@ -1003,7 +1017,7 @@ function TestsTab() {
                     )
                   }
                 />
-              </>
+              </PhoneFilters>
             )}
           </div>
         </>

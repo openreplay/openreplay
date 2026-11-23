@@ -94,8 +94,6 @@ export default class MetricStore {
   sessionsPageSize: number = 10;
   listView?: boolean = true;
   includeClickRage: boolean = false;
-  clickMapSearch = '';
-  clickMapLabel = '';
   cardCategory: string | null = CATEGORIES.product_analytics;
   focusedSeriesName: string | null = null;
   disabledSeries: string[] = [];
@@ -185,11 +183,6 @@ export default class MetricStore {
 
   setClickMapsRage(val: boolean) {
     this.includeClickRage = val;
-  }
-
-  changeClickMapSearch(val: string, label: string) {
-    this.clickMapSearch = val;
-    this.clickMapLabel = label;
   }
 
   merge(obj: any, updateChangeFlag: boolean = true) {

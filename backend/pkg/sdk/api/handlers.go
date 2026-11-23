@@ -117,8 +117,9 @@ func (e *handlersImpl) startSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	tokenData := &token.TokenData{
-		ID:      sessionID,
-		ExpTime: time.Now().Add(time.Hour * 24).UnixMilli(),
+		ID:        sessionID,
+		ExpTime:   time.Now().Add(time.Hour * 24).UnixMilli(),
+		ProjectID: p.ProjectID,
 	}
 
 	if err = e.sessions.Add(&sessions.Session{

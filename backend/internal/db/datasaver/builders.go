@@ -20,6 +20,7 @@ const (
 func heuristicsProcessors() []handlers.MessageProcessor {
 	return []handlers.MessageProcessor{
 		custom.NewPageEventBuilder(),
+		custom.NewScrollEventBuilder(),
 		&web.NetworkIssueDetector{},
 		&web.PerformanceAggregator{},
 		web.NewAppCrashDetector(),
@@ -121,7 +122,7 @@ func (bs *builders) Handle(msg messages.Message) {
 
 func (bs *builders) flush(sessionID uint64, b *builder) {
 	for _, p := range b.processors {
-		if rm := p.Build(); rm != nil {
+		for rm := p.Build(); rm != nil; rm = p.Build() {
 			if b.lastMsg != nil && !messages.HasMeta(rm) {
 				// attribute the event to the session's last known page
 				rm.Meta().SetMeta(b.lastMsg.Meta())

@@ -1,6 +1,7 @@
 import { cn } from '@/lib/utils';
 import { Button } from '@/ui/actions/button';
 import { Input } from '@/ui/inputs/input';
+import { useViewport } from '@/ui/layout/use-viewport';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import {
   ChevronLeft,
@@ -47,6 +48,7 @@ export function Pagination({
 }) {
   const { t } = useTranslation();
   const last = Math.max(1, Math.ceil(total / pageSize));
+  const phone = useViewport() === 'phone';
   const long = last >= LONG_FROM;
   const radius = radiusFor(last);
   const [draft, setDraft] = useState('');
@@ -115,6 +117,34 @@ export function Pagination({
       </Button>
     </Tooltip>
   );
+
+  // a row of cells is wider than a phone: where you are, and the two arrows
+  if (phone)
+    return (
+      <nav className="flex items-center gap-2" aria-label={t('Pagination')}>
+        <Button
+          variant="secondary"
+          size="icon"
+          disabled={current <= 1}
+          aria-label={t('Previous page')}
+          onClick={() => onChange(current - 1)}
+        >
+          <ChevronLeft size={16} strokeWidth={1.75} aria-hidden="true" />
+        </Button>
+        <span className="m-pager__where" aria-live="polite">
+          {t('Page {{current}} of {{last}}', { current, last })}
+        </span>
+        <Button
+          variant="secondary"
+          size="icon"
+          disabled={current >= last}
+          aria-label={t('Next page')}
+          onClick={() => onChange(current + 1)}
+        >
+          <ChevronRight size={16} strokeWidth={1.75} aria-hidden="true" />
+        </Button>
+      </nav>
+    );
 
   return (
     <nav

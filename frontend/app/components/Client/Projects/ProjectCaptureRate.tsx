@@ -4,97 +4,119 @@ import Project from '@/mstore/types/project';
 import { Button } from '@/ui/actions/button';
 import { Loader } from '@/ui/feedback/Loader';
 import { NumberInput } from '@/ui/inputs/number-input';
+import { useToast } from '@/ui/overlays/toast';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import { observer } from 'mobx-react-lite';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { FilterProjectContext } from 'Shared/FilterEditor';
 import ConditionalRecordingSettings from 'Shared/SessionSettings/components/ConditionalRecordingSettings';
 
 import { PrefBlock, PrefField, PrefToggle } from '../PrefSection';
+import {
+  type CaptureSettings,
+  useCaptureSettings,
+  useProjectFilters,
+  useSaveCaptureSettings,
+} from './queries';
 
 interface Props {
   project: Project;
 }
 
-function ProjectCaptureRate(props: Props) {
+function ProjectCaptureRate({ project }: Props) {
   const { t } = useTranslation();
-  const [conditions, setConditions] = React.useState<Conditions[]>([]);
-  const { projectId, platform } = props.project;
-  const isMobile = platform !== 'web';
-  const { settingsStore, userStore, customFieldStore } = useStore();
+  const projectId = project.projectId!;
+  const { userStore } = useStore();
+  const { data, isError, dataUpdatedAt } = useCaptureSettings(projectId);
+  const catalogue = useProjectFilters(`${projectId}`, userStore.isEnterprise);
+  // owned here: the form remounts once a save lands, the mutation must not
+  const save = useSaveCaptureSettings(projectId);
+
+  if (isError && !data)
+    return (
+      <PrefBlock
+        title={t('Capture rate')}
+        hint={t('Could not load capture settings')}
+      />
+    );
+  return (
+    <Loader loading={!data || catalogue.isLoading}>
+      {data ? (
+        // remounts on fresh server data, so the form never edits stale values
+        <CaptureRateForm
+          key={`${projectId}:${dataUpdatedAt}`}
+          project={project}
+          saved={data}
+          save={save}
+        />
+      ) : null}
+    </Loader>
+  );
+}
+
+interface FormProps {
+  project: Project;
+  saved: CaptureSettings;
+  save: ReturnType<typeof useSaveCaptureSettings>;
+}
+
+const CaptureRateForm = observer(({ project, saved, save }: FormProps) => {
+  const { t } = useTranslation();
+  const toast = useToast();
+  const { userStore } = useStore();
   const isAdmin = userStore.account.admin || userStore.account.superAdmin;
   const { isEnterprise } = userStore;
+  const isMobile = project.platform !== 'web';
+  const siteId = `${project.projectId}`;
+  const [captureRate, setCaptureRate] = useState(saved.rate);
+  const [conditionalCapture, setConditionalCapture] = useState(
+    saved.conditionalCapture,
+  );
+  const [conditions, setConditions] = useState<Conditions[]>(() =>
+    saved.conditions.map((c) => new Conditions(c, true, isMobile, siteId)),
+  );
   const [changed, setChanged] = useState(false);
-  const {
-    sessionSettings: {
-      captureRate,
-      changeCaptureRate,
-      conditionalCapture,
-      changeConditionalCapture,
-      captureConditions,
-    },
-    loadingCaptureRate,
-    updateCaptureConditions,
-    fetchCaptureConditions,
-  } = settingsStore;
-
-  useEffect(() => {
-    if (projectId) {
-      setChanged(false);
-      const fetchData = async () => {
-        if (isEnterprise) {
-          await customFieldStore.fetchListActive(`${projectId}`);
-        }
-        void fetchCaptureConditions(projectId);
-      };
-      void fetchData();
-    }
-  }, [projectId]);
-
-  useEffect(() => {
-    if (captureConditions) {
-      setConditions(
-        captureConditions.map(
-          (condition: any) => new Conditions(condition, true, isMobile),
-        ),
-      );
-    }
-  }, [captureConditions]);
-
-  const onCaptureRateChange = (input: string) => {
-    setChanged(true);
-    changeCaptureRate(input);
-  };
 
   const toggleRate = () => {
     setChanged(true);
     const newValue = !conditionalCapture;
-    changeConditionalCapture(newValue);
+    setConditionalCapture(newValue);
     if (newValue) {
-      changeCaptureRate('100');
+      setCaptureRate(100);
     }
   };
 
   const onUpdate = () => {
-    void updateCaptureConditions(projectId!, {
-      rate: parseInt(captureRate, 10),
-      conditionalCapture,
-      conditions: isEnterprise
-        ? conditions.map((c) => c.toCaptureCondition())
-        : [],
-    }).then((saved) => saved && setChanged(false));
+    const names = conditions.map((c) => c.name);
+    if (new Set(names).size !== names.length) {
+      toast.error(t('Condition set names must be unique'));
+      return;
+    }
+    save.mutate(
+      {
+        rate: captureRate,
+        conditionalCapture,
+        conditions: isEnterprise
+          ? conditions.map((c) => c.toCaptureCondition())
+          : [],
+      },
+      {
+        onSuccess: () => toast.success(t('Settings updated successfully')),
+        onError: () => toast.error(t('Error saving capture rate')),
+      },
+    );
   };
 
   const updateDisabled =
     !changed ||
-    // the form still shows another project's values until this one's load
-    settingsStore.captureConditionsFor !== projectId ||
+    save.isPending ||
     !isAdmin ||
     (isEnterprise && conditionalCapture && conditions.length === 0);
 
   return (
-    <Loader loading={loadingCaptureRate || !projectId}>
+    <>
       <PrefBlock
         title={t('Capture rate')}
         hint={t(
@@ -122,17 +144,16 @@ function ProjectCaptureRate(props: Props) {
           <PrefField>
             <div className="m-pref__row">
               <NumberInput
-                value={captureRate === '' ? undefined : Number(captureRate)}
+                value={captureRate}
                 min={0}
                 max={100}
                 disabled={!isAdmin}
                 aria-label={t('Capture rate')}
                 className="m-pref__w-xs"
-                onChange={(v) =>
-                  onCaptureRateChange(
-                    v == null ? '' : String(Math.min(100, Math.max(0, v))),
-                  )
-                }
+                onChange={(v) => {
+                  setChanged(true);
+                  setCaptureRate(v == null ? 0 : Math.min(100, Math.max(0, v)));
+                }}
               />
               <span className="m-pref__hint">{t('% of sessions')}</span>
             </div>
@@ -161,16 +182,18 @@ function ProjectCaptureRate(props: Props) {
           title={t('Condition sets')}
           hint={t('A session is recorded when it matches one of these.')}
         >
-          <ConditionalRecordingSettings
-            setChanged={setChanged}
-            conditions={conditions}
-            setConditions={setConditions}
-            isMobile={isMobile}
-          />
+          <FilterProjectContext.Provider value={siteId}>
+            <ConditionalRecordingSettings
+              setChanged={setChanged}
+              conditions={conditions}
+              setConditions={setConditions}
+              isMobile={isMobile}
+            />
+          </FilterProjectContext.Provider>
         </PrefBlock>
       ) : null}
-    </Loader>
+    </>
   );
-}
+});
 
 export default observer(ProjectCaptureRate);

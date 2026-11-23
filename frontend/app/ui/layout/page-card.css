@@ -229,6 +229,17 @@
 .m-panel {
   overflow-clip-margin: 1px;
 }
+/* that margin moves the clip onto the border, so an opaque first or last row
+   would paint its square corner over the curve: they follow the inner curve */
+.m-panel > :first-child:not(.m-panel__sentinel),
+.m-panel > .m-panel__sentinel:first-child + * {
+  border-start-start-radius: calc(var(--m-radius-surface) - 1px);
+  border-start-end-radius: calc(var(--m-radius-surface) - 1px);
+}
+.m-panel > :last-child {
+  border-end-start-radius: calc(var(--m-radius-surface) - 1px);
+  border-end-end-radius: calc(var(--m-radius-surface) - 1px);
+}
 .m-panel__sentinel {
   height: 0;
 }
@@ -255,4 +266,169 @@
   border-bottom: 0;
   border-radius: var(--m-radius-surface) var(--m-radius-surface) 0 0;
   background: var(--m-surface-default);
+}
+
+/* phone: a panel head's controls stay on one line; a segmented strip takes
+   its own full row; the way back gives way before the verbs do */
+:root[data-viewport='phone'] .m-panel__head .m-page__controls {
+  flex-wrap: nowrap;
+}
+:root[data-viewport='phone']
+  .m-panel__head
+  .m-page__controls:has(> [data-slot='segmented']) {
+  flex: 1 1 100%;
+  margin-left: 0;
+}
+:root[data-viewport='phone']
+  .m-page__head:has(> .m-page__back)
+  > .m-page__back {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+:root[data-viewport='phone']
+  .m-page__head:has(> .m-page__back)
+  > .m-page__actions {
+  gap: var(--m-space-2);
+}
+
+/* ── the compact header (compact-head.ts): one row, the title a step smaller,
+   the subtitle folded away, the tabs beside the title and the page's search
+   in the row. Crossing the line animates; a page load starts in its shape. */
+.m-page__head {
+  interpolate-size: allow-keywords;
+  transition:
+    padding var(--m-duration-slow) var(--m-ease-out),
+    height var(--m-duration-slow) var(--m-ease-out),
+    margin var(--m-duration-slow) var(--m-ease-out);
+}
+/* only on a crossing: a page mounting compact must not slide on load */
+.m-shell__main:has(> .m-page--folds) {
+  transition: padding-top var(--m-duration-slow) var(--m-ease-out);
+}
+.m-page__title {
+  transition: font-size var(--m-duration-slow) var(--m-ease-out);
+}
+.m-page__subfold {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition:
+    grid-template-rows var(--m-duration-slow) var(--m-ease-out),
+    opacity var(--m-duration-fast) var(--m-ease-out);
+}
+.m-page__subfold > .m-page__sub {
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* one height whatever the row holds: a control between the buttons and the
+   full bar, with the same air above (the shell's) and below */
+.m-page--compact .m-page__head {
+  --m-page-head-row: calc(
+    (var(--m-control-height-sm) + var(--m-control-height-md)) / 2
+  );
+  --m-page-head-pb: 0.75rem;
+  --m-page-head-h: calc(var(--m-page-head-row) + var(--m-page-head-pb));
+  box-sizing: border-box;
+  height: var(--m-page-head-h);
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: var(--m-space-5);
+  padding: 0 var(--m-space-7) var(--m-page-head-pb);
+}
+/* compact, a page with a way back is one row: back, title, verbs */
+.m-page--compact .m-page__head:has(> .m-page__back) {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: 'back lead actions';
+  column-gap: var(--m-space-3);
+  row-gap: 0;
+  padding-top: 0;
+}
+.m-page--compact .m-page__head:has(> .m-page__back) > .m-page__lead,
+.m-page--compact .m-page__head:has(> .m-page__back) .m-page__titlerow {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.m-page--compact .m-page__head:has(> .m-page__back) .m-page__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.m-shell__main:has(> .m-page--compact) {
+  padding-top: 0.75rem;
+}
+.m-page--compact .m-page__lead {
+  flex: none;
+  gap: 0;
+}
+.m-page--compact .m-page__titlerow {
+  flex-wrap: nowrap;
+}
+.m-page--compact .m-page__title {
+  font-size: calc(var(--m-text-xl) * var(--m-display-scale));
+  white-space: nowrap;
+}
+.m-page--compact .m-page__subfold {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  width: 0;
+}
+.m-page--compact .m-page__sub {
+  white-space: nowrap;
+}
+
+/* the tabs' labels on the title's line, their ink bar on the row's foot */
+.m-page__headtabs {
+  flex: none;
+  align-self: stretch;
+  display: flex;
+  margin-bottom: calc(var(--m-page-head-pb) * -1);
+  margin-inline-start: var(--m-space-3);
+}
+.m-page__headtabs [role='tablist'] {
+  align-items: stretch;
+  height: 100%;
+}
+.m-page__headtabs [role='tab'] {
+  display: inline-flex;
+  align-items: flex-start;
+  padding-block: calc(
+      (var(--m-page-head-h) - var(--m-page-head-pb) - 1.25rem) / 2
+    )
+    0;
+}
+/* the search's seat takes the room between the title and the actions */
+.m-page__headsearch {
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+}
+.m-page__headsearch .m-recs__entryfield {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.m-page__headsearch [data-trigger='bar'] .m-fbar__filter {
+  height: var(--m-page-head-row);
+}
+.m-page--folds .m-page__headsearch .m-recs__entryfield,
+.m-page--folds .m-page__headtabs {
+  animation: m-head-rise var(--m-duration-slow) var(--m-ease-out);
+}
+@keyframes m-head-rise {
+  from {
+    opacity: 0;
+    transform: translateY(var(--m-space-4));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m-page__head,
+  .m-page__title,
+  .m-page__subfold {
+    transition: none;
+  }
+  .m-page__headsearch .m-recs__entryfield,
+  .m-page__headtabs {
+    animation: none;
+  }
 }

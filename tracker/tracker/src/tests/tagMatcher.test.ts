@@ -172,35 +172,10 @@ describe('TagMatcher', () => {
   })
 
   describe('edge cases', () => {
-    test('handles empty selector gracefully', () => {
-      matcher.setTags([{ id: 1, selector: '' }])
+    test.each(['', '[[[invalid'])('handles selector %j without throwing', (selector) => {
+      matcher.setTags([{ id: 1, selector }])
       const node = el('<div></div>')
       expect(matcher.match(node)).toBeNull()
-    })
-
-    test('handles invalid selector without throwing', () => {
-      matcher.setTags([{ id: 1, selector: '[[[invalid' }])
-      const node = el('<div></div>')
-      expect(matcher.match(node)).toBeNull()
-    })
-
-    test('multiple tags can coexist across tiers', () => {
-      const idTag = { id: 1, selector: '#hero' }
-      const dataTag = { id: 2, selector: '[data-role="nav"]' }
-      const classTag = { id: 3, selector: 'div.sidebar' }
-      const fallbackTag = { id: 4, selector: 'ul > li:nth-child(1)' }
-      matcher.setTags([idTag, dataTag, classTag, fallbackTag])
-
-      document.body.innerHTML = `
-        <div id="hero"></div>
-        <nav data-role="nav"></nav>
-        <div class="sidebar"></div>
-        <ul><li>first</li><li>second</li></ul>
-      `
-      expect(matcher.match(document.getElementById('hero')!)).toBe(idTag)
-      expect(matcher.match(document.querySelector('[data-role="nav"]')!)).toBe(dataTag)
-      expect(matcher.match(document.querySelector('.sidebar')!)).toBe(classTag)
-      expect(matcher.match(document.querySelector('li')!)).toBe(fallbackTag)
     })
   })
 
@@ -225,18 +200,14 @@ describe('TagMatcher', () => {
       expect(matcher.match(el('<div data-t="v" data-u="w"></div>'))).toBe(tag)
     })
 
-    test('quoted attribute value with spaces after a combinator', () => {
+    test('a quoted value with spaces after a combinator is still indexed', () => {
       // jsdom's selector engine can't match '>' inside attribute values, so only spaces here
       const tag = { id: 1, selector: 'form [data-label="Save all now"]' }
-      matcher.setTags([tag])
+      // an indexed tag beats a fallback one listed earlier: this one wins only if indexed
+      const fallback = { id: 2, selector: 'form button' }
+      matcher.setTags([fallback, tag])
       document.body.innerHTML = '<form><button data-label="Save all now"></button></form>'
       expect(matcher.match(document.querySelector('button')!)).toBe(tag)
-    })
-
-    test('attribute value with a space in the last segment', () => {
-      const tag = { id: 1, selector: 'button[aria-label="Close dialog"]' }
-      matcher.setTags([tag])
-      expect(matcher.match(el('<button aria-label="Close dialog"></button>'))).toBe(tag)
     })
 
     test('two tags sharing an id fingerprint both match', () => {
@@ -269,6 +240,9 @@ describe('TagMatcher', () => {
       const not = { id: 2, selector: 'li:not(#skip)' }
       matcher.setTags([list, not])
       expect(matcher.match(el('<span class="yes"></span>'))).toBe(list)
+      cleanup()
+      // indexed by its last part ('.yes'), the list would miss its first one
+      expect(matcher.match(el('<span id="nope"></span>'))).toBe(list)
       document.body.innerHTML = '<ul><li id="skip"></li><li id="keep"></li></ul>'
       expect(matcher.match(document.getElementById('keep')!)).toBe(not)
       expect(matcher.match(document.getElementById('skip')!)).toBeNull()

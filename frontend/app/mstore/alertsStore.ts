@@ -1,13 +1,42 @@
 import Alert, { IAlert } from 'Types/alert';
-import { action, makeAutoObservable } from 'mobx';
+import { action, makeAutoObservable, runInAction } from 'mobx';
 
+import type { ConditionKind } from 'App/constants/alertConditions';
 import { alertsService } from 'App/services';
+import { normalizeDataType } from 'App/utils';
+
+export type TriggerGroup = 'cards' | 'predefined' | 'events' | 'users';
+
+export interface TriggerOption {
+  label: string;
+  value: string | number;
+  unit?: string;
+  group: TriggerGroup;
+  /** a property OpenReplay captures, not one the project sends */
+  autoCaptured?: boolean;
+  /** which operators apply: cards and predefined metrics are numbers */
+  kind: ConditionKind;
+}
+
+const NUMERIC = new Set(['number', 'date', 'timestamp']);
+const kindOf = (dataType?: string): ConditionKind =>
+  !dataType || NUMERIC.has(normalizeDataType(dataType)) ? 'number' : 'string';
+
+const groupOf = (o: {
+  value: string | number;
+  source?: string;
+  predefined?: boolean;
+}): TriggerGroup => {
+  if (o.source === 'events' || o.source === 'users') return o.source;
+  if (o.source === 'metrics') return 'cards';
+  if (o.source === 'predefined' || o.predefined) return 'predefined';
+  return typeof o.value === 'number' ? 'cards' : 'predefined';
+};
 
 export default class AlertsStore {
   alerts: Alert[] = [];
 
-  triggerOptions: { label: string; value: string | number; unit?: string }[] =
-    [];
+  triggerOptions: TriggerOption[] = [];
 
   alertsSearch = '';
 
@@ -70,6 +99,27 @@ export default class AlertsStore {
       }
     });
 
+  /** Saves the stored alert under a new name; unsaved form edits stay unsaved. */
+  rename = async (id: string, name: string) => {
+    const saved = this.alerts.find((a) => String(a.alertId) === id);
+    if (!saved) throw new Error(`alert ${id} is not loaded`);
+    const next = new Alert(
+      { ...JSON.parse(JSON.stringify(saved.toData())), name },
+      true,
+    );
+    this.setLoading(true);
+    try {
+      await alertsService.save(next);
+      // in place: a new list would re-init the open form and drop its edits
+      runInAction(() => {
+        saved.name = name;
+        if (String(this.instance.alertId) === id) this.instance.name = name;
+      });
+    } finally {
+      this.setLoading(false);
+    }
+  };
+
   remove = (id: string): Promise<void> =>
     new Promise<void>(async (resolve, reject) => {
       this.setLoading(true);
@@ -89,10 +139,19 @@ export default class AlertsStore {
     this.setLoading(true);
     try {
       const options = await alertsService.fetchTriggerOptions();
-      this.triggerOptions = options.map(({ name, value }) => ({
-        label: name,
-        value,
-      }));
+      this.triggerOptions = options.map((o) => {
+        const group = groupOf(o);
+        return {
+          label: o.name,
+          value: o.value,
+          unit: o.unit,
+          group,
+          autoCaptured:
+            (group === 'events' || group === 'users') &&
+            !String(o.value).startsWith('properties.'),
+          kind: kindOf(o.dataType),
+        };
+      });
     } catch (e) {
       console.error(e);
     } finally {

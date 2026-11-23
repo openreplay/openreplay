@@ -1,25 +1,5 @@
-import { isCSSStyleRule } from '../../../guards';
 import logger from '../../../logger';
 import type Screen from '../../Screen/Screen';
-import { replaceCSSPseudoclasses } from '../../messages/rewriter/rewriteMessage';
-
-// Doesn't work with css files (hasOwnProperty returns false)
-// TODO: recheck and remove if true
-function rewriteNodeStyleSheet(
-  doc: Document,
-  node: HTMLLinkElement | HTMLStyleElement,
-) {
-  const ss = Object.values(doc.styleSheets).find((s) => s.ownerNode === node);
-  if (!ss || !ss.hasOwnProperty('rules')) {
-    return;
-  }
-  for (let i = 0; i < ss.cssRules.length; i++) {
-    const r = ss.cssRules[i];
-    if (isCSSStyleRule(r)) {
-      r.selectorText = replaceCSSPseudoclasses(r.selectorText);
-    }
-  }
-}
 
 export default class StylesManager {
   private linkLoadingCount: number = 0;
@@ -51,13 +31,6 @@ export default class StylesManager {
     if (this.revealed) {
       // a stylesheet added to a page already on screen (an SPA's lazy chunk):
       // hiding the frame until it loads blinks the replay
-      node.onload = () => {
-        node.onload = null;
-        const doc = this.screen.document;
-        if (node.ownerDocument === doc && doc) {
-          rewriteNodeStyleSheet(doc, node);
-        }
-      };
       return;
     }
     const generation = this.generation;
@@ -72,13 +45,7 @@ export default class StylesManager {
       };
       timeoutId = setTimeout(() => addSkipAndResolve('by timeout'), 5000);
 
-      node.onload = () => {
-        const doc = this.screen.document;
-        if (node.ownerDocument === doc && doc) {
-          rewriteNodeStyleSheet(doc, node);
-        }
-        resolve();
-      };
+      node.onload = () => resolve();
       node.onerror = addSkipAndResolve;
     }).then(() => {
       node.onload = null;

@@ -47,10 +47,6 @@ class BaseIntegration(ABC):
         pass
 
     @abstractmethod
-    def _add(self, data):
-        pass
-
-    @abstractmethod
     def delete(self):
         pass
 

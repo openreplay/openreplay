@@ -171,3 +171,7 @@ func (s *teamImpl) createOrRestore(tx *pool.Tx, m *newMember) (int64, error) {
 	}
 	return userID, nil
 }
+
+func (s *teamImpl) emailVerification(tx *pool.Tx, userID int64) (string, error) {
+	return "", nil
+}

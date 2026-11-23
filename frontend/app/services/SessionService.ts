@@ -1,6 +1,7 @@
-import APIClient, { apiClient, clean as cleanParams } from 'App/api_client';
-import { ISession } from 'Types/session/session';
 import { IErrorStack } from 'Types/session/errorStack';
+import { ISession } from 'Types/session/session';
+
+import APIClient, { apiClient, clean as cleanParams } from 'App/api_client';
 
 export default class SettingsService {
   private client: APIClient;
@@ -11,17 +12,6 @@ export default class SettingsService {
 
   initClient(client?: APIClient) {
     this.client = client || apiClient;
-  }
-
-  saveCaptureRate(projectId: number, data: any) {
-    return this.client.post(`/${projectId}/sample_rate`, data);
-  }
-
-  fetchCaptureRate(projectId: number) {
-    return this.client
-      .get(`/${projectId}/sample_rate`)
-      .then((response) => response.json())
-      .then((response) => response.data || 0);
   }
 
   fetchCaptureConditions(
@@ -140,8 +130,7 @@ export default class SettingsService {
   }
 
   toggleFavorite(sessionId: string): Promise<any> {
-    return this.client
-      .get(`/sessions/${sessionId}/favorite`);
+    return this.client.get(`/sessions/${sessionId}/favorite`);
   }
 
   getClickMap(params = {}): Promise<any[]> {

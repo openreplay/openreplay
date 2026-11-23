@@ -29,3 +29,9 @@ web-ext.config.ts
 
 dist/*
 dist
+
+# bun.lock is the only lockfile
+yarn.lock
+package-lock.json
+pnpm-lock.yaml
+bun.lockb

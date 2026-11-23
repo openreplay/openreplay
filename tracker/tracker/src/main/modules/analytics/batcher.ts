@@ -31,7 +31,7 @@ class Batcher {
   private intervalId: any = null
   private stopped = false
   private discarded = false
-  private readonly retryTimers = new Set<ReturnType<typeof setTimeout>>()
+  private readonly abort = new AbortController()
 
   constructor(
     private readonly backendUrl: string,
@@ -180,20 +180,24 @@ class Batcher {
     const send = () => {
       if (this.discarded) return
       const token = this.getToken()
+      if (this.discarded) return
       if (!token) {
         // No token yet: keep the events so they go out once one is available.
         onTerminalFailure?.()
         return
       }
+      const body = JSON.stringify(sentBatch)
+      if (this.discarded) return
       attempts++
       return fetch(`${this.backendUrl}${this.apiEdp}`, {
         method: 'POST',
+        signal: this.abort.signal,
         keepalive,
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(sentBatch),
+        body,
       })
         .then(async (response) => {
           if (this.discarded) return
@@ -228,11 +232,13 @@ class Batcher {
         .catch(() => {
           if (this.discarded) return
           if (attempts < this.retryLimit) {
+            const signal = this.abort.signal
+            const cancel = () => clearTimeout(timer)
             const timer = setTimeout(() => {
-              this.retryTimers.delete(timer)
+              signal.removeEventListener('abort', cancel)
               void send()
             }, this.retryTimeout)
-            this.retryTimers.add(timer)
+            signal.addEventListener('abort', cancel, { once: true })
           } else {
             onTerminalFailure?.()
           }
@@ -308,11 +314,10 @@ class Batcher {
   discard() {
     this.discarded = true
     this.stopped = true
+    this.abort.abort()
     if (this.intervalId) clearInterval(this.intervalId)
     this.intervalId = null
     document.removeEventListener('visibilitychange', this.onVisibilityChange)
-    this.retryTimers.forEach(clearTimeout)
-    this.retryTimers.clear()
     this.batch[categories.people] = []
     this.batch[categories.events] = []
   }

@@ -9,7 +9,6 @@ from decouple import config
 
 import schemas
 from chalicelib.utils import sql_helper as sh
-from chalicelib.utils.TimeUTC import TimeUTC
 from schemas import SearchEventOperator
 
 logger = logging.getLogger(__name__)
@@ -36,16 +35,6 @@ def get_user_favorite_sessions_table(timestamp=0):
     return "experimental.user_favorite_sessions"
 
 
-def get_user_viewed_sessions_table(timestamp=0):
-    return "experimental.user_viewed_sessions"
-
-
-def get_user_viewed_errors_table(timestamp=0):
-    return "experimental.user_viewed_errors"
-
-
-def get_main_js_errors_sessions_table(timestamp=0):
-    return get_main_events_table(timestamp=timestamp)
     # enable this when js_errors_sessions_mv is fixed
     # return "experimental.js_errors_sessions_mv"  # \
     # if config("EXP_7D_MV", cast=bool, default=True) \
@@ -246,14 +235,3 @@ def best_clickhouse_type(value):
     raise TypeError(f"Unsupported type: {type(value).__name__}")
 
 
-def explode_dproperties(rows):
-    for i in range(len(rows)):
-        rows[i] = {**rows[i], **rows[i]["$properties"]}
-        rows[i].pop("$properties")
-    return rows
-
-
-def add_timestamp(rows):
-    for row in rows:
-        row["timestamp"] = TimeUTC.datetime_to_timestamp(row["createdAt"])
-    return rows

@@ -172,6 +172,11 @@ export default class Screen {
     return this.iframe.contentDocument;
   }
 
+  /** The scaled element holding the iframe; overlays added to it share the page's coordinates. */
+  get screenElement(): HTMLDivElement {
+    return this.screen;
+  }
+
   get iframeStylesRef(): CSSStyleDeclaration {
     return this.iframe.style;
   }
@@ -260,15 +265,16 @@ export default class Screen {
         posStyles = { height: `${height}px` };
         break;
       case ScaleMode.AdjustParentHeight:
-        // we want to scale the document with true height so the clickmap will be scrollable
-        const usedHeight =
-          this.document?.body.scrollHeight &&
-          this.document?.body.scrollHeight > height
-            ? this.document.body.scrollHeight + 'px'
-            : height + 'px';
+        // full document height so the clickmap scrolls; documentElement is what
+        // the tracker normalizes clicks against (body misses its margins and
+        // anything positioned outside it). Measured at the recorded viewport
+        // height: 100vh is the iframe's height, so measuring a fitted page
+        // would grow a 100vh section by the rest of the page on every fit
+        this.iframe.style.height = `${height}px`;
+        const docHeight = this.document?.documentElement.scrollHeight ?? 0;
         this.scaleRatio = offsetWidth / width;
         translate = 'translate(-50%, 0)';
-        posStyles = { top: 0, height: usedHeight };
+        posStyles = { top: 0, height: `${Math.max(docHeight, height)}px` };
         break;
     }
 
@@ -279,7 +285,9 @@ export default class Screen {
     }
 
     if (this.scaleMode === ScaleMode.AdjustParentHeight) {
-      this.parentElement.style.height = `${this.scaleRatio * height}px`;
+      // the parent is a fixed window the page scrolls in; overlay labels
+      // divide by this to stay at text size
+      this.screen.style.setProperty('--m-screen-k', String(this.scaleRatio));
     }
 
     Object.assign(this.screen.style, posStyles, {

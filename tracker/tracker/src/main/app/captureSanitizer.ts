@@ -39,14 +39,29 @@ export function sanitizeCapture(
 
 export const PLACEHOLDER_SRC = 'https://static.openreplay.com/tracker/placeholder.jpeg'
 
-// Only explicit SDK call sites may request these exemptions; DOM names/values alone cannot.
-export function isGeneratedAttribute(name: string, value: string): boolean {
-  return (
-    (name === 'src' && value === PLACEHOLDER_SRC) ||
-    ((name === 'width' || name === 'height') && /^\d+(?:\.\d+)?$/.test(value)) ||
-    (name === 'style' && /^width: \d+(?:\.\d+)?px; height: \d+(?:\.\d+)?px;$/.test(value)) ||
-    (name === '__openreplay_dialog' && ['modal', 'nonmodal', 'closed'].includes(value)) ||
-    (name === 'orloaded' && value === 'true') ||
-    (name === '__openreplay_color_scheme' && ['dark', 'light', 'normal'].includes(value))
-  )
+export function emptyStyleRule(rule: string): string {
+  if (/^\s*@import\b/i.test(rule)) return '@import url("data:text/css,") not all;'
+  if (/^\s*@namespace\b/i.test(rule)) return '@namespace openreplay-omitted "urn:openreplay:omitted";'
+  return ':not(*) {}'
+}
+
+export function hasStyleRuleCount(text: string, count: number): boolean {
+  try {
+    const sheet = new CSSStyleSheet()
+    sheet.replaceSync(text)
+    return sheet.cssRules.length === count
+  } catch {
+    return false
+  }
+}
+
+export function sanitizeStyleRule(
+  callback: CaptureSanitizer | undefined,
+  value: string,
+  source: 'rule' | 'adopted',
+): string {
+  if (!callback) return value
+  const approved = sanitizeCapture(callback, { kind: 'css', source, value, node: null })
+  if (approved === value || (approved && hasStyleRuleCount(approved, 1))) return approved
+  return emptyStyleRule(value)
 }

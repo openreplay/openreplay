@@ -171,9 +171,8 @@ export function DataTable<T>({
       className={cn('w-full table-fixed border-collapse', className)}
       style={
         {
-          '--m-dt-row': compact
-            ? 'var(--m-row-height)'
-            : 'var(--m-list-row-height)',
+          // a Fit list shares out what whole rows leave (rows-per-page)
+          '--m-dt-row': `calc(var(${compact ? '--m-row-height' : '--m-list-row-height'}) + var(--m-fit-extra, 0px))`,
         } as CSSProperties
       }
       aria-label={ariaLabel}
@@ -195,7 +194,7 @@ export function DataTable<T>({
         ))}
       </colgroup>
 
-      <thead>
+      <thead className="m-thead">
         <tr>
           {selection && (
             <th
@@ -292,7 +291,7 @@ export function DataTable<T>({
                     type="button"
                     onClick={() => cycle(c.key)}
                     className={cn(
-                      'group/th m-hover -mx-1 inline-flex h-full max-w-full items-center gap-2 rounded-chip px-1',
+                      'm-th__sort group/th m-hover -mx-1 inline-flex h-full max-w-full items-center gap-2 rounded-chip px-1',
                       'select-none whitespace-nowrap hover:text-content-secondary',
                       c.align === 'right' && 'flex-row-reverse',
                       order && 'text-content-primary',

@@ -1,4 +1,4 @@
-import { SessionAvatar } from '@/ui/data/SessionAvatar';
+import { SvgAvatar } from '@/ui/data/SessionAvatar';
 import type { AvatarFace } from '@/ui/data/avatar';
 import {
   FRAMES,
@@ -209,16 +209,26 @@ function Robot({
       <path d={poly(front)} className="m-cheer__fill-front" />
       <path d={poly(side)} className="m-cheer__fill-side" />
       {faces.map(({ kind, part }) => (
-        <foreignObject
+        <SvgAvatar
           key={kind}
+          seed={face.seed}
+          face={part}
+          faceOnly
           x={x + (W - FACE) / 2}
           y={TOP + (H - FACE) / 2}
-          width={FACE}
-          height={FACE}
+          size={FACE}
           className={`m-cheer__face m-cheer__face--${kind}`}
-        >
-          <SessionAvatar seed={face.seed} face={part} size={FACE} faceOnly />
-        </foreignObject>
+          ground={
+            <rect
+              x={x + (W - FACE) / 2}
+              y={TOP + (H - FACE) / 2}
+              width={FACE}
+              height={FACE}
+              rx={2}
+              className="m-savatar__ground"
+            />
+          }
+        />
       ))}
 
       <Boil>

@@ -67,7 +67,7 @@ export function TabsTrigger({
   return (
     <T.Trigger
       className={cn(
-        'py-4 text-sm leading-[1.25rem] text-content-muted',
+        'm-tab py-4 text-sm leading-[1.25rem] text-content-muted',
         'm-hover hover:text-content-primary data-[state=active]:text-content-primary',
         'data-[pointer]:outline-none',
         className,

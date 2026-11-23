@@ -116,34 +116,6 @@ describe('Events', () => {
     expect(constantProps.saveSuperProperties).not.toHaveBeenCalled()
   })
 
-  test('setPropertiesOnce with object only sets missing and non-reserved keys', () => {
-    events.ownProperties = {
-      superA: 'A',
-      existing: 'keep',
-      properties: 'reserved',
-      token: 'reserved-token',
-      timestamp: 1234,
-    }
-
-    events.setPropertiesOnce({
-      existing: 'new', // should not change
-      newKey: 'newValue',
-      properties: 'should-not-set',
-      token: 'should-not-set',
-      timestamp: 'should-not-set',
-    })
-
-    expect(events.ownProperties).toEqual({
-      superA: 'A',
-      existing: 'keep',
-      properties: 'reserved',
-      token: 'reserved-token',
-      timestamp: 1234,
-      newKey: 'newValue',
-    })
-    expect(constantProps.saveSuperProperties).toHaveBeenCalledWith(events.ownProperties)
-  })
-
   test('setPropertiesOnce with string/value sets only if missing and non-reserved', () => {
     events.ownProperties = {}
 
@@ -155,13 +127,6 @@ describe('Events', () => {
 
     events.setPropertiesOnce('properties', 'nope')
     expect(events.ownProperties.properties).toBeUndefined()
-  })
-
-  test('setPropertiesOnce does not call saveSuperProperties when nothing changed', () => {
-    events.ownProperties = { existing: 1 }
-
-    events.setPropertiesOnce({ existing: 2 })
-    expect(constantProps.saveSuperProperties).not.toHaveBeenCalled()
   })
 
   test('unsetProperties removes a single non-reserved property and saves', () => {

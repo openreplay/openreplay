@@ -9,7 +9,6 @@ PROVIDER = schemas.IntegrationType.GITHUB
 class GitHubIntegration(base.BaseIntegration):
 
     def __init__(self, tenant_id, user_id):
-        self.__tenant_id = tenant_id
         super(GitHubIntegration, self).__init__(user_id=user_id, ISSUE_CLASS=GithubIntegrationIssue)
 
     @property
@@ -42,9 +41,6 @@ class GitHubIntegration(base.BaseIntegration):
             if w and w.get("token") and obfuscate:
                 w["token"] = helper.obfuscate(w["token"])
             return w
-
-    def _add(self, data):
-        pass
 
     def add(self, token, obfuscate=False):
         with pg_client.PostgresClient() as cur:

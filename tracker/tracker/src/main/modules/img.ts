@@ -3,8 +3,9 @@ import type App from '../app/index.js'
 import { isURL, IS_FIREFOX, MAX_STR_LEN, createMutationObserver } from '../utils.js'
 import { ResourceTiming } from '../app/messages.gen.js'
 import { hasTag } from '../app/guards.js'
+import { SanitizeLevel } from '../app/sanitizer.js'
 
-function resolveURL(url: string, location: Location = document.location) {
+function resolveURL(url: string, base: string = document.baseURI) {
   url = url.trim()
   if (
     url.startsWith('//') ||
@@ -13,41 +14,72 @@ function resolveURL(url: string, location: Location = document.location) {
     url.startsWith('data:') // any other possible value here? https://bugzilla.mozilla.org/show_bug.cgi?id=1758035
   ) {
     return url
-  } else if (url.startsWith('/')) {
-    return location.origin + url
-  } else {
-    return location.origin + location.pathname + url
   }
+  try {
+    return new URL(url, base).href
+  } catch (e) {
+    return url
+  }
+}
+
+// srcset candidate: "url [descriptor]"
+function resolveSrcsetCandidate(candidate: string, base: string) {
+  const [url, ...descriptors] = candidate.trim().split(/\s+/)
+  return [resolveURL(url, base), ...descriptors].join(' ')
 }
 
 // https://bugzilla.mozilla.org/show_bug.cgi?id=1607081
 function isSVGInFireFox(url: string) {
-  return IS_FIREFOX && (url.startsWith('data:image/svg+xml') || url.match(/.svg$|/i))
+  return IS_FIREFOX && (url.startsWith('data:image/svg+xml') || /\.svg([?#]|$)/i.test(url))
 }
 
 export default function (app: App): void {
+  function sendImageAttribute(
+    id: number,
+    node: HTMLImageElement | HTMLSourceElement,
+    name: 'src' | 'srcset',
+    value: string,
+    urlBased = false,
+  ) {
+    if (app.isDisposed()) return
+    const approved = sanitizeCapture(app.captureSanitizer, {
+      kind: 'resource',
+      resourceType: 'image',
+      value,
+      node,
+    })
+    if (app.isDisposed()) return
+    if (approved === null) app.attributeSender.removeAttribute(id, name, node)
+    else if (urlBased) app.attributeSender.sendURLBasedAttribute(id, name, approved, node)
+    else app.attributeSender.sendSetAttribute(id, name, approved, false, node)
+  }
+
   function sendPlaceholder(id: number, node: HTMLImageElement): void {
-    app.attributeSender.removeAttribute(id, 'srcset')
-    app.attributeSender.sendSetAttribute(id, 'src', PLACEHOLDER_SRC, { generated: true, resourceType: 'image' })
+    sendImageAttribute(id, node, 'src', PLACEHOLDER_SRC)
+    if (app.isDisposed()) return
     const { width, height } = node.getBoundingClientRect()
     if (!node.hasAttribute('width')) {
-      app.attributeSender.sendSetAttribute(id, 'width', String(width), { generated: true })
+      app.attributeSender.sendSetAttribute(id, 'width', String(width), false, node)
     }
     if (!node.hasAttribute('height')) {
-      app.attributeSender.sendSetAttribute(id, 'height', String(height), { generated: true })
+      app.attributeSender.sendSetAttribute(id, 'height', String(height), false, node)
     }
   }
 
-  const sendSrcset = function (id: number, img: HTMLImageElement): void {
-    const { srcset } = img
+  function isMasked(id: number): boolean {
+    return app.sanitizer.isHidden(id) || app.sanitizer.isObscured(id)
+  }
+
+  const sendSrcset = function (id: number, el: HTMLImageElement | HTMLSourceElement): void {
+    const { srcset } = el
     if (!srcset) {
       return
     }
     const resolvedSrcset = srcset
       .split(srcset.match(/,\s+/) ? /,\s+/ : ',')
-      .map((str) => resolveURL(str))
+      .map((str) => resolveSrcsetCandidate(str, app.getBaseHref()))
       .join(', ')
-    app.attributeSender.sendSetAttribute(id, 'srcset', resolvedSrcset, { resourceType: 'image' })
+    sendImageAttribute(id, el, 'srcset', resolvedSrcset)
   }
 
   const sendSrc = function (id: number, img: HTMLImageElement): void {
@@ -55,75 +87,91 @@ export default function (app: App): void {
       sendPlaceholder(id, img)
       return
     }
-    app.attributeSender.sendURLBasedAttribute(id, 'src', img.src)
+    sendImageAttribute(id, img, 'src', img.src, true)
   }
 
   const sendImgError = app.safe(function (img: HTMLImageElement): void {
-    const id = app.nodes.getID(img)
-    if (id === undefined || app.sanitizer.isHidden(id) || app.sanitizer.isObscured(id)) return
-    const resolvedSrc = sanitizeCapture(app.captureSanitizer, {
-      kind: 'resource',
-      resourceType: 'timing',
-      value: resolveURL(img.src || ''),
-      node: img,
-    }) // Src type is null sometimes. - is it true?
-    if (resolvedSrc !== null && isURL(resolvedSrc)) {
-      app.send(
-        ResourceTiming(
-          app.timestamp(),
-          0,
-          0,
-          0,
-          0,
-          0,
-          resolvedSrc,
-          'img',
-          0,
-          false,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-        ),
-      )
+    // src="" reads back as the page URL; that is not an image request
+    const src = img.currentSrc || (img.getAttribute('src') ? img.src : '')
+    const resolvedSrc = resolveURL(src)
+    if (src && isURL(resolvedSrc)) {
+      app.send(ResourceTiming(app.timestamp(), 0, 0, 0, 0, 0, resolvedSrc, 'img', 0, false, 0, 0, 0, 0, 0, 0, 0))
     }
   })
 
-  const sendImgAttrs = app.safe(function (img: HTMLImageElement): void {
+  // Not waiting for load: lazy images that never load still need src/srcset to lay out in replay.
+  const sendImgAttrs = app.safe(function (img: HTMLImageElement, resanitize = false): void {
     const id = app.nodes.getID(img)
     if (id === undefined) {
       return
     }
-    if (!img.complete) {
+    if (!img.getAttribute('src') && !img.getAttribute('srcset')) {
       return
     }
-    if (app.sanitizer.isHidden(id) || app.sanitizer.isObscured(id)) {
-      sendPlaceholder(id, img)
-    } else if (img.naturalHeight === 0 && img.naturalWidth === 0 && !isSVGInFireFox(img.src)) {
+    if (
+      img.complete &&
+      img.naturalHeight === 0 &&
+      img.naturalWidth === 0 &&
+      !isSVGInFireFox(img.src)
+    ) {
       sendImgError(img)
+    } else if (isMasked(id)) {
+      sendPlaceholder(id, img)
+      // a srcset sent before masking would win over the placeholder
+      if (resanitize && img.srcset) {
+        app.attributeSender.removeAttribute(id, 'srcset', img)
+      }
     } else {
-      sendSrc(id, img)
+      if (img.getAttribute('src')) {
+        sendSrc(id, img)
+      }
       sendSrcset(id, img)
     }
   })
+
+  // <source> candidates win over the <img> in replay, so they follow its masking.
+  // Its own level can't be used: preceding <source>s are committed before the <img>.
+  function isPictureMasked(picture: HTMLPictureElement): boolean {
+    const pictureId = app.nodes.getID(picture)
+    const img = Array.from(picture.children).find((el) => hasTag(el, 'img'))
+    return (
+      pictureId !== undefined &&
+      img !== undefined &&
+      app.sanitizer.computeLevel(img, app.sanitizer.getLevel(pictureId)) >= SanitizeLevel.Obscured
+    )
+  }
+
+  const sendSourceSrcset = app.safe(function (source: HTMLSourceElement, resanitize = false): void {
+    const id = app.nodes.getID(source)
+    const picture = source.parentElement
+    if (id === undefined || !picture || !hasTag(picture, 'picture') || !source.srcset) {
+      return
+    }
+    if (isMasked(id) || isPictureMasked(picture)) {
+      if (resanitize) {
+        app.attributeSender.removeAttribute(id, 'srcset', source)
+      }
+    } else {
+      sendSrcset(id, source)
+    }
+  })
+
   const observer = createMutationObserver(
     app.safe((mutations) => {
       for (const mutation of mutations) {
         if (mutation.type === 'attributes') {
-          const target = mutation.target as HTMLImageElement
-          const id = app.nodes.getID(target)
-          if (id === undefined) {
+          const target = mutation.target as HTMLImageElement | HTMLSourceElement
+          if (hasTag(target, 'source')) {
+            sendSourceSrcset(target)
             continue
           }
-          if (app.sanitizer.isHidden(id) || app.sanitizer.isObscured(id)) {
-            sendPlaceholder(id, target)
+          const id = app.nodes.getID(target)
+          // masked images keep their placeholder
+          if (id === undefined || isMasked(id)) {
             continue
           }
           if (mutation.attributeName === 'src') {
-            sendSrc(id, target)
+            sendSrc(id, target as HTMLImageElement)
           }
           if (mutation.attributeName === 'srcset') {
             sendSrcset(id, target)
@@ -139,19 +187,35 @@ export default function (app: App): void {
   })
 
   app.nodes.attachNodeCallback((node: Node): void => {
+    if (hasTag(node, 'source')) {
+      sendSourceSrcset(node)
+      if (!app.isDisposed()) observer.observe(node, { attributes: true, attributeFilter: ['srcset'] })
+      return
+    }
     if (!hasTag(node, 'img')) {
       return
     }
     app.nodes.attachNodeListener(node, 'error', () => sendImgError(node))
-    app.nodes.attachNodeListener(node, 'load', () => sendImgAttrs(node))
     sendImgAttrs(node)
-    observer.observe(node, { attributes: true, attributeFilter: ['src', 'srcset'] })
+    if (!app.isDisposed()) {
+      observer.observe(node, { attributes: true, attributeFilter: ['src', 'srcset'] })
+    }
   })
 
-  // On a runtime level change, re-evaluate placeholder vs real src for this image.
+  // On a runtime level change, re-evaluate placeholder vs real src for this image
+  // and for the <source>s of its <picture>.
   app.attachResanitizeCallback((node: Node) => {
-    if (hasTag(node, 'img')) {
-      sendImgAttrs(node)
+    if (!hasTag(node, 'img')) {
+      return
+    }
+    sendImgAttrs(node, true)
+    const picture = node.parentElement
+    if (picture && hasTag(picture, 'picture')) {
+      for (const child of Array.from(picture.children)) {
+        if (hasTag(child, 'source')) {
+          sendSourceSrcset(child, true)
+        }
+      }
     }
   })
 }

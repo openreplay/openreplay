@@ -1,0 +1,3 @@
+package license
+
+func CheckLicense() {}

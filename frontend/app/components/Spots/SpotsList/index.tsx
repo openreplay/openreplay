@@ -3,7 +3,8 @@ import { IconButton } from '@/ui/actions/IconButton';
 import { Button } from '@/ui/actions/button';
 import { EmptyState } from '@/ui/feedback/EmptyState';
 import { DisplayShell, MenuSelect } from '@/ui/filters/DisplayMenu';
-import { FilterStrip } from '@/ui/filters/FilterStrip';
+import { FilterStrip, type FilterStripProps } from '@/ui/filters/FilterStrip';
+import { PhoneFilters } from '@/ui/filters/PhoneFilters';
 import { SearchField } from '@/ui/inputs/SearchField';
 import { Checkbox } from '@/ui/inputs/checkbox';
 import { CardGrid } from '@/ui/layout/CardGrid';
@@ -220,48 +221,63 @@ function SpotsList() {
   const { isLoading, spots } = spotStore;
   const picked = selected.size;
 
+  const ownerStrip: FilterStripProps = {
+    label: t('Filter by owner'),
+    items: [
+      { key: 'all', label: t('All Spots') },
+      { key: 'own', label: t('My Spots') },
+    ],
+    selected: [spotStore.filter],
+    onSelect: (key) => {
+      spotStore.setFilter(key as 'all' | 'own');
+      refetchFromStart();
+    },
+  };
+
   const question = (
     <>
-      <FilterStrip
-        label={t('Filter by owner')}
-        items={[
-          { key: 'all', label: t('All Spots') },
-          { key: 'own', label: t('My Spots') },
-        ]}
-        selected={[spotStore.filter]}
-        onSelect={(key) => {
-          spotStore.setFilter(key as 'all' | 'own');
-          refetchFromStart();
-        }}
-      />
+      <FilterStrip {...ownerStrip} folds="menu" />
       <span className="m-spots__display">
-        <DisplayShell
-          changeCount={spotStore.order === 'desc' ? 0 : 1}
+        <PhoneFilters
+          result={t('Show {{n}} Spots', {
+            count: spotStore.total,
+            n: spotStore.total.toLocaleString(),
+          })}
           onReset={() => {
+            spotStore.setFilter('all');
             spotStore.setOrder('desc');
             refetchFromStart();
           }}
-          rows={[
-            {
-              id: 'sp-sort',
-              label: t('Order'),
-              control: (
-                <MenuSelect<'asc' | 'desc'>
-                  id="sp-sort"
-                  value={spotStore.order}
-                  choices={[
-                    { value: 'desc', label: t('Newest first') },
-                    { value: 'asc', label: t('Oldest first') },
-                  ]}
-                  onChange={(order) => {
-                    spotStore.setOrder(order);
-                    refetchFromStart();
-                  }}
-                />
-              ),
-            },
-          ]}
-        />
+        >
+          <DisplayShell
+            strip={ownerStrip}
+            changeCount={spotStore.order === 'desc' ? 0 : 1}
+            onReset={() => {
+              spotStore.setOrder('desc');
+              refetchFromStart();
+            }}
+            rows={[
+              {
+                id: 'sp-sort',
+                label: t('Order'),
+                control: (
+                  <MenuSelect<'asc' | 'desc'>
+                    id="sp-sort"
+                    value={spotStore.order}
+                    choices={[
+                      { value: 'desc', label: t('Newest first') },
+                      { value: 'asc', label: t('Oldest first') },
+                    ]}
+                    onChange={(order) => {
+                      spotStore.setOrder(order);
+                      refetchFromStart();
+                    }}
+                  />
+                ),
+              },
+            ]}
+          />
+        </PhoneFilters>
       </span>
     </>
   );

@@ -3,14 +3,14 @@
 # build scripts and git stubbed out; asserts which scripts get called.
 # Usage: bash .github/tests/patch-build-old.sh
 set -euo pipefail
-SERVICES=chalice,alerts,crons,frontend
+SERVICES=chalice,frontend
 root=$(git rev-parse --show-toplevel)
 tmp=$(mktemp -d)
 trap 'rm -rf $tmp' EXIT
 
 # Fake repo layout
 mkdir -p $tmp/repo/{backend/cmd/http,ee/backend/cmd/connector,api,frontend}
-for c in chalice alerts utilities frontend http; do
+for c in chalice utilities frontend http; do
   mkdir -p $tmp/repo/scripts/helmcharts/openreplay/charts/$c
   echo 'AppVersion: "v1.27.0"' >$tmp/repo/scripts/helmcharts/openreplay/charts/$c/Chart.yaml
 done
@@ -20,7 +20,6 @@ mkdir -p $tmp/msaas/openreplay/{api,frontend,backend}
 cat >$tmp/run.sh <<'EOF'
 bash() {
   echo "$(basename $PWD)|$*|$IMAGE_TAG|$ARCH" >>$CALLS
-  [[ $1 != build_crons.sh || $2 == ee ]] || return 100 # mirrors api/build_crons.sh
 }
 env() { # newer workflows wrap builds as `run_build env K=V bash ...`
   while [[ $1 == *=* ]]; do export "$1"; shift; done
@@ -41,11 +40,7 @@ has() { grep -qxF "$1" $CALLS || { echo "FAIL: missing call: $1"; fail=1; }; }
 hasnt() { ! grep -qF "$1" $CALLS || { echo "FAIL: unexpected call: $1"; fail=1; }; }
 chart() { grep -q "AppVersion: \"$2\"" $tmp/repo/scripts/helmcharts/openreplay/charts/$1/Chart.yaml || { echo "FAIL: $1 chart not $2"; fail=1; }; }
 
-has "api|build_crons.sh ee|v1.27.1-ee|amd64"
-hasnt "build_crons.sh|"        # no FOSS crons build (exits 100)
-has "api|build_alerts.sh|v1.27.1|amd64"
-has "frontend|build.sh|v1.27.1|amd64" # script name must not leak from alerts
+has "frontend|build.sh|v1.27.1|amd64"
 chart utilities v1.27.1
-chart alerts v1.27.1
 chart frontend v1.27.1
 [[ $fail == 0 ]] && echo PASS || { cat $CALLS; exit 1; }

@@ -7,6 +7,8 @@ jest.mock('@openreplay/network-proxy', () => ({
   }),
 }))
 import Tracker from '../main/index.js'
+import NextObserver from '../main/app/observer/next_observer.js'
+import TopObserver from '../main/app/observer/top_observer.js'
 import { styleSheetIDMap } from '../main/modules/constructedStyleSheets.js'
 import { Type } from '../common/messages.gen.js'
 import { type CaptureData } from '../main/app/captureSanitizer.js'
@@ -19,8 +21,10 @@ const install = (object: any, name: string, value: any) => {
   restores.push(() => (old ? Object.defineProperty(object, name, old) : delete object[name]))
 }
 afterEach(() => {
-  app?.observer.disconnect()
-  app?.stop(false)
+  const tracker = (window as any).__OPENREPLAY__ as Tracker | undefined
+  tracker?.discard()
+  app?.discard()
+  app = undefined
   restores
     .splice(0)
     .reverse()
@@ -31,8 +35,16 @@ afterEach(() => {
   jest.restoreAllMocks()
   jest.clearAllTimers()
   jest.useRealTimers()
+  document.documentElement.innerHTML = '<head></head><body></body>'
 })
-function create(policy?: (d: CaptureData) => string | null, retainFontFace = false, singleTab = true, analyticsActive = false) {
+function create(
+  policy?: (d: CaptureData) => string | null,
+  retainFontFace = false,
+  singleTab = true,
+  analyticsActive = false,
+  inlineCss = 0,
+  nextObserver = false,
+) {
   jest.useFakeTimers()
   install(
     window,
@@ -70,13 +82,17 @@ function create(policy?: (d: CaptureData) => string | null, retainFontFace = fal
       ? Object.defineProperty(Document.prototype, 'adoptedStyleSheets', oldAdopted)
       : delete (Document.prototype as any).adoptedStyleSheets,
   )
-  install(CSSStyleSheet.prototype, 'replaceSync', function (this: CSSStyleSheet, text: string) {
-    while (this.cssRules.length) this.deleteRule(0)
-    this.insertRule(text, 0)
-  })
+  const { insertRule, deleteRule } = CSSStyleSheet.prototype
+  const replaceSync = function (this: CSSStyleSheet, text: string) {
+    while (this.cssRules.length) deleteRule.call(this, 0)
+    insertRule.call(this, text, 0)
+  }
+  install(CSSStyleSheet.prototype, 'replaceSync', replaceSync)
   install(CSSStyleSheet.prototype, 'replace', function (this: CSSStyleSheet, text: string) {
-    this.replaceSync(text)
-    return Promise.resolve(this)
+    return Promise.resolve().then(() => {
+      replaceSync.call(this, text)
+      return this
+    })
   })
   if (!retainFontFace) install(
     window,
@@ -129,16 +145,18 @@ function create(policy?: (d: CaptureData) => string | null, retainFontFace = fal
     analytics: { active: analyticsActive },
     canvas: { disableCanvas: true },
     css: { scanInMemoryCSS: false },
-    inlineCss: 0,
+    inlineCss,
+    nextObserver,
   })
   tracker.use((current) => {
     app = current
   })
   expect(app).not.toBeNull()
+  expect(app.observer).toBeInstanceOf(nextObserver ? NextObserver : TopObserver)
   app.activityState = 2 // Source wiring only: never call tracker.start / worker / ingest.
   return { tracker, fetcher }
 }
-test('real Tracker native wiring filters attributes/CSS/image/font before App buffers and preserves structural events', async () => {
+test.each([false, true])('capture filtering preserves replay structure with nextObserver=%s', async (nextObserver) => {
   const secret = 'SYNTHETIC_PRIVATE'
   const policy = jest.fn((d: CaptureData) => {
     if (d.kind === 'attribute')
@@ -146,7 +164,7 @@ test('real Tracker native wiring filters attributes/CSS/image/font before App bu
     if (d.kind === 'css') return d.value.includes(secret) ? null : d.value
     if (
       d.kind === 'font' &&
-      ['SafeFont', 'url(https://static.invalid/safe.woff2)', ''].includes(d.value)
+      ['SafeFont', 'url("https://static.invalid/safe.woff2")', ''].includes(d.value)
     )
       return d.value
     if (
@@ -158,7 +176,7 @@ test('real Tracker native wiring filters attributes/CSS/image/font before App bu
     if (d.kind === 'resource' && d.resourceType === 'base') return 'https://static.invalid/'
     return null
   })
-  const { fetcher } = create(policy)
+  const { fetcher } = create(policy, false, true, false, 0, nextObserver)
   document.documentElement.innerHTML = `<head><style>p::after{content:"${secret}"}</style></head><body><p class="safe-panel" title="${secret}" style="background:url(/${secret})"></p><img src="/${secret}"></body>`
   Object.defineProperty(document.querySelector('img')!, 'complete', { value: true })
   app.observer.observe()
@@ -172,13 +190,9 @@ test('real Tracker native wiring filters attributes/CSS/image/font before App bu
   expect(
     app.messages.some((m: any[]) => m[0] === Type.StringDictGlobal && m[2] === 'safe-panel'),
   ).toBe(true)
-  expect(
-    app.messages.some(
-      (m: any[]) =>
-        m[0] === Type.StringDictGlobal &&
-        m[2] === 'https://static.openreplay.com/tracker/placeholder.jpeg',
-    ),
-  ).toBe(true)
+  expect(policy).toHaveBeenCalledWith(
+    expect.objectContaining({ kind: 'resource', resourceType: 'timing', value: expect.stringContaining(secret) }),
+  )
   expect(policy).toHaveBeenCalledWith(
     expect.objectContaining({ kind: 'attribute', name: 'aria-label' }),
   )
@@ -223,37 +237,45 @@ test('real Tracker native wiring filters attributes/CSS/image/font before App bu
 
   // Original options mutation cannot replace the construction-time callback.
   app.options.captureSanitizer = () => secret
-  app.attributeSender.sendSetAttribute(1, 'title', secret)
+  document.querySelector('p')!.setAttribute('title', secret + '-changed')
+  await Promise.resolve()
   expect(JSON.stringify(app.messages)).not.toContain(secret)
 
   const conditions = { processMessage: jest.fn() },
     previous = app.conditionsManager
   app.conditionsManager = conditions
   app.activityState = 3
-  app.attributeSender.sendSetAttribute(1, 'title', secret)
-  app.attributeSender.sendSetAttribute(1, 'class', 'safe-panel')
+  const node = document.createElement('p')
+  node.title = secret
+  node.className = 'safe-panel'
+  document.body.append(node)
+  await Promise.resolve()
   expect(JSON.stringify(app.bufferedMessages1)).not.toContain(secret)
   expect(JSON.stringify(conditions.processMessage.mock.calls)).not.toContain(secret)
   expect(conditions.processMessage).toHaveBeenCalled()
   app.conditionsManager = previous
   app.activityState = 2
 
-  const warning = jest.spyOn(app.debug, 'warn').mockImplementation(() => {})
-  app.options.crossdomain = { enabled: true }
   const before = app.messages.length
-  for (let i = 0; i < 2; i++)
+  const child = { postMessage: jest.fn() }
+  for (const line of [
+    'tracker inside a child iframe',
+    'hello-how-are-you-im-under-the-water-please-help-me',
+    'batch of messages from an iframe window',
+  ]) {
     app.crossDomainIframeListener({
-      data: { line: 'batch of messages from an iframe window', messages: [[34, 1, secret]] },
+      source: child,
+      data: { line, context: 'child', messages: [[34, 1, secret]] },
     })
+  }
   expect(app.messages).toHaveLength(before)
-  expect(warning).toHaveBeenCalledTimes(1)
-  expect(JSON.stringify(warning.mock.calls)).not.toContain(secret)
+  expect(child.postMessage).not.toHaveBeenCalled()
 })
 
-test('real Tracker without the new option preserves ordinary attribute and CSS collection', () => {
-  create()
+test.each([false, true])('ordinary capture is preserved with nextObserver=%s', (nextObserver) => {
+  create(undefined, false, true, false, 0, nextObserver)
   document.documentElement.innerHTML =
-    '<head><style>p{color:red}</style></head><body><p title="legacy-value" style="color:blue"></p></body>'
+    '<head><style>p{color:red}</style></head><body><p class="legacy-value" style="color:blue"></p></body>'
   app.observer.observe()
   expect(
     app.messages.some((m: any[]) => m[0] === Type.StringDictGlobal && m[2] === 'legacy-value'),
@@ -263,10 +285,137 @@ test('real Tracker without the new option preserves ordinary attribute and CSS c
   ).toBe(true)
 })
 
-test('rejected resource base returns null without parsing or exposing the supplied URL', () => {
-  create(() => null)
+test('omitting a CSS rule preserves the index of the following rule', () => {
+  create((data) => {
+    if (data.value.includes('withheld')) return null
+    if (data.value.includes('multiplied')) return '.first {} .second {}'
+    return data.value
+  })
+  const sheet = new CSSStyleSheet()
+  styleSheetIDMap.set(sheet, 101)
+
+  sheet.insertRule('.withheld { color: red; }', 0)
+  sheet.insertRule('.visible { color: blue; }', 1)
+  sheet.deleteRule(1)
+  jest.spyOn(CSSStyleSheet.prototype, 'replaceSync').mockImplementationOnce(function (this: CSSStyleSheet) {
+    this.insertRule('.first {}', 0)
+    this.insertRule('.second {}', 1)
+  })
+  sheet.insertRule('.multiplied { color: green; }', 1)
+
+  expect(app.messages.filter((message: any[]) => message[1] === 101)).toEqual([
+    [Type.AdoptedSSInsertRuleURLBased, 101, ':not(*) {}', 0, expect.any(String)],
+    [Type.AdoptedSSInsertRuleURLBased, 101, '.visible { color: blue; }', 1, expect.any(String)],
+    [Type.AdoptedSSDeleteRule, 101, 1],
+    [Type.AdoptedSSInsertRuleURLBased, 101, ':not(*) {}', 1, expect.any(String)],
+  ])
+})
+
+test('a rejected resource base is cached until the document base changes', () => {
+  const policy = jest.fn(() => null)
+  create(policy)
   expect(app.getBaseHref()).toBe('')
-  expect(app.resolveResourceURL('https://static.invalid/private')).toBeNull()
+  expect(app.getBaseHref()).toBe('')
+  expect(policy).toHaveBeenCalledTimes(1)
+  document.head.innerHTML = '<base href="https://static.invalid/next/">'
+  expect(app.getBaseHref()).toBe('')
+  expect(policy).toHaveBeenCalledTimes(2)
+})
+
+test('the parent may retire a child tracker while shared records survive', () => {
+  const { tracker } = create(undefined, false, true, true)
+  const parent = {}
+  const command = { line: 'stop tracker inside frame', terminal: true }
+  install(window, 'parent', parent)
+  tracker.setAnalyticsToken('synthetic')
+  localStorage.setItem('or_buffer_1', 'shared-buffer')
+  const identityKey = '$__or__distinct_device_id__$'
+  const userKey = '$__or__user_id__$'
+  sessionStorage.setItem(userKey, 'shared-user')
+  sessionStorage.setItem(app.options.session_token_key, 'shared-token')
+  const identity = localStorage.getItem(identityKey)
+
+  try {
+    app.parentCrossDomainFrameListener({ source: {}, data: command })
+    expect(tracker.getAnalyticsToken()).toBe('synthetic')
+    app.parentCrossDomainFrameListener({ source: parent, data: command })
+
+    expect((window as any).__OPENREPLAY__).toBeUndefined()
+    expect(tracker.getAnalyticsToken()).toBe('')
+    expect(localStorage.getItem('or_buffer_1')).toBe('shared-buffer')
+    expect(localStorage.getItem(identityKey)).toBe(identity)
+    expect(sessionStorage.getItem(userKey)).toBe('shared-user')
+    expect(sessionStorage.getItem(app.options.session_token_key)).toBe('shared-token')
+  } finally {
+    localStorage.removeItem('or_buffer_1')
+    localStorage.removeItem(identityKey)
+    sessionStorage.removeItem(userKey)
+    sessionStorage.removeItem(app.options.session_token_key)
+  }
+})
+
+test('analytics cannot restore its stored identity after discard', () => {
+  const { tracker } = create(undefined, false, true, true)
+  const analytics = tracker.analytics!
+  const identityKey = '$__or__distinct_device_id__$'
+  const userKey = '$__or__user_id__$'
+  const propsKey = '$__or__super_properties__$'
+  analytics.constantProperties.setUserId('synthetic')
+  analytics.constantProperties.saveSuperProperties({ name: 'synthetic' })
+  expect(localStorage.getItem(identityKey)).toBeTruthy()
+  expect(sessionStorage.getItem(userKey)).toBe('synthetic')
+
+  tracker.discard()
+  analytics.people.identify('synthetic-late')
+  analytics.constantProperties.saveSuperProperties({ name: 'synthetic-late' })
+  expect(localStorage.getItem(identityKey)).toBeNull()
+  expect(localStorage.getItem(propsKey)).toBeNull()
+  expect(sessionStorage.getItem(userKey)).toBeNull()
+})
+
+test.each(['conditional', 'offline'])('%s recording settles when discard aborts its request', async (path) => {
+  const { tracker, fetcher } = create()
+  fetcher.mockImplementation(((_url: string, init: RequestInit) =>
+    new Promise((_resolve, reject) => {
+      init.signal?.addEventListener('abort', () => reject(new DOMException('', 'AbortError')))
+    })) as typeof fetcher)
+  const start = path === 'conditional' ? app.coldStart({}, true) : tracker.uploadOfflineRecording()
+  expect(fetcher).toHaveBeenCalledTimes(1)
+
+  tracker.discard()
+
+  await expect(start).resolves.toBeUndefined()
+  expect(app.coldInterval).toBeNull()
+})
+
+test.each([false, true])('discard during stylesheet approval prevents a fetch with nextObserver=%s', async (nextObserver) => {
+  const { tracker, fetcher } = create((data) => {
+    if (data.kind === 'resource' && data.resourceType === 'stylesheet') tracker.discard()
+    return data.value
+  }, false, true, false, 2, nextObserver)
+  document.head.innerHTML = '<link rel="stylesheet" href="https://static.invalid/fixture.css">'
+  app.observer.observe()
+  await jest.advanceTimersByTimeAsync(1000)
+  expect(fetcher).not.toHaveBeenCalled()
+  expect(app.isDisposed()).toBe(true)
+})
+
+test('discard during adopted rule approval stops the rest of the sheet update', () => {
+  const { tracker } = create((data) => {
+    if (data.kind === 'css' && data.source === 'adopted') tracker.discard()
+    return data.value
+  })
+  const first = new CSSStyleSheet()
+  first.insertRule('.first {}', 0)
+  const second = new CSSStyleSheet()
+  second.insertRule('.second {}', 0)
+
+  document.adoptedStyleSheets = [first, second]
+  jest.advanceTimersByTime(20)
+
+  expect(app.isDisposed()).toBe(true)
+  expect(styleSheetIDMap.has(first)).toBe(false)
+  expect(styleSheetIDMap.has(second)).toBe(false)
 })
 
 
@@ -374,6 +523,7 @@ test('discard continues teardown after one throwing stop callback and clears onl
     opts.session_reset_key, `${opts.session_token_key}_version`, '__or__watched_tags__']
   keys.forEach((key) => app.sessionStorage.setItem(key, 'synthetic'))
   app.localStorage.setItem(opts.local_uuid_key, 'synthetic')
+  app.localStorage.setItem('or_buffer_1', 'synthetic')
   app.sessionStorage.setItem('application-owned', 'keep')
   app.stopCallbacks.unshift(() => { throw Error('synthetic detach failure') })
   const later = jest.fn()
@@ -383,17 +533,18 @@ test('discard continues teardown after one throwing stop callback and clears onl
   expect(later).toHaveBeenCalledTimes(1)
   keys.forEach((key) => expect(app.sessionStorage.getItem(key)).toBeNull())
   expect(app.localStorage.getItem(opts.local_uuid_key)).toBeNull()
+  expect(app.localStorage.getItem('or_buffer_1')).toBeNull()
   expect(app.sessionStorage.getItem('application-owned')).toBe('keep')
   app.sessionStorage.removeItem('application-owned')
 })
 
 
-test('discard from initial sanitizer observation cannot start ticker or fetch tags', async () => {
+test.each([false, true])('discard during initial capture fences startup with nextObserver=%s', async (nextObserver) => {
   let tracker: Tracker
   const created = create((data) => {
     ;(tracker as any).discard()
     return null
-  })
+  }, false, true, false, 0, nextObserver)
   tracker = created.tracker
   app.activityState = 0
   app.startCallbacks = []
@@ -412,12 +563,13 @@ test('discard from initial sanitizer observation cannot start ticker or fetch ta
 })
 
 
-test('a sanitizer discard cannot repopulate the cleared attribute dictionary', () => {
+test.each([false, true])('discard prevents dictionary writes with nextObserver=%s', (nextObserver) => {
   let tracker: Tracker
-  tracker = create((data) => { (tracker as any).discard(); return data.value }).tracker
-  app.attributeSender.sendSetAttribute(1, 'title', 'synthetic-private')
+  tracker = create((data) => { tracker.discard(); return data.value }, false, true, false, 0, nextObserver).tracker
+  document.body.innerHTML = '<p title="synthetic-private"></p>'
+  app.observer.observe()
   expect(app.attributeSender.dict.totalChars).toBe(0)
-  expect(app.attributeSender.emittedAttributes.size).toBe(0)
+  expect(app.attributeSender.emittedAttributes.has(document.querySelector('p'))).toBe(false)
   expect(app.messages).toEqual([])
 })
 
@@ -430,7 +582,7 @@ test('three discard/new cycles leave only the current FontFace wrapper capturing
     policies.push(policy); apps.push(app)
     policies.forEach((p) => p.mockClear())
     new (window as any).FontFace('SafeFont', 'url(https://example.invalid/safe.woff2)')
-    expect(policy).toHaveBeenCalledTimes(3)
+    expect(policy).toHaveBeenCalledTimes(2)
     policies.slice(0, -1).forEach((p) => expect(p).not.toHaveBeenCalled())
     expect(app.messages.some((m: any[]) => m[0] === Type.LoadFontFace)).toBe(true)
     ;(tracker as any).discard()
@@ -583,7 +735,6 @@ test('discard fences a pending CSS replacement before its policy callback', asyn
   const pending = sheet.replace('.after { color: red; }')
   tracker.discard()
   styleSheetIDMap.set(sheet, 102)
-  policy.mockClear()
   await pending
   expect(policy).not.toHaveBeenCalled()
   expect(sheet.cssRules[0].cssText).toContain('red')

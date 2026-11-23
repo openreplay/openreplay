@@ -42,18 +42,24 @@ class RntrackerTouchView: UIView, UIGestureRecognizerDelegate {
     addGestureRecognizer(pan)
   }
 
+  // UInt64(_:) traps on negative/NaN values
+  private func coordinate(_ value: CGFloat) -> UInt64 {
+    guard value.isFinite, value > 0 else { return 0 }
+    return UInt64(value)
+  }
+
   @objc private func handleTap(_ recognizer: UITapGestureRecognizer) {
-    let point = recognizer.location(in: self)
-    Analytics.shared.sendClick(label: "React-Native View", x: UInt64(point.x), y: UInt64(point.y))
+    let point = recognizer.location(in: nil)
+    Analytics.shared.sendClick(label: "React-Native View", x: coordinate(point.x), y: coordinate(point.y))
   }
 
   @objc private func handlePan(_ recognizer: UIPanGestureRecognizer) {
     switch recognizer.state {
     case .began:
-      touchStart = recognizer.location(in: self)
+      touchStart = recognizer.location(in: nil)
     case .ended:
       guard let startPoint = touchStart else { return }
-      let endPoint = recognizer.location(in: self)
+      let endPoint = recognizer.location(in: nil)
       touchStart = nil
 
       let deltaX = endPoint.x - startPoint.x
@@ -62,7 +68,7 @@ class RntrackerTouchView: UIView, UIGestureRecognizerDelegate {
 
       if distance > 10 {
         let direction = abs(deltaX) > abs(deltaY) ? (deltaX > 0 ? "right" : "left") : (deltaY > 0 ? "down" : "up")
-        Analytics.shared.sendSwipe(label: "React-Native View", x: UInt64(endPoint.x), y: UInt64(endPoint.y), direction: direction)
+        Analytics.shared.sendSwipe(label: "React-Native View", x: coordinate(endPoint.x), y: coordinate(endPoint.y), direction: direction)
       }
     case .cancelled, .failed:
       touchStart = nil

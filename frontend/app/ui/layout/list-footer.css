@@ -8,7 +8,9 @@
 
   flex-wrap: wrap;
   padding: var(--m-space-4) var(--m-space-7);
-  border-top: 1px solid var(--m-border-subtle);
+  /* drawn in the pixel above so a full list's last row border and this rule are one line */
+  border-top: 1px solid transparent;
+  box-shadow: 0 -1px 0 var(--m-border-subtle);
 }
 
 .m-listfoot__range {
@@ -48,17 +50,23 @@
   margin: 0;
   padding: 0;
   border-top: 0;
+  box-shadow: none;
 }
 
-/* phone: the pager keeps its cells and drops the "go to" field */
+/* phone: one line, the count and "‹ Page 3 of 12 ›"; Fit decides the rows */
 :root[data-viewport='phone'] .m-listfoot {
+  flex-wrap: nowrap;
   padding-inline: var(--m-space-4);
 }
-:root[data-viewport='phone'] .m-pager__goto {
+:root[data-viewport='phone'] .m-listfoot__rows {
   display: none;
 }
-/* phone: the count on its own line, the rows choice and the pager under it */
-:root[data-viewport='phone'] .m-listfoot__end {
-  width: 100%;
-  justify-content: space-between;
+.m-pager__where {
+  min-width: 6.5rem;
+  text-align: center;
+  font-family: var(--m-font-num);
+  font-size: var(--m-text-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--m-content-secondary);
+  white-space: nowrap;
 }

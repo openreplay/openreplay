@@ -26,6 +26,7 @@ const (
 	MsgConsoleLog                         = 22
 	MsgPageLoadTiming                     = 23
 	MsgPageRenderTiming                   = 24
+	MsgScrollEvent                        = 26
 	MsgCustomEvent                        = 27
 	MsgUserID                             = 28
 	MsgUserAnonymousID                    = 29
@@ -77,7 +78,9 @@ const (
 	MsgNetworkRequest                     = 83
 	MsgWSChannel                          = 84
 	MsgResourceTiming                     = 85
+	MsgScrollDepth                        = 86
 	MsgIncident                           = 87
+	MsgPageHeight                         = 88
 	MsgLongAnimationTask                  = 89
 	MsgInputChange                        = 112
 	MsgSelectionChange                    = 113
@@ -732,6 +735,35 @@ func (msg *PageRenderTiming) Decode() Message {
 
 func (msg *PageRenderTiming) TypeID() int {
 	return 24
+}
+
+type ScrollEvent struct {
+	message
+	MessageID      uint64
+	Timestamp      uint64
+	Percent        uint64
+	PageHeight     uint64
+	ViewportHeight uint64
+}
+
+func (msg *ScrollEvent) Encode() []byte {
+	buf := make([]byte, 51)
+	buf[0] = 26
+	p := 1
+	p = WriteUint(msg.MessageID, buf, p)
+	p = WriteUint(msg.Timestamp, buf, p)
+	p = WriteUint(msg.Percent, buf, p)
+	p = WriteUint(msg.PageHeight, buf, p)
+	p = WriteUint(msg.ViewportHeight, buf, p)
+	return buf[:p]
+}
+
+func (msg *ScrollEvent) Decode() Message {
+	return msg
+}
+
+func (msg *ScrollEvent) TypeID() int {
+	return 26
 }
 
 type CustomEvent struct {
@@ -2115,6 +2147,27 @@ func (msg *ResourceTiming) TypeID() int {
 	return 85
 }
 
+type ScrollDepth struct {
+	message
+	Percent uint64
+}
+
+func (msg *ScrollDepth) Encode() []byte {
+	buf := make([]byte, 11)
+	buf[0] = 86
+	p := 1
+	p = WriteUint(msg.Percent, buf, p)
+	return buf[:p]
+}
+
+func (msg *ScrollDepth) Decode() Message {
+	return msg
+}
+
+func (msg *ScrollDepth) TypeID() int {
+	return 86
+}
+
 type Incident struct {
 	message
 	Label     string
@@ -2138,6 +2191,29 @@ func (msg *Incident) Decode() Message {
 
 func (msg *Incident) TypeID() int {
 	return 87
+}
+
+type PageHeight struct {
+	message
+	Height         uint64
+	ViewportHeight uint64
+}
+
+func (msg *PageHeight) Encode() []byte {
+	buf := make([]byte, 21)
+	buf[0] = 88
+	p := 1
+	p = WriteUint(msg.Height, buf, p)
+	p = WriteUint(msg.ViewportHeight, buf, p)
+	return buf[:p]
+}
+
+func (msg *PageHeight) Decode() Message {
+	return msg
+}
+
+func (msg *PageHeight) TypeID() int {
+	return 88
 }
 
 type LongAnimationTask struct {

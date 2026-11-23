@@ -9,6 +9,8 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 
+	"openreplay/backend/pkg/analytics/filters_catalog"
+	fcmodel "openreplay/backend/pkg/analytics/filters_catalog/model"
 	"openreplay/backend/pkg/analytics/model"
 	"openreplay/backend/pkg/analytics/search"
 	"openreplay/backend/pkg/logger"
@@ -189,10 +191,51 @@ var propertySources = map[string]propertySource{
 	},
 }
 
+// identifiedUserColumns maps the built-in identified-user attributes that /triggers offers
+// as "$properties.<name>" users triggers (see identifiedUserTriggers) to the value
+// expression reading them. product_analytics.users has no "$properties" JSON column: those
+// attributes are plain columns ($email, $country, $last_seen, ...), so the name is matched
+// against the static catalog and spliced as a quoted identifier; timestamps are read as
+// epoch seconds, everything else through toFloat64OrNull like a JSON property.
+var identifiedUserColumns = func() map[string]string {
+	cols := make(map[string]string)
+	for _, item := range filters_catalog.GetUsersIdentifiedFilters().List {
+		f, ok := item.(fcmodel.StaticFilterItem)
+		if !ok || f.Name == "" {
+			continue
+		}
+		col := `"` + strings.ReplaceAll(f.Name, `"`, `""`) + `"`
+		if f.DataType == "timestamp" {
+			cols[f.Name] = "toFloat64(toUnixTimestamp(" + col + "))"
+		} else {
+			cols[f.Name] = "toFloat64OrNull(toString(" + col + "))"
+		}
+	}
+	return cols
+}()
+
+// propertyValueExpr returns the SQL reading the alert's property as a nullable float and
+// whether @propKey must be bound. Built-in user attributes are read from their column;
+// every other property is a key of the JSON column named by ref.Column.
+func propertyValueExpr(source string, src propertySource, ref PropertyRef) (string, bool, error) {
+	if source == SourceUsers && ref.Column == AutoPropertiesColumn {
+		expr, ok := identifiedUserColumns[ref.Key]
+		if !ok {
+			return "", false, fmt.Errorf("source %q (%s) has no %q column and %q is not a built-in user attribute", source, src.table, ref.Column, ref.Key)
+		}
+		return expr, false, nil
+	}
+	if _, ok := src.columns[ref.Column]; !ok {
+		return "", false, fmt.Errorf("source %q (%s) has no %q column", source, src.table, ref.Column)
+	}
+	return fmt.Sprintf(`toFloat64OrNull(toString(getSubcolumn("%s", @propKey)))`, ref.Column), true, nil
+}
+
 // buildPropertyQuery returns one ClickHouse query averaging the numeric value of a JSON
 // property over the current and previous windows. The property key is a bound parameter
 // (getSubcolumn takes a constant; clickhouse-go binds @propKey as an escaped string literal),
-// so neither the key nor the threshold is spliced into the SQL. Non-numeric and missing
+// so neither the key nor the threshold is spliced into the SQL; the only identifiers spliced
+// are the built-in user attribute columns of identifiedUserColumns. Non-numeric and missing
 // values are NULL and therefore ignored by avg; zero is a legitimate value and is kept.
 func buildPropertyQuery(a *AlertToExecute, w Windows) (string, []any, error) {
 	ref, err := a.Query.Property()
@@ -204,14 +247,14 @@ func buildPropertyQuery(a *AlertToExecute, w Windows) (string, []any, error) {
 	if !ok {
 		return "", nil, fmt.Errorf("unsupported property source %q", source)
 	}
-	if _, ok := src.columns[ref.Column]; !ok {
-		return "", nil, fmt.Errorf("source %q (%s) has no %q column", source, src.table, ref.Column)
+	valueExpr, bindKey, err := propertyValueExpr(source, src, ref)
+	if err != nil {
+		return "", nil, err
 	}
 	rangeStart := w.CurStart
 	if needsPrevious(a) {
 		rangeStart = w.PrevStart
 	}
-	valueExpr := fmt.Sprintf(`toFloat64OrNull(toString(getSubcolumn("%s", @propKey)))`, ref.Column)
 	timeConds := []string{
 		"project_id = @projectId",
 		src.timeCol + " >= toDateTime(@rangeStart)",
@@ -233,13 +276,15 @@ WHERE NOT _is_deleted`, src.timeCol, valueExpr, src.table, strings.Join(timeCond
 	query := fmt.Sprintf(`SELECT COALESCE(avgIf(v, t >= toDateTime(@curStart)), 0) AS cur,
        COALESCE(avgIf(v, t < toDateTime(@curStart)), 0) AS prev
 FROM %s`, from)
-	args := []any{
-		clickhouse.Named("projectId", uint16(a.ProjectID)),
-		clickhouse.Named("propKey", ref.Key),
+	args := []any{clickhouse.Named("projectId", uint16(a.ProjectID))}
+	if bindKey {
+		args = append(args, clickhouse.Named("propKey", ref.Key))
+	}
+	args = append(args,
 		clickhouse.Named("rangeStart", rangeStart/1000),
 		clickhouse.Named("curStart", w.CurStart/1000),
 		clickhouse.Named("now", w.Now/1000),
-	}
+	)
 	return query, args, nil
 }
 

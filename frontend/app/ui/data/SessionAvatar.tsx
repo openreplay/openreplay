@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 
 import { type AvatarFace, hueIndexFor } from './avatar';
 import { robotArt } from './robot';
@@ -89,5 +89,62 @@ export function SessionAvatar({
         })}
       {presence && <span className={`m-savatar__presence is-${presence}`} />}
     </span>
+  );
+}
+
+/**
+ * The robot inside an SVG drawing: SVG <image>s in the drawing's own
+ * coordinates, never HTML in a <foreignObject> (Safari lays that out without
+ * the drawing's scale, so the faces slid off their bodies on every iPhone).
+ */
+export function SvgAvatar({
+  seed,
+  face,
+  faceOnly = false,
+  x,
+  y,
+  size,
+  ground,
+  className,
+  style,
+  clipPath,
+}: {
+  seed: string;
+  face?: AvatarFace;
+  faceOnly?: boolean;
+  x: number;
+  y: number;
+  size: number;
+  ground?: ReactNode;
+  className?: string;
+  style?: CSSProperties;
+  clipPath?: string;
+}) {
+  const { dark, light } = robotArt(seed, face, faceOnly);
+  return (
+    <g
+      className={`m-savatar m-savatar--svg${className ? ` ${className}` : ''}`}
+      style={{ '--m-avatar-i': hueIndexFor(seed), ...style } as CSSProperties}
+      clipPath={clipPath}
+      aria-hidden="true"
+    >
+      {ground}
+      <image
+        className="m-savatar__img is-light"
+        href={light}
+        x={x}
+        y={y}
+        width={size}
+        height={size}
+      />
+      <image
+        className="m-savatar__img is-dark"
+        href={dark}
+        x={x}
+        y={y}
+        width={size}
+        height={size}
+      />
+    </g>
   );
 }

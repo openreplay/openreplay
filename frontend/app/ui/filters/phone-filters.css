@@ -1,0 +1,134 @@
+.m-pf__scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--m-z-overlay);
+  background: var(--m-scrim);
+}
+.m-pf {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: var(--m-z-modal);
+  display: flex;
+  flex-direction: column;
+  max-height: 92dvh;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: var(--m-surface-default);
+  border-top-left-radius: var(--m-radius-surface);
+  border-top-right-radius: var(--m-radius-surface);
+  box-shadow: 0 -8px 32px rgb(0 0 0 / 0.16);
+  outline: none;
+}
+.m-pf__grip {
+  align-self: center;
+  width: 36px;
+  height: 4px;
+  margin-top: var(--m-space-3);
+  border-radius: var(--m-radius-full);
+  background: var(--m-border-default);
+}
+.m-pf__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--m-space-4);
+  padding: var(--m-space-3) var(--m-space-4) var(--m-space-4) var(--m-space-6);
+  border-bottom: 1px solid var(--m-border-subtle);
+}
+.m-pf__title {
+  font-size: var(--m-text-lg);
+  font-weight: var(--m-weight-semibold);
+  color: var(--m-content-primary);
+}
+.m-pf__head-end {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-2);
+}
+.m-pf__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-space-7);
+  padding: var(--m-space-6);
+}
+.m-pf__foot {
+  flex: none;
+  padding: var(--m-space-4) var(--m-space-6) var(--m-space-5);
+  border-top: 1px solid var(--m-border-subtle);
+}
+.m-pf__apply {
+  width: 100%;
+}
+
+.m-pf__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-space-3);
+}
+.m-pf__section.is-first {
+  order: -1;
+}
+.m-pf__section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--m-space-4);
+}
+.m-pf__section-title {
+  font-size: var(--m-text-sm);
+  font-weight: var(--m-weight-semibold);
+  color: var(--m-content-primary);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes m-pf-in {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: none;
+    }
+  }
+  @keyframes m-pf-out {
+    from {
+      transform: none;
+    }
+    to {
+      transform: translateY(100%);
+    }
+  }
+  .m-pf[data-state='open'] {
+    animation: m-pf-in var(--m-duration-slow) var(--m-ease-out) both;
+  }
+  .m-pf[data-state='closed'] {
+    animation: m-pf-out var(--m-duration-normal) var(--m-ease-in) both;
+  }
+}
+
+/* a page's wrapper around its controls does not break the section order */
+.m-pf__body :is(span, div):not(.m-pf__section):has(> .m-pf__section) {
+  display: contents;
+}
+
+/* Recordings' rules in the drawer: the section is the inset, and "Add a
+   filter" is a full-width row a finger tall */
+.m-pf .m-fchips .m-fchips__stack.m-fchips__stack {
+  padding: 0;
+}
+.m-pf :is(.m-fchips__foot, .m-fchips__addwrap) {
+  width: 100%;
+}
+.m-pf .m-fchips__add {
+  width: 100%;
+  min-height: var(--m-control-height-md);
+  justify-content: flex-start;
+  gap: var(--m-space-3);
+  padding-inline: var(--m-space-4);
+  border: var(--m-border-width) solid var(--m-border-default);
+  border-radius: var(--m-radius-control);
+  font-size: var(--m-text-sm);
+}

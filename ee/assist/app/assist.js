@@ -188,7 +188,29 @@ function check(socket, next) {
     }
 }
 
+
+const CALL_EVENTS = new Set([
+    '_agent_name', 'call_end', 'videofeed',
+    'webrtc_call_offer', 'webrtc_call_answer', 'webrtc_call_ice_candidate',
+    'request_control', 'release_control',
+    'click', 'scroll', 'move', 'input', 'focus', 'select', 'drag', 'startDrag', 'stopDrag',
+    'startAnnotation', 'moveAnnotation', 'stopAnnotation',
+    'WEBRTC_AGENT_CALL',
+    's_call_started', 's_call_ended', 's_control_started', 's_control_ended', 's_recording_started', 's_recording_ended',
+]);
+
+// Tokens issued before the claim existed carry no canCall and keep working.
+function agentCanCall(socket) {
+    return !(socket.decoded && socket.decoded.canCall === false);
+}
+
+function agentMaySend(socket, eventName) {
+    return agentCanCall(socket) || !CALL_EVENTS.has(eventName);
+}
+
 module.exports = {
+    agentCanCall,
+    agentMaySend,
     processPeerInfo,
     extractPeerId,
     extractSessionInfo,

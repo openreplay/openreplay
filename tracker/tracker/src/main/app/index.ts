@@ -14,12 +14,13 @@ import {
   adjustTimeOrigin,
   createEventListener,
   deleteEventListener,
+  getTimezone,
   IN_BROWSER,
   now,
   requestIdleCb,
   simpleMerge,
 } from '../utils.js'
-import CanvasRecorder from './canvas.js'
+import CanvasRecorder, { watchCanvasContexts } from './canvas.js'
 import Logger, { ILogLevel, LogLevel } from './logger.js'
 import Message, {
   ConsoleLog,
@@ -33,9 +34,11 @@ import Message, {
   WSChannel,
 } from './messages.gen.js'
 import Nodes from './nodes/index.js'
+import NextNodes from './nodes/next_nodes.js'
 import { MASK_ORDER } from './nodes/idSeq.js'
 import type { Options as ObserverOptions } from './observer/top_observer.js'
 import Observer, { InlineCssMode } from './observer/top_observer.js'
+import NextObserver from './observer/next_observer.js'
 import type { Options as SanitizerOptions } from './sanitizer.js'
 import Sanitizer, { SanitizeLevel, stringWiper } from './sanitizer.js'
 import { defaultUrlSanitizer } from '../modules/viewport.js'
@@ -185,9 +188,14 @@ type AppOptions = {
      * @default '*'
      * */
     parentDomain?: string
+    /**
+     * parent page only: origins of the child iframes allowed to join this session,
+     * e.g. ['https://widget.example.com']. Any child iframe on the page when omitted.
+     * */
+    childDomains?: string[]
   }
 
-  network?: NetworkOptions
+  network?: Partial<NetworkOptions>
   /**
    * use this flag to force angular detection to be offline
    *
@@ -205,6 +213,13 @@ type AppOptions = {
   nodes?: {
     maintainer: Partial<MaintainerOptions>
   }
+  /**
+   * Experimental DOM core: tracks node liveness structurally instead of with an id map and
+   * a periodic Maintainer, uses a single MutationObserver for all documents and shadow roots.
+   * Same recording format; meant for gradual testing.
+   * @default false
+   * */
+  nextObserver?: boolean
 } & WebworkerOptions &
   SessOptions
 
@@ -213,14 +228,14 @@ export type Options = AppOptions & ObserverOptions & SanitizerOptions
 // TODO: use backendHost only
 export const DEFAULT_INGEST_POINT = 'https://api.openreplay.com/ingest'
 
-function getTimezone() {
-  const offset = new Date().getTimezoneOffset() * -1
-  const sign = offset >= 0 ? '+' : '-'
-  const hours = Math.floor(Math.abs(offset) / 60)
-  const minutes = Math.abs(offset) % 60
-  return `UTC${sign}${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
-}
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms))
+const postJSON = (url: string, body: unknown, signal?: AbortSignal) =>
+  fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    ...(signal && { signal }),
+  })
 
 const proto = {
   // ask if there are any tabs alive
@@ -243,6 +258,18 @@ const proto = {
   // not communicating with backend to update it (for whatever reason)
   reset: 'reset-your-session-please',
 } as const
+
+const toOrigin = (domain: string): string | null => {
+  try {
+    return new URL(domain).origin
+  } catch {
+    return null
+  }
+}
+
+/** sandboxed frames report origin 'null' and can only be reached with '*' */
+const replyTarget = (event: MessageEvent): string =>
+  event.origin && event.origin !== 'null' ? event.origin : '*'
 
 /** reverse map proto value -> short readable key, for the crossdomain debug log */
 const protoLabel: Record<string, string> = Object.fromEntries(
@@ -274,9 +301,9 @@ export default class App {
   private readonly stopCallbacks: Array<() => any> = []
   private readonly commitCallbacks: Array<CommitCallback> = []
   public readonly captureSanitizer?: CaptureSanitizer
-  private captureBatchWarning = false
+  private captureBase?: { original: string; approved: string }
   public readonly options: Options
-  public readonly networkOptions?: NetworkOptions
+  public readonly networkOptions?: Partial<NetworkOptions>
   private readonly revID: string
   private activityState: ActivityState = ActivityState.NotActive
   private readonly version = 'TRACKER_VERSION' // TODO: version compatability check inside each plugin.
@@ -289,6 +316,10 @@ export default class App {
 
   isDisposed(): boolean {
     return this.disposed
+  }
+
+  get captureSignal(): AbortSignal {
+    return this.lifecycleAbort.signal
   }
 
   private schedule(callback: () => void, ms = 0) {
@@ -304,6 +335,10 @@ export default class App {
   public socketMode = false
   private readonly bc: BroadcastChannel | null = null
   private readonly contextId: string
+  /** child side: origin from crossdomain.parentDomain, null when '*' or unset */
+  private readonly parentOrigin: string | null
+  /** parent side: crossdomain.childDomains as origins, null when any child is allowed */
+  private readonly childOrigins: Set<string> | null
   private canvasRecorder: CanvasRecorder | null = null
   private conditionsManager: ConditionsManager | null = null
   private readonly tagWatcher: TagWatcher
@@ -313,6 +348,8 @@ export default class App {
   }
 
   private canStart = false
+  private stopEpoch = 0
+  private workerRestartEpoch: number | null = null
   private rootId: number | null = null
   private pageFrames: HTMLIFrameElement[] = []
   private frameOderNumber = 0
@@ -326,6 +363,7 @@ export default class App {
     options: Partial<Options>,
     private readonly signalError: (error: string, apis: string[]) => void,
     public readonly insideIframe: boolean,
+    private readonly discardFromParent = () => this.discard(false),
   ) {
     this.contextId = Math.random().toString(36).slice(2)
     this.projectKey = projectKey
@@ -335,7 +373,11 @@ export default class App {
     this.captureSanitizer =
       captureSanitizer === undefined
         ? undefined
-        : (data) => (this.disposed ? null : captureSanitizer(data))
+        : (data) => {
+            if (this.disposed) return null
+            const approved = captureSanitizer(data)
+            return this.disposed && typeof approved === 'string' ? null : approved
+          }
 
     const defaultOptions: Options = {
       revID: '',
@@ -375,6 +417,12 @@ export default class App {
       disableThrottling: false,
     }
     this.options = simpleMerge(defaultOptions, options)
+    const parentDomain = this.options.crossdomain?.parentDomain
+    this.parentOrigin = parentDomain && parentDomain !== '*' ? toOrigin(parentDomain) : null
+    const childDomains = this.options.crossdomain?.childDomains
+    this.childOrigins = childDomains?.length
+      ? new Set(childDomains.map((d) => toOrigin(d) ?? d))
+      : null
 
     if (
       !this.insideIframe &&
@@ -392,16 +440,34 @@ export default class App {
     this.localStorage = this.options.localStorage ?? window.localStorage
     this.sessionStorage = this.options.sessionStorage ?? window.sessionStorage
     this.sanitizer = new Sanitizer({ app: this, options })
-    this.nodes = new Nodes({
+    const nodesOptions = {
       node_id: this.options.node_id,
       forceNgOff: Boolean(options.forceNgOff),
       maintainer: this.options.nodes?.maintainer,
       onIdSpaceExhausted: this.ignoreThisFrame,
-    })
-    this.observer = new Observer({ app: this, options })
+      // ids are never reused, so a removed node's level would otherwise stay forever
+      onUnregister: (id: number) => this.sanitizer.setLevel(id, SanitizeLevel.Plain),
+    }
+    // the next core indexes nodes and listeners through WeakRef; without it, the default core
+    if (this.options.nextObserver && typeof WeakRef === 'function') {
+      // same public surface as Nodes/TopObserver, see next_observer.ts
+      this.nodes = new NextNodes(nodesOptions) as unknown as Nodes
+      this.observer = new NextObserver({ app: this, options }) as unknown as Observer
+    } else {
+      this.nodes = new Nodes(nodesOptions)
+      this.observer = new Observer({ app: this, options })
+    }
+    if (IN_BROWSER && !this.options.canvas.disableCanvas) {
+      // WebGL canvases are captured on draw; that needs their contexts from creation on
+      watchCanvasContexts(window)
+      this.observer.attachContextCallback(watchCanvasContexts)
+    }
     this.ticker = new Ticker(this)
     this.ticker.attach(() => this.commit())
     this.debug = new Logger(this.options.__debug__)
+    if (this.captureSanitizer && this.options.crossdomain?.enabled) {
+      this.debug.warn('OpenReplay: cross-domain child capture is disabled with captureSanitizer')
+    }
     this.session = new Session({ app: this, options: this.options })
     this.attributeSender = new AttributeSender({
       app: this,
@@ -454,14 +520,14 @@ export default class App {
       this.iframeDebugInterval = setInterval(this.emitIframeDebug, 60_000)
     } else {
       this.initWorker()
-      /**
-       * if we get a signal from child iframes, we check for their node_id and send it back,
-       * so they can act as if it was just a same-domain iframe
-       * */
-      window.addEventListener('message', this.crossDomainIframeListener)
-      // Parent-only: once per minute, log an encoded snapshot of every tracked child
-      // iframe and the freshness of our two-way comms, to debug iframes that go silent.
-      if (this.options.crossdomain?.enabled && this.captureSanitizer === undefined) {
+      if (this.options.crossdomain?.enabled && !this.captureSanitizer) {
+        /**
+         * if we get a signal from child iframes, we check for their node_id and send it back,
+         * so they can act as if it was just a same-domain iframe
+         * */
+        window.addEventListener('message', this.crossDomainIframeListener)
+        // Parent-only: once per minute, log an encoded snapshot of every tracked child
+        // iframe and the freshness of our two-way comms, to debug iframes that go silent.
         if (this.xdomainDebugInterval) clearInterval(this.xdomainDebugInterval)
         this.xdomainDebugInterval = setInterval(this.emitCrossdomainDebug, 60_000)
       }
@@ -597,7 +663,8 @@ export default class App {
   parentCrossDomainFrameListener = (event: MessageEvent) => {
     if (this.disposed) return
     const { data } = event
-    if (!data || event.source === window) return
+    if (!data || event.source !== window.parent) return
+    if (this.parentOrigin && event.origin !== this.parentOrigin) return
     // Debug: remember the last time the parent talked to us.
     if (
       data.line === proto.startIframe ||
@@ -644,6 +711,10 @@ export default class App {
       this.allowAppStart()
     }
     if (data.line === proto.killIframe) {
+      if (data.terminal) {
+        if (event.source === window.parent) this.discardFromParent()
+        return
+      }
       if (this.active()) {
         this.stop()
       }
@@ -651,6 +722,7 @@ export default class App {
   }
 
   trackedFrames: string[] = []
+  private readonly childWindows = new Map<Window, string>()
   /** every context that has been enrolled at least once, to tell an orphan (re-adopt) apart
    *  from a brand-new child still mid-enrollment (leave alone). */
   private everTrackedFrames: Set<string> = new Set()
@@ -727,6 +799,7 @@ export default class App {
   }
   private readonly FRAME_STALE_MS = 1500
   private pruneStaleFrames() {
+    this.pruneClosedChildWindows()
     const staleAfter = Date.now() - this.FRAME_STALE_MS
     this.trackedFrames = this.trackedFrames.filter((ctx) => {
       const last = this.frameLastSeen.get(ctx)
@@ -734,6 +807,12 @@ export default class App {
       this.frameLastSeen.delete(ctx)
       return false
     })
+  }
+
+  private pruneClosedChildWindows() {
+    for (const child of this.childWindows.keys()) {
+      if (child.closed) this.childWindows.delete(child)
+    }
   }
 
   /** records the last command/signal we posted to a given child iframe context (debug) */
@@ -765,13 +844,13 @@ export default class App {
       this.pageFrames.find((f) => f.contentWindow === event.source) ||
       Array.from(document.querySelectorAll('iframe')).find((f) => f.contentWindow === event.source)
     if (targetFrame) {
-      const nodeId = (targetFrame as any)[this.options.node_id]
+      const nodeId = this.nodes.getID(targetFrame)
       if (nodeId !== undefined) {
         message.id = nodeId
       }
     }
     // @ts-ignore
-    event.source?.postMessage(message, '*')
+    event.source?.postMessage(message, replyTarget(event))
     this.recordSentToFrame(ctx, proto.startIframe)
     this.debug.log('Re-adopting orphaned crossdomain iframe', ctx)
   }
@@ -839,22 +918,11 @@ export default class App {
     this.send(ConsoleLog('info', `[OR_XDOMAIN_DEBUG] ${encoded}`))
   }
   crossDomainIframeListener = (event: MessageEvent) => {
-    if (this.disposed) return
+    if (this.disposed || this.captureSanitizer) return
     if (event.source === window) return
+    if (this.childOrigins && !this.childOrigins.has(event.origin)) return
     const { data } = event
     if (!data) return
-    if (
-      this.captureSanitizer !== undefined &&
-      (this.options.crossdomain?.enabled ||
-        data.line === proto.iframeBatch ||
-        data.line === proto.iframeDebug)
-    ) {
-      if (!this.captureBatchWarning) {
-        this.captureBatchWarning = true
-        this.debug.warn('OpenReplay: cross-domain child capture is disabled with captureSanitizer')
-      }
-      return
-    }
     // Debug: remember when we last heard *anything* from this context, and its domain.
     if (data.context) {
       this.frameAnyLastSeen.set(data.context, Date.now())
@@ -875,7 +943,7 @@ export default class App {
     }
     if (data.line === proto.iframeSignal) {
       // @ts-ignore
-      event.source?.postMessage({ ping: true, line: proto.parentAlive }, '*')
+      event.source?.postMessage({ ping: true, line: proto.parentAlive }, replyTarget(event))
       this.recordSentToFrame(data.context, proto.parentAlive)
       const signalId = async () => {
         if (event.source === null) {
@@ -894,6 +962,8 @@ export default class App {
             this.trackedFrames.push(data.context)
           }
           this.everTrackedFrames.add(data.context)
+          this.pruneClosedChildWindows()
+          this.childWindows.set(event.source as Window, event.origin)
           await this.waitStarted()
           if (this.disposed) return
           const token = this.session.getSessionToken(this.projectKey)
@@ -911,7 +981,7 @@ export default class App {
           }
           this.debug.log('Got child frame signal; nodeId', id, event.source, iframeData)
           // @ts-ignore
-          event.source?.postMessage(iframeData, '*')
+          event.source?.postMessage(iframeData, replyTarget(event))
           this.recordSentToFrame(data.context, proto.iframeId)
         } catch (e) {
           console.error(e)
@@ -928,7 +998,8 @@ export default class App {
         this.frameBatchLastSeen.set(data.context, Date.now())
       }
       const msgBatch = data.messages
-      const mappedMessages: Message[] = []
+      // pushed one by one: spreading a large child snapshot into push() overflows the call stack
+      const mappedMessages = this.messages
       msgBatch.forEach((msg: Message) => {
         if (msg[0] === MType.MouseMove) {
           let fixedMessage = msg
@@ -940,8 +1011,7 @@ export default class App {
             }
           })
           mappedMessages.push(fixedMessage)
-        }
-        if (msg[0] === MType.MouseClick) {
+        } else if (msg[0] === MType.MouseClick) {
           let fixedMessage = msg
           this.pageFrames.forEach((frame) => {
             if (frame.contentWindow === event.source) {
@@ -968,12 +1038,10 @@ export default class App {
             }
           })
           mappedMessages.push(fixedMessage)
-        }
-        if (![MType.UserID, MType.UserAnonymousID, MType.Metadata].includes(msg[0])) {
+        } else if (![MType.UserID, MType.UserAnonymousID, MType.Metadata].includes(msg[0])) {
           mappedMessages.push(msg)
         }
       })
-      this.messages.push(...mappedMessages)
     }
     if (data.line === proto.polling) {
       // Self-heal: a live child that was enrolled before but fell out of trackedFrames
@@ -1020,14 +1088,14 @@ export default class App {
               (f) => f.contentWindow === event.source,
             )
           if (targetFrame) {
-            const nodeId = (targetFrame as any)[this.options.node_id]
+            const nodeId = this.nodes.getID(targetFrame)
             if (nodeId !== undefined) {
               message.id = nodeId
             }
           }
         }
         // @ts-ignore
-        event.source?.postMessage(message, '*')
+        event.source?.postMessage(message, replyTarget(event))
         this.recordSentToFrame(data.context, nextCommand)
         if (this.pollingQueue[nextCommand].length === 0) {
           delete this.pollingQueue[nextCommand]
@@ -1155,8 +1223,7 @@ export default class App {
     let tries = 0
     while (tries < 100) {
       if (this.disposed) return null
-      // @ts-ignore
-      const potentialId = targetFrame[this.options.node_id]
+      const potentialId = this.nodes.getID(targetFrame)
       if (potentialId !== undefined) {
         tries = 100
         return potentialId
@@ -1191,6 +1258,12 @@ export default class App {
         }, 500)
 
         if (this.worker) {
+          // the page may be gone before the next commit task runs
+          try {
+            this.postPendingNow()
+          } catch (e) {
+            this._debug('worker_commit', e)
+          }
           this.worker.postMessage('closing')
         }
       }
@@ -1230,10 +1303,13 @@ export default class App {
   }
 
   private restart = (forceNew = false) => {
-    if (this.disposed) return
+    if (this.disposed || this.activityState === ActivityState.NotActive) {
+      return
+    }
     this.stop(false)
+    const epoch = this.stopEpoch
     this.waitStatus(ActivityState.NotActive).then(() => {
-      if (this.disposed) return
+      if (this.disposed || epoch !== this.stopEpoch) return
       this.allowAppStart()
       // Force a brand-new session when asked (e.g. a stale bfcache restore) without
       // letting forceNew leak into later restarts through prevOpts.
@@ -1284,10 +1360,16 @@ export default class App {
     if (this.disposed) return
     // handling 401 auth restart (new token assignment)
     if (data === 'a_stop') {
+      // the worker may have begun this restart before it got our 'stop'
+      const wasRunning = this.activityState !== ActivityState.NotActive
       this.stop(false)
+      this.workerRestartEpoch = wasRunning ? this.stopEpoch : null
     } else if (data === 'a_start') {
+      const epoch = this.workerRestartEpoch
+      this.workerRestartEpoch = null
+      if (epoch === null) return
       this.waitStatus(ActivityState.NotActive).then(() => {
-        if (this.disposed) return
+        if (this.disposed || epoch !== this.stopEpoch) return
         this.allowAppStart()
         this.start(this.prevOpts, true)
           .then((r) => {
@@ -1321,16 +1403,10 @@ export default class App {
   private _debug(context: string, e: any) {
     if (this.disposed) return
     if (this.options.__debug_report_edp !== null) {
-      void fetch(this.options.__debug_report_edp, {
-        method: 'POST',
-        signal: this.lifecycleAbort.signal,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          context,
-          // @ts-ignore
-          error: `${e as unknown as string}`,
-        }),
-      })
+      void postJSON(this.options.__debug_report_edp, {
+        context,
+        error: `${e as unknown as string}`,
+      }, this.captureSignal).catch(() => {})
     }
     this.debug.error('OpenReplay error: ', context, e)
   }
@@ -1349,6 +1425,17 @@ export default class App {
     // ids past the frame's block would corrupt a sibling frame in replay
     if (this.frameIgnored) {
       return
+    }
+    if (this.captureSanitizer && message[0] === MType.ResourceTiming) {
+      const url = sanitizeCapture(this.captureSanitizer, {
+        kind: 'resource',
+        resourceType: 'timing',
+        value: message[7],
+        node: null,
+      })
+      if (url === null || this.disposed) return
+      message = [...message]
+      message[7] = url
     }
     // ====================================================
     if (this.activityState === ActivityState.ColdStart) {
@@ -1384,6 +1471,10 @@ export default class App {
     }
 
     if (this.insideIframe) {
+      // liveness is signalled by the 250ms poll; an empty batch would only cost a cross-window message
+      if (!this.messages.length) {
+        return
+      }
       window.parent.postMessage(
         {
           line: proto.iframeBatch,
@@ -1421,26 +1512,29 @@ export default class App {
     this.emptyBatchCounter = 0
 
     try {
-      requestIdleCb(() => {
-        if (!this.messages.length) {
-          return
-        }
-        this.messages.unshift(Timestamp(this.timestamp()), TabData(this.session.getTabId()))
-        this.worker?.postMessage(this.messages)
-        this.commitCallbacks.forEach((cb) => cb(this.messages))
-        this.messages.length = 0
-      }, this.onCommitError)
+      requestIdleCb(this.postPending, this.onCommitError)
     } catch (e) {
       this.onCommitError(e)
     }
+  }
+
+  private postPending = () => {
+    if (!this.messages.length) {
+      return
+    }
+    this.messages.unshift(Timestamp(this.timestamp()), TabData(this.session.getTabId()))
+    this.worker?.postMessage(this.messages)
+    this.commitCallbacks.forEach((cb) => cb(this.messages))
+    this.messages.length = 0
   }
 
   private onCommitError = (e: unknown) => {
     if (this.disposed) return
     this._debug('worker_commit', e)
     this.stop(true)
+    const epoch = this.stopEpoch
     this.schedule(() => {
-      void this.start()
+      if (epoch === this.stopEpoch) void this.start()
     }, 500)
   }
 
@@ -1576,6 +1670,13 @@ export default class App {
     }
   }
 
+  /** document.title as the recording sends it: privateMode / urls.titleSanitizer applied */
+  getSanitizedTitle(): string {
+    const title = document.title
+    if (this.sanitizer.privateMode) return stringWiper(title)
+    return this.options.urls?.titleSanitizer?.(title) ?? title
+  }
+
   getSessionToken(): string | undefined {
     return this.session.getSessionToken(this.projectKey)
   }
@@ -1620,20 +1721,22 @@ export default class App {
         : document.baseURI ||
           document.head?.getElementsByTagName('base')[0]?.getAttribute('href') ||
           location.origin + location.pathname
-    return (
-      sanitizeCapture(this.captureSanitizer, {
+    if (!this.captureSanitizer) return value
+    if (this.captureBase?.original !== value) {
+      const approved = sanitizeCapture(this.captureSanitizer, {
         kind: 'resource',
         resourceType: 'base',
         value,
         node: null,
       }) ?? ''
-    )
+      if (this.disposed) return ''
+      this.captureBase = { original: value, approved }
+    }
+    return this.captureBase.approved
   }
 
-  resolveResourceURL(resourceURL: string): string | null {
-    const baseHref = this.getBaseHref()
-    if (!baseHref) return null
-    const base = new URL(baseHref)
+  resolveResourceURL(resourceURL: string): string {
+    const base = new URL(this.getBaseHref())
     base.pathname += '/' + new URL(resourceURL).pathname
     base.pathname.replace(/\/+/g, '/')
     return base.toString()
@@ -1648,6 +1751,7 @@ export default class App {
   }
 
   resetNextPageSession(flag: boolean) {
+    if (this.disposed) return
     if (flag) {
       this.sessionStorage.setItem(this.options.session_reset_key, 't')
     } else {
@@ -1705,9 +1809,14 @@ export default class App {
     this.singleBuffer = false
     const second = 1000
     const isNewSession = this.checkSessionToken(startOpts.forceNew)
+    let epoch = this.stopEpoch
     if (conditional) {
-      await this.setupConditionalStart(startOpts)
-      if (this.disposed) return
+      try {
+        await this.setupConditionalStart(startOpts)
+      } catch (error) {
+        if (!this.disposed) throw error
+      }
+      if (this.disposed || epoch !== this.stopEpoch) return
     }
     const cycle = () => {
       if (this.disposed) return
@@ -1724,6 +1833,7 @@ export default class App {
         this.bufferedMessages2.push(TabData(this.session.getTabId()))
       }
       this.stop(false)
+      epoch = this.stopEpoch
       this.activityState = ActivityState.ColdStart
       if (startOpts.sessionHash) {
         this.session.applySessionHash(startOpts.sessionHash)
@@ -1744,34 +1854,46 @@ export default class App {
       if (this.disposed) return
       this.ticker.start()
     }
-    this.coldInterval = setInterval(() => {
+    const interval = setInterval(() => {
+      if (epoch !== this.stopEpoch) {
+        clearInterval(interval)
+        return
+      }
       cycle()
     }, 30 * second)
+    this.coldInterval = interval
     cycle()
+  }
+
+  /** `extra` goes after the common fields, keeping the body's key order */
+  private fetchStart(
+    timestamp: number,
+    doNotRecord: boolean,
+    bufferDiff: number,
+    token: string | undefined,
+    extra?: Record<string, unknown>,
+  ) {
+    return postJSON(this.options.ingestPoint + '/v1/web/start', {
+      ...this.getTrackerInfo(),
+      timestamp,
+      doNotRecord,
+      bufferDiff,
+      userID: this.session.getInfo().userID,
+      token,
+      deviceMemory,
+      jsHeapSizeLimit,
+      timezone: getTimezone(),
+      ...extra,
+    }, this.captureSignal)
   }
 
   private async setupConditionalStart(startOpts: StartOptions) {
     if (this.disposed) return
+    const epoch = this.stopEpoch
     this.conditionsManager = new ConditionsManager(this, startOpts)
-    const r = await fetch(this.options.ingestPoint + '/v1/web/start', {
-      method: 'POST',
-      signal: this.lifecycleAbort.signal,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        ...this.getTrackerInfo(),
-        timestamp: now(),
-        doNotRecord: true,
-        bufferDiff: 0,
-        userID: this.session.getInfo().userID,
-        token: undefined,
-        deviceMemory,
-        jsHeapSizeLimit,
-        timezone: getTimezone(),
-        width: window.screen.width,
-        height: window.screen.height,
-      }),
+    const r = await this.fetchStart(now(), true, 0, undefined, {
+      width: window.screen.width,
+      height: window.screen.height,
     })
     if (this.disposed) return
     const {
@@ -1786,7 +1908,7 @@ export default class App {
       userState,
       projectID,
     } = await r.json()
-    if (this.disposed) return
+    if (this.disposed || epoch !== this.stopEpoch) return
     this.session.assign({ projectID })
     this.session.setUserInfo({
       userBrowser,
@@ -1896,8 +2018,17 @@ export default class App {
    * @reject {string} - error message
    * */
   public async uploadOfflineRecording() {
+    try {
+      await this.uploadOfflineBuffer()
+    } catch (error) {
+      if (!this.disposed) throw error
+    }
+  }
+
+  private async uploadOfflineBuffer() {
     if (this.disposed) return
     this.stop(false)
+    if (this.disposed) return
     const timestamp = now()
     this.worker?.postMessage({
       type: 'start',
@@ -1907,27 +2038,11 @@ export default class App {
       url: document.URL,
       connAttemptCount: this.options.connAttemptCount,
       connAttemptGap: this.options.connAttemptGap,
+      flushInterval: this.options.flushInterval,
       tabId: this.session.getTabId(),
       localDebug: this.options.__local_debug,
     })
-    const r = await fetch(this.options.ingestPoint + '/v1/web/start', {
-      method: 'POST',
-      signal: this.lifecycleAbort.signal,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        ...this.getTrackerInfo(),
-        timestamp: timestamp,
-        doNotRecord: false,
-        bufferDiff: timestamp - this.coldStartTs,
-        userID: this.session.getInfo().userID,
-        token: undefined,
-        deviceMemory,
-        jsHeapSizeLimit,
-        timezone: getTimezone(),
-      }),
-    })
+    const r = await this.fetchStart(timestamp, false, timestamp - this.coldStartTs, undefined)
     if (this.disposed) return
     const {
       token,
@@ -1973,6 +2088,7 @@ export default class App {
     conditionName?: string,
   ): Promise<StartPromiseReturn> {
     if (this.disposed) return UnsuccessfulStart('Tracker discarded')
+    const epoch = this.stopEpoch
     if (Object.keys(startOpts).length !== 0) {
       this.prevOpts = startOpts
     }
@@ -2024,6 +2140,7 @@ export default class App {
       url: document.URL,
       connAttemptCount: this.options.connAttemptCount,
       connAttemptGap: this.options.connAttemptGap,
+      flushInterval: this.options.flushInterval,
       tabId: this.session.getTabId(),
       localDebug: this.options.__local_debug,
     })
@@ -2039,30 +2156,22 @@ export default class App {
       sessionToken,
     )
     try {
-      const r = await window.fetch(this.options.ingestPoint + '/v1/web/start', {
-        method: 'POST',
-        signal: this.lifecycleAbort.signal,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...this.getTrackerInfo(),
-          timestamp,
-          doNotRecord: false,
-          bufferDiff: this.coldStartTs ? timestamp - this.coldStartTs : 0,
-          userID: this.session.getInfo().userID,
-          token: isNewSession ? undefined : sessionToken,
-          deviceMemory,
-          jsHeapSizeLimit,
-          timezone: getTimezone(),
+      const r = await this.fetchStart(
+        timestamp,
+        false,
+        this.coldStartTs ? timestamp - this.coldStartTs : 0,
+        isNewSession ? undefined : sessionToken,
+        {
           condition: conditionName,
           assistOnly: startOpts.assistOnly ?? this.socketMode,
           width: window.screen.width,
           height: window.screen.height,
           referrer: this.sanitizeReferrer(document.referrer),
-        }),
-      })
-      if (this.disposed) return UnsuccessfulStart('Tracker discarded')
+        },
+      )
+      if (epoch !== this.stopEpoch) {
+        return UnsuccessfulStart(CANCELED)
+      }
       if (r.status !== 200) {
         const error = await r.text()
         if (this.disposed) return UnsuccessfulStart('Tracker discarded')
@@ -2096,7 +2205,9 @@ export default class App {
         assistOnly: socketOnly,
         protocolVersion,
       } = await r.json()
-      if (this.disposed) return UnsuccessfulStart('Tracker discarded')
+      if (epoch !== this.stopEpoch) {
+        return UnsuccessfulStart(CANCELED)
+      }
       if (
         typeof token !== 'string' ||
         typeof userUUID !== 'string' ||
@@ -2201,6 +2312,9 @@ export default class App {
         this.clearBuffers()
         this.commit()
         /** --------------- COLD START BUFFER ------------------*/
+        if (epoch !== this.stopEpoch) {
+          return UnsuccessfulStart(CANCELED)
+        }
       }
       if (this.insideIframe && this.rootId) {
         this.observer.crossdomainObserve(this.rootId, this.frameOderNumber, this.frameLevel)
@@ -2297,7 +2411,7 @@ export default class App {
     })
   }
 
-  private waitUntil(predicate: () => boolean, ms: number): Promise<boolean> {
+  private waitUntil(predicate: () => boolean, ms: number, immediately = true): Promise<boolean> {
     return new Promise((resolve) => {
       let timer: ReturnType<typeof setTimeout> | undefined
       const finish = (value: boolean) => {
@@ -2312,12 +2426,13 @@ export default class App {
         else timer = setTimeout(check, ms)
       }
       this.disposalWaits.add(cancel)
-      check()
+      if (immediately || this.disposed) check()
+      else timer = setTimeout(check, ms)
     })
   }
 
   async waitStart() {
-    return this.waitUntil(() => this.canStart, 100)
+    return this.waitUntil(() => this.canStart, 100, false)
   }
 
   async waitStarted() {
@@ -2347,8 +2462,10 @@ export default class App {
       this.signalIframeTracker()
     }
 
+    const epoch = this.stopEpoch
     if (!document.hidden) {
       await this.waitStart()
+      if (epoch !== this.stopEpoch) return UnsuccessfulStart(CANCELED)
       return this._start(...args)
     } else {
       return new Promise((resolve) => {
@@ -2358,7 +2475,7 @@ export default class App {
             // eslint-disable-next-line
             document.removeEventListener('visibilitychange', onVisibilityChange)
             this.disposalWaits.delete(cancel)
-            resolve(this._start(...args))
+            resolve(epoch !== this.stopEpoch ? UnsuccessfulStart(CANCELED) : this._start(...args))
           }
         }
         const cancel = () => {
@@ -2372,8 +2489,18 @@ export default class App {
     }
   }
 
+  /** Hands messages still waiting for the next commit to the worker (assist-only and iframe batches go elsewhere). */
+  private postPendingNow() {
+    if (this.activityState === ActivityState.Active && !this.socketMode && !this.insideIframe) {
+      this.postPending()
+    }
+  }
+
   forceFlushBatch() {
     if (this.disposed) return
+    // Hand over messages still waiting for the next commit first, so that
+    // event(); forceFlushBatch() includes the event.
+    this.postPendingNow()
     this.worker?.postMessage('forceFlushBatch')
   }
 
@@ -2406,13 +2533,21 @@ export default class App {
     }
   }
 
-  discard(): void {
+  discard(clearSharedStorage = true): void {
     if (this.disposed) return
     this.disposed = true
+    this.stopEpoch++
     this.activityState = ActivityState.NotActive
-    const detach = (fn: () => void) => { try { fn() } catch { /* continue owned teardown */ } }
+    const detach = (fn: () => void) => {
+      try {
+        fn()
+      } catch {
+        // Other teardown must still run if a browser API or subscriber throws.
+      }
+    }
     detach(() => this.lifecycleAbort.abort())
     detach(() => this.tagWatcher.discard())
+    detach(() => this.canvasRecorder?.discard())
     const worker = this.worker
     this.worker = undefined
     if (worker) {
@@ -2421,6 +2556,7 @@ export default class App {
       detach(() => worker.terminate())
     }
     this.messages.length = 0
+    this.captureBase = undefined
     for (const buffer of [this.bufferedMessages1, this.bufferedMessages2]) {
       detach(() => { buffer.length = 0 })
     }
@@ -2440,50 +2576,57 @@ export default class App {
     this.iframeDebugInterval = this.xdomainDebugInterval = null
     this.disposalWaits.forEach((finish) => detach(finish))
     this.disposalWaits.clear()
+    this.childWindows.forEach((origin, child) =>
+      detach(() => child.postMessage({ line: proto.killIframe, terminal: true }, origin === 'null' ? '*' : origin)),
+    )
+    this.childWindows.clear()
     detach(() => window.removeEventListener('message', this.crossDomainIframeListener))
     detach(() => window.removeEventListener('message', this.parentCrossDomainFrameListener))
     if (this.bc) {
       this.bc.onmessage = null
       detach(() => this.bc!.close())
     }
-    for (const key of [this.options.session_token_key, this.options.session_pageno_key,
-      this.options.session_tabid_key, this.options.session_reset_key, this.sessionVersionKey,
-      '__or__watched_tags__']) detach(() => this.sessionStorage.removeItem(key))
-    detach(() => this.localStorage.removeItem(this.options.local_uuid_key))
-    for (const fn of [() => this.observer.disconnect(), () => this.ticker.stop(),
-      () => this.nodes.clear(), () => this.sanitizer.clear(), () => this.attributeSender.discard(),
-      () => this.canvasRecorder?.clear(), ...this.stopCallbacks]) detach(fn)
+    if (clearSharedStorage) {
+      for (const key of [this.options.session_token_key, this.options.session_pageno_key,
+        this.options.session_tabid_key, this.options.session_reset_key, this.sessionVersionKey,
+        '__or__watched_tags__']) detach(() => this.sessionStorage.removeItem(key))
+      detach(() => this.localStorage.removeItem(this.options.local_uuid_key))
+      detach(() => this.localStorage.removeItem(bufferStorageKey))
+    }
+    this.stopCapture(false, detach)
+    this.attributeSender.discard()
     this.startCallbacks.length = this.stopCallbacks.length = this.commitCallbacks.length = 0
     this.resanitizeCallbacks.length = 0
-    this.parentActive = false
-    this.pageFrames = []
   }
 
   stop(stopWorker = true): void {
     if (this.disposed) return
-    if (this.activityState !== ActivityState.NotActive) {
-      try {
-        if (this.options.crossdomain?.enabled) {
-          this.killChildrenFrames()
-        }
-        this.attributeSender.clear()
-        this.sanitizer.clear()
-        this.observer.disconnect()
-        this.nodes.clear()
-        this.ticker.stop()
-        this.stopCallbacks.forEach((cb) => cb())
-        this.tagWatcher.clear()
-        if (this.worker && stopWorker) {
-          this.worker.postMessage('stop')
-        }
-        this.canvasRecorder?.clear()
-        this.messages.length = 0
-        this.parentActive = false
-        this.pageFrames = []
-      } finally {
-        this.activityState = ActivityState.NotActive
-        this.debug.log('OpenReplay tracking stopped.')
-      }
+    this.stopEpoch++
+    if (this.activityState === ActivityState.NotActive) return
+    try {
+      if (this.options.crossdomain?.enabled) this.killChildrenFrames()
+    } finally {
+      this.stopCapture(stopWorker)
+    }
+  }
+
+  private stopCapture(stopWorker: boolean, cleanup = (callback: () => void) => callback()): void {
+    try {
+      cleanup(() => this.attributeSender.clear())
+      cleanup(() => this.sanitizer.clear())
+      cleanup(() => this.observer.disconnect())
+      cleanup(() => this.nodes.clear())
+      cleanup(() => this.ticker.stop())
+      this.stopCallbacks.forEach(cleanup)
+      cleanup(() => this.tagWatcher.clear())
+      if (stopWorker) this.worker?.postMessage('stop')
+      if (!this.disposed) cleanup(() => this.canvasRecorder?.clear())
+      this.messages.length = 0
+      this.parentActive = false
+      this.pageFrames = []
+    } finally {
+      this.activityState = ActivityState.NotActive
+      this.debug.log('OpenReplay tracking stopped.')
     }
   }
 }

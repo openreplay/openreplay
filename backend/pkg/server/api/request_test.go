@@ -83,6 +83,9 @@ func TestGetProjectResolution(t *testing.T) {
 		{"negative rejected", map[string]string{"projectId": "-42"}, 0, true, false},
 		{"overflow rejected", map[string]string{"projectId": "4294967301"}, 0, true, false},
 		{"zero rejected", map[string]string{"projectId": "0"}, 0, true, false},
+		{"max accepted", map[string]string{"projectId": "65000"}, MaxProjectID, false, false},
+		{"above max rejected", map[string]string{"projectId": "65001"}, 0, true, false},
+		{"above max via project alias rejected", map[string]string{"project": "65001"}, 0, true, false},
 		{"garbage rejected", map[string]string{"projectId": "42abc"}, 0, true, false},
 	}
 	for _, c := range cases {
@@ -106,6 +109,41 @@ func TestGetProjectResolution(t *testing.T) {
 			}
 			if id != c.wantID {
 				t.Fatalf("id: got %d, want %d", id, c.wantID)
+			}
+		})
+	}
+}
+
+func TestRequestContextGetProjectIDCap(t *testing.T) {
+	cases := []struct {
+		name    string
+		raw     string
+		wantID  uint32
+		wantErr bool
+	}{
+		{"valid", "42", 42, false},
+		{"max accepted", "65000", MaxProjectID, false},
+		{"above max rejected", "65001", 0, true},
+		{"zero rejected", "0", 0, true},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			rc := &RequestContext{Request: requestWithVars(t, map[string]string{"project": c.raw})}
+			id, err := rc.GetProjectID()
+			if c.wantErr {
+				if err == nil {
+					t.Fatalf("expected error, got id=%d", id)
+				}
+				if rc.ProjectID != 0 {
+					t.Fatalf("rejected id must not be cached, got %d", rc.ProjectID)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+			if id != c.wantID || rc.ProjectID != c.wantID {
+				t.Fatalf("id: got %d (cached %d), want %d", id, rc.ProjectID, c.wantID)
 			}
 		})
 	}

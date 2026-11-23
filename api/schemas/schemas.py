@@ -1,5 +1,3 @@
-from enum import StrEnum
-from itertools import chain
 from typing import Annotated, List, Literal, Optional, Union
 
 from pydantic import (
@@ -22,7 +20,6 @@ from .transformers_validators import (
     check_alphanumeric,
     check_property_name,
     check_regex,
-    int_to_string,
     remove_duplicate_values,
     remove_whitespace,
     single_to_list,
@@ -55,18 +52,6 @@ class UserSignupSchema(UserLoginSchema):
     _check_account_name = field_validator("fullname", "organizationName")(
         check_account_name
     )
-
-
-class EditAccountSchema(BaseModel):
-    name: Optional[str] = Field(default=None)
-    tenantName: Optional[str] = Field(default=None)
-    opt_out: Optional[bool] = Field(default=None)
-
-    _transform_name = field_validator("name", mode="before")(remove_whitespace)
-    _transform_tenantName = field_validator("tenantName", mode="before")(
-        remove_whitespace
-    )
-    _check_account_name = field_validator("name", "tenantName")(check_account_name)
 
 
 class ForgetPasswordPayloadSchema(_GRecaptcha):
@@ -190,16 +175,6 @@ class WebhookSchema(BaseModel):
     _transform_name = field_validator("name", mode="before")(remove_whitespace)
 
 
-class CreateMemberSchema(BaseModel):
-    user_id: Optional[int] = Field(default=None)
-    name: str = Field(...)
-    email: EmailStr = Field(...)
-    admin: Optional[bool] = Field(default=False)
-
-    _transform_email = field_validator("email", mode="before")(transform_email)
-    _transform_name = field_validator("name", mode="before")(remove_whitespace)
-
-
 class EditMemberSchema(BaseModel):
     name: str = Field(...)
     email: EmailStr = Field(...)
@@ -238,15 +213,6 @@ class GdprSchema(BaseModel):
     sampleRate: int = Field(...)
     maskNumbers: bool = Field(...)
     defaultInputMode: str = Field(...)
-
-
-class SampleRateSchema(BaseModel):
-    rate: int = Field(..., ge=0, le=100)
-    capture_all: bool = Field(default=False)
-
-
-class WeeklyReportConfigSchema(BaseModel):
-    weekly_report: bool = Field(default=True)
 
 
 class IntegrationBase(BaseModel):
@@ -321,89 +287,12 @@ class MetadataSchema(BaseModel):
     _transform_key = field_validator("key", mode="before")(remove_whitespace)
 
 
-class _AlertMessageSchema(BaseModel):
-    type: str = Field(...)
-    value: str = Field(...)
-
-    _transform_value = field_validator("value", mode="before")(int_to_string)
-
-
-class AlertDetectionType(str, Enum):
-    PERCENT = "percent"
-    CHANGE = "change"
-
-
-class _AlertOptionSchema(BaseModel):
-    message: List[_AlertMessageSchema] = Field([])
-    currentPeriod: Literal[15, 30, 60, 120, 240, 1440] = Field(...)
-    previousPeriod: Literal[15, 30, 60, 120, 240, 1440] = Field(default=15)
-    lastNotification: Optional[int] = Field(default=None)
-    renotifyInterval: Optional[int] = Field(default=720)
-
-
-class AlertSessionsColumn(str, Enum):
-    PERFORMANCE__CRASHES__COUNT = "performance.crashes.count"
-
-
-class AlertEventsColumn(str, Enum):
-    PERFORMANCE__DOM_CONTENT_LOADED__AVERAGE = "performance.dom_content_loaded.average"
-    PERFORMANCE__FIRST_MEANINGFUL_PAINT__AVERAGE = (
-        "performance.first_meaningful_paint.average"
-    )
-    PERFORMANCE__PAGE_LOAD_TIME__AVERAGE = "performance.page_load_time.average"
-    PERFORMANCE__DOM_BUILD_TIME__AVERAGE = "performance.dom_build_time.average"
-    PERFORMANCE__SPEED_INDEX__AVERAGE = "performance.speed_index.average"
-    PERFORMANCE__PAGE_RESPONSE_TIME__AVERAGE = "performance.page_response_time.average"
-    PERFORMANCE__TTFB__AVERAGE = "performance.ttfb.average"
-    PERFORMANCE__TIME_TO_RENDER__AVERAGE = "performance.time_to_render.average"
-    ERRORS__JAVASCRIPT__COUNT = "errors.javascript.count"
-    ERRORS__BACKEND__COUNT = "errors.backend.count"
-    CUSTOM = "CUSTOM"
-
-
-AlertColumn = StrEnum(
-    "AlertColumn",
-    {m.name: m.value for m in chain(AlertSessionsColumn, AlertEventsColumn)},
-    type=str,
-)
-
-
 class MathOperator(str, Enum):
     EQUAL = "="
     LESS = "<"
     GREATER = ">"
     LESS_EQ = "<="
     GREATER_EQ = ">="
-
-
-class _AlertQuerySchema(BaseModel):
-    left: Union[AlertColumn, int] = Field(...)
-    right: float = Field(...)
-    operator: MathOperator = Field(...)
-
-
-class AlertDetectionMethod(str, Enum):
-    THRESHOLD = "threshold"
-    CHANGE = "change"
-
-
-class AlertSchema(BaseModel):
-    name: str = Field(..., pattern=NAME_PATTERN)
-    detection_method: AlertDetectionMethod = Field(...)
-    change: Optional[AlertDetectionType] = Field(default=AlertDetectionType.CHANGE)
-    description: Optional[str] = Field(default=None)
-    options: _AlertOptionSchema = Field(...)
-    query: _AlertQuerySchema = Field(...)
-    series_id: Optional[int] = Field(default=None, doc_hidden=True)
-
-    @model_validator(mode="after")
-    def transform_alert(self):
-        self.series_id = None
-        if isinstance(self.query.left, int):
-            self.series_id = self.query.left
-            self.query.left = AlertColumn.CUSTOM
-
-        return self
 
 
 class SourcemapUploadPayloadSchema(BaseModel):
@@ -548,15 +437,6 @@ class IssueType(str, Enum):
     MOUSE_THRASHING = "mouse_thrashing"
     TAP_RAGE = "tap_rage"  # IOS
     INCIDENT = "incident"
-
-
-class MetricFormatType(str, Enum):
-    SESSION_COUNT = "sessionCount"
-
-
-class MetricExtendedFormatType(str, Enum):
-    SESSION_COUNT = "sessionCount"
-    USER_COUNT = "userCount"
 
 
 class FetchFilterType(str, Enum):
@@ -972,27 +852,6 @@ class SessionsSearchPayloadSchema(_TimedSchema, _PaginatedSchema):
         return values
 
 
-class ErrorStatus(str, Enum):
-    ALL = "all"
-    UNRESOLVED = "unresolved"
-    RESOLVED = "resolved"
-    IGNORED = "ignored"
-
-
-class ErrorSort(str, Enum):
-    LAST_OCCURRENCE = "lastOccurrence"
-    FIRST_OCCURRENCE = "firstOccurrence"
-    USERS_COUNT = "users"
-    SESSIONS_COUNT = "sessions"
-
-
-class SearchErrorsSchema(SessionsSearchPayloadSchema):
-    sort: ErrorSort = Field(default=ErrorSort.LAST_OCCURRENCE)
-    density: Optional[int] = Field(default=7)
-    status: Optional[ErrorStatus] = Field(default=ErrorStatus.ALL)
-    query: Optional[str] = Field(default=None)
-
-
 class ProductAnalyticsSelectedEventType(str, Enum):
     CLICK = EventType.CLICK.value
     INPUT = EventType.INPUT.value
@@ -1152,30 +1011,3 @@ class TagCreate(TagUpdate):
     ignoreDeadClick: bool = Field(default=False)
 
 
-class ScopeSchema(BaseModel):
-    scope: int = Field(default=1, ge=1, le=2)
-
-
-class SessionModel(BaseModel):
-    duration: int
-    errorsCount: int
-    eventsCount: int
-    issueTypes: List[IssueType] = Field(default=[])
-    metadata: dict = Field(default={})
-    pagesCount: int
-    platform: str
-    projectId: int
-    sessionId: str
-    startTs: int
-    timezone: Optional[str]
-    userAnonymousId: Optional[str]
-    userBrowser: str
-    userCity: str
-    userCountry: str
-    userDevice: Optional[str]
-    userDeviceType: str
-    userId: Optional[str]
-    userOs: str
-    userState: str
-    userUuid: str
-    viewed: bool = Field(default=False)

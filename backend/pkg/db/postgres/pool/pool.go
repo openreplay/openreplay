@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -37,7 +38,7 @@ func New(metrics database.Database, url string) (Pool, error) {
 	if url == "" {
 		return nil, errors.New("pg connection url is empty")
 	}
-	cfg, err := pgxpool.ParseConfig(url)
+	cfg, err := pgxpool.ParseConfig(escapeUserinfo(url))
 	if err != nil {
 		return nil, fmt.Errorf("pgxpool.ParseConfig error: %v", err)
 	}
@@ -193,6 +194,18 @@ func registerCustomTypes(ctx context.Context, conn *pgx.Conn) error {
 		conn.TypeMap().RegisterType(t)
 	}
 	return nil
+}
+
+// pgx >= 5.11 splits URL userinfo at the first '@' (like libpq), so a raw '@' in the password breaks the host.
+func escapeUserinfo(connString string) string {
+	if !strings.HasPrefix(connString, "postgres://") && !strings.HasPrefix(connString, "postgresql://") {
+		return connString
+	}
+	u, err := url.Parse(connString)
+	if err != nil {
+		return connString
+	}
+	return u.String()
 }
 
 // TX - start

@@ -4,6 +4,7 @@
   flex: none;
   width: var(--m-nav-width);
   height: 100vh;
+  height: 100dvh;
   padding: var(--m-space-5) var(--m-space-5) var(--m-space-5) var(--m-space-6);
   transition:
     width var(--m-duration-normal) var(--m-ease-out),
@@ -42,8 +43,11 @@
 }
 
 .m-nav__brand {
-  --m-brand: calc(var(--m-text-lg) * var(--m-display-scale));
+  --m-brand: calc(1.1875rem * var(--m-display-scale));
   gap: calc(var(--m-brand) * 0.24);
+}
+.m-nav.is-collapsed .m-nav__brand {
+  --m-brand: calc(1.375rem * var(--m-display-scale));
 }
 .m-nav__mark {
   height: var(--m-brand);
@@ -333,8 +337,6 @@
 }
 
 .m-nav__sections {
-  --m-rail-on: 0;
-  --m-rail-y: 0px;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -343,23 +345,6 @@
   padding-left: var(--m-space-6);
   border-left: 1px solid var(--m-border-subtle);
   margin-left: var(--m-space-6);
-}
-
-.m-nav__rail-light {
-  --m-lt-len: calc(0.6rem + 0.3rem * var(--m-rail-on));
-  --m-lt-spread: calc(0.35rem + 0.2rem * var(--m-rail-on));
-  top: 0;
-  left: calc(var(--m-border-width) * -0.5);
-  width: 0;
-  height: 0;
-  opacity: calc(var(--m-rail-on) * 0.3);
-  transform: translateY(var(--m-rail-y));
-}
-
-@media (hover: none), (pointer: coarse) {
-  .m-nav__rail-light {
-    display: none;
-  }
 }
 
 .m-nav__foot {
@@ -482,9 +467,10 @@
     background-color var(--m-duration-normal) var(--m-ease-out);
 }
 
+/* collapsed, the bar fades and narrows while the ring grows in its place */
 .m-nav.is-collapsed .m-meter {
   width: 1.75rem;
-  height: 2.75rem;
+  height: 1.75rem;
   padding: 0;
   justify-content: center;
   border-color: transparent;
@@ -492,18 +478,25 @@
 }
 
 .m-nav .m-meter .m-bar {
-  transform: rotate(0deg);
   transition:
-    transform var(--m-duration-normal) var(--m-ease-out),
-    width var(--m-duration-normal) var(--m-ease-out),
-    height var(--m-duration-normal) var(--m-ease-out);
+    opacity var(--m-duration-fast) var(--m-ease-out),
+    width var(--m-duration-normal) var(--m-ease-out);
+}
+.m-nav .m-meter__ring {
+  transition:
+    opacity var(--m-duration-fast) var(--m-ease-out),
+    transform var(--m-duration-normal) var(--m-ease-out);
 }
 
 .m-nav.is-collapsed .m-meter .m-bar {
   flex: none;
-  width: 2.5rem;
-  height: 6px;
-  transform: rotate(-90deg);
+  width: 0;
+  opacity: 0;
+}
+.m-nav.is-collapsed .m-meter__ring {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+  transition-delay: var(--m-duration-fast), 0s;
 }
 
 .m-nav.is-collapsed :is(.m-meter__label, .m-meter__value) {
@@ -516,18 +509,42 @@
 .m-nav.is-collapsed .m-meter .m-bar {
   min-width: 0;
 }
+/* collapsed, the meter is a column: the ring, then the upgrade as one more
+   footer tile */
+.m-nav.is-collapsed .m-meter {
+  flex-direction: column;
+  gap: var(--m-space-2);
+}
+.m-nav.is-collapsed .m-meter:has(.m-iconbtn) {
+  height: calc(1.75rem + var(--m-space-2) + 1.75rem);
+}
 .m-nav.is-collapsed .m-meter__read {
   flex: none;
   gap: 0;
+  justify-content: center;
+  align-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
 }
 .m-nav.is-collapsed .m-meter .m-iconbtn {
-  display: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin: 0;
+  border-radius: var(--m-radius-control);
 }
 
 @media (max-width: 880px) {
   .m-nav:not(.is-collapsed) {
     width: 11.5rem;
   }
+}
+
+/* a page arriving with its own menu width takes it in the same frame
+   (useNavCollapse): nothing in the menu or the page header animates */
+:root[data-nav-instant]
+  :is(.m-nav, .m-nav *, .m-page, .m-page__head, .m-page__head *) {
+  transition: none !important;
+  animation: none !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -565,4 +582,52 @@
     margin var(--m-duration-normal) var(--m-ease-out),
     background-color var(--m-duration-instant) var(--m-ease-out),
     color var(--m-duration-instant) var(--m-ease-out);
+}
+
+/* the phone's menu sheet: one head row (the mark, the project picker, the
+   close), the list and the foot full width under it */
+.m-nav.is-sheet {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  column-gap: var(--m-space-3);
+  align-items: center;
+  padding-top: var(--m-space-3);
+}
+.m-nav.is-sheet > .m-nav__brand {
+  grid-row: 1;
+  grid-column: 1;
+  align-self: center;
+  height: auto;
+  margin: 0;
+  padding-inline: var(--m-space-2) 0;
+  --m-brand: 1.5rem;
+}
+.m-nav.is-sheet > .m-nav__brand .m-nav__brand-toggle {
+  margin-inline: 0;
+}
+.m-nav.is-sheet > .m-nav__account {
+  grid-row: 1;
+  grid-column: 2;
+  min-width: 0;
+  margin: 0;
+}
+.m-nav.is-sheet > .m-nav__sheet-head {
+  grid-row: 1;
+  grid-column: 3;
+  margin: 0;
+}
+.m-nav.is-sheet > .m-nav__scroll {
+  grid-row: 2;
+  grid-column: 1 / -1;
+  align-self: stretch;
+  min-height: 0;
+  margin-top: var(--m-space-4);
+}
+.m-nav.is-sheet > .m-nav__foot {
+  grid-row: 3;
+  grid-column: 1 / -1;
+}
+.m-nav.is-sheet :is(.m-nav__brand-name, .m-nav__account-badge) {
+  display: none;
 }

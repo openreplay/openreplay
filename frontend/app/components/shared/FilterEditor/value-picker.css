@@ -77,6 +77,12 @@
   overflow-y: auto;
   padding: var(--m-space-2);
 }
+.m-vp__body:empty {
+  display: none;
+}
+.m-vp__search:has(+ .m-vp__body:empty) {
+  border-bottom: 0;
+}
 
 /* the share line hangs under the label out of flow, so the row's checkbox
    centres on the value text rather than on text plus line */
@@ -112,6 +118,11 @@
   color: var(--m-content-placeholder);
   border: var(--m-border-width) solid var(--m-border-subtle);
   border-radius: var(--m-radius-chip);
+}
+/* share lines are a % of the label: every row keeps the first row's Tab
+   width so the lines compare */
+.m-vp__key.is-slot {
+  visibility: hidden;
 }
 
 .m-vp__typed {

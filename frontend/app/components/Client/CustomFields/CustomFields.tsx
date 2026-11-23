@@ -9,9 +9,9 @@ import { Input } from '@/ui/inputs/input';
 import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
 import { RenameDialog } from '@/ui/overlays/RenameDialog';
 import { useToast } from '@/ui/overlays/toast';
-import { Pencil, Trash2 } from 'lucide-react';
+import { ChevronDown, Pencil, Trash2 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useStore } from 'App/mstore';
@@ -20,6 +20,7 @@ import CustomField from 'App/mstore/types/customField';
 import { ExampleChip } from 'Shared/ExampleChip/ExampleChip';
 
 import { PrefBlock, PrefField, PrefList, PrefListRow } from '../PrefSection';
+import { useMetadataKeys, useMetadataMutations } from '../Projects/queries';
 
 const MAX = 10;
 const EXAMPLES = ['plan', 'accountId', 'role', 'company', 'tier'];
@@ -39,18 +40,16 @@ function CustomFields() {
   usePageTitle('Metadata - OpenReplay Preferences');
   const { t } = useTranslation();
   const toast = useToast();
-  const { customFieldStore: store, projectsStore } = useStore();
+  const { projectsStore } = useStore();
   const project = projectsStore.config.project;
   const siteId = `${project?.projectId}`;
   const platform = project?.platform === 'web' ? 'web' : 'ios';
-  const fields: any[] = store.list;
+  const fields = useMetadataKeys(siteId).data ?? [];
+  const { save: saveKey, remove } = useMetadataMutations(siteId);
   const [key, setKey] = useState('');
-  const [renaming, setRenaming] = useState<any | null>(null);
-  const [deleting, setDeleting] = useState<any | null>(null);
-
-  useEffect(() => {
-    void store.fetchList(project?.id ?? undefined);
-  }, [project]);
+  const [renaming, setRenaming] = useState<CustomField | null>(null);
+  const [deleting, setDeleting] = useState<CustomField | null>(null);
+  const [showHow, setShowHow] = useState(false);
 
   const keys = fields.map((f) => f.key);
   const remaining = MAX - fields.length;
@@ -58,12 +57,9 @@ function CustomFields() {
   const valid = KEY_RE.test(key.trim()) && !taken && remaining > 0;
 
   const save = (instance: CustomField, done: string) =>
-    store
-      .save(siteId, instance)
-      .then((r: any) => {
-        if (r?.errors?.length) toast.error(r.errors[0]);
-        else toast.success(done);
-      })
+    saveKey
+      .mutateAsync(instance)
+      .then(() => toast.success(done))
       .catch(() => toast.error(t('An error occurred while saving metadata.')));
 
   const add = (k: string) => {
@@ -108,7 +104,7 @@ function CustomFields() {
               />
               <Button
                 variant="primary"
-                disabled={!valid || store.isSaving}
+                disabled={!valid || saveKey.isPending}
                 onClick={() => add(key.trim())}
               >
                 {t('Declare')}
@@ -171,15 +167,32 @@ function CustomFields() {
             ))}
           </PrefList>
         )}
+        {fields.length > 0 ? (
+          <button
+            type="button"
+            className="m-pref__quiet-link"
+            aria-expanded={showHow}
+            onClick={() => setShowHow((v) => !v)}
+          >
+            <ChevronDown
+              size={12}
+              aria-hidden="true"
+              className={`m-pref__disclose${showHow ? ' is-open' : ''}`}
+            />
+            {showHow
+              ? t('Hide how to send the values')
+              : t('How to send the values')}
+          </button>
+        ) : null}
       </PrefBlock>
 
-      {fields.length > 0 ? (
+      {fields.length === 0 || showHow ? (
         <PrefBlock
           title={t('Send the values')}
           hint={t('Call this after the tracker starts, once per key.')}
         >
           <CodeBlock
-            code={snippetFor(platform, keys)}
+            code={snippetFor(platform, keys.length ? keys : ['plan'])}
             language={platform === 'web' ? 'JavaScript' : 'Swift'}
             caption={t('After the tracker starts')}
           />
@@ -201,9 +214,10 @@ function CustomFields() {
           const f = renaming;
           setRenaming(null);
           if (!f || !next.trim() || next.trim() === f.key) return;
-          store.init(f);
-          store.edit({ key: next.trim() });
-          void save(store.instance, t('Metadata updated'));
+          void save(
+            new CustomField({ ...f.toData(), key: next.trim() }),
+            t('Metadata updated'),
+          );
         }}
       />
       <ConfirmDialog
@@ -216,8 +230,8 @@ function CustomFields() {
           const f = deleting;
           setDeleting(null);
           if (f)
-            store
-              .remove(siteId, f.index)
+            remove
+              .mutateAsync(f.index)
               .catch(() =>
                 toast.error(t('Could not remove {{key}}', { key: f.key })),
               );

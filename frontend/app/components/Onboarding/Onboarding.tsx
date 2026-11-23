@@ -5,6 +5,7 @@ import { OpenReplayMark } from '@/ui/brand/OpenReplayMark';
 import { Input } from '@/ui/inputs/input';
 import { Stepper, type StepperStep } from '@/ui/layout/Stepper';
 import '@/ui/layout/page-card.css';
+import { useViewport } from '@/ui/layout/use-viewport';
 import { useToast } from '@/ui/overlays/toast';
 import { ArrowLeft, ArrowRight, BookOpen } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
@@ -240,6 +241,16 @@ function Onboarding() {
           ? DOCS.invite
           : null;
   const nudge = nudged && !name.trim();
+  // phone first: a thin three-part progress bar instead of the step list,
+  // the project note only once Continue was pressed without a name, the docs
+  // link one quiet line at the end, the foot pinned to the bottom
+  const phone = useViewport() === 'phone';
+  const docsLink = docs ? (
+    <ExternalLink className="m-ob__docs" href={docs}>
+      <BookOpen size={13} aria-hidden="true" />
+      {t('Documentation for this step')}
+    </ExternalLink>
+  ) : null;
 
   if (!site) return null;
 
@@ -273,42 +284,63 @@ function Onboarding() {
               aria-invalid={nudge || undefined}
               aria-describedby="m-ob-project-note"
             />
-            <span
-              className="m-ob__project-note"
-              id="m-ob-project-note"
-              role={nudge ? 'status' : undefined}
-            >
-              {nudge
-                ? t('Name the project to continue.')
-                : t(
-                    'The site or app you are recording. The name is needed to continue.',
-                  )}
-            </span>
+            {(!phone || nudge) && (
+              <span
+                className="m-ob__project-note"
+                id="m-ob-project-note"
+                role={nudge ? 'status' : undefined}
+              >
+                {nudge
+                  ? t('Name the project to continue.')
+                  : t(
+                      'The site or app you are recording. The name is needed to continue.',
+                    )}
+              </span>
+            )}
           </div>
-          <Stepper
-            steps={steps}
-            current={step}
-            onSelect={(k) => go(k)}
-            ariaLabel={t('Setup steps')}
-          />
-          {docs && (
-            <ExternalLink className="m-ob__docs" href={docs}>
-              <BookOpen size={13} aria-hidden="true" />
-              {t('Documentation for this step')}
-            </ExternalLink>
+          {!phone && (
+            <Stepper
+              steps={steps}
+              current={step}
+              onSelect={(k) => go(k)}
+              ariaLabel={t('Setup steps')}
+            />
           )}
+          {!phone && docsLink}
         </aside>
 
         <section className="m-ob__card m-panel" aria-labelledby="m-ob-title">
           <div className="m-ob__step m-step-in" key={step ?? 'done'}>
             {step ? (
               <header className="m-ob__head">
-                <p className="m-ob__count">
-                  {t('Step {{n}} of {{total}}', {
-                    n: index + 1,
-                    total: ORDER.length,
-                  })}
-                </p>
+                {phone ? (
+                  <div
+                    className="m-ob__progress"
+                    role="group"
+                    aria-label={t('Setup steps')}
+                  >
+                    {steps.map((s2, i) => (
+                      <button
+                        key={s2.key}
+                        type="button"
+                        className={`m-ob__seg${s2.key === step ? ' is-current' : ''}${s2.status === 'done' ? ' is-done' : ''}${i < index ? ' is-past' : ''}`}
+                        aria-label={t('Step {{n}}, {{label}}', {
+                          n: i + 1,
+                          label: s2.label,
+                        })}
+                        aria-current={s2.key === step ? 'step' : undefined}
+                        onClick={() => go(s2.key)}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="m-ob__count">
+                    {t('Step {{n}} of {{total}}', {
+                      n: index + 1,
+                      total: ORDER.length,
+                    })}
+                  </p>
+                )}
                 <h1 className="m-ob__title" id="m-ob-title">
                   {titles[step].title}
                 </h1>
@@ -353,18 +385,31 @@ function Onboarding() {
                 />
               )}
             </div>
+            {phone && step && docsLink && (
+              <div className="m-ob__docs-end">{docsLink}</div>
+            )}
             {step && (
               <footer className="m-ob__foot">
                 <div className="m-ob__foot-left">
-                  {index > 0 && (
-                    <Button
-                      variant="subtle"
-                      onClick={() => go(ORDER[index - 1])}
-                    >
-                      <ArrowLeft size={14} />
-                      {t('Back')}
-                    </Button>
-                  )}
+                  {index > 0 &&
+                    (phone ? (
+                      <Button
+                        variant="subtle"
+                        size="icon"
+                        aria-label={t('Back')}
+                        onClick={() => go(ORDER[index - 1])}
+                      >
+                        <ArrowLeft size={15} />
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="subtle"
+                        onClick={() => go(ORDER[index - 1])}
+                      >
+                        <ArrowLeft size={14} />
+                        {t('Back')}
+                      </Button>
+                    ))}
                 </div>
                 <div className="m-ob__foot-right">
                   {step !== 'install' && (

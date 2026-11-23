@@ -9,7 +9,7 @@ import { action, makeAutoObservable, observable, runInAction } from 'mobx';
 
 import { getDateRangeFromValue } from 'App/dateRange';
 import { filterMap } from 'App/mstore/searchStore';
-import { metricService, sessionService } from 'App/services';
+import { sessionService } from 'App/services';
 import {
   cleanSessionFilters,
   compareJsonObjects,
@@ -125,16 +125,15 @@ interface Bookmarks {
   loading: boolean;
 }
 
-const LAST_PLAYED = 3;
 const LAST_PLAYED_KEY = '__or_last_played';
-function readLastPlayed(): string[] {
+// stored as a list by earlier builds: its head is the last one
+function readLastPlayed(): string {
   try {
-    const v = JSON.parse(localStorage.getItem(LAST_PLAYED_KEY) ?? '[]');
-    return Array.isArray(v)
-      ? v.filter((x) => typeof x === 'string').slice(0, LAST_PLAYED)
-      : [];
+    const v = JSON.parse(localStorage.getItem(LAST_PLAYED_KEY) ?? '""');
+    const id = Array.isArray(v) ? v[0] : v;
+    return typeof id === 'string' ? id : '';
   } catch {
-    return [];
+    return '';
   }
 }
 
@@ -189,12 +188,8 @@ export default class SessionStore {
 
   sessionPath: Record<string, any> = {};
 
-  /** the last sessions played, newest first, remembered */
-  lastPlayedSessionIds: string[] = readLastPlayed();
-
-  get lastPlayedSessionId(): string {
-    return this.lastPlayedSessionIds[0] ?? '';
-  }
+  /** the last session played, remembered */
+  lastPlayedSessionId: string = readLastPlayed();
 
   timeLineTooltip = {
     time: 0,
@@ -605,20 +600,6 @@ export default class SessionStore {
     this.timezone = tz;
   };
 
-  fetchInsights = async (metric, params = {}, isSaved = false) => {
-    try {
-      // const data = await sessionService.getClickMap(params);
-      const data = await metricService.getMetricChartData(
-        metric,
-        params,
-        isSaved,
-      );
-      this.insights = data.sort((a: any, b: any) => b.count - a.count);
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
   setTimelineTooltip = (tp: {
     time: number;
     offset: number;
@@ -705,15 +686,9 @@ export default class SessionStore {
   };
 
   setLastPlayedSessionId = (sessionId: string) => {
-    this.lastPlayedSessionIds = [
-      sessionId,
-      ...this.lastPlayedSessionIds.filter((id) => id !== sessionId),
-    ].slice(0, LAST_PLAYED);
+    this.lastPlayedSessionId = sessionId;
     try {
-      localStorage.setItem(
-        LAST_PLAYED_KEY,
-        JSON.stringify(this.lastPlayedSessionIds),
-      );
+      localStorage.setItem(LAST_PLAYED_KEY, JSON.stringify(sessionId));
     } catch {
       // private mode: it lasts the visit
     }

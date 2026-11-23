@@ -1,0 +1,135 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`React + Vite plan: config module, entry import, RTK middleware 1`] = `
+"// OpenReplay tracker docs: https://docs.openreplay.com/en/sdk/
+// Docs for agents: @openreplay/tracker/docs/usage.md and @openreplay/tracker/docs/api.md
+import { tracker } from '@openreplay/tracker'
+import trackerAssist from '@openreplay/tracker-assist'
+import trackerRedux from '@openreplay/tracker-redux'
+
+tracker.configure({
+  projectKey: 'KEY123',
+  ingestPoint: 'https://or.example.com/ingest',
+  __DISABLE_SECURE_MODE: import.meta.env.DEV, // record on http://localhost while developing
+  network: {
+    capturePayload: true,
+    // tracker 19's types want every network field
+    failuresOnly: false,
+    ignoreHeaders: ['cookie', 'set-cookie', 'authorization'],
+    sessionTokenHeader: false,
+    captureInIframes: true,
+  },
+})
+
+tracker.use(trackerAssist())
+export const openReplayMiddleware = tracker.use(trackerRedux())
+
+tracker.start()
+"
+`;
+
+exports[`Next.js < 15.3 Pages Router without _app: creates it 1`] = `
+"import type { AppProps } from 'next/app';
+import '../openreplay';
+
+export default function App({ Component, pageProps }: AppProps) {
+  return <Component {...pageProps} />;
+}
+"
+`;
+
+exports[`Nuxt Nuxt 4 + @pinia/nuxt: client plugin wires Pinia 1`] = `
+"// OpenReplay tracker docs: https://docs.openreplay.com/en/sdk/
+// Docs for agents: @openreplay/tracker/docs/usage.md and @openreplay/tracker/docs/api.md
+import { tracker } from '@openreplay/tracker'
+import trackerAssist from '@openreplay/tracker-assist'
+import trackerVuex from '@openreplay/tracker-vuex'
+
+export default defineNuxtPlugin((nuxtApp) => {
+  tracker.configure({
+    projectKey: 'KEY123',
+    __DISABLE_SECURE_MODE: import.meta.dev, // record on http://localhost while developing
+  })
+
+  tracker.use(trackerAssist())
+  const openReplayVuex = tracker.use(trackerVuex())
+  nuxtApp.$pinia.use(({ store }) => openReplayVuex(store.$id)(store))
+
+  tracker.start()
+})
+"
+`;
+
+exports[`React Router framework mode creates app/entry.client.tsx with the import 1`] = `
+"import './openreplay'
+import { startTransition, StrictMode } from 'react'
+import { hydrateRoot } from 'react-dom/client'
+import { HydratedRouter } from 'react-router/dom'
+
+startTransition(() => {
+  hydrateRoot(
+    document,
+    <StrictMode>
+      <HydratedRouter />
+    </StrictMode>,
+  )
+})
+"
+`;
+
+exports[`static HTML detects pages, injects the snippet 1`] = `
+"<!doctype html>
+<html>
+  <head>
+    <title>Home</title>
+    <!-- OpenReplay, docs: https://docs.openreplay.com/en/sdk/ -->
+    <script>
+      var initOpts = {
+        projectKey: 'KEY123',
+        __DISABLE_SECURE_MODE: location.hostname === 'localhost', // record on http://localhost while developing
+        privateMode: true,
+      };
+      var startOpts = {};
+      (function(A,s,a,y,e,r){
+        r=window.OpenReplay=[e,r,y,[s-1, e]];
+        s=document.createElement('script');s.src=A;s.async=!a;
+        document.getElementsByTagName('head')[0].appendChild(s);
+        r.start=function(v){r.push([0])};
+        r.stop=function(v){r.push([1])};
+        r.setUserID=function(id){r.push([2,id])};
+        r.setUserAnonymousID=function(id){r.push([3,id])};
+        r.setMetadata=function(k,v){r.push([4,k,v])};
+        r.event=function(k,p,i){r.push([5,k,p,i])};
+        r.issue=function(k,p){r.push([6,k,p])};
+        r.isActive=function(){return false};
+        r.getSessionToken=function(){};
+      })('https://static.openreplay.com/latest/openreplay-assist.js',1,0,initOpts,startOpts);
+    </script>
+  </head>
+  <body></body>
+</html>
+"
+`;
+
+exports[`extra options writes every selected option 1`] = `
+"// OpenReplay tracker docs, also meant for coding agents:
+//   node_modules/@openreplay/tracker/docs/usage.md  setup, privacy, frameworks, troubleshooting
+//   node_modules/@openreplay/tracker/docs/api.md    every method and option
+import { tracker } from '@openreplay/tracker'
+
+tracker.configure({
+  projectKey: 'KEY123',
+  respectDoNotTrack: true,
+  customAttributes: ['data-testid', 'data-cy'],
+  inlineCss: 1, // read stylesheets in the browser; for CSS the backend can't fetch
+  crossdomain: { enabled: true },
+  network: {
+    capturePayload: true,
+    sessionTokenHeader: true,
+    tokenUrlMatcher: (url) => url.startsWith('https://api.example.com/'),
+  },
+})
+
+tracker.start()
+"
+`;

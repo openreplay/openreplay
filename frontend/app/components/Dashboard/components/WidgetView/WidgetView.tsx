@@ -290,7 +290,9 @@ function WidgetView({
     const wasCreating = !widget.exists();
     if (isClickMap) {
       try {
-        widget.thumbnail = await renderClickmapThumbnail(true);
+        // no replay on screen: the card keeps the page it was saved with
+        widget.thumbnail =
+          (await renderClickmapThumbnail(true)) ?? widget.thumbnail;
       } catch (e) {
         console.error(e);
       }

@@ -2,6 +2,7 @@ import withPageTitle from '@/components/hocs/withPageTitle';
 import withPermissions from '@/components/hocs/withPermissions';
 import { cityAfterCode } from '@/lib/geo';
 import { IconButton } from '@/ui/actions/IconButton';
+import { GeoPlace, focusPanelOnOpen } from '@/ui/data/GeoCredit';
 import { ImpactMeter } from '@/ui/data/ImpactMeter';
 import { Loader } from '@/ui/feedback/Loader';
 import { PopoverPanel } from '@/ui/overlays/popover';
@@ -120,8 +121,7 @@ function IssuePlayer() {
     void integrationsStore.issues.fetchIntegrations();
     sessionStore.setUserTimezone(session.timezone as string);
     const mobData = sessionStore.prefetchedMobUrls?.[session.sessionId] as
-      | Record<string, any>
-      | undefined;
+      Record<string, any> | undefined;
     const [inst, store] = createWebPlayer(
       session as any,
       wrapPlayerStore,
@@ -281,9 +281,13 @@ function IssuePlayer() {
       t('Location'),
       (() => {
         const code = card?.country ?? session.userCountry;
-        return [cityAfterCode(card?.city ?? session.userCity, code), code]
+        const place = [
+          cityAfterCode(card?.city ?? session.userCity, code),
+          code,
+        ]
           .filter(Boolean)
           .join(', ');
+        return place && <GeoPlace>{place}</GeoPlace>;
       })(),
     ],
     [t('Browser'), card?.browser ?? session.userBrowser],
@@ -310,6 +314,7 @@ function IssuePlayer() {
             open={details}
             onOpenChange={setDetails}
             placement="bottomLeft"
+            onOpenAutoFocus={focusPanelOnOpen}
             content={
               <dl className="m-rs__details">
                 {rows

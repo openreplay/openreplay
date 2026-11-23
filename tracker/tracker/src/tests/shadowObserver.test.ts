@@ -15,6 +15,7 @@ function makeApp() {
     options: { forceNgOff: true },
     safe: (f: any) => f,
     send: (msg: any) => sent.push(msg),
+    callResanitizeCallbacks: jest.fn(),
     isDisposed: () => false,
     getBaseHref: () => 'http://localhost/',
     debug: { log: jest.fn(), warn: jest.fn(), info: jest.fn(), error: jest.fn() },
@@ -30,6 +31,11 @@ function makeApp() {
 }
 
 const flush = () => Promise.resolve().then(() => undefined)
+const allData = () =>
+  sent
+    .filter((m) => m[0] === Type.SetNodeData)
+    .map((m) => m[2])
+    .join('|')
 const shadowObservers = () => (observer as any).shadowRootObservers as Map<ShadowRoot, any>
 
 async function addHost(): Promise<[HTMLElement, ShadowRoot]> {
@@ -96,6 +102,56 @@ describe('TopObserver shadow root observers', () => {
     expect(shadowObservers().has(shadow)).toBe(true)
   })
 
+  test('slotchange keeps the light DOM bound and reports the slot', async () => {
+    const host = document.createElement('div')
+    host.innerHTML = '<span slot="a">light</span>'
+    document.body.appendChild(host)
+    await flush()
+    const shadow = host.attachShadow({ mode: 'open' })
+    await flush()
+    // slot rendered after the light DOM was committed (lazy web components)
+    shadow.innerHTML = '<slot name="a"></slot>'
+    await flush()
+    await flush()
+    // the next commit of the shadow observer used to walk the light DOM up to <html> and unbind it
+    shadow.appendChild(document.createElement('i'))
+    await flush()
+
+    const light = host.querySelector('span')!
+    const slotId = nodes.getID(shadow.querySelector('slot')!)
+    expect(slotId).toBeDefined()
+    expect(nodes.getID(document.documentElement)).toBe(0)
+    expect(nodes.getID(host)).toBeDefined()
+    expect(sent).toContainEqual([Type.SetNodeSlot, nodes.getID(light), slotId])
+
+    const later = document.createElement('p')
+    document.body.appendChild(later)
+    await flush()
+    expect(sent.some((m) => m[0] === Type.CreateElementNode && m[1] === nodes.getID(later))).toBe(true)
+  })
+
+  test('a re-inserted host gets its shadow content sent again under new ids', async () => {
+    const [host, shadow] = await addHost()
+    await flush()
+    const oldRootId = nodes.getID(shadow)
+    const span = shadow.querySelector('span')!
+    const oldSpanId = nodes.getID(span)
+
+    host.remove()
+    await flush()
+    // a cached view / moved overlay: the same element comes back later
+    document.body.appendChild(host)
+    await flush()
+
+    const hostId = nodes.getID(host)
+    const rootId = nodes.getID(shadow)
+    expect(rootId).toBeDefined()
+    expect(rootId).not.toBe(oldRootId)
+    expect(nodes.getID(span)).not.toBe(oldSpanId)
+    expect(sent).toContainEqual([Type.CreateIFrameDocument, hostId, rootId])
+    expect(sent).toContainEqual([Type.CreateElementNode, nodes.getID(span), rootId, 0, 'SPAN', false])
+  })
+
   test('disconnect() disconnects every shadow observer and restores attachShadow', async () => {
     const [, s1] = await addHost()
     const [, s2] = await addHost()
@@ -109,5 +165,55 @@ describe('TopObserver shadow root observers', () => {
     expect(moDisconnect).toHaveBeenCalledTimes(3)
     expect(shadowObservers().size).toBe(0)
     expect(Element.prototype.attachShadow).toBe(nativeAttachShadow)
+  })
+
+  test('shadow content inherits a masked host; a hidden host gets no shadow root', async () => {
+    const masked = document.createElement('div')
+    masked.setAttribute('data-openreplay-obscured', '')
+    const hidden = document.createElement('div')
+    hidden.setAttribute('data-openreplay-hidden', '')
+    document.body.append(masked, hidden)
+    await flush()
+    masked.attachShadow({ mode: 'open' }).innerHTML = '<span>card 4111</span>'
+    const hiddenShadow = hidden.attachShadow({ mode: 'open' })
+    hiddenShadow.innerHTML = '<span>secret</span>'
+    await flush()
+    hiddenShadow.append('more 6011')
+    await flush()
+
+    expect(allData()).toContain('****')
+    expect(allData()).not.toContain('4111')
+    expect(allData()).not.toContain('secret')
+    expect(allData()).not.toContain('6011')
+    expect(shadowObservers().has(hiddenShadow)).toBe(false)
+  })
+
+  test('resanitize re-levels shadow content: masked, hidden, then recorded again', async () => {
+    const [host, shadow] = await addHost()
+    await flush()
+    const text = shadow.querySelector('span')!.firstChild as Text
+
+    host.setAttribute('data-openreplay-obscured', '')
+    observer.resanitizeSubtree(host)
+    expect(sent[sent.length - 1]).toEqual([Type.SetNodeData, nodes.getID(text), '**'])
+
+    host.removeAttribute('data-openreplay-obscured')
+    host.setAttribute('data-openreplay-hidden', '')
+    observer.resanitizeSubtree(host)
+    expect(nodes.getID(text)).toBeUndefined()
+    expect(shadowObservers().has(shadow)).toBe(false)
+    let before = sent.length
+    text.data = 'card 5500'
+    shadow.append('more 6011')
+    await flush()
+    expect(JSON.stringify(sent.slice(before))).not.toMatch(/5500|6011/)
+
+    host.removeAttribute('data-openreplay-hidden')
+    before = sent.length
+    observer.resanitizeSubtree(host)
+    await flush()
+    const after = sent.slice(before)
+    expect(after).toContainEqual([Type.CreateIFrameDocument, nodes.getID(host), nodes.getID(shadow)])
+    expect(JSON.stringify(after)).toContain('card 5500')
   })
 })

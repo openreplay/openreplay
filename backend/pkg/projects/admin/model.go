@@ -19,6 +19,7 @@ const (
 var (
 	ErrProjectNotFound  = errors.New("project not found")
 	ErrNameExists       = errors.New("name already exists.")
+	ErrProjectLimit     = errors.New("maximum number of projects reached.")
 	ErrMetadataLimit    = errors.New("maximum allowed metadata reached")
 	ErrMetadataNotFound = errors.New("custom field not found")
 )

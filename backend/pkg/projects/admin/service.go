@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -14,6 +15,7 @@ import (
 	"openreplay/backend/pkg/db/postgres/pool"
 	"openreplay/backend/pkg/logger"
 	"openreplay/backend/pkg/projects"
+	"openreplay/backend/pkg/server/api"
 )
 
 const (
@@ -40,9 +42,10 @@ type Service interface {
 }
 
 type serviceImpl struct {
-	log      logger.Logger
-	pgconn   pool.Pool
-	projects projects.Projects
+	log          logger.Logger
+	pgconn       pool.Pool
+	projects     projects.Projects
+	limitReached atomic.Bool
 }
 
 func New(log logger.Logger, pgconn pool.Pool, projects projects.Projects) Service {
@@ -182,16 +185,48 @@ func (s *serviceImpl) Create(ctx context.Context, tenantID uint64, req *ProjectR
 	if exists {
 		return nil, ErrNameExists
 	}
-	var projectID uint32
-	if err := s.pgconn.QueryRow(insertProject,
-		pgx.NamedArgs{"tenantId": tenantID, "name": req.Name, "platform": req.Platform}).Scan(&projectID); err != nil {
-		return nil, fmt.Errorf("create project: %s", err)
+	projectID, err := s.insert(ctx, tenantID, req)
+	if err != nil {
+		return nil, err
 	}
 	p, err := s.getInfo(tenantID, projectID, false)
 	if err != nil {
 		return nil, fmt.Errorf("get created project: %s", err)
 	}
 	return &p.ProjectInfo, nil
+}
+
+// insert creates the project row and rejects it when the generated project_id
+// exceeds api.MaxProjectID (project_id is stored as UInt16 in ClickHouse).
+func (s *serviceImpl) insert(ctx context.Context, tenantID uint64, req *ProjectRequest) (projectID uint32, err error) {
+	if s.limitReached.Load() {
+		return 0, ErrProjectLimit
+	}
+	tx, err := s.pgconn.Begin()
+	if err != nil {
+		return 0, fmt.Errorf("begin tx: %s", err)
+	}
+	defer func() {
+		if err != nil {
+			if rbErr := tx.TxRollback(); rbErr != nil {
+				s.log.Warn(ctx, "failed to rollback project creation: %s", rbErr)
+			}
+		}
+	}()
+	if err = tx.TxQueryRow(insertProject,
+		pgx.NamedArgs{"tenantId": tenantID, "name": req.Name, "platform": req.Platform}).Scan(&projectID); err != nil {
+		return 0, fmt.Errorf("create project: %s", err)
+	}
+	if projectID > api.MaxProjectID {
+		s.limitReached.Store(true)
+		s.log.Error(ctx, "project creation rejected: project_id %d exceeds %d", projectID, api.MaxProjectID)
+		err = ErrProjectLimit
+		return 0, err
+	}
+	if err = tx.TxCommit(); err != nil {
+		return 0, fmt.Errorf("commit project creation: %s", err)
+	}
+	return projectID, nil
 }
 
 func (s *serviceImpl) Update(ctx context.Context, tenantID uint64, projectID uint32, req *ProjectRequest) (*ProjectUpdated, error) {

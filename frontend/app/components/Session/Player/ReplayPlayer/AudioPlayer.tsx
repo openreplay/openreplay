@@ -292,7 +292,7 @@ function DropdownAudioPlayer({
 
       {isVisible ? (
         <div
-          className="m-elevated absolute left-1/2 top-0 flex flex-col gap-4 rounded-surface border border-border-subtle bg-surface-raised p-4"
+          className="m-elevated absolute left-1/2 top-0 flex flex-col gap-4 rounded-surface border border-border-default bg-surface-raised p-4"
           style={{
             width: 240,
             transform: 'translate(-75%, -110%)',

@@ -6,11 +6,13 @@ import { EmptyState } from '@/ui/feedback/EmptyState';
 import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
 import { ActiveFilters } from '@/ui/filters/ActiveFilters';
 import { type FilterDimension, FilterMenu } from '@/ui/filters/FilterMenu';
-import { FilterStrip } from '@/ui/filters/FilterStrip';
+import { FilterStrip, type FilterStripProps } from '@/ui/filters/FilterStrip';
+import { PhoneFilters } from '@/ui/filters/PhoneFilters';
 import { DateRange } from '@/ui/inputs/DateRange';
 import { SearchField } from '@/ui/inputs/SearchField';
 import { ListFooter } from '@/ui/layout/ListFooter';
 import { setRowsPerPage, useRowsPerPage } from '@/ui/layout/rows-per-page';
+import { useViewport } from '@/ui/layout/use-viewport';
 import { useToast } from '@/ui/overlays/toast';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import Period, {
@@ -54,6 +56,7 @@ import {
   REGION_OPTIONS,
   RESOLUTION_OPTIONS,
   RowTags,
+  RunResultIcon,
   VersionLabel,
   formatDuration,
   getRunResult,
@@ -369,6 +372,36 @@ function RunsTab() {
     },
   ];
 
+  // at phone a run is one cell: the result icon, the test, a quiet line
+  // "Production · 2.1s · 4h ago", then a failure's error; Rerun stays
+  const phone = useViewport() === 'phone';
+  const phoneColumns: Column<RunData>[] = [
+    {
+      title: t('Run'),
+      key: 'test',
+      render: (run) => (
+        <div className="m-runs__m">
+          <RunResultIcon status={run.status} t={t} />
+          <span className="m-runs__title m-truncate">{run.testName}</span>
+          <span className="m-runs__m-facts m-truncate">
+            {run.envName && <>{run.envName} · </>}
+            {run.status === 'running' ? (
+              <LiveDuration start={run.date} />
+            ) : run.duration ? (
+              formatDuration(run.duration)
+            ) : null}
+            {(run.status === 'running' || !!run.duration) && ' · '}
+            <RelativeTime at={run.date} />
+          </span>
+          {run.error && (
+            <span className="m-runs__error m-truncate">{run.error}</span>
+          )}
+        </div>
+      ),
+    },
+    columns[columns.length - 1]!,
+  ];
+
   /* ── filters ── */
   const dimensions: FilterDimension<FilterKey>[] = [
     {
@@ -449,6 +482,18 @@ function RunsTab() {
     passed: t('No passes in this period'),
   };
 
+  const resultStrip: FilterStripProps = {
+    label: t('Filter by result'),
+    items: [
+      { key: 'all', label: t('All'), count: allCount },
+      { key: 'running', label: t('Running'), count: runningCount },
+      { key: 'failed', label: t('Failed'), count: failedCount },
+      { key: 'passed', label: t('Passed'), count: passedCount },
+    ],
+    selected: [statusTab],
+    onSelect: (key) => setStatusTab(key as StatusTab),
+  };
+
   return (
     <SyntheticsFrame
       actions={
@@ -460,32 +505,37 @@ function RunsTab() {
       }
       toolbar={
         <>
-          <FilterStrip
-            label={t('Filter by result')}
-            items={[
-              { key: 'all', label: t('All'), count: allCount },
-              { key: 'running', label: t('Running'), count: runningCount },
-              { key: 'failed', label: t('Failed'), count: failedCount },
-              { key: 'passed', label: t('Passed'), count: passedCount },
-            ]}
-            selected={[statusTab]}
-            onSelect={(key) => setStatusTab(key as StatusTab)}
-          />
+          <FilterStrip {...resultStrip} folds="menu" />
           <div className="m-page__controls">
-            <DateRange
-              field={t('Started')}
-              period={period}
-              options={PERIODS}
-              resting={LAST_7_DAYS}
-              onChange={setPeriod}
-            />
-            <FilterMenu<FilterKey>
-              dimensions={dimensions}
-              isActive={isActive}
-              onToggle={onToggle}
-              activeCount={chips.length}
-              label={t('Filter runs')}
-            />
+            <PhoneFilters
+              result={t('Show {{n}} runs', {
+                count: total,
+                n: total.toLocaleString(),
+              })}
+              onReset={() => {
+                setStatusTab('all');
+                setPeriod(Period({ rangeName: LAST_7_DAYS }));
+                (Object.keys(state) as FilterKey[]).forEach((k) =>
+                  state[k][1]('all'),
+                );
+              }}
+            >
+              <DateRange
+                field={t('Started')}
+                period={period}
+                options={PERIODS}
+                resting={LAST_7_DAYS}
+                onChange={setPeriod}
+              />
+              <FilterMenu<FilterKey>
+                dimensions={dimensions}
+                isActive={isActive}
+                onToggle={onToggle}
+                activeCount={chips.length}
+                label={t('Filter runs')}
+                strip={resultStrip}
+              />
+            </PhoneFilters>
           </div>
         </>
       }
@@ -535,7 +585,7 @@ function RunsTab() {
           <DataTable<RunData>
             className="m-runs__table"
             ariaLabel={t('Runs')}
-            columns={columns}
+            columns={phone ? phoneColumns : columns}
             rows={runs}
             rowKey={(r) => r.key}
             rowClassName={() => 'm-tests__row'}

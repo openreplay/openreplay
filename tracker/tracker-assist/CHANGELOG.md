@@ -1,3 +1,13 @@
+## 11.0.23
+
+- remote control works inside shadow DOM: clicks go to the element under the cursor inside open shadow roots (Ionic datetime, Stencil and Lit components) as composed events, and scrolling finds the scroll container through shadow roots and slots (`ion-content`)
+
+## 11.0.22
+
+- canvases masked by `privateMode`, `data-openreplay-obscured` or `domSanitizer` are no longer streamed to agents, and a canvas masked later stops streaming; `canvas.disableCanvas` turns canvas streaming off
+- the page title sent to agents goes through `privateMode` / `urls.titleSanitizer` (tracker 20.0+)
+- a call resumes without the confirmation prompt only when the same agent redials it shortly after a page reload; stopping assist ends the active call and releases the microphone
+
 ## 11.0.20
 
 - fixes towards stability of connection on restarts, page visits etc

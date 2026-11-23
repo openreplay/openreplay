@@ -72,3 +72,7 @@ func (s *teamImpl) createOrRestore(tx *pool.Tx, m *newMember) (int64, error) {
 func (h *handlersImpl) editionHandlers(req api.RequestHandler) []*api.Description {
 	return nil
 }
+
+func (s *teamImpl) emailVerification(tx *pool.Tx, userID int64) (string, error) {
+	return "", nil
+}

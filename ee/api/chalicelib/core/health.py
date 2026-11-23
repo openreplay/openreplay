@@ -7,7 +7,6 @@ import requests
 from decouple import config
 
 from chalicelib.utils import pg_client, ch_client
-from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.log import sanitize
 
 logger = logging.getLogger(__name__)
@@ -20,7 +19,6 @@ def app_connection_string(name, port, path):
 
 
 HEALTH_ENDPOINTS = {
-    "alerts": app_connection_string("alerts-openreplay", 8888, "health"),
     "assets": app_connection_string("assets-openreplay", 8888, "metrics"),
     "assist": app_connection_string("api-openreplay", 8888, "metrics"),
     "chalice": app_connection_string("chalice-openreplay", 8888, "metrics"),
@@ -33,6 +31,7 @@ HEALTH_ENDPOINTS = {
         "sourcemapreader-openreplay", 8888, "health"
     ),
     "storage": app_connection_string("storage-openreplay", 8888, "metrics"),
+    "tasks": app_connection_string("tasks-openreplay", 8888, "health"),
 }
 
 
@@ -198,7 +197,6 @@ def get_health(tenant_id=None):
             "kafka": __always_healthy,
         },
         "backendServices": {
-            "alerts": __check_be_service("alerts"),
             "assets": __check_be_service("assets"),
             "assist": __check_be_service("assist"),
             "chalice": __always_healthy,
@@ -210,6 +208,7 @@ def get_health(tenant_id=None):
             "sink": __check_be_service("sink"),
             "sourcemapreader": __check_be_service("sourcemapreader"),
             "storage": __check_be_service("storage"),
+            "tasks": __check_be_service("tasks"),
         },
         "details": __get_sessions_stats,
         "ssl": __check_SSL,
@@ -241,135 +240,6 @@ def __process_health(tenant_id, health_map):
             response[parent_key] = health_map[parent_key](tenant_id)
     logger.info("__process_health: end")
     return response
-
-
-def cron():
-    logger.info("cron: start")
-    with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(
-            """SELECT projects.project_id,
-                                      projects.created_at,
-                                      projects.sessions_last_check_at,
-                                      projects.first_recorded_session_at,
-                                      projects_stats.last_update_at
-                                FROM public.projects
-                                     LEFT JOIN public.projects_stats USING (project_id)
-                                WHERE projects.deleted_at IS NULL
-                                ORDER BY project_id;"""
-        )
-        cur.execute(query)
-        rows = cur.fetchall()
-        for r in rows:
-            insert = False
-            if r["last_update_at"] is None:
-                # never counted before, must insert
-                insert = True
-                if r["first_recorded_session_at"] is None:
-                    if r["sessions_last_check_at"] is None:
-                        count_start_from = r["created_at"]
-                    else:
-                        count_start_from = r["sessions_last_check_at"]
-                else:
-                    count_start_from = r["first_recorded_session_at"]
-
-            else:
-                # counted before, must update
-                count_start_from = r["last_update_at"]
-
-            count_start_from = TimeUTC.datetime_to_timestamp(count_start_from)
-            params = {
-                "project_id": r["project_id"],
-                "start_ts": count_start_from,
-                "end_ts": TimeUTC.now(),
-                "sessions_count": 0,
-                "events_count": 0,
-            }
-
-            query = cur.mogrify(
-                """SELECT COUNT(1) AS sessions_count,
-                                          COALESCE(SUM(events_count),0) AS events_count
-                                   FROM public.sessions
-                                   WHERE project_id=%(project_id)s
-                                      AND start_ts>=%(start_ts)s
-                                      AND start_ts<=%(end_ts)s
-                                      AND duration IS NOT NULL;""",
-                params,
-            )
-            cur.execute(query)
-            row = cur.fetchone()
-            if row is not None:
-                params["sessions_count"] = row["sessions_count"]
-                params["events_count"] = row["events_count"]
-
-            if insert:
-                query = cur.mogrify(
-                    """INSERT INTO public.projects_stats(project_id, sessions_count, events_count, last_update_at)
-                                       VALUES (%(project_id)s, %(sessions_count)s, %(events_count)s, (now() AT TIME ZONE 'utc'::text));""",
-                    params,
-                )
-            else:
-                query = cur.mogrify(
-                    """UPDATE public.projects_stats
-                                       SET sessions_count=sessions_count+%(sessions_count)s,
-                                           events_count=events_count+%(events_count)s,
-                                           last_update_at=(now() AT TIME ZONE 'utc'::text)
-                                       WHERE project_id=%(project_id)s;""",
-                    params,
-                )
-            cur.execute(query)
-    logger.info("cron: end")
-
-
-# this cron is used to correct the sessions&events count every week
-def weekly_cron():
-    logger.info("weekly_cron: start")
-    with pg_client.PostgresClient(long_query=True) as cur:
-        query = cur.mogrify(
-            """SELECT project_id,
-                                      projects_stats.last_update_at
-                               FROM public.projects
-                                    LEFT JOIN public.projects_stats USING (project_id)
-                               WHERE projects.deleted_at IS NULL
-                               ORDER BY project_id;"""
-        )
-        cur.execute(query)
-        rows = cur.fetchall()
-        for r in rows:
-            if r["last_update_at"] is None:
-                continue
-
-            params = {
-                "project_id": r["project_id"],
-                "end_ts": TimeUTC.now(),
-                "sessions_count": 0,
-                "events_count": 0,
-            }
-
-            query = cur.mogrify(
-                """SELECT COUNT(1) AS sessions_count,
-                                          COALESCE(SUM(events_count),0) AS events_count
-                                   FROM public.sessions
-                                   WHERE project_id=%(project_id)s
-                                      AND start_ts<=%(end_ts)s
-                                      AND duration IS NOT NULL;""",
-                params,
-            )
-            cur.execute(query)
-            row = cur.fetchone()
-            if row is not None:
-                params["sessions_count"] = row["sessions_count"]
-                params["events_count"] = row["events_count"]
-
-            query = cur.mogrify(
-                """UPDATE public.projects_stats
-                                   SET sessions_count=%(sessions_count)s,
-                                       events_count=%(events_count)s,
-                                       last_update_at=(now() AT TIME ZONE 'utc'::text)
-                                   WHERE project_id=%(project_id)s;""",
-                params,
-            )
-            cur.execute(query)
-    logger.info("weekly_cron: end")
 
 
 def __check_database_ch(*_):

@@ -3,7 +3,6 @@ import time
 from contextlib import asynccontextmanager
 
 import psycopg_pool
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from decouple import config
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,8 +13,8 @@ from starlette.responses import StreamingResponse
 
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client, ch_client
+from chalicelib.utils import env_secrets
 from chalicelib.utils.log import sanitize
-from crons import core_crons, core_dynamic_crons
 from routers import core, core_dynamic
 from routers.subs import health, spot, mcp
 
@@ -34,26 +33,10 @@ class ORPYAsyncConnection(AsyncConnection):
 async def lifespan(app: FastAPI):
     # Startup
     logging.info(">>>>> starting up <<<<<")
-    ap_logger = logging.getLogger("apscheduler")
-    ap_logger.setLevel(loglevel)
+    env_secrets.check()
 
-    app.schedule = AsyncIOScheduler()
     await pg_client.init()
     await ch_client.init()
-    app.schedule.start()
-
-    for job in core_crons.cron_jobs + core_dynamic_crons.cron_jobs:
-        app.schedule.add_job(id=job["func"].__name__, **job)
-
-    ap_logger.info(">Scheduled jobs:")
-    for job in app.schedule.get_jobs():
-        ap_logger.info(
-            {
-                "Name": str(job.id),
-                "Run Frequency": str(job.trigger),
-                "Next Run": str(job.next_run_time),
-            }
-        )
 
     database = {
         "host": config("pg_host", default="localhost"),
@@ -79,7 +62,6 @@ async def lifespan(app: FastAPI):
     # Shutdown
     await database.close()
     logging.info(">>>>> shutting down <<<<<")
-    app.schedule.shutdown(wait=True)
     await pg_client.terminate()
 
 

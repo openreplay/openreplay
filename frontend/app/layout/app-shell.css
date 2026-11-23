@@ -48,36 +48,40 @@
 :root[data-viewport='phone'] .m-mobile-nav .m-nav {
   width: 100%;
 }
-.m-mobile-nav .m-drawer__body {
-  position: relative;
-}
-.m-mobile-nav__close {
-  position: absolute;
-  top: var(--m-space-4);
-  right: var(--m-space-3);
-  z-index: 1;
-}
 .m-mobile-nav .m-nav__collapse {
   display: none;
 }
+/* three columns: the menu, the brand on the screen's true centre, and an
+   empty column as wide as the menu */
 .m-shell__bar {
-  display: flex;
+  display: grid;
+  grid-template-columns: var(--m-control-height-sm) 1fr var(
+      --m-control-height-sm
+    );
   align-items: center;
   gap: var(--m-space-2);
   flex: none;
-  height: 2.75rem;
-  padding-inline: var(--m-space-2) var(--m-space-4);
+  height: 3rem;
+  padding-inline: var(--m-space-2);
+}
+.m-shell__bar-brand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--m-space-3);
+  min-width: 0;
 }
 .m-shell__bar-mark {
-  height: 1rem;
+  height: 1.25rem;
   width: auto;
-  margin-inline-start: var(--m-space-1);
+  flex: none;
 }
 .m-shell__bar-name {
-  font-size: var(--m-text-md);
+  font-size: var(--m-text-lg);
   font-weight: var(--m-weight-medium);
   letter-spacing: var(--m-tracking-tight);
   color: var(--m-content-primary);
+  white-space: nowrap;
 }
 :root[data-viewport='phone'] .m-shell {
   flex-direction: column;

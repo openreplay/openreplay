@@ -113,17 +113,24 @@ func (e *handlersImpl) imagesUploaderHandlerMobile(w http.ResponseWriter, r *htt
 				return
 			}
 			defer uncompressedStream.Close()
+			unpacked, err := api.ReadLimited(uncompressedStream, e.cfg.UnpackedSizeLimit)
+			if err != nil {
+				code := http.StatusInternalServerError
+				if errors.Is(err, api.ErrBodyTooLarge) {
+					code = http.StatusRequestEntityTooLarge
+				}
+				e.responser.ResponseWithError(e.log, r.Context(), w, code, fmt.Errorf("can't unpack gzip: %w", err), startTime, r.URL.Path, 0)
+				return
+			}
 
-			framesBuf := bytes.NewBuffer([]byte{})
+			var framesBuf *bytes.Buffer
 			var fileName string
 
 			if isFrames {
-				if _, err = framesBuf.ReadFrom(uncompressedStream); err != nil {
-					e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0)
-					return
-				}
+				framesBuf = bytes.NewBuffer(unpacked)
 			} else {
-				tarReader := tar.NewReader(uncompressedStream)
+				framesBuf = bytes.NewBuffer(make([]byte, 0, len(unpacked)))
+				tarReader := tar.NewReader(bytes.NewReader(unpacked))
 				for {
 					header, err := tarReader.Next()
 					if err != nil {

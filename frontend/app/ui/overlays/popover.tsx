@@ -23,7 +23,7 @@ export function PopoverContent({
         align={align}
         sideOffset={sideOffset}
         className={cn(
-          'm-pop z-[var(--m-z-dropdown)] rounded-surface border border-border-subtle bg-surface-raised',
+          'm-pop z-[var(--m-z-dropdown)] rounded-surface border border-border-default bg-surface-raised',
           'm-elevated outline-none',
           className,
         )}
@@ -84,7 +84,7 @@ export function PopoverPanel({
           align={p.align}
           sideOffset={sideOffset}
           className={cn(
-            'm-pop z-[var(--m-z-dropdown)] rounded-surface border border-border-subtle bg-surface-raised',
+            'm-pop z-[var(--m-z-dropdown)] rounded-surface border border-border-default bg-surface-raised',
             'm-elevated outline-none',
             className,
           )}

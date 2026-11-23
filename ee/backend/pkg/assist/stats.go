@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -148,8 +149,22 @@ func (as *assistStatsImpl) loadData() {
 }
 
 func (as *assistStatsImpl) insertEvent(event *AssistStatsEvent) error {
-	insertQuery := `INSERT INTO assist_events (event_id, project_id, session_id, agent_id, event_type, timestamp) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (event_id) DO NOTHING`
-	return as.pgClient.Exec(insertQuery, event.EventID, uint32(event.ProjectID), event.SessionID, int(event.AgentID), event.EventType, event.Timestamp)
+	sessionID, err := strconv.ParseUint(event.SessionID, 10, 64)
+	if err != nil {
+		return fmt.Errorf("invalid session id: %s", event.SessionID)
+	}
+	insertQuery := `INSERT INTO assist_events (event_id, project_id, session_id, agent_id, event_type, timestamp)
+		SELECT $1::varchar, s.project_id, s.session_id::varchar, u.user_id, $5::varchar, $6::bigint
+		FROM sessions AS s
+			INNER JOIN projects AS p ON p.project_id = s.project_id
+			INNER JOIN users AS u ON u.tenant_id = p.tenant_id
+		WHERE s.session_id = $3::bigint
+			AND s.project_id = $2::int
+			AND p.deleted_at IS NULL
+			AND u.user_id = $4::int
+			AND u.deleted_at IS NULL
+		ON CONFLICT (event_id) DO NOTHING`
+	return as.pgClient.Exec(insertQuery, event.EventID, uint32(event.ProjectID), sessionID, int(event.AgentID), event.EventType, event.Timestamp)
 }
 
 func (as *assistStatsImpl) updateEvent(event *AssistStatsEvent) error {

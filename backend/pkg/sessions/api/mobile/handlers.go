@@ -153,7 +153,7 @@ func (e *handlersImpl) startMobileSessionHandler(w http.ResponseWriter, r *http.
 	userUUID := uuid.GetUUID(req.UserUUID)
 	tokenData, err := e.tokenizer.Parse(req.Token)
 
-	if err != nil { // Starting the new one
+	if err != nil || (tokenData.ProjectID != 0 && tokenData.ProjectID != p.ProjectID) { // Starting the new one
 		dice := byte(rand.Intn(100)) // [0, 100)
 		// Use condition rate if it's set
 		if req.Condition != "" {
@@ -181,7 +181,7 @@ func (e *handlersImpl) startMobileSessionHandler(w http.ResponseWriter, r *http.
 		}
 
 		expTime := startTime.Add(time.Duration(p.MaxSessionDuration) * time.Millisecond)
-		tokenData = &token.TokenData{sessionID, 0, expTime.UnixMilli()}
+		tokenData = &token.TokenData{ID: sessionID, ExpTime: expTime.UnixMilli(), ProjectID: p.ProjectID}
 
 		// Add sessionID to context
 		r = r.WithContext(context.WithValue(r.Context(), "sessionID", fmt.Sprintf("%d", sessionID)))
@@ -236,6 +236,8 @@ func (e *handlersImpl) startMobileSessionHandler(w http.ResponseWriter, r *http.
 				e.log.Error(r.Context(), "failed to send mobile sessionStart event to queue: %s", err)
 			}
 		}
+	} else {
+		tokenData.ProjectID = p.ProjectID // legacy token without project part
 	}
 
 	e.responser.ResponseWithJSON(e.log, r.Context(), w, &StartMobileSessionResponse{

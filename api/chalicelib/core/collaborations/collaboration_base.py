@@ -16,16 +16,6 @@ class BaseCollaboration(ABC):
 
     @classmethod
     @abstractmethod
-    def send_raw(cls, tenant_id, webhook_id, body):
-        pass
-
-    @classmethod
-    @abstractmethod
-    def send_batch(cls, tenant_id, webhook_id, attachments):
-        pass
-
-    @classmethod
-    @abstractmethod
     def __share(cls, tenant_id, integration_id, attachments, extra=None):
         pass
 

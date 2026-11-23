@@ -4,13 +4,18 @@ import { makeAutoObservable } from 'mobx';
 
 import { userStore } from 'App/mstore';
 import { recordingsService } from 'App/services';
-import { ExportsResponse, IRecord } from 'App/services/RecordingsService';
+import {
+  ExportsResponse,
+  IRecord,
+  RecordsResponse,
+} from 'App/services/RecordingsService';
 
 export default class RecordingsStore {
   recordings: IRecord[] = [];
   loading: boolean;
   page = 1;
   total: number = 0;
+  counts: RecordsResponse['counts'] | null = null;
   order: 'desc' | 'asc' = 'desc';
   search = '';
   startTimestamp = 0;
@@ -32,9 +37,14 @@ export default class RecordingsStore {
     this.page = 1;
   };
 
-  setRecordings(records: IRecord[], total?: number) {
+  setRecordings(
+    records: IRecord[],
+    total?: number,
+    counts?: RecordsResponse['counts'],
+  ) {
     this.total = total || 0;
     this.recordings = records;
+    this.counts = counts ?? null;
   }
 
   updateSearch(val: string) {
@@ -75,9 +85,8 @@ export default class RecordingsStore {
 
     this.loading = true;
     try {
-      const response: { records: []; total: number } =
-        await recordingsService.fetchRecordings(filter);
-      this.setRecordings(response.records, response.total);
+      const response = await recordingsService.fetchRecordings(filter);
+      this.setRecordings(response.records, response.total, response.counts);
       return response.records;
     } catch (e) {
       console.error(e);
@@ -184,6 +193,7 @@ export default class RecordingsStore {
     this.loading = false;
     this.page = 1;
     this.total = 0;
+    this.counts = null;
     this.order = 'desc';
     this.search = '';
     this.startTimestamp = 0;

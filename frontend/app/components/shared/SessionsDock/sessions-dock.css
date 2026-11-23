@@ -77,7 +77,7 @@
   height: calc(var(--m-sdock-h) + 2 * var(--m-border-width));
   border-radius: var(--m-radius-track);
   background: var(--m-surface-raised);
-  border-color: var(--m-border-subtle);
+  border-color: var(--m-border-default);
   box-shadow: var(--m-shadow-popover);
   opacity: 1;
 }
@@ -86,7 +86,7 @@
   width: calc(var(--m-sdock-pw) + 2 * var(--m-border-width));
   height: calc(var(--m-sdock-ph) + 2 * var(--m-border-width));
   background: var(--m-surface-raised);
-  border-color: var(--m-border-subtle);
+  border-color: var(--m-border-default);
   box-shadow: var(--m-shadow-popover);
   opacity: 1;
 }

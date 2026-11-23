@@ -19,10 +19,6 @@ def transform_email(email: str) -> str:
     return email.lower().strip() if isinstance(email, str) else email
 
 
-def int_to_string(value: int) -> str:
-    return str(value) if isinstance(value, int) else value
-
-
 def remove_whitespace(value: str) -> str:
     return " ".join(value.split()) if isinstance(value, str) else value
 

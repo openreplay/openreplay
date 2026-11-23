@@ -54,8 +54,7 @@ jobs:
             ee_build_args="ee $SERVICE"
           else 
             cd $working_dir
-            [[ $SERVICE == 'chalice' || $SERVICE == 'alerts' || $SERVICE == 'crons' ]] && cd $working_dir/api || cd $SERVICE
-            [[ $SERVICE == 'alerts' || $SERVICE == 'crons' ]] && BUILD_SCRIPT_NAME="build_${SERVICE}.sh"
+            [[ $SERVICE == 'chalice' ]] && cd $working_dir/api || cd $SERVICE
             ee_build_args="ee"
           fi  
           {

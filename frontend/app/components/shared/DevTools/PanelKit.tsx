@@ -49,12 +49,14 @@ export function Keyword({
 }) {
   const { t } = useTranslation();
   return (
-    <SearchField
-      className="m-dt__keyword"
-      placeholder={placeholder ?? t('Filter by keyword')}
-      value={value}
-      onChange={onChange}
-    />
+    <div className="m-dt__keyword">
+      <SearchField
+        size="sm"
+        placeholder={placeholder ?? t('Filter by keyword')}
+        value={value}
+        onChange={onChange}
+      />
+    </div>
   );
 }
 

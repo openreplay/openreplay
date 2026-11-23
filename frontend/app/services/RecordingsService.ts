@@ -22,9 +22,20 @@ export interface IRecord {
   duration: number;
   name: string;
   recordId: number;
-  sessionId: number;
+  sessionId: number | null;
   userId: number;
+  /** the recorded session's identity; empty once the session is gone */
+  visitorId?: string | null;
+  visitorAnonymousId?: string | null;
+  visitorUuid?: string | null;
   URL?: string;
+}
+
+export interface RecordsResponse {
+  total: number;
+  /** All / My recordings, for the same window and search */
+  counts?: { all: number; mine: number };
+  records: IRecord[];
 }
 
 export default class RecordingsService {
@@ -65,7 +76,7 @@ export default class RecordingsService {
       .then((r) => r.json().then((j) => j.data));
   }
 
-  fetchRecordings(filters: FetchFilter): Promise<any> {
+  fetchRecordings(filters: FetchFilter): Promise<RecordsResponse> {
     return this.client
       .post('/assist/records', filters)
       .then((r) => r.json().then((j) => j.data));

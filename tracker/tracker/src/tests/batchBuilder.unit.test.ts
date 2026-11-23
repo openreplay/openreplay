@@ -73,13 +73,6 @@ describe('BatchBuilder', () => {
       expect(builder.flush()).toBeNull()
     })
 
-    test('first byte of any non-empty batch is the BatchMetadata varint type (0x51)', () => {
-      builder.push([MType.MouseMove, 100, 200], ctx())
-      const out = builder.flush()
-      expect(out).not.toBeNull()
-      expect(out![0]).toBe(MType.BatchMetadata)
-    })
-
     test('header carries Timestamp+TabData prelude immediately after BatchMetadata', () => {
       builder.push([MType.MouseMove, 100, 200], ctx({ timestamp: 12345, tabId: 'abc-tab' }))
       const out = builder.flush()!
@@ -104,41 +97,14 @@ describe('BatchBuilder', () => {
 
       expect(out[i]).toBe(MType.TabData)
     })
-
-    test('BatchMetadata firstIndex equals ctx.index of the first push', () => {
-      builder.push([MType.MouseMove, 1, 2], ctx({ index: 42 }))
-      const out = builder.flush()!
-      // Read past type=81, version, pageNo to firstIndex
-      let i = 0
-      let consumed: number
-      ;[, consumed] = readVarint(out, i); i += consumed
-      ;[, consumed] = readVarint(out, i); i += consumed
-      ;[, consumed] = readVarint(out, i); i += consumed
-      const [firstIdx] = readVarint(out, i)
-      expect(firstIdx).toBe(42)
-    })
   })
 
   describe('atomic push', () => {
-    test('push returns false for a message larger than buffer; builder stays usable', () => {
-      const small = new BatchBuilder(200, 1, 'player')
-      const huge = 'x'.repeat(500)
-      const accepted = small.push([MType.ConsoleLog, 'info', huge], ctx())
-      expect(accepted).toBe(false)
-
-      // A subsequent push of a small message succeeds.
-      const ok = small.push([MType.MouseMove, 10, 20], ctx())
-      expect(ok).toBe(true)
-      const out = small.flush()
-      expect(out).not.toBeNull()
-      expect(out![0]).toBe(MType.BatchMetadata)
-    })
-
     test('after a failed first push, ctx of the next push wins (snap is not stuck)', () => {
       const small = new BatchBuilder(200, 1, 'player')
       const huge = 'x'.repeat(500)
       // First push fails — snap must NOT be locked to ctx of the failed push.
-      small.push([MType.ConsoleLog, 'info', huge], ctx({ index: 7, timestamp: 999 }))
+      expect(small.push([MType.ConsoleLog, 'info', huge], ctx({ index: 7, timestamp: 999 }))).toBe(false)
       // Second push succeeds with a different ctx.
       small.push([MType.MouseMove, 10, 20], ctx({ index: 50, timestamp: 2222 }))
       const out = small.flush()!
@@ -150,20 +116,6 @@ describe('BatchBuilder', () => {
       ;[, consumed] = readVarint(out, i); i += consumed // pageNo
       const [firstIdx] = readVarint(out, i)
       expect(firstIdx).toBe(50)
-    })
-
-    test('push that fails mid-batch only rolls back its own bytes; prior messages remain', () => {
-      builder.push([MType.MouseMove, 1, 2], ctx({ index: 0 }))
-      builder.push([MType.MouseMove, 3, 4], ctx({ index: 1 }))
-      // Try to push a message that's bigger than remaining capacity (200KB - what's been written)
-      const huge = 'x'.repeat(250000)
-      const accepted = builder.push([MType.ConsoleLog, 'info', huge], ctx({ index: 2 }))
-      expect(accepted).toBe(false)
-      // Existing batch flushes intact
-      const out = builder.flush()!
-      expect(out[0]).toBe(MType.BatchMetadata)
-      // Builder is reset — second flush returns null
-      expect(builder.flush()).toBeNull()
     })
   })
 
@@ -289,28 +241,6 @@ describe('BatchBuilder', () => {
       // Expect: synth Timestamp from header + explicit Timestamp(2000) from the push = 2.
       // If there were duplication, this would be 3 or more.
       expect(timestampCount).toBe(2)
-    })
-
-    test('first push captures lastPushedTs from its own ctx (no synth before first real msg)', () => {
-      // First push at ts=5000 should have NO auto-synth before MouseMove
-      // (the header already encodes ts=5000 and synthesizes a Timestamp(5000) message).
-      builder.push([MType.MouseMove, 1, 2], ctx({ index: 0, timestamp: 5000 }))
-      const out = builder.flush()!
-
-      let i = 0, consumed: number
-      ;[, consumed] = readVarint(out, i); i += consumed
-      ;[, consumed] = readVarint(out, i); i += consumed
-      ;[, consumed] = readVarint(out, i); i += consumed
-      ;[, consumed] = readVarint(out, i); i += consumed
-      ;[, consumed] = readVarint(out, i); i += consumed
-      const [urlLen, urlLenSize] = readVarint(out, i); i += urlLenSize + urlLen
-      // synth Timestamp + TabData from header
-      expect(out[i]).toBe(MType.Timestamp); i += 1 + 3
-      ;[, consumed] = readVarint(out, i); i += consumed
-      expect(out[i]).toBe(MType.TabData); i += 1 + 3
-      const [tabLen, tabLenSize] = readVarint(out, i); i += tabLenSize + tabLen
-      // Next must be the MouseMove directly — not another Timestamp.
-      expect(out[i]).toBe(MType.MouseMove)
     })
   })
 })

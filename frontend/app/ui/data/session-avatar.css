@@ -92,3 +92,13 @@
 .m-ss__row.is-viewed .m-savatar {
   opacity: 0.82;
 }
+
+/* the robot inside a drawing: SVG images over a ground in the avatar's hue */
+.m-savatar--svg {
+  overflow: visible;
+  border-radius: 0;
+  background: none;
+}
+.m-savatar--svg .m-savatar__ground {
+  fill: oklch(var(--m-avatar-l) var(--m-avatar-c) var(--m-avatar-hue));
+}

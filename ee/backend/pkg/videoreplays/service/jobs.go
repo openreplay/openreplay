@@ -53,6 +53,7 @@ func NewSessionBatchService(log logger.Logger, cfg *config.Config) (BatchJobs, e
 func buildDefaultConfig(cfg *config.Config) map[string]string {
 	envVars := make(map[string]string)
 	envVars["BUCKET"] = cfg.ExportBucket
+	envVars["STORAGE_BACKEND"] = "s3" // downloads are presigned from S3; the image may default to gcs
 	envVars["WIDTH"] = strconv.Itoa(cfg.VideoWidth)
 	envVars["HEIGHT"] = strconv.Itoa(cfg.VideoHeight)
 	envVars["FPS"] = strconv.Itoa(cfg.VideoFPS)

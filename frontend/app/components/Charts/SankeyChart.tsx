@@ -14,6 +14,7 @@ import {
   getEventPriority,
   getIcon,
   getNodeName,
+  journeyIconStyles,
   linkIconStyles,
   sankeyTooltip,
 } from './sankeyUtils';
@@ -22,6 +23,20 @@ echarts.use([SankeyChart]);
 
 const NODE_W = 40;
 const ICON_W = 16;
+const mixHex = (hex: string, toward: string, k: number) => {
+  const c = (x: string) =>
+    [1, 3, 5].map((i) => parseInt(x.slice(i, i + 2), 16));
+  const a = c(hex);
+  const b = c(toward);
+  if (a.some(Number.isNaN) || b.some(Number.isNaN)) return hex;
+  return `#${a
+    .map((v, i) =>
+      Math.round(v + (b[i] - v) * k)
+        .toString(16)
+        .padStart(2, '0'),
+    )
+    .join('')}`;
+};
 let measurer: CanvasRenderingContext2D | null = null;
 /** Fits `text` into `px` at `font`, cutting the middle so a URL keeps its end. */
 function fitMiddle(text: string, px: number, font: string) {
@@ -52,7 +67,6 @@ interface Props {
   onChartClick?: (filters: any[]) => void;
   isUngrouped?: boolean;
   inGrid?: boolean;
-  startUrl: string;
   getFilter: (name: string) => Record<string, any>;
   drilldownFilter?: any[];
 }
@@ -77,9 +91,7 @@ type tHighlightedLink = { id: number; shape: 'link' | 'node' };
 const EChartsSankey = (props: Props) => {
   const { t } = useTranslation();
   const theme = useChartTheme();
-  const highlightOn = props.drilldownFilter?.some((f) =>
-    f.filters.find((subf: any) => subf.name === 'url_path'),
-  );
+  const highlightOn = !!props.drilldownFilter?.length;
   const [highlightedLink, setHighlightedLink] =
     React.useState<tHighlightedLink | null>(null);
   const [savedOriginalLinks, setOriginalLinks] = React.useState<any[]>([]);
@@ -133,23 +145,19 @@ const EChartsSankey = (props: Props) => {
     };
     let { lane, right } = layoutOf(chart.getWidth());
     const labelFont = `600 12px ${theme.font || 'sans-serif'}`;
-    const nodeValues: Record<string, number> = {};
+    // the border token is ~1.3:1 on a dark card; this grey is 3:1+ on both
+    const dropColor = mixHex(theme.border, theme.axis, 0.62);
     const echartNodes = filteredNodes
-      .map((n, i) => {
+      .map((n) => {
         let computedName = getNodeName(n.eventType || 'Minor Paths', n.name);
         if (computedName === 'Other') {
           computedName = 'Others';
-        }
-        if (n.id) {
-          nodeValues[n.id] = 0;
-        } else {
-          nodeValues[i] = 0;
         }
         const itemColor =
           computedName === 'Others'
             ? theme.series[1]
             : n.eventType === 'DROP'
-              ? theme.grid
+              ? dropColor
               : theme.series[0];
 
         return {
@@ -172,7 +180,7 @@ const EChartsSankey = (props: Props) => {
       });
 
     const echartLinks = filteredLinks.map((l) => ({
-      ...filteredLinks,
+      ...l,
       source: echartNodes.findIndex((n) => n.id === l.source),
       target: echartNodes.findIndex((n) => n.id === l.target),
       value: l.sessionsCount,
@@ -198,15 +206,16 @@ const EChartsSankey = (props: Props) => {
       )
       .reduce((sum, link) => sum + link.value, 0);
 
-    Object.keys(nodeValues).forEach((nodeId) => {
-      const intId = parseInt(nodeId as string);
+    // links point at echartNodes indices, so the values are keyed the same way
+    const nodeValues: Record<number, number> = {};
+    echartNodes.forEach((_, idx) => {
       const outgoingValues = echartLinks
-        .filter((l) => l.source === intId)
+        .filter((l) => l.source === idx)
         .reduce((p, c) => p + c.value, 0);
       const incomingValues = echartLinks
-        .filter((l) => l.target === intId)
+        .filter((l) => l.target === idx)
         .reduce((p, c) => p + c.value, 0);
-      nodeValues[nodeId] = Math.max(outgoingValues, incomingValues);
+      nodeValues[idx] = Math.max(outgoingValues, incomingValues);
     });
 
     const option = {
@@ -269,6 +278,7 @@ const EChartsSankey = (props: Props) => {
             },
             rich: {
               ...linkIconStyles,
+              ...journeyIconStyles(theme.textSecondary, theme.textMuted),
               header: { ...linkIconStyles.header, color: theme.text },
               body: { ...linkIconStyles.body, color: theme.text },
               percentage: {

@@ -245,3 +245,49 @@
     transition: none;
   }
 }
+
+/* phone: the categories a sideways row of chips over a full-width list;
+   a drag along the row scrolls it, a tap picks */
+:root[data-viewport='phone'] .m-pick2__body {
+  display: flex;
+  flex-direction: column;
+}
+:root[data-viewport='phone'] .m-pick2__rail {
+  flex: none;
+  flex-direction: row;
+  gap: var(--m-space-2);
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: var(--m-space-2) var(--m-space-2) var(--m-space-3);
+  border-right: 0;
+  border-bottom: var(--m-border-width) solid var(--m-border-subtle);
+  scrollbar-width: none;
+  touch-action: pan-x;
+}
+:root[data-viewport='phone'] .m-pick2__rail::-webkit-scrollbar {
+  display: none;
+}
+:root[data-viewport='phone'] .m-pick2__rail-head {
+  display: none;
+}
+:root[data-viewport='phone'] .m-pick2__cat {
+  flex: none;
+  width: auto;
+  min-width: 0;
+  padding-inline: var(--m-space-4);
+  border: var(--m-border-width) solid var(--m-border-subtle);
+  border-radius: var(--m-radius-full);
+}
+:root[data-viewport='phone'] .m-pick2__cat > .m-truncate {
+  overflow: visible;
+}
+:root[data-viewport='phone'] .m-pick2__cat.is-on {
+  border-color: transparent;
+}
+:root[data-viewport='phone'] .m-pick2__chev {
+  display: none;
+}
+:root[data-viewport='phone'] :is(.m-pick2__list, .m-pick2__cmd) {
+  flex: 1;
+  min-height: 0;
+}

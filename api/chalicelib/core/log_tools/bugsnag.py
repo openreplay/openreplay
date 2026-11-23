@@ -35,10 +35,6 @@ def list_projects(auth_token):
     return orgs
 
 
-def get_all(tenant_id):
-    return log_tools.get_all_by_tenant(tenant_id=tenant_id, integration=IN_TY)
-
-
 def get(project_id):
     return log_tools.get(project_id=project_id, integration=IN_TY)
 

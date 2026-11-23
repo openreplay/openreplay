@@ -155,7 +155,7 @@ export default class RemoteControl {
       || this.focused.tagName === 'INPUT'
       || this.focused.tagName === 'TEXTAREA') {
       setInputValue.call(this.focused, value)
-      const ev = new Event('input', { bubbles: true,})
+      const ev = new Event('input', { bubbles: true, composed: true })
       this.focused.dispatchEvent(ev)
       // @ts-ignore
     } else if (this.focused.isContentEditable) {

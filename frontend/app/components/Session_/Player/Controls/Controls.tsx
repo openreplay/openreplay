@@ -18,7 +18,6 @@ import { useStore } from 'App/mstore';
 import { PlayingState } from 'App/player-ui';
 import { session as sessionRoute, withSiteId } from 'App/routes';
 import { useHistory } from 'App/routing';
-import { signalService } from 'App/services';
 import useShortcuts from 'Components/Session/Player/ReplayPlayer/useShortcuts';
 import PlaybackSettings, {
   SKIP_INTERVALS,
@@ -42,7 +41,6 @@ function Controls({ setActiveTab, fullView, mobile }: any) {
   };
   const { player, store } = React.useContext(PlayerContext);
   const { uiPlayerStore, projectsStore, sessionStore, userStore } = useStore();
-  const [mounted, setMounted] = React.useState(false);
   const permissions = userStore.account.permissions || [];
   const disableDevtools =
     userStore.isEnterprise &&
@@ -56,7 +54,7 @@ function Controls({ setActiveTab, fullView, mobile }: any) {
   const { skipInterval } = uiPlayerStore;
   const history = useHistory();
   const { siteId } = projectsStore;
-  const { playing, completed, speed, messagesLoading, inspectorMode } =
+  const { playing, completed, messagesLoading, inspectorMode } =
     store.get();
 
   const session = sessionStore.current;
@@ -65,7 +63,6 @@ function Controls({ setActiveTab, fullView, mobile }: any) {
 
   const disabled = disableDevtools || messagesLoading || inspectorMode;
   const sessionTz = session?.timezone;
-  const sessionId = session?.sessionId;
 
   const nextHandler = () => {
     history.push(withSiteId(sessionRoute(nextSessionId), siteId));
@@ -86,30 +83,8 @@ function Controls({ setActiveTab, fullView, mobile }: any) {
     disableDevtools,
   });
 
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  React.useEffect(() => {
-    if (mounted) {
-      signalService.send(
-        {
-          source: 'speed',
-          value: speed,
-        },
-        sessionId,
-      );
-    }
-  }, [speed]);
-
   const togglePlay = () => {
     player.togglePlay();
-    signalService.send(
-      {
-        source: playing ? 'pause' : 'play',
-      },
-      sessionId,
-    );
   };
 
   const state = completed
@@ -183,15 +158,17 @@ function Controls({ setActiveTab, fullView, mobile }: any) {
       </span>
       <Timeline inline isMobile={mobile} />
       <PlaybackSettings disabled={disabled} mobile={mobile} />
-      <IconButton
-        icon={fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
-        label={
-          fullscreen ? t('Leave full screen (Esc)') : t('Full screen (⇧F)')
-        }
-        variant="ghost"
-        pressed={fullscreen}
-        onClick={() => toggleFullscreen()}
-      />
+      <span className="m-tl__full">
+        <IconButton
+          icon={fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+          label={
+            fullscreen ? t('Leave full screen (Esc)') : t('Full screen (⇧F)')
+          }
+          variant="ghost"
+          pressed={fullscreen}
+          onClick={() => toggleFullscreen()}
+        />
+      </span>
     </div>
   );
 }

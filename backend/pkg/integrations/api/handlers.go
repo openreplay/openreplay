@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -15,17 +16,21 @@ import (
 	"openreplay/backend/pkg/server/api"
 )
 
+var errInternal = errors.New("internal server error")
+
 type handlersImpl struct {
 	log           logger.Logger
 	responser     api.Responser
+	req           api.RequestHandler
 	integrations  service.Service
 	jsonSizeLimit int64
 }
 
-func NewHandlers(log logger.Logger, jsonSizeLimit int64, responser api.Responser, integrations service.Service) (api.Handlers, error) {
+func NewHandlers(log logger.Logger, jsonSizeLimit int64, responser api.Responser, req api.RequestHandler, integrations service.Service) (api.Handlers, error) {
 	return &handlersImpl{
 		log:           log,
 		responser:     responser,
+		req:           req,
 		integrations:  integrations,
 		jsonSizeLimit: jsonSizeLimit,
 	}, nil
@@ -33,6 +38,7 @@ func NewHandlers(log logger.Logger, jsonSizeLimit int64, responser api.Responser
 
 func (e *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
+		{"/integration/status", "GET", e.req.Handle(e.getStatus), api.NoPermissions, api.DoNotTrack},
 		{"/{project}/integration/{name}", "POST", e.createIntegration, api.NoPermissions, api.DoNotTrack},
 		{"/{project}/integration/{name}", "GET", e.getIntegration, api.NoPermissions, api.DoNotTrack},
 		{"/{project}/integration/{name}", "PATCH", e.updateIntegration, api.NoPermissions, api.DoNotTrack},
@@ -202,4 +208,14 @@ func (e *handlersImpl) getIntegrationData(w http.ResponseWriter, r *http.Request
 
 	resp := map[string]string{"url": url}
 	e.responser.ResponseWithJSON(e.log, r.Context(), w, resp, startTime, r.URL.Path, bodySize)
+}
+
+func (e *handlersImpl) getStatus(r *api.RequestContext) (any, int, error) {
+	u := api.GetUser(r.Request)
+	status, err := e.integrations.GetStatus(u.TenantID, u.ID, u.CanAccessProject)
+	if err != nil {
+		e.log.Error(r.Request.Context(), "failed to get integrations status: %s", err)
+		return nil, http.StatusInternalServerError, errInternal
+	}
+	return status, 0, nil
 }

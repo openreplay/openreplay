@@ -41,7 +41,7 @@ describe('untaintedDom', () => {
     jest.restoreAllMocks()
   })
 
-  test('reads plain properties without a helper iframe when prototypes are native', () => {
+  test('uses the native prototype getters without a helper iframe when prototypes are native', () => {
     const nativeSrc = 'function get() { [native code] }'
     jest.spyOn(Function.prototype, 'toString').mockReturnValue(nativeSrc)
     const createSpy = jest.spyOn(document, 'createElement')
@@ -76,7 +76,24 @@ describe('untaintedDom', () => {
     expect(previousSibling(a)).toBe(null)
   })
 
-  test('falls back to plain properties when the helper iframe has no contentWindow', () => {
+  test('ignores getters redefined on the node itself (Stencil scoped slots)', () => {
+    const { root, a, b } = buildTree()
+    const host = document.createElement('my-host')
+    Object.defineProperty(a, 'parentNode', { configurable: true, get: () => host })
+    Object.defineProperty(a, 'nextSibling', { configurable: true, get: () => null })
+    Object.defineProperty(b, 'previousSibling', { configurable: true, get: () => null })
+    Object.defineProperty(root, 'firstChild', { configurable: true, get: () => b })
+
+    initUntaintedDom()
+
+    expect(a.parentNode).toBe(host)
+    expect(parentNode(a)).toBe(root)
+    expect(nextSibling(a)).toBe(b)
+    expect(previousSibling(b)).toBe(a)
+    expect(firstChild(root)).toBe(a)
+  })
+
+  test('falls back to the page getters when the helper iframe has no contentWindow', () => {
     const { root, a } = buildTree()
     jest.spyOn(HTMLIFrameElement.prototype, 'contentWindow', 'get').mockReturnValue(null)
     Object.defineProperty(Node.prototype, 'parentNode', {

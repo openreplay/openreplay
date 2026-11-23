@@ -21,7 +21,6 @@ import MetricService from './MetricService';
 import ProjectsService from './ProjectsService';
 import RecordingsService from './RecordingsService';
 import SessionService from './SessionService';
-import SignalService from './SignalService';
 import UserService from './UserService';
 import WebhookService from './WebhookService';
 import LoginService from './loginService';
@@ -38,7 +37,6 @@ export const recordingsService = new RecordingsService();
 export const configService = new ConfigService();
 export const alertsService = new AlertsService();
 export const webhookService = new WebhookService();
-export const signalService = new SignalService();
 
 export const healthService = new HealthService();
 export const assistStatsService = new AssistStatsService();
@@ -68,7 +66,6 @@ export const services = [
   configService,
   alertsService,
   webhookService,
-  signalService,
   healthService,
   assistStatsService,
   tagWatchService,
