@@ -1,0 +1,104 @@
+{{- if .Values.kafka.enabled }}
+{{- $name := include "otel-collector.writerFullname" . }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "otel-collector.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.kafka.writer.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "otel-collector.writerSelectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "otel-collector.writerSelectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "otel-collector.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      terminationGracePeriodSeconds: {{ .Values.kafka.writer.terminationGracePeriodSeconds }}
+      {{- include "openreplay.pod.hostAliases" . | nindent 6 }}
+      containers:
+        - name: {{ .Chart.Name }}-writer
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ tpl .Values.image.registry . }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["--config", "/etc/otelcol/config.yaml", "--config", "/etc/otelcol/config-kafka-writer.yaml"]
+          {{- if .Values.healthCheck }}
+          {{- .Values.healthCheck | toYaml | nindent 10 }}
+          {{- end }}
+          env:
+            {{- include "openreplay.env" (dict "ctx" .) | nindent 12 }}
+            {{- include "otel-collector.kafkaEnv" . | nindent 12 }}
+            {{- include "otel-collector.clickhouseEnv" . | nindent 12 }}
+          ports:
+            - name: metrics
+              containerPort: {{ .Values.service.ports.metrics }}
+              protocol: TCP
+            - name: health
+              containerPort: {{ .Values.service.ports.health }}
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.kafka.writer.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "otel-collector.writerSelectorLabels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.service.ports.metrics }}
+      targetPort: metrics
+      protocol: TCP
+      name: metrics
+  selector:
+    {{- include "otel-collector.writerSelectorLabels" . | nindent 4 }}
+{{- if and ( .Capabilities.APIVersions.Has "monitoring.coreos.com/v1" ) ( .Values.serviceMonitor.enabled ) }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "otel-collector.labels" . | nindent 4 }}
+  {{- if .Values.serviceMonitor.additionalLabels }}
+    {{- toYaml .Values.serviceMonitor.additionalLabels | nindent 4 }}
+  {{- end }}
+spec:
+  endpoints:
+    {{- .Values.serviceMonitor.scrapeConfigs | toYaml | nindent 4 }}
+  selector:
+    matchLabels:
+      {{- include "otel-collector.writerSelectorLabels" . | nindent 6 }}
+{{- end }}
+{{- end }}

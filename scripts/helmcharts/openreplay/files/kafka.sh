@@ -20,6 +20,7 @@ topics=(
     "raw-analytics"
     "quickwit"
     "video-replays"
+    "otel-logs"
 )
 
 touch /tmp/config.txt
