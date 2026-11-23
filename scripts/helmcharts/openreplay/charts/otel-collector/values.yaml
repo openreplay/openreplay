@@ -69,7 +69,6 @@ autoscaling:
 # EE only
 kafka:
   enabled: false
-  topic: otel-logs
   writer:
     replicaCount: 1
     terminationGracePeriodSeconds: 30

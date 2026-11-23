@@ -68,15 +68,17 @@ Create the name of the service account to use
 Selector labels of the writer half (Kafka -> ClickHouse)
 */}}
 {{- define "otel-collector.writerSelectorLabels" -}}
-app.kubernetes.io/name: {{ include "otel-collector.name" . }}-writer
+app.kubernetes.io/name: {{ include "otel-collector.name" . | trunc 56 | trimSuffix "-" }}-writer
 app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+
+{{- define "otel-collector.writerFullname" -}}
+{{ include "otel-collector.fullname" . | trunc 56 | trimSuffix "-" }}-writer
 {{- end }}
 
 {{- define "otel-collector.kafkaEnv" -}}
 - name: OTLP_KAFKA_BROKERS
   value: '{{ .Values.global.kafka.kafkaHost }}:{{ .Values.global.kafka.kafkaPort }}'
-- name: OTLP_KAFKA_TOPIC
-  value: '{{ .Values.kafka.topic }}'
 - name: OTLP_KAFKA_TLS_INSECURE
   value: '{{ ne (toString .Values.global.kafka.kafkaUseSsl) "true" }}'
 {{- end }}

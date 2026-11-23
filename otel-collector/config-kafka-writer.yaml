@@ -1,6 +1,7 @@
 # Overlay for the writer half of the Kafka-buffered pipeline: Kafka -> ClickHouse.
-# The exporter retries forever and blocks when its queue is full, so a
-# ClickHouse outage pauses consumption and the logs stay in the topic.
+# A Kafka message is marked only after its batch is inserted into ClickHouse:
+# the exporter batches incoming messages and every message waits for the result
+# of its batch. Delivery is at-least-once, a failed insert is retried forever.
 #
 #   otelcol-openreplay --config config.yaml --config config-kafka-writer.yaml
 
@@ -17,6 +18,9 @@ receivers:
     message_marking:
       after: true
       on_error: false
+      on_permanent_error: true
+    partition_processing:
+      independent: true
     error_backoff:
       enabled: true
       initial_interval: 1s
@@ -28,13 +32,18 @@ exporters:
     retry_on_failure:
       max_elapsed_time: 0s
     sending_queue:
-      queue_size: 2
+      wait_for_result: true
       block_on_overflow: true
+      queue_size: 64
+      batch:
+        sizer: items
+        min_size: 10000
+        flush_timeout: 1s
 
 service:
   pipelines:
     logs:
       receivers: [kafka]
-      processors: [memory_limiter, batch]
+      processors: [memory_limiter]
       exporters:
         - ${env:OTLP_LOGS_EXPORTER:-clickhouse}

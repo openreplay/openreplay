@@ -1,5 +1,5 @@
 {{- if .Values.kafka.enabled }}
-{{- $name := printf "%s-writer" (include "otel-collector.fullname" .) }}
+{{- $name := include "otel-collector.writerFullname" . }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
