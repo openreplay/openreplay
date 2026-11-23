@@ -54,7 +54,12 @@ export function inlineRemoteCss(
 
   // Fall back to fetching if we couldn't get or stringify the sheet
   if (href && !isStale()) {
-    const url = mayReadSheet ? node.href : href
+    let url: string
+    try {
+      url = mayReadSheet ? node.href : new URL(href, node.baseURI).href
+    } catch {
+      return
+    }
     const request = signal ? fetch(url, { signal }) : fetch(url)
     request
       .then(response => {

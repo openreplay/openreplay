@@ -56,7 +56,7 @@ export async function parseUseEl(
   domParser: DOMParser,
   approvedHref?: string,
   isCurrent = () => true,
-  cache = createSpriteCache(),
+  cache = defaultSprites,
   signal?: AbortSignal,
 ) {
   try {
@@ -270,8 +270,14 @@ export function sendNodeAttribute(
 ): void {
   const app = ctx.app
   if (isSVGElement(node)) {
+    const attributeName = name
     if (name.startsWith('xlink:')) {
       name = name.substring(6)
+    }
+    if (app.captureSanitizer && isUseElement(node) && name === 'href' && !ctx.disableSprites) {
+      const href = node.getAttribute('href')
+      if (attributeName === 'xlink:href' && href !== null) return
+      if (value === null && href === null) value = node.getAttribute('xlink:href')
     }
     if (value === null) {
       app.attributeSender.removeAttribute(id, name, node)
@@ -372,7 +378,8 @@ function sendSprite(ctx: AttributeContext, id: number, node: SVGUseElement, name
   const generation = ctx.generation
   const isCurrent = () => !signal?.aborted && ctx.generation === generation &&
     (!policy || (app.nodes.getID(node) === id &&
-      (node.getAttribute('xlink:href') || node.getAttribute('href')) === original))
+      (node.getAttribute('href') ?? node.getAttribute('xlink:href')) === original))
+  if (!isCurrent()) return
   const href = policy
     ? sanitizeCapture(policy, { kind: 'resource', resourceType: 'svg', value: original, node })
     : undefined

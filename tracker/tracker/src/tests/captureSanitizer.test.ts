@@ -249,6 +249,20 @@ test.each(['legacy', 'next'])('%s SVG sprite resource veto runs before fetch whi
   expect(JSON.stringify(sent)).not.toContain(secret)
 })
 
+test.each(['legacy', 'next'])('%s approves only the effective SVG sprite reference', (core) => {
+  const { sanitize } = observe(
+    '<svg><use xlink:href="#fallback" href="#primary"></use></svg>',
+    () => null,
+    core,
+  )
+  const references = sanitize.mock.calls
+    .map(([data]) => data)
+    .filter((data) => data.kind === 'resource' && data.resourceType === 'svg')
+    .map((data) => data.value)
+
+  expect(references).toEqual(['#primary'])
+})
+
 test('FontFace buffers approved fields and leaves constructor arguments untouched', () => {
   const original = Object.getOwnPropertyDescriptor(window, 'FontFace')
   class NativeFont {
@@ -292,7 +306,7 @@ test.each(['legacy', 'next'].flatMap((core) =>
     const policy = jest.fn((d: any) =>
       d.kind === 'resource' && d.resourceType === 'stylesheet'
         ? mode === 'rewrite'
-          ? 'https://static.invalid/approved.css'
+          ? './approved.css'
           : mode === 'deny'
             ? null
             : d.value
@@ -302,6 +316,7 @@ test.each(['legacy', 'next'].flatMap((core) =>
     document.documentElement.innerHTML =
       '<head><link rel="stylesheet" href="./relative.css"></head><body><p>structure</p></body>'
     const link = document.querySelector('link')!
+    Object.defineProperty(link, 'baseURI', { value: 'https://static.invalid/nested/' })
     let sheet: any =
       mode === 'fallback' ? null : { cssRules: [{ cssText: 'p{color:blue}' }], href: link.href }
     const read = jest.fn(() => sheet)
@@ -323,7 +338,7 @@ test.each(['legacy', 'next'].flatMap((core) =>
       } else if (mode === 'rewrite') {
         expect(read).not.toHaveBeenCalled()
         expect(fetcher).toHaveBeenCalledTimes(1)
-        expect(fetcher).toHaveBeenCalledWith('https://static.invalid/approved.css')
+        expect(fetcher).toHaveBeenCalledWith('https://static.invalid/nested/approved.css')
       } else if (mode === 'fallback') {
         expect(fetcher).toHaveBeenCalledWith(link.href)
         sheet = { cssRules: [{ cssText: 'p{color:blue}' }], href: link.href }
