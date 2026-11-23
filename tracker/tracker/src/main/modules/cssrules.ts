@@ -1,5 +1,5 @@
 import ContextPatches from '../app/contextPatches.js'
-import { sanitizeStyleRule } from '../app/captureSanitizer.js'
+import { emptyStyleRule, sanitizeStyleRule } from '../app/captureSanitizer.js'
 import type App from '../app/index.js'
 import {
   AdoptedSSInsertRuleURLBased,
@@ -40,9 +40,13 @@ export default function (app: App, opts: CssRulesOptions) {
     return
   }
   const sendRule = (sheetID: number, value: string, index: number) => {
-    const approved = sanitizeStyleRule(app.captureSanitizer, value, 'rule')
+    const baseHref = app.getBaseHref()
     if (app.isDisposed()) return
-    app.send(AdoptedSSInsertRuleURLBased(sheetID, approved, index, app.getBaseHref()))
+    const approved = baseHref === null
+      ? emptyStyleRule(value)
+      : sanitizeStyleRule(app.captureSanitizer, value, 'rule')
+    if (app.isDisposed()) return
+    app.send(AdoptedSSInsertRuleURLBased(sheetID, approved, index, baseHref ?? ''))
   }
   const options = { ...defaults, ...opts }
 

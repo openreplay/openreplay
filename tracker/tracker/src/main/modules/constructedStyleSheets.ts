@@ -44,9 +44,13 @@ export default function (app: App | null) {
   }
 
   const sendRule = (sheetID: number, value: string, index: number) => {
-    const approved = sanitizeStyleRule(app.captureSanitizer, value, 'adopted')
+    const baseHref = app.getBaseHref()
     if (app.isDisposed()) return
-    app.send(AdoptedSSInsertRuleURLBased(sheetID, approved, index, app.getBaseHref()))
+    const approved = baseHref === null
+      ? emptyStyleRule(value)
+      : sanitizeStyleRule(app.captureSanitizer, value, 'adopted')
+    if (app.isDisposed()) return
+    app.send(AdoptedSSInsertRuleURLBased(sheetID, approved, index, baseHref ?? ''))
   }
   const adoptedStyleSheetsOwnings: Map<number, number[]> = new Map()
   // text the sheet was filled with: its rules' cssText can lose declarations (see cssSourceText)
@@ -185,7 +189,9 @@ export default function (app: App | null) {
       sheetSources.set(sheet, text)
       const sheetID = styleSheetIDMap.get(sheet)
       if (!sheetID) return
-      const approved = sanitizeCapture(app.captureSanitizer, {
+      const baseHref = app.getBaseHref()
+      if (app.isDisposed()) return
+      const approved = baseHref === null ? null : sanitizeCapture(app.captureSanitizer, {
         kind: 'css',
         source: 'adopted',
         value: text,
@@ -196,7 +202,7 @@ export default function (app: App | null) {
         approved === text || (approved && hasStyleRuleCount(approved, sheet.cssRules.length))
           ? approved
           : Array.from(sheet.cssRules, (rule) => emptyStyleRule(rule.cssText)).join('\n')
-      app.send(AdoptedSSReplaceURLBased(sheetID, css, app.getBaseHref()))
+      app.send(AdoptedSSReplaceURLBased(sheetID, css, baseHref ?? ''))
     }
     const trackReplace = function (this: CSSStyleSheet, text: string) {
       return replace.call(this, text).then((sheet) => {

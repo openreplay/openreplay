@@ -48,6 +48,7 @@ export default class Session {
   }
 
   attachUpdateCallback(cb: OnUpdateCallback) {
+    if (this.disposed) return
     this.callbacks.push(cb)
   }
   private handleUpdate(newInfo: Partial<SessionInfo>) {
@@ -61,6 +62,7 @@ export default class Session {
   }
 
   assign(newInfo: Partial<SessionInfo>): void {
+    if (this.disposed) return
     if (newInfo.userID !== undefined) {
       // TODO clear nullable/undefinable types
       this.userID = newInfo.userID
@@ -81,16 +83,19 @@ export default class Session {
   }
 
   setMetadata(key: string, value: string) {
+    if (this.disposed) return
     this.metadata[key] = value
     this.handleUpdate({ metadata: { [key]: value } })
   }
 
   setUserID(userID: string) {
+    if (this.disposed) return
     this.userID = userID
     this.handleUpdate({ userID })
   }
 
   setUserInfo(userInfo: UserInfo) {
+    if (this.disposed) return
     this.userInfo = userInfo
   }
 

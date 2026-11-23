@@ -140,6 +140,7 @@ export default class Analytics {
     this.token = null
     this.batcher.discard()
     this.constantProperties.discard(clearSharedStorage)
+    this.people.discard()
     this.events.reset()
     if (this.standalone && clearSharedStorage) {
       try {

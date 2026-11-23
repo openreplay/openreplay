@@ -20,7 +20,7 @@ export default class ContextPatches {
     if (typeof WeakRef !== 'function' && context !== window) {
       const unload = () => {
         this.documents.delete(ref)
-        this.restorers.delete(document)
+        this.restore(document)
       }
       context.addEventListener('unload', unload, { once: true })
       this.restorers.set(document, () => {
@@ -30,17 +30,20 @@ export default class ContextPatches {
     }
   }
 
+  private restore(document: Document) {
+    const restore = this.restorers.get(document)
+    this.restorers.delete(document)
+    try {
+      restore?.()
+    } catch {
+      // A frame can navigate between capture and teardown.
+    }
+  }
+
   clear() {
     for (const ref of this.documents) {
       const document = ref.deref()
-      if (!document) continue
-      try {
-        this.restorers.get(document)?.()
-      } catch {
-        // A frame can navigate between capture and teardown.
-      } finally {
-        this.restorers.delete(document)
-      }
+      if (document) this.restore(document)
     }
     this.documents.clear()
   }

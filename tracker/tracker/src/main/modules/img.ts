@@ -75,9 +75,12 @@ export default function (app: App): void {
     if (!srcset) {
       return
     }
+    const baseHref = app.getBaseHref()
+    if (app.isDisposed()) return
+    if (baseHref === null) return app.attributeSender.removeAttribute(id, 'srcset', el)
     const resolvedSrcset = srcset
       .split(srcset.match(/,\s+/) ? /,\s+/ : ',')
-      .map((str) => resolveSrcsetCandidate(str, app.getBaseHref()))
+      .map((str) => resolveSrcsetCandidate(str, baseHref))
       .join(', ')
     sendImageAttribute(id, el, 'srcset', resolvedSrcset)
   }

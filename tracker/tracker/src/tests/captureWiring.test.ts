@@ -314,12 +314,56 @@ test('omitting a CSS rule preserves the index of the following rule', () => {
 test('a rejected resource base is cached until the document base changes', () => {
   const policy = jest.fn(() => null)
   create(policy)
-  expect(app.getBaseHref()).toBe('')
-  expect(app.getBaseHref()).toBe('')
+  expect(app.getBaseHref()).toBeNull()
+  expect(app.getBaseHref()).toBeNull()
   expect(policy).toHaveBeenCalledTimes(1)
   document.head.innerHTML = '<base href="https://static.invalid/next/">'
-  expect(app.getBaseHref()).toBe('')
+  expect(app.getBaseHref()).toBeNull()
   expect(policy).toHaveBeenCalledTimes(2)
+})
+
+test('a rejected base suppresses dependent capture while preserving CSS rule indices', async () => {
+  const { fetcher } = create((data) =>
+    data.kind === 'resource' && data.resourceType === 'base' ? null : data.value,
+    false, true, false, 1,
+  )
+  document.documentElement.innerHTML =
+    '<head><style>p { color: blue; }</style><link rel="stylesheet" href="/theme.css"></head>' +
+    '<body><img src="/image.png" srcset="/image.png 1x"><p style="color:red">text</p></body>'
+  Object.defineProperty(document.querySelector('img')!, 'complete', { value: false })
+  app.observer.observe()
+  const sheet = new CSSStyleSheet()
+  styleSheetIDMap.set(sheet, 102)
+  sheet.insertRule('.withheld { color: green; }', 0)
+  await jest.advanceTimersByTimeAsync(0)
+
+  expect(fetcher).not.toHaveBeenCalled()
+  expect(app.messages.some((message: any[]) =>
+    message[0] === Type.SetNodeAttributeURLBased && message[2] === 'src',
+  )).toBe(false)
+  expect(JSON.stringify(app.messages)).not.toMatch(/theme\.css|image\.png|color:\s*(red|blue|green)/)
+  expect(app.messages).toContainEqual([Type.AdoptedSSInsertRuleURLBased, 102, ':not(*) {}', 0, ''])
+})
+
+test.each([false, true])('discard during style filtering skips base approval with nextObserver=%s', (nextObserver) => {
+  const policy = jest.fn((data: CaptureData) => {
+    if (data.kind === 'css' && data.source === 'text') tracker.discard()
+    return data.value
+  })
+  const { tracker } = create(policy, false, true, false, 0, nextObserver)
+  document.head.innerHTML = '<style>p { color: blue; }</style>'
+  app.observer.observe()
+
+  expect(policy).toHaveBeenCalledWith(expect.objectContaining({ kind: 'css', source: 'text' }))
+  expect(app.getBaseHref()).toBeNull()
+  expect(policy).not.toHaveBeenCalledWith(expect.objectContaining({ resourceType: 'base' }))
+})
+
+test('a discarded tracker has no resource base without a capture policy', () => {
+  const { tracker } = create()
+  expect(app.getBaseHref()).toBe(document.baseURI)
+  tracker.discard()
+  expect(app.getBaseHref()).toBeNull()
 })
 
 test('the parent may retire a child tracker while shared records survive', () => {
@@ -362,11 +406,16 @@ test('analytics cannot restore its stored identity after discard', () => {
   const propsKey = '$__or__super_properties__$'
   analytics.constantProperties.setUserId('synthetic')
   analytics.constantProperties.saveSuperProperties({ name: 'synthetic' })
+  analytics.people.setProperties('name', 'synthetic')
+  expect(analytics.people.ownProperties).toEqual({ name: 'synthetic' })
   expect(localStorage.getItem(identityKey)).toBeTruthy()
   expect(sessionStorage.getItem(userKey)).toBe('synthetic')
 
   tracker.discard()
+  expect(analytics.people.ownProperties).toEqual({})
   analytics.people.identify('synthetic-late')
+  analytics.people.setProperties('late', 'synthetic-late')
+  expect(analytics.people.ownProperties).toEqual({})
   analytics.constantProperties.saveSuperProperties({ name: 'synthetic-late' })
   expect(localStorage.getItem(identityKey)).toBeNull()
   expect(localStorage.getItem(propsKey)).toBeNull()

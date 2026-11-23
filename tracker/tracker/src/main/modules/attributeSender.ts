@@ -88,6 +88,7 @@ export default class AttributeSender {
     if (this.disposed) return
     const baseHref = this.app.getBaseHref()
     if (this.disposed) return
+    if (baseHref === null) return this.removeAttribute(id, name, node)
     this.rememberAttribute(id, name, node)
     this.app.send(SetNodeAttributeURLBased(id, name, value, baseHref))
   }

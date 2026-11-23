@@ -7,6 +7,7 @@ type Value = string | number
 
 export default class People {
   ownProperties: Record<string, Value | Value[]> = {}
+  private discarded = false
 
   constructor(
     private readonly constantProperties: ConstantProperties,
@@ -16,6 +17,7 @@ export default class People {
   ) {}
 
   public identify = (user_id: string, options?: { fromTracker: boolean }) => {
+    if (this.discarded) return
     if (!user_id || typeof user_id !== 'string') {
       throw new Error('OR SDK: user_id (string) is required for .identify()')
     }
@@ -43,6 +45,11 @@ export default class People {
    * */
   public reset = (hard?: boolean) => {
     this.constantProperties.resetUserId(hard)
+    this.ownProperties = {}
+  }
+
+  discard() {
+    this.discarded = true
     this.ownProperties = {}
   }
 
@@ -74,6 +81,7 @@ export default class People {
     propertyOrObj: Record<string, string | number> | string,
     value?: string | number,
   ) => {
+    if (this.discarded) return
     if (!propertyOrObj) {
       throw new Error('OR SDK: no user properties provided to set')
     }
@@ -85,6 +93,7 @@ export default class People {
     } else {
       throw new Error('OR SDK: invalid user properties provided to set')
     }
+    if (this.discarded) return
     Object.entries(properties).forEach(([key, value]) => {
       if (!this.constantProperties.defaultPropertyKeys.includes(key)) {
         this.ownProperties[key] = value
@@ -101,10 +110,13 @@ export default class People {
    * Set property if it doesn't exist yet
    * */
   public setPropertiesOnce = (properties: Record<string, string | number>) => {
+    if (this.discarded) return
     if (!isObject(properties)) {
       throw new Error('Properties must be an object')
     }
-    Object.entries(properties).forEach(([key, value]) => {
+    const entries = Object.entries(properties)
+    if (this.discarded) return
+    entries.forEach(([key, value]) => {
       if (
         !this.constantProperties.defaultPropertyKeys.includes(key) &&
         this.ownProperties[key] === undefined
@@ -124,6 +136,7 @@ export default class People {
    * Add value to property (will turn string prop into array)
    * */
   public appendValues = (key: string, value: string | number) => {
+    if (this.discarded) return
     this.appendLocal(key, value)
 
     const appendEvent = createEvent(categories.people, mutationTypes.appendProperty, undefined, {
@@ -137,6 +150,7 @@ export default class People {
    * Add unique values to property (will turn string prop into array)
    * */
   public appendUniqueValues = (key: string, value: string | number) => {
+    if (this.discarded) return
     const current = this.ownProperties[key]
     const known = Array.isArray(current) ? current.includes(value) : current === value
     if (!known) {
@@ -171,6 +185,7 @@ export default class People {
    * Adds value (incl. negative) to existing numerical property
    * */
   public increment = (key: string, value: number) => {
+    if (this.discarded) return
     if (!this.ownProperties[key]) {
       this.ownProperties[key] = 0
     }

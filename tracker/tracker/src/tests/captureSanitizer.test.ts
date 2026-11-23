@@ -263,6 +263,26 @@ test.each(['legacy', 'next'])('%s approves only the effective SVG sprite referen
   expect(references).toEqual(['#primary'])
 })
 
+test.each(['legacy', 'next'])('%s sends an empty SVG href when the policy blanks it', (core) => {
+  const { sent } = observe('<svg><use href="#icon"></use></svg>', () => '', core)
+  expect(sent).toContainEqual([Type.SetNodeAttribute, expect.any(Number), 'href', ''])
+})
+
+test.each(['legacy', 'next'])('%s clears previously approved style text when an update is rejected', async (core) => {
+  const { sent } = observe(
+    '<style>p { color: blue; }</style>',
+    (data) => data.kind === 'css' && data.value.includes('red') ? null : data.value,
+    core,
+  )
+  const initial = sent.find((m) => m[0] === Type.SetCSSDataURLBased)
+  expect(initial?.[2]).toContain('blue')
+  sent.length = 0
+  ;(document.querySelector('style')!.firstChild as Text).data = 'p { color: red; }'
+  await Promise.resolve()
+
+  expect(sent).toContainEqual([Type.SetCSSDataURLBased, initial![1], '', expect.any(String)])
+})
+
 test('FontFace buffers approved fields and leaves constructor arguments untouched', () => {
   const original = Object.getOwnPropertyDescriptor(window, 'FontFace')
   class NativeFont {
@@ -339,6 +359,13 @@ test.each(['legacy', 'next'].flatMap((core) =>
         expect(read).not.toHaveBeenCalled()
         expect(fetcher).toHaveBeenCalledTimes(1)
         expect(fetcher).toHaveBeenCalledWith('https://static.invalid/nested/approved.css')
+        expect(sent).toContainEqual([
+          Type.AdoptedSSInsertRuleURLBased,
+          expect.any(Number),
+          'p{color:green}',
+          0,
+          'https://static.invalid/nested/approved.css',
+        ])
       } else if (mode === 'fallback') {
         expect(fetcher).toHaveBeenCalledWith(link.href)
         sheet = { cssRules: [{ cssText: 'p{color:blue}' }], href: link.href }

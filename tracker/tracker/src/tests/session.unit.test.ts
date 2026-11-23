@@ -79,6 +79,21 @@ describe('Session', () => {
     expect(session.getInfo()).toEqual(newInfo)
   })
 
+  test('rejects updates and callback registration after discard', () => {
+    session.discard()
+    const callback = jest.fn()
+    session.attachUpdateCallback(callback)
+    session.assign({ userID: 'late', metadata: { key: 'late' }, sessionID: 'late' })
+    session.setMetadata('late', 'value')
+    session.setUserID('late')
+    session.setUserInfo({ userBrowser: 'late' })
+
+    expect(session.getInfo()).toEqual({ sessionID: undefined, metadata: {}, userID: null, timestamp: 0, projectID: undefined })
+    expect(session.userInfo.userBrowser).toBe('')
+    expect(session.callbacks).toHaveLength(0)
+    expect(callback).not.toHaveBeenCalled()
+  })
+
   test('assign merges metadata and notifies update callbacks', () => {
     const callback = jest.fn()
     session.attachUpdateCallback(callback)

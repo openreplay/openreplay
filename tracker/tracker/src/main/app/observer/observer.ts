@@ -384,8 +384,12 @@ function sendSprite(ctx: AttributeContext, id: number, node: SVGUseElement, name
     ? sanitizeCapture(policy, { kind: 'resource', resourceType: 'svg', value: original, node })
     : undefined
   if (!isCurrent()) return
-  if (policy && !href) {
+  if (href === null) {
     app.attributeSender.removeAttribute(id, name, node)
+    return
+  }
+  if (href === '') {
+    app.attributeSender.sendSetAttribute(id, name, '', true, node)
     return
   }
   const cache = policy
@@ -416,10 +420,12 @@ function inlineStylesheet(
     (!policy || (app.nodes.getID(node) === id && node.getAttribute('href') === original))
   setTimeout(() => {
     if (!isCurrent()) return
+    const baseHref = app.getBaseHref()
+    if (baseHref === null || !isCurrent()) return
     inlineRemoteCss(
       node,
       id,
-      app.getBaseHref(),
+      baseHref,
       nextID,
       (sheetId, cssText, index, baseHref) => {
         if (isCurrent()) app.send(AdoptedSSInsertRuleURLBased(sheetId, cssText, index, baseHref))
@@ -429,10 +435,10 @@ function inlineStylesheet(
       },
       inlinerOptions?.forceFetch,
       inlinerOptions?.forcePlain,
-      (cssText, fakeTextId) => {
+      (cssText, fakeTextId, cssBaseHref) => {
         if (!isCurrent()) return
         app.send(CreateTextNode(fakeTextId, id, 0))
-        app.send(SetCSSDataURLBased(fakeTextId, cssText, app.getBaseHref()))
+        app.send(SetCSSDataURLBased(fakeTextId, cssText, cssBaseHref))
       },
       policy && { sanitizer: policy, href, original },
       signal,
@@ -445,7 +451,10 @@ export function sendStyleText(app: App, id: number, parent: Element, data: strin
   const approved = policy
     ? sanitizeCapture(policy, { kind: 'css', source: 'text', value: data, node: parent })
     : data
-  if (approved !== null) app.send(SetCSSDataURLBased(id, approved, app.getBaseHref()))
+  if (app.isDisposed()) return
+  const baseHref = approved === null ? null : app.getBaseHref()
+  if (app.isDisposed()) return
+  app.send(SetCSSDataURLBased(id, baseHref === null ? '' : approved ?? '', baseHref ?? ''))
 }
 
 /** After a level change: re-sends the attributes whose masking depends on it. */

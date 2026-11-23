@@ -92,7 +92,7 @@ describe('stylesheet pre-fetch and content policy', () => {
     expect(policy).toHaveBeenCalledWith(
       expect.objectContaining({ kind: 'css', source: 'text', value: 'p{color:red}' }),
     )
-    expect(insert).toHaveBeenCalledWith(2, 'p{color:blue}', 0, '')
+    expect(insert).toHaveBeenCalledWith(2, 'p{color:blue}', 0, 'https://static.invalid/safe.css')
   })
 })
 
@@ -127,7 +127,7 @@ test('rewritten stylesheet URL never reads the original DOM sheet', async () => 
     expect(read).not.toHaveBeenCalled()
     expect(fetcher).toHaveBeenCalledWith('https://static.invalid/safe.css')
     expect(policy).toHaveBeenCalledWith(expect.objectContaining({ kind: 'css', source: 'text' }))
-    expect(insert).toHaveBeenCalledWith(2, 'p{color:blue}', 0, '')
+    expect(insert).toHaveBeenCalledWith(2, 'p{color:blue}', 0, 'https://static.invalid/safe.css')
   } finally {
     globalThis.fetch = originalFetch
   }

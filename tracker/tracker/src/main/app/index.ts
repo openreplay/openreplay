@@ -301,7 +301,7 @@ export default class App {
   private readonly stopCallbacks: Array<() => any> = []
   private readonly commitCallbacks: Array<CommitCallback> = []
   public readonly captureSanitizer?: CaptureSanitizer
-  private captureBase?: { original: string; approved: string }
+  private captureBase?: { original: string; approved: string | null }
   public readonly options: Options
   public readonly networkOptions?: Partial<NetworkOptions>
   private readonly revID: string
@@ -1714,7 +1714,8 @@ export default class App {
     return this.projectKey
   }
 
-  getBaseHref(): string {
+  getBaseHref(): string | null {
+    if (this.disposed) return null
     const value =
       typeof this.options.resourceBaseHref === 'string'
         ? this.options.resourceBaseHref
@@ -1728,15 +1729,17 @@ export default class App {
         resourceType: 'base',
         value,
         node: null,
-      }) ?? ''
-      if (this.disposed) return ''
+      })
+      if (this.disposed) return null
       this.captureBase = { original: value, approved }
     }
     return this.captureBase.approved
   }
 
   resolveResourceURL(resourceURL: string): string {
-    const base = new URL(this.getBaseHref())
+    const baseHref = this.getBaseHref()
+    if (!baseHref) return ''
+    const base = new URL(baseHref)
     base.pathname += '/' + new URL(resourceURL).pathname
     base.pathname.replace(/\/+/g, '/')
     return base.toString()

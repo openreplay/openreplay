@@ -10,7 +10,7 @@ export function inlineRemoteCss(
   addOwner: (sheetId: number, ownerId: number) => void,
   forceFetch?: boolean,
   sendPlain?: boolean,
-  onPlain?: (cssText: string, id: number) => void,
+  onPlain?: (cssText: string, id: number, baseHref: string) => void,
   capture?: { sanitizer: CaptureSanitizer | undefined; href: string; original: string },
   signal?: AbortSignal,
 ) {
@@ -18,7 +18,7 @@ export function inlineRemoteCss(
     (capture !== undefined && node.getAttribute('href') !== capture.original)
   if (isStale()) return
   const href = capture?.href ?? node.href
-  const deliver = (cssText: string) => {
+  const deliver = (cssText: string, cssBaseHref = baseHref) => {
     if (isStale()) return
     const approved = sanitizeCapture(capture?.sanitizer, {
       kind: 'css',
@@ -27,8 +27,8 @@ export function inlineRemoteCss(
       node,
     })
     if (approved === null) return
-    if (sendPlain && onPlain) onPlain(approved, fakeIdHolder++)
-    else processCssText(approved)
+    if (sendPlain && onPlain) onPlain(approved, fakeIdHolder++, cssBaseHref)
+    else processCssText(approved, cssBaseHref)
   }
   const sheetId = sendPlain ? null : getNextID();
   if (!sendPlain) {
@@ -69,7 +69,7 @@ export function inlineRemoteCss(
         return response.text();
       })
       .then(cssText => {
-        deliver(cssText)
+        deliver(cssText, mayReadSheet ? baseHref : url)
       })
       .catch(error => {
         if (signal?.aborted) return
@@ -107,7 +107,7 @@ export function inlineRemoteCss(
     }
   }
 
-  function processCssText(cssText: string) {
+  function processCssText(cssText: string, cssBaseHref: string) {
     // Remove comments
     cssText = cssText.replace(/\/\*[\s\S]*?\*\//g, '');
 
@@ -115,7 +115,7 @@ export function inlineRemoteCss(
     const ruleTexts = parseCSS(cssText);
 
     for (let i = 0; i < ruleTexts.length; i++) {
-      insertRule(sheetId!, ruleTexts[i], i, baseHref);
+      insertRule(sheetId!, ruleTexts[i], i, cssBaseHref);
     }
   }
 
