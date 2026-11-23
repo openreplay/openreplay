@@ -12,8 +12,12 @@ on:
       - dev
     paths:
       - "otel-collector/**"
+      - "scripts/helmcharts/openreplay/charts/otel-collector/**"
 
 name: Build and Deploy otel-collector EE
+
+permissions:
+  contents: read
 
 jobs:
   deploy:
@@ -65,18 +69,30 @@ jobs:
           DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
           IMAGE_TAG: ${{ env.IMAGE_TAG }}
           ENVIRONMENT: staging
+          SKIP_SECURITY_CHECKS: ${{ github.event.inputs.skip_security_checks }}
         run: |
           set -e
-          skip_security_checks=${{ github.event.inputs.skip_security_checks }}
           cd otel-collector
           PUSH_IMAGE=0 bash -x ./build.sh
-          if [[ "x$skip_security_checks" == "xtrue" ]]; then
+          if [[ "$SKIP_SECURITY_CHECKS" == "true" ]]; then
             echo "Skipping Security Checks"
           else
             curl -L https://github.com/aquasecurity/trivy/releases/download/v0.56.2/trivy_0.56.2_Linux-64bit.tar.gz | tar -xzf - -C ./
             ./trivy image --db-repository ghcr.io/aquasecurity/trivy-db:2 --db-repository public.ecr.aws/aquasecurity/trivy-db:2 --exit-code 1 --security-checks vuln --vuln-type os,library --severity "HIGH,CRITICAL" --ignore-unfixed $DOCKER_REPO/otel-collector:$IMAGE_TAG
           fi
           docker push $DOCKER_REPO/otel-collector:$IMAGE_TAG
+
+      # The deploy below skips the migration job, and the collector does not auto-create topics.
+      - name: Ensure Kafka topic
+        run: |
+          set -e
+          kubectl exec -n db kafka-0 -- sh -c '
+            if kafka-topics.sh --bootstrap-server localhost:9092 --list | grep -qx otel-logs; then
+              echo "topic otel-logs exists"
+            else
+              kafka-topics.sh --bootstrap-server localhost:9092 --create --replication-factor 2 --partitions 16 --topic otel-logs
+              kafka-configs.sh --bootstrap-server localhost:9092 --entity-type topics --alter --add-config retention.ms=345600000 --entity-name otel-logs
+            fi'
 
       - name: Deploy to kubernetes
         env:
