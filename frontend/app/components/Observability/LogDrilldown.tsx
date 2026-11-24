@@ -25,7 +25,9 @@ import type { OtelValueCount } from 'App/services/OtelLogsService';
 import {
   type DrillCard as Card,
   DRILL_VALUES,
+  type LogRule,
   compactCount,
+  keepsValue,
   keyLabel,
 } from './logs-logic';
 import { termMenuItems } from './termMenu';
@@ -46,6 +48,8 @@ export interface LogDrilldownProps {
     operator: 'is' | 'isNot',
     on: boolean,
   ) => void;
+  /** the search's rules: a card splits only the values they keep */
+  rules: readonly LogRule[];
 }
 
 export const DRILL_SIZES = [12, 24, 48] as const;
@@ -121,6 +125,7 @@ export const LogDrilldown = observer(function LogDrilldown({
   epoch,
   termState,
   onTerm,
+  rules,
 }: LogDrilldownProps) {
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
@@ -186,6 +191,7 @@ export const LogDrilldown = observer(function LogDrilldown({
                 values={valuesOf(a.key)}
                 termState={termState}
                 onTerm={onTerm}
+                rules={rules}
               />
             ))}
           </div>
@@ -219,23 +225,38 @@ function DrillCardView({
   values: { values, loading },
   termState,
   onTerm,
+  rules,
 }: {
   card: Card;
   total: number;
   values: { values: OtelValueCount[]; loading: boolean };
   termState: LogDrilldownProps['termState'];
   onTerm: LogDrilldownProps['onTerm'];
+  rules: readonly LogRule[];
 }) {
   const { t } = useTranslation();
   const label = keyLabel(t, a.key);
   const presence = total ? a.carried / total : 0;
-  const top = values.slice(0, DRILL_VALUES);
+  // values are counted without their own key's filter, so each count is the
+  // value's count in the list, as long as the list keeps that value: split
+  // only those. A `contains` rule can't be replayed here, so it stays as is
+  const keeps = keepsValue(a.key, rules);
+  const kept = keeps ? values.filter((v) => keeps(v.value)) : values;
+  // excluded values stay on the card, struck out, to be let back in
+  const out = keeps
+    ? [
+        ...new Set(
+          rules
+            .filter((r) => r.name === a.key && r.operator === 'isNot')
+            .flatMap((r) => r.value.map((v) => v.trim()).filter(Boolean)),
+        ),
+      ].slice(0, DRILL_VALUES - 1)
+    : [];
+  const top = kept.slice(0, DRILL_VALUES - out.length);
   const inTop = top.reduce((s, v) => s + v.count, 0);
-  // values ignore their own key's filter, so a filtered key can count more
-  // lines than the list holds: split them over what was counted instead
   const base = Math.max(
     a.carried,
-    values.reduce((s, v) => s + v.count, 0),
+    kept.reduce((s, v) => s + v.count, 0),
   );
   const rest =
     base > 0 && top.length > 0 ? Math.max(0, base - inTop) / base : 0;
@@ -296,16 +317,29 @@ function DrillCardView({
             />
           </li>
         ))}
+        {out.map((v) => (
+          <li key={`out:${v}`}>
+            <DrillValueRow
+              attrKey={a.key}
+              label={label}
+              value={v}
+              state="out"
+              onTerm={onTerm}
+            />
+          </li>
+        ))}
       </ul>
       <p
         className="m-logs__drill-rest"
-        aria-hidden={rest > 0.0005 ? undefined : true}
+        aria-hidden={!keeps || rest > 0.0005 ? undefined : true}
       >
-        {rest > 0.0005 && (
-          <>
-            {t('more values')} <b>{pct(rest)}</b>
-          </>
-        )}
+        {!keeps
+          ? t('Counted without its “contains” filter')
+          : rest > 0.0005 && (
+              <>
+                {t('more values')} <b>{pct(rest)}</b>
+              </>
+            )}
       </p>
     </section>
   );
@@ -322,7 +356,8 @@ function DrillValueRow({
   attrKey: string;
   label: string;
   value: string;
-  share: number;
+  /** none for a value the list leaves out */
+  share?: number;
   state?: 'in' | 'out';
   onTerm: LogDrilldownProps['onTerm'];
 }) {
@@ -352,11 +387,13 @@ function DrillValueRow({
           className={`m-logs__drill-row${state ? ` is-${state}` : ''}`}
           title={value}
         >
-          <span
-            className="m-logs__drill-fill"
-            style={{ width: `${share * 100}%` }}
-            aria-hidden="true"
-          />
+          {share != null && (
+            <span
+              className="m-logs__drill-fill"
+              style={{ width: `${share * 100}%` }}
+              aria-hidden="true"
+            />
+          )}
           <span className="m-logs__drill-value">{value}</span>
           {state === 'out' ? (
             <CircleMinus
@@ -371,7 +408,9 @@ function DrillValueRow({
               aria-label={t('In the search')}
             />
           ) : null}
-          <span className="m-logs__drill-pct">{pct(share)}</span>
+          <span className="m-logs__drill-pct">
+            {share != null && pct(share)}
+          </span>
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="m-kv__menu">

@@ -3188,5 +3188,7 @@
   "CPU, memory and request rates as charts, on the same window and filters as Logs. Until then, the logs show what your services did.": "Le CPU, la mémoire et le débit des requêtes en graphiques, sur la même période et avec les mêmes filtres que Logs. En attendant, les logs montrent ce que vos services ont fait.",
   "Open Logs": "Ouvrir Logs",
   "Traces are on the way": "Les traces arrivent bientôt",
-  "Every request as a waterfall of spans, on the same window and filters as Logs. Until then, a log line carries its trace id and the search finds it.": "Chaque requête en cascade de spans, sur la même période et avec les mêmes filtres que Logs. En attendant, chaque ligne de log porte son trace id et la recherche la retrouve."
+  "Every request as a waterfall of spans, on the same window and filters as Logs. Until then, a log line carries its trace id and the search finds it.": "Chaque requête en cascade de spans, sur la même période et avec les mêmes filtres que Logs. En attendant, chaque ligne de log porte son trace id et la recherche la retrouve.",
+  "Some lines could not load, so nothing was exported": "Certaines lignes n’ont pas pu être chargées, rien n’a donc été exporté",
+  "Counted without its “contains” filter": "Compté sans son filtre « contient »"
 }

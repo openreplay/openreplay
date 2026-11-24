@@ -15,6 +15,7 @@ import {
   logFilter,
   rulesToFilter,
   sameRules,
+  sameValue,
   windowBounds,
 } from 'App/components/Observability/logs-logic';
 import type { Filter } from 'App/mstore/types/filterConstants';
@@ -52,10 +53,6 @@ const ruleOf = (f: Filter): LogRule => ({
   operator: f.operator ?? 'is',
   value: (f.value ?? []).map(String),
 });
-/** levels match whatever their case (the API lowercases them); every other
-    value is matched exactly, as the API does */
-const same = (key: string, a: string, b: string) =>
-  key === 'level' ? a.toLowerCase() === b.toLowerCase() : a === b;
 
 export default class OtelLogsStore {
   range: OtelLogsRange = { durationMs: 15 * 60 * 1000 };
@@ -475,10 +472,10 @@ export default class OtelLogsStore {
       return;
     }
     const vals = (r.value ?? []).map(String);
-    const on = vals.some((v) => same(key, v, value));
+    const on = vals.some((v) => sameValue(key, v, value));
     if (on && mode === 'add') return;
     const next = on
-      ? vals.filter((v) => !same(key, v, value))
+      ? vals.filter((v) => !sameValue(key, v, value))
       : [...vals, value];
     this.setRules(
       next.length
@@ -523,10 +520,10 @@ export default class OtelLogsStore {
         if (
           r.name !== key ||
           r.operator !== o ||
-          !vals.some((v) => same(key, v, value))
+          !vals.some((v) => sameValue(key, v, value))
         )
           return [r];
-        const rest = vals.filter((v) => !same(key, v, value));
+        const rest = vals.filter((v) => !sameValue(key, v, value));
         return rest.length ? [{ ...r, value: rest }] : [];
       });
     if (!on) {
@@ -547,7 +544,7 @@ export default class OtelLogsStore {
     }
     const vals = (r.value ?? []).map(String);
     this.setRules(
-      vals.some((v) => same(key, v, value))
+      vals.some((v) => sameValue(key, v, value))
         ? next
         : next.map((x) => (x === r ? { ...x, value: [...vals, value] } : x)),
       true,
@@ -561,7 +558,7 @@ export default class OtelLogsStore {
         (r) =>
           r.name === key &&
           r.operator === o &&
-          (r.value ?? []).some((v) => same(key, String(v), value)),
+          (r.value ?? []).some((v) => sameValue(key, String(v), value)),
       );
     return has('is') ? 'in' : has('isNot') ? 'out' : undefined;
   };

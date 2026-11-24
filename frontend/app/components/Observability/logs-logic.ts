@@ -316,6 +316,36 @@ export interface LogRule {
   value: string[];
 }
 
+/** levels match whatever their case (the API lowercases them); every other
+    value is matched exactly, as the API does */
+export const sameValue = (key: string, a: string, b: string) =>
+  key === 'level' ? a.toLowerCase() === b.toLowerCase() : a === b;
+
+/** Which values of a key the list keeps under the rules on that key, as the
+    API reads them: `is` rules of the service and the level add up, other
+    keys' rules all apply. Null when a rule the client cannot replay
+    (`contains`) is on the key. */
+export function keepsValue(
+  key: string,
+  rules: readonly LogRule[],
+): ((value: string) => boolean) | null {
+  const mine = rules.filter(
+    (r) =>
+      r.name === key &&
+      (r.operator === 'isAny' || r.value.some((v) => v.trim() !== '')),
+  );
+  if (mine.some((r) => r.operator === 'contains')) return null;
+  const has = (r: LogRule, v: string) =>
+    r.value.some((x) => sameValue(key, x.trim(), v));
+  const ins = mine.filter((r) => r.operator === 'is');
+  const outs = mine.filter((r) => r.operator === 'isNot');
+  const union = key === 'level' || key === 'service';
+  return (v) =>
+    (ins.length === 0 ||
+      (union ? ins.some((r) => has(r, v)) : ins.every((r) => has(r, v)))) &&
+    !outs.some((r) => has(r, v));
+}
+
 const OP: Record<string, OtelAttributeOp> = {
   is: 'is',
   isNot: 'isNot',

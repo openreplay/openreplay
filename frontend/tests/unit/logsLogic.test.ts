@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 
 import {
   drillCards,
+  keepsValue,
   levelOfText,
   logFilter,
   rulesToFilter,
@@ -60,6 +61,61 @@ describe('rulesToFilter', () => {
       value: ['v'],
     }));
     expect(rulesToFilter(rules).attributes).toHaveLength(20);
+  });
+});
+
+describe('keepsValue', () => {
+  const keeps = (key: string, rules: Parameters<typeof keepsValue>[1]) => {
+    const f = keepsValue(key, rules);
+    return f && ['a', 'b', 'c', 'A'].filter(f);
+  };
+
+  test('no rule on the key keeps every value', () => {
+    expect(keeps('attr.x', [])).toEqual(['a', 'b', 'c', 'A']);
+    expect(
+      keeps('attr.x', [{ name: 'attr.y', operator: 'is', value: ['a'] }]),
+    ).toEqual(['a', 'b', 'c', 'A']);
+  });
+
+  test('is keeps its values, isNot drops its own, matched exactly', () => {
+    expect(
+      keeps('attr.x', [{ name: 'attr.x', operator: 'is', value: ['a', 'b'] }]),
+    ).toEqual(['a', 'b']);
+    expect(
+      keeps('attr.x', [{ name: 'attr.x', operator: 'isNot', value: ['a'] }]),
+    ).toEqual(['b', 'c', 'A']);
+  });
+
+  test('service is-rules add up, attribute is-rules all apply', () => {
+    const two = (name: string) => [
+      { name, operator: 'is', value: ['a'] },
+      { name, operator: 'is', value: ['b'] },
+    ];
+    expect(keeps('service', two('service'))).toEqual(['a', 'b']);
+    expect(keeps('attr.x', two('attr.x'))).toEqual([]);
+  });
+
+  test('levels match whatever their case', () => {
+    expect(
+      keeps('level', [{ name: 'level', operator: 'is', value: ['a'] }]),
+    ).toEqual(['a', 'A']);
+  });
+
+  test('exists keeps everything, contains cannot be replayed', () => {
+    expect(
+      keeps('attr.x', [{ name: 'attr.x', operator: 'isAny', value: [] }]),
+    ).toEqual(['a', 'b', 'c', 'A']);
+    expect(
+      keepsValue('attr.x', [
+        { name: 'attr.x', operator: 'contains', value: ['a'] },
+      ]),
+    ).toBeNull();
+  });
+
+  test('an empty rule counts for nothing', () => {
+    expect(
+      keeps('attr.x', [{ name: 'attr.x', operator: 'is', value: [' '] }]),
+    ).toEqual(['a', 'b', 'c', 'A']);
   });
 });
 

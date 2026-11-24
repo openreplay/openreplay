@@ -532,6 +532,7 @@ function LogsPage() {
                   epoch={store.fetchSeq}
                   termState={store.termState}
                   onTerm={store.setTerm}
+                  rules={store.ruleList}
                 />
               ) : (
                 <>

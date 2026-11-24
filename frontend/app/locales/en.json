@@ -3114,5 +3114,7 @@
   "CPU, memory and request rates as charts, on the same window and filters as Logs. Until then, the logs show what your services did.": "CPU, memory and request rates as charts, on the same window and filters as Logs. Until then, the logs show what your services did.",
   "Open Logs": "Open Logs",
   "Traces are on the way": "Traces are on the way",
-  "Every request as a waterfall of spans, on the same window and filters as Logs. Until then, a log line carries its trace id and the search finds it.": "Every request as a waterfall of spans, on the same window and filters as Logs. Until then, a log line carries its trace id and the search finds it."
+  "Every request as a waterfall of spans, on the same window and filters as Logs. Until then, a log line carries its trace id and the search finds it.": "Every request as a waterfall of spans, on the same window and filters as Logs. Until then, a log line carries its trace id and the search finds it.",
+  "Some lines could not load, so nothing was exported": "Some lines could not load, so nothing was exported",
+  "Counted without its “contains” filter": "Counted without its “contains” filter"
 }
