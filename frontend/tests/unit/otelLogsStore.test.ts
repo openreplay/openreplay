@@ -116,6 +116,20 @@ describe('OtelLogsStore', () => {
     expect(mockSearch).toHaveBeenCalledTimes(2);
   });
 
+  it('a failed histogram or facets request still pages and exports', async () => {
+    const store = new OtelLogsStore();
+    mockSearch.mockResolvedValueOnce({ logs: [log('a')], nextCursor: 'c1' });
+    mockHistogram.mockRejectedValueOnce(new Error('histogram failed'));
+    mockFacets.mockRejectedValueOnce(new Error('facets failed'));
+    await store.fetch();
+    expect(store.error).toBe('histogram failed');
+    expect(store.searchFailed).toBe(false);
+
+    mockSearch.mockResolvedValueOnce({ logs: [log('b')], nextCursor: null });
+    const lines = await store.collectExport();
+    expect(lines.map((l) => l.body)).toEqual(['a', 'b']);
+  });
+
   it('drops results of a superseded fetch', async () => {
     const store = new OtelLogsStore();
     const first = deferred<any>();

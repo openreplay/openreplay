@@ -576,7 +576,7 @@ function LogsPage() {
                 />
               ) : (
                 <>
-                  {(store.pageError ?? store.error) &&
+                  {(store.pageError || store.searchFailed) &&
                   store.pageRows.length === 0 ? (
                     <EmptyState
                       title={t('Logs could not load')}
@@ -585,7 +585,7 @@ function LogsPage() {
                         // a failed search has no page to ask again: search anew
                         <Button
                           onClick={
-                            store.error
+                            store.searchFailed
                               ? () => void store.run()
                               : store.retryPage
                           }

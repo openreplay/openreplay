@@ -79,8 +79,11 @@ export default class OtelLogsStore {
   exporting = false;
   histogramLoading = false;
   facetsLoading = false;
-  /** the search itself failed: what is held, if anything, is from before */
+  /** a request of the last search failed: the list, histogram or facets */
   error: string | null = null;
+  /** the list request itself failed: what is held, if anything, is from
+      the window before, so nothing pages or exports from it */
+  searchFailed = false;
   /** a page past the first failed; asking again is safe */
   pageError: string | null = null;
 
@@ -181,6 +184,7 @@ export default class OtelLogsStore {
 
     this.appliedFilter = filter;
     this.error = null;
+    this.searchFailed = false;
     this.pageError = null;
     this.loading = !quiet;
     this.refreshing = quiet;
@@ -215,7 +219,11 @@ export default class OtelLogsStore {
             this.nextCursor = r.nextCursor;
           });
         })
-        .catch(fail)
+        .catch((e) => {
+          if (!isAbort(e) && current())
+            runInAction(() => (this.searchFailed = true));
+          fail(e);
+        })
         .finally(() => {
           if (current())
             runInAction(() => {
@@ -253,7 +261,7 @@ export default class OtelLogsStore {
       !appliedFilter ||
       !nextCursor ||
       !controller ||
-      this.error ||
+      this.searchFailed ||
       this.loading ||
       this.refreshing ||
       this.loadingMore
@@ -288,15 +296,18 @@ export default class OtelLogsStore {
   };
 
   /** Every line up to the export limit; refresh ticks wait meanwhile so the
-      pages are not swapped out under it. A failed search refuses: what is
-      held is from the window before. */
+      pages are not swapped out under it. A failed list request refuses:
+      what is held is from the window before. A failed histogram or facets
+      request does not touch the lines. */
   collectExport = async (): Promise<OtelLog[]> => {
     this.exporting = true;
     // an earlier failed page would stop ensure() before it asks again
     this.pageError = null;
     try {
       await this.ensure(EXPORT_LIMIT);
-      const failed = this.error ?? this.pageError;
+      const failed = this.searchFailed
+        ? (this.error ?? 'Failed to load logs')
+        : this.pageError;
       if (failed) throw new Error(failed);
       return this.logs;
     } finally {
@@ -318,7 +329,7 @@ export default class OtelLogsStore {
       this.controller === controller &&
       this.logs.length < want &&
       this.nextCursor &&
-      !this.error &&
+      !this.searchFailed &&
       !this.pageError
     ) {
       if (this.loading || this.refreshing || this.loadingMore) {
@@ -361,6 +372,7 @@ export default class OtelLogsStore {
     this.histogramLoading = false;
     this.facetsLoading = false;
     this.error = null;
+    this.searchFailed = false;
     this.pageError = null;
     this.ingestKeys = [];
     this.rules = [];
