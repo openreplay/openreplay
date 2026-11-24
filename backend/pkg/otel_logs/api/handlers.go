@@ -23,6 +23,7 @@ func NewHandlers(log logger.Logger, req api.RequestHandler, logs otel_logs.Logs)
 		{Path: "/{project}/logs/search", Method: "POST", Handler: req.HandleWithBody(h.search), Permissions: api.NoPermissions, AuditTrail: api.DoNotTrack},
 		{Path: "/{project}/logs/histogram", Method: "POST", Handler: req.HandleWithBody(h.histogram), Permissions: api.NoPermissions, AuditTrail: api.DoNotTrack},
 		{Path: "/{project}/logs/facets", Method: "POST", Handler: req.HandleWithBody(h.facets), Permissions: api.NoPermissions, AuditTrail: api.DoNotTrack},
+		{Path: "/{project}/logs/autocomplete", Method: "GET", Handler: req.Handle(h.autocomplete), Permissions: api.NoPermissions, AuditTrail: api.DoNotTrack},
 	}
 	return h, nil
 }
@@ -58,6 +59,27 @@ func (h *handlersImpl) facets(ctx *api.RequestContext) (any, int, error) {
 		return nil, code, err
 	}
 	resp, err := h.logs.Facets(ctx.Request.Context(), projectID, req)
+	return h.respond(ctx, resp, err)
+}
+
+// @Summary Logs autocomplete
+// @Description Suggests values of a native column (empty source) or of an
+//
+//	attribute (source = log / resource / scope) matching the optional `q` query.
+//
+// @Tags Logs
+// @Param project path uint true "Project ID"
+// @Param propertyName query string true "Column name or attribute key"
+// @Param source query string false "Attribute source (log/resource/scope), empty for native columns"
+// @Param q query string false "Search query"
+// @Router /{project}/logs/autocomplete [get]
+func (h *handlersImpl) autocomplete(ctx *api.RequestContext) (any, int, error) {
+	projectID, err := ctx.GetProjectID()
+	if err != nil {
+		return nil, http.StatusBadRequest, err
+	}
+	qv := ctx.Request.URL.Query()
+	resp, err := h.logs.Autocomplete(ctx.Request.Context(), projectID, qv.Get("propertyName"), qv.Get("source"), qv.Get("q"))
 	return h.respond(ctx, resp, err)
 }
 
