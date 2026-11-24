@@ -68,6 +68,7 @@ jobs:
         minio_secret_key: ${{ secrets.OSS_MINIO_SECRET_KEY }}
         pg_password: ${{ secrets.OSS_PG_PASSWORD }}
         registry_url: ${{ secrets.OSS_REGISTRY_URL }}
+        jwt_mcp_secret: ${{ secrets.JWT_MCP_SECRET }}
       name: Update Keys
 
     - name: Deploy to kubernetes foss
@@ -129,6 +130,7 @@ jobs:
         minio_secret_key: ${{ secrets.EE_MINIO_SECRET_KEY }}
         pg_password: ${{ secrets.EE_PG_PASSWORD }}
         registry_url: ${{ secrets.OSS_REGISTRY_URL }}
+        jwt_mcp_secret: ${{ secrets.JWT_MCP_SECRET }}
       name: Update Keys
 
     - name: Deploy to kubernetes ee
