@@ -354,6 +354,10 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* narrow steps the sides in; the compact row keeps its own top and foot */
+:root[data-viewport='narrow'] .m-page--compact .m-page__head {
+  padding: 0 var(--m-space-6) var(--m-page-head-pb);
+}
 .m-shell__main:has(> .m-page--compact) {
   padding-top: 0.75rem;
 }

@@ -1,4 +1,5 @@
 import { SimpleSelect } from '@/ui/inputs/select';
+import { Tooltip } from '@/ui/overlays/tooltip';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -37,8 +38,8 @@ export interface ListFooterProps {
   /** a Fit the host measures itself: shown as chosen, `onFit` picks it */
   fitted?: boolean;
   onFit?: () => void;
-  /** how far the pager can go when the list cannot reach its whole total */
-  reachable?: number;
+  /** a tip on the count, e.g. why the pager stops short of everything */
+  hint?: string;
 }
 
 const choicesOf = (sizes: readonly number[]) =>
@@ -58,7 +59,7 @@ export function ListFooter({
   sizeLabel,
   fitted: fittedProp,
   onFit,
-  reachable,
+  hint,
 }: ListFooterProps) {
   const { t } = useTranslation();
   const foot = useRef<HTMLElement>(null);
@@ -83,15 +84,17 @@ export function ListFooter({
 
   return (
     <footer className="m-listfoot" ref={foot}>
-      <span className="m-listfoot__range">
-        {paginated
-          ? t('{{start}}–{{end}} of {{phrase}}', {
-              start: n(start),
-              end: n(end),
-              phrase,
-            })
-          : `${phrase}${detail ? ` ${detail}` : ''}`}
-      </span>
+      <Tooltip title={hint}>
+        <span className="m-listfoot__range">
+          {paginated
+            ? t('{{start}}–{{end}} of {{phrase}}', {
+                start: n(start),
+                end: n(end),
+                phrase,
+              })
+            : `${phrase}${detail ? ` ${detail}` : ''}`}
+        </span>
+      </Tooltip>
       {(paginated || sizable) && (
         <span className="m-listfoot__end">
           {sizable && (
@@ -124,7 +127,7 @@ export function ListFooter({
           {paginated && (
             <Pagination
               current={page}
-              total={reachable != null ? Math.min(total, reachable) : total}
+              total={total}
               pageSize={pageSize}
               onChange={onPage}
             />

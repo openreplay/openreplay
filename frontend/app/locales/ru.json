@@ -3265,5 +3265,7 @@
   "Every request as a waterfall of spans, on the same window and filters as Logs. Until then, a log line carries its trace id and the search finds it.": "Каждый запрос в виде каскада спанов, с тем же периодом и фильтрами, что и в Logs. А пока строка лога содержит свой trace id, и поиск её находит.",
   "Some lines could not load, so nothing was exported": "Часть строк не загрузилась, поэтому ничего не экспортировано",
   "Counted without its “contains” filter": "Подсчитано без его фильтра «содержит»",
-  "About this line": "Об этой строке"
+  "About this line": "Об этой строке",
+  "the newest {{n}} · {{total}} in this window": "последние {{n}} · {{total}} за этот период",
+  "Auto-refresh works on relative windows, like Past hour. A custom range doesn't move.": "Автообновление работает с относительными периодами, например «Последний час». Заданный диапазон не сдвигается."
 }

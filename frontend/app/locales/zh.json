@@ -3050,5 +3050,7 @@
   "Every request as a waterfall of spans, on the same window and filters as Logs. Until then, a log line carries its trace id and the search finds it.": "以 span 瀑布图展示每个请求，与 Logs 使用相同的时间范围和筛选条件。在此之前，日志行带有其 trace id，搜索即可找到。",
   "Some lines could not load, so nothing was exported": "部分日志行未能加载，因此未导出任何内容",
   "Counted without its “contains” filter": "统计时未应用其“包含”筛选",
-  "About this line": "关于此行"
+  "About this line": "关于此行",
+  "the newest {{n}} · {{total}} in this window": "最新 {{n}} 条 · 此时间段共 {{total}} 条",
+  "Auto-refresh works on relative windows, like Past hour. A custom range doesn't move.": "自动刷新仅适用于相对时间段，例如“过去一小时”。自定义范围不会移动。"
 }

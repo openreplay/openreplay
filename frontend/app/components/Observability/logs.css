@@ -109,6 +109,14 @@
   border-bottom: 1px solid var(--m-border-default);
 }
 .m-logs__bar-legend { display: inline-flex; align-items: center; flex: 1; min-width: 0; }
+/* a narrow column (the facets open at 1024): the legend takes the bar's first
+   row, the controls the second at its end */
+.m-logs__main { container: logs-main / inline-size; --m-panel-head-h: var(--m-logs-bar-h, 3rem); }
+.m-logs__main:has(> .m-newrows) { --m-panel-head-h: calc(var(--m-logs-bar-h, 3rem) + 2rem); }
+@container logs-main (max-width: 780px) {
+  .m-logs__bar { flex-wrap: wrap; row-gap: var(--m-space-2); }
+  .m-logs__bar-legend { flex-basis: 100%; }
+}
 
 .m-logs__chart {
   position: relative;

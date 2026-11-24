@@ -3050,5 +3050,7 @@
   "Every request as a waterfall of spans, on the same window and filters as Logs. Until then, a log line carries its trace id and the search finds it.": "모든 요청을 Logs와 같은 기간과 필터로 스팬의 워터폴로 표시합니다. 그때까지는 로그 줄에 trace id가 있어 검색으로 찾을 수 있습니다.",
   "Some lines could not load, so nothing was exported": "일부 줄을 불러오지 못해 아무것도 내보내지 않았습니다",
   "Counted without its “contains” filter": "‘포함’ 필터를 빼고 집계함",
-  "About this line": "이 줄 정보"
+  "About this line": "이 줄 정보",
+  "the newest {{n}} · {{total}} in this window": "최신 {{n}}개 · 이 기간 {{total}}개",
+  "Auto-refresh works on relative windows, like Past hour. A custom range doesn't move.": "자동 새로고침은 지난 1시간처럼 상대 기간에서만 작동합니다. 사용자 지정 범위는 움직이지 않습니다."
 }

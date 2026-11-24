@@ -19,6 +19,9 @@ export interface RefreshControlProps {
   onEvery: (seconds: number | null) => void;
   onPause: (paused: boolean) => void;
   onRefresh: () => void;
+  /** why auto-refresh cannot run now: it reads Off, the menu stays shut and
+      this is its tip. `every` is kept for when it can. */
+  unavailable?: string;
 }
 
 const short = (s: number) => (s >= 60 ? `${s / 60}m` : `${s}s`);
@@ -30,6 +33,7 @@ export function RefreshControl({
   onEvery,
   onPause,
   onRefresh,
+  unavailable,
 }: RefreshControlProps) {
   const { t } = useTranslation();
   const long = (s: number) =>
@@ -37,7 +41,7 @@ export function RefreshControl({
       ? t('Every {{n}} min', { n: s / 60 })
       : t('Every {{n}} s', { n: s });
   const [turns, setTurns] = useState(0);
-  const on = every != null;
+  const on = every != null && !unavailable;
   return (
     <div
       className={cn('m-refresh', on && 'is-on', paused && 'is-paused')}
@@ -62,68 +66,86 @@ export function RefreshControl({
           />
         </button>
       </Tooltip>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
+      {unavailable ? (
+        <Tooltip title={unavailable}>
           <button
             type="button"
             className="m-refresh__cell m-refresh__every"
-            aria-label={
-              !on
-                ? t('Auto-refresh: off')
-                : paused
-                  ? t('Auto-refresh: {{every}}, paused', {
-                      every: long(every!),
-                    })
-                  : t('Auto-refresh: {{every}}', { every: long(every!) })
-            }
+            aria-disabled="true"
+            aria-label={t('Auto-refresh: off')}
           >
-            <span className="m-refresh__value">
-              {on ? short(every!) : t('Off')}
-            </span>
+            <span className="m-refresh__value">{t('Off')}</span>
             <ChevronDown
               size={12}
               className="m-refresh__caret"
               aria-hidden="true"
             />
-            {on && (
-              <span
-                key={`${every}-${paused}`}
-                className="m-refresh__countdown"
-                style={{ animationDuration: `${every}s` }}
+          </button>
+        </Tooltip>
+      ) : (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="m-refresh__cell m-refresh__every"
+              aria-label={
+                !on
+                  ? t('Auto-refresh: off')
+                  : paused
+                    ? t('Auto-refresh: {{every}}, paused', {
+                        every: long(every!),
+                      })
+                    : t('Auto-refresh: {{every}}', { every: long(every!) })
+              }
+            >
+              <span className="m-refresh__value">
+                {on ? short(every!) : t('Off')}
+              </span>
+              <ChevronDown
+                size={12}
+                className="m-refresh__caret"
                 aria-hidden="true"
               />
-            )}
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItems
-            items={[
-              {
-                key: 'off',
-                label: t('Off'),
-                icon: on ? (
-                  <span className="m-refresh__blank" />
-                ) : (
-                  <Check size={13} />
-                ),
-                onClick: () => onEvery(null),
-              },
-              { key: 'd', type: 'divider' },
-              ...choices.map((s) => ({
-                key: String(s),
-                label: long(s),
-                icon:
-                  every === s ? (
-                    <Check size={13} />
-                  ) : (
+              {on && (
+                <span
+                  key={`${every}-${paused}`}
+                  className="m-refresh__countdown"
+                  style={{ animationDuration: `${every}s` }}
+                  aria-hidden="true"
+                />
+              )}
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItems
+              items={[
+                {
+                  key: 'off',
+                  label: t('Off'),
+                  icon: on ? (
                     <span className="m-refresh__blank" />
+                  ) : (
+                    <Check size={13} />
                   ),
-                onClick: () => onEvery(s),
-              })),
-            ]}
-          />
-        </DropdownMenuContent>
-      </DropdownMenu>
+                  onClick: () => onEvery(null),
+                },
+                { key: 'd', type: 'divider' },
+                ...choices.map((s) => ({
+                  key: String(s),
+                  label: long(s),
+                  icon:
+                    every === s ? (
+                      <Check size={13} />
+                    ) : (
+                      <span className="m-refresh__blank" />
+                    ),
+                  onClick: () => onEvery(s),
+                })),
+              ]}
+            />
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
       {on && (
         <Tooltip title={paused ? t('Resume') : t('Pause')}>
           <button

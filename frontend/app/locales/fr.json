@@ -3191,5 +3191,7 @@
   "Every request as a waterfall of spans, on the same window and filters as Logs. Until then, a log line carries its trace id and the search finds it.": "Chaque requête en cascade de spans, sur la même période et avec les mêmes filtres que Logs. En attendant, chaque ligne de log porte son trace id et la recherche la retrouve.",
   "Some lines could not load, so nothing was exported": "Certaines lignes n’ont pas pu être chargées, rien n’a donc été exporté",
   "Counted without its “contains” filter": "Compté sans son filtre « contient »",
-  "About this line": "À propos de cette ligne"
+  "About this line": "À propos de cette ligne",
+  "the newest {{n}} · {{total}} in this window": "les {{n}} plus récentes · {{total}} sur cette période",
+  "Auto-refresh works on relative windows, like Past hour. A custom range doesn't move.": "L’actualisation automatique fonctionne avec les périodes relatives, comme Dernière heure. Une plage personnalisée ne bouge pas."
 }

@@ -11,12 +11,22 @@ import { ListFooter } from '@/ui/layout/ListFooter';
 import { NewRowsBand } from '@/ui/layout/NewRowsBand';
 import { PageCard, PagePanel } from '@/ui/layout/PageCard';
 import { PaneHandle } from '@/ui/layout/PaneHandle';
-import { setRowsPerPage, useRowsPerPage } from '@/ui/layout/rows-per-page';
+import {
+  getRowsPerPage,
+  setRowsPerPage,
+  useRowsChoice,
+} from '@/ui/layout/rows-per-page';
 import { useViewport } from '@/ui/layout/use-viewport';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import { Bookmark, PanelLeftOpen } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
-import { type CSSProperties, useEffect, useMemo, useState } from 'react';
+import {
+  type CSSProperties,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { CUSTOM_RANGE } from 'App/dateRange';
@@ -80,7 +90,7 @@ function LogsPage() {
   const phone = useViewport() === 'phone';
   const siteId = projectsStore.siteId;
   const userId = userStore.account.id;
-  const rowsPerPage = useRowsPerPage('logs');
+  const rowsChoice = useRowsChoice();
   const [legendSlot, setLegendSlot] = useState<HTMLElement | null>(null);
   const [railDragging, setRailDragging] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
@@ -98,15 +108,42 @@ function LogsPage() {
     return () => window.clearTimeout(id);
   }, [store.signature, siteId]);
 
+  // a new Fit count waits for the next search: the bar's height (a filter,
+  // the legend wrapping) never moves the lines under the page numbers
   useEffect(() => {
-    store.resize(rowsPerPage);
-  }, [rowsPerPage]);
+    store.resize(getRowsPerPage('logs'));
+  }, [rowsChoice]);
 
+  const relative = 'preset' in store.window;
   useEffect(() => {
-    if (store.refreshEvery == null || store.paused) return undefined;
-    const id = window.setInterval(store.tick, store.refreshEvery * 1000);
-    return () => window.clearInterval(id);
-  }, [store.refreshEvery, store.paused]);
+    if (!relative || store.refreshEvery == null || store.paused)
+      return undefined;
+    const id = window.setInterval(() => {
+      if (!document.hidden) store.tick();
+    }, store.refreshEvery * 1000);
+    const onVisible = () => {
+      if (!document.hidden) store.tick();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [relative, store.refreshEvery, store.paused]);
+
+  // the column head and the new-lines band stick under the bar, one or two rows
+  const bar = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = bar.current;
+    const host = el?.parentElement;
+    if (!el || !host) return undefined;
+    const publish = () =>
+      host.style.setProperty('--m-logs-bar-h', `${el.offsetHeight}px`);
+    publish();
+    const ro = new ResizeObserver(publish);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   useEffect(() => setViewOpen(false), [store.viewId]);
 
@@ -213,23 +250,30 @@ function LogsPage() {
 
   /* the controls on the list's head */
   const w = store.window;
+  const fixedRange = t(
+    "Auto-refresh works on relative windows, like Past hour. A custom range doesn't move.",
+  );
   const windowControl = (
-    <DateRange
-      field={t('Time')}
-      period={
-        'preset' in w
-          ? { rangeName: w.preset }
-          : { rangeName: CUSTOM_RANGE, start: w.from, end: w.to }
-      }
-      options={LOG_PRESETS.map((p) => ({ value: p.value, label: p.label }))}
-      resting={DEFAULT_LOG_PRESET}
-      withTime
-      onChange={(p: any) =>
-        p.rangeName === CUSTOM_RANGE
-          ? store.setWindow(clampWindow(p.start, p.end))
-          : store.setWindow({ preset: p.rangeName })
-      }
-    />
+    <Tooltip title={fixedRange} disabled={relative}>
+      <span className="inline-flex">
+        <DateRange
+          field={t('Time')}
+          period={
+            'preset' in w
+              ? { rangeName: w.preset }
+              : { rangeName: CUSTOM_RANGE, start: w.from, end: w.to }
+          }
+          options={LOG_PRESETS.map((p) => ({ value: p.value, label: p.label }))}
+          resting={DEFAULT_LOG_PRESET}
+          withTime
+          onChange={(p: any) =>
+            p.rangeName === CUSTOM_RANGE
+              ? store.setWindow(clampWindow(p.start, p.end))
+              : store.setWindow({ preset: p.rangeName })
+          }
+        />
+      </span>
+    </Tooltip>
   );
   const baseColumns = [
     'level',
@@ -451,7 +495,7 @@ function LogsPage() {
                   </span>
                 </div>
               )}
-              <div className="m-logs__bar">
+              <div className="m-logs__bar" ref={bar}>
                 <span className="m-logs__bar-legend" ref={setLegendSlot} />
                 <span className="m-logs__headend">
                   <Segmented
@@ -481,6 +525,7 @@ function LogsPage() {
                     onEvery={store.setRefresh}
                     onPause={store.setPaused}
                     onRefresh={() => void store.run()}
+                    unavailable={relative ? undefined : fixedRange}
                   />
                   <ExportControl
                     total={store.total}
@@ -516,7 +561,7 @@ function LogsPage() {
                   n: compactCount(store.newCount),
                   count: store.newCount,
                 })}
-                stickyTop="3rem"
+                stickyTop="var(--m-logs-bar-h, 3rem)"
                 onShow={store.showNew}
               />
               {store.loading && store.logs.length === 0 ? (
@@ -554,6 +599,8 @@ function LogsPage() {
                         </Button>
                       }
                     />
+                  ) : store.pageLoading ? (
+                    <SkeletonRows rows={Math.min(store.pageSize, 12)} />
                   ) : (
                     <LogTable
                       rows={store.pageRows}
@@ -568,15 +615,30 @@ function LogsPage() {
                     page={store.page}
                     pageSize={store.pageSize}
                     total={store.pagerTotal}
-                    reachable={EXPORT_LIMIT}
                     noun={(count, n) =>
-                      t('{{n}} lines', {
-                        count,
-                        // no histogram counted them: as many as loaded, and more
-                        n: store.totalKnown
-                          ? n
-                          : `${store.logs.length.toLocaleString()}+`,
-                      })
+                      store.capped
+                        ? t('the newest {{n}} · {{total}} in this window', {
+                            n,
+                            total: store.total.toLocaleString(),
+                          })
+                        : t('{{n}} lines', {
+                            count,
+                            // no histogram counted them: as many as loaded, and more
+                            n: store.totalKnown
+                              ? n
+                              : `${store.logs.length.toLocaleString()}+`,
+                          })
+                    }
+                    hint={
+                      store.capped
+                        ? t(
+                            'The newest {{n}} of {{total}}; narrow the window for the rest.',
+                            {
+                              n: compactCount(EXPORT_LIMIT),
+                              total: compactCount(store.total),
+                            },
+                          )
+                        : undefined
                     }
                     onPage={store.setPage}
                     onPageSize={(n) => setRowsPerPage(n)}

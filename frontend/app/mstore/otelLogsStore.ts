@@ -120,6 +120,9 @@ export default class OtelLogsStore {
   labelOf: (key: string) => string = (key) => key;
 
   private controller: AbortController | null = null;
+  /** every request of the last run has answered */
+  private landed = true;
+  private counting = false;
   private viewsKey: string | null = null;
   private generation = 0;
   private keysSeq = 0;
@@ -127,9 +130,16 @@ export default class OtelLogsStore {
   constructor() {
     makeAutoObservable<
       OtelLogsStore,
-      'controller' | 'viewsKey' | 'generation' | 'keysSeq'
+      | 'controller'
+      | 'landed'
+      | 'counting'
+      | 'viewsKey'
+      | 'generation'
+      | 'keysSeq'
     >(this, {
       controller: false,
+      landed: false,
+      counting: false,
       viewsKey: false,
       generation: false,
       keysSeq: false,
@@ -176,6 +186,7 @@ export default class OtelLogsStore {
     this.controller?.abort();
     const controller = new AbortController();
     this.controller = controller;
+    this.landed = false;
     const filter = this.buildFilter();
     const { signal } = controller;
 
@@ -255,6 +266,7 @@ export default class OtelLogsStore {
           if (current()) runInAction(() => (this.facetsLoading = false));
         }),
     ]);
+    if (current()) this.landed = true;
   };
 
   /** Next page of the applied filter; no-op while loading or at the end.
@@ -367,6 +379,7 @@ export default class OtelLogsStore {
   reset = () => {
     this.controller?.abort();
     this.controller = null;
+    this.landed = true;
     this.query = '';
     this.services = [];
     this.severities = [];
@@ -593,10 +606,29 @@ export default class OtelLogsStore {
     return !this.nextCursor || this.histogram != null;
   }
 
-  /** what the pager can reach: one line past the loaded ones while the
-      count is out, so the next page stays open */
+  /** more lines match than the list pages through */
+  get capped(): boolean {
+    return this.totalKnown && this.total > EXPORT_LIMIT;
+  }
+
+  /** what the pager can reach: the newest EXPORT_LIMIT lines, and one line
+      past the loaded ones while the count is out, so the next page stays open */
   get pagerTotal(): number {
-    return this.totalKnown ? this.total : this.logs.length + 1;
+    return Math.min(
+      this.totalKnown ? this.total : this.logs.length + 1,
+      EXPORT_LIMIT,
+    );
+  }
+
+  /** the shown page's lines are still on the way */
+  get pageLoading(): boolean {
+    return (
+      !this.loading &&
+      !this.searchFailed &&
+      !this.pageError &&
+      this.nextCursor != null &&
+      this.logs.length < Math.min(this.page * this.pageSize, EXPORT_LIMIT)
+    );
   }
 
   get pageRows(): OtelLog[] {
@@ -724,9 +756,11 @@ export default class OtelLogsStore {
   };
 
   /** a tick: page one with nothing open refetches, anything else counts
-      what arrived since and offers it */
+      what arrived since and offers it. A request still out is never cut
+      off: the tick skips until it lands. */
   tick = () => {
     if (!('preset' in this.window) || this.exporting) return;
+    if (!this.landed || this.loadingMore || this.counting) return;
     if (this.page === 1 && !this.openLine) {
       void this.run(Date.now(), true);
       return;
@@ -737,6 +771,7 @@ export default class OtelLogsStore {
   countNew = async () => {
     const applied = this.appliedFilter;
     if (!applied) return;
+    this.counting = true;
     try {
       const r = await otelLogsService.histogram({
         ...applied,
@@ -749,6 +784,8 @@ export default class OtelLogsStore {
       });
     } catch {
       /* the next tick asks again */
+    } finally {
+      this.counting = false;
     }
   };
 

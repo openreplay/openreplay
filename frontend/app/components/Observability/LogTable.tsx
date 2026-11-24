@@ -92,6 +92,7 @@ export function LogTable({
       }
       onRowClick={(l) => onOpen(l)}
       ariaLabel={t('Log lines')}
+      stickyHeader
     />
   );
 }

@@ -37,6 +37,17 @@
   background: var(--m-surface-hover);
   color: var(--m-content-primary);
 }
+.m-refresh__every[aria-disabled='true'] {
+  color: var(--m-content-disabled);
+  cursor: not-allowed;
+}
+.m-refresh__every[aria-disabled='true']:hover {
+  background: none;
+  color: var(--m-content-disabled);
+}
+.m-refresh__every[aria-disabled='true'] .m-refresh__caret {
+  color: var(--m-content-disabled);
+}
 .m-refresh__cell:focus-visible {
   outline: 2px solid var(--m-focus-ring, var(--m-border-strong));
   outline-offset: -2px;
