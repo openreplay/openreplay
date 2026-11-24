@@ -1113,7 +1113,7 @@ FROM otel.logs
 
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS otel.autocomplete_grouped_mv
-            TO otel.autocomplete_grouped AS
+    TO otel.autocomplete_grouped AS
 SELECT ProjectId,
        t.1                   AS Source,
        t.2                   AS Name,
@@ -1128,11 +1128,11 @@ FROM otel.logs
                      ('log_global', 'ScopeName', ScopeName),
                      ('log_global', 'ScopeVersion', ScopeVersion),
                      ('log_global', 'EventName', EventName)],
-                 arrayMap((k, v) -> ('resource',concat('ResourceAttributes.', toString(k)), v),
+                 arrayMap((k, v) -> ('resource', toString(k), v),
                           mapKeys(ResourceAttributes), mapValues(ResourceAttributes)),
-                 arrayMap((k, v) -> ('scope',concat('ScopeAttributes.', toString(k)), v),
+                 arrayMap((k, v) -> ('scope', toString(k), v),
                           mapKeys(ScopeAttributes), mapValues(ScopeAttributes)),
-                 arrayMap((k, v) -> ('log',concat('LogAttributes.', toString(k)), v),
+                 arrayMap((k, v) -> ('log', toString(k), v),
                           mapKeys(LogAttributes), mapValues(LogAttributes))) AS t
 WHERE isNotNull(t.3)
   AND notEmpty(toString(t.3))
