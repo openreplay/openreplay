@@ -2858,5 +2858,7 @@
   "One command": "One command",
   "Manual": "Manual",
   "Setup": "Setup",
-  "It finds your framework, installs the packages and adds the tracker, showing every change first.": "It finds your framework, installs the packages and adds the tracker, showing every change first."
+  "It finds your framework, installs the packages and adds the tracker, showing every change first.": "It finds your framework, installs the packages and adds the tracker, showing every change first.",
+  "Add an event or filter": "添加事件或筛选条件",
+  "Add the page": "添加页面"
 }

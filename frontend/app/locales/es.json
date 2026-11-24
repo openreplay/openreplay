@@ -2976,5 +2976,7 @@
   "One command": "One command",
   "Manual": "Manual",
   "Setup": "Setup",
-  "It finds your framework, installs the packages and adds the tracker, showing every change first.": "It finds your framework, installs the packages and adds the tracker, showing every change first."
+  "It finds your framework, installs the packages and adds the tracker, showing every change first.": "It finds your framework, installs the packages and adds the tracker, showing every change first.",
+  "Add an event or filter": "Añadir un evento o filtro",
+  "Add the page": "Añadir la página"
 }

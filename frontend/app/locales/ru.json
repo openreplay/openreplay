@@ -3035,5 +3035,7 @@
   "One command": "One command",
   "Manual": "Manual",
   "Setup": "Setup",
-  "It finds your framework, installs the packages and adds the tracker, showing every change first.": "It finds your framework, installs the packages and adds the tracker, showing every change first."
+  "It finds your framework, installs the packages and adds the tracker, showing every change first.": "It finds your framework, installs the packages and adds the tracker, showing every change first.",
+  "Add an event or filter": "Добавьте событие или фильтр",
+  "Add the page": "Добавьте страницу"
 }
