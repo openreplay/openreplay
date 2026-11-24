@@ -48,7 +48,7 @@ if out=$(helm template openreplay -n app openreplay -f vars.yaml --set ingress-n
 else
   ko "openreplay guard: ${out:0:400}"
 fi
-helm template databases -n db databases -f vars.yaml >/dev/null 2>&1 && ok "databases guard passes" || ko "databases guard fails"
+# databases is not rendered: no CI workflow deploys it (only openreplay).
 
 # Every workflow call site passes the MCP secret
 cd $root
