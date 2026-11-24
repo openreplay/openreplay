@@ -56,11 +56,14 @@
   color: inherit;
   font-weight: var(--m-weight-medium);
 }
+/* one line tall, so the × centres on the first line and overhangs the padding
+   instead of stretching the notice */
 .m-notice__dismiss {
   flex: none;
   display: flex;
   align-items: center;
-  margin: -3px calc(var(--m-space-2) * -1) -3px 0;
+  height: 1lh;
+  margin-right: calc(var(--m-space-2) * -1);
   color: inherit;
 }
 .m-notice__dismiss button {

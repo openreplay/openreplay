@@ -55,6 +55,7 @@ export function Notice({
             icon={<X size={13} />}
             label={t('Dismiss')}
             variant="ghost"
+            size="xs"
             onClick={onDismiss}
           />
         </span>
