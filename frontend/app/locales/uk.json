@@ -3037,5 +3037,13 @@
   "Setup": "Setup",
   "It finds your framework, installs the packages and adds the tracker, showing every change first.": "It finds your framework, installs the packages and adds the tracker, showing every change first.",
   "Add an event or filter": "Додайте подію або фільтр",
-  "Add the page": "Додайте сторінку"
+  "Add the page": "Додайте сторінку",
+  "Script tag": "Тег script",
+  "Paste one snippet in your page. No code tools needed.": "Вставте один фрагмент на сторінку. Інструменти розробки не потрібні.",
+  "npm package": "Пакет npm",
+  "For apps built with React, Vue, Angular and the like.": "Для застосунків на React, Vue, Angular тощо.",
+  "Step by step": "Покроково",
+  "How to install": "Спосіб встановлення",
+  "Explore the documentation": "Перегляньте документацію",
+  "Full SDK documentation": "Повна документація SDK"
 }

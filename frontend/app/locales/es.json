@@ -2978,5 +2978,13 @@
   "Setup": "Setup",
   "It finds your framework, installs the packages and adds the tracker, showing every change first.": "It finds your framework, installs the packages and adds the tracker, showing every change first.",
   "Add an event or filter": "Añadir un evento o filtro",
-  "Add the page": "Añadir la página"
+  "Add the page": "Añadir la página",
+  "Script tag": "Etiqueta script",
+  "Paste one snippet in your page. No code tools needed.": "Pega un fragmento en tu página. Sin herramientas de código.",
+  "npm package": "Paquete npm",
+  "For apps built with React, Vue, Angular and the like.": "Para apps hechas con React, Vue, Angular y similares.",
+  "Step by step": "Paso a paso",
+  "How to install": "Cómo instalar",
+  "Explore the documentation": "Consulta la documentación",
+  "Full SDK documentation": "Documentación completa del SDK"
 }

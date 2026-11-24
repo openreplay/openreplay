@@ -514,3 +514,26 @@
 :root[data-viewport='phone'] .m-ob__done-actions > * {
   justify-content: center;
 }
+
+/* how the tracker goes in (InstallChoice) */
+.m-ic { display: flex; flex-direction: column; align-items: flex-start; gap: var(--m-space-4); }
+.m-ic__doors { display: grid; grid-template-columns: repeat(2, minmax(0, 15rem)); gap: var(--m-space-3); }
+.m-ic__door {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--m-space-3);
+  padding: var(--m-space-4);
+  border: 1px solid var(--m-border-default);
+  border-radius: var(--m-radius-surface);
+  background: var(--m-surface-default);
+  text-align: left;
+  color: var(--m-content-muted);
+  cursor: pointer;
+  transition: border-color var(--m-duration-fast) var(--m-ease-out), background-color var(--m-duration-fast) var(--m-ease-out);
+}
+.m-ic__door:hover { background: var(--m-surface-hover); }
+.m-ic__door.is-on { border-color: var(--m-content-accent); background: var(--m-surface-selected); color: var(--m-content-accent); }
+.m-ic__door svg { flex: none; margin-top: 1px; }
+.m-ic__door b { display: block; font-size: var(--m-text-sm); font-weight: var(--m-weight-medium); color: var(--m-content-primary); }
+.m-ic__door small { display: block; margin-top: 2px; font-size: var(--m-text-xs); line-height: var(--m-leading-snug); color: var(--m-content-muted); }
+:root[data-viewport='phone'] .m-ic__doors { grid-template-columns: minmax(0, 1fr); width: 100%; }

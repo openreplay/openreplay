@@ -2860,5 +2860,13 @@
   "Setup": "Setup",
   "It finds your framework, installs the packages and adds the tracker, showing every change first.": "It finds your framework, installs the packages and adds the tracker, showing every change first.",
   "Add an event or filter": "이벤트 또는 필터 추가",
-  "Add the page": "페이지 추가"
+  "Add the page": "페이지 추가",
+  "Script tag": "스크립트 태그",
+  "Paste one snippet in your page. No code tools needed.": "페이지에 스니펫 하나만 붙여 넣으세요. 코드 도구는 필요 없습니다.",
+  "npm package": "npm 패키지",
+  "For apps built with React, Vue, Angular and the like.": "React, Vue, Angular 등으로 만든 앱용입니다.",
+  "Step by step": "단계별",
+  "How to install": "설치 방법",
+  "Explore the documentation": "문서 살펴보기",
+  "Full SDK documentation": "전체 SDK 문서"
 }

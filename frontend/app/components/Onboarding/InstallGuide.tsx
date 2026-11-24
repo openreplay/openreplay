@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { useStore } from 'App/mstore';
 import type Project from 'App/mstore/types/project';
 
+import InstallChoice, { type InstallSetup } from './InstallChoice';
 import {
   ASSIST_INSTALL,
   ASSIST_USE,
@@ -60,7 +61,7 @@ function InstallGuide({
   const [ownMethod, setOwnMethod] = React.useState<InstallMethod>('npm');
   const method = methodProp ?? ownMethod;
   const setMethod = onMethod ?? setOwnMethod;
-  const [setup, setSetup] = React.useState<'command' | 'manual'>('command');
+  const [setup, setSetup] = React.useState<InstallSetup>('command');
   const [ssr, setSsr] = React.useState(false);
   const [assist, setAssist] = React.useState(false);
   const [privacyOpen, setPrivacyOpen] = React.useState(false);
@@ -90,7 +91,7 @@ function InstallGuide({
   const language = PLATFORMS.find((p) => p.key === platform)!.language;
   const install = installCommand(platform);
   const isWeb = platform === 'web';
-  const manual = !isWeb || setup === 'manual';
+  const manual = !isWeb || method === 'script' || setup === 'manual';
   const showInstall = !isWeb || method === 'npm';
   const privacySummary = [
     t(INPUT_MODES.find((m) => m.value === inputMode)?.label ?? ''),
@@ -107,60 +108,49 @@ function InstallGuide({
     .join(' · ');
   let n = 0;
   const next = () => (n += 1);
+  // on the step it changes: the snippet's bundle, or a step of its own on npm
+  const cobrowse = (
+    <label className="m-ob__switch">
+      <Switch
+        checked={assist}
+        onCheckedChange={setAssist}
+        aria-label={t('Enable CoBrowse')}
+      />
+      {t('Enable CoBrowse')}{' '}
+      <span className="m-ob__muted">{t('(optional)')}</span>
+    </label>
+  );
 
   return (
     <div className="m-ob__stack">
-      {(platforms.length > 1 || isWeb) && (
+      {platforms.length > 1 && (
         <div className="m-ob__controls">
-          {platforms.length > 1 && (
-            <Segmented
-              value={platform}
-              onChange={(v) => onPlatform(v as Platform)}
-              ariaLabel={t('Platform')}
-              options={PLATFORMS.filter((p) => platforms.includes(p.key)).map(
-                (p) => ({ value: p.key, label: p.label }),
-              )}
-            />
-          )}
-          {isWeb && (
-            <Segmented<'command' | 'manual'>
-              value={setup}
-              onChange={setSetup}
-              ariaLabel={t('Setup')}
-              options={[
-                { value: 'command', label: t('One command') },
-                { value: 'manual', label: t('Manual') },
-              ]}
-            />
-          )}
-          {isWeb && (
-            <label className="m-ob__switch">
-              <Switch
-                checked={method === 'script'}
-                onCheckedChange={(v) => setMethod(v ? 'script' : 'npm')}
-                aria-label={t('Install with a script tag')}
-              />
-              {t('Install with a script tag')}
-            </label>
-          )}
-          {full && isWeb && manual && (
-            <label className="m-ob__switch">
-              <Switch
-                checked={assist}
-                onCheckedChange={setAssist}
-                aria-label={t('Enable CoBrowse')}
-              />
-              {t('Enable CoBrowse')}{' '}
-              <span className="m-ob__muted">{t('(optional)')}</span>
-            </label>
-          )}
+          <Segmented
+            value={platform}
+            onChange={(v) => onPlatform(v as Platform)}
+            ariaLabel={t('Platform')}
+            options={PLATFORMS.filter((p) => platforms.includes(p.key)).map(
+              (p) => ({ value: p.key, label: p.label }),
+            )}
+          />
         </div>
+      )}
+      {isWeb && (
+        <InstallChoice
+          method={method}
+          setup={setup}
+          onMethod={setMethod}
+          onSetup={setSetup}
+        />
       )}
 
       {!manual && (
-        <Step title={t('Run it in your app folder')}>
+        <Step
+          n={full ? next() : undefined}
+          title={t('Run it in your app folder')}
+        >
           <CodeBlock
-            code={wizardCommand(opts.projectKey, method)}
+            code={wizardCommand(opts.projectKey)}
             inline
             plain
             copyLabel={t('Copy command')}
@@ -171,6 +161,13 @@ function InstallGuide({
               'It finds your framework, installs the packages and adds the tracker, showing every change first.',
             )}
           </p>
+        </Step>
+      )}
+      {!manual && full && (
+        <Step n={next()} title={t('Explore the documentation')}>
+          <ExternalLink className="m-ob__link text-sm" href={DOCS.web}>
+            {t('Full SDK documentation')}
+          </ExternalLink>
         </Step>
       )}
 
@@ -204,16 +201,21 @@ function InstallGuide({
               : t('Start the tracker')
           }
           aside={
-            isWeb && method === 'npm' ? (
-              <label className="m-ob__switch">
-                <Switch
-                  checked={ssr}
-                  onCheckedChange={setSsr}
-                  aria-label={t('Server-side rendered')}
-                />
-                {t('Server-side rendered')}{' '}
-                <span className="m-ob__muted">(Next, Nuxt)</span>
-              </label>
+            isWeb && (method === 'npm' || full) ? (
+              <>
+                {method === 'npm' && (
+                  <label className="m-ob__switch">
+                    <Switch
+                      checked={ssr}
+                      onCheckedChange={setSsr}
+                      aria-label={t('Server-side rendered')}
+                    />
+                    {t('Server-side rendered')}{' '}
+                    <span className="m-ob__muted">(Next, Nuxt)</span>
+                  </label>
+                )}
+                {full && cobrowse}
+              </>
             ) : undefined
           }
         >

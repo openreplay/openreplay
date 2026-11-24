@@ -3037,5 +3037,13 @@
   "Setup": "Setup",
   "It finds your framework, installs the packages and adds the tracker, showing every change first.": "It finds your framework, installs the packages and adds the tracker, showing every change first.",
   "Add an event or filter": "Добавьте событие или фильтр",
-  "Add the page": "Добавьте страницу"
+  "Add the page": "Добавьте страницу",
+  "Script tag": "Тег script",
+  "Paste one snippet in your page. No code tools needed.": "Вставьте один фрагмент на страницу. Инструменты разработки не нужны.",
+  "npm package": "Пакет npm",
+  "For apps built with React, Vue, Angular and the like.": "Для приложений на React, Vue, Angular и подобных.",
+  "Step by step": "Пошагово",
+  "How to install": "Способ установки",
+  "Explore the documentation": "Изучите документацию",
+  "Full SDK documentation": "Полная документация SDK"
 }
