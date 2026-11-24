@@ -8,22 +8,36 @@ import { useTranslation } from 'react-i18next';
 
 import { CompareTag } from 'App/components/Charts/CompareTag';
 import 'App/components/Dashboard/charts.css';
-import TopNButton from 'App/components/Dashboard/components/BreakdownFilter/TopNButton';
+import BreakdownSelectionPanel from 'App/components/Dashboard/components/BreakdownFilter/BreakdownSelectionPanel';
+import { getBreakdownDisplayName } from 'App/components/Dashboard/components/BreakdownFilter/breakdownDimensions';
 import { useModal } from 'App/components/Modal';
 import type Funnel from 'App/mstore/types/funnel';
 import type FunnelStage from 'App/mstore/types/funnelStage';
 import type Widget from 'App/mstore/types/widget';
+import {
+  type NestedData,
+  buildLevelTree,
+  computeSelectionFromTopN,
+  getDepth,
+  isLeaf,
+} from 'App/utils/breakdownTree';
 import NoDataInWindow from 'Components/Dashboard/components/NoDataInWindow';
+
+interface FunnelData {
+  funnel: Funnel;
+  funnelBreakdown?: Record<string, Funnel>;
+  funnelBreakdownTree?: NestedData;
+}
 
 interface Props {
   metric?: Widget;
   isWidget?: boolean;
-  data: { funnel: Funnel; funnelBreakdown?: Record<string, Funnel> };
+  data: FunnelData;
   /** a stage was drilled into (a dashboard opens its card) */
   onDrill?: () => void;
   /** the window the funnel is drawn over, when not the card's drill-down one */
   drillPeriod?: Record<string, any>;
-  compData?: { funnel: Funnel; funnelBreakdown?: Record<string, Funnel> };
+  compData?: FunnelData;
 }
 
 const INSIDE_MIN = 12;
@@ -58,7 +72,7 @@ function FunnelWidget({
   drillPeriod,
 }: Props) {
   const { t } = useTranslation();
-  const { dashboardStore, metricStore } = useStore();
+  const { dashboardStore, metricStore, filterStore } = useStore();
   const { hideModal } = useModal();
   // the drill-down filter outlives this component (a refetch remounts it):
   // start from the stage it still points at, so the next click clears it
@@ -131,11 +145,41 @@ function FunnelWidget({
     if (!clearing) onDrill?.();
   };
 
-  const topN = metricStore.breakdownTopN;
   const breakdown = data?.funnelBreakdown;
   const allBreakdownKeys = breakdown ? Object.keys(breakdown) : [];
-  const breakdownKeys =
-    topN > 0 ? allBreakdownKeys.slice(0, topN) : allBreakdownKeys;
+  const tree = data?.funnelBreakdownTree;
+  const panelData = React.useMemo(() => (tree ? { tree } : null), [tree]);
+  const levelTopN = metricStore.breakdownLevelTopN;
+  const shownPaths = React.useMemo(() => {
+    if (!panelData || !tree) return null;
+    const sel = computeSelectionFromTopN(
+      buildLevelTree(panelData),
+      levelTopN,
+      getDepth(tree),
+    );
+    const out = new Set<string>();
+    const walk = (node: NestedData, path: string) => {
+      if (isLeaf(node)) {
+        out.add(path);
+        return;
+      }
+      const keep = sel[path];
+      Object.entries(node).forEach(([key, child]) => {
+        if (keep && !keep.includes(key)) return;
+        walk(child as NestedData, path ? `${path} / ${key}` : key);
+      });
+    };
+    walk(tree, '');
+    return out;
+  }, [panelData, levelTopN]);
+  const breakdownKeys = shownPaths
+    ? allBreakdownKeys.filter((k) => shownPaths.has(k))
+    : allBreakdownKeys;
+  const breakdowns = metric?.breakdowns ?? [];
+  const levelLabels = React.useMemo(() => {
+    const options = filterStore.getCurrentProjectFilters();
+    return breakdowns.map((b) => getBreakdownDisplayName(b, options));
+  }, [breakdowns, filterStore.isLoadingFilters]);
 
   const compLabel = React.useMemo(() => {
     if (!comparisonPeriod) return t('Previous period');
@@ -334,8 +378,11 @@ function FunnelWidget({
             </div>
           )}
         </dl>
-        {allBreakdownKeys.length > 0 && !isWidget ? (
-          <TopNButton totalValues={allBreakdownKeys.length} />
+        {panelData && !isWidget ? (
+          <BreakdownSelectionPanel
+            data={panelData}
+            breakdownLabels={levelLabels}
+          />
         ) : null}
       </footer>
     </div>
