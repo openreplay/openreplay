@@ -1,6 +1,6 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import cn from 'classnames';
+import cn from 'clsx';
 import styles from './styles.module.css';
 import Renderer from './Renderer';
 

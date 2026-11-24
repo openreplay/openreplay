@@ -282,7 +282,7 @@ function WidgetSessions() {
         rangeValue,
         startDate: start,
         endDate: end,
-        filters: [...sessionStore.userFilter.filters, clickFilter],
+        filters: [clickFilter],
       });
     } else {
       const seriesJson = listedSeries().map((s) => s.toJson());

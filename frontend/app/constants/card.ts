@@ -3,7 +3,6 @@ import { TFunction } from 'i18next';
 const LIBRARY = 'library';
 export const TIMESERIES = 'timeseries';
 export const TABLE = 'table';
-export const HEATMAP_CLICKS = 'heatmaps_session';
 export const HEATMAP = 'heatMap';
 export const FUNNEL = 'funnel';
 export const ERRORS = 'errors';

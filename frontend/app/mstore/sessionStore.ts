@@ -6,7 +6,7 @@ import ErrorStack from 'Types/session/errorStack';
 import { InjectedEvent } from 'Types/session/event';
 import { action, makeAutoObservable, runInAction } from 'mobx';
 
-import { sessionService } from 'App/services';
+import { metricService, sessionService } from 'App/services';
 import {
   cleanSessionFilters,
   compareJsonObjects,
@@ -449,6 +449,19 @@ export default class SessionStore {
       } else {
         console.error(r);
       }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  fetchInsights = async (metric, params = {}, isSaved = false) => {
+    try {
+      const data = await metricService.getMetricChartData(
+        metric,
+        params,
+        isSaved,
+      );
+      this.insights = data.sort((a: any, b: any) => b.count - a.count);
     } catch (e) {
       console.error(e);
     }

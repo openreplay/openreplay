@@ -1,5 +1,5 @@
 import React from 'react';
-import cn from 'classnames';
+import cn from 'clsx';
 import Overlay from 'Components/Session_/Player/Overlay';
 import stl from 'Components/Session_/Player/player.module.css';
 import { PlayerContext } from 'App/components/Session/playerContext';
