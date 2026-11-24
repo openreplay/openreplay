@@ -119,13 +119,19 @@ describe('keepsValue', () => {
   });
 });
 
-test('sameRules ignores order and case of values', () => {
+test('sameRules ignores order, and case only for levels', () => {
   expect(
     sameRules(
       [{ name: 'level', operator: 'is', value: ['Error', 'warn'] }],
       [{ name: 'level', operator: 'is', value: ['WARN', 'error'] }],
     ),
   ).toBe(true);
+  expect(
+    sameRules(
+      [{ name: 'service', operator: 'is', value: ['API'] }],
+      [{ name: 'service', operator: 'is', value: ['api'] }],
+    ),
+  ).toBe(false);
   expect(
     sameRules(
       [{ name: 'level', operator: 'is', value: ['error'] }],

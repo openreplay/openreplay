@@ -567,9 +567,17 @@ function LogsPage() {
                     fit="logs"
                     page={store.page}
                     pageSize={store.pageSize}
-                    total={store.total}
+                    total={store.pagerTotal}
                     reachable={EXPORT_LIMIT}
-                    noun={(count, n) => t('{{n}} lines', { count, n })}
+                    noun={(count, n) =>
+                      t('{{n}} lines', {
+                        count,
+                        // no histogram counted them: as many as loaded, and more
+                        n: store.totalKnown
+                          ? n
+                          : `${store.logs.length.toLocaleString()}+`,
+                      })
+                    }
                     onPage={store.setPage}
                     onPageSize={(n) => setRowsPerPage(n)}
                   />

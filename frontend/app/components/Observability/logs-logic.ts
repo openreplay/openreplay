@@ -400,9 +400,10 @@ export function rulesToFilter(rules: readonly LogRule[]): FilterParts {
   };
 }
 
+// only levels match whatever their case; a case-only edit elsewhere is one
 const sig = (r: LogRule) =>
   `${r.name}|${r.operator}|${r.value
-    .map((v) => v.toLowerCase())
+    .map((v) => (r.name === 'level' ? v.toLowerCase() : v))
     .sort()
     .join(',')}`;
 export function sameRules(a: readonly LogRule[], b: readonly LogRule[]) {

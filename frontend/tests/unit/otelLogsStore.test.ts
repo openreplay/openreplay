@@ -124,10 +124,39 @@ describe('OtelLogsStore', () => {
     await store.fetch();
     expect(store.error).toBe('histogram failed');
     expect(store.searchFailed).toBe(false);
+    // no count: the pager still reaches the next page
+    expect(store.totalKnown).toBe(false);
+    expect(store.pagerTotal).toBe(2);
 
     mockSearch.mockResolvedValueOnce({ logs: [log('b')], nextCursor: null });
     const lines = await store.collectExport();
     expect(lines.map((l) => l.body)).toEqual(['a', 'b']);
+    expect(store.totalKnown).toBe(true);
+  });
+
+  it('a failed list reports its own error over a chart one', async () => {
+    const store = new OtelLogsStore();
+    mockHistogram.mockRejectedValueOnce(new Error('histogram failed'));
+    const search = deferred<any>();
+    mockSearch.mockReturnValueOnce(search.promise);
+    const p = store.fetch();
+    await Promise.resolve();
+    search.resolve(Promise.reject(new Error('list failed')));
+    await p;
+    expect(store.searchFailed).toBe(true);
+    expect(store.error).toBe('list failed');
+  });
+
+  it('an export started mid-search waits for it', async () => {
+    const store = new OtelLogsStore();
+    const search = deferred<any>();
+    mockSearch.mockReturnValueOnce(search.promise);
+    const fetched = store.fetch();
+    const exported = store.collectExport();
+    search.resolve({ logs: [log('a')], nextCursor: 'c1' });
+    mockSearch.mockResolvedValueOnce({ logs: [log('b')], nextCursor: null });
+    await fetched;
+    expect((await exported).map((l) => l.body)).toEqual(['a', 'b']);
   });
 
   it('drops results of a superseded fetch', async () => {

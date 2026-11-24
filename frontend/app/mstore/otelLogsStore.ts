@@ -217,9 +217,12 @@ export default class OtelLogsStore {
           });
         })
         .catch((e) => {
-          if (!isAbort(e) && current())
-            runInAction(() => (this.searchFailed = true));
-          fail(e);
+          if (isAbort(e) || !current()) return;
+          // the list's own message, over a histogram or facets one
+          runInAction(() => {
+            this.searchFailed = true;
+            this.error = e?.message ?? 'Failed to load logs';
+          });
         })
         .finally(() => {
           if (current())
@@ -233,7 +236,12 @@ export default class OtelLogsStore {
         .then((r) => {
           if (current()) runInAction(() => (this.histogram = r));
         })
-        .catch(fail)
+        .catch((e) => {
+          // the one held counts another window
+          if (!isAbort(e) && current())
+            runInAction(() => (this.histogram = null));
+          fail(e);
+        })
         .finally(() => {
           if (current()) runInAction(() => (this.histogramLoading = false));
         }),
@@ -300,8 +308,11 @@ export default class OtelLogsStore {
     this.exporting = true;
     // an earlier failed page would stop ensure() before it asks again
     this.pageError = null;
+    const { controller } = this;
     try {
       await this.ensure(EXPORT_LIMIT);
+      if (this.controller !== controller)
+        throw new Error('The search changed while exporting');
       const failed = this.searchFailed
         ? (this.error ?? 'Failed to load logs')
         : this.pageError;
@@ -322,17 +333,19 @@ export default class OtelLogsStore {
   ensure = async (count: number) => {
     const want = Math.min(count, EXPORT_LIMIT);
     const controller = this.controller;
-    while (
-      this.controller === controller &&
-      this.logs.length < want &&
-      this.nextCursor &&
-      !this.searchFailed &&
-      !this.pageError
-    ) {
+    while (this.controller === controller) {
+      // a search still out decides the cursor: read it once it lands
       if (this.loading || this.refreshing || this.loadingMore) {
         await new Promise((r) => setTimeout(r, 50));
         continue;
       }
+      if (
+        this.logs.length >= want ||
+        !this.nextCursor ||
+        this.searchFailed ||
+        this.pageError
+      )
+        return;
       await this.loadMore(want - this.logs.length);
     }
   };
@@ -573,6 +586,17 @@ export default class OtelLogsStore {
       0,
     );
     return Math.max(sum, this.logs.length);
+  }
+
+  /** false while more pages exist and no histogram counted them */
+  get totalKnown(): boolean {
+    return !this.nextCursor || this.histogram != null;
+  }
+
+  /** what the pager can reach: one line past the loaded ones while the
+      count is out, so the next page stays open */
+  get pagerTotal(): number {
+    return this.totalKnown ? this.total : this.logs.length + 1;
   }
 
   get pageRows(): OtelLog[] {
