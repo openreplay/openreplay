@@ -47,7 +47,6 @@ function Session({
 
   useEffect(() => {
     clearLogs();
-    sessionStore.resetUserFilter();
   }, []);
 
   const player = session.isMobileNative ? <MobilePlayer /> : <WebPlayer />;

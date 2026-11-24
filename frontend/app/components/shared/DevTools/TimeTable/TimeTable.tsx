@@ -1,7 +1,5 @@
-import { Button } from '@/ui/actions/button';
 import { NoContent } from '@/ui/feedback/NoContent';
-import { Icon } from '@/ui/icons/Icon';
-import cn from 'classnames';
+import { clsx as cn } from 'clsx';
 import { Duration } from 'luxon';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
@@ -11,7 +9,6 @@ import { VList, VListHandle } from 'virtua';
 import { percentOf } from 'App/utils';
 
 import JumpButton from '../JumpButton';
-import autoscrollStl from '../autoscroll.module.css';
 import BarRow from './BarRow';
 import stl from './timeTable.module.css';
 
@@ -66,9 +63,7 @@ type Props = {
   tableHeight?: number;
   activeIndex?: number;
   renderPopup?: boolean;
-  navigation?: boolean;
   referenceLines?: any[];
-  additionalHeight?: number;
   hoverable?: boolean;
   onRowClick?: (row: any, index: number) => void;
   onJump?: (obj: { time: number }) => void;
@@ -80,7 +75,6 @@ type TimeLineInfo = {
   timewidth: number;
 };
 
-let _additionalHeight = 0;
 const ROW_HEIGHT = 24;
 
 const TIME_SECTIONS_COUNT = 8;
@@ -101,10 +95,7 @@ function computeTimeLine(
     0,
     Math.min(firstVisibleRowIndex, rows.length - visibleCount),
   );
-  const visibleRows = rows.slice(
-    start,
-    start + visibleCount + _additionalHeight,
-  );
+  const visibleRows = rows.slice(start, start + visibleCount);
   let timestart =
     visibleRows.length > 0 ? Math.min(...visibleRows.map((r) => r.time)) : 0;
   // TODO: GraphQL requests do not have a duration, so their timeline is borked. Assume a duration of 0.2s for every GraphQL request
@@ -145,12 +136,7 @@ function TimeTable(props: Props) {
       visibleCount,
     );
     setTimerange({ timestart, timewidth });
-  }, [
-    props.rows.length,
-    visibleCount,
-    _additionalHeight,
-    firstVisibleRowIndex,
-  ]);
+  }, [props.rows.length, visibleCount, firstVisibleRowIndex]);
   React.useEffect(() => {
     if (props.activeIndex && props.activeIndex >= 0 && scroller.current) {
       scroller.current.scrollToIndex(props.activeIndex, {
@@ -171,46 +157,16 @@ function TimeTable(props: Props) {
     }
   };
 
-  const onPrevClick = () => {
-    let prevRedIndex = -1;
-    for (let i = firstVisibleRowIndex - 1; i >= 0; i--) {
-      if (props.rows[i].isRed) {
-        prevRedIndex = i;
-        break;
-      }
-    }
-    if (scroller.current != null) {
-      scroller.current.scrollToIndex(prevRedIndex, { align: 'center' });
-    }
-  };
-
-  const onNextClick = () => {
-    let prevRedIndex = -1;
-    for (let i = firstVisibleRowIndex + 1; i < props.rows.length; i++) {
-      if (props.rows[i].isRed) {
-        prevRedIndex = i;
-        break;
-      }
-    }
-    if (scroller.current != null) {
-      scroller.current.scrollToIndex(prevRedIndex);
-    }
-  };
-
   const {
     className,
     rows,
-    navigation = false,
     referenceLines = [],
-    additionalHeight = 0,
     renderPopup,
     hoverable,
     onRowClick,
     activeIndex,
   } = props;
   const columns = props.children.filter((i: any) => !i.hidden);
-
-  _additionalHeight = additionalHeight;
 
   const sectionDuration = Math.round(timewidth / TIME_SECTIONS_COUNT);
   const timeColumns: number[] = [];
@@ -228,16 +184,6 @@ function TimeTable(props: Props) {
 
   return (
     <div className={cn(className, 'relative flex flex-col h-full min-h-0')}>
-      {navigation && (
-        <div className={cn(autoscrollStl.navButtons, 'flex items-center')}>
-          <Button variant="subtle" onClick={onPrevClick} size="icon">
-            <Icon name="chevron-up" />
-          </Button>
-          <Button variant="subtle" onClick={onNextClick} size="icon">
-            <Icon name="chevron-down" />
-          </Button>
-        </div>
-      )}
       <div className={stl.headers}>
         <div className={stl.infoHeaders}>
           {columns.map(({ label, width, dataKey, onClick = null }) => (

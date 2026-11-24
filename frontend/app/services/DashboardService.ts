@@ -1,20 +1,9 @@
 import Dashboard from 'App/mstore/types/dashboard';
 import Widget from 'App/mstore/types/widget';
+
 import BaseService from './BaseService';
 
 export default class DashboardService extends BaseService {
-  /**
-   * Get all widgets from a dashboard.
-   * @param dashboardId Required
-   * @returns
-   */
-  getWidgets(dashboardId: string): Promise<any> {
-    return this.client
-      .get(`/dashboards/${dashboardId}/widgets`)
-      .then((response) => response.json())
-      .then((response) => response.data || []);
-  }
-
   /**
    * Get all dashboards.
    * @returns {Promise<any>}

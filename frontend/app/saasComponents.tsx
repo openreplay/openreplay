@@ -6,8 +6,6 @@ import {
   agentIssuesEnabled,
   agentTestsEnabled,
 } from 'App/utils/split-utils';
-
-export const saasComponents = {};
 interface Route {
   path: string;
   component: React.LazyExoticComponent<React.ComponentType<any>>;

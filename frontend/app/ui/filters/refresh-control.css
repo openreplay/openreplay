@@ -1,0 +1,117 @@
+.m-refresh {
+  display: inline-flex;
+  align-items: stretch;
+  flex: none;
+  height: var(--m-control-height-sm);
+  border: 1px solid var(--m-border-default);
+  border-radius: var(--m-radius-control);
+  background: var(--m-surface-default);
+  overflow: hidden;
+  transition: border-color var(--m-duration-fast) var(--m-ease-out);
+}
+.m-refresh:hover {
+  border-color: var(--m-border-strong);
+}
+
+.m-refresh__cell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--m-space-2);
+  min-width: var(--m-control-height-sm);
+  padding-inline: var(--m-space-3);
+  color: var(--m-content-secondary);
+  font-size: var(--m-text-sm);
+  font-variant-numeric: tabular-nums;
+  transition:
+    background-color var(--m-duration-fast) var(--m-ease-out),
+    color var(--m-duration-fast) var(--m-ease-out);
+}
+.m-refresh__cell + .m-refresh__cell,
+.m-refresh__cell + [data-state] {
+  border-left: 1px solid var(--m-border-subtle);
+}
+.m-refresh__cell:hover,
+.m-refresh__cell[data-state='open'] {
+  background: var(--m-surface-hover);
+  color: var(--m-content-primary);
+}
+.m-refresh__cell:focus-visible {
+  outline: 2px solid var(--m-focus-ring, var(--m-border-strong));
+  outline-offset: -2px;
+}
+
+.m-refresh__now {
+  padding-inline: 0;
+}
+.m-refresh__pause {
+  padding-inline: 0;
+}
+.m-refresh__every {
+  padding-inline: var(--m-space-4) var(--m-space-3);
+  min-width: 3.25rem;
+}
+.m-refresh.is-on .m-refresh__value {
+  color: var(--m-content-primary);
+}
+.m-refresh__caret {
+  color: var(--m-content-decorative);
+}
+.m-refresh__cell:hover .m-refresh__caret {
+  color: var(--m-content-secondary);
+}
+.m-refresh.is-paused .m-refresh__pause {
+  color: var(--m-content-primary);
+}
+
+.m-refresh__now .is-turning {
+  animation: m-refresh-turn var(--m-duration-slow) var(--m-ease-out);
+}
+@keyframes m-refresh-turn {
+  from {
+    transform: rotate(-360deg);
+  }
+  to {
+    transform: rotate(0);
+  }
+}
+
+.m-refresh__countdown {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: 100%;
+  background: var(--m-content-secondary);
+  opacity: 0.45;
+  transform-origin: left center;
+  animation: m-refresh-count linear infinite;
+}
+@keyframes m-refresh-count {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.m-refresh.is-paused .m-refresh__countdown {
+  animation-play-state: paused;
+}
+
+.m-refresh__blank {
+  display: inline-block;
+  width: 13px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m-refresh__now .is-turning {
+    animation: none;
+  }
+  .m-refresh__countdown {
+    animation: none;
+    transform: scaleX(1);
+    opacity: 0.25;
+  }
+}

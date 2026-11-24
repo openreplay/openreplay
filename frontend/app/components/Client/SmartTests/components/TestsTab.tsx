@@ -1,12 +1,6 @@
 import { IconButton } from '@/ui/actions/IconButton';
 import { Button } from '@/ui/actions/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItems,
-  DropdownMenuTrigger,
-  type MenuItem,
-} from '@/ui/actions/dropdown-menu';
+import { type MenuItem, MoreMenu } from '@/ui/actions/dropdown-menu';
 import { MoreCount } from '@/ui/data/MoreCount';
 import { RelativeTime } from '@/ui/data/RelativeTime';
 import { type Column, DataTable, type TableSort } from '@/ui/data/table';
@@ -29,7 +23,6 @@ import {
   ClipboardCheck,
   Footprints,
   Merge,
-  MoreHorizontal,
   Play,
   Plus,
   Route,
@@ -39,6 +32,8 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import useDebouncedValue from 'App/hooks/useDebouncedValue';
 
 import { StartPath } from 'Shared/StartPath/StartPath';
 
@@ -137,7 +132,6 @@ function TestsTab() {
   const invalidateAll = () => invalidateTestData(queryClient, projectId);
 
   const [query, setQuery] = useState('');
-  const [search, setSearch] = useState(''); // debounced query → the actual filter
   const [statusTab, setStatusTab] = useState<StatusTab>('all');
   const [envFilter, setEnvFilter] = useState('all');
   const [tagFilter, setTagFilter] = useState('all');
@@ -157,12 +151,7 @@ function TestsTab() {
   // Nothing persists until "Combine".
   const [mergeTest, setMergeTest] = useState<TestCase | null>(null);
 
-  // debounce the search box (the setState runs in a timer callback, not synchronously
-  // in the effect body)
-  useEffect(() => {
-    const id = window.setTimeout(() => setSearch(query.trim()), 300);
-    return () => window.clearTimeout(id);
-  }, [query]);
+  const search = useDebouncedValue(query.trim(), 300);
 
   // shared filter set (no pagination/sort) — reused for the list and the aggregates
   const filters = useMemo(
@@ -727,23 +716,11 @@ function TestsTab() {
               </span>
             </Tooltip>
           )}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <span>
-                <IconButton
-                  icon={<MoreHorizontal size={15} />}
-                  label={t('Actions for {{name}}', { name: tc.title })}
-                  variant="ghost"
-                />
-              </span>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <DropdownMenuItems items={rowMenu(tc)} />
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <MoreMenu
+            label={t('Actions for {{name}}', { name: tc.title })}
+            items={rowMenu(tc)}
+            stopPropagation
+          />
         </div>
       ),
     },

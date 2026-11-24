@@ -1,29 +1,6 @@
-import APIClient, { apiClient } from 'App/api_client';
+import BaseService from './BaseService';
 
-export default class FilterService {
-  private client: APIClient;
-
-  constructor(client?: APIClient) {
-    this.client = client || apiClient;
-  }
-
-  initClient(client?: APIClient) {
-    this.client = client || apiClient;
-  }
-
-  // UNUSED CODE ?
-  fetchTopValues = async (name: string, source?: string, isLive?: boolean) => {
-    const response = await this.client.get(
-      '/PROJECT_ID/properties/autocomplete',
-      {
-        propertyName: name,
-        source,
-        live: isLive ? true : undefined,
-      },
-    );
-    return await response.json();
-  };
-
+export default class FilterService extends BaseService {
   fetchProperties = async (
     eventName: string,
     isAutoCapture: boolean = false,

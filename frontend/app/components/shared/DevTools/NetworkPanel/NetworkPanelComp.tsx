@@ -18,7 +18,7 @@ import { useModal } from 'App/components/Modal';
 import { formatMs } from 'App/date';
 import i18n from 'App/i18n';
 import { useStore } from 'App/mstore';
-import { debounceCall, formatBytes } from 'App/utils';
+import { debounce, formatBytes } from 'App/utils';
 
 import FetchDetailsModal from 'Shared/FetchDetailsModal';
 
@@ -65,10 +65,6 @@ const TYPE_TO_TAB = {
 };
 
 const TAP_KEYS = [ALL, XHR, JS, CSS, IMG, MEDIA, OTHER, WS, GRAPHQL] as const;
-export const NETWORK_TABS = TAP_KEYS.map((tab) => ({
-  text: tab === 'xhr' ? 'Fetch/XHR' : tab,
-  key: tab,
-}));
 const TAB_LABEL: Record<string, string> = {
   [ALL]: 'All',
   [XHR]: 'Fetch/XHR',
@@ -337,7 +333,7 @@ export const NetworkPanelComp = observer(
     const [isDetailsModalActive, setIsDetailsModalActive] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [isProcessing, setIsProcessing] = useState(false);
-    const [displayedItems, setDisplayedItems] = useState([]);
+    const [displayedItems, setDisplayedItems] = useState<any[]>([]);
     const [totalItems, setTotalItems] = useState(0);
     const [summaryStats, setSummaryStats] = useState({
       resourcesSize: 0,
@@ -345,6 +341,8 @@ export const NetworkPanelComp = observer(
     });
 
     const originalListRef = useRef<IResourceRequest[]>([]);
+    const filteredListRef = useRef<IResourceRequest[]>([]);
+    const [listVersion, setListVersion] = useState(0);
     const socketListRef = useRef<any[]>([]);
 
     const {
@@ -357,7 +355,7 @@ export const NetworkPanelComp = observer(
     const [inputFilterValue, setInputFilterValue] = useState(filter);
 
     const debouncedFilter = useCallback(
-      debounceCall((filterValue) => {
+      debounce((filterValue) => {
         devTools.update(INDEX_KEY, { filter: filterValue });
       }, 300),
       [],
@@ -372,10 +370,8 @@ export const NetworkPanelComp = observer(
       socketListRef.current = uniqueSocketList;
     }, [websocketList.length]);
 
-    // Initial data processing - do this only once when data changes
+    // the merged list; the first filter pass below clears the initial loader
     useEffect(() => {
-      setIsLoading(true);
-
       // Heaviest operation here, will create a final merged network list
       const processData = async () => {
         const processedSockets = socketListRef.current.map((ws: any) => ({
@@ -401,13 +397,8 @@ export const NetworkPanelComp = observer(
         );
 
         originalListRef.current = mergedList;
-        setTotalItems(mergedList.length);
-
         calculateResourceStats(usedResourceList);
-
-        // Only display initial chunk
-        setDisplayedItems(mergedList.slice(0, INITIAL_LOAD_SIZE));
-        setIsLoading(false);
+        setListVersion((v) => v + 1);
       };
 
       void processData();
@@ -439,55 +430,55 @@ export const NetworkPanelComp = observer(
     };
 
     useEffect(() => {
-      if (originalListRef.current.length === 0) return;
-      setIsProcessing(true);
+      let cancelled = false;
+      // processInChunks yields only past one chunk
+      if (originalListRef.current.length > 1000) setIsProcessing(true);
+      let regex: RegExp | null = null;
+      if (filter) {
+        try {
+          regex = new RegExp(filter, 'i');
+        } catch {}
+      }
+      const matches = (it: any) =>
+        regex
+          ? regex.test(it.status) ||
+            regex.test(it.name) ||
+            regex.test(it.type) ||
+            regex.test(it.method)
+          : String(it.status).includes(filter) ||
+            it.name.includes(filter) ||
+            it.type.includes(filter) ||
+            (it.method && it.method.includes(filter));
       const applyFilters = async () => {
-        let filteredItems: any[] = originalListRef.current;
-
-        filteredItems = await processInChunks(filteredItems, (chunk) =>
-          chunk.filter((it) => {
-            if (showOnlyErrors) {
-              const validStatus =
-                parseInt(it.status) >= 400 || !it.success || it.error;
-              if (!validStatus) return false;
-            }
-
-            if (filter) {
-              let validQuery = true;
-              try {
-                const regex = new RegExp(filter, 'i');
-                validQuery =
-                  regex.test(it.status) ||
-                  regex.test(it.name) ||
-                  regex.test(it.type) ||
-                  regex.test(it.method);
-              } catch (e) {
-                validQuery =
-                  String(it.status).includes(filter) ||
-                  it.name.includes(filter) ||
-                  it.type.includes(filter) ||
-                  (it.method && it.method.includes(filter));
+        const filteredItems = (await processInChunks(
+          originalListRef.current,
+          (chunk) =>
+            chunk.filter((it) => {
+              if (showOnlyErrors) {
+                const validStatus =
+                  parseInt(it.status) >= 400 || !it.success || it.error;
+                if (!validStatus) return false;
               }
-              if (!validQuery) return false;
-            }
-
-            if (activeTab !== ALL) {
-              const validTab = TYPE_TO_TAB[it.type] === activeTab;
-              if (!validTab) return false;
-            }
-
-            return true;
-          }),
-        );
-
-        // Update displayed items
+              if (filter && !matches(it)) return false;
+              if (activeTab !== ALL && TYPE_TO_TAB[it.type] !== activeTab) {
+                return false;
+              }
+              return true;
+            }),
+        )) as IResourceRequest[];
+        if (cancelled) return;
+        filteredListRef.current = filteredItems;
         setDisplayedItems(filteredItems.slice(0, INITIAL_LOAD_SIZE));
         setTotalItems(filteredItems.length);
         setIsProcessing(false);
+        setIsLoading(false);
       };
 
       void applyFilters();
-    }, [filter, activeTab, showOnlyErrors]);
+      return () => {
+        cancelled = true;
+      };
+    }, [filter, activeTab, showOnlyErrors, listVersion]);
 
     const loadMoreItems = useCallback(() => {
       if (isProcessing) return;
@@ -496,7 +487,7 @@ export const NetworkPanelComp = observer(
       setTimeout(() => {
         setDisplayedItems((prevItems) => {
           const currentLength = prevItems.length;
-          const newItems = originalListRef.current.slice(
+          const newItems = filteredListRef.current.slice(
             currentLength,
             currentLength + BATCH_SIZE,
           );
@@ -546,7 +537,7 @@ export const NetworkPanelComp = observer(
       activeIndex,
       (index) => devTools.update(INDEX_KEY, { index }),
     );
-    const onMouseEnter = () => stopAutoscroll;
+    const onMouseEnter = stopAutoscroll;
     const onMouseLeave = () => {
       if (isDetailsModalActive) {
         return;
@@ -747,7 +738,8 @@ export const NetworkPanelComp = observer(
           {isLoading ? (
             <NoData mark="network" title={t('Processing network data…')} />
           ) : displayedItems.length === 0 ? (
-            <NoData mark="network"
+            <NoData
+              mark="network"
               hint={
                 showOnlyErrors
                   ? t('No request failed in this session.')

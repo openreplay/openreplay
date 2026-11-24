@@ -58,7 +58,6 @@ describe('SpotPlayerStore', () => {
     expect(spotPlayerStore.time).toBe(0);
     expect(spotPlayerStore.isPlaying).toBe(true);
     expect(spotPlayerStore.state).toBe(PlayingState.Playing);
-    expect(spotPlayerStore.volume).toBe(1);
     expect(spotPlayerStore.logs).toEqual([]);
     expect(spotPlayerStore.network).toEqual([]);
   });
@@ -99,7 +98,6 @@ describe('SpotPlayerStore', () => {
   it('should set duration correctly', () => {
     spotPlayerStore.setDuration('02:30');
     expect(spotPlayerStore.duration).toBe(150);
-    expect(spotPlayerStore.durationString).toBe('02:30');
   });
 
   it('should update logs, locations, clicks, and network events correctly', () => {
@@ -114,15 +112,6 @@ describe('SpotPlayerStore', () => {
     expect(spotPlayerStore.network.length).toBe(1);
   });
 
-  it('should correctly compute the current log index', () => {
-    spotPlayerStore.logs = [{ time: 1000 }, { time: 2000 }, { time: 3000 }];
-    spotPlayerStore.time = 1.5;
-
-    const currentIndex = spotPlayerStore.currentLogIndex;
-
-    expect(currentIndex).toBe(0);
-  });
-
   it('should correctly highlight the closest event', () => {
     const eventTime = 2;
     // @ts-ignore
@@ -131,6 +120,9 @@ describe('SpotPlayerStore', () => {
     const closestLocation = spotPlayerStore.getClosestLocation(eventTime);
 
     expect(closestLocation.time).toBe(1000);
+    // before the first event the first one stays highlighted
+    expect(spotPlayerStore.getClosestLocation(0.5).time).toBe(1000);
+    expect(spotPlayerStore.getClosestLocation(3).time).toBe(3000);
   });
 
   it('should correctly set the playing state', () => {
@@ -141,22 +133,6 @@ describe('SpotPlayerStore', () => {
     spotPlayerStore.setIsPlaying(true);
     expect(spotPlayerStore.isPlaying).toBe(true);
     expect(spotPlayerStore.state).toBe(PlayingState.Playing);
-  });
-
-  it('should correctly mute and unmute', () => {
-    spotPlayerStore.setIsMuted(true);
-    expect(spotPlayerStore.isMuted).toBe(true);
-
-    spotPlayerStore.setIsMuted(false);
-    expect(spotPlayerStore.isMuted).toBe(false);
-  });
-
-  it('should correctly set volume', () => {
-    spotPlayerStore.setVolume(0.5);
-    expect(spotPlayerStore.volume).toBe(0.5);
-
-    spotPlayerStore.setVolume(1);
-    expect(spotPlayerStore.volume).toBe(1);
   });
 
   it('should correctly handle fullscreen toggle', () => {

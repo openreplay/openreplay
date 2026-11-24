@@ -197,6 +197,24 @@ describe('APIClient URL Replacer Logic', () => {
       path: '/trails/actions',
       expectedUrl: 'https://example.com/v2/api/trails/actions',
     },
+    {
+      description: 'OTel logs search',
+      edp: 'https://example.com/api',
+      path: '/PROJECT_ID/logs/search',
+      expectedUrl: 'https://example.com/v2/api/2/logs/search',
+    },
+    {
+      description: 'SaaS: OTel logs facets',
+      edp: 'https://api.openreplay.com',
+      path: '/PROJECT_ID/logs/facets',
+      expectedUrl: 'https://api.openreplay.com/v2/2/logs/facets',
+    },
+    {
+      description: 'Ingest key revoke',
+      edp: 'https://example.com/api',
+      path: '/PROJECT_ID/ingest-keys/7',
+      expectedUrl: 'https://example.com/v2/api/2/ingest-keys/7',
+    },
   ];
 
   describe.each(testCases)('URL Construction', (testCase) => {

@@ -1,17 +1,8 @@
 import IFunnel from 'App/mstore/types/funnel';
-import APIClient, { apiClient } from 'App/api_client';
 
-export default class FunnelService {
-  private client: APIClient;
+import BaseService from './BaseService';
 
-  constructor(client?: APIClient) {
-    this.client = client || apiClient;
-  }
-
-  initClient(client?: APIClient) {
-    this.client = client || apiClient;
-  }
-
+export default class FunnelService extends BaseService {
   all(): Promise<any[]> {
     return this.client
       .get('/funnels')
@@ -37,24 +28,11 @@ export default class FunnelService {
       .then((response) => response.json());
   }
 
-  fetchInsights(funnelId: string, payload: any): Promise<any> {
-    return this.client
-      .post(`/funnels/${funnelId}/insights`, payload)
-      .then((response) => response.json());
-  }
-
   fetchIssues(funnelId?: string, payload?: any): Promise<any> {
     const path = funnelId ? `/funnels/${funnelId}/issues` : '/funnels/issues';
     return this.client
       .post(path, payload)
       .then((response) => response.json())
       .then((response) => response.data || []);
-  }
-
-  fetchIssue(funnelId: string, issueId: string): Promise<any> {
-    return this.client
-      .post(`/funnels/${funnelId}/issues/${issueId}/sessions`, {})
-      .then((response) => response.json())
-      .then((response) => response.data || {});
   }
 }

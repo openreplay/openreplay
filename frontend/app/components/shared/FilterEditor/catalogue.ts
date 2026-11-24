@@ -61,6 +61,10 @@ export function entryFromFilter(f: Filter): CatalogueEntry {
       isEvent && category !== 'segments' && category !== 'features',
     autoCaptured: !!f.autoCaptured,
     options,
+    // store filters carry an empty list by default: only a real one counts
+    operators: f.operators?.length
+      ? f.operators.map((o) => ({ value: o.value, label: o.label }))
+      : undefined,
     source: f,
   };
 }
@@ -70,16 +74,31 @@ export interface OperatorOption {
   label: string;
 }
 
+/** live search takes only these */
+const liveOnly = <T extends { value: string }>(ops: readonly T[]) =>
+  ops.filter((o) => o.value === 'is' || o.value === 'contains');
+
 export const operatorsFor = (
   t: DataType,
   live = false,
 ): readonly OperatorOption[] => {
   if (t === 'duration') return [{ value: '=', label: 'is' }];
   const all = getOperatorsByType(t === 'date' ? 'date' : t);
-  return (
-    live ? all.filter((o) => o.value === 'is' || o.value === 'contains') : all
-  ).map((o) => ({ value: o.value, label: o.label }));
+  return (live ? liveOnly(all) : all).map((o) => ({
+    value: o.value,
+    label: o.label,
+  }));
 };
+
+export const entryOperators = (
+  e: Pick<CatalogueEntry, 'dataType' | 'operators'>,
+  live = false,
+): readonly OperatorOption[] =>
+  e.operators
+    ? live
+      ? liveOnly(e.operators)
+      : e.operators
+    : operatorsFor(e.dataType, live);
 
 export const isNullary = (operator: string) => NULLARY.has(operator);
 
@@ -87,6 +106,9 @@ export const defaultOperator = (t: DataType) =>
   t === 'boolean' ? 'isTrue' : (operatorsFor(t)[0]?.value ?? 'is');
 
 export const CATEGORY_ORDER: readonly string[] = [
+  'log_views',
+  'log',
+  'log_attrs',
   'auto_captured',
   'user_events',
   'features',
@@ -102,6 +124,9 @@ const CATEGORY_LABELS: Record<string, string> = {
   auto_captured: 'Autocapture',
   user_events: 'Events',
   event: 'Event',
+  log: 'Log',
+  log_attrs: 'Attributes',
+  log_views: 'Views',
 };
 
 export const categoryLabel = (key: string): string =>
@@ -157,7 +182,9 @@ export function storeFilterFor(entry: CatalogueEntry, eventName?: string) {
   const filter: Filter = {
     ...src,
     value: presetValue ? [...(src.value ?? [])] : [],
-    operator: entry.isEvent ? 'is' : defaultOperator(entry.dataType),
+    operator: entry.isEvent
+      ? 'is'
+      : (entry.operators?.[0]?.value ?? defaultOperator(entry.dataType)),
     filters: [],
     propertyOrder: 'and',
   } as unknown as Filter;
@@ -220,7 +247,7 @@ export function formatDuration(sec: number): string {
 }
 
 export const operatorLabel = (f: SearchFilter) =>
-  operatorsFor(f.entry.dataType).find((o) => o.value === f.operator)?.label ??
+  entryOperators(f.entry).find((o) => o.value === f.operator)?.label ??
   f.operator;
 
 /** The values as read: predefined ones by their label, not their id. */

@@ -1,4 +1,4 @@
-import { Button } from '@/ui/actions/button';
+
 import { CodeBlock } from '@/ui/data/CodeBlock';
 import { Field } from '@/ui/inputs/Field';
 import { Checkbox } from '@/ui/inputs/checkbox';
@@ -258,32 +258,3 @@ export function ShareDialog({
 }) {
   return open ? <ShareModal time={time} onClose={onClose} /> : null;
 }
-
-interface Props {
-  showCopyLink?: boolean;
-  hideModal: () => void;
-  time: number;
-}
-
-/** Content only, for hosts that bring their own drawer. */
-const ShareModalComp = observer(({ hideModal, time }: Props) => {
-  const s = useShare(time, hideModal);
-  return (
-    <>
-      <ShareBody s={s} time={time} onDone={hideModal} />
-      {s.anyConnected ? (
-        <div className="m-share__actions">
-          <Button
-            variant="primary"
-            onClick={() => void s.send()}
-            disabled={!s.channel || s.sending}
-          >
-            {s.sendLabel}
-          </Button>
-        </div>
-      ) : null}
-    </>
-  );
-});
-
-export default ShareModalComp;

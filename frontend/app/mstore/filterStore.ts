@@ -5,7 +5,7 @@ import { makeAutoObservable, reaction, runInAction } from 'mobx';
 import { filterService, searchService } from 'App/services';
 import { arraysIntersect, normalizeDataType } from 'App/utils';
 
-import { COMMON_FILTERS, Filter } from './types/filterConstants';
+import { Filter } from './types/filterConstants';
 import FilterItem from './types/filterItem';
 
 const countryMap = countries as Record<string, string>;
@@ -44,19 +44,6 @@ interface ProjectFilters {
   [projectId: string]: Filter[];
 }
 
-interface TopValuesParams {
-  id?: string;
-  siteId?: string;
-  source?: string;
-  isAutoCapture?: boolean;
-  isEvent?: boolean;
-}
-
-interface FilterOption {
-  label: string;
-  value: string;
-}
-
 interface CacheEntry {
   data: Filter[];
   timestamp: number;
@@ -74,7 +61,6 @@ export const topValuesKey = (id: string, live?: boolean, projectId?: string) =>
 export default class FilterStore {
   topValues: TopValues = {};
   filters: ProjectFilters = {};
-  commonFilters: Filter[] = [];
   isLoadingFilters: boolean = true;
 
   private filterCache: Record<string, CacheEntry> = {};
@@ -82,7 +68,6 @@ export default class FilterStore {
 
   constructor() {
     makeAutoObservable(this);
-    this.initCommonFilters();
 
     reaction(
       () => projectStore.activeSiteId,
@@ -96,27 +81,6 @@ export default class FilterStore {
       },
     );
   }
-
-  // getEventOptions = (siteId: string): FilterOption[] => {
-  //   return this.getFilters(siteId)
-  //     .filter((filter: Filter) => filter.isEvent)
-  //     .map((filter: Filter) => ({
-  //       label: filter.displayName || filter.name,
-  //       value: filter.name,
-  //     }));
-  // };
-
-  getEventOptions = (
-    siteId: string,
-    filterFn?: (filter: Filter) => boolean,
-  ): FilterOption[] => {
-    return this.getFilters(siteId)
-      .filter((f) => f.isEvent && (!filterFn || filterFn(f)))
-      .map((f) => ({
-        label: f.displayName || f.name,
-        value: f.name,
-      }));
-  };
 
   setTopValues = (
     key: string,
@@ -175,10 +139,6 @@ export default class FilterStore {
       console.error('Failed to fetch top values:', error);
       return [];
     }
-  };
-
-  private createTopValuesKey = (params: TopValuesParams): string => {
-    return `${params.siteId}_${params.id}${params.source || ''}`;
   };
 
   findEvent = (data: Partial<Filter>) => {
@@ -565,19 +525,10 @@ export default class FilterStore {
     return processedFilters;
   };
 
-  initCommonFilters = (): void => {
-    this.commonFilters = [...COMMON_FILTERS];
-  };
-
-  getAllFilters = (projectId: string): Filter[] => {
-    const projectFilters = this.filters[projectId] || [];
-    return this.addOperatorsToFilters([...projectFilters]);
-  };
-
   getCurrentProjectFilters = (
     projectId = String(projectStore.activeSiteId),
   ): Filter[] => {
-    return this.getAllFilters(projectId).map(
+    return this.getFilters(projectId).map(
       (f) => ({ ...f, filters: [] }) as Filter,
     );
   };
@@ -703,15 +654,6 @@ export default class FilterStore {
     }
   };
 
-  setCommonFilters = (filters: Filter[]): void => {
-    this.commonFilters = [...filters];
-  };
-
-  // Cleanup method for memory management
-  cleanup = (): void => {
-    this.clearExpiredCacheEntries();
-  };
-
   getFilterDisplayName = (filterName: string): string => {
     const filter = this.getCurrentProjectFilters().find(
       (f) => f.name === filterName,
@@ -731,14 +673,5 @@ export default class FilterStore {
       (v) => v.value === subName,
     );
     return matchingValue?.label ?? subName;
-  };
-
-  private clearExpiredCacheEntries = (): void => {
-    const now = Date.now();
-    Object.entries(this.filterCache).forEach(([key, entry]) => {
-      if (now - entry.timestamp > CACHE_TTL) {
-        delete this.filterCache[key];
-      }
-    });
   };
 }

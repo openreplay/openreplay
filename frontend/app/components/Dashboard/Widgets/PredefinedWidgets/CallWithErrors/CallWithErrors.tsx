@@ -1,6 +1,6 @@
 import { NoContent } from '@/ui/feedback/NoContent';
 import { SearchField } from '@/ui/inputs/SearchField';
-import cn from 'classnames';
+import { clsx as cn } from 'clsx';
 import { Info } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';

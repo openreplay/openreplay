@@ -73,16 +73,6 @@ const targetFilterKeys = [
   'endsWith',
   'notContains',
 ];
-const signUpStatusFilterKeys = ['isSignedUp', 'notSignedUp'];
-const rangeFilterKeys = [
-  'before',
-  'after',
-  'on',
-  'inRange',
-  'notInRange',
-  'withInLast',
-  'notWithInLast',
-];
 const pageUrlFilter = ['contains', 'startsWith', 'endsWith'];
 
 const getOperatorsByKeys = (keys) =>
@@ -158,15 +148,6 @@ export const metricTypes = [
   // { label: 'Errors', value: 'errors' },
   // { label: 'Sessions', value: 'sessions' },
 ];
-
-export const tableColumnName = {
-  [FilterKey.USERID]: 'Users',
-  [FilterKey.ISSUE]: 'Issues',
-  [FilterKey.USER_BROWSER]: 'Browser',
-  [FilterKey.USER_DEVICE]: 'Devices',
-  [FilterKey.USER_COUNTRY]: 'Countries',
-  [FilterKey.LOCATION]: 'URLs',
-};
 
 export const metricOf = [
   { label: 'Session Count', value: 'sessionCount', type: 'timeseries' },

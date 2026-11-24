@@ -1,11 +1,6 @@
 import { IconButton } from '@/ui/actions/IconButton';
 import { Button } from '@/ui/actions/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItems,
-  DropdownMenuTrigger,
-} from '@/ui/actions/dropdown-menu';
+import { MoreMenu } from '@/ui/actions/dropdown-menu';
 import { useViewport } from '@/ui/layout/use-viewport';
 import { useToast } from '@/ui/overlays/toast';
 import {
@@ -14,7 +9,6 @@ import {
   Bug,
   Code2,
   Film,
-  MoreHorizontal,
   Radio,
   Share2,
   Vault,
@@ -161,67 +155,55 @@ function ReplayActions({
           />
         </>
       )}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <span>
-            <IconButton
-              icon={<MoreHorizontal size={15} />}
-              label={t('More')}
-              variant="ghost"
-            />
-          </span>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItems
-            items={[
-              ...(phone
-                ? [
-                    {
-                      key: 'bookmark',
-                      icon: bookmarkIcon,
-                      label: bookmarkLabel,
-                      onClick: toggleFavorite,
-                    },
-                    {
-                      key: 'share',
-                      icon: <Share2 size={13} />,
-                      label: t('Share session'),
-                      onClick: share,
-                    },
-                  ]
-                : []),
-              ...(session.isMobileNative
-                ? []
-                : [
-                    {
-                      key: 'e2e',
-                      icon: <Code2 size={13} />,
-                      label: t('Export as E2E test'),
-                      onClick: () => setActiveTab('EXPORT'),
-                    },
-                  ]),
-              {
-                key: 'issue',
-                icon: <Bug size={13} />,
-                label: t('Create issue'),
-                disabled: !canReport,
-                onClick: reportIssue,
-              },
-              ...(isEnterprise
-                ? [
-                    {
-                      key: 'video',
-                      icon: <Film size={13} />,
-                      label: t('Export video'),
-                      disabled: !account.hasExportPermission,
-                      onClick: exportVideo,
-                    },
-                  ]
-                : []),
-            ]}
-          />
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <MoreMenu
+        label={t('More')}
+        items={[
+          ...(phone
+            ? [
+                {
+                  key: 'bookmark',
+                  icon: bookmarkIcon,
+                  label: bookmarkLabel,
+                  onClick: toggleFavorite,
+                },
+                {
+                  key: 'share',
+                  icon: <Share2 size={13} />,
+                  label: t('Share session'),
+                  onClick: share,
+                },
+              ]
+            : []),
+          ...(session.isMobileNative
+            ? []
+            : [
+                {
+                  key: 'e2e',
+                  icon: <Code2 size={13} />,
+                  label: t('Export as E2E test'),
+                  onClick: () => setActiveTab('EXPORT'),
+                },
+              ]),
+          {
+            key: 'issue',
+            icon: <Bug size={13} />,
+            label: t('Create issue'),
+            disabled: !canReport,
+            onClick: reportIssue,
+          },
+          ...(isEnterprise
+            ? [
+                {
+                  key: 'video',
+                  icon: <Film size={13} />,
+                  label: t('Export video'),
+                  disabled: !account.hasExportPermission,
+                  onClick: exportVideo,
+                },
+              ]
+            : []),
+        ]}
+      />
       <span className="m-rs__sep" aria-hidden="true" />
       <QueueControls {...({} as any)} />
       <ShareDialog

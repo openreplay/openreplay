@@ -5,7 +5,6 @@ import type { ComponentProps } from 'react';
 import { useViewportFit } from './use-viewport-fit';
 
 export const Popover = P.Root;
-export const PopoverTrigger = P.Trigger;
 export const PopoverAnchor = P.Anchor;
 
 export function PopoverContent({

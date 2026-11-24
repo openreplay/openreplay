@@ -1,5 +1,5 @@
 import { WebNetworkPanel } from '@/components/shared/DevTools/NetworkPanel';
-import cn from 'classnames';
+import { clsx as cn } from 'clsx';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -13,7 +13,7 @@ import { CONSOLE, NETWORK } from 'App/mstore/uiPlayerStore';
 import {
   debounceUpdate,
   getDefaultPanelHeight,
-} from 'Components/Session/Player/ReplayPlayer/PlayerInst';
+} from 'Components/Session/Player/panelHeight';
 import { DevToolsFrame } from 'Components/Session/ReplayScreen/DevToolsFrame';
 import stl from 'Components/Session_/Player/player.module.css';
 

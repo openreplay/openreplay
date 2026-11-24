@@ -30,11 +30,13 @@ import React, {
 import { useTranslation } from 'react-i18next';
 
 import { formatDateTimeDefault } from 'App/date';
+import { saveBlob } from 'App/utils/download';
 
 import CountryFlagIcon from 'Shared/CountryFlagIcon';
 
 import { getRunScreenshot } from '../../api';
 import { useProjectId, useRunHar, useTriggerRun } from '../../queries';
+import { LiveDuration } from '../shared/LiveDuration';
 import { harToNetworkRequests } from '../shared/adapters';
 import { ConsoleLog, NetworkRequest, RunData, TestStep } from '../shared/types';
 import {
@@ -325,17 +327,7 @@ function RunDrawer({ run, open, onClose }: Props) {
   );
   const downloadHar = () => {
     if (!harText) return;
-    const url = URL.createObjectURL(
-      new Blob([harText], { type: 'application/json' }),
-    );
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'network.har';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    // revoke after the click has been dispatched, or the download can be cancelled
-    window.setTimeout(() => URL.revokeObjectURL(url), 0);
+    saveBlob(new Blob([harText], { type: 'application/json' }), 'network.har');
   };
 
   // a per-step "View …" link selects the tab and scrolls the Activity panel into view
@@ -539,7 +531,7 @@ function RunDrawer({ run, open, onClose }: Props) {
           <span>
             <Timer size={13} aria-hidden="true" />
             {running ? (
-              <LiveDuration start={run.date} />
+              <LiveDuration start={run.date} format={formatDuration} />
             ) : run.duration ? (
               formatDuration(run.duration)
             ) : (
@@ -772,16 +764,6 @@ function StepMark({ status }: { status: StepMarkStatus }) {
       )}
     </svg>
   );
-}
-
-/** Live elapsed counter for an in-flight run. */
-function LiveDuration({ start }: { start: number }) {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
-  }, []);
-  return <>{formatDuration(Math.max(0, now - start))}</>;
 }
 
 export default RunDrawer;

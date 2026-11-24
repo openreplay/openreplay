@@ -1,28 +1,8 @@
 import Widget from 'App/mstore/types/widget';
-import APIClient, { apiClient } from 'App/api_client';
 import { HEATMAP, USER_PATH } from 'App/constants/card';
+import BaseService from './BaseService';
 
-export default class MetricService {
-  private client: APIClient;
-
-  constructor(client?: APIClient) {
-    this.client = client || apiClient;
-  }
-
-  initClient(client?: APIClient) {
-    this.client = client || apiClient;
-  }
-
-  /**
-   * Get all metrics.
-   * @returns {Promise<any>}
-   */
-  async getMetrics(): Promise<any> {
-    const response = await this.client.get('/cards');
-    const json = await response.json();
-    return json.data || [];
-  }
-
+export default class MetricService extends BaseService {
   /**
    * Get all metrics paginated.
    * @returns {Promise<any>}
@@ -39,13 +19,9 @@ export default class MetricService {
    * @returns {Promise<any>}
    */
   async getMetric(metricId: string): Promise<any> {
-    try {
-      const r = await this.client.get(`/cards/${metricId}`);
-      const response = await r.json();
-      return response.data || {};
-    } catch (e) {
-      return Promise.reject(e);
-    }
+    const r = await this.client.get(`/cards/${metricId}`);
+    const response = await r.json();
+    return response.data || {};
   }
 
   /**
@@ -57,13 +33,9 @@ export default class MetricService {
     const data = metric.toJson();
     const isCreating = !data[Widget.ID_KEY];
     const url = isCreating ? '/cards' : `/cards/${data[Widget.ID_KEY]}`;
-    try {
-      const r = await this.client.post(url, data);
-      const response = await r.json();
-      return response.data || {};
-    } catch (e) {
-      return Promise.reject(e);
-    }
+    const r = await this.client.post(url, data);
+    const response = await r.json();
+    return response.data || {};
   }
 
   /**
@@ -75,16 +47,6 @@ export default class MetricService {
     const response = await this.client.delete(`/cards/${metricId}`);
     const json = await response.json();
     return json?.data || {};
-  }
-
-  /**
-   * Get all templates.
-   * @returns {Promise<any>}
-   */
-  async getTemplates(): Promise<any> {
-    const response = await this.client.get('/cards/templates');
-    const json = await response.json();
-    return json.data || [];
   }
 
   async getMetricChartData(
@@ -101,30 +63,33 @@ export default class MetricService {
     ) {
       return Promise.resolve({});
     }
-    const path = isSaved
-      ? // ? `/dashboards/${metric.dashboardId}/cards/${metric.metricId}/chart`
-        `/PROJECT_ID/cards/${metric.metricId}/chart`
-      : '/PROJECT_ID/cards/try';
+    // the saved endpoint draws a card as stored, so a journey saved as a
+    // sunburst gets its flow chart from its definition, like the dashboard would
+    const asFlow =
+      isSaved && metric.metricType === USER_PATH && metric.savedAsSunburst;
+    const path =
+      isSaved && !asFlow
+        ? `/PROJECT_ID/cards/${metric.metricId}/chart`
+        : '/PROJECT_ID/cards/try';
     if (metric.metricType === USER_PATH) {
       data.density = 5;
       data.metricOf = 'sessionCount';
     }
+    if (asFlow) {
+      data = { ...metric.toJson(), ...data, hideExcess: true, rows: 5 };
+    }
     if (metric.metricType === HEATMAP) {
       data.density = 20;
     }
-    try {
-      const r = await this.client.post(
-        path,
-        data,
-        undefined,
-        undefined,
-        abortSignal,
-      );
-      const response = await r.json();
-      return response.data || {};
-    } catch (e) {
-      return await Promise.reject(e);
-    }
+    const r = await this.client.post(
+      path,
+      data,
+      undefined,
+      undefined,
+      abortSignal,
+    );
+    const response = await r.json();
+    return response.data || {};
   }
 
   /**
@@ -148,19 +113,6 @@ export default class MetricService {
 
     const resp: Response = await this.client.post('/cards/try/issues', filter);
     const json: any = await resp.json();
-    return json.data || {};
-  }
-
-  async fetchIssue(
-    metricId: string,
-    issueId: string,
-    params: any,
-  ): Promise<any> {
-    const response = await this.client.post(
-      `/cards/${metricId}/issues/${issueId}/sessions`,
-      params,
-    );
-    const json = await response.json();
     return json.data || {};
   }
 }

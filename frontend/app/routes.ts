@@ -140,11 +140,6 @@ export const metricDetails = (
   id = ':metricId',
   hash?: string | number,
 ): string => hashed(`/metrics/${id}`, hash);
-export const metricDetailsSub = (
-  id = ':metricId',
-  subId = ':subId',
-  hash?: string | number,
-): string => hashed(`/metrics/${id}/details/${subId}`, hash);
 
 export const alerts = (): string => '/alerts';
 export const alertCreate = (): string => '/alert/create';
@@ -156,6 +151,9 @@ export const spot = (id = ':spotId', hash?: string | number): string =>
   hashed(`/view-spot/${id}`, hash);
 
 export const mcpAuthorize = (): string => '/mcp/authorize';
+export const logs = (): string => '/logs';
+export const otelMetrics = (): string => '/observability/metrics';
+export const otelTraces = (): string => '/observability/traces';
 export const dataManagement = {
   activity: () => '/data-management/activity',
   userPage: (id = ':userId', hash?: string | number) =>
@@ -173,6 +171,9 @@ export const dataManagement = {
 
 const REQUIRED_SITE_ID_ROUTES = [
   ...routeIdRequired,
+  logs(),
+  otelMetrics(),
+  otelTraces(),
   liveSession(''),
   session(''),
   sessions(),
@@ -186,7 +187,6 @@ const REQUIRED_SITE_ID_ROUTES = [
 
   metrics(),
   metricDetails(''),
-  metricDetailsSub(''),
 
   dashboard(),
   dashboardSelected(''),
@@ -261,6 +261,9 @@ const SITE_CHANGE_AVAILABLE_ROUTES = [
   alerts(),
   errors(),
   onboarding(''),
+  logs(),
+  otelMetrics(),
+  otelTraces(),
 ];
 
 export const siteChangeAvailable = (path: string): boolean =>

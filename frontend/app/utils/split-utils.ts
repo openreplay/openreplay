@@ -21,6 +21,9 @@ export const agentTestsEnabled = (): boolean => hasPlanFeature('agent-tests');
 /** Audits agent (SaaS): its page lives in `saas/audits`. */
 export const agentAuditsEnabled = (): boolean => hasPlanFeature('agent-audits');
 
+/** Observability: the Logs page (OpenTelemetry) and its ingest keys. */
+export const otelLogsEnabled = (): boolean => true;
+
 /** Surfaces shared by both agents: the Agents menu section and its preferences tab. */
 export const anyAgentEnabled = (): boolean =>
   agentIssuesEnabled() || agentTestsEnabled();

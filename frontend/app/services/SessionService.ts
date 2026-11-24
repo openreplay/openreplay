@@ -1,19 +1,10 @@
-import { IErrorStack } from 'Types/session/errorStack';
 import { ISession } from 'Types/session/session';
 
-import APIClient, { apiClient, clean as cleanParams } from 'App/api_client';
+import { clean as cleanParams } from 'App/api_client';
 
-export default class SettingsService {
-  private client: APIClient;
+import BaseService from './BaseService';
 
-  constructor(client?: APIClient) {
-    this.client = client || apiClient;
-  }
-
-  initClient(client?: APIClient) {
-    this.client = client || apiClient;
-  }
-
+export default class SettingsService extends BaseService {
   fetchCaptureConditions(
     projectId: number,
   ): Promise<{ rate: number; conditionalCapture: boolean; conditions: any[] }> {
@@ -44,40 +35,6 @@ export default class SettingsService {
       .get(`/sessions/${sessionId}/first-mob`)
       .then((r) => r.json())
       .then((j) => j.data || {});
-  }
-
-  getRecommendedSessions(sort?: any): Promise<{
-    sessions: ISession[];
-    total: number;
-  }> {
-    return this.client
-      .post('/sessions-recommendations', sort)
-      .then((r) => r.json())
-      .then((response) => response || []);
-  }
-
-  getFinetuneSessions(): Promise<{ sessions: string[] }> {
-    return this.client
-      .get('/PROJECT_ID/finetuning/sessions')
-      .then((r) => r.json());
-  }
-
-  sendFeedback(data: any): Promise<any> {
-    return this.client
-      .post(`/session-feedback`, data)
-      .then((r) => r.json())
-      .then((j) => j.data || []);
-  }
-
-  signalFinetune() {
-    return this.client.get('/PROJECT_ID/finetune');
-  }
-
-  checkFeedback(sessionId: string): Promise<any> {
-    return this.client
-      .get(`/session-feedback/${sessionId}`)
-      .then((r) => r.json())
-      .then((j) => j.data || false);
   }
 
   getSessionInfo(
@@ -112,16 +69,6 @@ export default class SettingsService {
       .then((response) => response.data || []);
   }
 
-  getErrorStack(
-    sessionId: string,
-    errorId: string,
-  ): Promise<{ trace: IErrorStack[] }> {
-    return this.client
-      .get(`/sessions/${sessionId}/errors/${errorId}/sourcemaps`)
-      .then((r) => r.json())
-      .then((j) => j.data || {});
-  }
-
   getAutoplayList(params = {}): Promise<{ sessionId: string }[]> {
     return this.client
       .post('/sessions/search/ids', cleanParams(params))
@@ -147,49 +94,11 @@ export default class SettingsService {
       .then((j) => j.data || []);
   }
 
-  async fetchSimilarSessions(
-    sessionId: string,
-    params: any,
-  ): Promise<{ sessions: ISession[] }> {
-    try {
-      const r = await this.client.post(
-        `/PROJECT_ID/similar-sessions/${sessionId}`,
-        params,
-      );
-      const j = await r.json();
-      return j.sessions || [];
-    } catch (reason) {
-      return Promise.reject(reason);
-    }
-  }
-
   async getAssistCredentials(): Promise<any> {
     try {
       const r = await this.client.get('/config/assist/credentials');
       const j = await r.json();
       return j.data || null;
-    } catch (reason) {
-      return Promise.reject(reason);
-    }
-  }
-
-  generateShorts(projectId: string) {
-    try {
-      void this.client.post(`/${projectId}/generate/shorts`, {});
-    } catch (reason) {
-      console.error('Error generating shorts:', reason);
-    }
-  }
-
-  async fetchSessionClips(): Promise<{ clips: any[] }> {
-    try {
-      const r = await this.client.get('/PROJECT_ID/shorts-recommendations', {
-        sortBy: 'startTs',
-        sortOrder: 'desc',
-      });
-      // .get('/PROJECT_ID/shorts-recommendations');
-      const j = await r.json();
-      return j || {};
     } catch (reason) {
       return Promise.reject(reason);
     }

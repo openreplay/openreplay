@@ -153,10 +153,6 @@ export default class UiPlayerStore {
     this.fullscreen = false;
   };
 
-  fullscreenOn = () => {
-    this.fullscreen = true;
-  };
-
   toggleBottomBlock = (block: number) => {
     this.bottomBlock = this.bottomBlock === block ? 0 : block;
   };

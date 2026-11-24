@@ -15,9 +15,11 @@ import ErrorService from './ErrorService';
 import FilterService from './FilterService';
 import FunnelService from './FunnelService';
 import HealthService from './HealthService';
+import IngestKeysService from './IngestKeysService';
 import IntegrationsService from './IntegrationsService';
 import IssueReportsService from './IssueReportsService';
 import MetricService from './MetricService';
+import OtelLogsService from './OtelLogsService';
 import ProjectsService from './ProjectsService';
 import RecordingsService from './RecordingsService';
 import SessionService from './SessionService';
@@ -52,31 +54,5 @@ export const searchService = new SearchService();
 export const projectsService = new ProjectsService();
 export const billingService = new BillingService();
 export const analyticsService = new AnalyticsService();
-
-export const services = [
-  projectsService,
-  dashboardService,
-  metricService,
-  sessionService,
-  userService,
-  funnelService,
-  auditService,
-  errorService,
-  recordingsService,
-  configService,
-  alertsService,
-  webhookService,
-  healthService,
-  assistStatsService,
-  tagWatchService,
-  aiService,
-  spotService,
-  loginService,
-  filterService,
-  issueReportsService,
-  customFieldService,
-  integrationsService,
-  searchService,
-  billingService,
-  analyticsService,
-];
+export const otelLogsService = new OtelLogsService();
+export const ingestKeysService = new IngestKeysService();

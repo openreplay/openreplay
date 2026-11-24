@@ -185,8 +185,8 @@ export default function withReport<P extends Props>(
             <div className="font-semibold">
               {period &&
                 `${period.range.start.toFormat(
-                  'MMM D',
-                )} - ${period.range.end.toFormat('MMM D')}`}
+                  'MMM d',
+                )} - ${period.range.end.toFormat('MMM d')}`}
             </div>
           </div>
           {dashboard && dashboard.description && (

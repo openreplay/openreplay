@@ -13,6 +13,7 @@ import {
   PlayCircle,
   ScrollText,
   Settings2,
+  Telescope,
   TriangleAlert,
   UserRound,
   Users,
@@ -30,11 +31,9 @@ import { useTranslation } from 'react-i18next';
 
 import { PREFERENCES_MENU } from 'App/layout/data';
 import { activeMenuKey, menuRoutes } from 'App/layout/nav/routes';
-import { leafOf, preferencesTree } from 'App/layout/nav/tree';
+import { preferenceItems } from 'App/layout/nav/tree';
 import { useStore } from 'App/mstore';
 import { useLocation, useNavigate } from 'App/routing';
-import { mobileScreen } from 'App/utils/isMobile';
-import { agentIssuesEnabled, agentTestsEnabled } from 'App/utils/split-utils';
 
 import './preferences.css';
 
@@ -62,11 +61,12 @@ const GROUPS: { label: (t: TFunction) => string; keys: string[] }[] = [
       PREFERENCES_MENU.INTEGRATIONS,
       PREFERENCES_MENU.WEBHOOKS,
       PREFERENCES_MENU.EXPORTED_VIDEOS,
+      PREFERENCES_MENU.OPENTELEMETRY,
     ],
   },
   {
     label: (t) => t('Armada'),
-    keys: [PREFERENCES_MENU.AGENTS, PREFERENCES_MENU.TEST_AGENTS],
+    keys: [PREFERENCES_MENU.AGENTS],
   },
 ];
 
@@ -131,6 +131,12 @@ const LEDES = (
     title: t('Synthetics'),
     lede: t('Defaults for the agents that run your tests.'),
   },
+  [PREFERENCES_MENU.OPENTELEMETRY]: {
+    title: t('OpenTelemetry'),
+    lede: t(
+      'Where your services send their logs, and the keys they send with.',
+    ),
+  },
 });
 
 const SECTION_ICON: Record<string, LucideIcon> = {
@@ -146,6 +152,7 @@ const SECTION_ICON: Record<string, LucideIcon> = {
   [PREFERENCES_MENU.EXPORTED_VIDEOS]: Film,
   [PREFERENCES_MENU.AGENTS]: TriangleAlert,
   [PREFERENCES_MENU.TEST_AGENTS]: FlaskConical,
+  [PREFERENCES_MENU.OPENTELEMETRY]: Telescope,
 };
 
 /** Preferences: a grouped rail of sections beside the open one. */
@@ -156,24 +163,12 @@ function PreferencesShell({ children }: { children: ReactNode }) {
   const { userStore, projectsStore } = useStore();
   const { account, isEnterprise } = userStore;
   const isAdmin = account.admin || account.superAdmin;
-  const modules: string[] = account.settings?.modules ?? [];
   const routes = menuRoutes(projectsStore.siteId);
   const active = activeMenuKey(location.pathname, routes);
 
   const items = useMemo(
-    () =>
-      preferencesTree(t, {
-        isEnterprise,
-        isAdmin,
-        modules,
-        isMobile: mobileScreen,
-        issues: agentIssuesEnabled(),
-        tests: agentTestsEnabled(),
-      })
-        .flatMap((g) => g.entries)
-        .filter((e) => leafOf(e.key) !== 'exit')
-        .map((e) => ({ key: leafOf(e.key), label: e.label })),
-    [isEnterprise, isAdmin, modules, i18n.language],
+    () => preferenceItems(t, { isEnterprise, isAdmin }),
+    [isEnterprise, isAdmin, i18n.language],
   );
 
   const groups = useMemo(() => {

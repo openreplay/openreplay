@@ -21,6 +21,7 @@ export function NavSections({ items, active, onNavigate }: NavSectionsProps) {
           label={sub.label}
           count={sub.count}
           badge={sub.badge}
+          disabled={sub.disabled}
           active={isOn(sub)}
           onClick={() => onNavigate(sub.key)}
         />

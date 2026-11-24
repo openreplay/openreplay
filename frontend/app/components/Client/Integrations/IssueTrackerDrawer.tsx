@@ -76,7 +76,13 @@ function IssueTrackerDrawer({
       danger: true,
     });
     if (!ok) return;
-    await store.deleteIntegration();
+    const res = await store.deleteIntegration().catch(() => ({
+      errors: [t('Failed to remove {{name}}', { name: title })],
+    }));
+    if (res?.errors?.length) {
+      toast.error(res.errors.join(', '));
+      return;
+    }
     refresh();
     onClose();
   };

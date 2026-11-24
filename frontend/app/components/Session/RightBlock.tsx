@@ -1,4 +1,4 @@
-import cn from 'classnames';
+import { clsx as cn } from 'clsx';
 import React from 'react';
 
 import TagWatch from 'Components/Session/Player/TagWatch';

@@ -5,7 +5,7 @@ import ClipStore from '@/mstore/clipStore';
 import React from 'react';
 
 import { apiClient } from 'App/api_client';
-import { services } from 'App/services';
+import { copyText } from 'App/lib/use-copy';
 
 import AiFiltersStore from './aiFiltersStore';
 import AiSummaryStore from './aiSummaryStore';
@@ -23,6 +23,7 @@ import IssuesStore from './issuesStore';
 import LoginStore from './loginStore';
 import MetricStore from './metricStore';
 import NotificationStore from './notificationStore';
+import OtelLogsStore from './otelLogsStore';
 import ProjectsStore from './projectsStore';
 import RecordingsStore from './recordingsStore';
 import RoleStore from './roleStore';
@@ -42,33 +43,13 @@ const searchStoreLive = new SearchStoreLive();
 const settingsStore = new SettingsStore();
 const filterStore = new FilterStore();
 
-function copyToClipboard(text: string) {
-  const textArea = document.createElement('textarea');
-  textArea.value = text;
-
-  textArea.style.top = '0';
-  textArea.style.left = '0';
-  textArea.style.position = 'fixed';
-
-  document.body.appendChild(textArea);
-  textArea.focus();
-  textArea.select();
-
-  try {
-    const successful = document.execCommand('copy');
-    const msg = successful ? 'successful' : 'unsuccessful';
-  } catch (err) {
-    logger.error('unable to copy', err);
-  }
-
-  document.body.removeChild(textArea);
-}
-
 window.getJWT = () => {
   const jwtToken = userStore.getJwt() ?? null;
   if (jwtToken) {
     logger.log(jwtToken);
-    copyToClipboard(jwtToken);
+    void copyText(jwtToken).then((ok) => {
+      if (!ok) logger.error('unable to copy');
+    });
   } else {
     logger.log('not logged in');
   }
@@ -111,6 +92,7 @@ export class RootStore {
   clipStore: ClipStore;
   analyticsStore: AnalyticsStore;
   issuesStore: IssuesStore;
+  otelLogsStore: OtelLogsStore;
 
   constructor() {
     this.dashboardStore = new DashboardStore();
@@ -143,6 +125,7 @@ export class RootStore {
     this.clipStore = new ClipStore();
     this.analyticsStore = new AnalyticsStore();
     this.issuesStore = new IssuesStore();
+    this.otelLogsStore = new OtelLogsStore();
     // Before any component renders: child effects (the integration callback
     // among them) run ahead of Router's own mount effect.
     this.initClient();
@@ -150,12 +133,8 @@ export class RootStore {
 
   initClient() {
     client.setSiteIdCheck(projectStore.getSiteId);
-    client.setJwt(userStore.getJwt());
     client.setJwtChecker(userStore.getJwt);
     client.setOnUpdateJwt(userStore.updateJwt);
-    services.forEach((service) => {
-      service.initClient(client);
-    });
   }
 }
 

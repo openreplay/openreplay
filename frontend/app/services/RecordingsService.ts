@@ -1,4 +1,4 @@
-import APIClient, { apiClient } from 'App/api_client';
+import BaseService from './BaseService';
 
 interface RecordingData {
   name: string;
@@ -38,17 +38,7 @@ export interface RecordsResponse {
   records: IRecord[];
 }
 
-export default class RecordingsService {
-  private client: APIClient;
-
-  constructor(client?: APIClient) {
-    this.client = client || apiClient;
-  }
-
-  initClient(client?: APIClient) {
-    this.client = client || apiClient;
-  }
-
+export default class RecordingsService extends BaseService {
   reserveUrl(
     siteId: string,
     recordingData: RecordingData,

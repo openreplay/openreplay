@@ -1,5 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/ui/layout/tabs';
-import cn from 'classnames';
+import { clsx as cn } from 'clsx';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';

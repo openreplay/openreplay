@@ -1,16 +1,6 @@
-import APIClient, { apiClient } from 'App/api_client';
+import BaseService from './BaseService';
 
-export default class AuditService {
-  private client: APIClient;
-
-  constructor(client?: APIClient) {
-    this.client = client || apiClient;
-  }
-
-  initClient(client?: APIClient) {
-    this.client = client || apiClient;
-  }
-
+export default class AuditService extends BaseService {
   all(data: any): Promise<any> {
     return this.client
       .post('/trails', data)

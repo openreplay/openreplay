@@ -238,6 +238,9 @@ export interface EChartProps {
   }) => void;
 
   onAxisClick?: (dataIndex: number) => void;
+  /** the live instance, for a host that draws or listens on the canvas
+      itself; null when it goes */
+  onInstance?: (chart: echarts.ECharts | null) => void;
   ariaLabel?: string;
 }
 
@@ -248,6 +251,7 @@ export function EChart({
   style,
   onClick,
   onAxisClick,
+  onInstance,
   ariaLabel,
 }: EChartProps) {
   const box = useRef<HTMLDivElement>(null);
@@ -256,6 +260,8 @@ export function EChart({
   click.current = onClick;
   const axisClick = useRef(onAxisClick);
   axisClick.current = onAxisClick;
+  const instance = useRef(onInstance);
+  instance.current = onInstance;
 
   const last = useRef<string>('');
 
@@ -308,9 +314,11 @@ export function EChart({
       resizeFrame = requestAnimationFrame(() => c.resize());
     });
     ro.observe(el);
+    instance.current?.(c);
     return () => {
       cancelAnimationFrame(resizeFrame);
       ro.disconnect();
+      instance.current?.(null);
       c.dispose();
       chart.current = null;
     };

@@ -64,6 +64,7 @@ import {
   resolutionLabel,
 } from './shared/utils';
 import './tests-page.css';
+import { LiveDuration } from './shared/LiveDuration';
 
 type StatusTab = 'all' | UiRunStatus;
 type FilterKey = 'viewport' | 'tags' | 'env' | 'region';
@@ -96,23 +97,6 @@ const PERIODS = [
   { value: CUSTOM_RANGE, label: 'Custom Range' },
 ];
 
-/** Live elapsed counter for an in-flight run. */
-function LiveDuration({ start }: { start: number }) {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
-  }, []);
-  const total = Math.max(0, Math.floor((now - start) / 1000));
-  const h = Math.floor(total / 3600);
-  const m = Math.floor((total % 3600) / 60);
-  const s = total % 60;
-  const label =
-    h > 0
-      ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-      : `${m}:${String(s).padStart(2, '0')}`;
-  return <span className="m-runs__dur is-live">{label}</span>;
-}
 
 function RunsTab() {
   const { t } = useTranslation();
@@ -341,7 +325,7 @@ function RunsTab() {
       sortable: true,
       render: (run) =>
         run.status === 'running' ? (
-          <LiveDuration start={run.date} />
+          <LiveDuration start={run.date} className="m-runs__dur is-live" />
         ) : (
           <span className="m-runs__dur">
             {run.duration ? formatDuration(run.duration) : '—'}
@@ -386,7 +370,7 @@ function RunsTab() {
           <span className="m-runs__m-facts m-truncate">
             {run.envName && <>{run.envName} · </>}
             {run.status === 'running' ? (
-              <LiveDuration start={run.date} />
+              <LiveDuration start={run.date} className="m-runs__dur is-live" />
             ) : run.duration ? (
               formatDuration(run.duration)
             ) : null}

@@ -1,12 +1,12 @@
 import { IconButton } from '@/ui/actions/IconButton';
 import { InlineSelect } from '@/ui/inputs/select';
 import { Switch } from '@/ui/inputs/switch';
-import copy from 'copy-to-clipboard';
 import { Check, Copy } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useCopy } from 'App/lib/use-copy';
 import { useStore } from 'App/mstore';
 import { DAY_SECS, HOUR_SECS, WEEK_SECS } from 'App/utils/index';
 
@@ -21,7 +21,7 @@ type Expiry = keyof typeof EXPIRY;
 function AccessModal() {
   const { t } = useTranslation();
   const { spotStore } = useStore();
-  const [copied, setCopied] = useState(false);
+  const { copy, done: copied } = useCopy(1500);
   const [expiry, setExpiry] = useState<Expiry>('hour');
   const [busy, setBusy] = useState(false);
   const isPublic = !!spotStore.pubKey;
@@ -43,11 +43,7 @@ function AccessModal() {
     setExpiry(v);
     await spotStore.generateKey(spotId, EXPIRY[v]);
   };
-  const onCopy = () => {
-    copy(link);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  };
+  const onCopy = () => void copy(link);
 
   return (
     <div className="m-rs__access">

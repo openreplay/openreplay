@@ -1,8 +1,5 @@
 const regexIpAddress =
   /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-export function validateIP(value) {
-  return regexIpAddress.test(value);
-}
 
 export function validateURL(value) {
   if (typeof value !== 'string') return false;
@@ -46,23 +43,6 @@ export function validateName(value, options) {
 export function notEmptyString(value) {
   if (typeof value !== 'string') return false;
   if (value.trim() === '') return false;
-  return true;
-}
-
-export function validateKeyCode(keyCode, key, regex) {
-  switch (keyCode) {
-    case 8: // Backspace
-    case 9: // Tab
-    case 13: // Enter
-    case 37: // Left
-    case 38: // Up
-    case 39: // Right
-    case 40: // Down
-      break;
-    default:
-      if (!regex.test(key)) return false;
-  }
-
   return true;
 }
 

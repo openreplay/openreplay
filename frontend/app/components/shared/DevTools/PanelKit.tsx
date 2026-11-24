@@ -135,14 +135,3 @@ export function NoData({
     />
   );
 }
-
-/** Left and right halves of a panel bar. */
-export function BarSide({
-  side,
-  children,
-}: {
-  side: 'left' | 'right';
-  children: ReactNode;
-}) {
-  return <div className={`m-dt__bar-${side}`}>{children}</div>;
-}

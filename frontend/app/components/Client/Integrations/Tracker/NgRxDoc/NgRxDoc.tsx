@@ -1,18 +1,17 @@
-import { CodeBlock } from '@/ui/data/CodeBlock';
-import { Section } from '@/ui/overlays/EntityDrawer';
-import { observer } from 'mobx-react-lite';
-import React from 'react';
-import { useTranslation } from 'react-i18next';
+import { pluginDoc } from '../../PluginDoc';
 
-import ToggleContent from 'Shared/ToggleContent';
-
-import { PluginPane, usePluginProject } from '../../PluginPane';
-
-function NgRxDoc({ onClose }: { onClose?: () => void }) {
-  const { t } = useTranslation();
-  const scope = usePluginProject();
-  const { projectKey } = scope;
-  const usage = `import { StoreModule } from '@ngrx/store';
+export default pluginDoc({
+  title: 'NgRx',
+  icon: 'integrations/ngrx',
+  docs: 'https://docs.openreplay.com/plugins/ngrx',
+  pkg: '@openreplay/tracker-ngrx',
+  blurb: (t) =>
+    t('NgRx actions and the state they produce, to read back inside a replay.'),
+  hint: (t) =>
+    t(
+      'Add the generated meta-reducer into your imports. See NgRx documentation for more details.',
+    ),
+  usage: (projectKey) => `import { StoreModule } from '@ngrx/store';
 import { reducers } from './reducers';
 import { tracker } from '@openreplay/tracker';
 import trackerNgRx from '@openreplay/tracker-ngrx';
@@ -27,8 +26,8 @@ const metaReducers = [tracker.use(trackerNgRx(<options>))]; // check list of ava
 @NgModule({
   imports: [StoreModule.forRoot(reducers, { metaReducers })]
 })
-export class AppModule {}`;
-  const usageCjs = `import { StoreModule } from '@ngrx/store';
+export class AppModule {}`,
+  usageCjs: (projectKey) => `import { StoreModule } from '@ngrx/store';
 import { reducers } from './reducers';
 import { tracker } from '@openreplay/tracker/cjs';
 // alternatively you can use dynamic import without /cjs suffix to prevent issues with window scope
@@ -49,41 +48,5 @@ const metaReducers = [tracker.use(trackerNgRx(<options>))]; // check list of ava
     imports: [StoreModule.forRoot(reducers, { metaReducers })]
   })
   export class AppModule {}
-}`;
-  return (
-    <PluginPane
-      title="NgRx"
-      icon="integrations/ngrx"
-      blurb={t(
-        'NgRx actions and the state they produce, to read back inside a replay.',
-      )}
-      docs="https://docs.openreplay.com/plugins/ngrx"
-      scope={scope}
-      onClose={onClose}
-    >
-      <Section title={t('Install')}>
-        <CodeBlock
-          inline
-          code="npm i @openreplay/tracker-ngrx --save"
-          copyLabel={t('Copy command')}
-        />
-      </Section>
-      <Section
-        title={t('Use')}
-        hint={t(
-          'Add the generated meta-reducer into your imports. See NgRx documentation for more details.',
-        )}
-      >
-        <ToggleContent
-          label={t('Server-Side-Rendered (SSR)?')}
-          first={<CodeBlock language="js" code={usage} />}
-          second={<CodeBlock language="jsx" code={usageCjs} />}
-        />
-      </Section>
-    </PluginPane>
-  );
-}
-
-NgRxDoc.displayName = 'NgRxDoc';
-
-export default observer(NgRxDoc);
+}`,
+});
