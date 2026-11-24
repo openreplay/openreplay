@@ -64,7 +64,8 @@ function IngestKeys() {
   const env = [
     `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT=${endpoint}`,
     'OTEL_EXPORTER_OTLP_LOGS_PROTOCOL=http/protobuf',
-    'OTEL_EXPORTER_OTLP_LOGS_HEADERS=Authorization=Bearer <ingest key>',
+    // header values are percent-encoded in this variable
+    'OTEL_EXPORTER_OTLP_LOGS_HEADERS=Authorization=Bearer%20<ingest key>',
   ].join('\n');
 
   return (

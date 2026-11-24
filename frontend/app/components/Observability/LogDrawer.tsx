@@ -28,6 +28,7 @@ import { type OtelLog, otelLogTimeMs } from 'App/services/OtelLogsService';
 
 import {
   type LineField,
+  RELATED_SIDE,
   byteSize,
   levelLabel,
   levelOf,
@@ -41,7 +42,6 @@ import { termMenuItems } from './termMenu';
 export type RelatedMatch = 'service' | 'pod' | 'all';
 const RELATED_SPANS = [1_000, 5_000, 30_000, 60_000];
 const DEFAULT_RELATED_SPAN = 5_000;
-const RELATED_SIDE = 150;
 
 export interface LogDrawerProps {
   line: OtelLog | null;
@@ -105,7 +105,10 @@ export function LogDrawer({
       if (
         e.target instanceof HTMLElement &&
         (/^(INPUT|TEXTAREA)$/.test(e.target.tagName) ||
-          e.target.closest('[role="menu"]'))
+          e.target.closest('[role="menu"]') ||
+          // segmented controls and tabs move focus with the arrows
+          (e.key.startsWith('Arrow') &&
+            e.target.closest('[role="group"], [role="tablist"]')))
       )
         return;
       if (e.key === 'j' || e.key === 'ArrowDown') onNext?.();
@@ -131,8 +134,7 @@ export function LogDrawer({
       key: 'copy',
       icon: <Copy size={14} />,
       label: t('Copy value'),
-      onClick: () =>
-        void copyText(f.value),
+      onClick: () => void copyText(f.value),
     });
     if (f.key && !f.multiline) {
       const k = f.key;
@@ -355,15 +357,18 @@ function Related({
     fetch(line, at, span, match, ctl.signal)
       .then((found) => {
         if (ctl.signal.aborted) return;
-        // the API lists newest first: read them in order, around this one
-        const ordered = [...found].sort((a, b) =>
+        // the API lists newest first: read them in order, around this one.
+        // A busy window can cap this line out; it still goes where its time is
+        const all = found.some((l) => l.id === line.id)
+          ? found
+          : [...found, line];
+        const ordered = [...all].sort((a, b) =>
           a.timestamp.length !== b.timestamp.length
             ? a.timestamp.length - b.timestamp.length
             : a.timestamp < b.timestamp
               ? -1
               : 1,
         );
-        if (!ordered.some((l) => l.id === line.id)) ordered.push(line);
         const i = ordered.findIndex((l) => l.id === line.id);
         setLines(
           ordered.slice(Math.max(0, i - RELATED_SIDE), i + RELATED_SIDE + 1),

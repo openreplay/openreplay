@@ -72,7 +72,7 @@ function ReplayPinMarker({ scale }: { scale: number }) {
             at: clock(at),
             label: pin.label,
           })}
-          aria-expanded={open}
+          aria-expanded={shown}
           onPointerDown={stop}
           onClick={(e) => {
             e.stopPropagation();

@@ -71,7 +71,8 @@ export function calculateGranularities(periodDurationMs: number) {
 export function defaultDensity(periodDurationMs: number) {
   const options = calculateGranularities(periodDurationMs);
   const enabled = options.filter((opt) => !opt.disabled).length;
-  return options[Math.max(enabled - 2, 0)].key;
+  // under an hour no bucket fits; the API takes one point at least
+  return Math.max(options[Math.max(enabled - 2, 0)].key, 1);
 }
 
 export default RangeGranularity;

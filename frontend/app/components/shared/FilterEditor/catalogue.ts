@@ -61,7 +61,10 @@ export function entryFromFilter(f: Filter): CatalogueEntry {
       isEvent && category !== 'segments' && category !== 'features',
     autoCaptured: !!f.autoCaptured,
     options,
-    operators: f.operators?.map((o) => ({ value: o.value, label: o.label })),
+    // store filters carry an empty list by default: only a real one counts
+    operators: f.operators?.length
+      ? f.operators.map((o) => ({ value: o.value, label: o.label }))
+      : undefined,
     source: f,
   };
 }
@@ -71,21 +74,31 @@ export interface OperatorOption {
   label: string;
 }
 
+/** live search takes only these */
+const liveOnly = <T extends { value: string }>(ops: readonly T[]) =>
+  ops.filter((o) => o.value === 'is' || o.value === 'contains');
+
 export const operatorsFor = (
   t: DataType,
   live = false,
 ): readonly OperatorOption[] => {
   if (t === 'duration') return [{ value: '=', label: 'is' }];
   const all = getOperatorsByType(t === 'date' ? 'date' : t);
-  return (
-    live ? all.filter((o) => o.value === 'is' || o.value === 'contains') : all
-  ).map((o) => ({ value: o.value, label: o.label }));
+  return (live ? liveOnly(all) : all).map((o) => ({
+    value: o.value,
+    label: o.label,
+  }));
 };
 
 export const entryOperators = (
   e: Pick<CatalogueEntry, 'dataType' | 'operators'>,
   live = false,
-): readonly OperatorOption[] => e.operators ?? operatorsFor(e.dataType, live);
+): readonly OperatorOption[] =>
+  e.operators
+    ? live
+      ? liveOnly(e.operators)
+      : e.operators
+    : operatorsFor(e.dataType, live);
 
 export const isNullary = (operator: string) => NULLARY.has(operator);
 

@@ -47,7 +47,9 @@ window.getJWT = () => {
   const jwtToken = userStore.getJwt() ?? null;
   if (jwtToken) {
     logger.log(jwtToken);
-    void copyText(jwtToken);
+    void copyText(jwtToken).then((ok) => {
+      if (!ok) logger.error('unable to copy');
+    });
   } else {
     logger.log('not logged in');
   }

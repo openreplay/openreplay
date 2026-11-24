@@ -238,6 +238,9 @@
   background: var(--m-surface-default);
   color: var(--m-content-secondary);
   cursor: pointer;
+}
+/* a pulse remounts the pin; the intro plays on the first mount only */
+.m-tl__pin:not(.is-pulsing) {
   animation: m-tl-pin-in var(--m-duration-normal) var(--m-ease-out) 0.6s both;
 }
 .m-tl__pin.is-danger {
@@ -299,6 +302,9 @@
 .m-tl__pin.is-open {
   box-shadow: 0 0 0 3px
     color-mix(in oklab, var(--m-content-primary) 14%, transparent);
+}
+.m-tl__pin.is-open:focus-visible {
+  box-shadow: 0 0 0 2px var(--m-border-accent);
 }
 .m-tl__pin.is-pulsing::after {
   content: '';
@@ -391,7 +397,7 @@
   gap: var(--m-space-2);
 }
 @media (prefers-reduced-motion: reduce) {
-  .m-tl__pin {
+  .m-tl__pin:not(.is-pulsing) {
     animation: none;
   }
 }

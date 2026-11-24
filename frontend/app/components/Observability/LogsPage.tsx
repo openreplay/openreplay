@@ -305,8 +305,9 @@ function LogsPage() {
         level === 'error' ? 'danger' : level === 'warn' ? 'warning' : undefined,
       backUrl: withSiteId(logsRoute(), siteId),
     });
-    // back in Logs, the line's drawer is open again
-    store.openLog(l);
+    // back in Logs, the line's drawer is open again, even once newer lines
+    // have pushed it off the first page
+    store.openLog(l, true);
     navigate(
       `${withSiteId(sessionRoute(id), siteId)}?jumpto=${Math.max(0, at - PIN_LEAD)}`,
     );
@@ -434,19 +435,14 @@ function LogsPage() {
                     facets={facetKeys.map((key) => {
                       const { values, loading } = store.facetValuesOf(key);
                       const on = store.valuesOn(key);
+                      // the API matches these values exactly, case included
                       const list = values.map((v) => ({
                         value: v.value,
                         count: v.count,
-                        on: on.some(
-                          (x) => x.toLowerCase() === v.value.toLowerCase(),
-                        ),
+                        on: on.includes(v.value),
                       }));
                       for (const v of on)
-                        if (
-                          !list.some(
-                            (x) => x.value.toLowerCase() === v.toLowerCase(),
-                          )
-                        )
+                        if (!list.some((x) => x.value === v))
                           list.push({ value: v, count: 0, on: true });
                       return {
                         key,
@@ -529,10 +525,7 @@ function LogsPage() {
                   />
                   <ExportControl
                     total={store.total}
-                    collect={async () => {
-                      await store.ensure(EXPORT_LIMIT);
-                      return store.logs;
-                    }}
+                    collect={store.collectExport}
                     from={bounds.from}
                     to={bounds.to}
                     columns={store.columns}
@@ -583,14 +576,26 @@ function LogsPage() {
                 />
               ) : (
                 <>
-                  <LogTable
-                    rows={store.pageRows}
-                    withDate={withDate}
-                    openId={store.openId}
-                    onOpen={store.openLog}
-                    onPlay={play}
-                    columns={store.columns}
-                  />
+                  {store.error && store.pageRows.length === 0 ? (
+                    <EmptyState
+                      title={t('Logs could not load')}
+                      hint={store.error}
+                      action={
+                        <Button onClick={store.retryPage}>
+                          {t('Try again')}
+                        </Button>
+                      }
+                    />
+                  ) : (
+                    <LogTable
+                      rows={store.pageRows}
+                      withDate={withDate}
+                      openId={store.openId}
+                      onOpen={store.openLog}
+                      onPlay={play}
+                      columns={store.columns}
+                    />
+                  )}
                   <ListFooter
                     fit="logs"
                     page={store.page}

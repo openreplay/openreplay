@@ -112,6 +112,7 @@ export function useValueOptions(
   useEffect(() => {
     if (!open || entry.options || !source) return undefined;
     const ctl = new AbortController();
+    setOwn(null);
     setLoading(true);
     // typing narrows locally, so only the first open asks
     source

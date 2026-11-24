@@ -58,6 +58,6 @@ piniaStorePlugin(examplePiniaStore)
 // now you can use examplePiniaStore as
 // usual pinia store
 // (destructure values or return it as a whole etc)
-}`,
+`,
   cjsLanguage: 'js',
 });

@@ -498,6 +498,8 @@ export const byteSize = (text: string) => new TextEncoder().encode(text).length;
 /* ── export ─────────────────────────────────────────────────────────────── */
 
 export const EXPORT_LIMIT = 10_000;
+/** related lines shown on each side of the open one */
+export const RELATED_SIDE = 150;
 export type ExportFormat = 'csv' | 'json';
 export function exportLines(
   logs: readonly OtelLog[],
@@ -524,7 +526,7 @@ export function exportLines(
       .map(csvCell)
       .join(','),
   );
-  return [head.join(','), ...rows].join('\n');
+  return [head.map(csvCell).join(','), ...rows].join('\n');
 }
 
 export function exportFileName(from: number, to: number, format: ExportFormat) {

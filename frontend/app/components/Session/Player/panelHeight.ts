@@ -8,9 +8,8 @@ export const debounceUpdate = debounce((height: number) => {
 
 export const getDefaultPanelHeight = () => {
   const storageHeight = localStorage.getItem(heightKey);
-  if (storageHeight) {
-    const height = parseInt(storageHeight, 10);
-    return height > window.innerHeight / 2 ? window.innerHeight / 2 : height;
-  }
+  const height = storageHeight ? parseInt(storageHeight, 10) : NaN;
+  if (Number.isFinite(height) && height > 0)
+    return Math.min(height, window.innerHeight / 2);
   return 300;
 };

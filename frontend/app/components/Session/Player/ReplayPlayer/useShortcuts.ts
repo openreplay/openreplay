@@ -44,6 +44,8 @@ function useShortcuts({
   useEffect(() => {
     const handleShortcuts = (e: KeyboardEvent) => {
       if (ownsKeys(e.target)) return false;
+      // read before the Shift block below prevents it, so Shift+Space plays
+      const prevented = e.defaultPrevented;
       if (e.shiftKey && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
         player.toggleInspectorMode(false);
@@ -82,7 +84,7 @@ function useShortcuts({
       if (e.key === 'Esc' || e.key === 'Escape') {
         fullScreenOff();
       }
-      if (e.key === ' ' && !e.defaultPrevented) {
+      if (e.key === ' ' && !prevented) {
         e.preventDefault();
         (document.activeElement as HTMLInputElement | null)?.blur?.();
         player.togglePlay();

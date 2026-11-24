@@ -11,6 +11,7 @@ import {
   EXPORT_LIMIT,
   type LogRule,
   type LogWindow,
+  RELATED_SIDE,
   logFilter,
   rulesToFilter,
   sameRules,
@@ -44,12 +45,17 @@ export interface LogView {
 export type LogsDisplay = 'data' | 'drill';
 
 const isAbort = (e: any) => e?.name === 'AbortError';
+/** pages of related lines asked at most, in a busy window */
+const RELATED_PAGES = 10;
 const ruleOf = (f: Filter): LogRule => ({
   name: f.name,
   operator: f.operator ?? 'is',
   value: (f.value ?? []).map(String),
 });
-const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
+/** levels match whatever their case (the API lowercases them); every other
+    value is matched exactly, as the API does */
+const same = (key: string, a: string, b: string) =>
+  key === 'level' ? a.toLowerCase() === b.toLowerCase() : a === b;
 
 export default class OtelLogsStore {
   range: OtelLogsRange = { durationMs: 15 * 60 * 1000 };
@@ -70,6 +76,7 @@ export default class OtelLogsStore {
   /** a quiet refetch is out: the list stays as it is, paging waits */
   refreshing = false;
   loadingMore = false;
+  exporting = false;
   histogramLoading = false;
   facetsLoading = false;
   error: string | null = null;
@@ -112,19 +119,21 @@ export default class OtelLogsStore {
   private controller: AbortController | null = null;
   private viewsKey: string | null = null;
   private generation = 0;
+  private keysSeq = 0;
 
   constructor() {
-    makeAutoObservable<OtelLogsStore, 'controller' | 'viewsKey' | 'generation'>(
-      this,
-      {
-        controller: false,
-        viewsKey: false,
-        generation: false,
-        rules: observableRef,
-        window: observableRef,
-        labelOf: false,
-      },
-    );
+    makeAutoObservable<
+      OtelLogsStore,
+      'controller' | 'viewsKey' | 'generation' | 'keysSeq'
+    >(this, {
+      controller: false,
+      viewsKey: false,
+      generation: false,
+      keysSeq: false,
+      rules: observableRef,
+      window: observableRef,
+      labelOf: false,
+    });
   }
 
   setRange = (range: OtelLogsRange) => {
@@ -171,6 +180,8 @@ export default class OtelLogsStore {
     this.error = null;
     this.loading = !quiet;
     this.refreshing = quiet;
+    // a page in flight belongs to the aborted run and never clears this
+    this.loadingMore = false;
     this.newCount = 0;
     this.generation += 1;
     this.fetchSeq += 1;
@@ -267,6 +278,26 @@ export default class OtelLogsStore {
         runInAction(() => (this.loadingMore = false));
       }
     }
+  };
+
+  /** Every line up to the export limit; refresh ticks wait meanwhile so the
+      pages are not swapped out under it. */
+  collectExport = async (): Promise<OtelLog[]> => {
+    this.exporting = true;
+    try {
+      await this.ensure(EXPORT_LIMIT);
+      // a page that failed would leave the file short
+      if (this.error) throw new Error(this.error);
+      return this.logs;
+    } finally {
+      runInAction(() => (this.exporting = false));
+    }
+  };
+
+  /** the page past the loaded lines failed: asks for it again */
+  retryPage = () => {
+    this.error = null;
+    void this.ensure(this.page * this.pageSize);
   };
 
   /** Loads pages until `count` lines are held (or the list ends). */
@@ -420,9 +451,11 @@ export default class OtelLogsStore {
       return;
     }
     const vals = (r.value ?? []).map(String);
-    const on = vals.some((v) => same(v, value));
+    const on = vals.some((v) => same(key, v, value));
     if (on && mode === 'add') return;
-    const next = on ? vals.filter((v) => !same(v, value)) : [...vals, value];
+    const next = on
+      ? vals.filter((v) => !same(key, v, value))
+      : [...vals, value];
     this.setRules(
       next.length
         ? this.rules.map((x) => (x === r ? { ...x, value: next } : x))
@@ -466,10 +499,10 @@ export default class OtelLogsStore {
         if (
           r.name !== key ||
           r.operator !== o ||
-          !vals.some((v) => same(v, value))
+          !vals.some((v) => same(key, v, value))
         )
           return [r];
-        const rest = vals.filter((v) => !same(v, value));
+        const rest = vals.filter((v) => !same(key, v, value));
         return rest.length ? [{ ...r, value: rest }] : [];
       });
     if (!on) {
@@ -490,7 +523,7 @@ export default class OtelLogsStore {
     }
     const vals = (r.value ?? []).map(String);
     this.setRules(
-      vals.some((v) => same(v, value))
+      vals.some((v) => same(key, v, value))
         ? next
         : next.map((x) => (x === r ? { ...x, value: [...vals, value] } : x)),
       true,
@@ -504,7 +537,7 @@ export default class OtelLogsStore {
         (r) =>
           r.name === key &&
           r.operator === o &&
-          (r.value ?? []).some((v) => same(String(v), value)),
+          (r.value ?? []).some((v) => same(key, String(v), value)),
       );
     return has('is') ? 'in' : has('isNot') ? 'out' : undefined;
   };
@@ -648,8 +681,8 @@ export default class OtelLogsStore {
   /** a tick: page one with nothing open refetches, anything else counts
       what arrived since and offers it */
   tick = () => {
-    if (!('preset' in this.window)) return;
-    if (this.page === 1 && !this.openId) {
+    if (!('preset' in this.window) || this.exporting) return;
+    if (this.page === 1 && !this.openLine) {
       void this.run(Date.now(), true);
       return;
     }
@@ -698,8 +731,10 @@ export default class OtelLogsStore {
     this.openId = id;
   };
 
-  openLog = (log: OtelLog) => {
-    this.openExtra = this.logs.some((l) => l.id === log.id) ? null : log;
+  /** `keep` holds the line even once a refetch drops it from the list */
+  openLog = (log: OtelLog, keep = false) => {
+    this.openExtra =
+      keep || !this.logs.some((l) => l.id === log.id) ? log : null;
     this.openId = log.id;
   };
 
@@ -717,7 +752,9 @@ export default class OtelLogsStore {
       });
   };
 
-  /** lines around one, from a search of their own (the list stays put) */
+  /** lines around one, from a search of their own (the list stays put).
+      The API lists newest first, so a busy window is paged until the line
+      and as many older ones as the drawer shows have come in */
   related = async (
     log: OtelLog,
     at: number,
@@ -726,27 +763,36 @@ export default class OtelLogsStore {
     signal?: AbortSignal,
   ): Promise<OtelLog[]> => {
     const pod = log.resourceAttributes?.['k8s.pod.name'];
-    const r = await otelLogsService.search(
-      {
-        startTime: at - spanMs,
-        endTime: at + spanMs + 1,
-        services: match === 'service' ? [log.serviceName] : [],
-        attributes:
-          match === 'pod' && pod
-            ? [
-                {
-                  scope: 'resource',
-                  key: 'k8s.pod.name',
-                  op: 'is',
-                  values: [pod],
-                },
-              ]
-            : [],
-        limit: 301,
-      },
-      signal,
-    );
-    return r.logs;
+    const filter: OtelLogsFilter = {
+      startTime: at - spanMs,
+      endTime: at + spanMs + 1,
+      services: match === 'service' ? [log.serviceName] : [],
+      attributes:
+        match === 'pod' && pod
+          ? [
+              {
+                scope: 'resource',
+                key: 'k8s.pod.name',
+                op: 'is',
+                values: [pod],
+              },
+            ]
+          : [],
+    };
+    const found: OtelLog[] = [];
+    let cursor: string | undefined;
+    for (let page = 0; page < RELATED_PAGES; page += 1) {
+      const r = await otelLogsService.search(
+        { ...filter, limit: OTEL_LOGS_LIMITS.maxPageSize, cursor },
+        signal,
+      );
+      found.push(...r.logs);
+      const i = found.findIndex((l) => l.id === log.id);
+      if (!r.nextCursor || (i >= 0 && found.length - 1 - i >= RELATED_SIDE))
+        break;
+      cursor = r.nextCursor;
+    }
+    return found;
   };
 
   /* ── the Logs page: views ──────────────────────────────────────────── */
@@ -821,21 +867,26 @@ export default class OtelLogsStore {
   /* ── ingest keys ───────────────────────────────────────────────────── */
 
   fetchIngestKeys = async () => {
+    // a project switch asks again; the earlier answer is stale
+    const seq = ++this.keysSeq;
     this.ingestKeysLoading = true;
     try {
       const keys = await ingestKeysService.list();
-      runInAction(() => (this.ingestKeys = keys));
+      if (seq === this.keysSeq) runInAction(() => (this.ingestKeys = keys));
     } finally {
-      runInAction(() => (this.ingestKeysLoading = false));
+      if (seq === this.keysSeq)
+        runInAction(() => (this.ingestKeysLoading = false));
     }
   };
 
   /** Returns the key with its secret; the stored copy drops it since the API never returns it again. */
   createIngestKey = async (name: string): Promise<IngestKey> => {
+    const seq = this.keysSeq;
     const created = await ingestKeysService.create(name.trim());
-    runInAction(() => {
-      this.ingestKeys = [{ ...created, key: undefined }, ...this.ingestKeys];
-    });
+    if (seq === this.keysSeq)
+      runInAction(() => {
+        this.ingestKeys = [{ ...created, key: undefined }, ...this.ingestKeys];
+      });
     return created;
   };
 

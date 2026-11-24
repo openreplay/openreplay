@@ -130,7 +130,8 @@ function WidgetOptions() {
             ariaLabel={t('Metric format')}
             icon={<Library />}
             label={
-              metricFormatOptions.find((o) => o.value === metricFormat)?.label
+              metricFormatOptions.find((o) => o.value === metricFormat)
+                ?.label ?? metricFormat
             }
             value={metricFormat}
             onChange={handleChange}

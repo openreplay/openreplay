@@ -235,7 +235,13 @@ function WidgetSessions() {
     () => debounce(fetchSessions, 1000),
     [fetchSessions],
   );
-  useEffect(() => () => debounceSessions.cancel(), [debounceSessions]);
+  // cancelled on unmount only: a new widget instance must not drop a fetch
+  // queued just before it
+  const debounceRef = useRef(debounceSessions);
+  useEffect(() => {
+    debounceRef.current = debounceSessions;
+  }, [debounceSessions]);
+  useEffect(() => () => debounceRef.current.cancel(), []);
 
   // the series the list stands for: the focused one, less the hidden ones
   const listedSeries = () => {

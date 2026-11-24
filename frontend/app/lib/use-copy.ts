@@ -47,7 +47,10 @@ export function useCopy(holdMs = 1600) {
 
   const copy = useCallback(
     async (text: string) => {
-      if (!(await copyText(text))) return;
+      if (!(await copyText(text))) {
+        toast.error(i18n.t('Could not reach the clipboard'));
+        return;
+      }
       setDone(true);
       if (timer.current != null) window.clearTimeout(timer.current);
       timer.current = window.setTimeout(() => setDone(false), holdMs);

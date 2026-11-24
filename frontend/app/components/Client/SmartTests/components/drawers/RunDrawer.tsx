@@ -531,7 +531,7 @@ function RunDrawer({ run, open, onClose }: Props) {
           <span>
             <Timer size={13} aria-hidden="true" />
             {running ? (
-              <LiveDuration start={run.date} />
+              <LiveDuration start={run.date} format={formatDuration} />
             ) : run.duration ? (
               formatDuration(run.duration)
             ) : (

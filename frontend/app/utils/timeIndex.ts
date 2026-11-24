@@ -12,7 +12,7 @@ export function lastIndexAtOrBefore(
   let found = -1;
   while (lo <= hi) {
     const mid = (lo + hi) >> 1;
-    const time = list[mid].time;
+    const time = list[mid].time ?? 0;
     if (strict ? time < t : time <= t) {
       found = mid;
       lo = mid + 1;

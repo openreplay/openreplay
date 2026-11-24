@@ -24,6 +24,7 @@ import { observer } from 'mobx-react-lite';
 import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { copyText } from 'App/lib/use-copy';
 import { useStore } from 'App/mstore';
 import { formatClock } from 'App/player-ui/clock';
 import { formatBytes } from 'App/utils';
@@ -31,7 +32,6 @@ import { getLocalHourFormat } from 'App/utils/intlUtils';
 import 'Components/Session/ReplayScreen/request-sheet.css';
 
 import { AnyResource, toCurl, toFetch } from './utils';
-import { copyText } from 'App/lib/use-copy';
 
 type Headers = Record<string, string>;
 interface Part {

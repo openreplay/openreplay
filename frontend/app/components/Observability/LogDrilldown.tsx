@@ -138,7 +138,12 @@ export const LogDrilldown = observer(function LogDrilldown({
   const gridRef = useRef<HTMLDivElement>(null);
   const fitN = useFitCards(gridRef, choice === 'fit', shown.length > 0);
   const size = choice === 'fit' ? fitN : choice;
-  useEffect(() => setPage(1), [q, cards]);
+  // a refresh hands new cards each time; only a new set of keys starts over
+  const cardKeys = cards
+    .map((a) => a.key)
+    .sort()
+    .join('|');
+  useEffect(() => setPage(1), [q, cardKeys]);
   const pages = Math.max(1, Math.ceil(shown.length / size));
   const at = Math.min(page, pages);
   const paged = shown.slice((at - 1) * size, at * size);
@@ -226,10 +231,14 @@ function DrillCardView({
   const presence = total ? a.carried / total : 0;
   const top = values.slice(0, DRILL_VALUES);
   const inTop = top.reduce((s, v) => s + v.count, 0);
+  // values ignore their own key's filter, so a filtered key can count more
+  // lines than the list holds: split them over what was counted instead
+  const base = Math.max(
+    a.carried,
+    values.reduce((s, v) => s + v.count, 0),
+  );
   const rest =
-    a.carried > 0 && top.length > 0
-      ? Math.max(0, a.carried - inTop) / a.carried
-      : 0;
+    base > 0 && top.length > 0 ? Math.max(0, base - inTop) / base : 0;
   return (
     <section className="m-logs__drill-card" aria-label={label}>
       <header className="m-logs__drill-head">
@@ -281,7 +290,7 @@ function DrillCardView({
               attrKey={a.key}
               label={label}
               value={v.value}
-              share={a.carried ? v.count / a.carried : 0}
+              share={base ? v.count / base : 0}
               state={termState(a.key, v.value)}
               onTerm={onTerm}
             />
@@ -320,15 +329,19 @@ function DrillValueRow({
   const { t } = useTranslation();
   const pair = `${label}: ${value}`;
   const items: MenuItem[] = [
-    ...termMenuItems(t, pair, state, (op, on) =>
-      onTerm(attrKey, value, op, on),
+    // the API only takes levels to include
+    ...termMenuItems(
+      t,
+      pair,
+      state,
+      (op, on) => onTerm(attrKey, value, op, on),
+      attrKey !== 'level',
     ),
     {
       key: 'copy',
       icon: <Copy size={14} />,
       label: t('Copy value'),
-      onClick: () =>
-        void copyText(value),
+      onClick: () => void copyText(value),
     },
   ];
   return (

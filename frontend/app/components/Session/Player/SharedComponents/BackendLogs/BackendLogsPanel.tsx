@@ -140,7 +140,7 @@ const LogsTable = observer(({ data }: { data: UnifiedLog[] }) => {
       <VList ref={_list} data={data}>
         {(log, index) => (
           <LogRow
-            key={index}
+            key={log.key || index}
             isActive={index === activeIndex}
             log={log}
             onJump={onJump}

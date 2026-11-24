@@ -19,7 +19,18 @@ import {
   ToggleLeft,
   User,
 } from 'lucide-react';
-import { Fragment, type MutableRefObject, type ReactElement, type ReactNode, type PointerEvent as ReactPointerEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Fragment,
+  type MutableRefObject,
+  type ReactElement,
+  type ReactNode,
+  type PointerEvent as ReactPointerEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { categoryLabel, groupCatalogue, searchCatalogue } from './catalogue';

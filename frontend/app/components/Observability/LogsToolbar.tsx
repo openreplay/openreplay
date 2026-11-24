@@ -4,6 +4,7 @@ import '@/ui/filters/display-menu.css';
 import { Segmented } from '@/ui/inputs/toggle-group';
 import { RenameDialog } from '@/ui/overlays/RenameDialog';
 import { PopoverPanel } from '@/ui/overlays/popover';
+import { toast } from '@/ui/overlays/toast';
 import { Download } from 'lucide-react';
 import { DateTime } from 'luxon';
 import { useState } from 'react';
@@ -63,6 +64,9 @@ export function ExportControl({
       });
       saveBlob(blob, exportFileName(from, to, format));
       setOpen(false);
+    } catch {
+      // the popover stays open to try again
+      toast.error(t('Some lines could not load, so nothing was exported'));
     } finally {
       setBusy(false);
     }
@@ -85,7 +89,8 @@ export function ExportControl({
                 span,
               })}
         </p>
-        <label className="m-dm__row">
+        {/* not a label: a click on it would press the first segment */}
+        <div className="m-dm__row">
           <span className="m-dm__label">{t('Format')}</span>
           <Segmented<ExportFormat>
             ariaLabel={t('Format')}
@@ -106,7 +111,7 @@ export function ExportControl({
               },
             ]}
           />
-        </label>
+        </div>
         <p className="m-logs__export-note">
           {format === 'csv'
             ? t('Time, the columns on screen, and the message.')
