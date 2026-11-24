@@ -219,15 +219,16 @@ func (l *logsImpl) attributeKeys(ctx context.Context, projectID uint32, f *Filte
 	mapCol, _ := attributeColumns(scope)
 	qp := filters.NewParams()
 	where := buildConditions(projectID, f, f.StartTime, f.EndTime, exclusion{}, qp)
-	query := fmt.Sprintf(`
-		SELECT k, count() AS c 
+	qp.Set("internalKeyPrefix", internalKeyPrefix)
+	qp.Set("facetLimit", facetLimit)
+	query := `
+		SELECT k, count() AS c
 		FROM otel.logs
-			ARRAY JOIN mapKeys(%s) AS k
-		WHERE %s AND NOT startsWith(k, '%s') 
-		LIMIT %d
-		GROUP BY k 
-		ORDER BY c DESC 
-	    LIMIT %d`, mapCol, where, internalKeyPrefix, facetLimit)
+			ARRAY JOIN mapKeys(` + mapCol + `) AS k
+		WHERE ` + where + ` AND NOT startsWith(k, @internalKeyPrefix)
+		GROUP BY k
+		ORDER BY c DESC
+		LIMIT @facetLimit`
 	values, err := l.valueCounts(facetContext(ctx), query, qp)
 	if err != nil {
 		return nil, err
