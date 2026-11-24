@@ -3,3 +3,39 @@
     opacity: 0.8;
     transition: all 0.2s ease-in-out;
 }
+
+/* Once the fill is too small to hold its % label, the label moves just outside it. */
+.fill {
+  position: relative;
+  z-index: 1;
+  container-type: size;
+}
+
+.fillLabel {
+  color: var(--color-white);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+@container (max-width: 2rem) {
+  .fillLabelRow {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 100%;
+    padding-left: 0.25rem;
+    color: #333;
+  }
+}
+
+@container (max-height: 1rem) {
+  .fillLabelCol {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    right: 0;
+    justify-content: center;
+    padding-bottom: 0.25rem;
+    color: #333;
+  }
+}

@@ -8,6 +8,7 @@ import { Styles } from 'Components/Dashboard/Widgets/common';
 import { Icon } from 'UI';
 
 import FunnelStepText from './FunnelStepText';
+import stl from './FunnelWidget.module.css';
 
 interface Props {
   filter: any;
@@ -214,18 +215,26 @@ function FunnelBarData({
           opacity: isComp ? 0.7 : 1,
           display: 'flex',
           flexDirection: isHorizontal ? 'column-reverse' : 'row',
+          isolation: 'isolate',
         }}
       >
         <div
           className={cn(
             'flex',
+            stl.fill,
             isHorizontal
               ? 'justify-center items-start pt-1'
               : 'justify-end items-center pr-1',
           )}
           style={fillBarStyle}
         >
-          <div className="color-white flex items-center font-medium leading-3">
+          <div
+            className={cn(
+              'flex items-center font-medium leading-3',
+              stl.fillLabel,
+              isHorizontal ? stl.fillLabelCol : stl.fillLabelRow,
+            )}
+          >
             {data.completedPercentageTotal}%
           </div>
         </div>
