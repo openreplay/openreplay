@@ -1,34 +1,27 @@
 import { Filter } from '@/mstore/types/filterConstants';
 
 /**
- * One breakdown as the API takes it (model.Breakdown in
- * backend/pkg/analytics/model/model.go). The API also accepts a bare string,
- * which is how cards were saved before event properties were supported.
+ * One breakdown as the API takes it: a plain dimension name from the `oneof`
+ * list on Breakdowns in backend/pkg/analytics/model/model.go.
  */
-export interface Breakdown {
-  name: string;
-  isEvent?: boolean;
-  autoCaptured?: boolean;
-}
+export type Breakdown = string;
 
-export type StoredBreakdown = string | Breakdown;
+/** Object form a newer UI may have stored on a card. */
+export type StoredBreakdown = string | { name: string };
 
 /** `Breakdowns` is `max=3` on the API payload. */
 export const MAX_BREAKDOWNS = 3;
 
 /**
- * Dimensions the API resolves to a dedicated column instead of a generic
- * property lookup (breakdownDimensions in
- * backend/pkg/analytics/charts/breakdown.go). Catalog entries whose name maps
- * onto one of these are sent under the canonical key so they keep taking that
- * path; everything else goes through as its plain catalog name.
+ * The only breakdown names the API accepts (validation on Breakdowns in
+ * backend/pkg/analytics/model/model.go). Catalog entries whose name maps onto
+ * one of these are sent under this key; anything else can't be a breakdown.
  */
 export const CANONICAL_DIMENSIONS = [
   'userCountry',
   'userCity',
   'userState',
   'userBrowser',
-  'userBrowserVersion',
   'userDevice',
   'userOs',
   'referrer',
@@ -40,9 +33,6 @@ export const CANONICAL_DIMENSIONS = [
   'userDeviceType',
   'revId',
   'issueType',
-  'duration',
-  'screenHeight',
-  'screenWidth',
   'currentPath',
   'referringDomain',
   'searchEngine',
@@ -60,8 +50,7 @@ const CATALOG_NAME_BY_DIMENSION: Record<string, string> = {
 
 /**
  * Catalog buckets that name an event rather than describe one — you break down
- * by a property, not by "clicked Login". Everything else (session, user,
- * identified-user and metadata filters, plus every event property) is fair game.
+ * by a property, not by "clicked Login".
  */
 const NON_DIMENSION_CATEGORIES = new Set([
   'events',
@@ -71,9 +60,6 @@ const NON_DIMENSION_CATEGORIES = new Set([
   'features',
   'users',
 ]);
-
-/** The `event` section of the filters catalog holds the event properties. */
-const EVENT_PROPERTY_CATEGORY = 'event';
 
 /** `$current_path` and `current_path` both collapse to `currentpath`. */
 const normalizeName = (name: string) =>
@@ -95,10 +81,9 @@ const canonicalDimension = (name: string): string | undefined =>
   CANONICAL_BY_NORMALIZED_NAME[normalizeName(name)];
 
 export const normalizeBreakdown = (breakdown: StoredBreakdown): Breakdown =>
-  typeof breakdown === 'string' ? { name: breakdown } : breakdown;
+  typeof breakdown === 'string' ? breakdown : breakdown.name;
 
-export const breakdownName = (breakdown: StoredBreakdown): string =>
-  normalizeBreakdown(breakdown).name;
+export const breakdownName = normalizeBreakdown;
 
 function findCatalogFilter(
   name: string,
@@ -116,13 +101,14 @@ function findCatalogFilter(
 }
 
 const isBreakdownable = (filter: Filter): boolean =>
-  !filter.isEvent && !NON_DIMENSION_CATEGORIES.has(filter.category);
+  !filter.isEvent &&
+  !NON_DIMENSION_CATEGORIES.has(filter.category) &&
+  canonicalDimension(filter.name) !== undefined;
 
 /**
- * Options for the breakdown picker: every catalog entry that describes a
- * session, user or event rather than naming one — session/user/metadata
- * filters plus the full event-property list. The returned `name` is what goes
- * to the API, the `displayName` is the catalog label.
+ * Options for the breakdown picker: catalog entries that map onto a dimension
+ * the API accepts. The returned `name` is what goes to the API, the
+ * `displayName` is the catalog label.
  */
 export function buildBreakdownOptions(allFilters: Filter[]): Filter[] {
   const seen = new Set<string>();
@@ -141,20 +127,8 @@ export function buildBreakdownOptions(allFilters: Filter[]): Filter[] {
   }, []);
 }
 
-/**
- * Picker option -> API breakdown. `isEvent` is what tells the API to look the
- * name up in the event properties; without it a custom property that shares a
- * name with a session column would resolve to the wrong one.
- */
 export function toBreakdown(filter: Filter): Breakdown {
-  const breakdown: Breakdown = {
-    name: canonicalDimension(filter.name) ?? filter.name,
-  };
-  if (filter.category === EVENT_PROPERTY_CATEGORY) {
-    breakdown.isEvent = true;
-    if (filter.autoCaptured) breakdown.autoCaptured = true;
-  }
-  return breakdown;
+  return canonicalDimension(filter.name) ?? filter.name;
 }
 
 export function getBreakdownDisplayName(
