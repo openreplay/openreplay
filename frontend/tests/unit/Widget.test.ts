@@ -255,6 +255,57 @@ describe('Widget.transformFunnelSeriesFormat', () => {
     expect(bdKeys[0]).toBe('US');
   });
 
+  it('flattens nested breakdowns to leaf paths', () => {
+    const w = new Widget();
+    w.metricType = 'funnel';
+    const node = (a: number, b: number) => ({
+      stages: [
+        { count: a, type: 'LOCATION', value: ['/home'] },
+        { count: b, type: 'LOCATION', value: ['/checkout'] },
+      ],
+    });
+
+    const data = {
+      series: {
+        'Series 1': {
+          $overall: node(200, 100),
+          US: {
+            $overall: node(150, 80),
+            Chrome: {
+              $overall: node(100, 60),
+              mobile: node(70, 40),
+              desktop: node(30, 20),
+            },
+            Firefox: { $overall: node(50, 20), desktop: node(50, 20) },
+          },
+          EU: {
+            $overall: node(50, 20),
+            Safari: { $overall: node(50, 20), mobile: node(50, 20) },
+          },
+        },
+      },
+    };
+
+    const result = w.setData(data, fakePeriod);
+    expect(result.funnel.stages[0].count).toBe(200);
+    expect(Object.keys(result.funnelBreakdown)).toEqual([
+      'US / Chrome / mobile',
+      'US / Firefox / desktop',
+      'EU / Safari / mobile',
+      'US / Chrome / desktop',
+    ]);
+    expect(result.funnelBreakdown['US / Chrome / mobile'].stages[1].count).toBe(
+      40,
+    );
+    expect(result.funnelBreakdownTree).toEqual({
+      US: {
+        Chrome: { mobile: { count: 70 }, desktop: { count: 30 } },
+        Firefox: { desktop: { count: 50 } },
+      },
+      EU: { Safari: { mobile: { count: 50 } } },
+    });
+  });
+
   it('returns empty funnel for empty series', () => {
     const w = new Widget();
     w.metricType = 'funnel';
@@ -351,7 +402,7 @@ describe('Widget.collectBreakdownRows (via table transform)', () => {
             'New York': {
               values: [{ name: '/home', total: 40 }],
             },
-            'LA': {
+            LA: {
               values: [{ name: '/home', total: 30 }],
             },
           },

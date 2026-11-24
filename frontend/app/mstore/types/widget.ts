@@ -34,6 +34,7 @@ import Funnelissue from 'App/mstore/types/funnelIssue';
 import Session from 'App/mstore/types/session';
 import { metricService } from 'App/services';
 import {
+  type NestedData,
   collectChartLines,
   collectTimestamps,
   isLeaf,
@@ -558,6 +559,7 @@ export default class Widget {
   private transformFunnelSeriesFormat(seriesObj: Record<string, any>): {
     funnel: Funnel;
     funnelBreakdown?: Record<string, Funnel>;
+    funnelBreakdownTree?: NestedData;
   } {
     const seriesKeys = Object.keys(seriesObj);
     if (seriesKeys.length === 0) {
@@ -575,26 +577,44 @@ export default class Widget {
     if (seriesContent?.$overall?.stages) {
       const funnel = new Funnel().fromJSON(seriesContent.$overall);
 
-      const bdEntries = Object.entries(seriesContent)
-        .filter(
-          ([key, val]: [string, any]) =>
-            key !== '$overall' && (val?.stages || val?.$overall?.stages),
-        )
-        .sort(([, a]: any, [, b]: any) => {
-          const aStages = a.stages ?? a.$overall?.stages;
-          const bStages = b.stages ?? b.$overall?.stages;
-          return (bStages?.[0]?.count ?? 0) - (aStages?.[0]?.count ?? 0);
-        });
+      // nested breakdowns: each level is { $overall, value: child }, the
+      // deepest one holds stages; flatten to leaf paths like "US / Chrome"
+      // also returns the first-step counts per level, for the per-level top N
+      const bdEntries: [string, any][] = [];
+      const collect = (
+        node: Record<string, any>,
+        prefix: string,
+      ): Record<string, NestedData> => {
+        const tree: Record<string, NestedData> = {};
+        const leaf = (key: string, path: string, val: any) => {
+          bdEntries.push([path, val]);
+          tree[key] = { count: val.stages[0]?.count ?? 0 };
+        };
+        for (const [key, val] of Object.entries(node)) {
+          if (key === '$overall') continue;
+          const path = prefix ? `${prefix} / ${key}` : key;
+          if (val?.stages) {
+            leaf(key, path, val);
+          } else if (val?.$overall?.stages) {
+            const sub = collect(val, path);
+            if (Object.keys(sub).length) tree[key] = sub;
+            else leaf(key, path, val.$overall);
+          }
+        }
+        return tree;
+      };
+      const funnelBreakdownTree = collect(seriesContent, '');
+      bdEntries.sort(
+        ([, a], [, b]) =>
+          (b.stages?.[0]?.count ?? 0) - (a.stages?.[0]?.count ?? 0),
+      );
 
       if (bdEntries.length > 0) {
         const funnelBreakdown: Record<string, Funnel> = {};
         for (const [key, val] of bdEntries) {
-          const valAny = val as any;
-          funnelBreakdown[key] = new Funnel().fromJSON(
-            valAny.stages ? valAny : valAny.$overall,
-          );
+          funnelBreakdown[key] = new Funnel().fromJSON(val);
         }
-        return { funnel, funnelBreakdown };
+        return { funnel, funnelBreakdown, funnelBreakdownTree };
       }
 
       return { funnel };
@@ -716,6 +736,7 @@ export default class Widget {
         _data.funnel = result.funnel;
         if (result.funnelBreakdown) {
           _data.funnelBreakdown = result.funnelBreakdown;
+          _data.funnelBreakdownTree = result.funnelBreakdownTree;
         }
         if (!isComparison) {
           this.setDataValue(_data);

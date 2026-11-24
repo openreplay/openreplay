@@ -6,25 +6,39 @@ import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import TopNButton from 'App/components/Dashboard/components/BreakdownFilter/TopNButton';
+import BreakdownSelectionPanel from 'App/components/Dashboard/components/BreakdownFilter/BreakdownSelectionPanel';
+import { getBreakdownDisplayName } from 'App/components/Dashboard/components/BreakdownFilter/breakdownDimensions';
 import { useModal } from 'App/components/Modal';
 import Funnel from 'App/mstore/types/funnel';
 import Widget from 'App/mstore/types/widget';
+import {
+  type NestedData,
+  buildLevelTree,
+  computeSelectionFromTopN,
+  getDepth,
+  isLeaf,
+} from 'App/utils/breakdownTree';
 import { Icon, NoContent } from 'UI';
 
 import Funnelbar, { UxTFunnelBar } from './FunnelBar';
 import stl from './FunnelWidget.module.css';
 
+interface FunnelData {
+  funnel: Funnel;
+  funnelBreakdown?: Record<string, Funnel>;
+  funnelBreakdownTree?: NestedData;
+}
+
 interface Props {
   metric?: Widget;
   isWidget?: boolean;
-  data: { funnel: Funnel; funnelBreakdown?: Record<string, Funnel> };
-  compData: { funnel: Funnel; funnelBreakdown?: Record<string, Funnel> };
+  data: FunnelData;
+  compData: FunnelData;
 }
 
 function FunnelWidget(props: Props) {
   const { t } = useTranslation();
-  const { dashboardStore, metricStore } = useStore();
+  const { dashboardStore, metricStore, filterStore } = useStore();
   const [focusedFilter, setFocusedFilter] = React.useState<number | null>(null);
   const { isWidget = false, data, metric, compData } = props;
   const funnel = data?.funnel || { stages: [] };
@@ -88,12 +102,46 @@ function FunnelWidget(props: Props) {
     applyDrillDown(focusedFilter === index ? -1 : index, isComp);
   };
 
-  const topN = metricStore.breakdownTopN;
   const funnelBreakdown = data?.funnelBreakdown;
   const compBreakdown = compData?.funnelBreakdown;
   const allBreakdownKeys = funnelBreakdown ? Object.keys(funnelBreakdown) : [];
-  const breakdownKeys =
-    topN > 0 ? allBreakdownKeys.slice(0, topN) : allBreakdownKeys;
+  const tree = data?.funnelBreakdownTree;
+  const panelData = React.useMemo(() => (tree ? { tree } : null), [tree]);
+  const levelTopN = metricStore.breakdownLevelTopN;
+  const shownPaths = React.useMemo(() => {
+    if (!panelData || !tree) return null;
+    const sel = computeSelectionFromTopN(
+      buildLevelTree(panelData),
+      levelTopN,
+      getDepth(tree),
+    );
+    const out = new Set<string>();
+    const walk = (node: NestedData, path: string) => {
+      if (isLeaf(node)) {
+        out.add(path);
+        return;
+      }
+      const keep = sel[path];
+      Object.entries(node).forEach(([key, child]) => {
+        if (keep && !keep.includes(key)) return;
+        walk(child as NestedData, path ? `${path} / ${key}` : key);
+      });
+    };
+    walk(tree, '');
+    return out;
+  }, [panelData, levelTopN]);
+  const breakdownKeys = React.useMemo(
+    () =>
+      shownPaths
+        ? allBreakdownKeys.filter((k) => shownPaths.has(k))
+        : allBreakdownKeys,
+    [funnelBreakdown, shownPaths],
+  );
+  const breakdowns = metric?.breakdowns ?? [];
+  const levelLabels = React.useMemo(() => {
+    const options = filterStore.getCurrentProjectFilters();
+    return breakdowns.map((b) => getBreakdownDisplayName(b, options));
+  }, [breakdowns, filterStore.isLoadingFilters]);
 
   const shownStages = React.useMemo(() => {
     const stages: {
@@ -236,10 +284,11 @@ function FunnelWidget(props: Props) {
           </span>
         </div>
       )}
-      {allBreakdownKeys.length > 0 && (
-        <div className="flex items-center">
-          <TopNButton totalValues={allBreakdownKeys.length} />
-        </div>
+      {panelData && (
+        <BreakdownSelectionPanel
+          data={panelData}
+          breakdownLabels={levelLabels}
+        />
       )}
     </NoContent>
   );
