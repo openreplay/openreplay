@@ -107,17 +107,19 @@ function UserForm({ open, onClose }: { open: boolean; onClose: () => void }) {
             />
           </Field>
           {!account.smtp ? (
-            <Notice kind="info">
-              {t(
-                'SMTP is not configured, so no email is sent. Copy the invitation link and send it yourself.',
-              )}{' '}
-              <ExternalLink
-                className="link"
-                href="https://docs.openreplay.com/configuration/configure-smtp"
-              >
-                {t('How to set it up')}
-              </ExternalLink>
-            </Notice>
+            <div className="mt-4">
+              <Notice kind="info">
+                {t(
+                  'SMTP is not configured, so no email is sent. Copy the invitation link and send it yourself.',
+                )}{' '}
+                <ExternalLink
+                  className="link"
+                  href="https://docs.openreplay.com/configuration/configure-smtp"
+                >
+                  {t('How to set it up')}
+                </ExternalLink>
+              </Notice>
+            </div>
           ) : null}
         </Section>
         <Section
