@@ -2,6 +2,7 @@ import { CopyButton } from '@/ui/actions/CopyButton';
 import { IconButton } from '@/ui/actions/IconButton';
 import type { MenuItem } from '@/ui/actions/dropdown-menu';
 import { Chip } from '@/ui/data/Chip';
+import { FactStrip } from '@/ui/data/FactStrip';
 import {
   type KeyValueGroup,
   type KeyValueItem,
@@ -26,6 +27,7 @@ import {
   levelLabel,
   levelOf,
   lineFields,
+  lineHeadFacts,
   lineStamp,
   otelRow,
 } from './logs-logic';
@@ -180,6 +182,8 @@ export function LogDrawer({
             <Chip tone={levelTone(level)} kind="status">
               {line.severityText || levelLabel(t, level)}
             </Chip>
+            {/* a line with a trace has a copy button, taller than the words */}
+            <span className="m-logs__meta-strut" aria-hidden="true" />
             <span className="m-logs__stamp">
               {lineStamp(otelLogTimeMs(line), true)}
             </span>
@@ -196,6 +200,15 @@ export function LogDrawer({
               </span>
             )}
           </>
+        )
+      }
+      facts={
+        line && (
+          <FactStrip
+            ariaLabel={t('About this line')}
+            groups={lineHeadFacts(t, line)}
+            columns="minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr)"
+          />
         )
       }
       headerActions={

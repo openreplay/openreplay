@@ -502,6 +502,60 @@ export function lineFields(log: OtelLog) {
   return { log: logFields, resource, scope };
 }
 
+export interface HeadFact {
+  label: string;
+  value: string;
+  mono?: boolean;
+  tone?: FieldTone;
+  empty?: boolean;
+}
+
+const fmtMs = (ms: number) =>
+  ms >= 1000
+    ? `${Number((ms / 1000).toFixed(ms >= 10_000 ? 0 : 2))} s`
+    : `${Math.round(ms)} ms`;
+
+/** who wrote the line, then the request it was about; every cell always present
+    so the drawer head keeps one height across lines */
+export function lineHeadFacts(t: TFunction, log: OtelLog): HeadFact[][] {
+  const res = log.resourceAttributes ?? {};
+  const a = log.logAttributes ?? {};
+  const fact = (
+    label: string,
+    value: string | undefined,
+    extra: Partial<HeadFact> = {},
+  ): HeadFact =>
+    value ? { label, value, ...extra } : { label, value: '', empty: true };
+  const method = a['http.request.method'];
+  const route = a['http.route'];
+  const status = a['http.response.status_code'];
+  const dur = a.duration_ms;
+  const ms = dur && !Number.isNaN(Number(dur)) ? Number(dur) : null;
+  return [
+    [
+      fact(t('Pod'), res['k8s.pod.name'], { mono: true }),
+      fact(
+        t('Environment'),
+        res['deployment.environment.name'] ?? res['deployment.environment'],
+      ),
+      fact(t('Namespace'), res['k8s.namespace.name']),
+    ],
+    [
+      fact(t('Request'), route && (method ? `${method} ${route}` : route), {
+        mono: true,
+      }),
+      fact(t('Status'), status, {
+        mono: true,
+        tone: toneOf('http.response.status_code', status ?? ''),
+      }),
+      fact(t('Duration'), ms != null ? fmtMs(ms) : undefined, {
+        mono: true,
+        tone: toneOf('duration_ms', dur ?? ''),
+      }),
+    ],
+  ];
+}
+
 /** the record as stored (ClickHouse otel.logs) */
 export const otelRow = (log: OtelLog): Record<string, unknown> => ({
   Timestamp: new Date(otelLogTimeMs(log)).toISOString(),

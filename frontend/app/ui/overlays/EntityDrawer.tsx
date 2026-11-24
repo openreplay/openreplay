@@ -21,6 +21,8 @@ export interface EntityDrawerProps {
   namePlaceholder?: string;
 
   meta?: ReactNode;
+  /** details under the meta line, on a hairline (a `FactStrip`) */
+  facts?: ReactNode;
 
   headerActions?: ReactNode;
   footer?: ReactNode;
@@ -40,6 +42,7 @@ export function EntityDrawer({
   autoEditTitle,
   namePlaceholder,
   meta,
+  facts,
   headerActions,
   footer,
   size,
@@ -71,6 +74,7 @@ export function EntityDrawer({
             )
           }
           meta={meta}
+          facts={facts}
           actions={headerActions}
           onClose={onClose}
         />
@@ -88,12 +92,14 @@ export function DrawerHeader({
   eyebrow,
   title,
   meta,
+  facts,
   actions,
   onClose,
 }: {
   eyebrow?: ReactNode;
   title: ReactNode;
   meta?: ReactNode;
+  facts?: ReactNode;
   actions?: ReactNode;
   onClose: () => void;
 }) {
@@ -108,6 +114,7 @@ export function DrawerHeader({
           title
         )}
         {meta && <div className="m-drawer__meta">{meta}</div>}
+        {facts && <div className="m-drawer__facts">{facts}</div>}
       </div>
       <div className="m-drawer__actions">
         {actions}

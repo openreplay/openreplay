@@ -3264,5 +3264,6 @@
   "Traces are on the way": "Трасування незабаром з’явиться",
   "Every request as a waterfall of spans, on the same window and filters as Logs. Until then, a log line carries its trace id and the search finds it.": "Кожен запит у вигляді каскаду спанів, з тим самим періодом і фільтрами, що й у Logs. А поки рядок логу містить свій trace id, і пошук його знаходить.",
   "Some lines could not load, so nothing was exported": "Частину рядків не вдалося завантажити, тому нічого не експортовано",
-  "Counted without its “contains” filter": "Пораховано без його фільтра «містить»"
+  "Counted without its “contains” filter": "Пораховано без його фільтра «містить»",
+  "About this line": "Про цей рядок"
 }

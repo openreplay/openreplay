@@ -3049,5 +3049,6 @@
   "Traces are on the way": "트레이스가 곧 제공됩니다",
   "Every request as a waterfall of spans, on the same window and filters as Logs. Until then, a log line carries its trace id and the search finds it.": "모든 요청을 Logs와 같은 기간과 필터로 스팬의 워터폴로 표시합니다. 그때까지는 로그 줄에 trace id가 있어 검색으로 찾을 수 있습니다.",
   "Some lines could not load, so nothing was exported": "일부 줄을 불러오지 못해 아무것도 내보내지 않았습니다",
-  "Counted without its “contains” filter": "‘포함’ 필터를 빼고 집계함"
+  "Counted without its “contains” filter": "‘포함’ 필터를 빼고 집계함",
+  "About this line": "이 줄 정보"
 }

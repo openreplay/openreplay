@@ -352,6 +352,7 @@
 
 .m-logs__trace { display: inline-flex; align-items: center; gap: var(--m-space-1); font-size: var(--m-text-xs); color: var(--m-content-muted); }
 .m-logs__trace code { font: inherit; color: var(--m-content-secondary); }
+.m-logs__meta-strut { display: inline-block; width: 0; height: var(--m-control-height-xs); margin-right: calc(-1 * var(--m-space-5)); }
 .m-logs__text { max-height: 16rem; overflow-y: auto; }
 
 .m-logs__tabs { --m-logs-tabs-h: 2.5rem; }

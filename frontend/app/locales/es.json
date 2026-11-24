@@ -3190,5 +3190,6 @@
   "Traces are on the way": "Las trazas están en camino",
   "Every request as a waterfall of spans, on the same window and filters as Logs. Until then, a log line carries its trace id and the search finds it.": "Cada solicitud como una cascada de spans, con la misma ventana y los mismos filtros que Logs. Mientras tanto, cada línea de log lleva su trace id y la búsqueda la encuentra.",
   "Some lines could not load, so nothing was exported": "Algunas líneas no se pudieron cargar, así que no se exportó nada",
-  "Counted without its “contains” filter": "Contado sin su filtro «contiene»"
+  "Counted without its “contains” filter": "Contado sin su filtro «contiene»",
+  "About this line": "Sobre esta línea"
 }

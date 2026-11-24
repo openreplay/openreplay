@@ -1,0 +1,43 @@
+.m-facts {
+  display: grid;
+  gap: var(--m-space-5) var(--m-space-6);
+  margin: 0;
+  min-width: 0;
+}
+.m-facts__cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.m-facts__cell dt {
+  font-size: var(--m-text-2xs);
+  color: var(--m-content-muted);
+  line-height: 1.3;
+  white-space: nowrap;
+}
+.m-facts__cell dd {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--m-text-sm);
+  font-weight: var(--m-weight-regular);
+  /* in rem, so a mono value's line box matches to the subpixel */
+  line-height: calc(var(--m-text-sm) * 1.4);
+  color: var(--m-content-primary);
+}
+.m-facts__cell dd.is-mono {
+  font-family: var(--m-font-mono);
+  font-size: var(--m-text-xs);
+  font-variant-numeric: tabular-nums;
+}
+.m-facts__cell dd.is-danger {
+  color: var(--m-content-danger);
+}
+.m-facts__cell dd.is-warning {
+  color: var(--m-content-warning);
+}
+.m-facts__cell dd.is-empty {
+  color: var(--m-content-disabled);
+}
