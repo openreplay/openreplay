@@ -1,5 +1,4 @@
 import { Banner, BannerAction, BannerItem } from '@/ui/feedback/Banner';
-import { Notice } from '@/ui/feedback/Notice';
 import ENV from 'ENV';
 import { AlertTriangle, Info } from 'lucide-react';
 import React from 'react';
@@ -173,24 +172,5 @@ const WarnBadge = React.memo(
     );
   },
 );
-
-export function PartialSessionBadge() {
-  const { t } = useTranslation();
-  return (
-    <div
-      className="flex flex-col gap-2"
-      style={{
-        zIndex: 999,
-        position: 'absolute',
-        left: '61%',
-        bottom: '1.3rem',
-      }}
-    >
-      <Notice kind="info">
-        {t('You are viewing a portion of full session')}
-      </Notice>
-    </div>
-  );
-}
 
 export default WarnBadge;

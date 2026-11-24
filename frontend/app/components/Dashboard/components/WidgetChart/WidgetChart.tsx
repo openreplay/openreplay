@@ -22,7 +22,6 @@ import {
   USER_PATH,
   WEBVITALS,
 } from 'App/constants/card';
-import useIsMounted from 'App/hooks/useIsMounted';
 import { useStore } from 'App/mstore';
 import { debounce } from 'App/utils';
 import {
@@ -144,7 +143,6 @@ function WidgetChart(props: Props) {
   const params = { density: dashboardStore.selectedDensity, rows: 5 };
   const metricParams = _metric.params;
   const prevMetricRef = useRef<any>();
-  const isMounted = useIsMounted();
   const [compData, setCompData] = useState<any>(null);
   const [enabledRows, setEnabledRows] = useState<string[]>(
     _metric.series.map((s) => s.name),
@@ -288,7 +286,6 @@ function WidgetChart(props: Props) {
     period: any,
     isComparison?: boolean,
   ) => {
-    if (!isMounted()) return;
     abortController.current = new AbortController();
     const signal = abortController.current.signal;
     setLoading(true);
@@ -319,10 +316,11 @@ function WidgetChart(props: Props) {
       });
   };
 
-  const debounceRequest: any = React.useCallback(
-    debounce(fetchMetricChartData, 500),
+  const debounceRequest = React.useMemo(
+    () => debounce(fetchMetricChartData, 500),
     [],
   );
+  useEffect(() => () => debounceRequest.cancel(), [debounceRequest]);
   const lastRequestKey = useRef<string | undefined>(undefined);
   const loadPage = () => {
     if (!inView) return;

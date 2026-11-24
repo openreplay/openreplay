@@ -2,11 +2,7 @@ import { Filter } from '@/mstore/types/filterConstants';
 import { getRowsPerPage } from '@/ui/layout/rows-per-page';
 import Period, { CUSTOM_RANGE } from 'Types/app/period';
 import { FilterCategory, FilterKey } from 'Types/filter/filterType';
-import {
-  filtersMap,
-  generateFilterOptions,
-  liveFiltersMap,
-} from 'Types/filter/newFilter';
+import { filtersMap } from 'Types/filter/newFilter';
 import { makeAutoObservable, runInAction } from 'mobx';
 
 import {
@@ -16,7 +12,6 @@ import {
   settingsStore,
 } from 'App/mstore';
 import { checkFilterValue } from 'App/mstore/types/filter';
-import FilterItem from 'App/mstore/types/filterItem';
 import SavedSearch, { ISavedSearch } from 'App/mstore/types/savedSearch';
 import Search from 'App/mstore/types/search';
 import { searchService, sessionService } from 'App/services';
@@ -102,13 +97,6 @@ const ruleKey = (f: any): unknown => [
   (f.filters ?? []).map(ruleKey),
 ];
 
-export const TAB_MAP: any = {
-  all: { name: 'All', type: 'all' },
-  sessions: { name: 'Sessions', type: 'sessions' },
-  bookmarks: { name: 'Bookmarks', type: 'bookmarks' },
-  recommendations: { name: 'Recommendations', type: 'recommendations' },
-};
-
 class SearchStore {
   list: SavedSearch[] = [];
   /** the window start of the list on screen; null until one has loaded */
@@ -116,8 +104,6 @@ class SearchStore {
   /** bumped whenever the list on screen changes: a count asked about an
       older list is not applied */
   private listGeneration = 0;
-  latestList = [];
-  alertMetricId: number | null = null;
   instance = new Search({
     startDate: Date.now() - 24 * 60 * 60 * 1000,
     endDate: Date.now(),
@@ -131,14 +117,9 @@ class SearchStore {
   savedSearch: ISavedSearch = new SavedSearch();
   /** the rules when the search became its saved segment */
   segmentRules: string | null = null;
-  filterSearchList: any = {};
   currentPage = 1;
-  activeTab = { name: 'All', type: 'all' };
   scrollY = 0;
-  sessions = [];
-  total: number = 0;
   latestSessionCount: number = 0;
-  loadingFilterSearch = false;
   isSaving: boolean = false;
   activeTags: any[] = [];
   urlParsed: boolean = false;
@@ -212,18 +193,6 @@ class SearchStore {
   detachSegment() {
     this.savedSearch = new SavedSearch({});
     this.segmentRules = null;
-  }
-
-  get filterList() {
-    return generateFilterOptions(filtersMap);
-  }
-
-  get filterListMobile() {
-    return generateFilterOptions(filtersMap, true);
-  }
-
-  get filterListLive() {
-    return generateFilterOptions(liveFiltersMap);
   }
 
   applySavedSearch(savedSearch: ISavedSearch) {
@@ -371,33 +340,6 @@ class SearchStore {
     this.apply(filter, false);
   }
 
-  fetchFilterSearch(params: any) {
-    this.loadingFilterSearch = true;
-
-    searchService
-      .fetchFilterSearch(params)
-      .then((response: any[]) => {
-        this.filterSearchList = response.reduce(
-          (
-            acc: Record<string, { projectId: number; value: string }[]>,
-            item: any,
-          ) => {
-            const { projectId, type, value } = item;
-            if (!acc[type]) acc[type] = [];
-            acc[type].push({ projectId, value });
-            return acc;
-          },
-          {},
-        );
-      })
-      .catch((error: any) => {
-        console.error('Error fetching filter search:', error);
-      })
-      .finally(() => {
-        this.loadingFilterSearch = false;
-      });
-  }
-
   updateCurrentPage(page: number, force = false) {
     this.currentPage = page;
     void this.fetchSessions(force);
@@ -407,19 +349,8 @@ class SearchStore {
     this.currentPage = page;
   }
 
-  nextPage = () => {
-    this.currentPage += 1;
-    return this.currentPage;
-  };
-
   updateLatestSessionCount(count: number = 0) {
     this.latestSessionCount = count;
-  }
-
-  setActiveTab(tab: string) {
-    runInAction(() => {
-      this.activeTab = TAB_MAP[tab];
-    });
   }
 
   resetTags = () => {
@@ -776,7 +707,6 @@ class SearchStore {
     let filter = this.instance.toSearch();
     filter = this.applyTagFilter(filter, this.activeTags);
     filter = this.applyDurationFilter(filter);
-    this.latestList = [];
     this.searchInProgress = true;
     try {
       const loaded = await sessionStore.fetchSessions(

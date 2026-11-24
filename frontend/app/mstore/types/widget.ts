@@ -83,15 +83,6 @@ export class InsightIssue {
   }
 }
 
-function cleanFilter(filter: any) {
-  delete filter['operatorOptions'];
-  delete filter['placeholder'];
-  delete filter['category'];
-  delete filter['label'];
-  delete filter['icon'];
-  delete filter['key'];
-}
-
 /** The journey query compares an exclusion's own value with the step's column
     (path for a page, label for a click or input), and the chip edits its
     "where": that is sent as the value too. */
@@ -142,6 +133,9 @@ export default class Widget {
   startPoint: FilterItem | null = null;
   excludes: FilterItem[] = [];
   hideExcess?: boolean = true;
+
+  /** saved as the retired sunburst: its saved endpoint still answers with tree data */
+  savedAsSunburst = false;
   compareTo: [startDate?: string, endDate?: string] | null = null;
   sortBy?: string = '';
   sortOrder?: string = 'desc';
@@ -232,15 +226,6 @@ export default class Widget {
     this.hasChanged = true;
   }
 
-  createSeries(filters: Record<string, any>) {
-    const series = new FilterSeries().fromData({
-      filter: { filters },
-      name: 'AI Query',
-      seriesId: 1,
-    });
-    this.setSeries([series]);
-  }
-
   fromJson(json: any, period?: any) {
     json.config = json.config || {};
     runInAction(() => {
@@ -292,6 +277,7 @@ export default class Widget {
         if (json.viewType === 'chart' || json.viewType === 'sunburst') {
           this.viewType = 'lineChart';
         }
+        this.savedAsSunburst = json.viewType === 'sunburst';
         this.hideExcess = json.hideExcess;
         this.startType = json.startType;
         this.rows = json.rows;
@@ -437,25 +423,6 @@ export default class Widget {
     });
   }
 
-  updateExcludeByIndex(index: number, exclude: any) {
-    runInAction(() => {
-      const newExcludes = this.excludes.toSpliced(
-        index,
-        1,
-        new FilterItem(exclude),
-      );
-      this.excludes = newExcludes;
-      this.hasChanged = true;
-    });
-  }
-
-  removeExcludeByIndex(index: number) {
-    runInAction(() => {
-      this.excludes.splice(index, 1);
-      this.hasChanged = true;
-    });
-  }
-
   validate() {
     this.isValid = this.name.length > 0;
   }
@@ -464,16 +431,6 @@ export default class Widget {
     runInAction(() => {
       Object.assign(this, data);
     });
-  }
-
-  resetDefaults() {
-    if (this.metricType === FUNNEL) {
-      this.series = [];
-      this.series.push(new FilterSeries());
-      this.series[0].filter.addFunnelDefaultFilters();
-      this.series[0].filter.eventsOrder = 'then';
-      this.series[0].filter.eventsOrderSupport = ['then'];
-    }
   }
 
   exists() {

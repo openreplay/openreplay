@@ -50,12 +50,6 @@ function Slot({
   );
 }
 
-export const InactiveTab = React.memo(
-  (props: { onClick?: () => void; isDisabled?: boolean }) => (
-    <Slot kind="empty" onClick={props.onClick} isDisabled={props.isDisabled} />
-  ),
-);
-
 function AssistTabs({ session }: { session: Record<string, any> }) {
   const history = useHistory();
   const { store } = React.useContext(

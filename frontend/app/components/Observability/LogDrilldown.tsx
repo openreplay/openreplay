@@ -19,6 +19,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { copyText } from 'App/lib/use-copy';
 import type { OtelValueCount } from 'App/services/OtelLogsService';
 
 import {
@@ -27,7 +28,7 @@ import {
   compactCount,
   keyLabel,
 } from './logs-logic';
-import { copyText } from 'App/lib/use-copy';
+import { termMenuItems } from './termMenu';
 
 export interface LogDrilldownProps {
   cards: readonly Card[];
@@ -319,41 +320,9 @@ function DrillValueRow({
   const { t } = useTranslation();
   const pair = `${label}: ${value}`;
   const items: MenuItem[] = [
-    state === 'in'
-      ? {
-          key: 'in',
-          icon: <ListFilter size={14} />,
-          label: t('Remove filter'),
-          onClick: () => onTerm(attrKey, value, 'is', false),
-        }
-      : {
-          key: 'in',
-          icon: <ListFilter size={14} />,
-          label: (
-            <span className="m-logs__menu-pair">
-              {t('Filter by')} <b>{pair}</b>
-            </span>
-          ),
-          onClick: () => onTerm(attrKey, value, 'is', true),
-        },
-    state === 'out'
-      ? {
-          key: 'out',
-          icon: <CircleMinus size={14} />,
-          label: t('Stop excluding'),
-          onClick: () => onTerm(attrKey, value, 'isNot', false),
-        }
-      : {
-          key: 'out',
-          icon: <CircleMinus size={14} />,
-          label: (
-            <span className="m-logs__menu-pair">
-              {t('Exclude')} <b>{pair}</b>
-            </span>
-          ),
-          onClick: () => onTerm(attrKey, value, 'isNot', true),
-        },
-    { key: 'd', type: 'divider' },
+    ...termMenuItems(t, pair, state, (op, on) =>
+      onTerm(attrKey, value, op, on),
+    ),
     {
       key: 'copy',
       icon: <Copy size={14} />,

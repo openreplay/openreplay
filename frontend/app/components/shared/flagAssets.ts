@@ -23,5 +23,3 @@ for (const [filePath, url] of Object.entries(flagUrls)) {
 
 export const flagUrl = (countryCode: string): string | undefined =>
   byCode[countryCode?.toUpperCase()];
-
-export default byCode;

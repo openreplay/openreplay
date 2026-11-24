@@ -6,8 +6,4 @@ export default class BaseService {
   constructor(client?: APIClient) {
     this.client = client || apiClient;
   }
-
-  initClient(client?: APIClient) {
-    this.client = client || apiClient;
-  }
 }

@@ -1,43 +1,5 @@
 import Session from './session';
 
-export default class Error {
-  sessionId: string = '';
-
-  messageId: string = '';
-
-  errorId: string = '';
-
-  projectId: string = '';
-
-  source: string = '';
-
-  name: string = '';
-
-  message: string = '';
-
-  time: string = '';
-
-  function: string = '?';
-
-  stack0InfoString: string = '';
-
-  status: string = '';
-
-  chart: any = [];
-
-  sessions: number = 0;
-
-  users: number = 0;
-
-  firstOccurrence: string = '';
-
-  lastOccurrence: string = '';
-
-  timestamp: string = '';
-
-  constructor() {}
-}
-
 function getStck0InfoString(stack: any) {
   const stack0 = stack[0];
   if (!stack0) return '';

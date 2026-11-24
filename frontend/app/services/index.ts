@@ -56,33 +56,3 @@ export const billingService = new BillingService();
 export const analyticsService = new AnalyticsService();
 export const otelLogsService = new OtelLogsService();
 export const ingestKeysService = new IngestKeysService();
-
-export const services = [
-  projectsService,
-  dashboardService,
-  metricService,
-  sessionService,
-  userService,
-  funnelService,
-  auditService,
-  errorService,
-  recordingsService,
-  configService,
-  alertsService,
-  webhookService,
-  healthService,
-  assistStatsService,
-  tagWatchService,
-  aiService,
-  spotService,
-  loginService,
-  filterService,
-  issueReportsService,
-  customFieldService,
-  integrationsService,
-  searchService,
-  billingService,
-  analyticsService,
-  otelLogsService,
-  ingestKeysService,
-];

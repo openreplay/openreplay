@@ -135,20 +135,8 @@ export default class OtelLogsStore {
     this.query = query;
   };
 
-  setServices = (services: string[]) => {
-    this.services = services;
-  };
-
   setSeverities = (severities: string[]) => {
     this.severities = severities;
-  };
-
-  setAttributes = (attributes: OtelAttributeFilter[]) => {
-    this.attributes = attributes;
-  };
-
-  setPageSize = (size: number) => {
-    this.pageSize = Math.min(Math.max(size, 1), OTEL_LOGS_LIMITS.maxPageSize);
   };
 
   buildFilter = (now = Date.now()): OtelLogsFilter => {
@@ -828,10 +816,6 @@ export default class OtelLogsStore {
     this.views = this.views.filter((v) => v.id !== this.viewId);
     this.viewId = null;
     this.persistViews();
-  };
-
-  closeView = () => {
-    this.viewId = null;
   };
 
   /* ── ingest keys ───────────────────────────────────────────────────── */

@@ -267,15 +267,6 @@ export default class BaseProjectsStore {
     }
   };
 
-  updateProjectRecordingStatus = (siteId: string, status: boolean) => {
-    const site = this.list.find((site) => site.id === siteId);
-    if (site) {
-      this.listWrites += 1;
-      site.recorded = status;
-      this.relink();
-    }
-  };
-
   removeProject = async (projectId: string) => {
     this.setLoading(true);
     try {

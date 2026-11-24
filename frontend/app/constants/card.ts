@@ -1,6 +1,6 @@
 import { TFunction } from 'i18next';
 
-export const LIBRARY = 'library';
+const LIBRARY = 'library';
 export const TIMESERIES = 'timeseries';
 export const TABLE = 'table';
 export const HEATMAP_CLICKS = 'heatmaps_session';
@@ -13,7 +13,7 @@ export const ERRORS = 'errors';
 export const USER_PATH = 'pathAnalysis';
 export const RETENTION = 'retention';
 export const INSIGHTS = 'insights'; // SaaS and EE
-export const PERFORMANCE = 'performance';
+const PERFORMANCE = 'performance';
 export const WEBVITALS = 'webVital';
 
 export const CATEGORIES = {

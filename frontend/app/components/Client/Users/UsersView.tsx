@@ -36,6 +36,8 @@ function UsersView({ isOnboarding = false }: { isOnboarding?: boolean }) {
     [],
   );
 
+  useEffect(() => () => pushQuery.cancel(), [pushQuery]);
+
   useEffect(() => {
     void userStore.fetchUsers();
     if (roleStore.list.length === 0 && isEnterprise)

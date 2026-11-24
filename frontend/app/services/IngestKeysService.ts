@@ -3,8 +3,6 @@ import BaseService from './BaseService';
 /** OTLP/HTTP logs route on the ingest service; auth is `Authorization: Bearer <key>`. */
 export const OTLP_LOGS_PATH = '/v1/otlp/v1/logs';
 
-export const INGEST_KEY_NAME_MAX_LENGTH = 100;
-
 export interface IngestKey {
   keyId: number;
   projectId: number;

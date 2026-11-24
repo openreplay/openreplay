@@ -63,6 +63,11 @@ jobs:
         working-directory: frontend
         run: bun install --frozen-lockfile
 
+      # Unused files and exports (knip.jsonc lists what the saas overlay uses)
+      - name: Unused code
+        working-directory: frontend
+        run: bun run knip
+
       # Cobertura for diff-cover (lcov paths are relative to frontend/ and can't be
       # mapped back to the git diff); json-summary for the totals.
       - name: Run tests

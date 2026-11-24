@@ -18,7 +18,7 @@ import { useModal } from 'App/components/Modal';
 import { formatMs } from 'App/date';
 import i18n from 'App/i18n';
 import { useStore } from 'App/mstore';
-import { debounceCall, formatBytes } from 'App/utils';
+import { debounce, formatBytes } from 'App/utils';
 
 import FetchDetailsModal from 'Shared/FetchDetailsModal';
 
@@ -355,7 +355,7 @@ export const NetworkPanelComp = observer(
     const [inputFilterValue, setInputFilterValue] = useState(filter);
 
     const debouncedFilter = useCallback(
-      debounceCall((filterValue) => {
+      debounce((filterValue) => {
         devTools.update(INDEX_KEY, { filter: filterValue });
       }, 300),
       [],

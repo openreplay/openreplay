@@ -1,23 +1,17 @@
+import { observable } from 'mobx';
+
+import filterOptions, { countries, platformOptions } from 'App/constants';
 import {
   clickSelectorOperators,
   issueOptions,
 } from 'App/constants/filterOptions';
-import filterOptions, { countries, platformOptions } from 'App/constants';
-import { observable } from 'mobx';
-import { FilterType, FilterKey, FilterCategory } from './filterType';
+
+import { FilterCategory, FilterKey, FilterType } from './filterType';
 
 const countryOptions = Object.keys(countries).map((i) => ({
   label: countries[i],
   value: i,
 }));
-const containsFilters = [
-  {
-    key: 'contains',
-    label: 'contains',
-    text: 'contains',
-    value: 'contains',
-  },
-];
 
 const filterOrder = {
   [FilterCategory.EVENTS]: 0,
@@ -586,55 +580,15 @@ const mapFilters = (list) =>
     return acc;
   }, {});
 
-const liveFilterSupportedOperators = ['is', 'contains'];
-const liveFilterKeys = [
-  FilterKey.METADATA,
-  FilterKey.USERID,
-  FilterKey.USER_COUNTRY,
-  FilterKey.USER_CITY,
-  FilterKey.USER_STATE,
-  FilterKey.USERANONYMOUSID,
-  FilterKey.USER_BROWSER,
-  FilterKey.USER_OS,
-  FilterKey.USER_DEVICE,
-  FilterKey.PLATFORM,
-  FilterKey.UTM_MEDIUM,
-  FilterKey.UTM_SOURCE,
-  FilterKey.UTM_CAMPAIGN,
-];
-const mapLiveFilters = (list) => {
-  const obj = {};
-  list.forEach((filter) => {
-    filter.name = filter.type;
-    if (
-      filter.category !== FilterCategory.EVENTS &&
-      filter.category !== FilterCategory.DEVTOOLS &&
-      liveFilterKeys.includes(filter.key)
-    ) {
-      obj[filter.key] = { ...filter };
-      obj[filter.key].operatorOptions = filter.operatorOptions.filter(
-        (operator) => liveFilterSupportedOperators.includes(operator.value),
-      );
-      if (filter.key === FilterKey.PLATFORM) {
-        obj[filter.key].operator = 'is';
-      }
-    }
-  });
-
-  return obj;
-};
-
 export const filterLabelMap = filters.reduce((acc, filter) => {
   acc[filter.key] = filter.label;
   return acc;
 }, {});
 
 export let filtersMap = observable(mapFilters(filters));
-export let liveFiltersMap = observable(mapLiveFilters(filters));
 
 export const clearMetaFilters = () => {
   filtersMap = mapFilters(filters);
-  liveFiltersMap = mapLiveFilters(filters);
 };
 
 /**
@@ -679,81 +633,3 @@ export const addOptionsToFilter = (key, options) => {
 function getMetadataLabel(key) {
   return key.replace(/^_/, '').charAt(0).toUpperCase() + key.slice(2);
 }
-
-export const addElementToLiveFiltersMap = (
-  category = FilterCategory.METADATA,
-  key,
-  type = FilterType.MULTIPLE,
-  operator = 'contains',
-  operatorOptions = containsFilters,
-  icon = 'filters/metadata',
-) => {
-  liveFiltersMap[key] = {
-    key,
-    type,
-    category,
-    label: getMetadataLabel(key),
-    operator,
-    operatorOptions,
-    icon,
-    operatorDisabled: true,
-    isLive: true,
-  };
-};
-
-const WEB_EXCLUDE = [
-  FilterKey.CLICK_MOBILE,
-  FilterKey.SWIPE_MOBILE,
-  FilterKey.INPUT_MOBILE,
-  FilterKey.VIEW_MOBILE,
-  FilterKey.CUSTOM_MOBILE,
-  FilterKey.REQUEST_MOBILE,
-  FilterKey.ERROR_MOBILE,
-];
-
-const MOBILE_EXCLUDE = [
-  FilterKey.CLICK,
-  FilterKey.INPUT,
-  FilterKey.ERROR,
-  FilterKey.CUSTOM,
-  FilterKey.LOCATION,
-  FilterKey.FETCH,
-  FilterKey.DOM_COMPLETE,
-  FilterKey.LARGEST_CONTENTFUL_PAINT_TIME,
-  FilterKey.TTFB,
-  FilterKey.USER_BROWSER,
-  FilterKey.PLATFORM,
-  FilterKey.TAGGED_ELEMENT,
-  FilterKey.STATEACTION,
-  FilterKey.UTM_CAMPAIGN,
-  FilterKey.UTM_SOURCE,
-  FilterKey.UTM_MEDIUM,
-  FilterKey.SLOW_SESSION,
-];
-
-/**
- * Group filters by category
- * @returns
- * @param map
- * @param isMobile
- */
-export const generateFilterOptions = (map, isMobile = false) => {
-  const filterSection = {};
-  Object.keys(map).forEach((key) => {
-    if (isMobile && MOBILE_EXCLUDE.includes(key)) {
-      return;
-    }
-
-    if (!isMobile && WEB_EXCLUDE.includes(key)) {
-      return;
-    }
-
-    const filter = map[key];
-    if (filterSection.hasOwnProperty(filter.category)) {
-      filterSection[filter.category].push(filter);
-    } else {
-      filterSection[filter.category] = [filter];
-    }
-  });
-  return filterSection;
-};

@@ -154,11 +154,11 @@ function AssistStats() {
       .then((sessions) => {
         const data = sessions.list.map((s) => ({
           ...s,
-          members: `"${s.teamMembers.map((m) => m.name).join(', ')}"`,
-          dateStr: `"${formatTimeOrDate(s.timestamp, undefined, true)}"`,
-          assistDuration: `"${durationFromMsFormatted(s.assistDuration)}"`,
-          callDuration: `"${durationFromMsFormatted(s.callDuration)}"`,
-          controlDuration: `"${durationFromMsFormatted(s.controlDuration)}"`,
+          members: s.teamMembers.map((m) => m.name).join(', '),
+          dateStr: formatTimeOrDate(s.timestamp, undefined, true),
+          assistDuration: durationFromMsFormatted(s.assistDuration),
+          callDuration: durationFromMsFormatted(s.callDuration),
+          controlDuration: durationFromMsFormatted(s.controlDuration),
         }));
         const headers = [
           { label: t('Date'), key: 'dateStr' },

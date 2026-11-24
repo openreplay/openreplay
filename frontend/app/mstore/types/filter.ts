@@ -1,7 +1,6 @@
 import { filterStore } from '@/mstore/index';
 import { JsonData } from '@/mstore/types/filterConstants';
 import { FilterKey } from 'Types/filter/filterType';
-import { filtersMap } from 'Types/filter/newFilter';
 import { makeAutoObservable, runInAction } from 'mobx';
 
 import FilterItem from './filterItem';
@@ -26,62 +25,7 @@ export const checkFilterValue = (value: unknown): string[] => {
   return [String(value)];
 };
 
-export interface IFilterStore {
-  filterId: string;
-  name: string;
-  filters: FilterItem[];
-  excludes: FilterItem[];
-  eventsOrder: string;
-  eventsOrderSupport: string[];
-  startTimestamp: number;
-  endTimestamp: number;
-  eventsHeader: string;
-  page: number;
-  limit: number;
-  autoOpen: boolean;
-
-  merge(filterData: Partial<FilterStore>): void;
-
-  updateKey(key: string, value: any): void;
-
-  addFilter(filterData: FilterData): void;
-
-  replaceFilters(newFilters: FilterItem[]): void;
-
-  updateFilter(index: number, filterData: FilterData): void;
-
-  removeFilter(index: number): void;
-
-  fromJson(json: JsonData, isHeatmap?: boolean): this;
-
-  fromData(data: JsonData): this;
-
-  toJsonDrilldown(): JsonData;
-
-  createFilterByKey(key: FilterKey | string): FilterItem;
-
-  toJson(): JsonData;
-
-  addExcludeFilter(filterData: FilterItem): void;
-
-  updateExcludeFilter(filterId: string, filterData: FilterData): void;
-
-  removeExcludeFilter(filterId: string): void;
-
-  addFunnelDefaultFilters(): void;
-
-  addOrUpdateFilter(filterData: FilterData): void;
-
-  addFilterByKeyAndValue(
-    key: FilterKey | string,
-    value: unknown,
-    operator?: string,
-    sourceOperator?: string,
-    source?: unknown,
-  ): void;
-}
-
-export default class FilterStore implements IFilterStore {
+export default class FilterStore {
   public static readonly ID_KEY: string = 'filterId';
 
   filterId: string = '';
@@ -206,17 +150,6 @@ export default class FilterStore implements IFilterStore {
     this.filters = newFilters;
   }
 
-  private updateFilterByIndex(index: number, filterData: FilterItem) {
-    if (index >= 0 && index < this.filters.length) {
-      const originalId = this.filters[index].id;
-      const updatedFilter = this.createFilterItemFromData(filterData);
-      updatedFilter.id = originalId; // Ensure ID is not lost
-      this.filters[index] = updatedFilter;
-    } else {
-      console.warn(`FilterStore.updateFilterByIndex: Invalid index ${index}`);
-    }
-  }
-
   updateFilter = (index: number, filterData: FilterItem) => {
     if (index >= 0 && index < this.filters.length) {
       const updatedFilter = this.createFilterItemFromData(filterData);
@@ -292,25 +225,6 @@ export default class FilterStore implements IFilterStore {
     return this;
   }
 
-  toJsonDrilldown(): JsonData {
-    return {
-      name: this.name,
-      filters: this.filters.map((filterItem) => filterItem.toJson()),
-      eventsOrder: this.eventsOrder,
-      startTimestamp: this.startTimestamp,
-      endTimestamp: this.endTimestamp,
-    };
-  }
-
-  createFilterByKey(key: FilterKey | string): FilterItem {
-    const sourceMap = filtersMap;
-    const filterTemplate = sourceMap[key as FilterKey];
-    const newFilterData = filterTemplate
-      ? { ...filterTemplate, value: [''] }
-      : { key: key, value: [''] };
-    return this.createFilterItemFromData(newFilterData); // Use helper
-  }
-
   toJson(): JsonData {
     return {
       name: this.name,
@@ -331,62 +245,8 @@ export default class FilterStore implements IFilterStore {
     };
   }
 
-  addExcludeFilter(filterData: FilterItem) {
-    // const filter = filterStore.findEvent({
-    //   name: FilterKey.LOCATION,
-    //   autoCaptured: true,
-    // });
-
-    // if (!filter) {
-    //   console.error('FilterStore.addExcludeFilter: Location filter not found.');
-    //   return;
-    // }
-
-    // console.log('f', filter);
-    // // const newExclude = this.createFilterItemFromData(filterData);
-    // this.excludes.push(
-    //   new FilterItem({
-    //     ...filter,
-    //     filters: [
-    //       {
-    //         name: 'label',
-    //         value: [''],
-    //         operator: 'is',
-    //         dataType: 'string',
-    //       },
-    //     ],
-    //   }),
-    // );
-    //
-    this.excludes = [filterData];
-  }
-
-  updateExcludeFilter(filterId: string, filterData: FilterData) {
-    const index = this.excludes.findIndex((f) => f.id === filterId);
-    if (index > -1) {
-      const updatedExclude = this.createFilterItemFromData(filterData);
-      updatedExclude.id = filterId; // Ensure the ID remains the same
-      this.excludes[index] = updatedExclude;
-    } else {
-      console.warn(
-        `FilterStore.updateExcludeFilter: Exclude filter with id ${filterId} not found.`,
-      );
-    }
-  }
-
-  removeExcludeFilter(filterId: string) {
-    this.excludes = [];
-    // const index = this.excludes.findIndex((f) => f.id === filterId);
-    // if (index > -1) {
-    //   this.excludes.splice(index, 1);
-    // } else {
-    //   console.warn(
-    //     `FilterStore.removeExcludeFilter: Exclude filter with id ${filterId} not found.`,
-    //   );
-    // }
-  }
-
-  addFunnelDefaultFilters() {
+  /** funnels and heatmaps start from one page-view step */
+  startWithLocationFilter() {
     const locationFilter = filterStore.findEvent({
       name: FilterKey.LOCATION,
       autoCaptured: true,
@@ -396,65 +256,5 @@ export default class FilterStore implements IFilterStore {
       this.filters = [];
       this.addFilter(locationFilter);
     });
-  }
-
-  addHeatmapDefaultFilters() {
-    const locationFilter = filterStore.findEvent({
-      name: FilterKey.LOCATION,
-      autoCaptured: true,
-    });
-
-    runInAction(() => {
-      this.filters = []; // Clear existing filters
-      this.addFilter(locationFilter);
-    });
-  }
-
-  addOrUpdateFilter(filterData: FilterData) {
-    const index = this.filters.findIndex((f) => f.key === filterData.key);
-    const dataWithCheckedValue = {
-      ...filterData,
-      value: checkFilterValue(filterData.value),
-    };
-
-    if (index > -1) {
-      this.updateFilterByIndex(index, dataWithCheckedValue);
-    } else {
-      this.addFilter(dataWithCheckedValue);
-    }
-  }
-
-  addFilterByKeyAndValue(
-    key: FilterKey | string,
-    value: any,
-    operator?: string,
-    sourceOperator?: string,
-    source?: any,
-  ) {
-    const sourceMap = filtersMap;
-    const defaultFilterData = sourceMap[key as FilterKey];
-
-    if (defaultFilterData) {
-      const newFilterData: FilterData = {
-        ...defaultFilterData,
-        key: key,
-        value: checkFilterValue(value),
-        operator: operator ?? defaultFilterData.operator,
-        sourceOperator: sourceOperator ?? defaultFilterData.sourceOperator,
-        source: source ?? defaultFilterData.source,
-      };
-      this.addOrUpdateFilter(newFilterData);
-    } else {
-      console.warn(
-        `FilterStore.addFilterByKeyAndValue: No default filter template found for key ${key}. Adding generic filter.`,
-      );
-      this.addOrUpdateFilter({
-        key: key,
-        value: checkFilterValue(value),
-        operator,
-        sourceOperator,
-        source,
-      });
-    }
   }
 }

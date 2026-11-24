@@ -79,5 +79,3 @@ export function prefetchPath(pathname: string): void {
   const key = activeMenuKey(pathname, menuRoutes(siteId), menuAliases(siteId));
   if (key) prefetchRoute(key);
 }
-
-export default prefetchRoute;

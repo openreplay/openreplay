@@ -11,6 +11,7 @@ import {
   otelLogTimeMs,
   otelSeverityLevel,
 } from 'App/services/OtelLogsService';
+import { csvCell } from 'App/utils/download';
 
 import { entryFromFilter } from 'Shared/FilterEditor/catalogue';
 import type { CatalogueEntry } from 'Shared/FilterEditor/types';
@@ -194,6 +195,8 @@ const RESOURCE_LABEL: Record<string, string> = {
 
 export const scopeOfKey = (key: string): 'log' | 'resource' | null =>
   key.startsWith('attr.') ? 'log' : key.startsWith('res.') ? 'resource' : null;
+export const keyOf = (scope: 'log' | 'resource', name: string) =>
+  `${scope === 'log' ? 'attr' : 'res'}.${name}`;
 export const nameOfKey = (key: string) =>
   key.startsWith('attr.')
     ? key.slice(5)
@@ -496,11 +499,6 @@ export const byteSize = (text: string) => new TextEncoder().encode(text).length;
 
 export const EXPORT_LIMIT = 10_000;
 export type ExportFormat = 'csv' | 'json';
-const csvCell = (v: unknown) => {
-  const s = v == null ? '' : String(v);
-  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-};
-
 export function exportLines(
   logs: readonly OtelLog[],
   format: ExportFormat,
@@ -569,7 +567,7 @@ export function drillCards(
       if (isInternal(k.key) || DRILL_SKIP.has(k.key)) continue;
       if (scope === 'resource' && k.key === 'service.name') continue;
       cards.push({
-        key: `${scope === 'log' ? 'attr' : 'res'}.${k.key}`,
+        key: keyOf(scope, k.key),
         name: k.key,
         carried: Math.min(k.count, total),
       });

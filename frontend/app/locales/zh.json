@@ -2954,6 +2954,7 @@
   "drag to narrow": "拖动以缩小范围",
   "Lines over time": "日志量随时间变化",
   "{{name}}: {{n}} lines, {{pct}}%.": "{{name}}：{{n}} 条日志，{{pct}}%。",
+  "{{name}}: {{n}} lines, {{pct}}%._other": "{{name}}：{{n}} 条日志，{{pct}}%。",
   "Click to show every level again": "点击以重新显示所有级别",
   "Click to keep only these lines": "点击以仅保留这些日志",
   "{{n}} lines, {{pct}}%": "{{n}} 条日志，{{pct}}%",

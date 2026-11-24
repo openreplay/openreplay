@@ -140,7 +140,7 @@ export function useValueOptions(
         params.propertyName = getPropertyName(entry.source, live);
       if (filter.eventName) params.eventName = filter.eventName;
       searchService
-        .fetchAutoCompleteValues(params, projectId)
+        .fetchTopValues(params, projectId)
         .then((data: any) => {
           const list = Array.isArray(data) ? data : (data?.events ?? []);
           if (alive) setFound(list.map(toOption));

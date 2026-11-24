@@ -1,5 +1,7 @@
 import { toast } from '@/ui/overlays/toast';
 
+import { saveBlob } from './download';
+
 class AudioContextManager {
   context = new AudioContext();
 
@@ -93,15 +95,7 @@ function saveFile(
   saveCb(saveObject, blob);
 
   const filename = `${recName}.${mimeType.split('/')[1]}`;
-  const downloadLink = document.createElement('a');
-  downloadLink.href = URL.createObjectURL(blob);
-  downloadLink.download = filename;
-
-  document.body.appendChild(downloadLink);
-  downloadLink.click();
-
-  URL.revokeObjectURL(downloadLink.href); // clear from memory
-  document.body.removeChild(downloadLink);
+  saveBlob(blob, filename);
 }
 
 async function recordScreen() {

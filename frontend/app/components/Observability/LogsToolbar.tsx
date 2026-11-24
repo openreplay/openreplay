@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { OtelLog } from 'App/services/OtelLogsService';
+import { saveBlob } from 'App/utils/download';
 
 import {
   EXPORT_LIMIT,
@@ -60,12 +61,7 @@ export function ExportControl({
       const blob = new Blob([body], {
         type: format === 'csv' ? 'text/csv' : 'application/x-ndjson',
       });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = exportFileName(from, to, format);
-      a.click();
-      URL.revokeObjectURL(url);
+      saveBlob(blob, exportFileName(from, to, format));
       setOpen(false);
     } finally {
       setBusy(false);

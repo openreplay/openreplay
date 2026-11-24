@@ -178,31 +178,6 @@ class UserStore {
     }
   };
 
-  fetchUser = (userId: string): Promise<any> => {
-    this.loading = true;
-    return new Promise((resolve, reject) => {
-      userService
-        .one(userId)
-        .then((data) => {
-          runInAction(() => {
-            this.instance = new User().fromJson(data);
-          });
-          resolve(data);
-        })
-        .catch((error) => {
-          runInAction(() => {
-            this.loading = false;
-          });
-          reject(error);
-        })
-        .finally(() => {
-          runInAction(() => {
-            this.loading = false;
-          });
-        });
-    });
-  };
-
   fetchUsers = (): Promise<any> => {
     this.loading = true;
     return new Promise((resolve, reject) => {
@@ -599,40 +574,8 @@ class UserStore {
     await userService.resendEmailVerification();
   };
 
-  pushNewSite = (newSite: any) => {
-    this.sites.push(newSite);
-  };
-
   setOnboarding = (state: boolean = false) => {
     this.onboarding = state;
-  };
-
-  resetErrors = () => {
-    this.passwordErrors = [];
-    this.loginRequest.errors = [];
-    this.errors = [];
-  };
-
-  updateModule = (moduleKey: string) => {
-    const modules = this.account.settings?.modules || [];
-    if (modules.includes(moduleKey)) {
-      this.account.settings.modules = modules.filter(
-        (module: string) => module !== moduleKey,
-      );
-    } else {
-      this.account.settings.modules = [...modules, moduleKey];
-    }
-  };
-
-  upgradeScope = async () => {
-    try {
-      await userService.changeScope(2);
-      runInAction(() => {
-        this.scopeState = 2;
-      });
-    } catch (error) {
-      // TODO error handling
-    }
   };
 
   regenerateKey = async () => {
@@ -648,17 +591,6 @@ class UserStore {
     } catch (e: any) {
       toast.error(e.message || this.t('Failed to regenerate API key'));
       throw e;
-    }
-  };
-
-  downgradeScope = async () => {
-    try {
-      await userService.changeScope(1);
-      runInAction(() => {
-        this.scopeState = 1;
-      });
-    } catch (error) {
-      // TODO error handling
     }
   };
 

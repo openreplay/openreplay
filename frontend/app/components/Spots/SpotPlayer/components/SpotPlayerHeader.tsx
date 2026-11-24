@@ -15,6 +15,7 @@ import { copyWithToast } from 'App/lib/use-copy';
 import { useStore } from 'App/mstore';
 import { spotsList } from 'App/routes';
 import { useHistory } from 'App/routing';
+import { saveBlob } from 'App/utils/download';
 
 import AccessModal from './AccessModal';
 
@@ -182,15 +183,7 @@ async function downloadFile(
       throw new Error('Network response was not ok');
     }
     const blob = await response.blob();
-    const blobUrl = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = blobUrl;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    // revoking right after click() can cancel the download in Firefox / Safari
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+    saveBlob(blob, fileName);
   } catch (error) {
     onError();
     console.error('Error downloading file:', error);

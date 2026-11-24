@@ -203,10 +203,6 @@ export default class FilterItem implements IFilter {
     return Boolean(this.name && this.category);
   }
 
-  clone(): FilterItem {
-    return new FilterItem(JSON.parse(JSON.stringify(this.toJson())));
-  }
-
   reset(): void {
     this.value = [''];
     this.operator = 'is';

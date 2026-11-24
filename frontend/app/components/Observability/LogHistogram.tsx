@@ -14,6 +14,7 @@ import {
   clockLabel,
   compactCount,
   levelLabel,
+  levelTotals,
 } from './logs-logic';
 
 export interface LogHistogramProps {
@@ -61,17 +62,6 @@ function useTween(target: number, ms = 220): number {
   }, [target, ms]);
   return shown;
 }
-
-const sum = (bs: readonly Bucket[]): Record<LogLevel, number> => {
-  const out: Record<LogLevel, number> = {
-    error: 0,
-    warn: 0,
-    info: 0,
-    debug: 0,
-  };
-  for (const b of bs) for (const l of LEVELS) out[l] += b.counts[l];
-  return out;
-};
 
 export function LogHistogram({
   buckets,
@@ -280,7 +270,7 @@ export function LogHistogram({
     : hover != null && buckets[hover]
       ? [buckets[hover]]
       : null;
-  const shown = focus ? sum(focus) : counts;
+  const shown = focus ? levelTotals(focus) : counts;
   const total = LEVELS.reduce((n, l) => n + shown[l], 0);
   const windowTotal = LEVELS.reduce((n, l) => n + counts[l], 0);
   const spanWords = (bs: readonly Bucket[]) => {

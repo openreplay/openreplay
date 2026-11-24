@@ -41,7 +41,13 @@ function AuditView() {
     [],
   );
 
-  useEffect(() => () => auditStore.updateKey('searchQuery', ''), []);
+  useEffect(
+    () => () => {
+      push.cancel();
+      auditStore.updateKey('searchQuery', '');
+    },
+    [push],
+  );
 
   useEffect(() => {
     const { startTimestamp, endTimestamp } = period.toTimestamps();

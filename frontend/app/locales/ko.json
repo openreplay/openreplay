@@ -2954,6 +2954,7 @@
   "drag to narrow": "드래그하여 범위 좁히기",
   "Lines over time": "시간별 줄 수",
   "{{name}}: {{n}} lines, {{pct}}%.": "{{name}}: {{n}}줄, {{pct}}%.",
+  "{{name}}: {{n}} lines, {{pct}}%._other": "{{name}}: {{n}}줄, {{pct}}%.",
   "Click to show every level again": "클릭하면 모든 레벨을 다시 표시합니다",
   "Click to keep only these lines": "클릭하면 이 줄만 남깁니다",
   "{{n}} lines, {{pct}}%": "{{n}}줄, {{pct}}%",

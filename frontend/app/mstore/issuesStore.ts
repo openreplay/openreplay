@@ -818,11 +818,6 @@ export default class IssuesStore {
     return this.categoryCounts != null;
   }
 
-  /** Rows are hidden when the visibility filter is scoped to hidden issues. */
-  get viewingHidden(): boolean {
-    return this.visibility === 'hidden';
-  }
-
   // ---- critical (derived from descriptions) ----
   /** the server/agent flag on the raw issue (its own anonymous "rule") */
   private serverCritical(id: string): boolean {
@@ -869,10 +864,6 @@ export default class IssuesStore {
       ? 'mine'
       : 'team';
   }
-  /** relevant = one of MY descriptions flagged it, or a segment I own surfaced it */
-  isRelevant = (i: Issue): boolean =>
-    this.critState(i.id) === 'mine' ||
-    i.segmentIds.some((id) => this.segmentById(id)?.mine);
   /** count next to "Critical to me" — issues my own descriptions flagged */
   get relevantCount(): number {
     return this.issues.filter((i) => this.critState(i.id) === 'mine').length;

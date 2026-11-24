@@ -5,9 +5,9 @@ import React, { useEffect, useState } from 'react';
 
 import useLatestRef from 'App/hooks/useLatestRef';
 import { useStore } from 'App/mstore';
+import { SKIP_INTERVALS } from 'App/player-ui/clock';
 import { ownsKeys } from 'App/utils/keys';
 
-import { SKIP_INTERVALS } from '../Controls/Controls';
 import cls from './PlayIconLayer.module.css';
 import clsOv from './overlay.module.css';
 

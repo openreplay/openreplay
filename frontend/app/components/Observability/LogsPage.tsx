@@ -60,11 +60,14 @@ import {
   drillCards,
   isInternal,
   keyLabel,
+  keyOf,
   levelLabel,
   levelOf,
   levelOfText,
   levelTotals,
   logFilter,
+  nameOfKey,
+  scopeOfKey,
   sessionOf,
   toBuckets,
   windowBounds,
@@ -178,9 +181,9 @@ function LogsPage() {
         if (key === 'service' || key === 'level')
           values = store.facetValuesOf(key).values;
         else {
-          const scope = key.startsWith('attr.') ? 'log' : 'resource';
-          const name = key.slice(scope === 'log' ? 5 : 4);
-          values = (await store.fetchFacetValues(scope, name, signal)).values;
+          const scope = scopeOfKey(key) === 'log' ? 'log' : 'resource';
+          values = (await store.fetchFacetValues(scope, nameOfKey(key), signal))
+            .values;
         }
         const top = values.reduce((m, v) => Math.max(m, v.count), 0);
         return values.map((v) => ({
@@ -261,7 +264,7 @@ function LogsPage() {
     (store.facets?.attributeKeys?.[scope] ?? [])
       .filter((k) => !isInternal(k.key))
       .map((k) => {
-        const key = `${scope === 'log' ? 'attr' : 'res'}.${k.key}`;
+        const key = keyOf(scope, k.key);
         return {
           value: key,
           label: keyLabel(t, key),

@@ -27,13 +27,6 @@ export default class FunnelStore {
 
   isLoadingIssues: boolean = false;
 
-  issuesFilter: any = [];
-
-  issuesSort = {
-    sort: 'afectedUsers',
-    order: 'desc',
-  };
-
   constructor() {
     makeAutoObservable(this, {
       updateKey: action,

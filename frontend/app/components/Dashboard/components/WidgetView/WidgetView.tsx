@@ -194,7 +194,7 @@ function WidgetView({
 
         if (selectedCard.cardType === FUNNEL) {
           cardData.series = [new FilterSeries()];
-          cardData.series[0].filter.addFunnelDefaultFilters();
+          cardData.series[0].filter.startWithLocationFilter();
           cardData.series[0].filter.eventsOrder = 'then';
           cardData.series[0].filter.eventsOrderSupport = ['then'];
         }
@@ -229,7 +229,7 @@ function WidgetView({
         if (selectedCard.cardType === HEATMAP) {
           cardData.series = [new FilterSeries()];
           cardData.series[0].maxEvents = 1;
-          cardData.series[0].filter.addHeatmapDefaultFilters();
+          cardData.series[0].filter.startWithLocationFilter();
         }
 
         if (selectedCard.cardType === WEBVITALS) {
