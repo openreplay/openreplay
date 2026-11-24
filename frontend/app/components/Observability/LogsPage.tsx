@@ -21,15 +21,8 @@ import { useTranslation } from 'react-i18next';
 
 import { CUSTOM_RANGE } from 'App/dateRange';
 import { useStore } from 'App/mstore';
-import {
-  CLIENT_TABS,
-  client,
-  logs as logsRoute,
-  session as sessionRoute,
-  withSiteId,
-} from 'App/routes';
+import { CLIENT_TABS, client } from 'App/routes';
 import { useNavigate } from 'App/routing';
-import { type OtelLog, otelLogTimeMs } from 'App/services/OtelLogsService';
 
 import {
   EntryField,
@@ -61,14 +54,11 @@ import {
   isInternal,
   keyLabel,
   keyOf,
-  levelLabel,
-  levelOf,
   levelOfText,
   levelTotals,
   logFilter,
   nameOfKey,
   scopeOfKey,
-  sessionOf,
   toBuckets,
   windowBounds,
 } from './logs-logic';
@@ -82,17 +72,10 @@ const DEFAULT_FACETS = [
   'res.k8s.namespace.name',
   'res.k8s.pod.name',
 ];
-/** replay opens this long before the line */
-export const PIN_LEAD = 5_000;
 
 function LogsPage() {
   const { t } = useTranslation();
-  const {
-    otelLogsStore: store,
-    projectsStore,
-    userStore,
-    sessionStore,
-  } = useStore();
+  const { otelLogsStore: store, projectsStore, userStore } = useStore();
   const navigate = useNavigate();
   const phone = useViewport() === 'phone';
   const siteId = projectsStore.siteId;
@@ -257,7 +240,6 @@ function LogsPage() {
       'res.k8s.pod.name',
     ].filter((k) => resourceKeys.has(k)),
     'trace',
-    'session',
   ];
   const added = store.columns.filter((c) => !baseColumns.includes(c));
   const more = (['log', 'resource'] as const).flatMap((scope) =>
@@ -289,29 +271,6 @@ function LogsPage() {
       onReset={store.resetColumns}
     />
   );
-
-  const play = (l: OtelLog) => {
-    const id = sessionOf(l);
-    if (!id) return;
-    const at = otelLogTimeMs(l);
-    const level = levelOf(l);
-    sessionStore.setReplayPin({
-      sessionId: id,
-      at,
-      kind: 'log',
-      label: l.body,
-      detail: `${l.serviceName} · ${l.severityText || levelLabel(t, level)}`,
-      tone:
-        level === 'error' ? 'danger' : level === 'warn' ? 'warning' : undefined,
-      backUrl: withSiteId(logsRoute(), siteId),
-    });
-    // back in Logs, the line's drawer is open again, even once newer lines
-    // have pushed it off the first page
-    store.openLog(l, true);
-    navigate(
-      `${withSiteId(sessionRoute(id), siteId)}?jumpto=${Math.max(0, at - PIN_LEAD)}`,
-    );
-  };
 
   const filters = store.rules.length > 0 && (
     <FilterBar
@@ -600,7 +559,6 @@ function LogsPage() {
                       withDate={withDate}
                       openId={store.openId}
                       onOpen={store.openLog}
-                      onPlay={play}
                       columns={store.columns}
                     />
                   )}
@@ -636,7 +594,6 @@ function LogsPage() {
         onTerm={store.setTerm}
         columns={store.columns}
         onToggleColumn={store.toggleColumn}
-        onPlay={play}
         withDate={withDate}
       />
       <SaveViewDialog

@@ -163,10 +163,6 @@ export function levelTotals(buckets: readonly Bucket[]) {
 
 /* ── keys ───────────────────────────────────────────────────────────────── */
 
-export const SESSION_ATTR = 'openreplay.session.id';
-export const sessionOf = (log: OtelLog): string | undefined =>
-  log.logAttributes?.[SESSION_ATTR] || undefined;
-
 const ATTR_LABEL: Record<string, string> = {
   'http.route': 'Route',
   'http.request.method': 'Method',
@@ -209,7 +205,6 @@ export function keyLabel(t: TFunction, key: string): string {
   if (key === 'level') return t('Level');
   if (key === 'service') return t('Service');
   if (key === 'trace') return t('Trace');
-  if (key === 'session') return t('Session');
   const name = nameOfKey(key);
   const label = key.startsWith('res.')
     ? RESOURCE_LABEL[name]
@@ -230,8 +225,6 @@ export function valueOfLog(log: OtelLog, key: string): string | undefined {
       return log.serviceName;
     case 'trace':
       return log.traceId || undefined;
-    case 'session':
-      return sessionOf(log);
     default: {
       const scope = scopeOfKey(key);
       const bag =
@@ -541,11 +534,7 @@ export function exportFileName(from: number, to: number, format: ExportFormat) {
 
 export const DRILL_VALUES = 5;
 /** keys whose every value is its own: no distribution to read */
-const DRILL_SKIP = new Set([
-  'exception.stacktrace',
-  'exception.message',
-  SESSION_ATTR,
-]);
+const DRILL_SKIP = new Set(['exception.stacktrace', 'exception.message']);
 
 export interface DrillCard {
   key: string;

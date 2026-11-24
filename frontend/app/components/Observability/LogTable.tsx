@@ -1,6 +1,4 @@
 import { type Column, DataTable } from '@/ui/data/table';
-import { Tooltip } from '@/ui/overlays/tooltip';
-import { PlayCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { type OtelLog, otelLogTimeMs } from 'App/services/OtelLogsService';
@@ -10,7 +8,6 @@ import {
   levelLabel,
   levelOf,
   lineStamp,
-  sessionOf,
   valueOfLog,
 } from './logs-logic';
 
@@ -19,7 +16,6 @@ export interface LogTableProps {
   withDate: boolean;
   openId: string | null;
   onOpen: (log: OtelLog) => void;
-  onPlay?: (log: OtelLog) => void;
   columns: readonly string[];
 }
 
@@ -38,7 +34,6 @@ export function LogTable({
   withDate,
   openId,
   onOpen,
-  onPlay,
   columns: on,
 }: LogTableProps) {
   const { t } = useTranslation();
@@ -81,21 +76,6 @@ export function LogTable({
       render: (l) => (
         <span className="m-logs__msg">
           <span title={l.body}>{l.body}</span>
-          {onPlay && sessionOf(l) && (
-            <Tooltip title={t('Watch session')}>
-              <button
-                type="button"
-                className="m-logs__play"
-                aria-label={t('Watch session')}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onPlay(l);
-                }}
-              >
-                <PlayCircle size={14} />
-              </button>
-            </Tooltip>
-          )}
         </span>
       ),
     },

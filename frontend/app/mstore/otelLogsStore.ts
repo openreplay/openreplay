@@ -755,10 +755,8 @@ export default class OtelLogsStore {
     this.openId = id;
   };
 
-  /** `keep` holds the line even once a refetch drops it from the list */
-  openLog = (log: OtelLog, keep = false) => {
-    this.openExtra =
-      keep || !this.logs.some((l) => l.id === log.id) ? log : null;
+  openLog = (log: OtelLog) => {
+    this.openExtra = this.logs.some((l) => l.id === log.id) ? null : log;
     this.openId = log.id;
   };
 

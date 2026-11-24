@@ -1,6 +1,5 @@
 import { CopyButton } from '@/ui/actions/CopyButton';
 import { IconButton } from '@/ui/actions/IconButton';
-import { Button } from '@/ui/actions/button';
 import type { MenuItem } from '@/ui/actions/dropdown-menu';
 import { Chip } from '@/ui/data/Chip';
 import {
@@ -13,13 +12,7 @@ import { SearchField } from '@/ui/inputs/SearchField';
 import { Segmented } from '@/ui/inputs/toggle-group';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/ui/layout/tabs';
 import { EntityDrawer, Section } from '@/ui/overlays/EntityDrawer';
-import {
-  ChevronDown,
-  ChevronUp,
-  Columns3,
-  Copy,
-  PlayCircle,
-} from 'lucide-react';
+import { ChevronDown, ChevronUp, Columns3, Copy } from 'lucide-react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -35,7 +28,6 @@ import {
   lineFields,
   lineStamp,
   otelRow,
-  sessionOf,
 } from './logs-logic';
 import { termMenuItems } from './termMenu';
 
@@ -65,7 +57,6 @@ export interface LogDrawerProps {
   ) => void;
   columns: readonly string[];
   onToggleColumn: (key: string) => void;
-  onPlay?: (line: OtelLog) => void;
   withDate: boolean;
 }
 
@@ -87,7 +78,6 @@ export function LogDrawer({
   onTerm,
   columns,
   onToggleColumn,
-  onPlay,
   withDate,
 }: LogDrawerProps) {
   const { t } = useTranslation();
@@ -96,7 +86,6 @@ export function LogDrawer({
   const [rawQuery, setRawQuery] = useState('');
   const [span, setSpan] = useState(DEFAULT_RELATED_SPAN);
   const [match, setMatch] = useState<RelatedMatch>('service');
-  const session = line ? sessionOf(line) : undefined;
 
   useEffect(() => {
     if (!line) return undefined;
@@ -250,27 +239,6 @@ export function LogDrawer({
           >
             <pre className="m-logs__text">{line.body}</pre>
           </Section>
-
-          {session && (
-            <Section title={t('Session')}>
-              <div className="m-logs__session">
-                <div className="m-logs__session-lead">
-                  <span className="m-logs__session-who">
-                    {t('Recording {{id}}', { id: session })}
-                  </span>
-                  <span className="m-logs__session-what">
-                    {t('The session this line was written in')}
-                  </span>
-                </div>
-                {onPlay && (
-                  <Button variant="secondary" onClick={() => onPlay(line)}>
-                    <PlayCircle size={14} />
-                    {t('Watch session')}
-                  </Button>
-                )}
-              </div>
-            </Section>
-          )}
 
           <Tabs
             value={tab}

@@ -15,7 +15,6 @@ import {
 
 import { MobEventsList, WebEventsList } from './EventsList';
 import IssueMarkersList from './IssueMarkersList';
-import ReplayPinMarker from './ReplayPinMarker';
 import SkipIntervalsList from './SkipIntervalsList';
 import TooltipContainer from './components/TooltipContainer';
 import stl from './timeline.module.css';
@@ -201,7 +200,6 @@ function Timeline({
         {isMobile ? <MobEventsList /> : <WebEventsList />}
         <SkipIntervalsList scale={scale} />
         <IssueMarkersList scale={scale} />
-        <ReplayPinMarker scale={scale} />
       </div>
     </div>
   );
