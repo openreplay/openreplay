@@ -2876,5 +2876,13 @@
   "More details": "更多详情",
   "Location from the IP address.": "根据 IP 地址推断的位置。",
   "Add an event or filter": "添加事件或筛选条件",
-  "Add the page": "添加页面"
+  "Add the page": "添加页面",
+  "Script tag": "Script 标签",
+  "Paste one snippet in your page. No code tools needed.": "在页面中粘贴一段代码即可，无需开发工具。",
+  "npm package": "npm 包",
+  "For apps built with React, Vue, Angular and the like.": "适用于使用 React、Vue、Angular 等构建的应用。",
+  "Step by step": "分步操作",
+  "How to install": "安装方式",
+  "Explore the documentation": "查看文档",
+  "Full SDK documentation": "完整 SDK 文档"
 }

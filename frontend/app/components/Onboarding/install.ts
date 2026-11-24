@@ -50,15 +50,11 @@ const lastMajor = ENV.TRACKER_MAJOR_VERSION
  * Assist isn't passed: `--assist` would also skip the wizard's plugin question,
  * which is where it offers the state plugins.
  */
-export function wizardCommand(
-  projectKey: string,
-  method: InstallMethod,
-): string {
+export function wizardCommand(projectKey: string): string {
   const args = [
     `--key=${projectKey}`,
     isSaas() ? '--cloud' : `--host=https://${window.location.hostname}`,
   ];
-  if (method === 'script') args.push('--script');
   return `npx @openreplay/wizard ${args.join(' ')}`;
 }
 

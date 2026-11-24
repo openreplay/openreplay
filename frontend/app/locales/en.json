@@ -2935,5 +2935,13 @@
   "More details": "More details",
   "Location from the IP address.": "Location from the IP address.",
   "Add an event or filter": "Add an event or filter",
-  "Add the page": "Add the page"
+  "Add the page": "Add the page",
+  "Script tag": "Script tag",
+  "Paste one snippet in your page. No code tools needed.": "Paste one snippet in your page. No code tools needed.",
+  "npm package": "npm package",
+  "For apps built with React, Vue, Angular and the like.": "For apps built with React, Vue, Angular and the like.",
+  "Step by step": "Step by step",
+  "How to install": "How to install",
+  "Explore the documentation": "Explore the documentation",
+  "Full SDK documentation": "Full SDK documentation"
 }
