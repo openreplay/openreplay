@@ -25,7 +25,6 @@ import { useTranslation } from 'react-i18next';
 
 import { FUNNEL, HEATMAP, TABLE, USER_PATH } from 'App/constants/card';
 import { CUSTOM_RANGE } from 'App/dateRange';
-import useIsMounted from 'App/hooks/useIsMounted';
 import { useStore } from 'App/mstore';
 import { sessions as sessionsRoute, withSiteId } from 'App/routes';
 import { useHistory } from 'App/routing';
@@ -94,7 +93,6 @@ function WidgetSessions() {
     projectsStore,
   } = useStore();
   const pageSize = useRowsPerPage();
-  const isMounted = useIsMounted();
   const listRef = useRef<HTMLDivElement>(null);
   const requestSeq = useRef(0);
 
@@ -183,7 +181,6 @@ function WidgetSessions() {
 
   const fetchSessions = useCallback(
     (metricId, flt) => {
-      if (!isMounted()) return;
       const seq = ++requestSeq.current;
       const isDrilldown = !!flt.isDrilldown;
       if (
@@ -231,7 +228,7 @@ function WidgetSessions() {
           if (seq === requestSeq.current) setLoading(false);
         });
     },
-    [isMounted, widget, metricStore, t],
+    [widget, metricStore, t],
   );
 
   const fetchClickmapSessions = useCallback(
@@ -253,6 +250,7 @@ function WidgetSessions() {
     () => debounce(fetchClickmapSessions, 1000),
     [fetchClickmapSessions],
   );
+  useEffect(() => () => debounceSessions.cancel(), [debounceSessions]);
 
   // the series the list stands for: the focused one, less the hidden ones
   const listedSeries = () => {

@@ -16,19 +16,16 @@ import { useTranslation } from 'react-i18next';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { useStore } from 'App/mstore';
 import { PlayingState } from 'App/player-ui';
+import { SKIP_INTERVALS } from 'App/player-ui/clock';
 import { session as sessionRoute, withSiteId } from 'App/routes';
 import { useHistory } from 'App/routing';
 import useShortcuts from 'Components/Session/Player/ReplayPlayer/useShortcuts';
-import PlaybackSettings, {
-  SKIP_INTERVALS,
-} from 'Components/Session/ReplayScreen/PlaybackSettings';
+import PlaybackSettings from 'Components/Session/ReplayScreen/PlaybackSettings';
 import { ReduxTime } from 'Components/Session_/Player/Controls/Time';
 
 import Timeline from './Timeline';
 import PlayingTime from './components/PlayingTime';
 import { type ITimeMode } from './components/timeMode';
-
-export { SKIP_INTERVALS };
 
 function Controls({ setActiveTab, fullView, mobile }: any) {
   const { t } = useTranslation();

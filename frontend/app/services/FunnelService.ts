@@ -1,17 +1,8 @@
 import IFunnel from 'App/mstore/types/funnel';
-import APIClient, { apiClient } from 'App/api_client';
 
-export default class FunnelService {
-  private client: APIClient;
+import BaseService from './BaseService';
 
-  constructor(client?: APIClient) {
-    this.client = client || apiClient;
-  }
-
-  initClient(client?: APIClient) {
-    this.client = client || apiClient;
-  }
-
+export default class FunnelService extends BaseService {
   all(): Promise<any[]> {
     return this.client
       .get('/funnels')
@@ -34,12 +25,6 @@ export default class FunnelService {
   delete(funnelId: string): Promise<any> {
     return this.client
       .delete(`/funnels/${funnelId}`)
-      .then((response) => response.json());
-  }
-
-  fetchInsights(funnelId: string, payload: any): Promise<any> {
-    return this.client
-      .post(`/funnels/${funnelId}/insights`, payload)
       .then((response) => response.json());
   }
 

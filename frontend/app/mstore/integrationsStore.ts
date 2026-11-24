@@ -124,10 +124,6 @@ class NamedIntegrationStore<T extends Integration> {
     this.fetched = fetched;
   };
 
-  setIssuesFetched = (issuesFetched: boolean): void => {
-    this.issuesFetched = issuesFetched;
-  };
-
   fetchIntegrations = async (): Promise<void> => {
     this.setLoading(true);
     try {
@@ -230,10 +226,6 @@ class MessengerIntegrationStore {
   setLoaded(loaded: boolean): void {
     this.loaded = loaded;
   }
-
-  setErrors = (errors: any[]) => {
-    this.errors = errors;
-  };
 
   /** Resolves true once the channel is saved; a failure has already been toasted. */
   saveIntegration = async (): Promise<boolean> => {

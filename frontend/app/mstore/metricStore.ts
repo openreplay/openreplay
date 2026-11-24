@@ -20,37 +20,6 @@ import { errorService, metricService } from 'App/services';
 import { ErrorInfo } from './types/error';
 import Widget from './types/widget';
 
-const handleTypeFilter = (card: Widget, filterType?: string) => {
-  const { metricType } = card;
-  if (filterType === 'all' || !filterType || !metricType) {
-    return true;
-  }
-  if ([CATEGORIES.monitors, CATEGORIES.web_analytics].includes(filterType)) {
-    if (metricType !== 'table') return false;
-    const { metricOf } = card;
-    if (filterType === CATEGORIES.monitors) {
-      return [
-        FilterKey.ERRORS,
-        FilterKey.FETCH,
-        `${TIMESERIES}_4xx_requests`,
-        `${TIMESERIES}_slow_network_requests`,
-      ].includes(metricOf);
-    }
-    if (filterType === CATEGORIES.web_analytics) {
-      return [
-        FilterKey.LOCATION,
-        FilterKey.USER_BROWSER,
-        FilterKey.REFERRER,
-        FilterKey.USERID,
-        FilterKey.LOCATION,
-        FilterKey.USER_DEVICE,
-      ].includes(metricOf);
-    }
-  } else {
-    return filterType === metricType;
-  }
-};
-
 const cardToCategory = (cardType: string) => {
   switch (cardType) {
     case TIMESERIES:
@@ -73,13 +42,6 @@ const cardToCategory = (cardType: string) => {
   }
 };
 
-interface MetricFilter {
-  query?: string;
-  showMine?: boolean;
-  type?: string;
-  // dashboard?: [];
-}
-
 export default class MetricStore {
   isLoading: boolean = false;
   isSaving: boolean = false;
@@ -92,7 +54,6 @@ export default class MetricStore {
   filter: any = { type: '', query: '' };
   sessionsPage: number = 1;
   sessionsPageSize: number = 10;
-  listView?: boolean = true;
   includeClickRage: boolean = false;
   clickMapSearch = '';
   clickMapLabel = '';
@@ -168,10 +129,6 @@ export default class MetricStore {
 
   clearBreakdownSelection() {
     this.breakdownSelection = {};
-  }
-
-  setCardCategory(category: string) {
-    this.cardCategory = category;
   }
 
   updateKey(key: string, value: any) {

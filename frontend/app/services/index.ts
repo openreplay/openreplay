@@ -52,31 +52,3 @@ export const searchService = new SearchService();
 export const projectsService = new ProjectsService();
 export const billingService = new BillingService();
 export const analyticsService = new AnalyticsService();
-
-export const services = [
-  projectsService,
-  dashboardService,
-  metricService,
-  sessionService,
-  userService,
-  funnelService,
-  auditService,
-  errorService,
-  recordingsService,
-  configService,
-  alertsService,
-  webhookService,
-  healthService,
-  assistStatsService,
-  tagWatchService,
-  aiService,
-  spotService,
-  loginService,
-  filterService,
-  issueReportsService,
-  customFieldService,
-  integrationsService,
-  searchService,
-  billingService,
-  analyticsService,
-];

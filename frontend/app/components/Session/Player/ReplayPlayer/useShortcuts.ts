@@ -2,9 +2,9 @@ import { useContext, useEffect } from 'react';
 
 import { copyWithToast } from 'App/lib/use-copy';
 import { blockValues, blocks } from 'App/mstore/uiPlayerStore';
+import { SKIP_INTERVALS } from 'App/player-ui/clock';
 import { ownsKeys } from 'App/utils/keys';
 import { PlayerContext } from 'Components/Session/playerContext';
-import { SKIP_INTERVALS } from 'Components/Session_/Player/Controls/Controls';
 
 function useShortcuts({
   skipInterval,

@@ -1,63 +1,15 @@
 import { getRowsPerPage } from '@/ui/layout/rows-per-page';
-import { FilterCategory, FilterKey } from 'Types/filter/filterType';
-import {
-  filtersMap,
-  generateFilterOptions,
-  liveFiltersMap,
-} from 'Types/filter/newFilter';
 import { makeAutoObservable, reaction } from 'mobx';
 
 import { sessionStore } from 'App/mstore';
 import { checkFilterValue } from 'App/mstore/types/filter';
 import FilterItem, { IFilter } from 'App/mstore/types/filterItem';
 import Search from 'App/mstore/types/search';
-import { searchService } from 'App/services';
-
-export const checkValues = (key: any, value: any) => {
-  if (key === FilterKey.DURATION) {
-    return value[0] === '' || value[0] === null ? [0, value[1]] : value;
-  }
-  return value.filter((i: any) => i !== '' && i !== null);
-};
-
-export const filterMap = ({
-  category,
-  value,
-  key,
-  operator,
-  sourceOperator,
-  source,
-  custom,
-  isEvent,
-  filters,
-  sort,
-  order,
-}: any) => ({
-  value: checkValues(key, value),
-  custom,
-  type: category === FilterCategory.METADATA ? FilterKey.METADATA : key,
-  operator,
-  source: category === FilterCategory.METADATA ? key.replace(/^_/, '') : source,
-  sourceOperator,
-  isEvent,
-  filters: filters ? filters.map(filterMap) : [],
-});
 
 class SearchStoreLive {
   list = [];
-  latestRequestTime: number | null = null;
-  latestList = [];
-  alertMetricId: number | null = null;
   instance = new Search({ sort: 'timestamp', order: 'desc' });
-  instanceLive = new Search();
-  savedSearch = new Search();
-  filterSearchList: any = {};
   currentPage = 1;
-  activeTab = { name: 'All', type: 'all' };
-  scrollY = 0;
-  sessions = [];
-  total: number = 0;
-  loadingFilterSearch = false;
   loading = false;
   /** the Fit list the page size comes from: the CoBrowse page, not the multiview picker */
   rowsList: string | undefined = undefined;
@@ -84,53 +36,8 @@ class SearchStoreLive {
     );
   }
 
-  get filterList() {
-    return generateFilterOptions(filtersMap);
-  }
-
-  get filterListLive() {
-    return generateFilterOptions(liveFiltersMap);
-  }
-
-  fetchFilterSearch = async (params: any): Promise<void> => {
-    this.loadingFilterSearch = true;
-
-    try {
-      const response: any[] = await searchService.fetchFilterSearch(params);
-
-      this.filterSearchList = response.reduce(
-        (
-          acc: Record<string, { projectId: number; value: string }[]>,
-          item: any,
-        ) => {
-          const { projectId, type, value } = item;
-          if (!acc[type]) acc[type] = [];
-          acc[type].push({ projectId, value });
-          return acc;
-        },
-        {},
-      );
-    } catch (error) {
-      console.error('Error fetching filter search:', error);
-    } finally {
-      this.loadingFilterSearch = false;
-    }
-  };
-
   edit(instance: Partial<Search>) {
     this.instance = new Search({ ...this.instance, ...instance });
-  }
-
-  apply(filter: any, fromUrl: boolean) {
-    if (fromUrl) {
-      this.instance = new Search(filter);
-    } else {
-      this.instance = { ...this.instance, ...filter };
-    }
-  }
-
-  applyFilter(filter: any, force = false) {
-    this.apply(filter, false);
   }
 
   updateCurrentPage(page: number) {
@@ -177,27 +84,6 @@ class SearchStoreLive {
     this.instance = new Search({
       ...this.instance.toData(),
     });
-  }
-
-  addFilterByKeyAndValue(
-    key: any,
-    value: any,
-    operator?: string,
-    sourceOperator?: string,
-    source?: string,
-  ) {
-    const defaultFilter = { ...filtersMap[key] };
-    defaultFilter.value = value;
-
-    if (operator) {
-      defaultFilter.operator = operator;
-    }
-    if (defaultFilter.hasSource && source && sourceOperator) {
-      defaultFilter.sourceOperator = sourceOperator;
-      defaultFilter.source = source;
-    }
-
-    this.addFilter(defaultFilter);
   }
 
   updateFilter = (index: number, search: Partial<IFilter>) => {

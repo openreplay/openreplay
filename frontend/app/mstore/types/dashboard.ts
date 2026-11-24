@@ -47,10 +47,6 @@ export default class Dashboard {
     return this.createdAt as unknown as DateTime;
   }
 
-  get updatedBy() {
-    return 'no api';
-  }
-
   update(data: any) {
     runInAction(() => {
       Object.assign(this, data);
@@ -121,33 +117,6 @@ export default class Dashboard {
     this.widgets = this.widgets.filter((w) => w.widgetId !== widgetId);
   }
 
-  updateWidget(widget: Widget) {
-    const index = this.widgets.findIndex((w) => w.widgetId === widget.widgetId);
-    if (index >= 0) {
-      this.widgets[index] = widget;
-    }
-  }
-
-  getWidget(widgetId: string) {
-    return this.widgets.find((w) => w.widgetId === widgetId);
-  }
-
-  getWidgetIndex(widgetId: string) {
-    return this.widgets.findIndex((w) => w.widgetId === widgetId);
-  }
-
-  getWidgetByIndex(index: number) {
-    return this.widgets[index];
-  }
-
-  getWidgetCount() {
-    return this.widgets.length;
-  }
-
-  getWidgetIndexByWidgetId(widgetId: string) {
-    return this.widgets.findIndex((w) => w.widgetId === widgetId);
-  }
-
   swapWidgetPosition(positionA: number, positionB: number): Promise<any> {
     const widgetA = this.widgets[positionA];
     const widgetB = this.widgets[positionB];
@@ -184,27 +153,7 @@ export default class Dashboard {
     });
   }
 
-  sortWidgets() {
-    this.widgets = this.widgets.sort((a, b) => {
-      if (a.position > b.position) {
-        return 1;
-      }
-      if (a.position < b.position) {
-        return -1;
-      }
-      return 0;
-    });
-  }
-
   exists() {
     return this.dashboardId !== undefined;
-  }
-
-  toggleMetrics(metricId: string) {
-    if (this.metrics.includes(metricId)) {
-      this.metrics = this.metrics.filter((m) => m !== metricId);
-    } else {
-      this.metrics.push(metricId);
-    }
   }
 }

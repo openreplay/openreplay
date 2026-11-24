@@ -60,8 +60,6 @@ jest.mock('Types/filter/newFilter', () => {
       },
     },
     conditionalFiltersMap: {},
-    generateFilterOptions: jest.fn(() => []),
-    liveFiltersMap: {},
     mobileConditionalFiltersMap: {},
   };
 });

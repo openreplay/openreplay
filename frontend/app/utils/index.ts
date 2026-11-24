@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { SESSION_FILTER } from 'App/constants/storageKeys';
+import { saveCsv } from './download';
 export * from './extraUtils';
 
 export const HOUR_SECS = 60 * 60;
@@ -25,26 +26,15 @@ export const httpHref = (url?: string | null): string | undefined => {
   }
 };
 
-export function debounce(callback, wait, context = this) {
-  let timeout = null;
-  let callbackArgs = null;
-
-  const later = () => callback.apply(context, callbackArgs);
-
-  return function (...args) {
-    callbackArgs = args;
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-  };
-}
-
-export function debounceCall(func, wait) {
+/** runs `fn` once `wait` ms pass without another call; `.cancel()` drops a pending run */
+export function debounce(fn, wait) {
   let timeout;
-  return function (...args) {
-    const context = this;
+  const debounced = function (...args) {
     clearTimeout(timeout);
-    timeout = setTimeout(() => func.apply(context, args), wait);
+    timeout = setTimeout(() => fn.apply(this, args), wait);
   };
+  debounced.cancel = () => clearTimeout(timeout);
+  return debounced;
 }
 
 export const fileNameFormat = (str = '', ext = '') => {
@@ -141,50 +131,12 @@ export const unserscoreToSpaceAndCapitalize = (str) =>
       (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase(),
     );
 
-export const convertToCSV = (headers, objArray) => {
-  const array = typeof objArray !== 'object' ? JSON.parse(objArray) : objArray;
-  let str = '';
-  const headersMap = headers.reduce((acc, curr) => {
-    acc[curr.key] = curr;
-    return acc;
-  }, {});
-
-  str += `${headers.map((h) => h.label).join(',')}\r\n`;
-
-  for (let i = 0; i < array.length; i++) {
-    let line = '';
-    for (const index in headersMap) {
-      if (line !== '') line += ',';
-      line += array[i][index];
-    }
-    str += `${line}\r\n`;
-  }
-
-  return str;
-};
-
-export const exportCSVFile = (headers, items, fileTitle) => {
-  const jsonObject = JSON.stringify(items);
-  const csv = convertToCSV(headers, jsonObject);
-  const exportedFilenmae = `${fileTitle}.csv` || 'export.csv';
-
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  if (navigator.msSaveBlob) {
-    // IE 10+
-    navigator.msSaveBlob(blob, exportedFilenmae);
-  } else {
-    const link = document.createElement('a');
-    if (link.download !== undefined) {
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', exportedFilenmae);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-  }
-};
+export const exportCSVFile = (headers, items, fileTitle) =>
+  saveCsv(
+    `${fileTitle}.csv`,
+    headers.map((h) => h.label),
+    items.map((item) => headers.map((h) => item[h.key])),
+  );
 
 export const cleanSessionFilters = (data: any) => {
   const { filters, ...rest } = data;
@@ -367,32 +319,14 @@ const decodeJwt = (jwt: string): any => {
   return JSON.parse(atob(base64));
 };
 
-function saveAsFile(blob: Blob, filename: string) {
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement('a');
-
-  a.href = url;
-  a.download = filename;
-  a.click();
-  window.URL.revokeObjectURL(url);
-}
-
 export function exportAntCsv(tableColumns, tableData, filename = 'table.csv') {
-  const headers = tableColumns.map((col) => col._pureTitle).join(',');
-  const rows = tableData.map((row) =>
-    tableColumns
-      .map((col) => {
-        const value = col.dataIndex ? row[col.dataIndex] : '';
-        return typeof value === 'string'
-          ? `"${value.replace(/"/g, '""')}"`
-          : value;
-      })
-      .join(','),
+  saveCsv(
+    filename,
+    tableColumns.map((col) => col._pureTitle),
+    tableData.map((row) =>
+      tableColumns.map((col) => (col.dataIndex ? row[col.dataIndex] : '')),
+    ),
   );
-
-  const csvContent = [headers, ...rows].join('\n');
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  saveAsFile(blob, filename);
 }
 
 export function roundToNextMinutes(timestamp: number, minutes: number): number {

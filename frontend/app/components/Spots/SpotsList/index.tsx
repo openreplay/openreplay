@@ -26,6 +26,7 @@ import type { Spot } from 'App/mstore/types/spot';
 import { spot as spotUrl, withSiteId } from 'App/routes';
 import { useHistory, useParams } from 'App/routing';
 import { debounce } from 'App/utils';
+import { saveBlob } from 'App/utils/download';
 
 import { StartPath } from 'Shared/StartPath/StartPath';
 
@@ -77,13 +78,7 @@ function SpotsList() {
     try {
       const { url } = await spotStore.getVideo(s.spotId);
       const blob = await (await fetch(url)).blob();
-      const href = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = href;
-      a.download = `${s.title}.webm`;
-      a.click();
-      // revoking right after click() can cancel the download in Firefox / Safari
-      setTimeout(() => URL.revokeObjectURL(href), 1000);
+      saveBlob(blob, `${s.title}.webm`);
     } catch {
       toast.error(t('Error downloading file.'));
     }

@@ -1,7 +1,6 @@
 import { CaptureIcon, captureKind } from '@/ui/icons/CaptureIcon';
 import { PopoverSearch } from '@/ui/overlays/PopoverSearch';
 import { menuKeyDown } from '@/ui/overlays/menuKeys';
-import { PopoverPanel } from '@/ui/overlays/popover';
 import {
   ALargeSmall,
   CalendarDays,
@@ -20,19 +19,7 @@ import {
   ToggleLeft,
   User,
 } from 'lucide-react';
-import {
-  Fragment,
-  type MutableRefObject,
-  type ReactElement,
-  type ReactNode,
-  type PointerEvent as ReactPointerEvent,
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { Fragment, type MutableRefObject, type ReactElement, type ReactNode, type PointerEvent as ReactPointerEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { categoryLabel, groupCatalogue, searchCatalogue } from './catalogue';
@@ -379,72 +366,5 @@ export function PickerBody({
         </div>
       </div>
     </div>
-  );
-}
-
-/** Eases the popover between its contents' heights (a category switch). */
-function EasedHeight({ children }: { children: ReactNode }) {
-  const inner = useRef<HTMLDivElement>(null);
-  const [height, setHeight] = useState<number | null>(null);
-  useLayoutEffect(() => {
-    const el = inner.current;
-    if (!el) return undefined;
-    const ro = new ResizeObserver(() => setHeight(el.offsetHeight));
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-  return (
-    <div
-      className="m-pick-ease"
-      style={height == null ? undefined : { height }}
-    >
-      <div ref={inner} className="m-pick-ease__in">
-        {children}
-      </div>
-    </div>
-  );
-}
-
-/**
- * A picker in a popover. It never flips: the top edge stays under the trigger
- * while the list changes, and the list scrolls inside the room below. Near the
- * viewport's edge it slides back in sideways (useViewportFit).
- */
-export function PickerPopover({
-  open,
-  onOpenChange,
-  content,
-  children,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  content: ReactNode;
-  children: ReactNode;
-}) {
-  return (
-    <PopoverPanel
-      open={open}
-      onOpenChange={onOpenChange}
-      placement="bottomLeft"
-      sideOffset={5}
-      avoidCollisions={false}
-      className="m-pick-host"
-      content={<EasedHeight>{content}</EasedHeight>}
-    >
-      {children}
-    </PopoverPanel>
-  );
-}
-
-export function FilterPicker({ children, ...rest }: FilterPickerProps) {
-  const [open, setOpen] = useState(false);
-  return (
-    <PickerPopover
-      open={open}
-      onOpenChange={setOpen}
-      content={<PickerBody {...rest} onDone={() => setOpen(false)} />}
-    >
-      {children}
-    </PickerPopover>
   );
 }

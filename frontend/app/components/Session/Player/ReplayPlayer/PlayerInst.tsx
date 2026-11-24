@@ -19,7 +19,6 @@ import {
   STACKEVENTS,
   STORAGE,
 } from 'App/mstore/uiPlayerStore';
-import { debounce } from 'App/utils';
 import { Exceptions } from 'Components/Session_/Exceptions/Exceptions';
 import GraphQL from 'Components/Session_/GraphQL';
 import Controls from 'Components/Session_/Player/Controls';
@@ -40,6 +39,7 @@ import {
   OverviewPanel,
   usePrefetchChartPanels,
 } from '../chartPanels';
+import { debounceUpdate, getDefaultPanelHeight } from '../panelHeight';
 
 interface IProps {
   fullView: boolean;
@@ -47,19 +47,6 @@ interface IProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
 }
-
-export const heightKey = 'playerPanelHeight';
-export const debounceUpdate = debounce((height: number) => {
-  localStorage.setItem(heightKey, height.toString());
-}, 500);
-export const getDefaultPanelHeight = () => {
-  const storageHeight = localStorage.getItem(heightKey);
-  if (storageHeight) {
-    const height = parseInt(storageHeight, 10);
-    return height > window.innerHeight / 2 ? window.innerHeight / 2 : height;
-  }
-  return 300;
-};
 
 function Player(props: IProps) {
   usePrefetchChartPanels();

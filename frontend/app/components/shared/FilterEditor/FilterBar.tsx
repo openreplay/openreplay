@@ -764,48 +764,6 @@ export function RuleChips({
   );
 }
 
-export function SingleRule({
-  filter,
-  editor,
-  entries,
-  removable = false,
-}: {
-  filter: SearchFilter;
-  editor: FilterEditor;
-  entries: readonly CatalogueEntry[];
-  removable?: boolean;
-}) {
-  const { t } = useTranslation();
-  const { entry } = filter;
-  return (
-    <span className="m-fchip m-fchip--group" data-slot="filter-chip">
-      <span className="m-fchip__main">
-        <NameSegment
-          entry={entry}
-          entries={entries}
-          taken={[]}
-          onReplace={(e) => editor.onReplace(filter.key, e)}
-        />
-        <Predicate
-          filter={filter}
-          live={false}
-          onUpdate={(p) => editor.onUpdate(filter.key, p)}
-        />
-      </span>
-      {removable && (
-        <Actions>
-          <ActionButton
-            name={t('Remove {{name}}', { name: entry.displayName })}
-            onClick={() => editor.onRemove(filter.key)}
-          >
-            <CircleMinus size={13} aria-hidden="true" />
-          </ActionButton>
-        </Actions>
-      )}
-    </span>
-  );
-}
-
 function AddControl({
   label,
   word,

@@ -1,5 +1,5 @@
-import { queried } from './routes';
 import ENV from '../env';
+import { queried } from './routes';
 
 const siteIdRequiredPaths: string[] = [
   '/dashboard',
@@ -155,28 +155,12 @@ export const clean = (
 };
 
 export default class APIClient {
-  private init: RequestInit;
   private siteId: string | undefined;
   private siteIdCheck: (() => { siteId: string | null }) | undefined;
   public getJwt: () => string | null = () => null;
   private onUpdateJwt: (data: { jwt?: string; spotJwt?: string }) => void;
   private refreshingTokenPromise: Promise<string> | null = null;
   private jwtExp: { token: string; exp: number } | null = null;
-
-  constructor() {
-    this.init = {
-      headers: new Headers({
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      }),
-    };
-  }
-
-  setJwt(jwt: string | null): void {
-    if (jwt !== null) {
-      (this.init.headers as Headers).set('Authorization', `Bearer ${jwt}`);
-    }
-  }
 
   setOnUpdateJwt(
     onUpdateJwt: (data: { jwt?: string; spotJwt?: string }) => void,
@@ -265,10 +249,9 @@ export default class APIClient {
     abortSignal?: AbortSignal,
   ): Promise<Response> {
     let _path = path;
-    let jwt = this.getJwt();
+    const jwt = this.getJwt();
     if (!path.includes('/refresh') && jwt && this.isTokenExpired(jwt)) {
-      jwt = await this.handleTokenRefresh();
-      (this.init.headers as Headers).set('Authorization', `Bearer ${jwt}`);
+      await this.handleTokenRefresh();
     }
 
     const init = this.getInit(method, headers, abortSignal);
@@ -295,7 +278,7 @@ export default class APIClient {
       // from the Python `kai` service) — routed at the origin root like /kai,
       // not under the chalice /api prefix.
       path.includes('/smart-issues') ||
-      (path.includes('/spot') && !path.includes('/login'))
+      (path.includes('/spot') && !path.includes('/login'));
 
     // using product analytics api for cards and dashboards (excluding sessions)
     // integrations moved to the Go `api` service: /v2/api/{projectId}/integration/*
@@ -355,14 +338,9 @@ export default class APIClient {
 
   async refreshToken(): Promise<string> {
     try {
-      const response = await this.fetch(
-        '/refresh',
-        {
-          headers: this.init.headers,
-        },
-        'GET',
-        { clean: false },
-      );
+      const response = await this.fetch('/refresh', undefined, 'GET', {
+        clean: false,
+      });
 
       if (!response.ok) {
         throw new Error('Failed to refresh token');
@@ -386,7 +364,6 @@ export default class APIClient {
     headers?: Record<string, any>,
     abortSignal?: AbortSignal,
   ): Promise<Response> {
-    this.init.method = 'GET';
     return this.fetch(
       queried(path, params),
       options,
@@ -404,7 +381,6 @@ export default class APIClient {
     headers?: Record<string, any>,
     abortSignal?: AbortSignal,
   ): Promise<Response> {
-    this.init.method = 'POST';
     return this.fetch(path, params, 'POST', options, headers, abortSignal);
   }
 
@@ -414,7 +390,6 @@ export default class APIClient {
     options?: any,
     abortSignal?: AbortSignal,
   ): Promise<Response> {
-    this.init.method = 'PUT';
     return this.fetch(path, params, 'PUT', options, undefined, abortSignal);
   }
 
@@ -424,7 +399,6 @@ export default class APIClient {
     options?: any,
     abortSignal?: AbortSignal,
   ): Promise<Response> {
-    this.init.method = 'DELETE';
     return this.fetch(path, params, 'DELETE', options, undefined, abortSignal);
   }
 
@@ -434,10 +408,10 @@ export default class APIClient {
     options?: any,
     abortSignal?: AbortSignal,
   ): Promise<Response> {
-    this.init.method = 'PATCH';
     return this.fetch(path, params, 'PATCH', options, undefined, abortSignal);
   }
 
+  /** called by the player (efsClient in player/src/config.ts) */
   forceSiteId = (siteId: string) => {
     this.siteId = siteId;
   };

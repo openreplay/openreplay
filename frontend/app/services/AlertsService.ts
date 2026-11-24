@@ -1,18 +1,8 @@
 import Alert, { IAlert } from 'Types/alert';
 
-import APIClient, { apiClient } from 'App/api_client';
+import BaseService from './BaseService';
 
-export default class AlertsService {
-  private client: APIClient;
-
-  constructor(client?: APIClient) {
-    this.client = client || apiClient;
-  }
-
-  initClient(client?: APIClient) {
-    this.client = client || apiClient;
-  }
-
+export default class AlertsService extends BaseService {
   save(instance: Alert): Promise<IAlert> {
     return this.client
       .post(

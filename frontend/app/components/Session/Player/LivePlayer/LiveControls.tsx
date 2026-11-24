@@ -9,10 +9,10 @@ import {
 } from 'App/components/Session/playerContext';
 import useLatestRef from 'App/hooks/useLatestRef';
 import { useStore } from 'App/mstore';
+import { SKIP_INTERVALS } from 'App/player-ui/clock';
 import { useLocation } from 'App/routing';
 import { ownsKeys } from 'App/utils/keys';
 import 'Components/Session/ReplayScreen/replay-timeline.css';
-import { SKIP_INTERVALS } from 'Components/Session_/Player/Controls/Controls';
 
 import AssistDuration from './AssistDuration';
 import AssistSessionsTabs from './AssistSessionsTabs';

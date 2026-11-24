@@ -1,4 +1,3 @@
-import FilterStore from '@/mstore/filterStore';
 
 const default_keys = [
   'event_id',
@@ -132,10 +131,6 @@ export default class Event {
 
   get customProps() {
     return this.custom_properties;
-  }
-
-  get customPropKeys() {
-    return Object.keys(this.custom_properties);
   }
 
   get allProps() {

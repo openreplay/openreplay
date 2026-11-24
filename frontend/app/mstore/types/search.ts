@@ -98,24 +98,6 @@ export default class Search {
     return Boolean(this.searchId);
   }
 
-  toSaveData() {
-    const js: any = { ...this };
-    js.filters = js.filters.map((filter: any) => {
-      filter.type = filter.key;
-      delete filter.category;
-      delete filter.icon;
-      delete filter.operatorOptions;
-      delete filter._key;
-      delete filter.key;
-      return filter;
-    });
-
-    delete js.createdAt;
-    delete js.key;
-    delete js._key;
-    return js;
-  }
-
   toData() {
     const js: any = { ...this };
     // js.filters = this.filters.map((filter: any) => {
@@ -139,8 +121,6 @@ export default class Search {
       return js;
     });
 
-    // this.handleProperties(js); // TODO this is temproray to support PYTHON api where it has different structure for nested filters
-
     const { startDate, endDate } = this.getDateRange(
       js.rangeValue,
       js.startDate,
@@ -153,30 +133,6 @@ export default class Search {
     delete js.createdAt;
     delete js.key;
     return js;
-  }
-
-  handleProperties(data: any) {
-    data.filters = data.filters.map((filter: any) => {
-      if (filter.isEvent && Array.isArray(filter.filters)) {
-        const nested = filter.filters.map((nestedFilter: any) => {
-          const js = new FilterItem(nestedFilter).toJson();
-          delete js.type;
-          delete js.propertyOrder;
-          return js;
-        });
-
-        delete filter.filters;
-        filter.properties = {
-          propertyOrder: filter.propertyOrder,
-          operator: filter.propertyOrder, // TODO remove this and use the propertyOrder once the API is fixed.
-          filters: nested,
-        };
-      }
-
-      delete filter.propertyOrder;
-      return filter;
-    });
-    return data;
   }
 
   private getDateRange(
@@ -216,37 +172,5 @@ export default class Search {
     }
 
     return { startDate, endDate };
-  }
-
-  fromJS({ eventsOrder, filters, events, custom, ...filterData }: any) {
-    let startDate;
-    let endDate;
-    const rValue = filterData.rangeValue || rangeValue;
-
-    if (rValue !== CUSTOM_RANGE) {
-      const range: any = getDateRangeFromValue(rValue);
-      startDate = range.start.ts;
-      endDate = range.end.ts;
-    } else if (filterData.startDate && filterData.endDate) {
-      startDate = filterData.startDate;
-      endDate = filterData.endDate;
-    }
-
-    return new Search({
-      ...filterData,
-      eventsOrder,
-      startDate,
-      endDate,
-      filters,
-      // filters: filters.map((i: any) => {
-      //   const filter = new Filter(i).toData();
-      //   if (Array.isArray(i.filters)) {
-      //     filter.filters = i.filters.map((f: any) =>
-      //       new Filter({ ...f, subFilter: i.type }).toData()
-      //     );
-      //   }
-      //   return filter;
-      // })
-    });
   }
 }

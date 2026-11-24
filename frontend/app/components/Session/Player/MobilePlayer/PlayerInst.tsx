@@ -18,7 +18,7 @@ import ReplayWindow from 'Components/Session/Player/MobilePlayer/ReplayWindow';
 import {
   debounceUpdate,
   getDefaultPanelHeight,
-} from 'Components/Session/Player/ReplayPlayer/PlayerInst';
+} from 'Components/Session/Player/panelHeight';
 import { MobileExceptions } from 'Components/Session_/Exceptions/Exceptions';
 import GraphQL from 'Components/Session_/GraphQL';
 import Controls from 'Components/Session_/Player/Controls';

@@ -1,5 +1,5 @@
 import { Loader } from '@/ui/feedback/Loader';
-import { debounceCall } from '@/utils';
+import { debounce } from '@/utils';
 import withSiteIdUpdater from 'HOCs/withSiteIdUpdater';
 import { observer } from 'mobx-react-lite';
 import React, { Suspense, lazy } from 'react';
@@ -263,7 +263,7 @@ function PrivateRoutes() {
   }, [filtersLoaded, searchStore.urlParsed, location.search, siteId]);
 
   const debouncedSearchCall = React.useMemo(
-    () => debounceCall(() => searchStore.fetchSessions(true), 250),
+    () => debounce(() => searchStore.fetchSessions(true), 250),
     [searchStore],
   );
   React.useEffect(() => {

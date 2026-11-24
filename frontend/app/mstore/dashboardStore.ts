@@ -25,7 +25,6 @@ export default class DashboardStore {
   dashboardInstance: Dashboard = new Dashboard();
   selectedWidgets: Widget[] = [];
   currentWidget: Widget = new Widget();
-  widgetCategories: any[] = [];
   widgets: Widget[] = [];
   period: Record<string, any> = Period({ rangeName: LAST_24_HOURS });
   drillDownFilter: Filter = new Filter();
@@ -36,7 +35,6 @@ export default class DashboardStore {
     startTimestamp: number;
     endTimestamp: number;
   } | null = null;
-  comparisonFilter: Filter = new Filter();
   drillDownPeriod: Record<string, any> = Period({ rangeName: LAST_24_HOURS });
   selectedDensity: number = 7;
   comparisonPeriods: Record<string, any> = {};
@@ -46,20 +44,17 @@ export default class DashboardStore {
   filter: DashboardFilter = { showMine: false, query: '' };
   // Metrics
   metricsPage: number = 1;
-  metricsPageSize: number = 10;
   metricsSearch: string = '';
   // Loading states
   isLoading: boolean = false;
   isSaving: boolean = false;
   isDeleting: boolean = false;
-  loadingTemplates: boolean = false;
   fetchingDashboard: boolean = false;
   sessionsLoading: boolean = false;
   showAlertModal: boolean = false;
   // Pagination
   page: number = 1;
   pageSize: number = 10;
-  dashboardsSearch: string = '';
   sort: any = { by: 'desc' };
 
   constructor() {
@@ -87,15 +82,6 @@ export default class DashboardStore {
   setDensity = (density: number) => {
     this.selectedDensity = density;
   };
-
-  get sortedDashboards() {
-    const sortOrder = this.sort.by;
-    return [...this.dashboards].sort((a, b) =>
-      sortOrder === 'desc'
-        ? b.createdAt - a.createdAt
-        : a.createdAt - b.createdAt,
-    );
-  }
 
   carryDrill(metricId: string | number) {
     const f = this.drillDownFilter;
@@ -154,55 +140,6 @@ export default class DashboardStore {
       );
   }
 
-  toggleAllSelectedWidgets(isSelected: boolean) {
-    if (isSelected) {
-      const allWidgets = this.widgetCategories.reduce(
-        (acc, cat) => acc.concat(cat.widgets),
-        [],
-      );
-
-      this.selectedWidgets = allWidgets;
-    } else {
-      this.selectedWidgets = [];
-    }
-  }
-
-  selectWidgetsByCategory(category: string) {
-    const selectedWidgetIds = this.selectedWidgets.map(
-      (widget: any) => widget.metricId,
-    );
-    const widgets = this.widgetCategories
-      .find((cat) => cat.name === category)
-      ?.widgets.filter(
-        (widget: any) => !selectedWidgetIds.includes(widget.metricId),
-      );
-    this.selectedWidgets = this.selectedWidgets.concat(widgets) || [];
-  }
-
-  removeSelectedWidgetByCategory = (category: any) => {
-    const categoryWidgetIds = category.widgets.map((w: Widget) => w.metricId);
-    this.selectedWidgets = this.selectedWidgets.filter(
-      (widget: any) => !categoryWidgetIds.includes(widget.metricId),
-    );
-  };
-
-  toggleWidgetSelection = (widget: any) => {
-    const selectedWidgetIds = this.selectedWidgets.map(
-      (widget: any) => widget.metricId,
-    );
-    if (selectedWidgetIds.includes(widget.metricId)) {
-      this.selectedWidgets = this.selectedWidgets.filter(
-        (w: any) => w.metricId !== widget.metricId,
-      );
-    } else {
-      this.selectedWidgets.push(widget);
-    }
-  };
-
-  findByIds(ids: string[]) {
-    return this.dashboards.filter((d) => ids.includes(d.dashboardId));
-  }
-
   initDashboard(dashboard?: Dashboard) {
     this.dashboardInstance = dashboard
       ? new Dashboard().fromJson(dashboard)
@@ -213,14 +150,6 @@ export default class DashboardStore {
   updateKey(key: string, value: any) {
     // @ts-ignore
     this[key] = value;
-  }
-
-  resetCurrentWidget() {
-    this.currentWidget = new Widget();
-  }
-
-  editWidget(widget: any) {
-    this.currentWidget.update(widget);
   }
 
   listFetched = false;
@@ -405,26 +334,6 @@ export default class DashboardStore {
     return this.dashboards.find((d) => d.dashboardId == dashboardId) || null;
   }
 
-  getDashboardByIndex(index: number) {
-    return this.dashboards[index];
-  }
-
-  getDashboardCount() {
-    return this.dashboards.length;
-  }
-
-  updateDashboard(dashboard: Dashboard) {
-    const index = this.dashboards.findIndex(
-      (d) => d.dashboardId === dashboard.dashboardId,
-    );
-    if (index >= 0) {
-      this.dashboards[index] = dashboard;
-      if (this.selectedDashboard?.dashboardId === dashboard.dashboardId) {
-        this.selectDashboardById(dashboard.dashboardId);
-      }
-    }
-  }
-
   selectDashboardById = (dashboardId: any) => {
     this.selectedDashboard =
       this.dashboards.find((d) => d.dashboardId == dashboardId) ||
@@ -438,41 +347,6 @@ export default class DashboardStore {
   setSiteId = (siteId: any) => {
     this.siteId = siteId;
   };
-
-  fetchTemplates(hardRefresh: boolean): Promise<any> {
-    this.loadingTemplates = true;
-    return new Promise((resolve, reject) => {
-      if (this.widgetCategories.length > 0 && !hardRefresh) {
-        resolve(this.widgetCategories);
-      } else {
-        metricService
-          .getTemplates()
-          .then((response) => {
-            const categories: any[] = [];
-            response.forEach((category: any) => {
-              const widgets: any[] = [];
-              category.widgets.forEach((widget: any) => {
-                const w = new Widget().fromJson(widget);
-                widgets.push(w);
-              });
-              const c: any = {};
-              c.widgets = widgets;
-              c.name = category.category;
-              c.description = category.description;
-              categories.push(c);
-            });
-            this.widgetCategories = categories;
-            resolve(this.widgetCategories);
-          })
-          .catch((error) => {
-            reject(error);
-          })
-          .finally(() => {
-            this.loadingTemplates = false;
-          });
-      }
-    });
-  }
 
   async deleteDashboardWidget(dashboardId: string, widgetId: string) {
     this.isDeleting = true;
@@ -539,13 +413,6 @@ export default class DashboardStore {
       return (this.comparisonPeriods[metricId] = null);
     }
     this.comparisonPeriods[metricId] = period;
-  }
-
-  cloneCompFilter() {
-    const filterData = this.drillDownFilter.toData();
-    this.comparisonFilter = new Filter().fromData(filterData);
-
-    return this.comparisonFilter;
   }
 
   toggleAlertModal(val: boolean) {

@@ -6,7 +6,6 @@ import React from 'react';
 
 import { apiClient } from 'App/api_client';
 import { copyText } from 'App/lib/use-copy';
-import { services } from 'App/services';
 
 import AiFiltersStore from './aiFiltersStore';
 import AiSummaryStore from './aiSummaryStore';
@@ -129,12 +128,8 @@ export class RootStore {
 
   initClient() {
     client.setSiteIdCheck(projectStore.getSiteId);
-    client.setJwt(userStore.getJwt());
     client.setJwtChecker(userStore.getJwt);
     client.setOnUpdateJwt(userStore.updateJwt);
-    services.forEach((service) => {
-      service.initClient(client);
-    });
   }
 }
 

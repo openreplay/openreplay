@@ -1,4 +1,4 @@
-import APIClient, { apiClient } from 'App/api_client';
+import BaseService from './BaseService';
 
 export interface Member {
   name: string;
@@ -91,17 +91,7 @@ export interface SessionsResponse {
   list: AssistStatsSession[];
 }
 
-export default class AssistStatsService {
-  private client: APIClient;
-
-  constructor(client?: APIClient) {
-    this.client = client || apiClient;
-  }
-
-  initClient(client?: APIClient) {
-    this.client = client || apiClient;
-  }
-
+export default class AssistStatsService extends BaseService {
   fetch(path: string, body: Record<string, any>, method: 'get' | 'post') {
     return this.client[method](`/assist-stats/${path}`, body).then((r) =>
       r.json(),

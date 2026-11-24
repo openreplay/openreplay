@@ -57,23 +57,7 @@ export default class SearchService extends BaseService {
     return j.data;
   }
 
-  async checkLatestSessions(filter: any) {
-    const r = await this.client.post('/PROJECT_ID/sessions/search/ids', filter);
-    const j = await r.json();
-    return j.data;
-  }
-
   async fetchTopValues(
-    params: Record<string, any>,
-    projectId = 'PROJECT_ID',
-  ): Promise<any> {
-    const url = `/${projectId}/properties/autocomplete`;
-    const r = await this.client.get(url, params);
-    const j = await r.json();
-    return j.data;
-  }
-
-  async fetchAutoCompleteValues(
     params: Record<string, any>,
     projectId = 'PROJECT_ID',
   ): Promise<any> {

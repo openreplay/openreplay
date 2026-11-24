@@ -1,1 +1,1 @@
-export { WebStackEventPanel, MobileStackEventPanel } from './StackEventPanel';
+export { MobileStackEventPanel } from './StackEventPanel';

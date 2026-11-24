@@ -33,6 +33,8 @@ import {
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import useDebouncedValue from 'App/hooks/useDebouncedValue';
+
 import { StartPath } from 'Shared/StartPath/StartPath';
 
 import {
@@ -130,7 +132,6 @@ function TestsTab() {
   const invalidateAll = () => invalidateTestData(queryClient, projectId);
 
   const [query, setQuery] = useState('');
-  const [search, setSearch] = useState(''); // debounced query → the actual filter
   const [statusTab, setStatusTab] = useState<StatusTab>('all');
   const [envFilter, setEnvFilter] = useState('all');
   const [tagFilter, setTagFilter] = useState('all');
@@ -150,12 +151,7 @@ function TestsTab() {
   // Nothing persists until "Combine".
   const [mergeTest, setMergeTest] = useState<TestCase | null>(null);
 
-  // debounce the search box (the setState runs in a timer callback, not synchronously
-  // in the effect body)
-  useEffect(() => {
-    const id = window.setTimeout(() => setSearch(query.trim()), 300);
-    return () => window.clearTimeout(id);
-  }, [query]);
+  const search = useDebouncedValue(query.trim(), 300);
 
   // shared filter set (no pagination/sort) — reused for the list and the aggregates
   const filters = useMemo(
