@@ -82,17 +82,38 @@ describe('OtelLogsStore', () => {
 
     mockSearch.mockRejectedValueOnce(new Error('boom'));
     await expect(store.collectExport()).rejects.toThrow('boom');
-    expect(mockSearch).toHaveBeenCalledTimes(2);
+    expect(store.pageError).toBe('boom');
 
     mockSearch.mockRejectedValueOnce(new Error('again'));
     await expect(store.collectExport()).rejects.toThrow('again');
-    expect(mockSearch).toHaveBeenCalledTimes(3);
 
     mockSearch.mockResolvedValueOnce({ logs: [log('b')], nextCursor: null });
     const lines = await store.collectExport();
     expect(lines.map((l) => l.body)).toEqual(['a', 'b']);
-    expect(store.error).toBeNull();
+    // each try asked for the page that failed
+    expect(
+      mockSearch.mock.calls
+        .slice(1)
+        .map((c) => (c[0] as { cursor?: string }).cursor),
+    ).toEqual(['c1', 'c1', 'c1']);
+    expect(store.pageError).toBeNull();
     expect(store.exporting).toBe(false);
+  });
+
+  it('a failed refresh refuses to page or export what it held', async () => {
+    const store = new OtelLogsStore();
+    mockSearch.mockResolvedValueOnce({ logs: [log('a')], nextCursor: 'c1' });
+    await store.fetch();
+
+    mockSearch.mockRejectedValueOnce(new Error('refresh failed'));
+    await store.fetch(true);
+    expect(store.logs.map((l) => l.body)).toEqual(['a']);
+    expect(store.error).toBe('refresh failed');
+
+    // the held cursor is from the window before: nothing asks with it
+    await store.loadMore();
+    await expect(store.collectExport()).rejects.toThrow('refresh failed');
+    expect(mockSearch).toHaveBeenCalledTimes(2);
   });
 
   it('drops results of a superseded fetch', async () => {

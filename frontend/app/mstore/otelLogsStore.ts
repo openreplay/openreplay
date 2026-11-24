@@ -79,7 +79,10 @@ export default class OtelLogsStore {
   exporting = false;
   histogramLoading = false;
   facetsLoading = false;
+  /** the search itself failed: what is held, if anything, is from before */
   error: string | null = null;
+  /** a page past the first failed; asking again is safe */
+  pageError: string | null = null;
 
   ingestKeys: IngestKey[] = [];
   ingestKeysLoading = false;
@@ -178,6 +181,7 @@ export default class OtelLogsStore {
 
     this.appliedFilter = filter;
     this.error = null;
+    this.pageError = null;
     this.loading = !quiet;
     this.refreshing = quiet;
     // a page in flight belongs to the aborted run and never clears this
@@ -240,13 +244,16 @@ export default class OtelLogsStore {
     ]);
   };
 
-  /** Next page of the applied filter; no-op while loading or at the end. */
+  /** Next page of the applied filter; no-op while loading or at the end.
+      After a failed search the held cursor is from the filter before, so
+      nothing pages until a search succeeds. */
   loadMore = async (limit: number = this.pageSize) => {
     const { appliedFilter, nextCursor, controller } = this;
     if (
       !appliedFilter ||
       !nextCursor ||
       !controller ||
+      this.error ||
       this.loading ||
       this.refreshing ||
       this.loadingMore
@@ -271,7 +278,7 @@ export default class OtelLogsStore {
     } catch (e: any) {
       if (isAbort(e) || this.controller !== controller) return;
       runInAction(() => {
-        this.error = e?.message ?? 'Failed to load logs';
+        this.pageError = e?.message ?? 'Failed to load logs';
       });
     } finally {
       if (this.controller === controller) {
@@ -281,16 +288,16 @@ export default class OtelLogsStore {
   };
 
   /** Every line up to the export limit; refresh ticks wait meanwhile so the
-      pages are not swapped out under it. */
+      pages are not swapped out under it. A failed search refuses: what is
+      held is from the window before. */
   collectExport = async (): Promise<OtelLog[]> => {
     this.exporting = true;
-    // an earlier failed page would stop ensure() before it asks again; a
-    // failed first load has no page to retry and keeps its error on screen
-    if (this.logs.length) this.error = null;
+    // an earlier failed page would stop ensure() before it asks again
+    this.pageError = null;
     try {
       await this.ensure(EXPORT_LIMIT);
-      // a page that failed would leave the file short
-      if (this.error) throw new Error(this.error);
+      const failed = this.error ?? this.pageError;
+      if (failed) throw new Error(failed);
       return this.logs;
     } finally {
       runInAction(() => (this.exporting = false));
@@ -299,7 +306,7 @@ export default class OtelLogsStore {
 
   /** the page past the loaded lines failed: asks for it again */
   retryPage = () => {
-    this.error = null;
+    this.pageError = null;
     void this.ensure(this.page * this.pageSize);
   };
 
@@ -311,7 +318,8 @@ export default class OtelLogsStore {
       this.controller === controller &&
       this.logs.length < want &&
       this.nextCursor &&
-      !this.error
+      !this.error &&
+      !this.pageError
     ) {
       if (this.loading || this.refreshing || this.loadingMore) {
         await new Promise((r) => setTimeout(r, 50));
@@ -353,6 +361,7 @@ export default class OtelLogsStore {
     this.histogramLoading = false;
     this.facetsLoading = false;
     this.error = null;
+    this.pageError = null;
     this.ingestKeys = [];
     this.rules = [];
     this.window = { preset: DEFAULT_LOG_PRESET };
