@@ -4,6 +4,7 @@ import {
   drillCards,
   keepsValue,
   levelOfText,
+  lineHeadFacts,
   logFilter,
   rulesToFilter,
   sameRules,
@@ -179,6 +180,98 @@ test('drillCards: service and level first, internal keys out, by presence', () =
     'level',
     'attr.http.route',
   ]);
+});
+
+describe('lineHeadFacts', () => {
+  const t = ((k: string) => k) as any;
+  const line = (
+    logAttributes: Record<string, string>,
+    resourceAttributes: Record<string, string> = {},
+  ) =>
+    ({
+      id: '1',
+      timestamp: '0',
+      severityText: 'INFO',
+      severityNumber: 9,
+      serviceName: 'api',
+      body: '',
+      traceId: '',
+      spanId: '',
+      logAttributes,
+      resourceAttributes,
+      scopeName: '',
+      scopeAttributes: {},
+    }) as any;
+  const cells = (l: any) =>
+    lineHeadFacts(t, l)
+      .flat()
+      .map((f) => (f.empty ? '-' : `${f.value}${f.tone ? `:${f.tone}` : ''}`));
+
+  test('semconv on a kubernetes line', () => {
+    expect(
+      cells(
+        line(
+          {
+            'http.request.method': 'GET',
+            'http.route': '/users/:id',
+            'http.response.status_code': '503',
+            duration_ms: '1500',
+          },
+          {
+            'k8s.pod.name': 'api-1',
+            'deployment.environment.name': 'prod',
+            'k8s.namespace.name': 'shop',
+          },
+        ),
+      ),
+    ).toEqual([
+      'api-1',
+      'prod',
+      'shop',
+      'GET /users/:id',
+      '503:danger',
+      '1.5 s:warning',
+    ]);
+  });
+
+  test('pre-1.21 semconv', () => {
+    expect(
+      cells(
+        line({
+          'http.method': 'POST',
+          'http.target': '/cart?x=1',
+          'http.status_code': '404',
+        }),
+      ),
+    ).toEqual(['-', '-', '-', 'POST /cart?x=1', '404:warning', '-']);
+  });
+
+  test('pino-http and express-winston bodies', () => {
+    expect(
+      cells(
+        line({
+          'req.method': 'GET',
+          'req.url': '/a',
+          'res.statusCode': '200',
+          responseTime: '12',
+        }),
+      ).slice(3),
+    ).toEqual(['GET /a', '200', '12 ms']);
+    expect(
+      cells(
+        line({
+          'meta.req.method': 'PUT',
+          'meta.req.url': '/b',
+          'meta.res.statusCode': '500',
+          'meta.responseTime': '15000',
+        }),
+      ).slice(3),
+    ).toEqual(['PUT /b', '500:danger', '15 s:warning']);
+  });
+
+  test('a line with nothing keeps every cell', () => {
+    expect(cells(line({}))).toEqual(['-', '-', '-', '-', '-', '-']);
+  });
 });
 
 describe('OtelLogsStore page model', () => {

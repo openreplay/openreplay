@@ -455,14 +455,43 @@ const byLead = (lead: readonly string[]) => (a: LineField, b: LineField) => {
   return a.name.localeCompare(b.name);
 };
 
+/* OTel semconv (current, then pre-1.21), then pino-http and express-winston
+   bodies, which the collector flattens into log attributes */
+const METHOD_KEYS = [
+  'http.request.method',
+  'http.method',
+  'req.method',
+  'meta.req.method',
+];
+const ROUTE_KEYS = [
+  'http.route',
+  'url.path',
+  'http.target',
+  'req.url',
+  'meta.req.url',
+];
+const STATUS_KEYS = [
+  'http.response.status_code',
+  'http.status_code',
+  'res.statusCode',
+  'meta.res.statusCode',
+];
+const DURATION_MS_KEYS = ['duration_ms', 'responseTime', 'meta.responseTime'];
+
+const firstOf = (bag: Record<string, string>, keys: readonly string[]) => {
+  for (const k of keys) if (bag[k]) return bag[k];
+  return undefined;
+};
+
 function toneOf(name: string, value: string): FieldTone | undefined {
   if (name === 'exception.type') return 'danger';
-  if (name === 'http.response.status_code') {
+  if (STATUS_KEYS.includes(name)) {
     const n = Number(value);
     if (n >= 500) return 'danger';
     if (n >= 400) return 'warning';
   }
-  if (name === 'duration_ms' && Number(value) >= 1000) return 'warning';
+  if (DURATION_MS_KEYS.includes(name) && Number(value) >= 1000)
+    return 'warning';
   return undefined;
 }
 
@@ -526,10 +555,10 @@ export function lineHeadFacts(t: TFunction, log: OtelLog): HeadFact[][] {
     extra: Partial<HeadFact> = {},
   ): HeadFact =>
     value ? { label, value, ...extra } : { label, value: '', empty: true };
-  const method = a['http.request.method'];
-  const route = a['http.route'];
-  const status = a['http.response.status_code'];
-  const dur = a.duration_ms;
+  const method = firstOf(a, METHOD_KEYS);
+  const route = firstOf(a, ROUTE_KEYS);
+  const status = firstOf(a, STATUS_KEYS);
+  const dur = firstOf(a, DURATION_MS_KEYS);
   const ms = dur && !Number.isNaN(Number(dur)) ? Number(dur) : null;
   return [
     [
