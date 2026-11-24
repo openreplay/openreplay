@@ -55,10 +55,7 @@ import { useHistory, useLeaveGuard, useLocation } from 'App/routing';
 import { mobileScreen } from 'App/utils/isMobile';
 import AlertFormModal from 'Components/Alerts/AlertFormModal/AlertFormModal';
 import { CARD_LIST, type CardType } from 'Components/Dashboard/cardPresets';
-import BreakdownFilter from 'Components/Dashboard/components/BreakdownFilter/BreakdownFilter';
-import WidgetFormNew, {
-  supportsBreakdown,
-} from 'Components/Dashboard/components/WidgetForm/WidgetFormNew';
+import WidgetFormNew from 'Components/Dashboard/components/WidgetForm/WidgetFormNew';
 import { renderClickmapThumbnail } from 'Components/Dashboard/components/WidgetForm/renderMap';
 import { useModal } from 'Components/ModalContext';
 
@@ -544,12 +541,6 @@ function WidgetView({
             >
               <WidgetFormNew layout={LEGACY_LAYOUT[layout]} />
             </PagePanel>
-            {supportsBreakdown(widget) ? (
-              <BreakdownFilter
-                metric={widget}
-                observeChanges={() => widget.updateKey('hasChanged', true)}
-              />
-            ) : null}
           </div>
           <PagePanel
             head={<span className="m-pa__head-title">{t('Preview')}</span>}

@@ -81,6 +81,8 @@ export interface FilterBarProps {
   orderNote?: (order: EventsOrder) => ReactNode;
   /** Assist live search: only `is`/`contains`. */
   live?: boolean;
+  /** Empty, a button as wide as its words instead of the bar. */
+  emptyAs?: 'field' | 'button';
 }
 
 function FilterBar({
@@ -92,6 +94,7 @@ function FilterBar({
   orderLocked = false,
   orderNote,
   live = false,
+  emptyAs = 'field',
 }: FilterBarProps) {
   const { t } = useTranslation();
   const { events, properties, eventsOrder } = editor;
@@ -344,6 +347,7 @@ function FilterBar({
               <AddControl
                 label={lead}
                 word={inPanel ? lead : t('Filter')}
+                plus={emptyAs === 'button'}
                 onOpen={(typed) => openPanel('all', typed)}
                 expanded={open === 'all'}
                 badge={!inPanel}

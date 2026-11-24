@@ -26,6 +26,7 @@ import { issueCategories } from 'App/constants/filterOptions';
 import { useStore } from 'App/mstore';
 import type { Filter } from 'App/mstore/types/filterConstants';
 import FilterItem from 'App/mstore/types/filterItem';
+import BreakdownFilter from 'Components/Dashboard/components/BreakdownFilter/BreakdownFilter';
 import FilterSeries from 'Components/Dashboard/components/FilterSeries/FilterSeries';
 
 import {
@@ -123,121 +124,123 @@ const FilterSection = observer(
     const isSingleSeries = checkIsSingleSeries(metric);
     const { t } = useTranslation();
     const allOpen = isSingleSeries || layout.startsWith('flex-row');
-    const defaultClosed = React.useRef(!allOpen && metric.exists());
-    const [seriesCollapseState, setSeriesCollapseState] = React.useState<
-      Record<number, boolean>
-    >({});
-
-    React.useEffect(() => {
-      const defaultSeriesCollapseState: Record<number, boolean> = {};
-      metric.series.forEach((s: any) => {
-        defaultSeriesCollapseState[s.seriesId] = isTable
-          ? false
-          : allOpen
-            ? false
-            : defaultClosed.current;
+    // keyed by the series itself: unsaved series have no seriesId yet
+    const [collapsed, setCollapsed] = React.useState<ReadonlySet<object>>(
+      () =>
+        new Set(
+          !allOpen && metric.exists() && metric.series.length > 1
+            ? metric.series
+            : [],
+        ),
+    );
+    const toggle = (series: object) =>
+      setCollapsed((prev) => {
+        const next = new Set(prev);
+        if (!next.delete(series)) next.add(series);
+        return next;
       });
-      setSeriesCollapseState(defaultSeriesCollapseState);
-    }, [metric.series]);
+    const collapseAll = () => setCollapsed(new Set(metric.series));
+    const expandAll = () => setCollapsed(new Set());
 
-    const collapseAll = () => {
-      setSeriesCollapseState((seriesCollapseState) => {
-        const newState = { ...seriesCollapseState };
-        Object.keys(newState).forEach((key) => {
-          newState[key] = true;
-        });
-        return newState;
-      });
-    };
-    const expandAll = () => {
-      setSeriesCollapseState((seriesCollapseState) => {
-        const newState = { ...seriesCollapseState };
-        Object.keys(newState).forEach((key) => {
-          newState[key] = false;
-        });
-        return newState;
-      });
-    };
-
-    const allCollapsed = Object.values(seriesCollapseState).every((v) => v);
-    const lead = isPathAnalysis
-      ? t('Filter the sessions')
-      : isFunnel
-        ? t('Add the first step')
+    const allCollapsed = metric.series.every((s: object) => collapsed.has(s));
+    const many = !isSingleSeries && metric.series.length > 1;
+    const lead = isFunnel
+      ? t('Add the first step')
+      : isHeatMap || isWebVitals
+        ? t('Add the page')
+        : t('Add an event or filter');
+    const heading = isFunnel
+      ? t('Steps')
+      : isHeatMap || isWebVitals
+        ? t('Page')
         : isTable
-          ? t('Filter the sessions')
-          : t('Add an event to count');
+          ? t('Filters')
+          : t('Events');
+    const breakdown = supportsBreakdown(metric);
     return (
-      <>
-        <div className="m-cardp__form">
-          {metric.series
-            .slice(0, isSingleSeries ? 1 : metric.series.length)
-            .map((series: any, index: number) => (
-              <FilterSeries
-                key={series.seriesId ?? series.name}
-                removeEvents={isPathAnalysis}
-                excludeCategory={excludeCategory}
-                observeChanges={() => metric.updateKey('hasChanged', true)}
-                hideHeader={isSingleSeries}
-                excludeEventOrder={isFunnel || isWebVitals || isHeatMap}
-                seriesIndex={index}
-                series={series}
-                seriesNames={metric.series.map((s: any) => s.name)}
-                onRemoveSeries={() => metric.removeSeries(index)}
-                canDelete={metric.series.length > 1}
-                collapseState={seriesCollapseState[series.seriesId]}
-                onToggleCollapse={() =>
-                  setSeriesCollapseState((state) => ({
-                    ...state,
-                    [series.seriesId]: !state[series.seriesId],
-                  }))
-                }
-                lead={lead}
-              />
-            ))}
-          {isSingleSeries ? null : (
-            <div className="m-cardp__form-foot">
-              <Tooltip
-                title={
-                  canAddSeries
-                    ? t('Compare another set of events on the same chart')
-                    : t('Maximum of 3 series reached.')
-                }
-              >
-                <span>
-                  <Button
-                    variant="secondary"
-                    className="m-cardp__addseries"
-                    disabled={!canAddSeries}
-                    onClick={() => metric.addSeries()}
-                  >
-                    <Plus size={13} />
-                    {t('Add series')}
-                  </Button>
-                </span>
-              </Tooltip>
-              {metric.series.length > 1 ? (
-                <IconButton
-                  icon={
-                    allCollapsed ? (
-                      <ChevronsUpDown size={14} />
-                    ) : (
-                      <ChevronsDownUp size={14} />
-                    )
-                  }
-                  label={
-                    allCollapsed
-                      ? t('Expand all series')
-                      : t('Collapse all series')
-                  }
-                  variant="ghost"
-                  onClick={allCollapsed ? expandAll : collapseAll}
+      <div className="m-defs">
+        <div className={`m-defs__groups${breakdown ? ' has-two' : ''}`}>
+          <section
+            className="m-defs__group"
+            aria-label={isSingleSeries ? heading : t('Series')}
+          >
+            {isSingleSeries ? (
+              <h4 className="m-defs__head">{heading}</h4>
+            ) : null}
+            {metric.series
+              .slice(0, isSingleSeries ? 1 : metric.series.length)
+              .map((series: any, index: number) => (
+                <FilterSeries
+                  key={series.seriesId ?? series.name}
+                  removeEvents={isPathAnalysis}
+                  excludeCategory={excludeCategory}
+                  observeChanges={() => metric.updateKey('hasChanged', true)}
+                  hideHeader={isSingleSeries}
+                  excludeEventOrder={isFunnel || isWebVitals || isHeatMap}
+                  seriesIndex={index}
+                  series={series}
+                  seriesNames={metric.series.map((s: any) => s.name)}
+                  onRemoveSeries={() => metric.removeSeries(index)}
+                  canDelete={metric.series.length > 1}
+                  many={many}
+                  collapseState={collapsed.has(series)}
+                  onToggleCollapse={() => toggle(series)}
+                  lead={lead}
                 />
-              ) : null}
-            </div>
-          )}
+              ))}
+            {isSingleSeries ? null : (
+              <div className="m-defs__foot">
+                <Tooltip
+                  title={
+                    canAddSeries
+                      ? t('Compare another set of events on the same chart')
+                      : t('Maximum of 3 series reached.')
+                  }
+                >
+                  <span>
+                    <Button
+                      variant="subtle"
+                      className="m-defs__add"
+                      disabled={!canAddSeries}
+                      onClick={() => metric.addSeries()}
+                    >
+                      <Plus size={13} />
+                      {t('Add series')}
+                    </Button>
+                  </span>
+                </Tooltip>
+                {many ? (
+                  <IconButton
+                    icon={
+                      allCollapsed ? (
+                        <ChevronsUpDown size={14} />
+                      ) : (
+                        <ChevronsDownUp size={14} />
+                      )
+                    }
+                    label={
+                      allCollapsed
+                        ? t('Expand all series')
+                        : t('Collapse all series')
+                    }
+                    variant="ghost"
+                    onClick={allCollapsed ? expandAll : collapseAll}
+                  />
+                ) : null}
+              </div>
+            )}
+          </section>
+          {breakdown ? (
+            <section className="m-defs__group" aria-label={t('Breakdown')}>
+              <h4 className="m-defs__head">{t('Breakdown')}</h4>
+              <BreakdownFilter
+                metric={metric}
+                observeChanges={() => metric.updateKey('hasChanged', true)}
+              />
+            </section>
+          ) : null}
         </div>
-      </>
+      </div>
     );
   },
 );
@@ -348,10 +351,10 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
 
   return (
     <ValueHintsContext.Provider value={hints}>
-      <div className="m-jrny">
-        <div className="m-jrny__groups">
-          <section className="m-jrny__group" aria-label={t('Journey')}>
-            <h4 className="m-jrny__head">{t('Journey')}</h4>
+      <div className="m-jrny m-defs">
+        <div className="m-defs__groups has-three">
+          <section className="m-defs__group" aria-label={t('Journey')}>
+            <h4 className="m-defs__head">{t('Journey')}</h4>
             <Segmented<'start' | 'end'>
               className="m-jrny__fit"
               ariaLabel={t('Start or end point')}
@@ -389,8 +392,8 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
             ) : null}
           </section>
 
-          <section className="m-jrny__group" aria-label={t('Steps')}>
-            <h4 className="m-jrny__head">{t('Steps')}</h4>
+          <section className="m-defs__group" aria-label={t('Steps')}>
+            <h4 className="m-defs__head">{t('Steps')}</h4>
             <div className="m-jrny__grid">
               <span className="m-jrny__word">{t('Showing')}</span>
               <div className="m-jrny__ctl">
@@ -421,8 +424,8 @@ const PathAnalysisFilter = observer(({ metric, writeOption }: any) => {
           </section>
 
           {filters && (
-            <section className="m-jrny__group" aria-label={t('Filters')}>
-              <h4 className="m-jrny__head">{t('Filters')}</h4>
+            <section className="m-defs__group" aria-label={t('Filters')}>
+              <h4 className="m-defs__head">{t('Filters')}</h4>
               <RuleChips
                 editor={filters}
                 entries={sessionEntries}

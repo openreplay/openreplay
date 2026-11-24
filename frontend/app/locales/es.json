@@ -2992,5 +2992,7 @@
   "starts with": "empieza por",
   "ends with": "termina en",
   "More details": "Más detalles",
-  "Location from the IP address.": "Ubicación a partir de la dirección IP."
+  "Location from the IP address.": "Ubicación a partir de la dirección IP.",
+  "Add an event or filter": "Añadir un evento o filtro",
+  "Add the page": "Añadir la página"
 }

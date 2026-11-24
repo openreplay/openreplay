@@ -27,6 +27,8 @@ interface Props {
   onToggleCollapse: () => void;
   seriesNames?: string[];
   lead?: string;
+  /** more than one series: each can fold */
+  many?: boolean;
 }
 
 /** One series of a card: its name, and the events and filters it counts. */
@@ -44,6 +46,7 @@ function FilterSeries({
   onToggleCollapse,
   seriesNames = [],
   lead,
+  many = false,
 }: Props) {
   const { t } = useTranslation();
   const toast = useToast();
@@ -60,7 +63,7 @@ function FilterSeries({
     );
   }, [all, excludeCategory, removeEvents, eventsFull]);
   const editor = buildFilterEditor(seriesTarget(series.filter, observeChanges));
-  const open = hideHeader || !collapseState;
+  const open = hideHeader || !many || !collapseState;
   const [name, setName] = React.useState(series.name);
   React.useEffect(() => setName(series.name), [series.name]);
 
@@ -94,24 +97,27 @@ function FilterSeries({
       aria-label={hideHeader ? t('Definition') : series.name}
     >
       {hideHeader ? null : (
-        <header className="m-cardp__series-head">
-          <button
-            type="button"
-            className="m-cardp__series-toggle"
-            onClick={onToggleCollapse}
-            aria-expanded={open}
-            aria-label={open ? t('Collapse series') : t('Expand series')}
-          >
-            {open ? (
-              <ChevronDown size={13} aria-hidden="true" />
-            ) : (
-              <ChevronRight size={13} aria-hidden="true" />
-            )}
-          </button>
+        <header className="m-defs__series-head">
+          {many ? (
+            <button
+              type="button"
+              className="m-defs__fold"
+              onClick={onToggleCollapse}
+              aria-expanded={open}
+              aria-label={open ? t('Collapse series') : t('Expand series')}
+            >
+              {open ? (
+                <ChevronDown size={12} aria-hidden="true" />
+              ) : (
+                <ChevronRight size={12} aria-hidden="true" />
+              )}
+            </button>
+          ) : null}
           <input
-            className="m-cardp__series-name"
+            className="m-defs__series-name"
             value={name}
             maxLength={22}
+            size={Math.max(4, name.length)}
             aria-label={t('Series {{n}} name', { n: seriesIndex + 1 })}
             onChange={(e) => setName(e.target.value)}
             onBlur={commitName}
@@ -120,14 +126,13 @@ function FilterSeries({
               if (e.key === 'Escape') setName(series.name);
             }}
           />
-          {count ? (
-            <span className="m-cardp__series-count">{count}</span>
-          ) : null}
+          {count ? <span className="m-defs__series-count">{count}</span> : null}
           {canDelete ? (
             <IconButton
-              icon={<X size={13} />}
+              icon={<X size={12} />}
               label={t('Remove {{name}}', { name: series.name })}
               variant="ghost"
+              size="xs"
               onClick={onRemoveSeries}
             />
           ) : null}
@@ -137,6 +142,7 @@ function FilterSeries({
         <div className="m-cardp__rules">
           <FilterBar
             variant="panel"
+            emptyAs="button"
             editor={editor}
             entries={entries}
             lead={lead}

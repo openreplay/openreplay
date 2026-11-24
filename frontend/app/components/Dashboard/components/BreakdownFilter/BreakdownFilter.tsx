@@ -2,7 +2,6 @@ import { useStore } from '@/mstore';
 import type { Filter } from '@/mstore/types/filterConstants';
 import { Button } from '@/ui/actions/button';
 import { CheckRow } from '@/ui/inputs/CheckRow';
-import { PagePanel } from '@/ui/layout/PageCard';
 import { PopoverSearch } from '@/ui/overlays/PopoverSearch';
 import { PopoverPanel } from '@/ui/overlays/popover';
 import { Tooltip } from '@/ui/overlays/tooltip';
@@ -24,7 +23,7 @@ interface Props {
   observeChanges?: () => void;
 }
 
-/** What a card's result is split by: a door while empty, a panel once set. */
+/** What a card's result is split by: the chosen dimensions, then Add. */
 function BreakdownFilter({ metric, observeChanges = () => {} }: Props) {
   const { t } = useTranslation();
   const { filterStore } = useStore();
@@ -119,8 +118,8 @@ function BreakdownFilter({ metric, observeChanges = () => {} }: Props) {
         >
           <span>
             <Button
-              variant="secondary"
-              className="m-cardp__addseries"
+              variant="subtle"
+              className="m-defs__add"
               disabled={full}
               aria-label={t('Add breakdown')}
             >
@@ -133,14 +132,6 @@ function BreakdownFilter({ metric, observeChanges = () => {} }: Props) {
     </PopoverPanel>
   );
 
-  if (names.length === 0) {
-    return (
-      <div className="m-cardp__bdoor">
-        <span className="m-brk m-brk--door">{door}</span>
-      </div>
-    );
-  }
-
   const drop = () => {
     if (drag && drag.from !== drag.over) {
       metric.moveBreakdown(drag.from, drag.over);
@@ -150,66 +141,62 @@ function BreakdownFilter({ metric, observeChanges = () => {} }: Props) {
   };
 
   return (
-    <div className="m-brk">
-      <PagePanel
-        head={<span className="m-pa__head-title">{t('Breakdown')}</span>}
-      >
-        <div className="m-brk__body">
-          <ul className="m-brk__dims">
-            {dims.map((d, i) => (
-              <li
-                key={d.name}
-                className={`m-brk__dim${drag?.over === i && drag.from !== i ? ' is-over' : ''}`}
-                draggable={dims.length > 1}
-                onDragStart={(e) => {
-                  e.dataTransfer.effectAllowed = 'move';
-                  setDrag({ from: i, over: i });
+    <div className="m-brk" data-slot="breakdown">
+      {dims.length > 0 ? (
+        <ul className="m-brk__dims">
+          {dims.map((d, i) => (
+            <li
+              key={d.name}
+              className={`m-brk__dim${drag?.over === i && drag.from !== i ? ' is-over' : ''}`}
+              draggable={dims.length > 1}
+              onDragStart={(e) => {
+                e.dataTransfer.effectAllowed = 'move';
+                setDrag({ from: i, over: i });
+              }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDrag((s) => (s ? { ...s, over: i } : s));
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                drop();
+              }}
+              onDragEnd={() => setDrag(null)}
+            >
+              {dims.length > 1 ? (
+                <GripVertical
+                  size={12}
+                  className="m-brk__grip"
+                  aria-hidden="true"
+                />
+              ) : null}
+              {d.category ? (
+                <>
+                  <span className="m-brk__cat">{d.category}</span>
+                  <span className="m-brk__dot" aria-hidden="true">
+                    ·
+                  </span>
+                </>
+              ) : null}
+              <span className="m-brk__name">{d.displayName || d.name}</span>
+              <button
+                type="button"
+                className="m-brk__remove"
+                onClick={() => {
+                  metric.removeBreakdown(i);
+                  observeChanges();
                 }}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setDrag((s) => (s ? { ...s, over: i } : s));
-                }}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  drop();
-                }}
-                onDragEnd={() => setDrag(null)}
+                aria-label={t('Remove {{name}}', {
+                  name: d.displayName || d.name,
+                })}
               >
-                {dims.length > 1 ? (
-                  <GripVertical
-                    size={12}
-                    className="m-brk__grip"
-                    aria-hidden="true"
-                  />
-                ) : null}
-                {d.category ? (
-                  <>
-                    <span className="m-brk__cat">{d.category}</span>
-                    <span className="m-brk__dot" aria-hidden="true">
-                      ·
-                    </span>
-                  </>
-                ) : null}
-                <span className="m-brk__name">{d.displayName || d.name}</span>
-                <button
-                  type="button"
-                  className="m-brk__remove"
-                  onClick={() => {
-                    metric.removeBreakdown(i);
-                    observeChanges();
-                  }}
-                  aria-label={t('Remove {{name}}', {
-                    name: d.displayName || d.name,
-                  })}
-                >
-                  <CircleMinus size={13} aria-hidden="true" />
-                </button>
-              </li>
-            ))}
-          </ul>
-          <div className="m-cardp__form-foot">{door}</div>
-        </div>
-      </PagePanel>
+                <CircleMinus size={13} aria-hidden="true" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {door}
     </div>
   );
 }

@@ -3051,5 +3051,7 @@
   "starts with": "начинается с",
   "ends with": "заканчивается на",
   "More details": "Подробнее",
-  "Location from the IP address.": "Местоположение по IP-адресу."
+  "Location from the IP address.": "Местоположение по IP-адресу.",
+  "Add an event or filter": "Добавьте событие или фильтр",
+  "Add the page": "Добавьте страницу"
 }
