@@ -32,6 +32,8 @@ kafka: {}
 # Kept separate from kafka chart image so broker overrides (e.g. Redpanda)
 # don't break the migration job which needs kafka-topics.sh.
 kafkaMigration:
+  # Disable when an external system manages Kafka topics and retention.
+  enabled: true
   image:
     registry: ghcr.io/openreplay
     repository: kafka

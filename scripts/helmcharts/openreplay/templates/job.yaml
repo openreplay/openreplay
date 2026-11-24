@@ -18,6 +18,7 @@ Previous version preference:
 {{- if $existingConfigMap }}
   {{- $previousVersion = index $existingConfigMap.data "version" | default .Values.fromVersion }}
 {{- end }}
+{{- $isMigration := or .Release.IsUpgrade (not (empty $previousVersion)) .Values.forceMigration }}
 {{- $versionChange := (or (not .Release.IsUpgrade) .Values.deployment.argo (and .Release.IsUpgrade (not (eq $previousVersion .Chart.AppVersion)))) }}
 {{- if or .Values.forceMigration (and (not .Values.skipMigration) $versionChange) }}
 ---
@@ -427,7 +428,7 @@ spec:
         command: 
         - /bin/bash
         - /opt/migrations/dbops.sh
-        - "{{ .Release.IsUpgrade }}"
+        - "{{ $isMigration }}"
         - "postgresql"
         volumeMounts:
         - name: shared
@@ -475,7 +476,7 @@ spec:
         command: 
         - /bin/bash
         - /opt/migrations/dbops.sh
-        - "{{ .Release.IsUpgrade }}"
+        - "{{ $isMigration }}"
         - minio
         volumeMounts:
         - name: shared
@@ -580,7 +581,7 @@ spec:
           mountPath: /opt/openreplay
       {{- end }}
       {{- end}}
-      {{- if or .Values.global.enterpriseEditionLicense .Values.forceKafkaMigration }}
+      {{- if and .Values.kafkaMigration.enabled (or .Values.global.enterpriseEditionLicense .Values.forceKafkaMigration) }}
       - name: kafka
         image: "{{.Values.kafkaMigration.image.registry}}/{{.Values.kafkaMigration.image.repository}}:{{.Values.kafkaMigration.image.tag}}"
         {{- with $.Values.migrationJob.resources }}
@@ -621,7 +622,7 @@ spec:
         command: 
         - /bin/bash
         - /opt/migrations/dbops.sh
-        - "{{ .Release.IsUpgrade }}"
+        - "{{ $isMigration }}"
         - kafka
         volumeMounts:
         - name: shared
@@ -672,7 +673,7 @@ spec:
         command: 
         - /bin/bash
         - /opt/migrations/dbops.sh
-        - "{{ .Release.IsUpgrade }}"
+        - "{{ $isMigration }}"
         - clickhouse
         volumeMounts:
         - name: shared
