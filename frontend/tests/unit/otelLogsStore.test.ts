@@ -75,6 +75,26 @@ describe('OtelLogsStore', () => {
     now.mockRestore();
   });
 
+  it('an export after a failed page asks for it again', async () => {
+    const store = new OtelLogsStore();
+    mockSearch.mockResolvedValueOnce({ logs: [log('a')], nextCursor: 'c1' });
+    await store.fetch();
+
+    mockSearch.mockRejectedValueOnce(new Error('boom'));
+    await expect(store.collectExport()).rejects.toThrow('boom');
+    expect(mockSearch).toHaveBeenCalledTimes(2);
+
+    mockSearch.mockRejectedValueOnce(new Error('again'));
+    await expect(store.collectExport()).rejects.toThrow('again');
+    expect(mockSearch).toHaveBeenCalledTimes(3);
+
+    mockSearch.mockResolvedValueOnce({ logs: [log('b')], nextCursor: null });
+    const lines = await store.collectExport();
+    expect(lines.map((l) => l.body)).toEqual(['a', 'b']);
+    expect(store.error).toBeNull();
+    expect(store.exporting).toBe(false);
+  });
+
   it('drops results of a superseded fetch', async () => {
     const store = new OtelLogsStore();
     const first = deferred<any>();

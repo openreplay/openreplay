@@ -284,6 +284,9 @@ export default class OtelLogsStore {
       pages are not swapped out under it. */
   collectExport = async (): Promise<OtelLog[]> => {
     this.exporting = true;
+    // an earlier failed page would stop ensure() before it asks again; a
+    // failed first load has no page to retry and keeps its error on screen
+    if (this.logs.length) this.error = null;
     try {
       await this.ensure(EXPORT_LIMIT);
       // a page that failed would leave the file short
