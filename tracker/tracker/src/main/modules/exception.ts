@@ -27,7 +27,22 @@ function getDefaultStack(e: ErrorEvent): Array<StackFrame> {
   ]
 }
 
+// inline scripts report the page URL as their file; script file URLs are kept for sourcemaps
+const isPageUrl = (file?: string): file is string =>
+  !!file && /^https?:/.test(file) && !/\.[cm]?[jt]sx?$/.test(file.split(/[?#]/)[0])
+
+function stringifyStack(app: App, stack: Array<StackFrame>): string {
+  return JSON.stringify(
+    stack.map((frame) =>
+      isPageUrl(frame.fileName)
+        ? { ...frame, fileName: app.sanitizeURL(frame.fileName), source: '' }
+        : frame,
+    ),
+  )
+}
+
 export function getExceptionMessage(
+  app: App,
   error: Error,
   fallbackStack: Array<StackFrame>,
   metadata: Record<string, any> = {},
@@ -36,7 +51,12 @@ export function getExceptionMessage(
   try {
     stack = parse(error)
   } catch (e) {}
-  return JSException(error.name, error.message, JSON.stringify(stack), JSON.stringify(metadata))
+  return JSException(
+    error.name,
+    error.message,
+    stringifyStack(app, stack),
+    JSON.stringify(metadata),
+  )
 }
 
 // events and errors from iframes are instances of the iframe realm's classes
@@ -44,6 +64,7 @@ const isError = (x: unknown, context: typeof globalThis): x is Error =>
   x instanceof Error || (context !== window && 'Error' in context && x instanceof context.Error)
 
 export function getExceptionMessageFromEvent(
+  app: App,
   e: ErrorEvent | PromiseRejectionEvent,
   context: typeof globalThis = window,
   metadata: Record<string, any> = {},
@@ -53,7 +74,7 @@ export function getExceptionMessageFromEvent(
     (context !== window && 'ErrorEvent' in context && e instanceof context.ErrorEvent)
   ) {
     if (isError(e.error, context)) {
-      return getExceptionMessage(e.error, getDefaultStack(e), metadata)
+      return getExceptionMessage(app, e.error, getDefaultStack(e), metadata)
     } else {
       const sep = e.message.indexOf(':')
       let name = sep === -1 ? '' : e.message.slice(0, sep).trim()
@@ -65,13 +86,13 @@ export function getExceptionMessageFromEvent(
       return JSException(
         name,
         message,
-        JSON.stringify(getDefaultStack(e)),
+        stringifyStack(app, getDefaultStack(e)),
         JSON.stringify(metadata),
       )
     }
   } else if ('PromiseRejectionEvent' in context && e instanceof context.PromiseRejectionEvent) {
     if (isError(e.reason, context)) {
-      return getExceptionMessage(e.reason, [], metadata)
+      return getExceptionMessage(app, e.reason, [], metadata)
     } else {
       let message: string
       try {
@@ -94,7 +115,7 @@ export default function (app: App, opts: Partial<Options>): void {
   )
   function patchContext(context: Window & typeof globalThis) {
     function handler(e: ErrorEvent | PromiseRejectionEvent): void {
-      const msg = getExceptionMessageFromEvent(e, context)
+      const msg = getExceptionMessageFromEvent(app, e, context)
       if (msg != null) {
         app.send(msg)
       }

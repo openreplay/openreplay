@@ -74,7 +74,12 @@ const labelElementFor: (element: TextFieldElement) => HTMLLabelElement | undefin
         }
       }
 
-export function getInputLabel(node: TextFieldElement, customAttributes?: string[]): string {
+export function getInputLabel(
+  node: TextFieldElement,
+  customAttributes?: string[],
+  getInnerText: (el: HTMLElement) => string = (el) => el.innerText,
+  masked = false,
+): string {
   const openreplayLabel = getLabelAttribute(node)
   if (openreplayLabel !== null) return normSpaces(openreplayLabel).slice(0, 100)
   const customAttributeLabel = getCustomAttributeLabel(node, customAttributes)
@@ -84,7 +89,10 @@ export function getInputLabel(node: TextFieldElement, customAttributes?: string[
   if (classLabel) return classLabel.slice(0, 100)
   const labelElement = labelElementFor(node)
   const label =
-    node.name || node.placeholder || (labelElement && labelElement.innerText) || node.type
+    node.name ||
+    (masked ? '' : node.placeholder) ||
+    (labelElement && getInnerText(labelElement)) ||
+    node.type
   return normSpaces(label || '').slice(0, 100)
 }
 
@@ -158,7 +166,7 @@ export default function (app: App, opts: Partial<Options>): void {
     if (passwordFields.has(node) || app.sanitizer.isHidden(id)) {
       inputMode = InputMode.Hidden
     } else if (
-      app.sanitizer.isObscured(id) ||
+      (inputMode !== InputMode.Hidden && app.sanitizer.isObscured(id)) ||
       (inputMode === InputMode.Plain &&
         ((options.obscureInputNumbers && node.type !== 'date' && /\d\d\d\d/.test(value)) ||
           (options.obscureInputDates && node.type === 'date') ||
@@ -186,7 +194,7 @@ export default function (app: App, opts: Partial<Options>): void {
     app.send(SetInputValue(id, value, mask))
   }
 
-  const inputValues: Map<number, string> = new Map()
+  const inputValues: Map<number, string | null> = new Map()
   const checkboxValues: Map<number, boolean> = new Map()
   const selectValues: Map<number, string> = new Map()
 
@@ -200,14 +208,20 @@ export default function (app: App, opts: Partial<Options>): void {
   function trackInputValue(id: number, node: TextFieldElement) {
     // a field can be switched to password and back before its value changes
     if (node.type === 'password') passwordFields.add(node)
-    if (inputValues.get(id) === node.value) {
+    const last = inputValues.get(id)
+    if (last === node.value) {
       return
     }
-    inputValues.set(id, node.value)
-    sendInputValue(id, node)
+    const { value, mask } = getInputValue(id, node)
+    if (mask === -1 && last === null) {
+      return
+    }
+    inputValues.set(id, mask === -1 ? null : node.value)
+    app.send(SetInputValue(id, value, mask))
   }
 
-  function trackCheckboxValue(id: number, value: boolean) {
+  function trackCheckboxValue(id: number, node: HTMLInputElement) {
+    const value = node.checked && !app.sanitizer.isHidden(id)
     if (checkboxValues.get(id) === value) {
       return
     }
@@ -233,7 +247,7 @@ export default function (app: App, opts: Partial<Options>): void {
     checkboxValues.forEach((checked, id) => {
       const node = app.nodes.getNode(id) as HTMLInputElement
       if (!node) return checkboxValues.delete(id)
-      trackCheckboxValue(id, node.checked)
+      trackCheckboxValue(id, node)
     })
     selectValues.forEach((_, id) => {
       const node = app.nodes.getNode(id) as HTMLSelectElement
@@ -249,7 +263,14 @@ export default function (app: App, opts: Partial<Options>): void {
     inputTime: number,
   ) {
     const { value, mask } = getInputValue(id, node)
-    let label = getTagSelector(id, node) || getInputLabel(node, options.customAttributes)
+    let label =
+      getTagSelector(id, node) ||
+      getInputLabel(
+        node,
+        options.customAttributes,
+        (el) => app.sanitizer.getInnerTextSecure(el),
+        app.sanitizer.isObscured(id),
+      )
     if (app.sanitizer.privateMode) {
       label = label.replaceAll(/./g, '*')
     }
@@ -310,8 +331,8 @@ export default function (app: App, opts: Partial<Options>): void {
       }
 
       if (isCheckbox(node)) {
-        trackCheckboxValue(id, node.checked)
-        app.nodes.attachNodeListener(node, 'change', () => trackCheckboxValue(id, node.checked))
+        trackCheckboxValue(id, node)
+        app.nodes.attachNodeListener(node, 'change', () => trackCheckboxValue(id, node))
         return
       }
     }),

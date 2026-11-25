@@ -3,8 +3,11 @@ import { getTimeOrigin } from '../utils.js'
 import { SetPageLocation, SetViewportSize, SetPageVisibility } from '../app/messages.gen.js'
 import { stringWiper } from '../app/sanitizer.js'
 
+const hiddenQueryParams = ['jwt', 'password', 'reset-password', 'invitation', 'secret', 'token']
+// hash routers keep the route's query in the fragment: #/reset?token=abc
+const hiddenHashParams = new RegExp(`([#?&])(${hiddenQueryParams.join('|')})=([^&#]*)`, 'gi')
+
 export const defaultUrlSanitizer = (url: string) => {
-  const hiddenQueryParams = ['jwt', 'password', 'reset-password', 'invitation', 'secret', 'token']
   try {
     const u = new URL(url)
     u.searchParams.forEach((value, key) => {
@@ -12,6 +15,12 @@ export const defaultUrlSanitizer = (url: string) => {
         u.searchParams.set(key, '*'.repeat(value.length))
       }
     })
+    if (u.hash) {
+      u.hash = u.hash.replace(
+        hiddenHashParams,
+        (_, sep: string, key: string, value: string) => `${sep}${key}=${'*'.repeat(value.length)}`,
+      )
+    }
     return u.toString()
   } catch {
     return url
@@ -48,7 +57,9 @@ export default function (app: App, options?: Options): void {
         const u = new URL(currURL);
         const hashRoute = u.hash.startsWith('#/') ? u.hash.slice(2) : "";
         const routePath = hashRoute ? "/" + hashRoute.replace(/^\/+/, "") : "";
-        const cleaned = u.origin + u.pathname.replace(/\/$/, "") + routePath + u.search;
+        // after the route's own query, not inside its last value
+        const search = routePath.includes("?") ? u.search.replace("?", "&") : u.search;
+        const cleaned = u.origin + u.pathname.replace(/\/$/, "") + routePath + search;
         url = cleaned;
       }
       const sanitized = urlSanitizer(url)

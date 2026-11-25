@@ -644,6 +644,14 @@ describe('NextObserver callbacks and roots', () => {
     expect(doc[2]).toBe(pack(1, 3, 0))
     expect(nodes.getID(document.documentElement)).toBe(pack(1, 3, 0) + 1)
   })
+
+  test('a crossdomain frame is recorded at the level of its iframe on the parent page', () => {
+    setup('<p>card 4111</p>')
+    observer.crossdomainObserve(42, 3, 1, SanitizeLevel.Obscured)
+    const data = ofType(Type.SetNodeData).map((m) => m[2]).join('|')
+    expect(data).toContain('****')
+    expect(data).not.toContain('4111')
+  })
 })
 
 describe('NextNodes API', () => {

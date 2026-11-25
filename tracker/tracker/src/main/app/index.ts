@@ -324,6 +324,8 @@ export default class App {
   private stopEpoch = 0
   private workerRestartEpoch: number | null = null
   private rootId: number | null = null
+  /** child: level of our <iframe> on the parent page, which our document inherits */
+  private rootLevel: SanitizeLevel = SanitizeLevel.Plain
   private pageFrames: HTMLIFrameElement[] = []
   private frameOderNumber = 0
   private frameLevel = 0
@@ -648,6 +650,7 @@ export default class App {
         }
         if (data.id !== undefined) {
           this.rootId = data.id
+          this.rootLevel = data.level ?? SanitizeLevel.Plain
         }
         this.allowAppStart()
         void this.start()
@@ -661,6 +664,7 @@ export default class App {
     if (data.line === proto.iframeId) {
       this.parentActive = true
       this.rootId = data.id
+      if (!this.active()) this.rootLevel = data.level ?? SanitizeLevel.Plain
       this.session.setSessionToken(data.token as string, this.projectKey)
       this.lastTokenReceived = { tok: String(data.token).slice(-8), at: Date.now() }
       this.frameOderNumber = data.frameOrderNumber
@@ -786,19 +790,28 @@ export default class App {
       line: proto.startIframe,
       token: this.session.getSessionToken(this.projectKey),
     }
-    const targetFrame =
-      this.pageFrames.find((f) => f.contentWindow === event.source) ||
-      Array.from(document.querySelectorAll('iframe')).find((f) => f.contentWindow === event.source)
+    const targetFrame = this.frameOf(event.source)
     if (targetFrame) {
       const nodeId = this.nodes.getID(targetFrame)
       if (nodeId !== undefined) {
+        if (this.sanitizer.isHidden(nodeId)) return
         message.id = nodeId
+        message.level = this.sanitizer.getLevel(nodeId)
       }
     }
     // @ts-ignore
     event.source?.postMessage(message, replyTarget(event))
     this.recordSentToFrame(ctx, proto.startIframe)
     this.debug.log('Re-adopting orphaned crossdomain iframe', ctx)
+  }
+
+  private frameOf(source: MessageEventSource | null): HTMLIFrameElement | undefined {
+    let frame = this.pageFrames.find((f) => f.contentWindow === source)
+    if (!frame) {
+      this.pageFrames = Array.from(document.querySelectorAll('iframe'))
+      frame = this.pageFrames.find((f) => f.contentWindow === source)
+    }
+    return frame
   }
 
   /**
@@ -864,7 +877,8 @@ export default class App {
     this.send(ConsoleLog('info', `[OR_XDOMAIN_DEBUG] ${encoded}`))
   }
   crossDomainIframeListener = (event: MessageEvent) => {
-    if (event.source === window) return
+    // only this window's own iframes, not an opener, popup or deeper frame
+    if (event.source === window || (event.source as Window | null)?.parent !== window) return
     if (this.childOrigins && !this.childOrigins.has(event.origin)) return
     const { data } = event
     if (!data) return
@@ -895,7 +909,7 @@ export default class App {
           return console.error('Couldnt connect to event.source for child iframe tracking')
         }
         const id = await this.checkNodeId(event.source)
-        if (!id) {
+        if (!id || this.sanitizer.isHidden(id)) {
           this.debug.log('Couldnt get node id for iframe', event.source)
           return
         }
@@ -916,6 +930,7 @@ export default class App {
           const iframeData = {
             line: proto.iframeId,
             id,
+            level: this.sanitizer.getLevel(id),
             token,
             frameOrderNumber: order,
             frameLevel,
@@ -937,6 +952,17 @@ export default class App {
     if (data.line === proto.iframeBatch) {
       if (data.context) {
         this.frameBatchLastSeen.set(data.context, Date.now())
+      }
+      const frame = this.frameOf(event.source)
+      if (frame) {
+        const frameId = this.nodes.getID(frame)
+        // not recorded (under a hidden ancestor) or hidden
+        if (frameId === undefined || this.sanitizer.isHidden(frameId)) return
+        if (data.level !== undefined && data.level < this.sanitizer.getLevel(frameId)) {
+          // masked after the child joined: restart it at the new level
+          if (data.context) this.reAdoptOrphanFrame(event, data.context)
+          return
+        }
       }
       const msgBatch = data.messages
       // pushed one by one: spreading a large child snapshot into push() overflows the call stack
@@ -1023,18 +1049,20 @@ export default class App {
         const message: Record<string, any> = { line: nextCommand }
         if (nextCommand === proto.startIframe) {
           message.token = this.session.getSessionToken(this.projectKey)
-          const targetFrame = this.pageFrames.find((f) => f.contentWindow === event.source)
-            || Array.from(document.querySelectorAll('iframe')).find((f) => f.contentWindow === event.source)
+          const targetFrame = this.frameOf(event.source)
           if (targetFrame) {
             const nodeId = this.nodes.getID(targetFrame)
             if (nodeId !== undefined) {
               message.id = nodeId
+              message.level = this.sanitizer.getLevel(nodeId)
             }
           }
         }
-        // @ts-ignore
-        event.source?.postMessage(message, replyTarget(event))
-        this.recordSentToFrame(data.context, nextCommand)
+        if (message.level !== SanitizeLevel.Hidden) {
+          // @ts-ignore
+          event.source?.postMessage(message, replyTarget(event))
+          this.recordSentToFrame(data.context, nextCommand)
+        }
         if (this.pollingQueue[nextCommand].length === 0) {
           delete this.pollingQueue[nextCommand]
           this.pollingQueue.order.shift()
@@ -1339,10 +1367,22 @@ export default class App {
     this.debug.error('OpenReplay error: ', context, e)
   }
 
-  private sanitizeReferrer(referrer: string): string {
-    if (!referrer) return ''
-    if (this.sanitizer.privateMode) return stringWiper(referrer)
-    return (this.options.urls?.urlSanitizer ?? defaultUrlSanitizer)(referrer)
+  /** a page URL as the recording sends it: privateMode / urls.urlSanitizer applied */
+  sanitizeURL(url: string): string {
+    if (!url) return ''
+    if (this.sanitizer.privateMode) return stringWiper(url)
+    return (this.options.urls?.urlSanitizer ?? defaultUrlSanitizer)(url)
+  }
+
+  /** the worker writes it into batch headers until the first SetPageLocation */
+  private sanitizedPageURL(): string {
+    try {
+      return this.sanitizeURL(document.URL)
+    } catch (e) {
+      // a throwing urlSanitizer must not leave start() stuck in Starting
+      this._debug('url_sanitizer', e)
+      return ''
+    }
   }
 
   send = (message: Message, urgent = false): void => {
@@ -1395,6 +1435,7 @@ export default class App {
           line: proto.iframeBatch,
           messages: this.messages,
           context: this.contextId,
+          level: this.rootLevel,
         },
         this.options.crossdomain?.parentDomain ?? '*',
       )
@@ -1710,6 +1751,10 @@ export default class App {
    * and we will then send buffered batch, so it won't get lost
    * */
   public async coldStart(startOpts: StartOptions = {}, conditional?: boolean) {
+    // stop() keeps the buffers
+    if (this.activityState === ActivityState.NotActive) {
+      this.clearBuffers()
+    }
     this.singleBuffer = false
     const second = 1000
     const isNewSession = this.checkSessionToken(startOpts.forceNew)
@@ -1910,7 +1955,7 @@ export default class App {
       pageNo: this.session.incPageNo(),
       ingestPoint: this.options.ingestPoint,
       timestamp: this.coldStartTs,
-      url: document.URL,
+      url: this.sanitizedPageURL(),
       connAttemptCount: this.options.connAttemptCount,
       connAttemptGap: this.options.connAttemptGap,
       flushInterval: this.options.flushInterval,
@@ -2008,7 +2053,7 @@ export default class App {
       pageNo: this.session.incPageNo(),
       ingestPoint: this.options.ingestPoint,
       timestamp: isColdStart ? this.coldStartTs : timestamp,
-      url: document.URL,
+      url: this.sanitizedPageURL(),
       connAttemptCount: this.options.connAttemptCount,
       connAttemptGap: this.options.connAttemptGap,
       flushInterval: this.options.flushInterval,
@@ -2037,7 +2082,7 @@ export default class App {
           assistOnly: startOpts.assistOnly ?? this.socketMode,
           width: window.screen.width,
           height: window.screen.height,
-          referrer: this.sanitizeReferrer(document.referrer),
+          referrer: this.sanitizeURL(document.referrer),
         },
       )
       if (epoch !== this.stopEpoch) {
@@ -2182,7 +2227,12 @@ export default class App {
         }
       }
       if (this.insideIframe && this.rootId) {
-        this.observer.crossdomainObserve(this.rootId, this.frameOderNumber, this.frameLevel)
+        this.observer.crossdomainObserve(
+          this.rootId,
+          this.frameOderNumber,
+          this.frameLevel,
+          this.rootLevel,
+        )
       } else {
         this.observer.observe()
       }

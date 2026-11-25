@@ -59,6 +59,17 @@ describe('getInputLabel', () => {
     expect(getInputLabel(bare)).toBe('email')
   })
 
+  test('a masked field: no placeholder, the label text as given', () => {
+    const label = withInnerText(document.createElement('label'), 'Card of Jane Smith')
+    const input = document.createElement('input')
+    input.placeholder = 'Jane Smith'
+    label.appendChild(input)
+    document.body.appendChild(label)
+    const secure = (el: HTMLElement) => el.innerText.replace(/\w/g, '*')
+    expect(getInputLabel(input, undefined, secure, true)).toBe('**** ** **** *****')
+    expect(getInputLabel(input, undefined, secure, false)).toBe('Jane Smith')
+  })
+
   test('custom attributes, id and class selectors', () => {
     const input = document.createElement('input')
     input.className = 'cls1 cls2'

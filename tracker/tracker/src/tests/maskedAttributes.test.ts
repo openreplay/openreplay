@@ -54,6 +54,14 @@ const attrs = (el: Element) => {
   return out
 }
 
+/** last value of a URL-based attribute (style, svg href) sent for `el` */
+const urlAttr = (el: Element, name: string) => {
+  const id = app.nodes.getID(el)
+  return sent
+    .filter((m) => m[0] === Type.SetNodeAttributeURLBased && m[1] === id && m[2] === name)
+    .map((m) => m[3])
+    .pop()
+}
 const textData = () => sent.filter((m) => m[0] === Type.SetNodeData).map((m) => m[2])
 const allData = () => textData().join('|')
 // the default core picks iframes up after 250ms
@@ -96,6 +104,20 @@ describe.each(['default', 'next'] as const)('%s observer: attributes of masked c
     expect(attrs($('#p')).title).toBe('Public')
   })
 
+  test('checked of a hidden input is not recorded, of an obscured one it is', async () => {
+    setup(
+      core,
+      `<input id="h" type="checkbox" checked data-openreplay-hidden>
+      <input id="o" type="radio" checked data-openreplay-obscured>`,
+    )
+    $('#h').removeAttribute('checked')
+    $('#h').setAttribute('checked', '')
+    await flush()
+    expect(attrs($('#h')).checked).toBeUndefined()
+    expect(sent.some((m) => m[0] === Type.RemoveNodeAttribute)).toBe(false)
+    expect(attrs($('#o')).checked).toBe('')
+  })
+
   test('a content attribute changed later is masked', async () => {
     setup(core, '<div data-openreplay-obscured><span id="s" title="Jane">x</span></div>')
     $('#s').setAttribute('title', 'Jane Later')
@@ -133,6 +155,57 @@ describe.each(['default', 'next'] as const)('%s observer: attributes of masked c
     await flush()
     observer.resanitizeSubtree($('#w'))
     expect(attrs($('#s'))).toEqual({ title: 'Jane', 'data-name': 'Jane' })
+  })
+
+  test('what a masked element would draw is not recorded: svg href, poster, style url()', () => {
+    setup(
+      core,
+      `<div data-openreplay-obscured>
+        <svg><image id="i" href="data:image/png;base64,AAAA" width="64"></image>
+        <linearGradient id="g" href="#base"></linearGradient>
+        <symbol id="sig"><text>Jane Smith</text></symbol><use id="u" href="#sig"></use></svg>
+        <video id="v" poster="/jane.png" controls></video>
+        <div id="d" style="width: 64px; background-image: url('/jane.png'); clip-path: url(#c)"></div>
+      </div>
+      <div id="h" data-openreplay-hidden style="background: url(data:image/png;base64,BBBB)">x</div>
+      <svg><image id="pi" href="/logo.png"></image></svg><video id="pv" poster="/intro.png"></video>
+      <div id="pd" style="background-image: url(/logo.png)"></div>`,
+    )
+    expect(urlAttr($('#i'), 'href')).toBe('')
+    expect(attrs($('#i'))).toEqual({ width: '64' })
+    expect(urlAttr($('#g'), 'href')).toBe('#base')
+    // points at the recorded (masked) symbol instead of a plain copy of it
+    expect(urlAttr($('#u'), 'href')).toBe('#sig')
+    expect(JSON.stringify(sent)).not.toContain('Jane')
+    expect(attrs($('#v'))).toEqual({ poster: '', controls: '' })
+    expect(urlAttr($('#d'), 'style')).toBe(
+      'width: 64px; background-image: none; clip-path: url(#c)',
+    )
+    expect(urlAttr($('#h'), 'style')).not.toContain('BBBB')
+    expect(urlAttr($('#pi'), 'href')).toBe('/logo.png')
+    expect(attrs($('#pv')).poster).toBe('/intro.png')
+    expect(urlAttr($('#pd'), 'style')).toBe('background-image: url(/logo.png)')
+  })
+
+  test('a level change re-sends what the element would draw', async () => {
+    setup(
+      core,
+      `<div id="w"><svg><image id="i" href="/jane.png"></image></svg>
+      <video id="v" poster="/jane.png"></video><div id="d" style="background: url(/jane.png)"></div></div>`,
+    )
+    $('#w').setAttribute('data-openreplay-obscured', '')
+    await flush()
+    observer.resanitizeSubtree($('#w'))
+    expect(urlAttr($('#i'), 'href')).toBe('')
+    expect(attrs($('#v')).poster).toBe('')
+    expect(urlAttr($('#d'), 'style')).toBe('background: none')
+
+    $('#w').removeAttribute('data-openreplay-obscured')
+    await flush()
+    observer.resanitizeSubtree($('#w'))
+    expect(urlAttr($('#i'), 'href')).toBe('/jane.png')
+    expect(attrs($('#v')).poster).toBe('/jane.png')
+    expect(urlAttr($('#d'), 'style')).toBe('background: url(/jane.png)')
   })
 
   test('an element masked through its own attribute re-sends its attributes', async () => {
@@ -211,6 +284,58 @@ describe.each(['default', 'next'] as const)('%s observer: attributes of masked c
     expect(textData()).toHaveLength(count + 1)
     expect(allData()).not.toContain('5555')
   })
+
+  test.each(['obscured', 'hidden'])(
+    'shadow content follows a host moved into a %s container, alone or with an ancestor',
+    async (mask) => {
+      setup(
+        core,
+        `<section id="m" data-openreplay-${mask}></section><div id="w"><div id="h"></div></div><div id="h2"></div>`,
+      )
+      const shadow = $('#h').attachShadow({ mode: 'open' })
+      shadow.innerHTML = '<span>in</span>'
+      const shadow2 = $('#h2').attachShadow({ mode: 'open' })
+      shadow2.innerHTML = '<span>in</span>'
+      await flush()
+      $('#m').append($('#w'), $('#h2'))
+      await flush()
+      ;(shadow.querySelector('span')!.firstChild as Text).data = 'card 4111'
+      shadow2.append('more 5500')
+      await flush()
+      expect(allData()).not.toMatch(/4111|5500/)
+    },
+  )
+
+  test('a host hidden after it was recorded stops its shadow root, with resanitize in a later task', async () => {
+    setup(core, '<div id="w"><div id="h"></div></div>')
+    const shadow = $('#h').attachShadow({ mode: 'open' })
+    shadow.innerHTML = '<span>in</span>'
+    await flush()
+    $('#w').setAttribute('data-openreplay-hidden', '')
+    await flush()
+    observer.resanitizeSubtree($('#w'))
+    ;(shadow.querySelector('span')!.firstChild as Text).data = 'card 4111'
+    shadow.append('more 5500')
+    await flush()
+    expect(allData()).not.toMatch(/4111|5500/)
+  })
+
+  test.each(['obscured', 'hidden'])(
+    'iframe content follows an ancestor %s after its document was recorded',
+    async (mask) => {
+      setup(core, '<div id="w"><iframe id="f"></iframe></div>')
+      const doc = ($('#f') as HTMLIFrameElement).contentDocument!
+      doc.body.innerHTML = '<p>in</p>'
+      await waitFrames()
+      expect(allData()).toContain('in')
+      $('#w').setAttribute(`data-openreplay-${mask}`, '')
+      await flush()
+      ;(doc.querySelector('p')!.firstChild as Text).data = 'card 4111'
+      doc.body.append('more 5500')
+      await flush()
+      expect(allData()).not.toMatch(/4111|5500/)
+    },
+  )
 
   test('textarea text (initial, or rewritten by React on each keystroke) is not sent', async () => {
     setup(core, '<p>Apply now</p><textarea id="t">draft secret</textarea>')

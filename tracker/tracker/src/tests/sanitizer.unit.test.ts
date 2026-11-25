@@ -106,6 +106,43 @@ describe('Sanitizer', () => {
     expect(sanitizer.getInnerTextSecure(element)).toEqual('******')
   })
 
+  describe('getInnerTextSecure with a masked element inside', () => {
+    // jsdom has no innerText
+    const row = (html: string, innerText: string) => {
+      const li = document.createElement('li')
+      li.innerHTML = html
+      Object.defineProperty(li, 'innerText', { value: innerText })
+      Object.defineProperty(li, 'mockId', { value: 1 })
+      Object.defineProperty(li.firstElementChild!, 'mockId', { value: 2 })
+      sanitizer.setLevel(2, SanitizeLevel.Obscured)
+      return li
+    }
+
+    test('wipes the text when the masked element has text', () => {
+      const li = row('Next: <span>Jane Smith</span>', 'Next: Jane Smith')
+      expect(sanitizer.getInnerTextSecure(li)).toEqual('***** **** *****')
+    })
+
+    test('keeps the text when the masked element has none', () => {
+      const li = row('Pay <img alt="Jane Smith" />', 'Pay')
+      expect(sanitizer.getInnerTextSecure(li)).toEqual('Pay')
+    })
+  })
+
+  test('stateAttributesMasked answers as masksStateAttributes without counting as sent', () => {
+    const app = { nodes: { getID: jest.fn() } }
+    // @ts-expect-error partial app mock
+    const s = new Sanitizer({ app, options: { privateMode: true } })
+    const el = document.createElement('div')
+    el.setAttribute('data-openreplay-obscured', '')
+    el.setAttribute('data-patient', 'jane.smith')
+    s.setLevel(1, SanitizeLevel.Obscured)
+    expect(s.stateAttributesMasked(1, el)).toBe(true)
+    expect(s.stateMaskChanged(1, el)).toBe(true)
+    expect(s.masksStateAttributes(1, el)).toBe(true)
+    expect(s.stateMaskChanged(1, el)).toBe(false)
+  })
+
   test.each(['data-openreplay-masked', 'data-openreplay-obscured'])('%s obscures', (attr) => {
     const node = document.createElement('div')
     node.setAttribute(attr, '')

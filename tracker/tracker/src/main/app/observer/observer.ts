@@ -34,6 +34,8 @@ const iconCache = {}
 const svgUrlCache = {}
 // slotted nodes and their slot live in different roots (and observers), so this is shared
 const slotOf = new WeakMap<Node, number>()
+// bumped on level changes: shadow roots and iframe documents below may lag
+let levelChanges = 0
 
 export async function parseUseEl(
   useElement: SVGUseElement,
@@ -231,6 +233,14 @@ function isContentAttribute(el: Element, name: string): boolean {
   return CONTENT_ATTRIBUTES.has(name)
 }
 
+// what a masked element would draw; `#id` and url(#id) point into the page (gradients, symbols)
+function isResourceAttribute(el: Element, name: string): boolean {
+  return isSVGElement(el)
+    ? name === 'href' || name === 'xlink:href'
+    : name === 'poster' || name === 'background'
+}
+const CSS_URL = /url\(\s*(?!['"]?#)(?:"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|(?:\\.|[^)\\])*)\s*\)/gi
+
 function maskAttribute(app: App, id: number, el: Element, name: string, value: string): string {
   if (!app.sanitizer.isObscured(id)) return value
   if (
@@ -239,6 +249,8 @@ function maskAttribute(app: App, id: number, el: Element, name: string, value: s
   ) {
     return stringWiper(value)
   }
+  if (isResourceAttribute(el, name)) return value.startsWith('#') ? value : ''
+  if (name === 'style') return value.replace(CSS_URL, 'none')
   return value
 }
 
@@ -268,7 +280,13 @@ export function sendNodeAttribute(
       app.send(RemoveNodeAttribute(id, name))
       return
     }
-    if (isUseElement(node) && name === 'href' && !ctx.disableSprites) {
+    // a masked <use> points at its symbol, recorded masked, instead of a copy
+    if (
+      isUseElement(node) &&
+      name === 'href' &&
+      !ctx.disableSprites &&
+      !(value.startsWith('#') && app.sanitizer.isObscured(id))
+    ) {
       const gen = ctx.generation
       parseUseEl(node, 'svgtext', ctx.domParser)
         .then((svgData) => {
@@ -285,6 +303,7 @@ export function sendNodeAttribute(
       if (value.length > 1e5) {
         value = ''
       }
+      value = maskAttribute(app, id, node, name, value)
       app.send(SetNodeAttributeURLBased(id, name, value, app.getBaseHref()))
     } else {
       app.attributeSender.sendSetAttribute(id, name, maskAttribute(app, id, node, name, value))
@@ -321,6 +340,9 @@ export function sendNodeAttribute(
   if (name === 'value' && shouldSkipValueAttribute(node)) {
     return
   }
+  if (name === 'checked' && app.sanitizer.isHidden(id)) {
+    return
+  }
   if (value === null) {
     app.send(RemoveNodeAttribute(id, name))
     return
@@ -353,6 +375,7 @@ export function sendNodeAttribute(
       }, 0)
       return
     }
+    value = maskAttribute(app, id, node, name, value)
     app.send(SetNodeAttributeURLBased(id, name, value, app.getBaseHref()))
     return
   }
@@ -367,8 +390,14 @@ export function sendContentAttributes(ctx: AttributeContext, id: number, el: Ele
   const attrs = el.attributes
   for (let i = 0; i < attrs.length; i++) {
     const name = attrs[i].nodeName
-    if (isContentAttribute(el, name) || isStateAttribute(el, name)) {
-      sendNodeAttribute(ctx, id, el, name, attrs[i].value)
+    const value = attrs[i].value
+    if (
+      isContentAttribute(el, name) ||
+      isStateAttribute(el, name) ||
+      isResourceAttribute(el, name) ||
+      (name === 'style' && /url\(/i.test(value))
+    ) {
+      sendNodeAttribute(ctx, id, el, name, value)
     }
   }
 }
@@ -418,6 +447,7 @@ export default abstract class Observer {
   private readonly attributesMap: Map<number, Set<string>> = new Map()
   private readonly textSet: Set<number> = new Set()
   private root: Node | null = null
+  private rootLevelChecked = -1
   /**
    * this option means that, instead of using link element with href to load css,
    * we will try to parse the css text instead and send it as css rules set
@@ -692,6 +722,10 @@ export default abstract class Observer {
   // A top-consumption function on the infinite lists test. (~1% of performance resources)
   private _commitNode(id: number, node: Node): boolean {
     if (isRootNode(node)) {
+      if (this.rootLevelChecked !== levelChanges) {
+        this.rootLevelChecked = levelChanges
+        this.app.sanitizer.handleRoot(id, node)
+      }
       return true
     }
     let slot = (node as any).assignedSlot as HTMLSlotElement | null
@@ -720,6 +754,7 @@ export default abstract class Observer {
       }
       this.app.sanitizer.handleNode(id, parentID, node)
       if (this.app.sanitizer.isHidden(parentID)) {
+        if (this.recents.get(id) === RecentsType.Removed) levelChanges++
         return false
       }
     } else {
@@ -801,6 +836,7 @@ export default abstract class Observer {
       }
     }
     if (isElementNode(node) && this.app.sanitizer.getLevel(id) !== prevLevel) {
+      levelChanges++
       // raised by an attribute change or a move: what was sent at the old level is re-sent
       sendContentAttributes(this.attrCtx, id, node)
     }

@@ -147,6 +147,34 @@ describe('CanvasRecorder', () => {
     })
   })
 
+  describe('masked or rebuilt without a resanitize callback', () => {
+    beforeEach(() => {
+      jest.useFakeTimers()
+      document.body.appendChild(nodeMock)
+      canvasRecorder.recordCanvas(nodeMock, 1)
+      jest.advanceTimersByTime(300)
+      expect(nodeMock.toBlob).toHaveBeenCalledTimes(3)
+    })
+
+    const expectStopped = () => {
+      jest.advanceTimersByTime(1000)
+      expect(nodeMock.toBlob).toHaveBeenCalledTimes(3)
+      expect(canvasRecorder['snapshots'][1]).toBeUndefined()
+      expect(canvasRecorder['timer']).toBeNull()
+      expect(globalThis.fetch).not.toHaveBeenCalled()
+    }
+
+    test('stops when its level was raised by a commit', () => {
+      appMock.sanitizer.isObscured.mockReturnValue(true)
+      expectStopped()
+    })
+
+    test.each([undefined, 7])('stops when it lost its id (now %s)', (newId) => {
+      appMock.nodes.getID.mockReturnValue(newId)
+      expectStopped()
+    })
+  })
+
   describe('clear', () => {
     test('clears the recording interval, flushes pending images and drops snapshots', () => {
       jest.useFakeTimers()
