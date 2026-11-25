@@ -2,6 +2,7 @@
 
 - crossdomain: a child frame's DOM observer is disconnected on `stop()`; a restart no longer leaves two observers running
 - `coldStart()` after `stop()` no longer uploads what the stopped cold start buffered
+- crossdomain: `parentDomain` takes a list of origins; the iframe talks to the listed one that embeds it
 - privacy: masking and URL sanitization updates (inputs, selections, click labels, canvases, error stacks, shadow roots, iframes)
 - crossdomain: a child iframe is recorded with the masking its `<iframe>` has on the parent page (needs this version in the child page too)
 - masked elements: click labels use the element's selector; under `privateMode`, background images in inline styles and SVG images of masked elements are not replayed

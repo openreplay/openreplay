@@ -181,11 +181,11 @@ type AppOptions = {
      * */
     enabled?: boolean
     /**
-     * used to send message up, will be '*' by default
-     * (check your CSP settings)
+     * iframe only: origin of the page embedding this one, or a list of them.
+     * The iframe posts only to that origin and takes commands only from it.
      * @default '*'
      * */
-    parentDomain?: string
+    parentDomain?: string | string[]
     /**
      * parent page only: origins of the child iframes allowed to join this session,
      * e.g. ['https://widget.example.com']. Any child iframe on the page when omitted.
@@ -264,6 +264,20 @@ const toOrigin = (domain: string): string | null => {
   }
 }
 
+/**
+ * Target origins for posts to the parent: the embedding page's origin when it is allowed,
+ * none when it is known and not allowed. When it is unknown (no ancestorOrigins, or "null"
+ * under a no-referrer policy) and the referrer doesn't tell, every allowed origin is tried
+ * until the parent answers.
+ */
+const parentTargets = (origins: Set<string> | null): string[] => {
+  if (!origins) return ['*']
+  const ancestor = window.location.ancestorOrigins?.[0]
+  if (ancestor && ancestor !== 'null') return origins.has(ancestor) ? [ancestor] : []
+  const referrer = document.referrer ? toOrigin(document.referrer) : null
+  return referrer && origins.has(referrer) ? [referrer] : [...origins]
+}
+
 /** sandboxed frames report origin 'null' and can only be reached with '*' */
 const replyTarget = (event: MessageEvent): string =>
   event.origin && event.origin !== 'null' ? event.origin : '*'
@@ -308,8 +322,9 @@ export default class App {
   public socketMode = false
   private readonly bc: BroadcastChannel | null = null
   private readonly contextId: string
-  /** child side: origin from crossdomain.parentDomain, null when '*' or unset */
-  private readonly parentOrigin: string | null
+  /** child side: origins from crossdomain.parentDomain, null when '*' or unset */
+  private readonly parentOrigins: Set<string> | null
+  private parentTargets: string[]
   /** parent side: crossdomain.childDomains as origins, null when any child is allowed */
   private readonly childOrigins: Set<string> | null
   private canvasRecorder: CanvasRecorder | null = null
@@ -382,8 +397,12 @@ export default class App {
       disableThrottling: false,
     }
     this.options = simpleMerge(defaultOptions, options)
-    const parentDomain = this.options.crossdomain?.parentDomain
-    this.parentOrigin = parentDomain && parentDomain !== '*' ? toOrigin(parentDomain) : null
+    const parentDomains = [this.options.crossdomain?.parentDomain ?? []].flat()
+    this.parentOrigins =
+      parentDomains.length && !parentDomains.includes('*')
+        ? new Set(parentDomains.map(toOrigin).filter((o): o is string => !!o))
+        : null
+    this.parentTargets = insideIframe ? parentTargets(this.parentOrigins) : []
     const childDomains = this.options.crossdomain?.childDomains
     this.childOrigins = childDomains?.length
       ? new Set(childDomains.map((d) => toOrigin(d) ?? d))
@@ -467,14 +486,10 @@ export default class App {
       window.addEventListener('message', this.parentCrossDomainFrameListener)
       window.addEventListener('message', this.crossDomainIframeListener)
       this.childPollingInterval = setInterval(() => {
-        window.parent.postMessage(
-          {
-            line: proto.polling,
-            context: this.contextId,
-          },
-          options.crossdomain?.parentDomain ?? '*',
-        )
-        this.markSentToParent()
+        this.postToParent({
+          line: proto.polling,
+          context: this.contextId,
+        })
       }, 250)
       // Child-only: once per minute, post an encoded snapshot of our own tracking state
       // (active?, token received, last comms) up to the parent so it lands in the replay.
@@ -575,7 +590,8 @@ export default class App {
   private lastSentToParentAt = 0
   private iframeDebugInterval: ReturnType<typeof setInterval> | null = null
   /** stamp every outbound post to the parent window, for the child debug snapshot */
-  private markSentToParent() {
+  private postToParent(message: Record<string, unknown>) {
+    for (const origin of this.parentTargets) window.parent.postMessage(message, origin)
     this.lastSentToParentAt = Date.now()
   }
 
@@ -612,11 +628,7 @@ export default class App {
       encoded = json
     }
     try {
-      window.parent.postMessage(
-        { line: proto.iframeDebug, context: this.contextId, debug: encoded },
-        this.options.crossdomain?.parentDomain ?? '*',
-      )
-      this.markSentToParent()
+      this.postToParent({ line: proto.iframeDebug, context: this.contextId, debug: encoded })
     } catch (e) {
       this.debug.error('iframe debug post failed', e)
     }
@@ -624,7 +636,10 @@ export default class App {
   parentCrossDomainFrameListener = (event: MessageEvent) => {
     const { data } = event
     if (!data || event.source !== window.parent) return
-    if (this.parentOrigin && event.origin !== this.parentOrigin) return
+    if (this.parentOrigins) {
+      if (!this.parentOrigins.has(event.origin)) return
+      this.parentTargets = [event.origin]
+    }
     // Debug: remember the last time the parent talked to us.
     if (
       data.line === proto.startIframe ||
@@ -1101,15 +1116,11 @@ export default class App {
 
   signalIframeTracker = () => {
     const thisTab = this.session.getTabId()
-    window.parent.postMessage(
-      {
-        line: proto.iframeSignal,
-        source: thisTab,
-        context: this.contextId,
-      },
-      this.options.crossdomain?.parentDomain ?? '*',
-    )
-    this.markSentToParent()
+    this.postToParent({
+      line: proto.iframeSignal,
+      source: thisTab,
+      context: this.contextId,
+    })
 
     /**
      * since we need to wait uncertain amount of time
@@ -1127,15 +1138,11 @@ export default class App {
         stopAttempts = true
         return
       }
-      window.parent.postMessage(
-        {
-          line: proto.iframeSignal,
-          source: thisTab,
-          context: this.contextId,
-        },
-        this.options.crossdomain?.parentDomain ?? '*',
-      )
-      this.markSentToParent()
+      this.postToParent({
+        line: proto.iframeSignal,
+        source: thisTab,
+        context: this.contextId,
+      })
       this.debug.info('Trying to signal to parent, attempt:', retries + 1)
       retries++
     }
@@ -1430,16 +1437,12 @@ export default class App {
       if (!this.messages.length) {
         return
       }
-      window.parent.postMessage(
-        {
-          line: proto.iframeBatch,
-          messages: this.messages,
-          context: this.contextId,
-          level: this.rootLevel,
-        },
-        this.options.crossdomain?.parentDomain ?? '*',
-      )
-      this.markSentToParent()
+      this.postToParent({
+        line: proto.iframeBatch,
+        messages: this.messages,
+        context: this.contextId,
+        level: this.rootLevel,
+      })
       this.commitCallbacks.forEach((cb) => cb(this.messages))
       this.messages.length = 0
       return

@@ -131,6 +131,68 @@ describe('crossdomain message origins', () => {
     app.parentCrossDomainFrameListener({ source: parent, origin: 'https://shop.example.com', data: assign })
     expect(setToken).toHaveBeenCalledWith('tok', 'key')
   })
+
+  const LIST = ['https://a.example.com', 'https://b.example.com/app']
+  const targets = (post: ReturnType<typeof jest.fn>) => post.mock.calls.map((c: any[]) => c[1])
+
+  test('a child with a parentDomain list posts to each listed origin until its parent answers', () => {
+    const parent = { postMessage: jest.fn() }
+    jest.spyOn(window, 'parent', 'get').mockReturnValue(parent as any)
+    const app = makeApp({ enabled: true, parentDomain: LIST }, true)
+    const setToken = jest.spyOn(app.session, 'setSessionToken')
+    const assign = { line: ASSIGN, id: 1, token: 'tok' }
+
+    app.postToParent({ line: SIGNAL })
+    expect(targets(parent.postMessage)).toEqual(['https://a.example.com', 'https://b.example.com'])
+
+    app.parentCrossDomainFrameListener({ source: parent, origin: 'https://c.example.com', data: assign })
+    expect(setToken).not.toHaveBeenCalled()
+    app.parentCrossDomainFrameListener({ source: parent, origin: 'https://b.example.com', data: assign })
+    expect(setToken).toHaveBeenCalledWith('tok', 'key')
+
+    parent.postMessage.mockClear()
+    app.postToParent({ line: SIGNAL })
+    expect(targets(parent.postMessage)).toEqual(['https://b.example.com'])
+  })
+
+  test('a child with a parentDomain list posts only to a listed referrer', () => {
+    const parent = { postMessage: jest.fn() }
+    jest.spyOn(window, 'parent', 'get').mockReturnValue(parent as any)
+    jest.spyOn(document, 'referrer', 'get').mockReturnValue('https://b.example.com/app/page')
+    const app = makeApp({ enabled: true, parentDomain: LIST }, true)
+
+    app.postToParent({ line: SIGNAL })
+    expect(targets(parent.postMessage)).toEqual(['https://b.example.com'])
+  })
+
+  test('a child whose ancestor origin is hidden tries each listed origin', () => {
+    const parent = { postMessage: jest.fn() }
+    jest.spyOn(window, 'parent', 'get').mockReturnValue(parent as any)
+    Object.defineProperty(window.location, 'ancestorOrigins', { value: ['null'], configurable: true })
+    try {
+      const app = makeApp({ enabled: true, parentDomain: LIST }, true)
+      app.postToParent({ line: SIGNAL })
+      expect(targets(parent.postMessage)).toEqual(['https://a.example.com', 'https://b.example.com'])
+    } finally {
+      delete (window.location as any).ancestorOrigins
+    }
+  })
+
+  test('a child embedded by an origin it does not list posts nothing', () => {
+    const parent = { postMessage: jest.fn() }
+    jest.spyOn(window, 'parent', 'get').mockReturnValue(parent as any)
+    Object.defineProperty(window.location, 'ancestorOrigins', {
+      value: ['https://c.example.com'],
+      configurable: true,
+    })
+    try {
+      const app = makeApp({ enabled: true, parentDomain: LIST }, true)
+      app.postToParent({ line: SIGNAL })
+      expect(parent.postMessage).not.toHaveBeenCalled()
+    } finally {
+      delete (window.location as any).ancestorOrigins
+    }
+  })
 })
 
 describe('crossdomain child frames follow the level of their iframe on the parent page', () => {

@@ -193,7 +193,7 @@ Passed to `configure()` / `new Tracker()`. All optional except `projectKey`.
 | `captureResourceTimings` / `capturePageLoadTimings` / `capturePageRenderTimings` | `true` | Resource timings and web vitals. |
 | `longTasks` | `false` | Long animation frame tracking. |
 | `captureIFrames` | `true` | Record same-origin iframes. |
-| `crossdomain` | `{ enabled: false, parentDomain: '*', childDomains? }` | Cross-origin iframes: set `enabled` in the parent page and inside the iframe, which runs its own tracker. |
+| `crossdomain` | `{ enabled: false, parentDomain: '*', childDomains? }` | Cross-origin iframes: set `enabled` in the parent page and inside the iframe, which runs its own tracker. In the iframe, `parentDomain` (an origin or a list of them) limits which embedding pages it talks to; on the parent, `childDomains` limits which iframe origins can join. |
 | `nextObserver` | `false` | Experimental DOM core: one MutationObserver for the page, iframes and shadow roots, no node maintainer, same recording format. Needs `WeakRef`; without it the default core is used. |
 | `canvas` | `{ disableCanvas: false, fixedCanvasScaling: false, useAnimationFrame: false, fileExt: 'webp' }` | Canvas/WebGL capture. |
 | `mouse` | `{ disableClickmaps?, trackingOffset? }` | Click/movement capture. |
