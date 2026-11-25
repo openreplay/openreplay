@@ -9,3 +9,10 @@
   overflow-y: auto;
   padding: var(--m-space-2);
 }
+/* rows with an icon or a line each: the trigger's width, so lines wrap */
+.m-mselect--rich {
+  width: var(--radix-popover-trigger-width);
+}
+.m-mselect--rich [role='group'] {
+  gap: 2px;
+}
