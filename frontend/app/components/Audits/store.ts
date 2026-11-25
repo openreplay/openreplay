@@ -62,12 +62,23 @@ export class AuditsUiStore {
 
   filters: AuditFilters = { ...NO_FILTERS };
 
+  private projectId = '';
+
   constructor() {
     const display = readDisplay();
     this.sort = display.sort;
     this.fields = display.fields;
     makeAutoObservable(this, { period: observableRef });
   }
+
+  /** Segments belong to a project, and the page may be past the new project's end. */
+  forProject = (projectId: string) => {
+    if (this.projectId && this.projectId !== projectId) {
+      this.filters = { ...this.filters, segment: undefined };
+      this.page = 1;
+    }
+    this.projectId = projectId;
+  };
 
   setTab = (tab: AuditTab) => {
     this.tab = tab;

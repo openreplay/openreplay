@@ -1,5 +1,6 @@
 import withPageTitle from '@/components/hocs/withPageTitle';
 import withPermissions from '@/components/hocs/withPermissions';
+import { copyWithToast } from '@/lib/use-copy';
 import { Button } from '@/ui/actions/button';
 import {
   DropdownMenu,
@@ -73,6 +74,7 @@ import {
   useCancelAudit,
   useDeleteAudit,
   useOpenArtifact,
+  useProjectId,
   useRenameAudit,
   useRerunAudit,
 } from './queries';
@@ -88,6 +90,8 @@ function AuditsPage() {
   const { userStore } = useStore();
   const me = userStore.account?.id;
   const pageSize = useRowsPerPage('audits');
+  const projectId = useProjectId();
+  React.useEffect(() => ui.forProject(projectId), [projectId]);
 
   const [query, setQuery] = React.useState(ui.search);
   const settled = useDebouncedValue(query, 300);
@@ -102,18 +106,28 @@ function AuditsPage() {
   const items = list.data?.items;
   const { dimensions, chips } = useAuditFilters(items);
   const total = list.data?.total ?? 0;
+  // a delete can leave the page past the last one
+  const pastEnd =
+    !list.isPlaceholderData &&
+    items?.length === 0 &&
+    total > 0 &&
+    ui.page > Math.ceil(total / pageSize);
+  React.useEffect(() => {
+    if (pastEnd) ui.setPage(Math.ceil(total / pageSize));
+  }, [pastEnd, total, pageSize]);
 
   const history = useHistory();
   const [openId] = useQueryParam('audit');
   const [slideParam, setSlide] = useQueryParam('slide');
-  const [exportParam] = useQueryParam('export');
+  // kept out of the URL so a reload doesn't export again
+  const [exportFor, setExportFor] = React.useState<string | null>(null);
   const opened = useAudit(openId ?? undefined);
   const openedItem = items?.find((a) => a.id === openId) ?? opened.data;
-  const setReport = (id: string | null, extra: Record<string, string> = {}) => {
+  const setReport = (id: string | null) => {
     const params = new URLSearchParams(window.location.search);
     ['audit', 'slide', 'export'].forEach((k) => params.delete(k));
     if (id) params.set('audit', id);
-    Object.entries(extra).forEach(([k, v]) => params.set(k, v));
+    else setExportFor(null);
     const to = { search: params.toString() };
     if (id) history.push(to);
     else history.replace(to);
@@ -132,10 +146,16 @@ function AuditsPage() {
   const failed = (e: unknown) =>
     toast.error(e instanceof Error ? e.message : t('Something went wrong.'));
 
-  useAuditLandings(items, JSON.stringify(params), (a) => {
-    if (a.isReady) toast.success(t('“{{name}}” is ready', { name: a.name }));
-    else if (a.isFailed) toast.error(t('“{{name}}” failed', { name: a.name }));
-  });
+  // the previous scope's rows stand in while the new scope loads: not a baseline for it
+  useAuditLandings(
+    list.isPlaceholderData ? undefined : items,
+    JSON.stringify(params),
+    (a) => {
+      if (a.isReady) toast.success(t('“{{name}}” is ready', { name: a.name }));
+      else if (a.isFailed)
+        toast.error(t('“{{name}}” failed', { name: a.name }));
+    },
+  );
 
   const newAudit = () => {
     setDraftKey((k) => k + 1);
@@ -158,13 +178,14 @@ function AuditsPage() {
 
   const downloadPdf = (a: AuditItem) => {
     if (a.hasArtifact('pdf')) artifact.open(a.id, 'pdf', { onError: failed });
-    else setReport(a.id, { export: '1' });
+    else {
+      setExportFor(a.id);
+      setReport(a.id);
+    }
   };
 
-  const copyLink = (a: AuditItem) => {
-    void navigator.clipboard?.writeText(reportLink(a.id)).catch(() => {});
-    toast.success(t('Link copied'));
-  };
+  const copyLink = (a: AuditItem) =>
+    void copyWithToast(reportLink(a.id), t('Link copied'));
 
   const doRerun = (a: AuditItem) =>
     rerun.mutate(a.id, {
@@ -467,7 +488,7 @@ function AuditsPage() {
         />
       );
     if (ever.data?.all === 0) return firstRun;
-    if (!items?.length) return noMatch;
+    if (!items?.length) return pastEnd ? <SkeletonRows rows={4} /> : noMatch;
     return (
       <>
         <DataTable<AuditItem>
@@ -583,8 +604,12 @@ function AuditsPage() {
             auditId={openId}
             title={openedItem?.name ?? t('Audit')}
             scope={openedItem?.scopeLabel ?? ''}
-            initialSlide={Math.max(0, Number(slideParam ?? 1) - 1)}
-            exportOnOpen={exportParam === '1'}
+            initialSlide={Math.max(
+              0,
+              (parseInt(slideParam ?? '', 10) || 1) - 1,
+            )}
+            exportOnOpen={exportFor === openId}
+            onExportStart={() => setExportFor(null)}
             onSlide={(i) => setSlide(i > 0 ? String(i + 1) : null)}
             onClose={() => setReport(null)}
           />
