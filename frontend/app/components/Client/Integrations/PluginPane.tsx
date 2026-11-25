@@ -25,6 +25,7 @@ export function usePluginProject() {
     projectId: project ? String(project.projectId) : projectId,
     setProjectId,
     projectKey: project?.projectKey ?? '',
+    host: project?.host || project?.name || 'your app',
   };
 }
 

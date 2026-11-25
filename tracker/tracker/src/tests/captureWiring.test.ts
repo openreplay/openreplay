@@ -297,10 +297,6 @@ test('omitting a CSS rule preserves the index of the following rule', () => {
   sheet.insertRule('.withheld { color: red; }', 0)
   sheet.insertRule('.visible { color: blue; }', 1)
   sheet.deleteRule(1)
-  jest.spyOn(CSSStyleSheet.prototype, 'replaceSync').mockImplementationOnce(function (this: CSSStyleSheet) {
-    this.insertRule('.first {}', 0)
-    this.insertRule('.second {}', 1)
-  })
   sheet.insertRule('.multiplied { color: green; }', 1)
 
   expect(app.messages.filter((message: any[]) => message[1] === 101)).toEqual([
@@ -366,39 +362,7 @@ test('a discarded tracker has no resource base without a capture policy', () => 
   expect(app.getBaseHref()).toBeNull()
 })
 
-test('the parent may retire a child tracker while shared records survive', () => {
-  const { tracker } = create(undefined, false, true, true)
-  const parent = {}
-  const command = { line: 'stop tracker inside frame', terminal: true }
-  install(window, 'parent', parent)
-  tracker.setAnalyticsToken('synthetic')
-  localStorage.setItem('or_buffer_1', 'shared-buffer')
-  const identityKey = '$__or__distinct_device_id__$'
-  const userKey = '$__or__user_id__$'
-  sessionStorage.setItem(userKey, 'shared-user')
-  sessionStorage.setItem(app.options.session_token_key, 'shared-token')
-  const identity = localStorage.getItem(identityKey)
-
-  try {
-    app.parentCrossDomainFrameListener({ source: {}, data: command })
-    expect(tracker.getAnalyticsToken()).toBe('synthetic')
-    app.parentCrossDomainFrameListener({ source: parent, data: command })
-
-    expect((window as any).__OPENREPLAY__).toBeUndefined()
-    expect(tracker.getAnalyticsToken()).toBe('')
-    expect(localStorage.getItem('or_buffer_1')).toBe('shared-buffer')
-    expect(localStorage.getItem(identityKey)).toBe(identity)
-    expect(sessionStorage.getItem(userKey)).toBe('shared-user')
-    expect(sessionStorage.getItem(app.options.session_token_key)).toBe('shared-token')
-  } finally {
-    localStorage.removeItem('or_buffer_1')
-    localStorage.removeItem(identityKey)
-    sessionStorage.removeItem(userKey)
-    sessionStorage.removeItem(app.options.session_token_key)
-  }
-})
-
-test('analytics cannot restore its stored identity after discard', () => {
+test('discard clears analytics memory without changing analytics persistence', () => {
   const { tracker } = create(undefined, false, true, true)
   const analytics = tracker.analytics!
   const identityKey = '$__or__distinct_device_id__$'
@@ -409,17 +373,20 @@ test('analytics cannot restore its stored identity after discard', () => {
   analytics.people.setProperties('name', 'synthetic')
   expect(analytics.people.ownProperties).toEqual({ name: 'synthetic' })
   expect(localStorage.getItem(identityKey)).toBeTruthy()
+  const identity = localStorage.getItem(identityKey)
   expect(sessionStorage.getItem(userKey)).toBe('synthetic')
 
   tracker.discard()
   expect(analytics.people.ownProperties).toEqual({})
   analytics.people.identify('synthetic-late')
   analytics.people.setProperties('late', 'synthetic-late')
+  analytics.people.reset(true)
+  analytics.people.deleteUser()
   expect(analytics.people.ownProperties).toEqual({})
   analytics.constantProperties.saveSuperProperties({ name: 'synthetic-late' })
-  expect(localStorage.getItem(identityKey)).toBeNull()
-  expect(localStorage.getItem(propsKey)).toBeNull()
-  expect(sessionStorage.getItem(userKey)).toBeNull()
+  expect(localStorage.getItem(identityKey)).toBe(identity)
+  expect(localStorage.getItem(propsKey)).toBe('{"name":"synthetic"}')
+  expect(sessionStorage.getItem(userKey)).toBe('synthetic')
 })
 
 test.each(['conditional', 'offline'])('%s recording settles when discard aborts its request', async (path) => {

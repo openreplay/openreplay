@@ -33,6 +33,9 @@ const loaders: Record<string, () => Promise<unknown>> = {
   [MENU.TEST_AGENTS]: () =>
     import('Components/Client/SmartTests/StandalonePage'),
   [MENU.AUDITS]: () => import('Saas/audits/AuditsPage'),
+  [MENU.LOGS]: () => import('Components/Observability/LogsPage'),
+  [MENU.TRACES]: () => import('Components/Observability/SoonPage'),
+  [MENU.OTEL_METRICS]: () => import('Components/Observability/SoonPage'),
 };
 
 export function prefetchRoute(key: string): void {
@@ -76,5 +79,3 @@ export function prefetchPath(pathname: string): void {
   const key = activeMenuKey(pathname, menuRoutes(siteId), menuAliases(siteId));
   if (key) prefetchRoute(key);
 }
-
-export default prefetchRoute;

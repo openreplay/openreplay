@@ -1,51 +1,28 @@
 import { projectStore, useStore } from '@/mstore';
 import Project from '@/mstore/types/project';
-import { IconButton } from '@/ui/actions/IconButton';
 import { Button } from '@/ui/actions/button';
 import { Field } from '@/ui/inputs/Field';
 import { Input } from '@/ui/inputs/input';
 import { Segmented } from '@/ui/inputs/toggle-group';
-import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
 import { useToast } from '@/ui/overlays/toast';
-import { Trash2 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface Props {
-  project?: Project;
   onClose?: (arg: any) => void;
 }
 
-/** Name and type of a project; creating one makes it the open project. */
-function ProjectForm({ project: initial, onClose }: Props) {
+/** Name and type of a new project; creating one makes it the open project. */
+function ProjectForm({ onClose }: Props) {
   const { t } = useTranslation();
   const toast = useToast();
   const mstore = useStore();
   const { projectsStore } = mstore;
-  const [project, setProject] = React.useState<Project>(
-    new Project(initial || {}),
-  );
-  const [deleting, setDeleting] = React.useState(false);
-  const exists = !!project.id && project.exists();
-  const canDelete = projectsStore.list.length > 1;
+  const [project, setProject] = React.useState<Project>(new Project({}));
 
   const submit = () => {
     if (!project.name?.trim()) return;
-    if (exists) {
-      projectsStore
-        .updateProject(project.id!, project)
-        .then(() => {
-          toast.success(t('Project updated successfully'));
-          onClose?.(null);
-        })
-        .catch((e: Error) =>
-          toast.error(
-            e.message || t('An error occurred while updating the project'),
-          ),
-        );
-      return;
-    }
     projectsStore
       .save(project)
       .then((resp: Project) => {
@@ -58,18 +35,6 @@ function ProjectForm({ project: initial, onClose }: Props) {
       .catch((e: Error) =>
         toast.error(
           e.message || t('An error occurred while creating the project'),
-        ),
-      );
-  };
-
-  const remove = () => {
-    setDeleting(false);
-    projectsStore
-      .removeProject(project.id!)
-      .then(() => onClose?.(null))
-      .catch((e: Error) =>
-        toast.error(
-          e.message || t('An error occurred while deleting the project'),
         ),
       );
   };
@@ -114,7 +79,7 @@ function ProjectForm({ project: initial, onClose }: Props) {
             variant="primary"
             disabled={!project.name?.trim() || projectStore.loading}
           >
-            {exists ? t('Save') : t('Add')}
+            {t('Add')}
           </Button>
           <Button
             type="button"
@@ -124,32 +89,7 @@ function ProjectForm({ project: initial, onClose }: Props) {
             {t('Cancel')}
           </Button>
         </div>
-        {exists ? (
-          <IconButton
-            icon={<Trash2 size={14} />}
-            label={
-              canDelete
-                ? t('Delete project')
-                : t('Can’t delete the only project')
-            }
-            variant="ghost"
-            disabled={!canDelete}
-            onClick={() => setDeleting(true)}
-          />
-        ) : null}
       </div>
-      <ConfirmDialog
-        open={deleting}
-        title={t('Delete {{name}}?', { name: project.name })}
-        okText={t('Delete project')}
-        danger
-        onCancel={() => setDeleting(false)}
-        onOk={remove}
-      >
-        {t(
-          'Every session, dashboard and alert belonging to this project goes with it. This cannot be undone.',
-        )}
-      </ConfirmDialog>
     </form>
   );
 }

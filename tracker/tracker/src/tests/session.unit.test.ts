@@ -88,7 +88,13 @@ describe('Session', () => {
     session.setUserID('late')
     session.setUserInfo({ userBrowser: 'late' })
 
-    expect(session.getInfo()).toEqual({ sessionID: undefined, metadata: {}, userID: null, timestamp: 0, projectID: undefined })
+    expect(session.getInfo()).toEqual({
+      sessionID: undefined,
+      metadata: {},
+      userID: null,
+      timestamp: 0,
+      projectID: undefined,
+    })
     expect(session.userInfo.userBrowser).toBe('')
     expect(session.callbacks).toHaveLength(0)
     expect(callback).not.toHaveBeenCalled()

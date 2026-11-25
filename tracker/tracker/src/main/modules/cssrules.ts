@@ -54,7 +54,7 @@ export default function (app: App, opts: CssRulesOptions) {
   // keyed by the rule object so inserts/deletes elsewhere in the sheet don't shift it
   let ruleSnapshots = new WeakMap<CSSRule, string>()
   let checkInterval: number | null = null
-  const trackedSheets: Set<CSSStyleSheet> = new Set()
+  const trackedSheets: Set<CSSStyleSheet> = new Set();
   const checkIntervalMs = options.checkCssInterval || 200
   let checkIterations: Record<number, number> = {}
   const restoreContexts = new ContextPatches()
@@ -164,8 +164,9 @@ export default function (app: App, opts: CssRulesOptions) {
     }
 
     const trackDelete: typeof deleteRule = function (this: CSSStyleSheet, index) {
+      if (!app.captureSanitizer) sendInsertDeleteRule(this, index)
       deleteRule.call(this, index)
-      sendInsertDeleteRule(this, index)
+      if (app.captureSanitizer) sendInsertDeleteRule(this, index)
     }
 
     sheet.insertRule = trackInsert

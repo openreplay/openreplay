@@ -43,8 +43,8 @@ import ValuePicker from './ValuePicker';
 import {
   categoryLabel,
   describeRules,
+  entryOperators,
   isNullary,
-  operatorsFor,
 } from './catalogue';
 import { useEventProperties } from './data';
 import './filter-chips.css';
@@ -81,6 +81,12 @@ export interface FilterBarProps {
   orderNote?: (order: EventsOrder) => ReactNode;
   /** Assist live search: only `is`/`contains`. */
   live?: boolean;
+  /** Empty, a button as wide as its words instead of the bar. */
+  emptyAs?: 'field' | 'button';
+  /** rules written from outside the bar (a facet rail) leave it closed */
+  restCollapsed?: boolean;
+  /** what the bar filters, for its label */
+  ariaLabel?: string;
 }
 
 function FilterBar({
@@ -92,6 +98,9 @@ function FilterBar({
   orderLocked = false,
   orderNote,
   live = false,
+  emptyAs = 'field',
+  restCollapsed = false,
+  ariaLabel,
 }: FilterBarProps) {
   const { t } = useTranslation();
   const { events, properties, eventsOrder } = editor;
@@ -120,7 +129,10 @@ function FilterBar({
 
   const collapse = useFilterCollapse(
     inPanel ? 0 : events.length + properties.length,
+    restCollapsed,
   );
+  // every rule is one kind: its door is just "filter"
+  const oneKind = eventEntries.length === 0 && events.length === 0;
   const collapsed = !inPanel && any && collapse.collapsed;
 
   const openPanel = (
@@ -199,7 +211,7 @@ function FilterBar({
     <section
       className={`m-fchips${inPanel ? ' m-fchips--panel' : ''}${collapsed ? ' is-collapsed' : ''}`}
       data-slot="filter-bar"
-      aria-label={t('Session filter')}
+      aria-label={ariaLabel ?? t('Session filter')}
       ref={collapse.anchor as RefObject<HTMLElement>}
     >
       <div className={`m-fchips__stack${any ? '' : ' is-empty'}`}>
@@ -239,23 +251,21 @@ function FilterBar({
                 />
               )}
               {events.length > 0 && orderNote?.(eventsOrder)}
-              {eventEntries.length === 0 &&
-                events.length === 0 &&
-                properties.length > 0 && (
-                  <Tooltip
-                    title={t(
-                      'Every filter applies: what shows matches all of them',
-                    )}
+              {oneKind && properties.length > 0 && (
+                <Tooltip
+                  title={t(
+                    'Every filter applies: what shows matches all of them',
+                  )}
+                >
+                  <span
+                    className="m-fchips__orderpick is-fixed"
+                    aria-label={t('Filters combined with and, fixed')}
                   >
-                    <span
-                      className="m-fchips__orderpick is-fixed"
-                      aria-label={t('Filters combined with and, fixed')}
-                    >
-                      <Combine size={13} aria-hidden="true" />
-                      <span className="m-fchips__ordertag">{t('and')}</span>
-                    </span>
-                  </Tooltip>
-                )}
+                    <Combine size={13} aria-hidden="true" />
+                    <span className="m-fchips__ordertag">{t('and')}</span>
+                  </span>
+                </Tooltip>
+              )}
               {trailing}
             </div>
             {events.map((f, i) => (
@@ -328,7 +338,7 @@ function FilterBar({
                 ref={addGroup}
               >
                 <AddControl
-                  label={t('Add group property')}
+                  label={oneKind ? t('Add filter') : t('Add group property')}
                   plus
                   onOpen={(typed) => openPanel('group', typed)}
                   expanded={open === 'group'}
@@ -344,6 +354,7 @@ function FilterBar({
               <AddControl
                 label={lead}
                 word={inPanel ? lead : t('Filter')}
+                plus={emptyAs === 'button'}
                 onOpen={(typed) => openPanel('all', typed)}
                 expanded={open === 'all'}
                 badge={!inPanel}
@@ -373,7 +384,9 @@ function FilterBar({
             open === 'event'
               ? t('Search filters')
               : open === 'group'
-                ? t('Search group properties')
+                ? oneKind
+                  ? t('Search filters')
+                  : t('Search group properties')
                 : undefined
           }
         />
@@ -554,7 +567,7 @@ function Predicate({
 }) {
   const { t } = useTranslation();
   const { entry } = filter;
-  const operators = operatorsFor(entry.dataType, live);
+  const operators = entryOperators(entry, live);
   return (
     <>
       {operators.length > 1 && (
@@ -757,48 +770,6 @@ export function RuleChips({
         />
       </div>
     </section>
-  );
-}
-
-export function SingleRule({
-  filter,
-  editor,
-  entries,
-  removable = false,
-}: {
-  filter: SearchFilter;
-  editor: FilterEditor;
-  entries: readonly CatalogueEntry[];
-  removable?: boolean;
-}) {
-  const { t } = useTranslation();
-  const { entry } = filter;
-  return (
-    <span className="m-fchip m-fchip--group" data-slot="filter-chip">
-      <span className="m-fchip__main">
-        <NameSegment
-          entry={entry}
-          entries={entries}
-          taken={[]}
-          onReplace={(e) => editor.onReplace(filter.key, e)}
-        />
-        <Predicate
-          filter={filter}
-          live={false}
-          onUpdate={(p) => editor.onUpdate(filter.key, p)}
-        />
-      </span>
-      {removable && (
-        <Actions>
-          <ActionButton
-            name={t('Remove {{name}}', { name: entry.displayName })}
-            onClick={() => editor.onRemove(filter.key)}
-          >
-            <CircleMinus size={13} aria-hidden="true" />
-          </ActionButton>
-        </Actions>
-      )}
-    </span>
   );
 }
 

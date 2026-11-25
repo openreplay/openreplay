@@ -12,6 +12,11 @@
   border-top: 1px solid transparent;
   box-shadow: 0 -1px 0 var(--m-border-subtle);
 }
+/* collapsed borders spill half of the last row's line past the table, 0.5px
+   under the shadow above: the footer's line is the only one */
+:has(> .m-listfoot) > * tbody > tr:last-child {
+  border-bottom-color: transparent;
+}
 
 .m-listfoot__range {
   white-space: nowrap;

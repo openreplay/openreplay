@@ -202,17 +202,12 @@ export default class API {
       return
     }
 
-    let clearSharedStorage = true
     const app = new App(
       options.projectKey,
       options.sessionToken,
       options,
       this.signalStartIssue,
       this.crossdomainMode,
-      () => {
-        clearSharedStorage = false
-        this.discardTracker(false)
-      },
     )
     this.app = app
     if (options.projectKey && options.analytics?.active) {
@@ -246,7 +241,7 @@ export default class API {
         this.analytics?.onStart()
       })
       app.attachStopCallback(() => {
-        if (app.isDisposed()) this.analytics?.onDiscard(clearSharedStorage)
+        if (app.isDisposed()) this.analytics?.onDiscard()
         else this.analytics?.onStop()
       })
     }
@@ -477,16 +472,12 @@ export default class API {
 
   /** Terminally drop pending capture; dispatched requests cannot be retracted. */
   discard(): void {
-    this.discardTracker(true)
-  }
-
-  private discardTracker(clearSharedStorage: boolean): void {
     const app = this.app
     if (app === null) return
     this.app = null
     this.analyticsToken = null
     try {
-      app.discard(clearSharedStorage)
+      app.discard()
     } finally {
       // A new constructor must not race the old global-patch detach callbacks.
       if (IN_BROWSER && (window as any).__OPENREPLAY__ === this) {
@@ -587,13 +578,12 @@ export default class API {
   }
 
   event(key: string, payload: any = null, issue = false): void {
-    const app = this.app
-    if (typeof key === 'string' && app !== null) {
+    if (typeof key === 'string' && this.app !== null) {
       if (issue) {
         return this.issue(key, payload)
       } else {
         if (!payload || typeof payload === 'string') {
-          return app.send(CustomEvent(key, payload))
+          return this.app.send(CustomEvent(key, payload))
         }
         try {
           if ('or_timestamp' in payload) {
@@ -607,20 +597,19 @@ export default class API {
           }
           payload = JSON.stringify(payload)
         } catch (_) {}
-        app.send(CustomEvent(key, payload))
+        this.app?.send(CustomEvent(key, payload))
       }
     }
   }
 
   issue(key: string, payload: any = null): void {
-    const app = this.app
-    if (typeof key === 'string' && app !== null) {
+    if (typeof key === 'string' && this.app !== null) {
       try {
         payload = JSON.stringify(payload)
       } catch (e) {
         return
       }
-      app.send(CustomIssue(key, payload))
+      this.app?.send(CustomIssue(key, payload))
     }
   }
 
@@ -632,13 +621,13 @@ export default class API {
       return
     }
     if (e instanceof Error) {
-      const msg = getExceptionMessage(e, [], metadata)
+      const msg = getExceptionMessage(this.app, e, [], metadata)
       this.app.send(msg)
     } else if (
       e instanceof ErrorEvent ||
       ('PromiseRejectionEvent' in window && e instanceof PromiseRejectionEvent)
     ) {
-      const msg = getExceptionMessageFromEvent(e, undefined, metadata)
+      const msg = getExceptionMessageFromEvent(this.app, e, undefined, metadata)
       if (msg != null) {
         this.app.send(msg)
       }

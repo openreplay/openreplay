@@ -1,4 +1,8 @@
-import { SetNodeAttributeDictGlobal, SetNodeAttribute, Type } from '../../common/messages.gen.js'
+import {
+  SetNodeAttributeDictGlobal,
+  SetNodeAttribute,
+  Type,
+} from '../../common/messages.gen.js'
 import App from '../app/index.js'
 import { SetNodeAttributeURLBased, RemoveNodeAttribute } from '../app/messages.gen.js'
 

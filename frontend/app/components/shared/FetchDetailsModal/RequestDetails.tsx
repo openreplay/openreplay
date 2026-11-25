@@ -24,6 +24,7 @@ import { observer } from 'mobx-react-lite';
 import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { copyText } from 'App/lib/use-copy';
 import { useStore } from 'App/mstore';
 import { formatClock } from 'App/player-ui/clock';
 import { formatBytes } from 'App/utils';
@@ -110,12 +111,11 @@ export const RequestDetails = observer(function RequestDetails({
 
   const copy = async (kind: 'curl' | 'fetch') => {
     const text = kind === 'curl' ? toCurl(r) : toFetch(r);
-    try {
-      await navigator.clipboard.writeText(text);
+    if (await copyText(text)) {
       toast.success(
         kind === 'curl' ? t('Copied as cURL') : t('Copied as JS fetch'),
       );
-    } catch {
+    } else {
       toast.info(t('Could not reach the clipboard'));
     }
   };

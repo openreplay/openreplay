@@ -11,7 +11,6 @@ import { useInView } from 'react-intersection-observer';
 import CustomMetricPercentage from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricPercentage';
 import CustomMetricTableErrors from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricTableErrors';
 import CustomMetricTableSessions from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricTableSessions';
-import { Styles } from 'App/components/Dashboard/Widgets/common';
 import {
   ERRORS,
   FUNNEL,
@@ -23,22 +22,20 @@ import {
   USER_PATH,
   WEBVITALS,
 } from 'App/constants/card';
-import useIsMounted from 'App/hooks/useIsMounted';
 import { useStore } from 'App/mstore';
 import { debounce } from 'App/utils';
 import {
   type NestedData,
   buildLevelTree,
   collectTimestamps,
-  computeSelectionFromTopN,
   getDepth,
   remapTimestamps,
+  selectTopLeaves,
 } from 'App/utils/breakdownTree';
 import { hasRuleValue } from 'App/utils/hasRuleValue';
 import { hasSampling } from 'App/utils/split-utils';
 import TrendChart from 'Components/Charts/TrendChart';
 import SessionsBy from 'Components/Dashboard/Widgets/CustomMetricsWidgets/SessionsBy';
-import SessionsByWithBreakdown from 'Components/Dashboard/Widgets/CustomMetricsWidgets/SessionsByWithBreakdown';
 import NoDataInWindow from 'Components/Dashboard/components/NoDataInWindow';
 
 import BugNumChart from '../../Widgets/CustomMetricsWidgets/BigNumChart';
@@ -116,11 +113,11 @@ function nothingInWindow(metric: any, data: any): boolean {
 interface Props {
   metric: any;
   isSaved?: boolean;
-  isTemplate?: boolean;
   isPreview?: boolean;
-  height?: number;
   /** on a dashboard: a datum was drilled into, open its card */
   onDatum?: () => void;
+  /** on a dashboard: open the card */
+  onOpen?: () => void;
 }
 
 function WidgetChart(props: Props) {
@@ -132,7 +129,7 @@ function WidgetChart(props: Props) {
     rootMargin: '200px 0px',
   });
   const abortController = React.useRef<AbortController>(null);
-  const { isSaved = false, metric, isTemplate, height } = props;
+  const { isSaved = false, metric } = props;
   const { dashboardStore, metricStore, filterStore, userStore } = useStore();
   const showSampling = hasSampling && userStore.isEnterprise;
   const _metric: any = props.metric;
@@ -142,13 +139,11 @@ function WidgetChart(props: Props) {
   const { drillDownFilter } = dashboardStore;
   // on a dashboard a card is drawn over the dashboard's period
   const drawnPeriod = isSaved ? period : drillDownPeriod;
-  const colors = Styles.safeColors;
   const [loading, setLoading] = useState(true);
   const [stale, setStale] = useState(false);
   const params = { density: dashboardStore.selectedDensity, rows: 5 };
   const metricParams = _metric.params;
   const prevMetricRef = useRef<any>();
-  const isMounted = useIsMounted();
   const [compData, setCompData] = useState<any>(null);
   const [enabledRows, setEnabledRows] = useState<string[]>(
     _metric.series.map((s) => s.name),
@@ -292,7 +287,6 @@ function WidgetChart(props: Props) {
     period: any,
     isComparison?: boolean,
   ) => {
-    if (!isMounted()) return;
     abortController.current = new AbortController();
     const signal = abortController.current.signal;
     setLoading(true);
@@ -323,10 +317,11 @@ function WidgetChart(props: Props) {
       });
   };
 
-  const debounceRequest: any = React.useCallback(
-    debounce(fetchMetricChartData, 500),
+  const debounceRequest = React.useMemo(
+    () => debounce(fetchMetricChartData, 500),
     [],
   );
+  useEffect(() => () => debounceRequest.cancel(), [debounceRequest]);
   const lastRequestKey = useRef<string | undefined>(undefined);
   const loadPage = () => {
     if (!inView) return;
@@ -451,7 +446,9 @@ function WidgetChart(props: Props) {
 
     if (metricType === FUNNEL) {
       if (viewType === 'table') {
-        return <FunnelTable data={data} compData={compData} />;
+        return (
+          <FunnelTable metric={_metric} data={data} compData={compData} />
+        );
       }
       if (viewType === 'metric') {
         const values: {
@@ -473,12 +470,8 @@ function WidgetChart(props: Props) {
         return (
           <BugNumChart
             values={values}
-            inGrid={!props.isPreview}
-            colors={colors}
             hideLegend
-            onClick={onChartClick}
             label={t('Conversion')}
-            height={height}
           />
         );
       }
@@ -488,9 +481,10 @@ function WidgetChart(props: Props) {
           metric={_metric}
           data={data}
           compData={compData}
-          isWidget={isSaved || isTemplate}
+          isWidget={isSaved}
           drillPeriod={drawnPeriod}
           onDrill={props.onDatum}
+          onOpen={props.onOpen}
         />
       );
     }
@@ -502,7 +496,6 @@ function WidgetChart(props: Props) {
           : metric;
       return (
         <WidgetPredefinedChart
-          isTemplate={isTemplate}
           metric={defaultMetric}
           data={data}
           predefinedKey={_metric.metricOf}
@@ -592,7 +585,7 @@ function WidgetChart(props: Props) {
                 : focusSeries
             }
             onClick={onChartClick}
-            height={height ?? 240}
+            height={240}
             label={
               _metric.metricOf ? labels[_metric.metricOf] : labels.sessionCount
             }
@@ -604,7 +597,6 @@ function WidgetChart(props: Props) {
           <CustomMetricPercentage
             inGrid={!props.isPreview}
             data={data[0]}
-            height={height}
             label={
               _metric.metricOf ? labels[_metric.metricOf] : labels.sessionCount
             }
@@ -640,11 +632,7 @@ function WidgetChart(props: Props) {
         return (
           <BugNumChart
             values={values}
-            height={height}
-            inGrid={!props.isPreview}
-            colors={colors}
             onSeriesFocus={onFocus}
-            onClick={onChartClick}
             label={
               _metric.metricOf ? labels[_metric.metricOf] : labels.sessionCount
             }
@@ -659,9 +647,7 @@ function WidgetChart(props: Props) {
           <CustomMetricTableSessions
             metric={_metric}
             data={data}
-            height={height}
-            isTemplate={isTemplate}
-            isEdit={!isSaved && !isTemplate}
+            isEdit={!isSaved}
             inGrid={!props.isPreview}
           />
         );
@@ -672,28 +658,16 @@ function WidgetChart(props: Props) {
             metric={_metric}
             data={data}
             inGrid={!props.isPreview}
-            height={height}
-            isEdit={!isSaved && !isTemplate}
+            isEdit={!isSaved}
           />
         );
       }
       if (viewType === TABLE) {
-        if (data.hasBreakdown) {
-          return (
-            <SessionsByWithBreakdown
-              metric={_metric}
-              data={data}
-              onClick={onChartClick}
-              isTemplate={isTemplate}
-            />
-          );
-        }
         return (
           <SessionsBy
             metric={_metric}
             data={data}
             onClick={onChartClick}
-            isTemplate={isTemplate}
             inGrid={!props.isPreview}
           />
         );
@@ -716,7 +690,7 @@ function WidgetChart(props: Props) {
 
     if (metricType === INSIGHTS) {
       return (
-        <InsightsCard height={height} data={data} inGrid={!props.isPreview} />
+        <InsightsCard data={data} inGrid={!props.isPreview} />
       );
     }
 
@@ -765,7 +739,7 @@ function WidgetChart(props: Props) {
         return (
           <TrendChart
             viewType="lineChart"
-            height={height ?? 240}
+            height={240}
             data={data}
             onClick={onChartClick}
           />
@@ -832,35 +806,29 @@ function WidgetChart(props: Props) {
     return { ...data.breakdownData, ...remapped };
   }, [data?.breakdownData, compData?.breakdownData]);
 
-  const breakdownInitialized = React.useRef(false);
+  // the top N the selection was last built for; checkboxes refine it after
+  const selectedFor = React.useRef<number | null>(null);
 
-  // Reset selection when breakdown configuration changes
   React.useEffect(() => {
-    breakdownInitialized.current = false;
+    selectedFor.current = null;
     metricStore.clearBreakdownSelection();
   }, [_metric.breakdowns]);
 
-  // Initialise breakdown selection when data first loads
   React.useEffect(() => {
-    if (mergedBreakdownData && !breakdownInitialized.current) {
-      const depth = Math.max(
-        0,
-        ...Object.values(mergedBreakdownData).map((d) =>
-          getDepth(d as NestedData),
-        ),
-      );
-      if (depth > 0) {
-        breakdownInitialized.current = true;
-        const tree = buildLevelTree(mergedBreakdownData);
-        const selection = computeSelectionFromTopN(
-          tree,
-          metricStore.breakdownLevelTopN,
-          depth,
-        );
-        metricStore.setBreakdownSelection(selection);
-      }
-    }
-  }, [mergedBreakdownData, metricStore.breakdownLevelTopN]);
+    const topN = metricStore.breakdownTopN;
+    if (!mergedBreakdownData || selectedFor.current === topN) return;
+    const depth = Math.max(
+      0,
+      ...Object.values(mergedBreakdownData).map((d) =>
+        getDepth(d as NestedData),
+      ),
+    );
+    if (depth === 0) return;
+    selectedFor.current = topN;
+    metricStore.setBreakdownSelection(
+      selectTopLeaves(buildLevelTree(mergedBreakdownData), depth, topN),
+    );
+  }, [mergedBreakdownData, metricStore.breakdownTopN]);
 
   // a loaded heatmap stays mounted while it refetches: the same definition picks
   // the same session, so its replay doesn't have to download again

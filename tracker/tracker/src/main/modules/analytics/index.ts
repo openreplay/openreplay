@@ -134,22 +134,14 @@ export default class Analytics {
       this.batcher.restart()
     }
   }
-  onDiscard = (clearSharedStorage = true) => {
+  onDiscard = () => {
     if (this.discarded) return
     this.discarded = true
     this.token = null
     this.batcher.discard()
-    this.constantProperties.discard(clearSharedStorage)
+    this.constantProperties.discard()
     this.people.discard()
     this.events.reset()
-    if (this.standalone && clearSharedStorage) {
-      try {
-        if (this.sessionStorage.removeItem) this.sessionStorage.removeItem(STORAGEKEY)
-        else this.sessionStorage.setItem(STORAGEKEY, '')
-      } catch {
-        // Storage may be unavailable during teardown.
-      }
-    }
   }
   onStop = () => {
     if (!this.standalone) {

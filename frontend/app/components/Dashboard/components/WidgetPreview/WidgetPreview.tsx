@@ -1,7 +1,8 @@
 import { IconButton } from '@/ui/actions/IconButton';
 import { Loader } from '@/ui/feedback/Loader';
+import { PagePanel } from '@/ui/layout/PageCard';
 import { Tooltip } from '@/ui/overlays/tooltip';
-import cn from 'classnames';
+import { clsx as cn } from 'clsx';
 import { Download, Table2 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { Suspense, lazy } from 'react';
@@ -77,60 +78,68 @@ function WidgetPreview(props: Props) {
   );
 
   const presetComparison = metric.compareTo;
-  return (
-    <div className={cn(className, 'm-cardp__preview')}>
-      <div className="m-cardp__toolbar" data-slot="card-toolbar">
-        <div className="m-cardp__toolbar-left">
-          <WidgetDateRange
-            hasGranularSettings={hasGranularSettings}
-            hasGranularity={hasGranularity}
-            hasComparison={hasComparison}
-            presetComparison={presetComparison}
-          />
-        </div>
-        <div className="m-cardp__toolbar-right">
-          <WidgetOptions />
-          {exportTable ? (
-            <>
-              {metric.viewType !== 'table' ? (
-                <Tooltip
-                  title={tableShown ? t('Hide the table') : t('Show the table')}
-                >
-                  <span className="inline-flex">
-                    <IconButton
-                      icon={<Table2 size={15} />}
-                      label={
-                        tableShown ? t('Hide the table') : t('Show the table')
-                      }
-                      variant="ghost"
-                      pressed={tableShown}
-                      onClick={toggleTable}
-                    />
-                  </span>
-                </Tooltip>
-              ) : null}
-              <Tooltip title={t('Export as CSV')}>
+  const toolbar = (
+    <div
+      className="m-cardp__toolbar m-cardp__toolbar--head"
+      data-slot="card-toolbar"
+    >
+      <div className="m-cardp__toolbar-left">
+        <span className="m-pa__head-title">{t('Preview')}</span>
+        <WidgetDateRange
+          hasGranularSettings={hasGranularSettings}
+          hasGranularity={hasGranularity}
+          hasComparison={hasComparison}
+          presetComparison={presetComparison}
+        />
+      </div>
+      <div className="m-cardp__toolbar-right">
+        <WidgetOptions />
+        {exportTable ? (
+          <>
+            {metric.viewType !== 'table' ? (
+              <Tooltip
+                title={tableShown ? t('Hide the table') : t('Show the table')}
+              >
                 <span className="inline-flex">
                   <IconButton
-                    icon={<Download size={15} />}
-                    label={t('Export as CSV')}
+                    icon={<Table2 size={15} />}
+                    label={
+                      tableShown ? t('Hide the table') : t('Show the table')
+                    }
                     variant="ghost"
-                    onClick={exportTable}
+                    pressed={tableShown}
+                    onClick={toggleTable}
                   />
                 </span>
               </Tooltip>
-            </>
-          ) : null}
-        </div>
-      </div>
-      <div className="m-cardp__chart">
-        <PreviewTableContext.Provider value={table}>
-          <Suspense fallback={<Loader loading style={{ height: 240 }} />}>
-            <WidgetChart isPreview metric={metric} />
-          </Suspense>
-        </PreviewTableContext.Provider>
+            ) : null}
+            <Tooltip title={t('Export as CSV')}>
+              <span className="inline-flex">
+                <IconButton
+                  icon={<Download size={15} />}
+                  label={t('Export as CSV')}
+                  variant="ghost"
+                  onClick={exportTable}
+                />
+              </span>
+            </Tooltip>
+          </>
+        ) : null}
       </div>
     </div>
+  );
+  return (
+    <PagePanel head={toolbar}>
+      <div className={cn(className, 'm-cardp__preview')}>
+        <div className="m-cardp__chart">
+          <PreviewTableContext.Provider value={table}>
+            <Suspense fallback={<Loader loading style={{ height: 240 }} />}>
+              <WidgetChart isPreview metric={metric} />
+            </Suspense>
+          </PreviewTableContext.Provider>
+        </div>
+      </div>
+    </PagePanel>
   );
 }
 

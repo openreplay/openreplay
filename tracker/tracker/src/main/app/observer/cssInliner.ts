@@ -17,8 +17,16 @@ export function inlineRemoteCss(
   const isStale = () => signal?.aborted ||
     (capture !== undefined && node.getAttribute('href') !== capture.original)
   if (isStale()) return
-  const href = capture?.href ?? node.href
-  const deliver = (cssText: string, cssBaseHref = baseHref) => {
+  let cssBaseHref = baseHref
+  if (capture) {
+    if (!capture.href) return
+    try {
+      cssBaseHref = new URL(capture.href, node.baseURI).href
+    } catch {
+      return
+    }
+  }
+  const deliver = (cssText: string) => {
     if (isStale()) return
     const approved = sanitizeCapture(capture?.sanitizer, {
       kind: 'css',
@@ -35,9 +43,7 @@ export function inlineRemoteCss(
     addOwner(sheetId!, id);
   }
 
-  // The observer already approved this raw href; unchanged relative URLs retain sheet access.
-  const mayReadSheet = !capture || capture.href === capture.original
-  const sheet = mayReadSheet ? node.sheet : null
+  const sheet = node.sheet
 
   if (sheet && !forceFetch) {
     try {
@@ -53,13 +59,8 @@ export function inlineRemoteCss(
   }
 
   // Fall back to fetching if we couldn't get or stringify the sheet
-  if (href && !isStale()) {
-    let url: string
-    try {
-      url = mayReadSheet ? node.href : new URL(href, node.baseURI).href
-    } catch {
-      return
-    }
+  const url = node.href
+  if (url && !isStale()) {
     const request = signal ? fetch(url, { signal }) : fetch(url)
     request
       .then(response => {
@@ -69,7 +70,7 @@ export function inlineRemoteCss(
         return response.text();
       })
       .then(cssText => {
-        deliver(cssText, mayReadSheet ? baseHref : url)
+        deliver(cssText)
       })
       .catch(error => {
         if (signal?.aborted) return
@@ -84,7 +85,7 @@ export function inlineRemoteCss(
   }
 
   function retryViaLoadEvent() {
-    if (!mayReadSheet || isStale()) return
+    if (isStale()) return
     const trySheet = () => {
       if (isStale()) return
       const loadedSheet = node.sheet;

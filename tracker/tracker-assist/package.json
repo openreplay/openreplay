@@ -27,27 +27,27 @@
     "postversion": "bun run build"
   },
   "dependencies": {
-    "csstype": "^3.2.3",
+    "csstype": "^3.2.4",
     "fflate": "^0.8.3",
-    "socket.io-client": "^4.8.3"
+    "socket.io-client": "^4.8.4"
   },
   "peerDependencies": {
     "@openreplay/tracker": ">=15.0.0-0"
   },
   "devDependencies": {
-    "@jest/globals": "^30.4.1",
+    "@jest/globals": "^30.5.2",
     "@openreplay/tracker": "workspace:*",
-    "@types/node": "^26.4.1",
-    "@typescript-eslint/eslint-plugin": "^8.65.0",
-    "@typescript-eslint/parser": "^8.65.0",
+    "@types/node": "^26.6.6",
+    "@typescript-eslint/eslint-plugin": "^8.73.0",
+    "@typescript-eslint/parser": "^8.73.0",
     "eslint": "^9.39.5",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-prettier": "^5.5.6",
-    "jest": "^30.4.2",
-    "jest-environment-jsdom": "^30.4.1",
-    "prettier": "^3.9.6",
+    "eslint-plugin-prettier": "^5.5.7",
+    "jest": "^30.5.2",
+    "jest-environment-jsdom": "^30.5.2",
+    "prettier": "^3.10.1",
     "replace-in-files-cli": "^1.0.0",
-    "ts-jest": "^29.4.12",
+    "ts-jest": "^29.4.15",
     "typescript": "^5.9.3"
   },
   "packageManager": "bun@1.2.7"

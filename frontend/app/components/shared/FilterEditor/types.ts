@@ -1,12 +1,9 @@
+import type { TFunction } from 'i18next';
+
 import type { Filter } from 'App/mstore/types/filterConstants';
 
 export type DataType =
-  | 'string'
-  | 'number'
-  | 'boolean'
-  | 'duration'
-  | 'array'
-  | 'date';
+  'string' | 'number' | 'boolean' | 'duration' | 'array' | 'date';
 
 export type EventsOrder = 'then' | 'and' | 'or';
 export type PropertyOrder = 'and' | 'or';
@@ -23,6 +20,10 @@ export interface CatalogueEntry {
   autoCaptured: boolean;
   /** Closed value set (`possibleValues` of predefined filters). */
   options?: readonly { value: string; label: string }[];
+  /** Names an open set's value that reads otherwise (Logs' empty service). */
+  valueLabel?: (t: TFunction, value: string) => string;
+  /** Overrides the operators of the data type (a source that supports fewer). */
+  operators?: readonly { value: string; label: string }[];
   source: Filter;
 }
 

@@ -25,8 +25,11 @@ export function pages(
 ): (number | 'gap')[] {
   const span = 2 * radius + 5;
   if (last <= span) return Array.from({ length: last }, (_, i) => i + 1);
-  const lo = Math.max(2, Math.min(current - radius, last - (2 * radius + 2)));
-  const hi = Math.min(last - 1, Math.max(current + radius, 2 * radius + 3));
+  let lo = Math.max(2, Math.min(current - radius, last - (2 * radius + 2)));
+  let hi = Math.min(last - 1, Math.max(current + radius, 2 * radius + 3));
+  // a gap never stands for one page: that page shows instead
+  if (lo === 3) lo = 2;
+  if (hi === last - 2) hi = last - 1;
   const out: (number | 'gap')[] = [1];
   if (lo > 2) out.push('gap');
   for (let p = lo; p <= hi; p++) out.push(p);
@@ -52,15 +55,24 @@ export function Pagination({
   const long = last >= LONG_FROM;
   const radius = radiusFor(last);
   const [draft, setDraft] = useState('');
+  const [invalid, setInvalid] = useState(false);
 
-  useEffect(() => setDraft(''), [current]);
+  useEffect(() => {
+    setDraft('');
+    setInvalid(false);
+  }, [current]);
   const go = (n: number) => {
     const p = Math.min(last, Math.max(1, n));
     if (p !== current) onChange(p);
   };
+  // out of range, the page stays and the field says what it takes
   const commit = () => {
-    const n = parseInt(draft, 10);
-    if (!n) return;
+    if (!draft) return;
+    const n = /^\d+$/.test(draft) ? Number(draft) : 0;
+    if (n < 1 || n > last) {
+      setInvalid(true);
+      return;
+    }
     go(n);
     setDraft('');
   };
@@ -176,24 +188,28 @@ export function Pagination({
 
       {long && (
         <span className="m-pager__goto ml-2 flex items-center border-l border-border-subtle pl-3">
-          <Input
-            value={draft}
-            inputMode="numeric"
-            placeholder={t('Go to')}
-            title={`Type a page number between 1 and ${last} and press Enter`}
-            aria-label={`Go to page, 1 to ${last}`}
-            className="h-control-sm w-14 px-2 text-center text-xs tabular-nums"
-            onChange={(e) =>
-              setDraft(
-                e.target.value
-                  .replace(/[^0-9]/g, '')
-                  .slice(0, String(last).length),
-              )
-            }
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') commit();
-            }}
-          />
+          <Tooltip
+            title={t('{{from}} to {{to}}', { from: 1, to: last })}
+            open={invalid}
+          >
+            <Input
+              value={draft}
+              inputMode="numeric"
+              placeholder={t('Go to')}
+              title={`Type a page number between 1 and ${last} and press Enter`}
+              aria-label={`Go to page, 1 to ${last}`}
+              aria-invalid={invalid || undefined}
+              className="h-control-sm w-14 px-2 text-center text-xs tabular-nums"
+              onChange={(e) => {
+                setDraft(e.target.value.trim().slice(0, 8));
+                setInvalid(false);
+              }}
+              onBlur={() => setInvalid(false)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') commit();
+              }}
+            />
+          </Tooltip>
         </span>
       )}
     </nav>

@@ -124,17 +124,40 @@
   padding: var(--m-space-4) var(--m-space-4) 0;
 }
 
-.m-dr__input {
+.m-dr__end {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--m-space-3);
+}
+.m-dr__picker.has-time .m-dr__end {
+  grid-template-columns: minmax(0, 1fr) 5.5rem;
+}
+
+.m-dr__input,
+.m-dr__time {
   font-variant-numeric: tabular-nums;
   text-align: center;
   font-size: var(--m-text-xs);
 }
+.m-dr__time {
+  color-scheme: light dark;
+}
+.m-dr__time::-webkit-calendar-picker-indicator {
+  display: none;
+}
+.m-dr__time::-webkit-datetime-edit {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
 
-.m-dr__input.is-active {
+.m-dr__input.is-active,
+.m-dr__time.is-active {
   border-color: var(--m-border-strong);
   background: var(--m-surface-default);
 }
-.m-dr__input.is-bad {
+.m-dr__input.is-bad,
+.m-dr__time.is-bad {
   border-color: var(--m-border-danger);
 }
 

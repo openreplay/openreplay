@@ -1,4 +1,5 @@
 import type App from '../app/index.js'
+import { isTextNode } from '../app/guards.js'
 import { SelectionChange } from '../app/messages.gen.js'
 import { stringWiper } from '../app/sanitizer.js'
 import { firstChild, nextSibling, parentNode } from '../app/untaintedDom.js'
@@ -39,6 +40,25 @@ function rangeHasMasked(app: App, range: Range): boolean {
   return false
 }
 
+/** obscureTextEmails/-Numbers rewrite it; an email cut by an end matches only in its node */
+function rewritesText(app: App, sel: Selection, text: string, start: number, end: number): boolean {
+  const s = app.sanitizer
+  const cut = (n: Node | null, id: number) =>
+    n !== null && isTextNode(n) && s.sanitize(id, n.data) !== n.data
+  return s.sanitize(start, text) !== text || cut(sel.anchorNode, start) || cut(sel.focusNode, end)
+}
+
+/** Firefox's toString() includes a textarea's default value, where React keeps typed text */
+function rangeHasTextarea(range: Range): boolean {
+  const ca = range.commonAncestorContainer
+  if (ca.nodeType !== Node.ELEMENT_NODE && ca.nodeType !== Node.DOCUMENT_NODE) return false
+  const fields = (ca as Element).getElementsByTagName('textarea')
+  for (let i = 0; i < fields.length; i++) {
+    if (fields[i].defaultValue.trim() && range.intersectsNode(fields[i])) return true
+  }
+  return false
+}
+
 function touchesMasked(app: App, selection: Selection, start: number, end: number): boolean {
   const sanitizer = app.sanitizer
   if (sanitizer.privateMode || sanitizer.isObscured(start) || sanitizer.isObscured(end)) {
@@ -48,6 +68,8 @@ function touchesMasked(app: App, selection: Selection, start: number, end: numbe
 }
 
 function selection(app: App) {
+  // a caret move in a text field fires selectionchange too
+  let selected = false
   app.attachEventListener(document, 'selectionchange', () => {
     const selection = document.getSelection()
     if (selection !== null && !selection.isCollapsed) {
@@ -55,12 +77,18 @@ function selection(app: App) {
       const selectionEnd = app.nodes.getID(selection.focusNode!)
       if (selectionStart && selectionEnd) {
         let selectedText = selection.toString().replace(/\s+/g, ' ')
-        if (touchesMasked(app, selection, selectionStart, selectionEnd)) {
+        if (
+          touchesMasked(app, selection, selectionStart, selectionEnd) ||
+          rangeHasTextarea(selection.getRangeAt(0)) ||
+          rewritesText(app, selection, selectedText, selectionStart, selectionEnd)
+        ) {
           selectedText = stringWiper(selectedText)
         }
+        selected = true
         app.send(SelectionChange(selectionStart, selectionEnd, selectedText))
       }
-    } else {
+    } else if (selected) {
+      selected = false
       app.send(SelectionChange(-1, -1, ''))
     }
   })

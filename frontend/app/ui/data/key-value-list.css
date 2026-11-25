@@ -1,0 +1,190 @@
+.m-kv {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-space-2);
+  min-width: 0;
+}
+
+.m-kv__search {
+  position: sticky;
+  top: var(--m-kv-sticky-top, 0);
+  z-index: 1;
+  padding-block: var(--m-space-3);
+  background: var(--m-surface-default);
+}
+.m-kv__search .m-search {
+  width: 100%;
+}
+
+.m-kv__empty {
+  padding: var(--m-space-4) 0;
+  font-size: var(--m-text-sm);
+  color: var(--m-content-muted);
+}
+
+.m-kv__group + .m-kv__group {
+  margin-top: var(--m-space-3);
+}
+.m-kv__head {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  width: 100%;
+  min-height: 1.75rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--m-content-secondary);
+  cursor: pointer;
+  text-align: start;
+}
+.m-kv__head:disabled {
+  cursor: default;
+}
+.m-kv__head:hover:not(:disabled) {
+  color: var(--m-content-primary);
+}
+.m-kv__caret {
+  flex: none;
+  color: var(--m-content-decorative);
+  transition: transform var(--m-duration-fast) var(--m-ease-out);
+}
+.m-kv__head[aria-expanded='true'] .m-kv__caret {
+  transform: rotate(90deg);
+}
+.m-kv__title {
+  font-size: var(--m-text-sm);
+  font-weight: var(--m-weight-medium);
+}
+.m-kv__count {
+  font-size: var(--m-text-xs);
+  color: var(--m-content-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.m-kv__rows {
+  display: flex;
+  flex-direction: column;
+}
+.m-kv__rows > [role='listitem'] {
+  min-width: 0;
+}
+
+.m-kv__row {
+  display: grid;
+  grid-template-columns: minmax(7rem, 38%) minmax(0, 1fr) 14px;
+  align-items: baseline;
+  gap: var(--m-space-4);
+  width: calc(100% + 2 * var(--m-space-3));
+  min-height: 1.875rem;
+  padding: var(--m-space-2) var(--m-space-3);
+  margin-inline: calc(-1 * var(--m-space-3));
+  box-sizing: border-box;
+  border: 0;
+  border-radius: var(--m-radius-control);
+  background: none;
+  font-family: var(--m-font-sans);
+  font-size: var(--m-text-sm);
+  line-height: 1.45;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+button.m-kv__row:hover,
+button.m-kv__row[data-state='open'] {
+  background: var(--m-surface-hover);
+}
+.m-kv__row.is-static {
+  cursor: default;
+}
+.m-kv__key {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--m-content-secondary);
+}
+.m-kv__path {
+  color: var(--m-content-muted);
+}
+.m-kv__value {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--m-content-primary);
+}
+.m-kv__value.is-danger,
+.m-kv__block.is-danger {
+  color: var(--m-content-danger);
+}
+.m-kv__value.is-warning {
+  color: var(--m-content-warning);
+}
+
+.m-kv__glyph {
+  align-self: center;
+  color: var(--m-content-decorative);
+  opacity: 0;
+  transition: opacity var(--m-duration-instant) var(--m-ease-out);
+}
+.m-kv__row.is-static .m-kv__glyph {
+  display: none;
+}
+button.m-kv__row:hover .m-kv__glyph,
+button.m-kv__row:focus-visible .m-kv__glyph,
+button.m-kv__row[data-state='open'] .m-kv__glyph {
+  opacity: 1;
+}
+.m-kv__row.is-in .m-kv__glyph,
+.m-kv__row.is-out .m-kv__glyph {
+  opacity: 1;
+  color: var(--m-content-primary);
+}
+.m-kv__row.is-out .m-kv__value {
+  color: var(--m-content-muted);
+  text-decoration: line-through;
+  text-decoration-color: var(--m-content-decorative);
+}
+
+.m-kv__row.is-block {
+  grid-template-columns: minmax(0, 1fr) auto;
+  row-gap: var(--m-space-2);
+  cursor: default;
+}
+.m-kv__copy {
+  justify-self: end;
+}
+.m-kv__block {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: var(--m-space-3) var(--m-space-4);
+  border-radius: var(--m-radius-control);
+  background: var(--m-surface-sunken);
+  font-family: var(--m-font-mono);
+  font-size: var(--m-text-xs);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--m-content-primary);
+}
+.m-kv__more {
+  grid-column: 1 / -1;
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--m-font-sans);
+  font-size: var(--m-text-xs);
+  color: var(--m-content-muted);
+  cursor: pointer;
+}
+.m-kv__more:hover {
+  color: var(--m-content-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m-kv__caret,
+  .m-kv__glyph {
+    transition: none;
+  }
+}

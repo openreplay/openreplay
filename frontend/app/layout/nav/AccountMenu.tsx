@@ -19,11 +19,17 @@ const ProjectForm = React.lazy(
 
 export function useSwitchProject() {
   const mstore = useStore();
-  const { projectsStore, searchStore, searchStoreLive, aiFiltersStore } =
-    mstore;
+  const {
+    projectsStore,
+    searchStore,
+    searchStoreLive,
+    aiFiltersStore,
+    otelLogsStore,
+  } = mstore;
   return (siteId: string) => {
     mstore.initClient();
     aiFiltersStore.clearFilters();
+    otelLogsStore.reset();
     projectsStore.setSiteId(siteId);
     searchStore.clearSearch();
     searchStore.clearList();

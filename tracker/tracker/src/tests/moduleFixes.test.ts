@@ -3,7 +3,9 @@ import { describe, expect, test, jest, afterEach } from '@jest/globals'
 import selection from '../main/modules/selection.js'
 import setupMouse from '../main/modules/mouse.js'
 import webAnimations from '../main/modules/webAnimations.js'
+import Sanitizer, { SanitizeLevel } from '../main/app/sanitizer.js'
 import { Type } from '../main/app/messages.gen.js'
+import Sanitizer from '../main/app/sanitizer.js'
 
 afterEach(() => {
   document.body.innerHTML = ''
@@ -11,7 +13,7 @@ afterEach(() => {
 
 describe('selection', () => {
   /** Every node gets an id; `masked` elements and their subtrees get a masked level, as the observers set it. */
-  function setup(html: string, masked: string[] = []) {
+  function setup(html: string, masked: string[] = [], sanitize = (_id, data: string) => data) {
     document.body.innerHTML = html
     const ids = new Map<Node, number>()
     let next = 1
@@ -34,6 +36,7 @@ describe('selection', () => {
         privateMode: false,
         isObscured: (id: number) => maskedIds.has(id),
         hasMasked: () => maskedIds.size > 0,
+        sanitize,
       },
       send: jest.fn(),
     }
@@ -51,8 +54,25 @@ describe('selection', () => {
     }
     const text = (sel: string) => document.querySelector(sel)!.firstChild as Text
     const selectText = (from: string, to: string) => select(text(from), 0, text(to), text(to).length)
-    return { app, select, selectText }
+    const collapse = () => {
+      document.getSelection()!.removeAllRanges()
+      handler()
+    }
+    return { app, select, selectText, collapse }
   }
+
+  test('an empty selection is sent once after a selection, not on every caret move', () => {
+    const { app, selectText, collapse } = setup('<p id="a">public</p>')
+    collapse()
+    collapse()
+    selectText('#a', '#a')
+    collapse()
+    collapse()
+    expect(app.send.mock.calls.map((c) => c[0].slice(1))).toEqual([
+      [3, 3, 'public'],
+      [-1, -1, ''],
+    ])
+  })
 
   test('plain text is sent as is, without walking the range when nothing is masked', () => {
     const { app, selectText } = setup('<p id="a">public</p><p>more</p><p id="c">text</p>')
@@ -97,6 +117,34 @@ describe('selection', () => {
     const after = document.querySelector('#c')!.firstChild!
     expect(select(host, 0, after, 3)).not.toContain('secret')
   })
+
+  test('text is masked when a textarea with text lies in the range', () => {
+    const { selectText } = setup(
+      '<p id="a">one</p><textarea>draft secret</textarea><p id="c">two</p><textarea></textarea><p id="e">three</p>',
+    )
+    expect(selectText('#a', '#c')).not.toContain('secret')
+    expect(selectText('#c', '#e')).toBe('twothree')
+  })
+
+  test('text that obscureTextEmails/-Numbers rewrite is masked, also when cut by an end', () => {
+    const emails = new Sanitizer({ app: {}, options: { obscureTextEmails: true } })
+    const { select, selectText } = setup(
+      '<p id="a">one</p><p id="m">mail jane.roe@example.com</p><p id="c">two 42</p>',
+      [],
+      (id, data) => emails.sanitize(id, data),
+    )
+    expect(selectText('#a', '#c')).not.toContain('jane')
+    const mail = document.querySelector('#m')!.firstChild!
+    expect(select(mail, 5, mail, 13)).toBe('********')
+    expect(selectText('#c', '#c')).toBe('two 42')
+
+    const numbers = new Sanitizer({
+      app: {},
+      options: { obscureTextEmails: false, obscureTextNumbers: true },
+    })
+    const n = setup('<p id="a">card 4111</p>', [], (id, data) => numbers.sanitize(id, data))
+    expect(n.selectText('#a', '#a')).toBe('**** ****')
+  })
 })
 
 describe('mouse', () => {
@@ -123,7 +171,12 @@ describe('mouse', () => {
         attachNodeListener: (t, type, fn) => t.addEventListener(type, fn),
       },
       observer: { getDocumentOffset: () => [0, 0] },
-      sanitizer: { privateMode: false, getInnerTextSecure: () => '' },
+      sanitizer: {
+        privateMode: false,
+        getInnerTextSecure: () => '',
+        isObscured: () => false,
+        stateAttributesMasked: () => false,
+      },
       tagMatcher: { match: () => null },
       ticker: { attach() {} },
       send: jest.fn(),
@@ -134,6 +187,88 @@ describe('mouse', () => {
     button.dispatchEvent(new w.MouseEvent('click', { bubbles: true, clientX: 5, clientY: 5 }))
     const clicks = app.send.mock.calls.filter((c) => c[0][0] === Type.MouseClick)
     expect(clicks.map((c) => c[0][1])).toEqual([11])
+  })
+
+  test('a click sends no text, description or data-* value of masked content', () => {
+    document.body.innerHTML =
+      '<ul><li id="free">Room 4 is free</li>' +
+      '<li id="next">Next patient: <span class="m">Jane Smith</span></li></ul>' +
+      '<button id="call" class="m" aria-label="Call Jane Smith">☎</button>' +
+      '<p><a class="m" data-patient="jane.smith">File of Jane Smith</a></p>'
+    const ids = new Map<Node, number>()
+    const register = (n: Node) => {
+      ids.set(n, ids.size + 1)
+      n.childNodes.forEach(register)
+    }
+    register(document.documentElement)
+    const app = {
+      attachStartCallback() {},
+      attachStopCallback() {},
+      attachEventListener: (t, type, fn) => t.addEventListener(type, fn),
+      nodes: { getID: (n: Node) => ids.get(n), attachNodeCallback() {} },
+      observer: { getDocumentOffset: () => [0, 0] },
+      tagMatcher: { match: () => null },
+      ticker: { attach() {} },
+      send: jest.fn(),
+    }
+    app.sanitizer = new Sanitizer({ app })
+    document
+      .querySelectorAll('.m')
+      .forEach((el) => app.sanitizer.setLevel(ids.get(el), SanitizeLevel.Obscured))
+    // jsdom has no innerText
+    document
+      .querySelectorAll('li, a')
+      .forEach((el) => Object.defineProperty(el, 'innerText', { value: el.textContent }))
+    setupMouse(app)
+    document
+      .querySelectorAll('li, button, a')
+      .forEach((el) =>
+        el.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: 5, clientY: 5 })),
+      )
+    const clicks = app.send.mock.calls.map((c) => c[0]).filter((m) => m[0] === Type.MouseClick)
+    expect(clicks.map((m) => m[3])).toEqual([
+      'Room 4 is free',
+      '#next',
+      '#call',
+      'html > body > p:nth-of-type(1) > a:nth-of-type(1)',
+    ])
+    expect(JSON.stringify(clicks)).not.toMatch(/jane/i)
+  })
+
+  test('a selector cached before an element was masked is not reused', () => {
+    document.body.innerHTML = '<p><a data-patient="jane.smith">File</a></p>'
+    const ids = new Map<Node, number>()
+    const register = (n: Node) => {
+      ids.set(n, ids.size + 1)
+      n.childNodes.forEach(register)
+    }
+    register(document.documentElement)
+    const app = {
+      attachStartCallback() {},
+      attachStopCallback() {},
+      attachEventListener: (t, type, fn) => t.addEventListener(type, fn),
+      nodes: { getID: (n: Node) => ids.get(n), attachNodeCallback() {} },
+      observer: { getDocumentOffset: () => [0, 0] },
+      tagMatcher: { match: () => null },
+      ticker: { attach() {} },
+      send: jest.fn(),
+    }
+    app.sanitizer = new Sanitizer({ app })
+    const a = document.querySelector('a')!
+    Object.defineProperty(a, 'innerText', { value: a.textContent })
+    setupMouse(app)
+    const click = () =>
+      a.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: 5, clientY: 5 }))
+    const clicks = () =>
+      app.send.mock.calls.map((c) => c[0]).filter((m) => m[0] === Type.MouseClick)
+
+    click()
+    expect(JSON.stringify(clicks())).toMatch(/jane/)
+    app.send.mockClear()
+    app.sanitizer.setLevel(ids.get(a), SanitizeLevel.Obscured)
+    click()
+    expect(clicks()).toHaveLength(1)
+    expect(JSON.stringify(clicks())).not.toMatch(/jane/i)
   })
 })
 

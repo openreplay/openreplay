@@ -1,4 +1,5 @@
 import { SimpleSelect } from '@/ui/inputs/select';
+import { Tooltip } from '@/ui/overlays/tooltip';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -29,12 +30,20 @@ export interface ListFooterProps {
   /** Names a full-page list: Fit comes first in the rows choice, and under
       Fit a new count goes through `onPageSize('fit')` again. */
   fit?: string;
+  /** page sizes of the host's own instead of the rows choices (cards, say),
+      picked through `onSize` */
+  sizes?: readonly number[];
+  onSize?: (size: number) => void;
+  sizeLabel?: string;
+  /** a Fit the host measures itself: shown as chosen, `onFit` picks it */
+  fitted?: boolean;
+  onFit?: () => void;
+  /** a tip on the count, e.g. why the pager stops short of everything */
+  hint?: string;
 }
 
-const ROWS = ROWS_OPTIONS.map((n) => ({
-  value: String(n) as `${RowsPerPage}`,
-  label: String(n),
-}));
+const choicesOf = (sizes: readonly number[]) =>
+  sizes.map((n) => ({ value: String(n), label: String(n) }));
 
 export function ListFooter({
   page,
@@ -45,13 +54,25 @@ export function ListFooter({
   detail,
   onPageSize,
   fit,
+  sizes,
+  onSize,
+  sizeLabel,
+  fitted: fittedProp,
+  onFit,
+  hint,
 }: ListFooterProps) {
   const { t } = useTranslation();
   const foot = useRef<HTMLElement>(null);
-  const fitted = useFitRows(fit, foot, () => onPageSize?.('fit'));
+  const listFitted = useFitRows(fit, foot, () => onPageSize?.('fit'));
+  const fitted = fit != null ? listFitted : !!fittedProp;
+  const offersFit = fit != null || onFit != null;
   const paginated = onPage != null && total > pageSize;
+  const own = sizes != null && onSize != null;
+  const offered = own ? sizes : ROWS_OPTIONS;
   const sizable =
-    onPageSize != null && (fit != null || total > ROWS_OPTIONS[0]);
+    (own || onPageSize != null) && (offersFit || total > offered[0]);
+  const choices = choicesOf(offered);
+  const label = sizeLabel ?? t('Rows');
 
   const n = (x: number) => x.toLocaleString();
   const start = (page - 1) * pageSize + 1;
@@ -63,32 +84,42 @@ export function ListFooter({
 
   return (
     <footer className="m-listfoot" ref={foot}>
-      <span className="m-listfoot__range">
-        {paginated
-          ? t('{{start}}–{{end}} of {{phrase}}', {
-              start: n(start),
-              end: n(end),
-              phrase,
-            })
-          : `${phrase}${detail ? ` ${detail}` : ''}`}
-      </span>
+      <Tooltip title={hint}>
+        <span className="m-listfoot__range">
+          {paginated
+            ? t('{{start}}–{{end}} of {{phrase}}', {
+                start: n(start),
+                end: n(end),
+                phrase,
+              })
+            : `${phrase}${detail ? ` ${detail}` : ''}`}
+        </span>
+      </Tooltip>
       {(paginated || sizable) && (
         <span className="m-listfoot__end">
           {sizable && (
             <label className="m-listfoot__rows">
-              <span className="m-listfoot__rows-label">{t('Rows')}</span>
-              <SimpleSelect<'fit' | `${RowsPerPage}`>
+              <span className="m-listfoot__rows-label">{label}</span>
+              <SimpleSelect<string>
                 variant="subtle"
-                ariaLabel={t('Rows per page')}
-                value={fitted ? 'fit' : (String(pageSize) as `${RowsPerPage}`)}
-                onChange={(v) =>
-                  v &&
-                  onPageSize(v === 'fit' ? 'fit' : (Number(v) as RowsPerPage))
+                ariaLabel={
+                  sizeLabel
+                    ? t('{{label}} per page', { label: sizeLabel })
+                    : t('Rows per page')
                 }
+                value={fitted ? 'fit' : String(pageSize)}
+                onChange={(v) => {
+                  if (!v) return;
+                  if (v !== 'fit') {
+                    if (own) onSize?.(Number(v));
+                    else onPageSize?.(Number(v) as RowsPerPage);
+                  } else if (fit != null) onPageSize?.('fit');
+                  else onFit?.();
+                }}
                 options={
-                  fit != null
-                    ? [{ value: 'fit', label: t('Fit') }, ...ROWS]
-                    : ROWS
+                  offersFit
+                    ? [{ value: 'fit', label: t('Fit') }, ...choices]
+                    : choices
                 }
               />
             </label>

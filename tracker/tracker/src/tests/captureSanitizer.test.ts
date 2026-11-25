@@ -266,6 +266,37 @@ test.each(['legacy', 'next'])('%s approves only the effective SVG sprite referen
 test.each(['legacy', 'next'])('%s sends an empty SVG href when the policy blanks it', (core) => {
   const { sent } = observe('<svg><use href="#icon"></use></svg>', () => '', core)
   expect(sent).toContainEqual([Type.SetNodeAttribute, expect.any(Number), 'href', ''])
+  expect(JSON.stringify(sent)).not.toContain('#icon')
+})
+
+test.each(['legacy', 'next'])('%s fetches an approved sprite at the original URL', async (core) => {
+  const href = 'https://static.invalid/sprite.svg?test=example'
+  const fetcher = jest.fn(async (url: string) => ({
+    ok: url === href,
+    text: async () => '<svg xmlns="http://www.w3.org/2000/svg"><symbol id="icon"><path d="M0 0"/></symbol></svg>',
+  }))
+  const previous = globalThis.fetch
+  ;(globalThis as any).fetch = fetcher
+  cleanups.push(() => { globalThis.fetch = previous })
+  const { sent, sanitize } = observe(
+    `<svg><use href="${href}#icon"></use></svg>`,
+    (data) => {
+      if (data.kind === 'attribute' && data.name === 'href') return null
+      if (data.kind === 'svg') return data.value.replace('M0 0', 'M1 1')
+      return data.value.replace('?test=example', '')
+    },
+    core,
+  )
+  await new Promise((resolve) => setTimeout(resolve, 0))
+
+  expect(fetcher.mock.calls.map(([url]) => url)).toEqual([href])
+  expect(sanitize.mock.calls.some(([data]) => data.value.startsWith('_$OPENREPLAY_SPRITE$_'))).toBe(false)
+  expect(sent).toContainEqual([
+    Type.SetNodeAttribute, expect.any(Number), 'href',
+    expect.stringMatching(/_\$OPENREPLAY_SPRITE\$_[\s\S]*M1 1/),
+  ])
+  expect(JSON.stringify(sent)).not.toContain('?test=example')
+  expect(JSON.stringify(sent)).not.toContain('M0 0')
 })
 
 test.each(['legacy', 'next'])('%s clears previously approved style text when an update is rejected', async (core) => {
@@ -281,6 +312,7 @@ test.each(['legacy', 'next'])('%s clears previously approved style text when an 
   await Promise.resolve()
 
   expect(sent).toContainEqual([Type.SetCSSDataURLBased, initial![1], '', expect.any(String)])
+  expect(JSON.stringify(sent)).not.toContain('red')
 })
 
 test('FontFace buffers approved fields and leaves constructor arguments untouched', () => {
@@ -356,13 +388,12 @@ test.each(['legacy', 'next'].flatMap((core) =>
         expect(read).not.toHaveBeenCalled()
         expect(fetcher).not.toHaveBeenCalled()
       } else if (mode === 'rewrite') {
-        expect(read).not.toHaveBeenCalled()
-        expect(fetcher).toHaveBeenCalledTimes(1)
-        expect(fetcher).toHaveBeenCalledWith('https://static.invalid/nested/approved.css')
+        expect(read).toHaveBeenCalled()
+        expect(fetcher).not.toHaveBeenCalled()
         expect(sent).toContainEqual([
           Type.AdoptedSSInsertRuleURLBased,
           expect.any(Number),
-          'p{color:green}',
+          'p{color:blue}',
           0,
           'https://static.invalid/nested/approved.css',
         ])
@@ -384,7 +415,7 @@ test.each(['legacy', 'next'].flatMap((core) =>
         sent.some(
           (m) =>
             m[0] === Type.AdoptedSSInsertRuleURLBased &&
-            m[2].includes(mode === 'rewrite' ? 'green' : 'blue'),
+            m[2].includes('blue'),
         ),
       ).toBe(mode !== 'deny')
       expect(sent.some((m) => m[0] === Type.CreateElementNode && m[4] === 'P')).toBe(true)
@@ -506,9 +537,7 @@ test.each(['legacy', 'next'].flatMap((core) =>
       observer.observe()
       if (phase !== 'timer') {
         await new Promise((r) => setTimeout(r, 15))
-        expect(fetcher).toHaveBeenCalledWith(
-          phase === 'rewritten-load' ? 'https://static.invalid/rewritten-A.css' : link.href,
-        )
+        expect(fetcher).toHaveBeenCalledWith(link.href)
       }
       link.setAttribute('href', './denied-B.css')
       loaded = true

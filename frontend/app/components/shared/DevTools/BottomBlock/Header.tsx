@@ -1,5 +1,5 @@
 import { IconButton } from '@/ui/actions/IconButton';
-import cn from 'classnames';
+import { clsx as cn } from 'clsx';
 import { X } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';

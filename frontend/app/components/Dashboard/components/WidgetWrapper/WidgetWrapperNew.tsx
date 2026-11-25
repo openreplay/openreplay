@@ -1,21 +1,9 @@
 import { IconButton } from '@/ui/actions/IconButton';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItems,
-  DropdownMenuTrigger,
-} from '@/ui/actions/dropdown-menu';
+import { MoreMenu } from '@/ui/actions/dropdown-menu';
 import { Loader } from '@/ui/feedback/Loader';
 import { useViewport } from '@/ui/layout/use-viewport';
 import { toast } from '@/ui/overlays/toast';
-import {
-  Bell,
-  Maximize2,
-  Minimize2,
-  MoreHorizontal,
-  Pencil,
-  X,
-} from 'lucide-react';
+import { Bell, Maximize2, Minimize2, Pencil, X } from 'lucide-react';
 import { runInAction } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import React, { Suspense, lazy, useRef } from 'react';
@@ -162,65 +150,54 @@ function WidgetWrapperDashboard({
               onClick={createAlert}
             />
           ) : null}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <span>
-                <IconButton
-                  icon={<MoreHorizontal size={14} />}
-                  label={t('Actions for {{name}}', { name: widget.name })}
-                  variant="ghost"
-                />
-              </span>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItems
-                items={[
-                  {
-                    key: 'edit',
-                    icon: <Pencil size={13} />,
-                    label: t('Edit'),
-                    onClick: open,
-                  },
-                  // by what is drawn: below wide every widget is full, and a
-                  // lone half fills its row, so neither has a width to pick
-                  ...(!wide
+          <MoreMenu
+            label={t('Actions for {{name}}', { name: widget.name })}
+            items={[
+              {
+                key: 'edit',
+                icon: <Pencil size={13} />,
+                label: t('Edit'),
+                onClick: open,
+              },
+              // by what is drawn: below wide every widget is full, and a
+              // lone half fills its row, so neither has a width to pick
+              ...(!wide
+                ? []
+                : full
+                  ? [
+                      {
+                        key: 'half',
+                        icon: <Minimize2 size={13} />,
+                        label: t('Half width'),
+                        onClick: () => setWidth(2),
+                      },
+                    ]
+                  : drawnFull
                     ? []
-                    : full
-                      ? [
-                          {
-                            key: 'half',
-                            icon: <Minimize2 size={13} />,
-                            label: t('Half width'),
-                            onClick: () => setWidth(2),
-                          },
-                        ]
-                      : drawnFull
-                        ? []
-                        : [
-                            {
-                              key: 'full',
-                              icon: <Maximize2 size={13} />,
-                              label: t('Full width'),
-                              onClick: () => setWidth(4),
-                            },
-                          ]),
-                  { key: 'd1', type: 'divider' },
-                  {
-                    key: 'remove',
-                    icon: <X size={13} />,
-                    label: t('Remove from dashboard'),
-                    danger: true,
-                    onClick: () =>
-                      dashboard &&
-                      void dashboardStore.deleteDashboardWidget(
-                        dashboard.dashboardId!,
-                        widget.widgetId,
-                      ),
-                  },
-                ]}
-              />
-            </DropdownMenuContent>
-          </DropdownMenu>
+                    : [
+                        {
+                          key: 'full',
+                          icon: <Maximize2 size={13} />,
+                          label: t('Full width'),
+                          onClick: () => setWidth(4),
+                        },
+                      ]),
+              { key: 'd1', type: 'divider' },
+              {
+                key: 'remove',
+                icon: <X size={13} />,
+                label: t('Remove from dashboard'),
+                danger: true,
+                onClick: () =>
+                  dashboard &&
+                  void dashboardStore.deleteDashboardWidget(
+                    dashboard.dashboardId!,
+                    widget.widgetId,
+                  ),
+              },
+            ]}
+            iconSize={14}
+          />
         </span>
       </header>
       <div className="m-dash__widget-body">
@@ -229,6 +206,7 @@ function WidgetWrapperDashboard({
             metric={widget}
             isSaved
             onDatum={isPredefined ? undefined : openDrilled}
+            onOpen={open}
           />
         </Suspense>
       </div>

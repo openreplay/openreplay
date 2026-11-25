@@ -178,7 +178,7 @@ Passed to `configure()` / `new Tracker()`. All optional except `projectKey`.
 | `__DISABLE_SECURE_MODE` | `false` | Allow non-HTTPS pages. **Local development only**: set it from your dev-build flag, e.g. `import.meta.env.DEV`. |
 | `privateMode` | `false` | Mask everything: text, inputs, URLs, titles, console, network URLs/headers/bodies. Opt subtrees back in with `data-openreplay-unmask`. |
 | `obscureTextEmails` / `obscureTextNumbers` | `true` / `false` | Mask emails/numbers in page text. |
-| `obscureInputEmails` / `obscureInputNumbers` / `obscureInputDates` | `true` / `true` / `false` | Mask those values in inputs. |
+| `obscureInputEmails` / `obscureInputNumbers` / `obscureInputDates` | `true` / `true` / `false` | With `defaultInputMode: 0`: mask email and date fields, and other fields once the value has `@` or 4 digits in a row; what was typed before that is recorded, so mark fields that hold such values with `data-openreplay-obscured`. |
 | `defaultInputMode` | `1` | Inputs: `0` plain, `1` obscured, `2` ignored. |
 | `domSanitizer` | `(node: Element) => SanitizeLevel` | Per-element masking rule. |
 | `urls` | `{ urlSanitizer?, titleSanitizer?, replaceHashSymbol? }` | Rewrite recorded page URLs/titles (strip tokens, PII). |
@@ -193,8 +193,8 @@ Passed to `configure()` / `new Tracker()`. All optional except `projectKey`.
 | `captureResourceTimings` / `capturePageLoadTimings` / `capturePageRenderTimings` | `true` | Resource timings and web vitals. |
 | `longTasks` | `false` | Long animation frame tracking. |
 | `captureIFrames` | `true` | Record same-origin iframes. |
-| `crossdomain` | `{ enabled: false, parentDomain: '*', childDomains? }` | Cross-origin iframes: set `enabled` in the parent page and inside the iframe, which runs its own tracker. |
-| `nextObserver` | `false` | Experimental DOM core: one MutationObserver for the page, iframes and shadow roots, no node maintainer, same recording format. Needs `WeakRef`; without it the default core is used. |
+| `crossdomain` | `{ enabled: false, parentDomain: '*', childDomains? }` | Cross-origin iframes: set `enabled` in the parent page and inside the iframe, which runs its own tracker. In the iframe, `parentDomain` (an origin or a list of them) limits which embedding pages it talks to; on the parent, `childDomains` limits which iframe origins can join. |
+| `nextObserver` | `true` | DOM core: one MutationObserver for the page, iframes and shadow roots, no node maintainer, same recording format. Needs `WeakRef`; without it the previous core is used. Set `false` to switch back to the previous core; leaving it unset logs a one-time console warning about the new default. |
 | `canvas` | `{ disableCanvas: false, fixedCanvasScaling: false, useAnimationFrame: false, fileExt: 'webp' }` | Canvas/WebGL capture. |
 | `mouse` | `{ disableClickmaps?, trackingOffset? }` | Click/movement capture. |
 | `disableScrollmaps` | `false` | Don't send scroll depth. |
@@ -227,7 +227,7 @@ network?: {
 
 | Attribute | Effect |
 |---|---|
-| `data-openreplay-obscured` | Mask the element's text/value (layout kept). |
+| `data-openreplay-obscured` | Mask the element's text/value (layout kept). Checkbox/radio state is kept; hide them to drop it. |
 | `data-openreplay-hidden` | Don't record content; element replays as an empty box of the same size. |
 | `data-openreplay-unmask` | With `privateMode`: record this subtree in plain. |
 | `data-openreplay-capture` | On an `<iframe>`: record it when `captureIFrames` is off. |

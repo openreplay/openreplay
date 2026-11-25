@@ -15,6 +15,7 @@ import { client, useStore } from 'App/mstore';
 import { capitalize } from 'App/utils';
 
 import { Keyword, PanelTabs } from 'Shared/DevTools/PanelKit';
+import { useRegExListFilterMemo } from 'Shared/DevTools/useListFilter';
 
 import { FailedFetch, LoadingFetch } from './StatusMessages';
 import { LogRow, TableHeader } from './Table';
@@ -48,10 +49,11 @@ function BackendLogsPanel() {
   const { projectsStore, sessionStore, integrationsStore } = useStore();
   const integratedServices =
     integrationsStore.integrations.backendLogIntegrations;
-  const defaultTab = integratedServices[0]!.name;
+  // switching project from a replay can empty the list while this is open
+  const defaultTab = integratedServices[0]?.name as ServiceName | undefined;
   const sessionId = sessionStore.currentId;
   const projectId = projectsStore.siteId!;
-  const [tab, setTab] = React.useState<ServiceName>(defaultTab as ServiceName);
+  const [tab, setTab] = React.useState(defaultTab ?? null);
   const { data, isError, isPending, isSuccess, refetch } = useQuery<
     UnifiedLog[]
   >({
@@ -62,6 +64,11 @@ function BackendLogsPanel() {
     retry: 3,
   });
   const [filter, setFilter] = React.useState('');
+  const filtered = useRegExListFilterMemo(
+    data ?? [],
+    (log) => log.content,
+    filter,
+  );
 
   const tabs = Object.entries(serviceNames)
     .filter(
@@ -92,11 +99,11 @@ function BackendLogsPanel() {
       </BottomBlock.Header>
 
       <BottomBlock.Content className="overflow-y-auto">
-        {isPending ? <LoadingFetch provider={capitalize(tab)} /> : null}
-        {isError ? (
+        {tab && isPending ? <LoadingFetch provider={capitalize(tab)} /> : null}
+        {tab && isError ? (
           <FailedFetch provider={capitalize(tab)} onRetry={refetch} />
         ) : null}
-        {isSuccess ? <LogsTable data={data} /> : null}
+        {isSuccess ? <LogsTable data={filtered} /> : null}
       </BottomBlock.Content>
     </BottomBlock>
   );
@@ -107,15 +114,18 @@ const LogsTable = observer(({ data }: { data: UnifiedLog[] }) => {
   const { time } = store.get();
   const { sessionStart } = store.get();
   const _list = React.useRef<VListHandle>(null);
+  const times = React.useMemo(
+    () =>
+      data.map((log) =>
+        log.timestamp !== 'N/A' ? new Date(log.timestamp).getTime() : NaN,
+      ),
+    [data],
+  );
   const activeIndex = React.useMemo(() => {
     const currTs = time + sessionStart;
-    const index = data.findIndex((log) =>
-      log.timestamp !== 'N/A'
-        ? new Date(log.timestamp).getTime() >= currTs
-        : false,
-    );
+    const index = times.findIndex((ts) => ts >= currTs);
     return index === -1 ? data.length - 1 : index;
-  }, [time, data.length]);
+  }, [time, sessionStart, times]);
   React.useEffect(() => {
     if (_list.current) {
       _list.current.scrollToIndex(activeIndex);
@@ -131,7 +141,7 @@ const LogsTable = observer(({ data }: { data: UnifiedLog[] }) => {
       <VList ref={_list} data={data}>
         {(log, index) => (
           <LogRow
-            key={index}
+            key={log.key || index}
             isActive={index === activeIndex}
             log={log}
             onJump={onJump}

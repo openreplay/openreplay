@@ -1,7 +1,7 @@
-import Filter from 'Types/filter';
 import Session from 'Types/session';
 import { makeAutoObservable } from 'mobx';
 
+import { DATE_RANGE_VALUES, getDateRangeFromValue } from 'App/dateRange';
 import { sessionService } from 'App/services';
 
 type MultiSessions = [
@@ -95,9 +95,16 @@ export default class AssistMultiviewStore {
   }
 
   async presetSessions(ids: string[]) {
-    // @ts-ignore
-    const filter = new Filter({ filters: [], sort: '' }).toData();
-    const data = await sessionService.getLiveSessions(filter);
+    const { LAST_24_HOURS } = DATE_RANGE_VALUES;
+    const range = getDateRangeFromValue(LAST_24_HOURS);
+    const data = await sessionService.getLiveSessions({
+      filters: [],
+      custom: {},
+      rangeValue: LAST_24_HOURS,
+      startDate: range.start?.toMillis(),
+      endDate: range.end?.toMillis(),
+      order: 'desc',
+    });
 
     const matchingSessions = data.sessions.filter(
       (s: Record<string, any>) =>

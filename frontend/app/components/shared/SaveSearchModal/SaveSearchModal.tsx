@@ -5,7 +5,7 @@ import { confirm } from '@/ui/overlays/confirm';
 import '@/ui/overlays/dialogs.css';
 import { Modal } from '@/ui/overlays/modal';
 import { useToast } from '@/ui/overlays/toast';
-import cn from 'classnames';
+import { clsx as cn } from 'clsx';
 import { Trash2, Users } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';

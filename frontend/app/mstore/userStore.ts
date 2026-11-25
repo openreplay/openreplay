@@ -1,11 +1,11 @@
 import { toast } from '@/ui/overlays/toast';
 import Account from 'Types/account';
 import Client from 'Types/client';
-import copy from 'copy-to-clipboard';
 import i18next, { TFunction } from 'i18next';
 import { makeAutoObservable, runInAction } from 'mobx';
 import { makePersistable } from 'mobx-persist-store';
 
+import { copyText, copyWithToast } from 'App/lib/use-copy';
 import User from 'App/mstore/types/user';
 import { userService } from 'App/services';
 import { deleteCookie } from 'App/utils';
@@ -178,31 +178,6 @@ class UserStore {
     }
   };
 
-  fetchUser = (userId: string): Promise<any> => {
-    this.loading = true;
-    return new Promise((resolve, reject) => {
-      userService
-        .one(userId)
-        .then((data) => {
-          runInAction(() => {
-            this.instance = new User().fromJson(data);
-          });
-          resolve(data);
-        })
-        .catch((error) => {
-          runInAction(() => {
-            this.loading = false;
-          });
-          reject(error);
-        })
-        .finally(() => {
-          runInAction(() => {
-            this.loading = false;
-          });
-        });
-    });
-  };
-
   fetchUsers = (): Promise<any> => {
     this.loading = true;
     return new Promise((resolve, reject) => {
@@ -308,8 +283,7 @@ class UserStore {
   copyInviteCode = (userId: string): void => {
     const content = this.list.find((u) => u.userId === userId)?.invitationLink;
     if (content) {
-      copy(content);
-      toast.success(this.t('Invite code copied successfully'));
+      void copyWithToast(content, this.t('Invite code copied successfully'));
     } else {
       toast.error(this.t('Invite code not found'));
     }
@@ -330,7 +304,7 @@ class UserStore {
                 response.invitationLink,
               );
             }
-            copy(response.invitationLink);
+            void copyText(response.invitationLink);
           });
           resolve(response);
         })
@@ -600,40 +574,8 @@ class UserStore {
     await userService.resendEmailVerification();
   };
 
-  pushNewSite = (newSite: any) => {
-    this.sites.push(newSite);
-  };
-
   setOnboarding = (state: boolean = false) => {
     this.onboarding = state;
-  };
-
-  resetErrors = () => {
-    this.passwordErrors = [];
-    this.loginRequest.errors = [];
-    this.errors = [];
-  };
-
-  updateModule = (moduleKey: string) => {
-    const modules = this.account.settings?.modules || [];
-    if (modules.includes(moduleKey)) {
-      this.account.settings.modules = modules.filter(
-        (module: string) => module !== moduleKey,
-      );
-    } else {
-      this.account.settings.modules = [...modules, moduleKey];
-    }
-  };
-
-  upgradeScope = async () => {
-    try {
-      await userService.changeScope(2);
-      runInAction(() => {
-        this.scopeState = 2;
-      });
-    } catch (error) {
-      // TODO error handling
-    }
   };
 
   regenerateKey = async () => {
@@ -649,17 +591,6 @@ class UserStore {
     } catch (e: any) {
       toast.error(e.message || this.t('Failed to regenerate API key'));
       throw e;
-    }
-  };
-
-  downgradeScope = async () => {
-    try {
-      await userService.changeScope(1);
-      runInAction(() => {
-        this.scopeState = 1;
-      });
-    } catch (error) {
-      // TODO error handling
     }
   };
 

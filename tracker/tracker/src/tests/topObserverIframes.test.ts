@@ -1,8 +1,9 @@
 import AttributeSender from '../main/modules/attributeSender.js'
 import { describe, expect, test, afterEach, jest } from '@jest/globals'
 import TopObserver from '../main/app/observer/top_observer.js'
+import IFrameObserver from '../main/app/observer/iframe_observer.js'
 import Nodes from '../main/app/nodes/index.js'
-import Sanitizer from '../main/app/sanitizer.js'
+import Sanitizer, { SanitizeLevel } from '../main/app/sanitizer.js'
 import { Type } from '../common/messages.gen.js'
 
 let sent: any[]
@@ -130,6 +131,29 @@ describe('TopObserver iframes and privacy', () => {
     shadow.append('more 6011')
     await new Promise((r) => setTimeout(r, 0))
     expect(JSON.stringify(sent.slice(before))).not.toMatch(/5500|6011/)
+  })
+
+  test('a crossdomain frame is recorded at the level of its iframe on the parent page', () => {
+    // what crossdomainObserve() runs in the child frame; 42 is the <iframe> on the parent page
+    setup('<p>card 4111</p>')
+    const frame = new IFrameObserver(app, false, { disableThrottling: true })
+    frame.syntheticObserve(42, document, SanitizeLevel.Obscured)
+    frame.disconnect()
+    // the document got an id, which the other tests don't expect
+    app.nodes.clear()
+    expect(ofType(Type.CreateIFrameDocument)[0][1]).toBe(42)
+    expect(allData()).toContain('****')
+    expect(allData()).not.toContain('4111')
+  })
+
+  test('the crossdomain frame observer stops with the tracker', () => {
+    setup('<p>a</p>')
+    const stop = jest.spyOn(IFrameObserver.prototype, 'disconnect')
+    observer.crossdomainObserve(42, 0, 1)
+    observer.disconnect()
+    app.nodes.clear()
+    expect(stop).toHaveBeenCalledTimes(1)
+    stop.mockRestore()
   })
 })
 

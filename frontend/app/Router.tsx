@@ -57,13 +57,13 @@ const Router: React.FC = () => {
   const handleJwtFromUrl = () => {
     const params = new URLSearchParams(location.search);
     const urlJWT = params.get('jwt');
+    // embedded pages pass their own
+    if (!urlJWT || (jwt && window === window.top)) return;
     const spotJwt = params.get('spotJwt');
     if (spotJwt) {
       handleSpotLogin(spotJwt);
     }
-    if (urlJWT) {
-      setJwt({ jwt: urlJWT, spotJwt: spotJwt ?? undefined });
-    }
+    setJwt({ jwt: urlJWT, spotJwt: spotJwt ?? undefined });
   };
 
   const handleSpotLogin = (jwt: string) => {
@@ -121,8 +121,10 @@ const Router: React.FC = () => {
       destinationPath !== '/'
     ) {
       const url = new URL(destinationPath, window.location.origin);
-      checkParams(url.search);
-      navigate(destinationPath);
+      if (url.origin === window.location.origin) {
+        checkParams(url.search);
+        navigate(destinationPath);
+      }
       localStorage.removeItem(GLOBAL_DESTINATION_PATH);
     }
   };
@@ -216,7 +218,9 @@ const Router: React.FC = () => {
   // dashboard) needs the width: the menu folds while either is open
   const needsRoom =
     pathname.startsWith('/client/') ||
-    /\/metrics\/[^/]+|\/dashboard\/[^/]+\/metric\//.test(pathname);
+    /\/metrics\/[^/]+|\/dashboard\/[^/]+\/metric\/|^\/\d+\/logs(\/|$)/.test(
+      pathname,
+    );
   const bare =
     pathname.includes('/mcp/authorize') || pathname.includes('/onboarding/');
   if (isIframe) {

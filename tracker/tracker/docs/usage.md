@@ -218,4 +218,4 @@ Others: `@openreplay/tracker-graphql` (queries), `@openreplay/tracker-profiler` 
 - Set `__debug__: 4` to see tracker logs in the console.
 - CSP: allow `worker-src blob:` and your `ingestPoint` origin in `connect-src`.
 - Missing styles in replays: by default the OpenReplay backend downloads your CSS files, so they must be publicly reachable. For CSS behind a VPN or login use `inlineCss: 1`: the tracker reads each stylesheet in the browser and falls back to fetching it. Cross-origin stylesheets need CORS headers for that. For CSS-in-JS use `css: { scanInMemoryCSS: true }`.
-- Cross-origin iframes: set `crossdomain: { enabled: true }` in the parent page tracker and in a tracker running inside the iframe.
+- Cross-origin iframes: set `crossdomain: { enabled: true }` in the parent page tracker and in a tracker running inside the iframe. Inside the iframe, add `parentDomain: 'https://app.example.com'` (or a list of origins) so it only talks to pages you embed it in.

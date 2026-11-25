@@ -29,6 +29,24 @@ pull: ## Pull the latest version of the application
 restart: ## Restart the application
 	kubectl rollout restart deployment -n app
 
+VERSION ?= $(patsubst v%,%,$(shell yq e '.AppVersion' openreplay/Chart.yaml))
+DEST ?= dist
+OCI_REPO ?= oci://public.ecr.aws/op3nr3play/helm
+
+package: ## Package openreplay+databases for OCI into $(DEST) (VERSION=1.28.0)
+	@test -n "$(VERSION)" || { echo "VERSION is empty"; exit 1; }
+	@set -e; tmp=$$(mktemp -d); trap 'rm -rf $$tmp' EXIT; mkdir -p $(DEST); \
+	cp -r openreplay databases $$tmp/; \
+	yq e -i '.offlineMigration.enabled = true' $$tmp/openreplay/values.yaml; \
+	for c in databases openreplay; do \
+		helm package $$tmp/$$c --version $(VERSION) --app-version v$(VERSION) -d $(DEST); \
+	done
+
+publish: package ## Push the packaged charts to $(OCI_REPO)
+	@for c in databases openreplay; do \
+		helm push $(DEST)/$$c-$(VERSION).tgz $(OCI_REPO); \
+	done
+
 template: ## Generate a template for the application
 	@templater -i vars.yaml -o vars_templated.yaml
 	@helm template op ./openreplay -f vars_templated.yaml

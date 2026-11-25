@@ -14,5 +14,6 @@ export const CLIENT_TABS = {
   VIDEOS: 'exported',
   TEST_AGENTS: 'test-agents',
   AGENTS: 'agents',
+  OPENTELEMETRY: 'opentelemetry',
   SUPPORT: 'support',
 };

@@ -38,6 +38,12 @@ export const DOCS = {
 
 export const ingestPoint = () => `https://${window.location.hostname}/ingest`;
 const isSaas = () => window.location.hostname === 'app.openreplay.com';
+// the SaaS tracker already points at its own ingest
+const ingestLine = () =>
+  isSaas()
+    ? ''
+    : `
+  ingestPoint: "${ingestPoint()}",`;
 
 const lastMajor = ENV.TRACKER_MAJOR_VERSION
   ? ENV.TRACKER_MAJOR_VERSION
@@ -50,15 +56,11 @@ const lastMajor = ENV.TRACKER_MAJOR_VERSION
  * Assist isn't passed: `--assist` would also skip the wizard's plugin question,
  * which is where it offers the state plugins.
  */
-export function wizardCommand(
-  projectKey: string,
-  method: InstallMethod,
-): string {
+export function wizardCommand(projectKey: string): string {
   const args = [
     `--key=${projectKey}`,
     isSaas() ? '--cloud' : `--host=https://${window.location.hostname}`,
   ];
-  if (method === 'script') args.push('--script');
   return `npx @openreplay/wizard ${args.join(' ')}`;
 }
 
@@ -71,9 +73,10 @@ export interface SnippetOptions {
   platform: Platform;
   method: InstallMethod;
   ssr: boolean;
-  inputMode: InputMode;
-  maskNumbers: boolean;
-  maskEmails: boolean;
+  /** left out, the snippet sets no privacy options and the tracker's defaults apply */
+  inputMode?: InputMode;
+  maskNumbers?: boolean;
+  maskEmails?: boolean;
   assist?: boolean;
 }
 
@@ -123,6 +126,14 @@ dependencies {
 const modeCode = (m: InputMode) =>
   INPUT_MODES.find((x) => x.value === m)?.code ?? 0;
 
+const privacyLines = (o: SnippetOptions, indent: string) =>
+  o.inputMode === undefined
+    ? ''
+    : `
+${indent}defaultInputMode: ${modeCode(o.inputMode)},
+${indent}obscureTextNumbers: ${!!o.maskNumbers},
+${indent}obscureTextEmails: ${!!o.maskEmails},`;
+
 export function trackerSnippet(o: SnippetOptions): string {
   const ingest = ingestPoint();
   if (o.platform === 'ios')
@@ -160,15 +171,18 @@ class MainActivity : TrackingActivity() {
         // ...
     }
 }`;
-  if (o.method === 'script')
+  if (o.method === 'script') {
+    const lead = isSaas()
+      ? o.inputMode === undefined
+        ? ''
+        : `
+    // 0 - plain, 1 - obscured, 2 - ignored`
+      : `
+    ingestPoint: "${ingest}",`;
     return `<!-- OpenReplay Tracking Code for ${o.host} -->
 <script>
   var initOpts = {
-    projectKey: "${o.projectKey}",
-    ${isSaas() ? '// 0 - plain, 1 - obscured, 2 - ignored' : `ingestPoint: "${ingest}",`}
-    defaultInputMode: ${modeCode(o.inputMode)},
-    obscureTextNumbers: ${o.maskNumbers},
-    obscureTextEmails: ${o.maskEmails},
+    projectKey: "${o.projectKey}",${lead}${privacyLines(o, '    ')}
   };
   var startOpts = { userID: "" };
   (function(A,s,a,y,e,r){
@@ -186,24 +200,17 @@ class MainActivity : TrackingActivity() {
     r.getSessionToken=function(){};
   })("${trackerUrl(!!o.assist)}",1,0,initOpts,startOpts);
 </script>`;
+  }
   const privacy =
     o.inputMode !== 'plain' || o.maskNumbers || o.maskEmails
-      ? `
-  defaultInputMode: ${modeCode(o.inputMode)},
-  obscureTextNumbers: ${o.maskNumbers},
-  obscureTextEmails: ${o.maskEmails},`
+      ? privacyLines(o, '  ')
       : '';
-  // the SaaS tracker already points at its own ingest
-  const ingestLine = isSaas()
-    ? ''
-    : `
-  ingestPoint: "${ingest}",`;
   if (o.ssr)
     return `import { tracker } from '@openreplay/tracker/cjs';
 // alternatively you can use dynamic import without /cjs suffix to prevent issues with window scope
 
 tracker.configure({
-  projectKey: "${o.projectKey}",${ingestLine}${privacy}
+  projectKey: "${o.projectKey}",${ingestLine()}${privacy}
 });
 
 function MyApp() {
@@ -216,8 +223,34 @@ function MyApp() {
   return `import { tracker } from '@openreplay/tracker';
 
 tracker.configure({
-  projectKey: "${o.projectKey}",${ingestLine}${privacy}
+  projectKey: "${o.projectKey}",${ingestLine()}${privacy}
 });
+tracker.start()`;
+}
+
+export function assistNpmSnippet(projectKey: string, ssr: boolean): string {
+  const configure = `tracker.configure({
+  projectKey: "${projectKey}",${ingestLine()}
+});
+tracker.use(trackerAssist(options)); // check the list of available options below`;
+  if (ssr)
+    return `import { tracker } from '@openreplay/tracker/cjs';
+// alternatively you can use dynamic import without /cjs suffix to prevent issues with window scope
+import trackerAssist from '@openreplay/tracker-assist/cjs';
+
+${configure}
+
+function MyApp() {
+  useEffect(() => { // use componentDidMount in case of React Class Component
+    tracker.start()
+  }, []);
+
+  //...
+}`;
+  return `import { tracker } from '@openreplay/tracker';
+import trackerAssist from '@openreplay/tracker-assist';
+
+${configure}
 tracker.start()`;
 }
 

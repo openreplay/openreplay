@@ -22,6 +22,8 @@ export interface ModalProps {
   width?: number;
 
   className?: string;
+  /** Title for screen readers only, no padding or footer: the dialog draws its own layout. */
+  bare?: boolean;
   children: ReactNode;
 }
 
@@ -37,6 +39,7 @@ export function Modal({
   footer,
   width = 440,
   className,
+  bare = false,
   children,
 }: ModalProps) {
   const { t } = useTranslation();
@@ -54,7 +57,7 @@ export function Modal({
           )}
           data-slot="modal"
         >
-          <div className="px-7 pt-7">
+          <div className={bare ? 'sr-only' : 'px-7 pt-7'}>
             <D.Title className="pr-7 text-lg font-semibold leading-normal">
               {title}
             </D.Title>
@@ -63,13 +66,13 @@ export function Modal({
             <button
               type="button"
               aria-label={t('Close')}
-              className="m-modal__close m-hover absolute right-5 top-5 flex size-6 items-center justify-center rounded-control text-content-decorative hover:bg-surface-hover hover:text-content-primary"
+              className="m-modal__close m-hover absolute right-5 top-5 z-[1] flex size-6 items-center justify-center rounded-control text-content-decorative hover:bg-surface-hover hover:text-content-primary"
             >
               <X size={14} aria-hidden="true" />
             </button>
           </D.Close>
-          <div className="px-7 py-6">{children}</div>
-          {footer !== null && (
+          {bare ? children : <div className="px-7 py-6">{children}</div>}
+          {footer !== null && !bare && (
             <div className="m-modal__foot flex items-center justify-end gap-4 px-7 pb-7">
               {footer ?? (
                 <>

@@ -373,6 +373,8 @@ export default class Assist {
       this.sessionConfirmed = false;
     }
     this.clean();
+    // clean() keeps the control grant for internal restarts
+    sessionStorage.removeItem(this.options.session_control_peer_key);
   }
 
   /**
@@ -608,12 +610,7 @@ export default class Assist {
       this.app.debug.error(e);
       return;
     }
-    this.app.waitStatus(0).then((ready) => {
-      if (ready === false) {
-        this.assistDemandedRestart = false;
-        finish();
-        return;
-      }
+    this.app.waitStatus(0).then(() => {
       this.app.allowAppStart();
       setTimeout(() => {
         this.app
@@ -1199,6 +1196,11 @@ export default class Assist {
           this.options.onCallDeny?.();
           return;
         }
+        // also an agent that never sent _agent_name is shown to the user
+        if (!callingAgents.has(senderId)) {
+          callingAgents.set(senderId, this.agents[senderId]?.agentInfo?.name || "Agent");
+          updateCallerNames();
+        }
 
         // create a new RTCPeerConnection with ice server config
         const pc = new RTCPeerConnection({
@@ -1398,11 +1400,11 @@ export default class Assist {
         }
         const int = setInterval(() => {
           const isPresent = node.ownerDocument.defaultView && node.isConnected;
-          if (!isPresent) {
+          if (!isPresent || app.nodes.getID(node) !== id || isMaskedCanvas(id)) {
             this.stopCanvasStream(id);
             clearInterval(int);
           }
-        }, 5000);
+        }, 1000);
         this.canvasNodeCheckers.set(id, int);
       }
     };

@@ -5,34 +5,24 @@ import { useViewport } from '@/ui/layout/use-viewport';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import RecordingsMeter from 'Saas/nav/RecordingsMeter';
 import {
-  ArrowLeft,
   Bell,
-  Bot,
   ChartColumn,
   ChevronsUpDown,
-  CreditCard,
   Database,
-  Film,
-  FolderClosed,
-  ListChecks,
-  ListVideo,
-  Network,
   PanelLeftClose,
   PanelLeftOpen,
   PlayCircle,
-  Plug,
   ScreenShare,
   Settings2,
-  UserRound,
-  Users,
+  Telescope,
   Video,
-  Webhook,
   X,
 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { type ComponentType, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { hasAuditsPermission } from 'App/components/Audits/access';
 import { useModal } from 'App/components/Modal';
 import { MENU, PREFERENCES_MENU } from 'App/layout/data';
 import { useStore } from 'App/mstore';
@@ -45,6 +35,7 @@ import {
   agentIssuesEnabled,
   agentTestsEnabled,
   hasHealth,
+  otelLogsEnabled,
 } from 'App/utils/split-utils';
 import HealthStatus from 'Components/Header/HealthStatus';
 import SaasHeaderMenuItems from 'Components/Header/SaasHeaderMenuItems/SaasHeaderMenuItems';
@@ -74,19 +65,7 @@ const ICONS: Record<NavIconName, ComponentType<{ size?: number }>> = {
   spot: Video,
   analytics: ChartColumn,
   dataManagement: Database,
-  exit: ArrowLeft,
-  [PREFERENCES_MENU.ACCOUNT]: UserRound,
-  [PREFERENCES_MENU.SESSION_SETTINGS]: ListVideo,
-  [PREFERENCES_MENU.INTEGRATIONS]: Plug,
-  [PREFERENCES_MENU.WEBHOOKS]: Webhook,
-  [PREFERENCES_MENU.PROJECTS]: FolderClosed,
-  [PREFERENCES_MENU.ROLES_ACCESS]: Network,
-  [PREFERENCES_MENU.AUDIT]: ListChecks,
-  [PREFERENCES_MENU.TEAM]: Users,
-  [PREFERENCES_MENU.BILLING]: CreditCard,
-  [PREFERENCES_MENU.EXPORTED_VIDEOS]: Film,
-  [PREFERENCES_MENU.TEST_AGENTS]: Bot,
-  [PREFERENCES_MENU.AGENTS]: Bot,
+  observability: Telescope,
 };
 
 interface SideNavProps {
@@ -133,7 +112,8 @@ function SideNav({
   const inPreferences = location.pathname.includes('/client/');
   const issues = agentIssuesEnabled();
   const tests = agentTestsEnabled();
-  const audits = agentAuditsEnabled();
+  const audits = agentAuditsEnabled() && hasAuditsPermission(userStore);
+  const logs = otelLogsEnabled();
   const phone = useViewport() === 'phone';
 
   const groups = useMemo(() => {
@@ -146,6 +126,7 @@ function SideNav({
       issues,
       tests,
       audits,
+      logs,
     };
     return navTree(t, flags);
   }, [
@@ -155,6 +136,7 @@ function SideNav({
     issues,
     tests,
     audits,
+    logs,
     phone,
     i18n.language,
   ]);
@@ -208,7 +190,9 @@ function SideNav({
   };
   const onNavigate = (key: string) => {
     const entry = groups.flatMap((g) => g.entries).find((e) => e.key === key);
-    const last = entry?.items?.find((i) => i.key === lastChild.current[key]);
+    const last = entry?.items?.find(
+      (i) => i.key === lastChild.current[key] && !i.disabled,
+    );
     const target = (last ?? entry?.items?.[0])?.key ?? key;
     const route = routeTable[leafOf(target)];
     if (route) go(route());

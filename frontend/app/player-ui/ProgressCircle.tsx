@@ -1,5 +1,6 @@
+import { clsx as cn } from 'clsx';
 import React, { memo } from 'react';
-import cn from 'classnames';
+
 import styles from './styles.module.css';
 
 interface IProps {

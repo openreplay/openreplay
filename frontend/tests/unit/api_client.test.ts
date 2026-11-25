@@ -197,6 +197,24 @@ describe('APIClient URL Replacer Logic', () => {
       path: '/trails/actions',
       expectedUrl: 'https://example.com/v2/api/trails/actions',
     },
+    {
+      description: 'OTel logs search',
+      edp: 'https://example.com/api',
+      path: '/PROJECT_ID/logs/search',
+      expectedUrl: 'https://example.com/v2/api/2/logs/search',
+    },
+    {
+      description: 'SaaS: OTel logs facets',
+      edp: 'https://api.openreplay.com',
+      path: '/PROJECT_ID/logs/facets',
+      expectedUrl: 'https://api.openreplay.com/v2/2/logs/facets',
+    },
+    {
+      description: 'Ingest key revoke',
+      edp: 'https://example.com/api',
+      path: '/PROJECT_ID/ingest-keys/7',
+      expectedUrl: 'https://example.com/v2/api/2/ingest-keys/7',
+    },
   ];
 
   describe.each(testCases)('URL Construction', (testCase) => {
@@ -219,6 +237,32 @@ describe('APIClient URL Replacer Logic', () => {
 
     expect(fetchMock).toHaveBeenCalledWith(
       'https://api.openreplay.com/client/members',
+      expect.any(Object)
+    );
+  });
+
+  test.each([
+    '/PROJECT_ID/users/../../client/new_api_key?/activity',
+    '/PROJECT_ID/users/..%2f..%2fprojects%2f2',
+    '/PROJECT_ID/users/%2E%2e/conditions',
+    '/cards/..\\assist\\sessions\\1',
+    '/sessions/.\t./replay',
+  ])('Refuses a path an id steers to another route: %j', async (path) => {
+    ENV.API_EDP = 'https://example.com/api';
+
+    await expect(client.fetch(path, {}, 'POST')).rejects.toThrow(
+      'Invalid request path'
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  test('Dots inside an id or in the query pass', async () => {
+    ENV.API_EDP = 'https://example.com/api';
+
+    await client.fetch('/PROJECT_ID/users/j..doe.@a.com?next=../..', undefined, 'GET');
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://example.com/v2/api/2/users/j..doe.@a.com?next=../..',
       expect.any(Object)
     );
   });

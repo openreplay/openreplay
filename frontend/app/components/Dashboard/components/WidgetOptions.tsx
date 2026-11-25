@@ -13,6 +13,7 @@ import {
   ChartPie,
   Hash,
   Library,
+  ListFilter,
   SquareActivity,
   Table,
   Users,
@@ -42,6 +43,11 @@ function WidgetOptions() {
   const { t } = useTranslation();
   const { metricStore } = useStore();
   const metric: Widget = metricStore.instance;
+  const hasBreakdown =
+    [TIMESERIES, FUNNEL, TABLE].includes(metric.metricType) &&
+    metric.breakdowns.length > 0;
+  const topNLabel = (n: string) =>
+    n === '0' ? t('All values') : t('Top {{n}}', { n });
 
   const handleChange = (value: any) => {
     metric.update({ metricFormat: value });
@@ -62,18 +68,12 @@ function WidgetOptions() {
     [],
   );
 
-  const metricFormatLabel = ((mf: MetricFormat | undefined) => {
-    switch (mf) {
-      case 'sessionCount':
-        return t('All Sessions');
-      case 'eventCount':
-        return t('Event Count');
-      case 'userCount':
-        return t('Unique Users');
-      default:
-        return t('Unique Users'); // fallback
-    }
-  })(metric.metricFormat as MetricFormat);
+  const metricFormat = metric.metricFormat ?? 'sessionCount';
+  const metricFormatOptions: { value: MetricFormat; label: string }[] = [
+    { value: 'sessionCount', label: t('All Sessions') },
+    { value: 'userCount', label: t('Unique Users') },
+    { value: 'eventCount', label: t('Total Events') },
+  ];
 
   // const hasSeriesTypes = [TIMESERIES, FUNNEL, TABLE].includes(metric.metricType);
   const hasViewTypes = [TIMESERIES, FUNNEL, USER_PATH].includes(
@@ -135,17 +135,33 @@ function WidgetOptions() {
           <MenuButton<string>
             ariaLabel={t('Metric format')}
             icon={<Library />}
-            label={metricFormatLabel}
-            value={metric.metricFormat ?? 'sessionCount'}
+            label={
+              metricFormatOptions.find((o) => o.value === metricFormat)
+                ?.label ?? metricFormat
+            }
+            value={metricFormat}
             onChange={handleChange}
-            options={[
-              { value: 'sessionCount', label: t('All Sessions') },
-              { value: 'userCount', label: t('Unique Users') },
-              { value: 'eventCount', label: t('Total Events') },
-            ]}
+            options={metricFormatOptions}
             align="end"
           />
         )}
+      {hasBreakdown && (
+        <MenuButton<(typeof TOP_N)[number]>
+          ariaLabel={t('Values under each bar')}
+          icon={<ListFilter />}
+          label={topNLabel(String(metricStore.breakdownTopN))}
+          value={
+            (TOP_N as readonly string[]).includes(
+              String(metricStore.breakdownTopN),
+            )
+              ? (String(metricStore.breakdownTopN) as (typeof TOP_N)[number])
+              : '0'
+          }
+          onChange={(v) => metricStore.setBreakdownTopN(Number(v))}
+          options={TOP_N.map((n) => ({ value: n, label: topNLabel(n) }))}
+          align="end"
+        />
+      )}
       {hasViewTypes && views.length > 0 && (
         <MenuButton<string>
           ariaLabel={t('Visualization type')}
@@ -170,6 +186,8 @@ function WidgetOptions() {
     </>
   );
 }
+
+const TOP_N = ['3', '5', '10', '0'] as const;
 
 const VIEW_TYPES = (
   t: (s: string) => string,

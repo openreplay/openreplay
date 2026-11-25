@@ -11,7 +11,6 @@ import {
   Section,
 } from '@/ui/overlays/EntityDrawer';
 import { Tooltip } from '@/ui/overlays/tooltip';
-import copy from 'copy-to-clipboard';
 import { Link2, UserCog } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
@@ -20,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 import { useStore } from 'App/mstore';
 
 import { PrefToggle } from '../../../PrefSection';
+import { copyText } from 'App/lib/use-copy';
 
 /** Invite someone, or edit a member: name, admin rights, role, ownership. */
 function UserForm({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -107,17 +107,19 @@ function UserForm({ open, onClose }: { open: boolean; onClose: () => void }) {
             />
           </Field>
           {!account.smtp ? (
-            <Notice kind="info">
-              {t(
-                'SMTP is not configured, so no email is sent. Copy the invitation link and send it yourself.',
-              )}{' '}
-              <ExternalLink
-                className="link"
-                href="https://docs.openreplay.com/configuration/configure-smtp"
-              >
-                {t('How to set it up')}
-              </ExternalLink>
-            </Notice>
+            <div className="mt-4">
+              <Notice kind="info">
+                {t(
+                  'SMTP is not configured, so no email is sent. Copy the invitation link and send it yourself.',
+                )}{' '}
+                <ExternalLink
+                  className="link"
+                  href="https://docs.openreplay.com/configuration/configure-smtp"
+                >
+                  {t('How to set it up')}
+                </ExternalLink>
+              </Notice>
+            </div>
           ) : null}
         </Section>
         <Section
@@ -161,7 +163,7 @@ function UserForm({ open, onClose }: { open: boolean; onClose: () => void }) {
               <Button
                 variant="subtle"
                 className="self-start"
-                onClick={() => copy(user.invitationLink)}
+                onClick={() => void copyText(user.invitationLink)}
               >
                 <Link2 size={14} />
                 {t('Copy invite link')}

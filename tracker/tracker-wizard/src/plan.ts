@@ -252,7 +252,7 @@ export function buildPlan(
   const ext = p.ts ? '.ts' : '.js'
   const moduleOptions = {
     nextObserver:
-      a.features.includes('next-observer') && (tracker.major ?? 0) >= NEXT_OBSERVER_MAJOR,
+      (tracker.major ?? 0) >= NEXT_OBSERVER_MAJOR ? a.features.includes('next-observer') : undefined,
     localDocs: tracker.docs,
     fullNetwork: p.ts && !tracker.partialNetwork,
   }

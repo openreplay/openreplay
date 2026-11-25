@@ -1,4 +1,4 @@
-import cn from 'classnames';
+import { clsx as cn } from 'clsx';
 import React, { CSSProperties } from 'react';
 
 import 'Components/Session/ReplayScreen/dev-tools.css';

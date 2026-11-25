@@ -11,6 +11,7 @@ export type Area =
   | 'Product Analytics'
   | 'Data Management'
   | 'Preferences'
+  | 'Observability'
   | 'Everywhere';
 
 export interface EmptyEntry {
@@ -595,6 +596,62 @@ export const EMPTY_STATES: EmptyEntry[] = [
     title: 'Nothing is described as critical yet',
     size: 'page',
     subject: 'critical',
+  },
+
+  {
+    id: 'traces-soon',
+    area: 'Observability',
+    where: 'Traces, before it ships',
+    title: 'Traces are on the way',
+    size: 'page',
+    subject: 'traces',
+    pose: 'work',
+    side: 'right',
+    prop: 'stopwatch',
+  },
+  {
+    id: 'metrics-soon',
+    area: 'Observability',
+    where: 'Metrics, before it ships',
+    title: 'Metrics are on the way',
+    size: 'page',
+    subject: 'metrics',
+    pose: 'work',
+    side: 'right',
+    prop: 'wrench',
+  },
+  {
+    id: 'logs-window',
+    area: 'Observability',
+    where: 'Logs, nothing in the window',
+    title: 'No lines in this window',
+    size: 'page',
+    subject: 'calendar',
+  },
+  {
+    id: 'logs-nomatch',
+    area: 'Observability',
+    where: 'Logs, the filters match nothing',
+    title: 'No lines match',
+    size: 'page',
+    subject: 'noMatch',
+  },
+  {
+    id: 'logs-first',
+    area: 'Observability',
+    where: 'Logs, a project that never sent a line',
+    title: 'No logs yet',
+    size: 'page',
+    subject: 'activity',
+  },
+  {
+    id: 'logs-error',
+    area: 'Observability',
+    where: 'Logs, the service did not answer',
+    title: "The logs didn't load",
+    size: 'page',
+    subject: 'environments',
+    pose: 'work',
   },
 
   {

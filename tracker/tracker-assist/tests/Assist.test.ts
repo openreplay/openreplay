@@ -992,24 +992,6 @@ describe('Assist — teardown when the last agent leaves', () => {
     handlers.NEW_AGENT('s-2', agentInfo)
     expect(app.stop).toHaveBeenCalledTimes(2)
   })
-
-  test('a cancelled tracker wait clears the restart without starting again', async () => {
-    jest.useFakeTimers()
-    try {
-      app.waitStatus.mockImplementationOnce(async () => false)
-      const callback = jest.fn()
-      assist.restartTracking(callback)
-      await jest.advanceTimersByTimeAsync(250)
-
-      expect(app.allowAppStart).not.toHaveBeenCalled()
-      expect(app.start).not.toHaveBeenCalled()
-      expect(callback).not.toHaveBeenCalled()
-      expect(assist.restartInProgress).toBe(false)
-      expect(assist.assistDemandedRestart).toBe(false)
-    } finally {
-      jest.useRealTimers()
-    }
-  })
 })
 
 describe('Assist — call consent and masking', () => {
@@ -1108,6 +1090,19 @@ describe('Assist — call consent and masking', () => {
     expect(promptShown()).toBe(true)
   })
 
+  test('an agent joining a running call is shown to the user', async () => {
+    startAssist()
+    assist.agents['sock-B'] = { agentInfo: { name: 'Bob', }, }
+    assist.callingState = CALLING_TRUE
+    const setAssistentName = jest.fn()
+    assist.callUI = { setAssistentName, } as any
+
+    await handlers.webrtc_call_offer('sock-B', { from: 'project-1-session-1-tab-1-8-sock-B-agent', offer: {}, })
+
+    expect(promptShown()).toBe(false)
+    expect(setAssistentName).toHaveBeenCalledWith(new Map([['sock-B', 'Bob',],]))
+  })
+
   test('the calling list is dropped when no call resumes soon after connecting', () => {
     jest.useFakeTimers()
     sessionStorage.setItem(CALLING_KEY, JSON.stringify([callId,]))
@@ -1132,6 +1127,19 @@ describe('Assist — call consent and masking', () => {
     expect(fakeSocket.emit).toHaveBeenCalledWith('call_end', expect.anything())
   })
 
+  test('stop() revokes remote control so a later start prompts again', () => {
+    startAssist()
+    sessionStorage.setItem('__openreplay_control_peer', 'sock-A')
+    const grant = jest
+      .spyOn(assist.remoteControl, 'grantControl')
+      .mockImplementation(() => {})
+
+    assist.stop()
+    assist.remoteControl.reconnect(['sock-A',])
+
+    expect(grant).not.toHaveBeenCalled()
+  })
+
   test('obscured canvases are not streamed', () => {
     app.sanitizer.isObscured.mockReturnValue(true)
     startAssist()
@@ -1151,6 +1159,32 @@ describe('Assist — call consent and masking', () => {
 
     expect(stop).toHaveBeenCalled()
     expect(assist.canvasMap.has(5)).toBe(false)
+  })
+
+  describe('a streamed canvas masked without a resanitize callback', () => {
+    beforeEach(() => {
+      jest.useFakeTimers()
+      startAssist()
+      const canvas = document.createElement('canvas')
+      ;(canvas as any).captureStream = jest.fn(() => ({ getTracks: () => [], }))
+      document.body.appendChild(canvas)
+      nodeCallbacks.forEach((cb) => cb(canvas))
+      jest.advanceTimersByTime(1000)
+      expect(assist.canvasMap.has(5)).toBe(true)
+    })
+
+    test('stops when its level was raised by a commit', () => {
+      app.sanitizer.isObscured.mockReturnValue(true)
+      jest.advanceTimersByTime(1000)
+      expect(assist.canvasMap.has(5)).toBe(false)
+      expect(assist.canvasNodeCheckers.has(5)).toBe(false)
+    })
+
+    test('stops when it lost its id (rebuilt as hidden)', () => {
+      app.nodes.getID.mockReturnValue(undefined)
+      jest.advanceTimersByTime(1000)
+      expect(assist.canvasMap.has(5)).toBe(false)
+    })
   })
 
   test('disableCanvas turns canvas streaming off', () => {

@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 
 import type AnalyticsStore from 'App/mstore/AnalyticsStore';
+import type OtelLogsStore from 'App/mstore/otelLogsStore';
 import type SearchStore from 'App/mstore/searchStore';
 import type SearchStoreLive from 'App/mstore/searchStoreLive';
 import type FilterModel from 'App/mstore/types/filter';
@@ -77,6 +78,22 @@ export const peopleTarget = (store: AnalyticsStore): FilterTarget => ({
   move: () => {},
   setEventsOrder: () => {},
   clear: () => store.editUsersPayload({ filters: [] }),
+});
+
+/** The Logs search: every rule a property, all of them applying. */
+export const logsTarget = (store: OtelLogsStore): FilterTarget => ({
+  owner: store,
+  get filters() {
+    return store.rules;
+  },
+  eventsOrder: 'and',
+  add: (f) => store.setRules([...store.rules, f]),
+  update: (i, f) =>
+    store.setRules(store.rules.map((x, j) => (j === i ? f : x))),
+  remove: (i) => store.setRules(store.rules.filter((_, j) => j !== i)),
+  move: () => {},
+  setEventsOrder: () => {},
+  clear: () => store.clearRules(),
 });
 
 /** A card series' filter; `onChange` marks the card dirty. */

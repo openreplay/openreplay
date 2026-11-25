@@ -11,8 +11,7 @@ export type NavIconName =
   | 'spot'
   | 'analytics'
   | 'dataManagement'
-  | 'exit'
-  | PREFERENCES_MENU;
+  | 'observability';
 
 export interface NavEntry {
   key: string;
@@ -21,6 +20,7 @@ export interface NavEntry {
   count?: number;
   countNoun?: string;
   badge?: string;
+  disabled?: boolean;
   items?: NavEntry[];
 }
 
@@ -39,9 +39,8 @@ export interface NavFlags {
   issues: boolean;
   tests: boolean;
   audits: boolean;
+  logs: boolean;
 }
-
-export const PREFERENCES_PARENT = 'preferences';
 
 const leaf = (parent: string, key: string, label: string): NavEntry => ({
   key: `${parent}/${key}`,
@@ -101,6 +100,22 @@ export function navTree(t: TFunction, f: NavFlags): readonly NavGroup[] {
           leaf('analytics', MENU.ALERTS, t('Alerts')),
       ]),
     },
+    f.logs && {
+      key: 'observability',
+      label: t('Observability'),
+      icon: 'observability',
+      items: [
+        leaf('observability', MENU.LOGS, t('Logs')),
+        {
+          ...leaf('observability', MENU.TRACES, t('Traces')),
+          badge: t('Soon'),
+        },
+        {
+          ...leaf('observability', MENU.OTEL_METRICS, t('Metrics')),
+          badge: t('Soon'),
+        },
+      ],
+    },
     !menuHidden.dataAnalytics &&
       withItems({
         key: 'data',
@@ -118,11 +133,12 @@ export function navTree(t: TFunction, f: NavFlags): readonly NavGroup[] {
   return [{ entries }];
 }
 
-export function preferencesTree(
+/** the preference pages this account can open */
+export function preferenceItems(
   t: TFunction,
-  f: NavFlags,
-): readonly NavGroup[] {
-  const items = preferences(t)
+  f: Pick<NavFlags, 'isAdmin' | 'isEnterprise'>,
+) {
+  return preferences(t)
     .flatMap((c) => c.items)
     .filter(
       (i) =>
@@ -130,20 +146,8 @@ export function preferencesTree(
         !(i.isAdmin && !f.isAdmin) &&
         !(i.isEnterprise && !f.isEnterprise) &&
         !(i.key === PREFERENCES_MENU.EXPORTED_VIDEOS && !f.isEnterprise),
-    );
-  return [
-    {
-      entries: items.map((i) =>
-        i.key === MENU.EXIT
-          ? { key: MENU.EXIT, label: String(i.label), icon: 'exit' as const }
-          : {
-              key: `${PREFERENCES_PARENT}/${String(i.key)}`,
-              label: String(i.label),
-              icon: i.key as PREFERENCES_MENU,
-            },
-      ),
-    },
-  ];
+    )
+    .map((i) => ({ key: String(i.key), label: String(i.label) }));
 }
 
 export const leafOf = (key: string) => key.slice(key.lastIndexOf('/') + 1);

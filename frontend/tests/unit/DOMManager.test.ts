@@ -167,6 +167,18 @@ describe('SetInputValue on a <select>', () => {
   });
 });
 
+describe('SetNodeAttribute from a live (JSON) message', () => {
+  it('drops a value that is not a string', () => {
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+    const a = mount('a', 3);
+    // @ts-ignore private access
+    manager.applyMessage({ tp: MType.SetNodeAttribute, id: 3, name: 'href', value: ['javascript:alert(1)'] });
+    // @ts-ignore private access
+    manager.vElements.get(3).applyChanges();
+    expect(a.hasAttribute('href')).toBe(false);
+  });
+});
+
 describe('SetInputValue rejections', () => {
   it('logs and skips an element that has no value', () => {
     const error = jest.spyOn(console, 'error').mockImplementation(() => {});
@@ -181,6 +193,19 @@ describe('SetInputValue rejections', () => {
     const error = jest.spyOn(console, 'error').mockImplementation(() => {});
     expect(() => setInputValue(999, '2')).not.toThrow();
     expect(error).toHaveBeenCalled();
+  });
+});
+
+describe('element names createElement() refuses', () => {
+  it('become a span, not the element their letters spell', () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    mount('div', 1);
+    ['ME/TA', 'IF/RAME', 'SCRIPT '].forEach((tag, i) => {
+      // @ts-ignore private access
+      manager.applyMessage({ tp: MType.CreateElementNode, id: 10 + i, parentID: 1, index: i, tag, svg: false });
+      // @ts-ignore private access
+      expect(manager.vElements.get(10 + i).node.tagName).toBe('SPAN');
+    });
   });
 });
 
@@ -226,5 +251,51 @@ describe('dom.mobs assets batch overlapping dom.mobe', () => {
       MType.SetNodeAttribute,
       MType.RemoveNode,
     ]);
+  });
+});
+
+describe('autocomplete on recorded fields', () => {
+  const dict: Record<string, string> = { 1: 'autocomplete', 2: 'current-password' };
+
+  beforeEach(() => {
+    manager = new DOMManager({
+      screen: screen as any,
+      isMobile: false,
+      setCssLoading: jest.fn(),
+      time: 0,
+      stringDict: dict,
+      globalDict: { get: (key: any) => dict[key], all: () => dict },
+    });
+    mount('div', 1);
+  });
+
+  function apply(msg: object): void {
+    // @ts-ignore private access
+    manager.applyMessage(msg);
+  }
+
+  function create(tag: string): Element {
+    apply({ tp: MType.CreateElementNode, id: 10, parentID: 1, index: 0, tag, svg: false });
+    // @ts-ignore private access
+    return manager.vElements.get(10);
+  }
+
+  it('marks an input recorded in lower case', () => {
+    const vElem: any = create('input');
+    vElem.applyChanges();
+    expect(vElem.node.getAttribute('autocomplete')).toBe('new-password');
+  });
+
+  it('ignores a recorded autocomplete in every attribute message', () => {
+    const vElem: any = create('INPUT');
+    [
+      { tp: MType.SetNodeAttribute, id: 10, name: 'AutoComplete', value: 'current-password' },
+      { tp: MType.SetNodeAttributeDictGlobal, id: 10, name: 1, value: 2 },
+      { tp: MType.SetNodeAttributeDict, id: 10, name: 1, value: 2 },
+      { tp: MType.SetNodeAttributeDictDeprecated, id: 10, nameKey: 1, valueKey: 2 },
+      { tp: MType.RemoveNodeAttribute, id: 10, name: 'autocomplete' },
+    ].forEach(apply);
+    vElem.applyChanges();
+    expect(vElem.node.getAttribute('autocomplete')).toBe('new-password');
   });
 });

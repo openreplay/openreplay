@@ -1,5 +1,5 @@
 import Session from 'Types/session';
-import cn from 'classnames';
+import { clsx as cn } from 'clsx';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 

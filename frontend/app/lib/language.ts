@@ -9,6 +9,7 @@ export const LANGUAGES = [
   { value: 'uk', label: 'Українська' },
   { value: 'zh', label: '简体中文' },
   { value: 'ko', label: '한국어' },
+  { value: 'tr', label: 'Türkçe' },
 ];
 
 /** Switches the interface language and remembers it once it has loaded;

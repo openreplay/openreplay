@@ -20,6 +20,7 @@ type Logs interface {
 	Search(ctx context.Context, projectID uint32, req *SearchRequest) (*SearchResponse, error)
 	Histogram(ctx context.Context, projectID uint32, f *Filter) (*HistogramResponse, error)
 	Facets(ctx context.Context, projectID uint32, req *FacetsRequest) (any, error)
+	Autocomplete(ctx context.Context, projectID uint32, propertyName, source, q string) ([]AutocompleteRow, error)
 }
 
 type logsImpl struct {
@@ -219,11 +220,16 @@ func (l *logsImpl) attributeKeys(ctx context.Context, projectID uint32, f *Filte
 	mapCol, _ := attributeColumns(scope)
 	qp := filters.NewParams()
 	where := buildConditions(projectID, f, f.StartTime, f.EndTime, exclusion{}, qp)
-	query := fmt.Sprintf(`SELECT k, count() AS c
-		FROM (SELECT mapKeys(%s) AS keys FROM otel.logs WHERE %s LIMIT %d)
-		ARRAY JOIN keys AS k
-		WHERE NOT startsWith(k, '%s')
-		GROUP BY k ORDER BY c DESC LIMIT %d`, mapCol, where, facetSampleRows, internalKeyPrefix, facetLimit)
+	qp.Set("internalKeyPrefix", internalKeyPrefix)
+	qp.Set("facetLimit", facetLimit)
+	query := `
+		SELECT k, count() AS c
+		FROM otel.logs
+			ARRAY JOIN mapKeys(` + mapCol + `) AS k
+		WHERE ` + where + ` AND NOT startsWith(k, @internalKeyPrefix)
+		GROUP BY k
+		ORDER BY c DESC
+		LIMIT @facetLimit`
 	values, err := l.valueCounts(facetContext(ctx), query, qp)
 	if err != nil {
 		return nil, err
@@ -239,10 +245,15 @@ func (l *logsImpl) attributeValues(ctx context.Context, projectID uint32, req *F
 	mapCol, _ := attributeColumns(req.Scope)
 	qp := filters.NewParams()
 	where := buildConditions(projectID, &req.Filter, req.StartTime, req.EndTime, exclusion{attrScope: req.Scope, attrKey: req.Key}, qp)
-	key := qp.Add(req.Key)
-	query := fmt.Sprintf(`SELECT v, count() AS c
-		FROM (SELECT %s[%s] AS v FROM otel.logs WHERE %s AND mapContains(%s, %s) LIMIT %d)
-		GROUP BY v ORDER BY c DESC LIMIT %d`, mapCol, key, where, mapCol, key, facetSampleRows, facetLimit)
+	qp.Set("attrKey", req.Key)
+	qp.Set("facetLimit", facetLimit)
+	query := `
+		SELECT ` + mapCol + `[@attrKey] AS v, count() AS c
+		FROM otel.logs
+		WHERE ` + where + ` AND mapContains(` + mapCol + `, @attrKey)
+		GROUP BY v
+		ORDER BY c DESC
+		LIMIT @facetLimit`
 	return l.valueCounts(facetContext(ctx), query, qp)
 }
 

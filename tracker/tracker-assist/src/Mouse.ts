@@ -6,6 +6,7 @@ type XYDXDY = [number, number, number, number]
 /** The innermost element at a point, inside open shadow roots too (web components, Ionic). */
 function elementFromPoint(x: number, y: number): Element | null {
   let el = document.elementFromPoint(x, y)
+  if (el?.closest('#openreplay-confirm-window-wrapper')) return null
   while (el?.shadowRoot) {
     const inner = el.shadowRoot.elementFromPoint(x, y)
     if (!inner || inner === el) break

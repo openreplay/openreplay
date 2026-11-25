@@ -89,25 +89,6 @@ describe('stop() is final for pending starts and restarts', () => {
     expect(workerMsgs).toContain('stop')
   })
 
-  test('prunes closed child windows on stop and discards children that remain open', async () => {
-    await startActive()
-    app.options.crossdomain = { enabled: true }
-    const closed = { closed: true, postMessage: jest.fn() }
-    const open = { closed: false, postMessage: jest.fn() }
-    app.childWindows.set(closed, 'https://closed.test')
-    app.childWindows.set(open, 'https://open.test')
-
-    app.stop()
-    expect([...app.childWindows.keys()]).toEqual([open])
-
-    app.discard()
-    expect(closed.postMessage).not.toHaveBeenCalled()
-    expect(open.postMessage).toHaveBeenCalledWith(
-      expect.objectContaining({ terminal: true }),
-      'https://open.test',
-    )
-  })
-
   describe('start()', () => {
     test('a start response arriving after stop() does not activate the tracker', async () => {
       const res = deferred<any>()
@@ -266,6 +247,27 @@ describe('stop() is final for pending starts and restarts', () => {
 
       expect(app.activityState).toBe(NOT_ACTIVE)
       expect(app.observer.observe).toHaveBeenCalledTimes(1)
+    })
+
+    test('a cold start after stop() does not carry over what the stopped one buffered', async () => {
+      const stale = [27, 'stale', '{}']
+      await app.coldStart()
+      app.send(stale)
+      app.stop()
+      await app.coldStart()
+      app.send([27, 'fresh', '{}'])
+
+      expect([...app.bufferedMessages1, ...app.bufferedMessages2]).not.toContainEqual(stale)
+      expect(app.bufferedMessages1).toContainEqual([27, 'fresh', '{}'])
+    })
+
+    test('cold start keeps the previous cycle in one buffer', async () => {
+      const previous = [27, 'previous', '{}']
+      await app.coldStart()
+      app.send(previous)
+      await jest.advanceTimersByTimeAsync(30_000)
+
+      expect([...app.bufferedMessages1, ...app.bufferedMessages2]).toContainEqual(previous)
     })
 
     test('cold start keeps cycling until stopped', async () => {

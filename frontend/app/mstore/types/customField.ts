@@ -1,11 +1,7 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 
 const varRegExp = new RegExp('^[A-Za-z_-][A-Za-z0-9_-]*$');
-
-export const BOOLEAN = 'boolean';
 export const STRING = 'string';
-export const NUMBER = 'number';
-export const MAX_COUNT = 20;
 
 interface CustomRecord {
   index?: string;

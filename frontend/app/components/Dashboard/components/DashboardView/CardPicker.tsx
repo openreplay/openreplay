@@ -145,7 +145,6 @@ function CardPicker({ onDone }: { onDone: () => void }) {
           <AddCardSection
             step={{ query }}
             handleOpenChange={(o) => !o && onDone()}
-            hideExisting
           />
         </div>
       ) : (

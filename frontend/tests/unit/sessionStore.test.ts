@@ -1,9 +1,10 @@
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+
+import { checkEventWithFilters } from '../../app/components/Session_/Player/Controls/checkEventWithFilters';
+import { searchStore } from '../../app/mstore/index';
+import SessionStore from '../../app/mstore/sessionStore';
 import { sessionService } from '../../app/services';
 import Session from '../../app/types/session';
-import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import SessionStore from '../../app/mstore/sessionStore';
-import { searchStore } from '../../app/mstore/index';
-import { checkEventWithFilters } from '../../app/components/Session_/Player/Controls/checkEventWithFilters';
 import { mockSession } from '../mocks/sessionData';
 
 jest.mock('../../../player/src', () => ({
@@ -63,16 +64,6 @@ describe('SessionStore', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     sessionStore = new SessionStore();
-  });
-
-  describe('resetUserFilter', () => {
-    it('should reset user filter', () => {
-      sessionStore.userFilter.update('page', 5);
-      expect(sessionStore.userFilter.page).toBe(5);
-
-      sessionStore.resetUserFilter();
-      expect(sessionStore.userFilter.page).toBe(1);
-    });
   });
 
   describe('fetchLiveSessions', () => {
@@ -182,7 +173,11 @@ describe('SessionStore', () => {
       sessionStore.list = [];
       sessionStore.total = 0;
 
-      await sessionStore.fetchSessions({ filters: [] }, true, controller.signal);
+      await sessionStore.fetchSessions(
+        { filters: [] },
+        true,
+        controller.signal,
+      );
 
       expect(sessionStore.list).toEqual([]);
       expect(sessionStore.total).toBe(0);
@@ -201,18 +196,6 @@ describe('SessionStore', () => {
       await expect(
         sessionStore.fetchSessions({ filters: [] }, true, controller.signal),
       ).rejects.toThrow('aborted');
-    });
-  });
-
-  describe('clearAll', () => {
-    it('should clear session list and current session', () => {
-      sessionStore.list = [new Session({ sessionId: 'test' })];
-      sessionStore.current = new Session({ sessionId: 'current' });
-
-      sessionStore.clearAll();
-
-      expect(sessionStore.list).toEqual([]);
-      expect(sessionStore.current.sessionId).toBe('');
     });
   });
 
@@ -252,9 +235,6 @@ describe('SessionStore', () => {
         mockSessionId,
       );
       expect(sessionStore.current.sessionId).toBe(mockSessionId);
-      expect(sessionStore.visitedEvents.length).toBe(1);
-      expect(sessionStore.visitedEvents[0].url).toBe('https://example.com');
-      expect(sessionStore.host).toBe('');
       expect(sessionStore.prefetched).toBe(false);
     });
 
@@ -283,7 +263,7 @@ describe('SessionStore', () => {
 
       await sessionStore.fetchSessionData(mockSessionId);
 
-      expect(sessionStore.eventsIndex).toEqual([]);
+      expect(sessionStore.current.sessionId).toBe(mockSessionId);
     });
 
     it('should handle different filter operators', async () => {
@@ -310,7 +290,7 @@ describe('SessionStore', () => {
 
       await sessionStore.fetchSessionData(mockSessionId);
 
-      expect(sessionStore.eventsIndex).toEqual([]);
+      expect(sessionStore.current.sessionId).toBe(mockSessionId);
     });
 
     it('should handle errors when fetching events', async () => {

@@ -83,15 +83,6 @@ export class InsightIssue {
   }
 }
 
-function cleanFilter(filter: any) {
-  delete filter['operatorOptions'];
-  delete filter['placeholder'];
-  delete filter['category'];
-  delete filter['label'];
-  delete filter['icon'];
-  delete filter['key'];
-}
-
 /** The journey query compares an exclusion's own value with the step's column
     (path for a page, label for a click or input), and the chip edits its
     "where": that is sent as the value too. */
@@ -142,6 +133,9 @@ export default class Widget {
   startPoint: FilterItem | null = null;
   excludes: FilterItem[] = [];
   hideExcess?: boolean = true;
+
+  /** saved as the retired sunburst: its saved endpoint still answers with tree data */
+  savedAsSunburst = false;
   compareTo: [startDate?: string, endDate?: string] | null = null;
   sortBy?: string = '';
   sortOrder?: string = 'desc';
@@ -232,15 +226,6 @@ export default class Widget {
     this.hasChanged = true;
   }
 
-  createSeries(filters: Record<string, any>) {
-    const series = new FilterSeries().fromData({
-      filter: { filters },
-      name: 'AI Query',
-      seriesId: 1,
-    });
-    this.setSeries([series]);
-  }
-
   fromJson(json: any, period?: any) {
     json.config = json.config || {};
     runInAction(() => {
@@ -292,6 +277,7 @@ export default class Widget {
         if (json.viewType === 'chart' || json.viewType === 'sunburst') {
           this.viewType = 'lineChart';
         }
+        this.savedAsSunburst = json.viewType === 'sunburst';
         this.hideExcess = json.hideExcess;
         this.startType = json.startType;
         this.rows = json.rows;
@@ -437,25 +423,6 @@ export default class Widget {
     });
   }
 
-  updateExcludeByIndex(index: number, exclude: any) {
-    runInAction(() => {
-      const newExcludes = this.excludes.toSpliced(
-        index,
-        1,
-        new FilterItem(exclude),
-      );
-      this.excludes = newExcludes;
-      this.hasChanged = true;
-    });
-  }
-
-  removeExcludeByIndex(index: number) {
-    runInAction(() => {
-      this.excludes.splice(index, 1);
-      this.hasChanged = true;
-    });
-  }
-
   validate() {
     this.isValid = this.name.length > 0;
   }
@@ -464,16 +431,6 @@ export default class Widget {
     runInAction(() => {
       Object.assign(this, data);
     });
-  }
-
-  resetDefaults() {
-    if (this.metricType === FUNNEL) {
-      this.series = [];
-      this.series.push(new FilterSeries());
-      this.series[0].filter.addFunnelDefaultFilters();
-      this.series[0].filter.eventsOrder = 'then';
-      this.series[0].filter.eventsOrderSupport = ['then'];
-    }
   }
 
   exists() {
@@ -576,6 +533,7 @@ export default class Widget {
   private transformFunnelSeriesFormat(seriesObj: Record<string, any>): {
     funnel: Funnel;
     funnelBreakdown?: Record<string, Funnel>;
+    funnelBreakdownValues?: Record<string, string[]>;
   } {
     const seriesKeys = Object.keys(seriesObj);
     if (seriesKeys.length === 0) {
@@ -593,26 +551,34 @@ export default class Widget {
     if (seriesContent?.$overall?.stages) {
       const funnel = new Funnel().fromJSON(seriesContent.$overall);
 
-      const bdEntries = Object.entries(seriesContent)
-        .filter(
-          ([key, val]: [string, any]) =>
-            key !== '$overall' && (val?.stages || val?.$overall?.stages),
-        )
-        .sort(([, a]: any, [, b]: any) => {
-          const aStages = a.stages ?? a.$overall?.stages;
-          const bStages = b.stages ?? b.$overall?.stages;
-          return (bStages?.[0]?.count ?? 0) - (aStages?.[0]?.count ?? 0);
-        });
+      // nested breakdowns: each level is { $overall, value: child }, the
+      // deepest one holds stages; flatten to leaf paths like "US / Chrome"
+      const bdEntries: [string, any, string[]][] = [];
+      const collect = (node: Record<string, any>, values: string[]) => {
+        for (const [key, val] of Object.entries(node)) {
+          if (key === '$overall') continue;
+          const path = [...values, key];
+          const before = bdEntries.length;
+          if (!val?.stages && val?.$overall?.stages) collect(val, path);
+          if (bdEntries.length > before) continue;
+          const leaf = val?.stages ? val : val?.$overall;
+          if (leaf?.stages) bdEntries.push([path.join(' / '), leaf, path]);
+        }
+      };
+      collect(seriesContent, []);
+      bdEntries.sort(
+        ([, a], [, b]) =>
+          (b.stages?.[0]?.count ?? 0) - (a.stages?.[0]?.count ?? 0),
+      );
 
       if (bdEntries.length > 0) {
         const funnelBreakdown: Record<string, Funnel> = {};
-        for (const [key, val] of bdEntries) {
-          const valAny = val as any;
-          funnelBreakdown[key] = new Funnel().fromJSON(
-            valAny.stages ? valAny : valAny.$overall,
-          );
+        const funnelBreakdownValues: Record<string, string[]> = {};
+        for (const [key, val, values] of bdEntries) {
+          funnelBreakdown[key] = new Funnel().fromJSON(val);
+          funnelBreakdownValues[key] = values;
         }
-        return { funnel, funnelBreakdown };
+        return { funnel, funnelBreakdown, funnelBreakdownValues };
       }
 
       return { funnel };
@@ -734,6 +700,7 @@ export default class Widget {
         _data.funnel = result.funnel;
         if (result.funnelBreakdown) {
           _data.funnelBreakdown = result.funnelBreakdown;
+          _data.funnelBreakdownValues = result.funnelBreakdownValues;
         }
         if (!isComparison) {
           this.setDataValue(_data);
@@ -976,24 +943,6 @@ export default class Widget {
 
   setComparisonRange(range: [start: string, end?: string] | null) {
     this.compareTo = range;
-  }
-
-  fetchIssue(funnelId: any, issueId: any, params: any): Promise<any> {
-    return new Promise((resolve, reject) => {
-      metricService
-        .fetchIssue(funnelId, issueId, params)
-        .then((response: any) => {
-          resolve({
-            issue: new Funnelissue().fromJSON(response.issue),
-            sessions: response.sessions.sessions.map((s: any) =>
-              new Session().fromJson(s),
-            ),
-          });
-        })
-        .catch((error: any) => {
-          reject(error);
-        });
-    });
   }
 
   private metricValueFromArray(metricValue: any, metricType: string) {

@@ -211,8 +211,9 @@ export default function (app: App | null) {
       })
     }
     const trackReplaceSync = function (this: CSSStyleSheet, text: string) {
+      if (!app.captureSanitizer) sendReplacement(this, text)
       replaceSync.call(this, text)
-      sendReplacement(this, text)
+      if (app.captureSanitizer) sendReplacement(this, text)
     }
     if (typeof replace === 'function') prototype.replace = trackReplace
     if (typeof replaceSync === 'function') prototype.replaceSync = trackReplaceSync

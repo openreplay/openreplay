@@ -22,7 +22,6 @@ import { Modal } from '@/ui/overlays/modal';
 import { useToast } from '@/ui/overlays/toast';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import { FilterKey } from 'Types/filter/filterType';
-import copy from 'copy-to-clipboard';
 import {
   Bell,
   Grid2x2Plus,
@@ -48,6 +47,7 @@ import {
   USER_PATH,
   WEBVITALS,
 } from 'App/constants/card';
+import { copyWithToast } from 'App/lib/use-copy';
 import { useStore } from 'App/mstore';
 import Widget from 'App/mstore/types/widget';
 import { dashboardMetricDetails, metricDetails, withSiteId } from 'App/routes';
@@ -55,10 +55,7 @@ import { useHistory, useLeaveGuard, useLocation } from 'App/routing';
 import { mobileScreen } from 'App/utils/isMobile';
 import AlertFormModal from 'Components/Alerts/AlertFormModal/AlertFormModal';
 import { CARD_LIST, type CardType } from 'Components/Dashboard/cardPresets';
-import BreakdownFilter from 'Components/Dashboard/components/BreakdownFilter/BreakdownFilter';
-import WidgetFormNew, {
-  supportsBreakdown,
-} from 'Components/Dashboard/components/WidgetForm/WidgetFormNew';
+import WidgetFormNew from 'Components/Dashboard/components/WidgetForm/WidgetFormNew';
 import { renderClickmapThumbnail } from 'Components/Dashboard/components/WidgetForm/renderMap';
 import { useModal } from 'Components/ModalContext';
 
@@ -197,7 +194,7 @@ function WidgetView({
 
         if (selectedCard.cardType === FUNNEL) {
           cardData.series = [new FilterSeries()];
-          cardData.series[0].filter.addFunnelDefaultFilters();
+          cardData.series[0].filter.startWithLocationFilter();
           cardData.series[0].filter.eventsOrder = 'then';
           cardData.series[0].filter.eventsOrderSupport = ['then'];
         }
@@ -232,7 +229,7 @@ function WidgetView({
         if (selectedCard.cardType === HEATMAP) {
           cardData.series = [new FilterSeries()];
           cardData.series[0].maxEvents = 1;
-          cardData.series[0].filter.addHeatmapDefaultFilters();
+          cardData.series[0].filter.startWithLocationFilter();
         }
 
         if (selectedCard.cardType === WEBVITALS) {
@@ -327,8 +324,7 @@ function WidgetView({
   };
 
   const copyLink = () => {
-    copy(window.location.href);
-    toast.success(t('Link copied to clipboard'));
+    void copyWithToast(window.location.href, t('Link copied to clipboard'));
   };
 
   const remove = () => {
@@ -544,18 +540,8 @@ function WidgetView({
             >
               <WidgetFormNew layout={LEGACY_LAYOUT[layout]} />
             </PagePanel>
-            {supportsBreakdown(widget) ? (
-              <BreakdownFilter
-                metric={widget}
-                observeChanges={() => widget.updateKey('hasChanged', true)}
-              />
-            ) : null}
           </div>
-          <PagePanel
-            head={<span className="m-pa__head-title">{t('Preview')}</span>}
-          >
-            <WidgetPreview name={widget.name} isEditing={expanded} />
-          </PagePanel>
+          <WidgetPreview name={widget.name} isEditing={expanded} />
         </div>
         {showsSessions ? <WidgetSessions /> : null}
         {widget.metricType === RETENTION ? <CardUserList /> : null}

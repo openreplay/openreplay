@@ -19,10 +19,10 @@
   "license": "MIT",
   "devDependencies": {
     "@vitest/coverage-istanbul": "^4.1.12",
-    "esbuild": "0.28.1",
+    "esbuild": "0.28.2",
     "jquery": "3.7.1",
     "jsdom": "^27.4.0",
-    "playwright-core": "1.64.1",
+    "playwright-core": "1.65.1",
     "typescript": "^5.9.3",
     "vitest": "^4.1.12"
   }

@@ -6,3 +6,11 @@
   flex: none;
   padding: var(--m-space-5) var(--m-space-7) 0;
 }
+
+/* a compact page head has no air of its own above it */
+.m-shell__notices:has(+ .m-page--compact) {
+  padding-bottom: 0.75rem;
+}
+.m-shell__main:has(> .m-page--folds) > .m-shell__notices {
+  transition: padding-bottom var(--m-duration-slow) var(--m-ease-out);
+}

@@ -22,12 +22,13 @@ export const policy: CaptureSanitizer = (data: CaptureData) => {
     case 'css': return data.source
     case 'font': return data.field
     case 'resource': return data.resourceType
+    case 'svg': return data.value
   }
 }
 export const policyOptions: EsmOptions = { captureSanitizer: policy }
 export const defaultCaptureOptions: ConstructorParameters<typeof tracker>[0] = {}
 export const captureKinds: Record<CaptureData['kind'], true> = {
-  attribute: true, css: true, font: true, resource: true,
+  attribute: true, css: true, font: true, resource: true, svg: true,
 }
 
 export function discardType(instance: TrackerClass): void {

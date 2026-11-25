@@ -84,9 +84,6 @@ export const rrect = (
   [x, y + c],
 ];
 
-export const shift = (pts: P[], dx: number, dy: number): P[] =>
-  pts.map(([x, y]) => [x + dx, y + dy] as P);
-
 export const PAPER = 'm-ill__fill-paper';
 export const ACCENT = 'm-ill__fill-accent';
 

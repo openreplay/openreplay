@@ -1,11 +1,10 @@
-import { toast } from '@/ui/overlays/toast';
-import copy from 'copy-to-clipboard';
 import { useContext, useEffect } from 'react';
 
+import { copyWithToast } from 'App/lib/use-copy';
 import { blockValues, blocks } from 'App/mstore/uiPlayerStore';
+import { SKIP_INTERVALS } from 'App/player-ui/clock';
 import { ownsKeys } from 'App/utils/keys';
 import { PlayerContext } from 'Components/Session/playerContext';
-import { SKIP_INTERVALS } from 'Components/Session_/Player/Controls/Controls';
 
 function useShortcuts({
   skipInterval,
@@ -29,14 +28,10 @@ function useShortcuts({
   const { player, store } = useContext(PlayerContext);
 
   const copySessionUrl = (withTs?: boolean) => {
-    if (withTs) {
-      const { time } = store.get();
-      const sessUrl = `${window.location.href}?jumpto=${time}`;
-      copy(sessUrl);
-    } else {
-      copy(window.location.href);
-    }
-    toast.success('Copied session url to clipboard');
+    const url = withTs
+      ? `${window.location.href}?jumpto=${store.get().time}`
+      : window.location.href;
+    void copyWithToast(url, 'Copied session url to clipboard');
   };
   const forthTenSeconds = () => {
     player.jumpInterval(SKIP_INTERVALS[skipInterval]);
@@ -49,6 +44,8 @@ function useShortcuts({
   useEffect(() => {
     const handleShortcuts = (e: KeyboardEvent) => {
       if (ownsKeys(e.target)) return false;
+      // read before the Shift block below prevents it, so Shift+Space plays
+      const prevented = e.defaultPrevented;
       if (e.shiftKey && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
         player.toggleInspectorMode(false);
@@ -87,7 +84,8 @@ function useShortcuts({
       if (e.key === 'Esc' || e.key === 'Escape') {
         fullScreenOff();
       }
-      if (e.key === ' ') {
+      if (e.key === ' ' && !prevented) {
+        e.preventDefault();
         (document.activeElement as HTMLInputElement | null)?.blur?.();
         player.togglePlay();
       }

@@ -1,14 +1,11 @@
 import { checkEventWithFilters } from '@/components/Session_/Player/Controls/checkEventWithFilters';
 import { getRowsPerPage } from '@/ui/layout/rows-per-page';
 import { loadFile } from 'Player/web/network/loadFiles';
-import { LAST_7_DAYS } from 'Types/app/period';
 import Session from 'Types/session';
 import ErrorStack from 'Types/session/errorStack';
-import { InjectedEvent, Location } from 'Types/session/event';
-import { action, makeAutoObservable, observable, runInAction } from 'mobx';
+import { InjectedEvent } from 'Types/session/event';
+import { action, makeAutoObservable, runInAction } from 'mobx';
 
-import { getDateRangeFromValue } from 'App/dateRange';
-import { filterMap } from 'App/mstore/searchStore';
 import { sessionService } from 'App/services';
 import {
   cleanSessionFilters,
@@ -18,60 +15,7 @@ import {
   setSessionFilter,
 } from 'App/utils';
 
-import { searchStore, searchStoreLive } from './index';
-
-const range = getDateRangeFromValue(LAST_7_DAYS);
-
-const defaultDateFilters = {
-  url: '',
-  rangeValue: LAST_7_DAYS,
-  startDate: range.start?.toMillis(),
-  endDate: range.end?.toMillis(),
-};
-
-class UserFilter {
-  endDate: number = new Date().getTime();
-  startDate: number = new Date().getTime() - 24 * 60 * 60 * 1000;
-  rangeName: string = LAST_7_DAYS;
-  filters: any = [];
-  page: number = 1;
-  limit: number = 10;
-  period: any = { rangeName: LAST_7_DAYS };
-
-  constructor() {
-    makeAutoObservable(this);
-  }
-
-  update(key: string, value: any) {
-    // @ts-ignore
-    this[key] = value;
-    if (key === 'period') {
-      this.startDate = this.period.start;
-      this.endDate = this.period.end;
-    }
-  }
-
-  setFilters(filters: any[]) {
-    this.filters = filters;
-  }
-
-  setPage(page: number) {
-    this.page = page;
-  }
-
-  toJson() {
-    return {
-      endDate: this.period.end,
-      startDate: this.period.start,
-      startTimestamp: this.startDate,
-      endTimestamp: this.endDate,
-      filters: this.filters.map(filterMap),
-      page: this.page,
-      limit: this.limit,
-      eventsOrder: 'then',
-    };
-  }
-}
+import { searchStore } from './index';
 
 interface BaseDevState {
   index: number;
@@ -137,9 +81,21 @@ function readLastPlayed(): string {
   }
 }
 
-export default class SessionStore {
-  userFilter: UserFilter = new UserFilter();
+export interface ReplayPin {
+  sessionId: string;
+  /** epoch ms of the moment */
+  at: number;
+  kind: 'log';
+  label: string;
+  detail?: string;
+  tone?: 'danger' | 'warning';
+  /** where "Open in Logs" goes */
+  backUrl: string;
+}
+/** the replay opens, and plays from, this long before the pin */
+export const PIN_LEAD = 5_000;
 
+export default class SessionStore {
   devTools: DevTools = new DevTools();
 
   list: Session[] = [];
@@ -162,13 +118,9 @@ export default class SessionStore {
 
   favoriteList: Session[] = [];
 
-  activeTab = { name: 'All', type: 'all' };
-
   timezone = 'local';
 
   errorStack: ErrorStack[] = [];
-
-  eventsIndex: number[] = [];
 
   sourcemapUploaded = true;
 
@@ -178,13 +130,7 @@ export default class SessionStore {
 
   liveSessions: Session[] = [];
 
-  visitedEvents: Location[] = [];
-
   insights: any[] = [];
-
-  insightsFilters = defaultDateFilters;
-
-  host = '';
 
   sessionPath: Record<string, any> = {};
 
@@ -203,6 +149,8 @@ export default class SessionStore {
       session start). Empty for a regular session; populated by the issue
       player. */
   timelineIssues: { time: number; label?: string }[] = [];
+  /** what opened this replay from elsewhere (a log line), shown on the track */
+  replayPin: ReplayPin | null = null;
 
   createNoteTooltip = {
     time: 0,
@@ -230,8 +178,6 @@ export default class SessionStore {
 
   loadingSessions: boolean = false;
 
-  loadingSessionData: boolean = false;
-
   constructor() {
     makeAutoObservable(this);
   }
@@ -242,10 +188,6 @@ export default class SessionStore {
 
   setUserTimezone = (timezone: string) => {
     this.userTimezone = timezone;
-  };
-
-  resetUserFilter = () => {
-    this.userFilter = new UserFilter();
   };
 
   getFirstMob = async (sessionId: string) => {
@@ -369,11 +311,6 @@ export default class SessionStore {
     }
   };
 
-  clearAll = () => {
-    this.list = [];
-    this.clearCurrentSession();
-  };
-
   fetchSessionInfo = async (sessionId: string, abortSignal?: AbortSignal) => {
     this.loadingSessions = true;
     try {
@@ -415,7 +352,6 @@ export default class SessionStore {
 
   addSessionEvents = async (sessionData, isLive = false) => {
     const session = new Session(sessionData);
-    const filter = isLive ? searchStoreLive.instance : searchStore.instance;
 
     const eventsData: Record<string, any[]> = {};
     try {
@@ -457,36 +393,6 @@ export default class SessionStore {
       incidents = [],
     } = eventsData;
 
-    const filterEvents = filter.filters.filter((f) => f.isEvent) as Record<
-      string,
-      any
-    >[];
-    const matching: number[] = [];
-
-    const visitedEvents: Location[] = [];
-    const tmpMap = new Set();
-
-    events.forEach((event) => {
-      if (event.type === 'LOCATION' && !tmpMap.has(event.url)) {
-        tmpMap.add(event.url);
-        visitedEvents.push(event as Location);
-      }
-    });
-
-    filterEvents.forEach(({ key, operator, value }) => {
-      events.forEach((e, index) => {
-        if (key === e.type) {
-          const val = e.type === 'LOCATION' ? e.url : e.value;
-          if (operator === 'is' && value === val) {
-            matching.push(index);
-          }
-          if (operator === 'contains' && val.includes(value)) {
-            matching.push(index);
-          }
-        }
-      });
-    });
-
     const newSess = session.addEvents(
       events ?? [],
       crashes ?? [],
@@ -497,29 +403,7 @@ export default class SessionStore {
       stackEvents ?? [],
       incidents ?? [],
     );
-    this.eventsIndex = matching;
-    this.visitedEvents = visitedEvents;
-    this.host = visitedEvents[0]?.host || '';
-
     return newSess;
-  };
-
-  fetchFavoriteList = async () => {
-    try {
-      const data = await sessionService.getFavoriteSessions();
-      this.favoriteList = data.map((s: any) => new Session(s));
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  fetchSessionClickmap = async (sessionId: string, params: any) => {
-    try {
-      const data = await sessionService.getSessionClickMap(sessionId, params);
-      this.insights = data;
-    } catch (e) {
-      console.error(e);
-    }
   };
 
   setAutoplayValues = () => {
@@ -586,20 +470,6 @@ export default class SessionStore {
     }
   };
 
-  setActiveTab = (tab: { type: string; name: string }) => {
-    const list =
-      tab.type === 'all'
-        ? this.list
-        : this.list.filter((s) => s.issueTypes.includes(tab.type));
-
-    this.activeTab = tab;
-    this.sessionIds = list.map((s) => s.sessionId);
-  };
-
-  setTimezone = (tz: string) => {
-    this.timezone = tz;
-  };
-
   setTimelineTooltip = (tp: {
     time: number;
     offset: number;
@@ -615,14 +485,6 @@ export default class SessionStore {
     this.timelineIssues = issues;
   };
 
-  setCreateNoteTooltip = (noteTooltip: any) => {
-    this.createNoteTooltip = noteTooltip;
-  };
-
-  setEditNoteTooltip = (noteTooltip: any) => {
-    this.createNoteTooltip = noteTooltip;
-  };
-
   setSessionPath = (path = {}) => {
     this.sessionPath = path;
   };
@@ -634,12 +496,14 @@ export default class SessionStore {
     }
   };
 
+  setReplayPin = (pin: ReplayPin | null) => {
+    this.replayPin = pin;
+  };
+
   clearCurrentSession = () => {
     this.current = new Session();
-    this.eventsIndex = [];
-    this.visitedEvents = [];
-    this.host = '';
     this.timelineIssues = [];
+    this.replayPin = null;
   };
 
   prefetchSession = (sessionData: Session) => {

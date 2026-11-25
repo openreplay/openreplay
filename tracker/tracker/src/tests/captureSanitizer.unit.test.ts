@@ -1,5 +1,5 @@
 import { describe, expect, test, jest, afterEach } from '@jest/globals'
-import { sanitizeCapture, type CaptureData } from '../main/app/captureSanitizer.js'
+import { sanitizeCapture, sanitizeStyleRule, type CaptureData } from '../main/app/captureSanitizer.js'
 import AttributeSender from '../main/modules/attributeSender.js'
 import { Type } from '../common/messages.gen.js'
 import images from '../main/modules/img.js'
@@ -13,6 +13,33 @@ afterEach(() => {
   jest.restoreAllMocks()
 })
 const value = 'synthetic-private'
+
+test.each([
+  '@import url(https://static.invalid/theme.css?key=example);',
+  '/* comment */ @import url(https://static.invalid/theme.css?key=example);',
+  '@import/* comment */url(https://static.invalid/theme.css?key=example);',
+  'p { background: url(https://static.invalid/image.png?key=example); }',
+])('rewrites %s without constructing a stylesheet', (rule) => {
+  const original = Object.getOwnPropertyDescriptor(globalThis, 'CSSStyleSheet')!
+  Object.defineProperty(globalThis, 'CSSStyleSheet', { ...original, value: undefined })
+  try {
+    expect(sanitizeStyleRule(({ value }) => value.replace('?key=example', ''), rule, 'rule'))
+      .toBe(rule.replace('?key=example', ''))
+  } finally {
+    Object.defineProperty(globalThis, 'CSSStyleSheet', original)
+  }
+})
+
+test('omitting an import with a leading comment keeps an inert import slot', () => {
+  expect(sanitizeStyleRule(() => null, '/* retained */ @import "theme.css";', 'rule'))
+    .toBe('@import url("data:text/css,") not all;')
+})
+
+test('an empty import replacement keeps an inert import slot', () => {
+  expect(sanitizeStyleRule(() => '@import ;', '@import "theme.css";', 'rule'))
+    .toBe('@import url("data:text/css,") not all;')
+})
+
 function appFor(policy?: any) {
   const messages: any[][] = []
   const app: any = {
@@ -61,7 +88,7 @@ describe('capture sanitizer contract', () => {
 
 })
 describe('stylesheet pre-fetch and content policy', () => {
-  test('fetch uses approved URL; fetched CSS has separate semantic check and safe positive survives', async () => {
+  test('fetch uses the page URL and emits sanitized CSS with the approved base', async () => {
     const previousFetch = globalThis.fetch
     callbacks.push(() => { globalThis.fetch = previousFetch })
     const fetcher = jest.fn(async (_url: string) => ({
@@ -88,7 +115,7 @@ describe('stylesheet pre-fetch and content policy', () => {
       { sanitizer: policy, href: 'https://static.invalid/safe.css', original: link.href },
     )
     await new Promise((resolve) => setTimeout(resolve, 0))
-    expect(fetcher).toHaveBeenCalledWith('https://static.invalid/safe.css')
+    expect(fetcher).toHaveBeenCalledWith(link.href)
     expect(policy).toHaveBeenCalledWith(
       expect.objectContaining({ kind: 'css', source: 'text', value: 'p{color:red}' }),
     )
@@ -96,13 +123,11 @@ describe('stylesheet pre-fetch and content policy', () => {
   })
 })
 
-test('rewritten stylesheet URL never reads the original DOM sheet', async () => {
+test('rewriting the replay base still reads the original DOM sheet', async () => {
   const originalFetch = globalThis.fetch
   const fetcher = jest.fn(async (_url: string) => ({ ok: true, text: async () => 'p{color:blue}' }))
   ;(globalThis as any).fetch = fetcher
-  const read = jest.fn(() => {
-    throw Error('original sheet must not be read')
-  })
+  const read = jest.fn(() => ({ cssRules: [{ cssText: 'p{color:blue}' }] }))
   const link = document.createElement('link')
   link.href = 'https://example.invalid/private.css'
   Object.defineProperty(link, 'sheet', { get: read })
@@ -124,8 +149,8 @@ test('rewritten stylesheet URL never reads the original DOM sheet', async () => 
       { sanitizer: policy, href: 'https://static.invalid/safe.css', original: link.href },
     )
     await new Promise((resolve) => setTimeout(resolve, 0))
-    expect(read).not.toHaveBeenCalled()
-    expect(fetcher).toHaveBeenCalledWith('https://static.invalid/safe.css')
+    expect(read).toHaveBeenCalled()
+    expect(fetcher).not.toHaveBeenCalled()
     expect(policy).toHaveBeenCalledWith(expect.objectContaining({ kind: 'css', source: 'text' }))
     expect(insert).toHaveBeenCalledWith(2, 'p{color:blue}', 0, 'https://static.invalid/safe.css')
   } finally {

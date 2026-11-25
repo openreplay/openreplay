@@ -1,4 +1,5 @@
 import { CopyButton } from '@/ui/actions/CopyButton';
+import { Highlight, holds } from '@/ui/data/Highlight';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import React, { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -13,6 +14,8 @@ export interface JsonTreeProps {
   /** each line gets the kit copy on hover: a leaf copies its value, an object
    *  itself as JSON, the first line the whole thing */
   copyable?: boolean;
+  /** keeps only what holds it, opened, with the match marked */
+  query?: string;
   className?: string;
 }
 
@@ -21,22 +24,49 @@ export function JsonTree({
   value,
   openDepth = 2,
   copyable = false,
+  query = '',
   className,
 }: JsonTreeProps) {
+  const { t } = useTranslation();
+  const q = query.trim();
+  const shown = q ? prune(value, q) : value;
   return (
     <div
       className={`m-json m-mono${className ? ` ${className}` : ''}`}
       role="tree"
     >
-      <JsonNode
-        value={value}
-        depth={0}
-        last
-        openDepth={openDepth}
-        copyable={copyable}
-      />
+      {shown === undefined ? (
+        <p className="m-json__none">{t('Nothing matches “{{q}}”', { q })}</p>
+      ) : (
+        <JsonNode
+          value={shown}
+          depth={0}
+          last
+          openDepth={openDepth}
+          copyable={copyable}
+          query={q}
+        />
+      )}
     </div>
   );
+}
+
+/** The part of a value that holds the query; undefined when none does. */
+function prune(v: unknown, q: string): unknown {
+  if (v != null && typeof v === 'object') {
+    const arr = Array.isArray(v);
+    const entries: [string, unknown][] = arr
+      ? (v as unknown[]).map((x, i) => [String(i), x])
+      : Object.entries(v as Record<string, unknown>);
+    const kept = entries.flatMap(([k, x]): [string, unknown][] => {
+      if (!arr && holds(k, q)) return [[k, x]];
+      const p = prune(x, q);
+      return p === undefined ? [] : [[k, p]];
+    });
+    if (!kept.length) return undefined;
+    return arr ? kept.map(([, x]) => x) : Object.fromEntries(kept);
+  }
+  return holds(String(v), q) ? v : undefined;
 }
 
 const asText = (v: unknown) =>
@@ -76,6 +106,7 @@ function JsonNode({
   last,
   openDepth,
   copyable,
+  query,
 }: {
   name?: string;
   value: unknown;
@@ -83,14 +114,18 @@ function JsonNode({
   last: boolean;
   openDepth: number;
   copyable: boolean;
+  query: string;
 }) {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(depth < openDepth);
+  const [folded, setOpen] = useState(depth < openDepth);
+  const open = query ? true : folded;
   const comma = last ? '' : ',';
   const key =
     name != null ? (
       <>
-        <span className="m-json__key">{name}</span>
+        <span className="m-json__key">
+          <Highlight text={name} query={query} />
+        </span>
         <span className="m-code__t-punct">: </span>
       </>
     ) : null;
@@ -110,7 +145,8 @@ function JsonNode({
           <button
             type="button"
             className="m-json__fold"
-            onClick={() => setOpen((v) => !v)}
+            onClick={() => setOpen(!open)}
+            disabled={!!query}
             aria-label={open ? t('Collapse') : t('Expand')}
           >
             {key}
@@ -138,6 +174,7 @@ function JsonNode({
                 last={i === entries.length - 1}
                 openDepth={openDepth}
                 copyable={copyable}
+                query={query}
               />
             ))}
             <div>
@@ -153,11 +190,12 @@ function JsonNode({
   }
 
   let tok: ReactNode;
+  const text = <Highlight text={String(value)} query={query} />;
   if (typeof value === 'string')
-    tok = <span className="m-code__t-string">"{value}"</span>;
+    tok = <span className="m-code__t-string">"{text}"</span>;
   else if (typeof value === 'number')
-    tok = <span className="m-code__t-number">{value}</span>;
-  else tok = <span className="m-code__t-keyword">{String(value)}</span>;
+    tok = <span className="m-code__t-number">{text}</span>;
+  else tok = <span className="m-code__t-keyword">{text}</span>;
   return (
     <div className="m-json__leaf" role="treeitem">
       <Line copy={copy}>

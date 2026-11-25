@@ -1,29 +1,43 @@
 import { useStore } from '@/mstore';
+import { Button } from '@/ui/actions/button';
 import { EmptyState } from '@/ui/feedback/EmptyState';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import type { TFunction } from 'i18next';
+import { ChevronRight } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { CompareTag } from 'App/components/Charts/CompareTag';
+import {
+  type BreakdownPart,
+  SubBars,
+  SubColumns,
+} from 'App/components/Charts/SubBars';
 import 'App/components/Dashboard/charts.css';
-import TopNButton from 'App/components/Dashboard/components/BreakdownFilter/TopNButton';
 import { useModal } from 'App/components/Modal';
 import type Funnel from 'App/mstore/types/funnel';
 import type FunnelStage from 'App/mstore/types/funnelStage';
 import type Widget from 'App/mstore/types/widget';
 import NoDataInWindow from 'Components/Dashboard/components/NoDataInWindow';
 
+interface FunnelData {
+  funnel: Funnel;
+  funnelBreakdown?: Record<string, Funnel>;
+  funnelBreakdownValues?: Record<string, string[]>;
+}
+
 interface Props {
   metric?: Widget;
   isWidget?: boolean;
-  data: { funnel: Funnel; funnelBreakdown?: Record<string, Funnel> };
+  data: FunnelData;
   /** a stage was drilled into (a dashboard opens its card) */
   onDrill?: () => void;
+  /** a dashboard tile's hidden steps open its card */
+  onOpen?: () => void;
   /** the window the funnel is drawn over, when not the card's drill-down one */
   drillPeriod?: Record<string, any>;
-  compData?: { funnel: Funnel; funnelBreakdown?: Record<string, Funnel> };
+  compData?: FunnelData;
 }
 
 const INSIDE_MIN = 12;
@@ -55,6 +69,7 @@ function FunnelWidget({
   data,
   compData,
   onDrill,
+  onOpen,
   drillPeriod,
 }: Props) {
   const { t } = useTranslation();
@@ -131,11 +146,19 @@ function FunnelWidget({
     if (!clearing) onDrill?.();
   };
 
-  const topN = metricStore.breakdownTopN;
   const breakdown = data?.funnelBreakdown;
-  const allBreakdownKeys = breakdown ? Object.keys(breakdown) : [];
-  const breakdownKeys =
-    topN > 0 ? allBreakdownKeys.slice(0, topN) : allBreakdownKeys;
+  const breakdownValues = data?.funnelBreakdownValues;
+  const partsAt = (index: number): BreakdownPart[] =>
+    breakdown
+      ? Object.entries(breakdown)
+          .map(([key, f]) => ({
+            values: breakdownValues?.[key] ?? [key],
+            count: f?.stages?.[index]?.count ?? 0,
+          }))
+          .filter((p) => p.count > 0)
+          .sort((a, b) => b.count - a.count)
+      : [];
+  const topN = metricStore.breakdownTopN;
 
   const compLabel = React.useMemo(() => {
     if (!comparisonPeriod) return t('Previous period');
@@ -178,14 +201,8 @@ function FunnelWidget({
           const inside = share >= INSIDE_MIN;
           const label = stageText(s, t);
           const c = compStages?.[index];
-          const parts = breakdown
-            ? breakdownKeys
-                .map((key) => ({
-                  key,
-                  count: breakdown[key]?.stages?.[index]?.count ?? 0,
-                }))
-                .filter((p) => p.count > 0)
-            : null;
+          const parts = partsAt(index);
+          const scale = stages[0].count;
           const size = (pct: number) => ({
             [horizontal ? 'height' : 'width']: `${Math.max(2, pct)}%`,
           });
@@ -218,26 +235,13 @@ function FunnelWidget({
               </span>
               <span className="m-fn__bars">
                 <span className="m-fn__track" aria-hidden="true">
-                  {parts && parts.length ? (
-                    <span className="m-fn__parts" style={size(share)}>
-                      {parts.map((p, k) => (
-                        <span
-                          key={p.key}
-                          className="m-fn__part"
-                          style={{
-                            flex: p.count,
-                            background: `var(--m-chart-${(k % 8) + 1})`,
-                          }}
-                          title={`${p.key}: ${fmt(p.count)}`}
-                        />
-                      ))}
-                    </span>
-                  ) : (
-                    <span className="m-fn__fill" style={size(share)}>
-                      {inside && <span className="m-fn__inside">{share}%</span>}
-                    </span>
-                  )}
+                  <span className="m-fn__fill" style={size(share)}>
+                    {inside && <span className="m-fn__inside">{share}%</span>}
+                  </span>
                 </span>
+                {horizontal && parts.length ? (
+                  <SubColumns parts={parts} scale={scale} topN={topN} />
+                ) : null}
                 {c ? (
                   <span
                     className="m-fn__ghost"
@@ -263,36 +267,49 @@ function FunnelWidget({
             },
           );
           return (
-            <li
-              key={index}
-              className={`m-fn__stage${focusedFilter === index ? ' is-focused' : ''}${s.isActive ? '' : ' is-muted'}`}
-            >
+            <React.Fragment key={index}>
               {i === 1 && hidden > 0 && (
-                <span className="m-fn__more">
-                  {hidden === 1
-                    ? t('+1 step')
-                    : t('+{{n}} steps', { n: hidden, count: hidden })}
-                </span>
+                <li className="m-fn__gap">
+                  <Button variant="subtle" onClick={onOpen}>
+                    {t('{{n}} more steps', { n: hidden, count: hidden })}
+                    <ChevronRight size={13} />
+                  </Button>
+                </li>
               )}
-              {isWidget && !onDrill ? (
-                <span
-                  className="m-fn__stage-btn"
-                  role="group"
-                  aria-label={aria}
-                >
-                  {body}
-                </span>
-              ) : (
-                <button
-                  type="button"
-                  className="m-fn__stage-btn"
-                  aria-label={aria}
-                  onClick={() => focusStage(index)}
-                >
-                  {body}
-                </button>
-              )}
-            </li>
+              <li
+                className={`m-fn__stage${focusedFilter === index ? ' is-focused' : ''}${s.isActive ? '' : ' is-muted'}`}
+              >
+                {isWidget && !onDrill ? (
+                  <span
+                    className="m-fn__stage-btn"
+                    role="group"
+                    aria-label={aria}
+                  >
+                    {body}
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    className="m-fn__stage-btn"
+                    aria-label={aria}
+                    onClick={() => focusStage(index)}
+                  >
+                    {body}
+                  </button>
+                )}
+                {parts.length ? (
+                  <SubBars
+                    parts={parts}
+                    scale={scale}
+                    parent={s.count}
+                    topN={topN}
+                    unit={unit}
+                    bars={!horizontal}
+                    inert={isWidget}
+                  />
+                ) : null}
+              </li>
+            </React.Fragment>
           );
         })}
       </ol>
@@ -334,9 +351,6 @@ function FunnelWidget({
             </div>
           )}
         </dl>
-        {allBreakdownKeys.length > 0 && !isWidget ? (
-          <TopNButton totalValues={allBreakdownKeys.length} />
-        ) : null}
       </footer>
     </div>
   );

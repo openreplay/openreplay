@@ -29,40 +29,23 @@ import { nextID } from '../../modules/constructedStyleSheets.js'
 import { SanitizeLevel, stringWiper, isStateAttribute } from '../sanitizer.js'
 import { parentNode, previousSibling, nextSibling, firstChild } from '../untaintedDom.js'
 
-function createSpriteCache() {
-  return {
-    icons: new Map<string, string | { paths: string; vbox: string }>(),
-    localIcons: new WeakMap<Document, Map<string, string>>(),
-    documents: new Map<string, Promise<Document>>(),
-  }
-}
-
-const defaultSprites = createSpriteCache()
-const recordingSprites = new WeakMap<AbortSignal, ReturnType<typeof createSpriteCache>>()
-
-function getRecordingSprites(signal: AbortSignal) {
-  let cache = recordingSprites.get(signal)
-  if (cache === undefined) {
-    cache = createSpriteCache()
-    recordingSprites.set(signal, cache)
-    signal.addEventListener('abort', () => recordingSprites.delete(signal), { once: true })
-  }
-  return cache
-}
+const iconCache = {}
+const svgUrlCache = {}
+// slotted nodes and their slot live in different roots (and observers), so this is shared
+const slotOf = new WeakMap<Node, number>()
+// bumped on level changes: shadow roots and iframe documents below may lag
+let levelChanges = 0
 
 export async function parseUseEl(
   useElement: SVGUseElement,
   mode: 'inline' | 'dataurl' | 'svgtext',
   domParser: DOMParser,
-  approvedHref?: string,
-  isCurrent = () => true,
-  cache = defaultSprites,
   signal?: AbortSignal,
+  sourceHref?: string,
 ) {
   try {
-    if (!isCurrent()) return
-    const href =
-      approvedHref ?? (useElement.getAttribute('xlink:href') || useElement.getAttribute('href'))
+    if (signal?.aborted) return
+    const href = sourceHref ?? (useElement.getAttribute('xlink:href') || useElement.getAttribute('href'))
     if (!href) {
       console.debug('Openreplay: xlink:href or href not found on <use>.')
       return
@@ -82,10 +65,9 @@ export async function parseUseEl(
     // named "local" can't collide with the in-document bucket.
     const cacheKey = url ? `url:${url}#${symbolId}#${mode}` : `doc:${symbolId}#${mode}`
 
-    const cached = url
-      ? cache.icons.get(cacheKey)
-      : cache.localIcons.get(useElement.ownerDocument)?.get(cacheKey)
-    if (cached !== undefined) return cached
+    if (sourceHref === undefined && iconCache[cacheKey]) {
+      return iconCache[cacheKey]
+    }
 
     // happens if svg spritemap is local, fastest case for us
     if (!url && symbolId) {
@@ -105,9 +87,7 @@ export async function parseUseEl(
         </svg>
       `
 
-        const icons = cache.localIcons.get(useElement.ownerDocument) ?? new Map<string, string>()
-        icons.set(cacheKey, inlineSvg)
-        cache.localIcons.set(useElement.ownerDocument, icons)
+        if (sourceHref === undefined) iconCache[cacheKey] = inlineSvg
 
         return inlineSvg
       } else {
@@ -115,20 +95,48 @@ export async function parseUseEl(
         return
       }
     }
-    let documentRequest = cache.documents.get(url)
-    if (documentRequest === undefined) {
-      const request = signal ? fetch(url, { signal }) : fetch(url)
-      documentRequest = request
-        .then((response) => response.text())
-        .then((source) => domParser.parseFromString(source, 'image/svg+xml'))
-        .catch((error) => {
-          cache.documents.delete(url)
-          throw error
+    let svgDoc: Document | undefined
+    if (sourceHref === undefined && svgUrlCache[url]) {
+      if (svgUrlCache[url] === 1) {
+        await new Promise((resolve) => {
+          let tries = 0
+          const interval = setInterval(() => {
+            if (signal?.aborted || tries > 100) {
+              clearInterval(interval)
+              resolve(false)
+              return
+            }
+            if (svgUrlCache[url] !== 1) {
+              svgDoc = svgUrlCache[url]
+              clearInterval(interval)
+              resolve(true)
+            } else {
+              tries++
+            }
+          }, 100)
         })
-      cache.documents.set(url, documentRequest)
+      } else {
+        svgDoc = svgUrlCache[url] ?? `<svg xmlns="http://www.w3.org/2000/svg"></svg>`
+      }
+    } else {
+      if (sourceHref === undefined) svgUrlCache[url] = 1
+      try {
+        const response = await (signal ? fetch(url, { signal }) : fetch(url))
+        if (sourceHref !== undefined && !response.ok) return
+        const svgText = await response.text()
+        svgDoc = domParser.parseFromString(svgText, 'image/svg+xml')
+        if (sourceHref === undefined) svgUrlCache[url] = svgDoc
+      } catch (e) {
+        // Clear the in-flight sentinel so a failed fetch doesn't wedge every
+        // future <use> for this url into a 10s poll-then-give-up loop.
+        if (sourceHref === undefined) delete svgUrlCache[url]
+        throw e
+      }
     }
-    const svgDoc = await documentRequest
-    if (!isCurrent()) return
+
+    if (signal?.aborted || !svgDoc) {
+      return
+    }
 
     // @ts-ignore
     const symbol = svgDoc.getElementById(symbolId)
@@ -140,7 +148,7 @@ export async function parseUseEl(
 
     if (mode === 'inline') {
       const res = { paths: symbol.innerHTML, vbox: symbol.getAttribute('viewBox') || '0 0 24 24' }
-      cache.icons.set(cacheKey, res)
+      if (sourceHref === undefined) iconCache[cacheKey] = res
       return res
     }
     if (mode === 'svgtext') {
@@ -150,7 +158,7 @@ export async function parseUseEl(
         </svg>
       `
 
-      cache.icons.set(cacheKey, inlineSvg)
+      if (sourceHref === undefined) iconCache[cacheKey] = inlineSvg
 
       return inlineSvg
     }
@@ -163,20 +171,17 @@ export async function parseUseEl(
       const encodedSvg = btoa(inlineSvg)
       const dataUrl = `data:image/svg+xml;base64,${encodedSvg}`
 
-      cache.icons.set(cacheKey, dataUrl)
+      if (sourceHref === undefined) iconCache[cacheKey] = dataUrl
 
       return dataUrl
     }
     console.debug(`Openreplay: Unknown mode: ${mode}. Use "inline" or "dataurl".`)
   } catch (error) {
-    if (!isCurrent()) return
-    if (approvedHref !== undefined) console.error('OpenReplay: failed to capture SVG sprite')
+    if (signal?.aborted) return
+    if (sourceHref !== undefined) console.error('OpenReplay: failed to capture SVG sprite')
     else console.error('Openreplay: Error processing <use> element:', error)
   }
 }
-
-// slotted nodes and their slot live in different roots (and observers), so this is shared
-const slotOf = new WeakMap<Node, number>()
 
 export function isIgnored(node: Node): boolean {
   const t = node.nodeType
@@ -234,6 +239,14 @@ function isContentAttribute(el: Element, name: string): boolean {
   return CONTENT_ATTRIBUTES.has(name)
 }
 
+// what a masked element would draw; `#id` and url(#id) point into the page (gradients, symbols)
+function isResourceAttribute(el: Element, name: string): boolean {
+  return isSVGElement(el)
+    ? name === 'href' || name === 'xlink:href'
+    : name === 'poster' || name === 'background'
+}
+const CSS_URL = /url\(\s*(?!['"]?#)(?:"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|(?:\\.|[^)\\])*)\s*\)/gi
+
 function maskAttribute(app: App, id: number, el: Element, name: string, value: string): string {
   if (!app.sanitizer.isObscured(id)) return value
   if (
@@ -242,6 +255,8 @@ function maskAttribute(app: App, id: number, el: Element, name: string, value: s
   ) {
     return stringWiper(value)
   }
+  if (isResourceAttribute(el, name)) return value.startsWith('#') ? value : ''
+  if (name === 'style') return value.replace(CSS_URL, 'none')
   return value
 }
 
@@ -253,12 +268,10 @@ export interface AttributeContext {
   readonly domParser: DOMParser
   /** bumped on disconnect: async work (sprites, css inlining) of an older session bails */
   generation: number
-  sprites?: ReturnType<typeof createSpriteCache>
 }
 
 export function resetAttributeContext(ctx: AttributeContext): void {
   ctx.generation++
-  ctx.sprites = undefined
 }
 
 export function sendNodeAttribute(
@@ -283,7 +296,13 @@ export function sendNodeAttribute(
       app.attributeSender.removeAttribute(id, name, node)
       return
     }
-    if (isUseElement(node) && name === 'href' && !ctx.disableSprites) {
+    // a masked <use> points at its symbol, recorded masked, instead of a copy
+    if (
+      isUseElement(node) &&
+      name === 'href' &&
+      !ctx.disableSprites &&
+      !((app.captureSanitizer || value.startsWith('#')) && app.sanitizer.isObscured(id))
+    ) {
       sendSprite(ctx, id, node, name, value)
       return
     }
@@ -291,6 +310,7 @@ export function sendNodeAttribute(
       if (value.length > 1e5) {
         value = ''
       }
+      value = maskAttribute(app, id, node, name, value)
       const approved = app.captureSanitizer
         ? sanitizeCapture(app.captureSanitizer, { kind: 'resource', resourceType: 'svg', value, node })
         : value
@@ -331,6 +351,9 @@ export function sendNodeAttribute(
   if (name === 'value' && shouldSkipValueAttribute(node)) {
     return
   }
+  if (name === 'checked' && app.sanitizer.isHidden(id)) {
+    return
+  }
   if (value === null) {
     app.attributeSender.removeAttribute(id, name, node)
     return
@@ -338,6 +361,7 @@ export function sendNodeAttribute(
   if (name === 'style' || (name === 'href' && hasTag(node, 'link'))) {
     const policy = app.captureSanitizer
     const original = value
+    value = maskAttribute(app, id, node, name, value)
     if (policy && value.length > 1e5) value = ''
     const approved = !policy
       ? value
@@ -362,13 +386,13 @@ export function sendNodeAttribute(
 }
 
 function sendAttributeValue(
-  app: App, id: number, node: Element, name: string, value: string, plain = false,
+  app: App, id: number, node: Element, name: string, value: string,
 ): void {
   value = maskAttribute(app, id, node, name, value)
   const policy = app.captureSanitizer
   const approved = policy ? sanitizeCapture(policy, { kind: 'attribute', name, value, node }) : value
   if (approved === null) app.attributeSender.removeAttribute(id, name, node)
-  else app.attributeSender.sendSetAttribute(id, name, approved, plain, node)
+  else app.attributeSender.sendSetAttribute(id, name, approved, false, node)
 }
 
 function sendSprite(ctx: AttributeContext, id: number, node: SVGUseElement, name: string, original: string): void {
@@ -392,17 +416,19 @@ function sendSprite(ctx: AttributeContext, id: number, node: SVGUseElement, name
     app.attributeSender.sendSetAttribute(id, name, '', true, node)
     return
   }
-  const cache = policy
-    ? (ctx.sprites ??= createSpriteCache())
-    : signal
-      ? getRecordingSprites(signal)
-      : defaultSprites
-  void parseUseEl(node, 'svgtext', ctx.domParser, href ?? undefined, isCurrent, cache, signal)
+  void parseUseEl(node, 'svgtext', ctx.domParser, signal, policy ? original : undefined)
     .then((svgData) => {
-      if (!svgData || !isCurrent()) return
-      const value = `_$OPENREPLAY_SPRITE$_${svgData}`
-      if (policy) sendAttributeValue(app, id, node, name, value, true)
-      else app.send(SetNodeAttribute(id, name, value))
+      if (typeof svgData !== 'string' || !svgData || !isCurrent()) return
+      if (policy) {
+        const approved = sanitizeCapture(policy, { kind: 'svg', value: svgData, node })
+        if (!isCurrent()) return
+        if (approved === null) app.attributeSender.removeAttribute(id, name, node)
+        else app.attributeSender.sendSetAttribute(
+          id, name, approved === '' ? '' : `_$OPENREPLAY_SPRITE$_${approved}`, true, node,
+        )
+      } else {
+        app.send(SetNodeAttribute(id, name, `_$OPENREPLAY_SPRITE$_${svgData}`))
+      }
     })
     .catch((error: unknown) => {
       if (policy) console.error('OpenReplay: failed to capture SVG sprite')
@@ -462,8 +488,14 @@ export function sendContentAttributes(ctx: AttributeContext, id: number, el: Ele
   const attrs = el.attributes
   for (let i = 0; i < attrs.length; i++) {
     const name = attrs[i].nodeName
-    if (isContentAttribute(el, name) || isStateAttribute(el, name)) {
-      sendNodeAttribute(ctx, id, el, name, attrs[i].value)
+    const value = attrs[i].value
+    if (
+      isContentAttribute(el, name) ||
+      isStateAttribute(el, name) ||
+      isResourceAttribute(el, name) ||
+      (name === 'style' && /url\(/i.test(value))
+    ) {
+      sendNodeAttribute(ctx, id, el, name, value)
     }
   }
 }
@@ -513,6 +545,7 @@ export default abstract class Observer {
   private readonly attributesMap: Map<number, Set<string>> = new Map()
   private readonly textSet: Set<number> = new Set()
   private root: Node | null = null
+  private rootLevelChecked = -1
   /**
    * this option means that, instead of using link element with href to load css,
    * we will try to parse the css text instead and send it as css rules set
@@ -791,6 +824,10 @@ export default abstract class Observer {
   // A top-consumption function on the infinite lists test. (~1% of performance resources)
   private _commitNode(id: number, node: Node): boolean {
     if (isRootNode(node)) {
+      if (this.rootLevelChecked !== levelChanges) {
+        this.rootLevelChecked = levelChanges
+        this.app.sanitizer.handleRoot(id, node)
+      }
       return true
     }
     let slot = (node as any).assignedSlot as HTMLSlotElement | null
@@ -819,6 +856,7 @@ export default abstract class Observer {
       }
       this.app.sanitizer.handleNode(id, parentID, node)
       if (this.app.sanitizer.isHidden(parentID)) {
+        if (this.recents.get(id) === RecentsType.Removed) levelChanges++
         return false
       }
     } else {
@@ -900,6 +938,7 @@ export default abstract class Observer {
       }
     }
     if (isElementNode(node) && this.app.sanitizer.getLevel(id) !== prevLevel) {
+      levelChanges++
       // raised by an attribute change or a move: what was sent at the old level is re-sent
       sendContentAttributes(this.attrCtx, id, node)
     }

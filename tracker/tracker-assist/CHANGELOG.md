@@ -1,3 +1,9 @@
+## 11.0.24
+
+- call and remote control state handling updates; every agent in the call is shown in the call window
+- `stop()` ends remote control, so a later `start()` asks again
+- canvas streaming follows masking changes
+
 ## 11.0.23
 
 - remote control works inside shadow DOM: clicks go to the element under the cursor inside open shadow roots (Ionic datetime, Stencil and Lit components) as composed events, and scrolling finds the scroll container through shadow roots and slots (`ion-content`)

@@ -1,7 +1,6 @@
-import { FilterCategory, FilterType } from 'Types/filter/filterType';
+import { FilterCategory } from 'Types/filter/filterType';
 import {
   addElementToFiltersMap,
-  addElementToLiveFiltersMap,
   clearMetaFilters,
 } from 'Types/filter/newFilter';
 import { makeAutoObservable, runInAction } from 'mobx';
@@ -12,13 +11,9 @@ import { customFieldService } from 'App/services';
 class CustomFieldStore {
   isLoading: boolean = false;
 
-  isAllLoading: boolean = false;
-
   isSaving: boolean = false;
 
   list: CustomField[] = [];
-
-  allList: CustomField[] = [];
 
   sources: CustomField[] = [];
 
@@ -73,10 +68,7 @@ class CustomFieldStore {
       if (seq !== this.listSeq) return;
       clearMetaFilters();
       response.forEach((item: any) => {
-        const calls = [addElementToFiltersMap, addElementToLiveFiltersMap];
-        calls.forEach((call) => {
-          call(FilterCategory.METADATA, `_${item.key}`);
-        });
+        addElementToFiltersMap(FilterCategory.METADATA, `_${item.key}`);
       });
       this.list = response.map((item_1: any) => new CustomField(item_1));
       this.fetchedMetadata = true;
@@ -103,23 +95,6 @@ class CustomFieldStore {
       // });
     } finally {
       if (seq === this.listSeq) this.isLoading = false;
-    }
-  }
-
-  async fetchSources(): Promise<any> {
-    this.isLoading = true;
-    try {
-      const response = await customFieldService.get('/integration/sources');
-      this.sources = response.map(
-        ({ value, ...item }: any) =>
-          new CustomField({
-            label: value,
-            key: value,
-            ...item,
-          }),
-      );
-    } finally {
-      this.isLoading = false;
     }
   }
 

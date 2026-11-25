@@ -1,5 +1,5 @@
 /**
- * Alternative DOM core, enabled with `nextObserver: true`. Same wire protocol and public
+ * Default DOM core (`nextObserver: false` opts out). Same wire protocol and public
  * surface as TopObserver + Nodes; differs in how it keeps track of nodes:
  *
  *  - Liveness by structure (see NextNodes): removing a branch, an iframe or the document
@@ -187,7 +187,12 @@ export default class NextObserver
     }
   }
 
-  crossdomainObserve(rootNodeId: number, frameOrder: number, frameLevel: number) {
+  crossdomainObserve(
+    rootNodeId: number,
+    frameOrder: number,
+    frameLevel: number,
+    level = SanitizeLevel.Plain,
+  ) {
     if (this.app.captureSignal?.aborted) return
     initUntaintedDom()
     this.active = true
@@ -200,7 +205,7 @@ export default class NextObserver
     this.mo.observe(document, MO_OPTS)
     this.listen(document, 'load', this.onLoad)
     this.beginBatch()
-    const r = this.newRec(document, null, SanitizeLevel.Plain)
+    const r = this.newRec(document, null, level)
     this.root = r
     this.app.send(CreateIFrameDocument(rootNodeId, r.id))
     this.created.push(document)

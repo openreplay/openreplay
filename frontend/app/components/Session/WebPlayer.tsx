@@ -12,6 +12,7 @@ import { prefetchRoute } from 'App/layout/nav/prefetchRoutes';
 import { useStore } from 'App/mstore';
 import { sessions as sessionsRoute, withSiteId } from 'App/routes';
 import { useNavigate, useParams } from 'App/routing';
+import PlayerErrorBoundary from 'Components/Session/Player/PlayerErrorBoundary';
 import { wrapPlayerStore } from 'Components/Session/playerStore';
 import RecordingNotices from 'Components/Session_/RecordingNotices';
 
@@ -296,37 +297,39 @@ function WebPlayer(props: any) {
 
   return (
     <PlayerContext.Provider value={contextValue}>
-      {fullView ? (
-        player
-      ) : (
-        <ReplayScreen
-          back={
-            hideBack
-              ? undefined
-              : { label: t('Sessions'), onClick: back, onIntent: warmBack }
-          }
-          lead={<ReplayLead width={width} height={height} />}
-          actions={
-            <ReplayActions activeTab={activeTab} setActiveTab={onPanel} />
-          }
-          panels={panels}
-          panel={activeTab || null}
-          onPanel={onPanel}
-          panelWidth={activeTab === 'EXPORT' ? 480 : undefined}
-          renderPanel={(key) => (
-            <RightBlock
-              key={contextValue.sessionId}
-              activeTab={key}
-              setActiveTab={onPanel}
-              embedded
-            />
-          )}
-          notice={<RecordingNotices />}
-          fullscreen={fullscreen}
-        >
-          {player}
-        </ReplayScreen>
-      )}
+      <PlayerErrorBoundary key={contextValue.sessionId}>
+        {fullView ? (
+          player
+        ) : (
+          <ReplayScreen
+            back={
+              hideBack
+                ? undefined
+                : { label: t('Sessions'), onClick: back, onIntent: warmBack }
+            }
+            lead={<ReplayLead width={width} height={height} />}
+            actions={
+              <ReplayActions activeTab={activeTab} setActiveTab={onPanel} />
+            }
+            panels={panels}
+            panel={activeTab || null}
+            onPanel={onPanel}
+            panelWidth={activeTab === 'EXPORT' ? 480 : undefined}
+            renderPanel={(key) => (
+              <RightBlock
+                key={contextValue.sessionId}
+                activeTab={key}
+                setActiveTab={onPanel}
+                embedded
+              />
+            )}
+            notice={<RecordingNotices />}
+            fullscreen={fullscreen}
+          >
+            {player}
+          </ReplayScreen>
+        )}
+      </PlayerErrorBoundary>
     </PlayerContext.Provider>
   );
 }

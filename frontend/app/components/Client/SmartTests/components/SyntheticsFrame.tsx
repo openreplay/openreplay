@@ -1,13 +1,7 @@
-import { IconButton } from '@/ui/actions/IconButton';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItems,
-  DropdownMenuTrigger,
-} from '@/ui/actions/dropdown-menu';
+import { MoreMenu } from '@/ui/actions/dropdown-menu';
 import { PageCard, PageToolbar } from '@/ui/layout/PageCard';
 import { Tabs, TabsList, TabsTrigger } from '@/ui/layout/tabs';
-import { BookOpen, MoreHorizontal, Settings2 } from 'lucide-react';
+import { BookOpen, Settings2 } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -54,36 +48,23 @@ export function SyntheticsFrame({
   const onTab = (key: string) => kaiUi.setActiveTab(key as KaiTab);
 
   const more = (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <span>
-          <IconButton
-            icon={<MoreHorizontal size={15} />}
-            label={t('More')}
-            variant="ghost"
-          />
-        </span>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItems
-          items={[
-            {
-              key: 'settings',
-              icon: <Settings2 size={13} />,
-              label: t('Tests settings'),
-              onClick: () => history.push('/client/agents?agent=tests'),
-            },
-            {
-              key: 'docs',
-              icon: <BookOpen size={13} />,
-              label: t('Documentation'),
-              onClick: () =>
-                window.open('https://docs.openreplay.com/', '_blank'),
-            },
-          ]}
-        />
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <MoreMenu
+      label={t('More')}
+      items={[
+        {
+          key: 'settings',
+          icon: <Settings2 size={13} />,
+          label: t('Tests settings'),
+          onClick: () => history.push('/client/agents?agent=tests'),
+        },
+        {
+          key: 'docs',
+          icon: <BookOpen size={13} />,
+          label: t('Documentation'),
+          onClick: () => window.open('https://docs.openreplay.com/', '_blank'),
+        },
+      ]}
+    />
   );
 
   // a list's own menu ends its toolbar line; the header keeps search and the CTA

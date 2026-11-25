@@ -1,6 +1,6 @@
 import { Loader } from '@/ui/feedback/Loader';
 import { Icon } from '@/ui/icons/Icon';
-import cn from 'classnames';
+import { clsx as cn } from 'clsx';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -12,7 +12,7 @@ import { ownsKeys } from 'App/utils/keys';
 import {
   debounceUpdate,
   getDefaultPanelHeight,
-} from 'Components/Session/Player/ReplayPlayer/PlayerInst';
+} from 'Components/Session/Player/panelHeight';
 import { DevToolsFrame } from 'Components/Session/ReplayScreen/DevToolsFrame';
 import { ReplayScreen } from 'Components/Session/ReplayScreen/ReplayScreen';
 import 'Components/Session/ReplayScreen/replay-player.css';

@@ -44,6 +44,7 @@ export default class People {
    * !hard reset will destroy persistent device id!
    * */
   public reset = (hard?: boolean) => {
+    if (this.discarded) return
     this.constantProperties.resetUserId(hard)
     this.ownProperties = {}
   }
@@ -61,6 +62,7 @@ export default class People {
    *  Will delete user and its data from backend, then reset all local properties
    */
   public deleteUser = () => {
+    if (this.discarded) return
     const removedUser = this.constantProperties.user_id
     if (!removedUser) return
     this.constantProperties.setUserId(null)

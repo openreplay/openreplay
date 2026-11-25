@@ -1,5 +1,5 @@
 import { Icon } from '@/ui/icons/Icon';
-import cn from 'classnames';
+import { clsx as cn } from 'clsx';
 import React from 'react';
 
 interface Props {

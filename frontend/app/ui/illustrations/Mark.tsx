@@ -858,8 +858,6 @@ const MARKS = {
 } satisfies Record<string, { label: string; draw: () => Drawing }>;
 
 export type MarkKind = keyof typeof MARKS;
-export const MARK_KINDS = Object.keys(MARKS) as MarkKind[];
-export const markLabel = (k: MarkKind) => MARKS[k].label;
 
 /** A quiet mark: one object in the illustrations' ink, still, no robot. */
 export function Mark({

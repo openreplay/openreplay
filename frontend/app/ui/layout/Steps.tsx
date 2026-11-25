@@ -1,4 +1,4 @@
-import { ExternalLink } from '@/ui/actions/ExternalLink';
+
 import type { ReactNode } from 'react';
 
 import './steps.css';
@@ -27,19 +27,5 @@ export function Step({
       </header>
       <div className="m-nstep__body">{children}</div>
     </section>
-  );
-}
-
-export function StepLink({
-  href,
-  children,
-}: {
-  href: string;
-  children: ReactNode;
-}) {
-  return (
-    <ExternalLink className="m-nstep__link" href={href}>
-      {children}
-    </ExternalLink>
   );
 }

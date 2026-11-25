@@ -156,25 +156,17 @@ function generateAccessToken(payload) {
 }
 
 const JWT_TOKEN_PREFIX = "Bearer ";
-const REQUIRE_SESSION_TOKEN = process.env.ASSIST_REQUIRE_SESSION_TOKEN === "true";
 const TOKEN_SECRET = process.env.TOKEN_SECRET;
-if (REQUIRE_SESSION_TOKEN && !TOKEN_SECRET) {
-    throw new Error('ASSIST_REQUIRE_SESSION_TOKEN=true needs TOKEN_SECRET');
-}
 if (!TOKEN_SECRET) {
-    logger.warn('TOKEN_SECRET is not set, session tokens are not verified');
+    throw new Error('TOKEN_SECRET is required to verify session tokens');
 }
 
 function checkSession(socket, next) {
     const token = socket.handshake.auth && socket.handshake.auth.token;
-    if (!token || !TOKEN_SECRET) {
-        if (REQUIRE_SESSION_TOKEN) {
-            logger.debug(`session without token, peerId: ${socket.handshake.query.peerId}`);
-            IncreaseSessionAuth('missing');
-            return next(new Error('Authentication error'));
-        }
-        IncreaseSessionAuth('legacy');
-        return next();
+    if (!token) {
+        logger.debug(`session without token, peerId: ${socket.handshake.query.peerId}`);
+        IncreaseSessionAuth('missing');
+        return next(new Error('Authentication error'));
     }
     try {
         socket.decoded = sessionToken.parse(token, TOKEN_SECRET);

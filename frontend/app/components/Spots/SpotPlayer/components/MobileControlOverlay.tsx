@@ -1,9 +1,8 @@
-import cn from 'classnames';
+import { clsx as cn } from 'clsx';
 import { FastForward, Pause, Play } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
 
-import { debounceCall } from 'App/utils';
 import cls from 'Components/Session_/Player/Overlay/PlayIconLayer.module.css';
 import clsOv from 'Components/Session_/Player/Overlay/overlay.module.css';
 
@@ -46,7 +45,7 @@ function PlayIconLayer({
   const onDoubleClick = (dir: 'left' | 'right') => {
     const now = Date.now();
     const lastTap = dir === 'left' ? leftLastTap : rightLastTap;
-    debounceCall(playAnimation(), DOUBLE_TAP_DELAY);
+    playAnimation();
     if (now - lastTap.current < DOUBLE_TAP_DELAY) {
       if (dir === 'left') {
         doubleLeft();

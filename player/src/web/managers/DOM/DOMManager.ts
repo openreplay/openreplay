@@ -60,6 +60,8 @@ function setupWindowLogging(
 }
 
 const IGNORED_ATTRS = ['autocomplete'];
+const isIgnoredAttr = (name: string) =>
+  IGNORED_ATTRS.includes(name.toLowerCase());
 /** Keeps the sprite map last among <body>'s children, whatever indices the message stream uses. */
 const SPRITE_MAP_INDEX = Number.MAX_SAFE_INTEGER - 100;
 const ATTR_NAME_REGEXP = /([^\t\n\f \/>"'=]+)/;
@@ -168,7 +170,7 @@ export default class DOMManager extends ListWalker<Message> {
       }
     } else if (
       m.tp === MType.SetNodeAttribute &&
-      (IGNORED_ATTRS.includes(m.name) || !ATTR_NAME_REGEXP.test(m.name))
+      (isIgnoredAttr(m.name) || !ATTR_NAME_REGEXP.test(m.name))
     ) {
       logger.log('Ignorring message: ', m);
       return; // Ignoring
@@ -189,7 +191,7 @@ export default class DOMManager extends ListWalker<Message> {
   }
 
   private removeAutocomplete(vElem: VElement): boolean {
-    const tag = vElem.tagName;
+    const tag = vElem.isSVG ? vElem.tagName : vElem.tagName.toUpperCase();
     if (['FORM', 'TEXTAREA', 'SELECT'].includes(tag)) {
       vElem.setAttribute('autocomplete', 'off');
       return true;
@@ -327,6 +329,11 @@ export default class DOMManager extends ListWalker<Message> {
     // surfaces (e.g. <dialog> Canvas bg) don't follow the replayer's OS theme.
     if (name === '__openreplay_color_scheme') {
       (vn.node as HTMLElement).style.colorScheme = value;
+      return;
+    }
+
+    // dictionary messages skip append()'s check
+    if (isIgnoredAttr(name)) {
       return;
     }
 
@@ -562,6 +569,9 @@ export default class DOMManager extends ListWalker<Message> {
         const vElem = this.vElements.get(msg.id);
         if (!vElem) {
           logger.error('RemoveNodeAttribute: Node not found', msg);
+          return;
+        }
+        if (isIgnoredAttr(msg.name)) {
           return;
         }
         vElem.removeAttribute(msg.name);

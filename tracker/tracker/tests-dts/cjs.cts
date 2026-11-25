@@ -18,6 +18,7 @@ export const policy: CaptureSanitizer = (data) => {
     case 'css': return data.source
     case 'font': return data.field
     case 'resource': return data.resourceType
+    case 'svg': return data.value
   }
 }
 export const policyOptions: ConstructorParameters<typeof cjsEntry.default>[0] = { captureSanitizer: policy }
@@ -27,7 +28,7 @@ export const rootCaptureOptions: ConstructorParameters<typeof tracker>[0] = {
 export const rootPolicy: RootCaptureSanitizer = policy
 export const defaultCaptureOptions: ConstructorParameters<typeof cjsEntry.default>[0] = {}
 export const captureKinds: Record<CaptureData['kind'], true> = {
-  attribute: true, css: true, font: true, resource: true,
+  attribute: true, css: true, font: true, resource: true, svg: true,
 }
 
 export function discardType(instance: InstanceType<typeof cjsEntry.default>): void {

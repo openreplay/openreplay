@@ -85,45 +85,6 @@ export const OPERATORS = {
     },
   ],
 
-  int: [
-    {
-      value: '=',
-      label: 'equals',
-      displayName: 'Equals',
-      description: 'Exactly equals the value',
-    },
-    {
-      value: '!=',
-      label: 'not equals',
-      displayName: 'Not equals',
-      description: 'Not equals the value',
-    },
-    {
-      value: '>',
-      label: 'greater than',
-      displayName: 'Greater than',
-      description: 'Greater than the value',
-    },
-    {
-      value: '<',
-      label: 'less than',
-      displayName: 'Less than',
-      description: 'Less than the value',
-    },
-    {
-      value: '>=',
-      label: 'greater than or equals',
-      displayName: 'Greater than or equals',
-      description: 'Greater than or equals the value',
-    },
-    {
-      value: '<=',
-      label: 'less than or equals',
-      displayName: 'Less than or equals',
-      description: 'Less than or equals the value',
-    },
-  ],
-
   number: [
     {
       value: '=',
@@ -285,48 +246,10 @@ export const OPERATORS = {
   ],
 };
 
-export const COMMON_FILTERS: Filter[] = [];
-
 export const getOperatorsByType = (type?: string): Operator[] => {
-  let operators: Operator[] = [];
-
-  switch (type?.toLowerCase()) {
-    case 'string':
-      operators = OPERATORS.string;
-      break;
-    case 'number':
-      operators = OPERATORS.number;
-      break;
-    case 'boolean':
-      operators = OPERATORS.boolean;
-      break;
-    case 'date':
-    case 'timestamp':
-      operators = OPERATORS.date;
-      break;
-    case 'array':
-      operators = OPERATORS.array;
-      break;
-    case 'duration':
-      operators = OPERATORS.duration;
-      break;
-    default:
-      // Default to string operators if type is unknown
-      operators = OPERATORS.string;
-      break;
-  }
-
-  return operators;
-};
-
-const LIVE_OPERATOR_VALUES = ['is', 'contains'];
-
-// /assist/sessions only matches on equality and substring
-export const getLiveOperatorsByType = (type?: string): Operator[] => {
-  const operators = getOperatorsByType(type).filter((o) =>
-    LIVE_OPERATOR_VALUES.includes(o.value),
-  );
-  return operators.length > 0
-    ? operators
-    : OPERATORS.string.filter((o) => LIVE_OPERATOR_VALUES.includes(o.value));
+  const t = type?.toLowerCase();
+  const key = t === 'timestamp' ? 'date' : t;
+  return key && Object.prototype.hasOwnProperty.call(OPERATORS, key)
+    ? OPERATORS[key as keyof typeof OPERATORS]
+    : OPERATORS.string;
 };

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import useCancelableTimeout from 'App/hooks/useCancelableTimeout';
 import useLatestRef from 'App/hooks/useLatestRef';
+import { lastIndexAtOrBefore } from 'App/utils/timeIndex';
 
 const TIMEOUT_DURATION = 5000;
 
@@ -52,13 +53,9 @@ export default function useAutoscroll(
   updadteIndex: (index: number) => void,
 ) {
   const filteredIndexNow = useMemo(() => {
-    // Should use findLastIndex here
-    for (let i = 0; i < filteredList.length; i++) {
-      if (filteredList[i].time > time) {
-        return i - 1;
-      }
-    }
-    return filteredList.length;
+    const i = lastIndexAtOrBefore(filteredList, time);
+    // past the end once every item is behind `time`
+    return i === filteredList.length - 1 ? filteredList.length : i;
   }, [time, filteredList]);
 
   return useAutoupdate(savedIndex, filteredIndexNow, 0, updadteIndex);

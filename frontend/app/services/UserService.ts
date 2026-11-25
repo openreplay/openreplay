@@ -1,17 +1,8 @@
-import APIClient, { apiClient } from 'App/api_client';
 import User from 'App/mstore/types/user';
 
-export default class UserService {
-  private client: APIClient;
+import BaseService from './BaseService';
 
-  constructor(client?: APIClient) {
-    this.client = client || apiClient;
-  }
-
-  initClient(client?: APIClient) {
-    this.client = client || apiClient;
-  }
-
+export default class UserService extends BaseService {
   all() {
     return this.client
       .get('/client/members')
@@ -107,13 +98,6 @@ export default class UserService {
     return this.client
       .post('/notifications/view', params)
       .then((response: { json: () => any }) => response.json())
-      .then((response: { data: any }) => response.data || {});
-  }
-
-  saveModules(module: any) {
-    return this.client
-      .post('/users/modules', module)
-      .then((r) => r.json())
       .then((response: { data: any }) => response.data || {});
   }
 
@@ -217,13 +201,6 @@ export default class UserService {
     return this.client
       .put(`/client/members/${userId}/owner`)
       .then((r) => r.json())
-      .then((response: { data: any }) => response.data || {});
-  }
-
-  changeScope(scope: 1 | 2) {
-    return this.client
-      .post('/account/scope', { scope })
-      .then((response: { json: () => any }) => response.json())
       .then((response: { data: any }) => response.data || {});
   }
 

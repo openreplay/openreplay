@@ -9,6 +9,7 @@ import {
   formatByteSize,
   getURL,
 } from '../src/utils.js';
+import { tryFilterUrl } from '../src/index.js';
 import { describe, it, expect } from 'vitest';
 
 describe('Network utility function tests', () => {
@@ -64,6 +65,13 @@ describe('Network utility function tests', () => {
     expect(isIterable(new Map())).toBe(true);
     expect(isIterable('string')).toBe(true);
     expect(isIterable(undefined)).toBe(false);
+  });
+
+  it('tryFilterUrl stars sensitive query params', () => {
+    expect(tryFilterUrl('https://a.io/x?token=abc&page=2&api_key=k')).toBe(
+      'https://a.io/x?token=******&page=2&api_key=******',
+    );
+    expect(tryFilterUrl('https://a.io/x?page=2')).toBe('https://a.io/x?page=2');
   });
 
   it('formatByteSize should format byte sizes correctly', () => {

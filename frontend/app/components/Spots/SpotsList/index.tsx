@@ -14,18 +14,19 @@ import { ConfirmDialog } from '@/ui/overlays/ConfirmDialog';
 import { RenameDialog } from '@/ui/overlays/RenameDialog';
 import { useToast } from '@/ui/overlays/toast';
 import withPageTitle from 'HOCs/withPageTitle';
-import copy from 'copy-to-clipboard';
 import { Disc, Download, Link2, Puzzle, RotateCw, Trash2 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import withPermissions from 'App/components/hocs/withPermissions';
+import { copyWithToast } from 'App/lib/use-copy';
 import { useStore } from 'App/mstore';
 import type { Spot } from 'App/mstore/types/spot';
 import { spot as spotUrl, withSiteId } from 'App/routes';
 import { useHistory, useParams } from 'App/routing';
 import { debounce } from 'App/utils';
+import { saveBlob } from 'App/utils/download';
 
 import { StartPath } from 'Shared/StartPath/StartPath';
 
@@ -77,13 +78,7 @@ function SpotsList() {
     try {
       const { url } = await spotStore.getVideo(s.spotId);
       const blob = await (await fetch(url)).blob();
-      const href = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = href;
-      a.download = `${s.title}.webm`;
-      a.click();
-      // revoking right after click() can cancel the download in Firefox / Safari
-      setTimeout(() => URL.revokeObjectURL(href), 1000);
+      saveBlob(blob, `${s.title}.webm`);
     } catch {
       toast.error(t('Error downloading file.'));
     }
@@ -387,8 +382,10 @@ function SpotsList() {
                 onOpen={(e) => open(s, e)}
                 onRename={() => setRenaming(s)}
                 onCopy={() => {
-                  copy(linkOf(s));
-                  toast.success(t('Spot URL copied to clipboard'));
+                  void copyWithToast(
+                    linkOf(s),
+                    t('Spot URL copied to clipboard'),
+                  );
                 }}
                 onDownload={() => downloadOne(s)}
                 onDelete={() => setDeleting([s])}

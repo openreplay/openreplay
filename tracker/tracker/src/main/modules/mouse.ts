@@ -11,13 +11,14 @@ import {
   now,
 } from '../utils.js'
 import { MouseMove, MouseClick, MouseThrashing } from '../app/messages.gen.js'
+import { isStateAttribute } from '../app/sanitizer.js'
 import { getInputLabel } from './input.js'
 
 
 let docClassCache = new WeakMap();
 
-function _getSelector(target: Element, customAttributes?: string[]): string {
-  const selector = getCSSPath(target, customAttributes)
+function _getSelector(target: Element, customAttributes?: string[], dataMasked = false): string {
+  const selector = getCSSPath(target, customAttributes, dataMasked)
   return selector || ''
 }
 
@@ -185,17 +186,23 @@ export default function (app: App, options?: MouseHandlerOptions): void {
   const getSecureInnerText = (el: HTMLElement) =>
     typeof el.innerText === 'string' ? app.sanitizer.getInnerTextSecure(el) : ''
 
+  /** masked, hidden or not recorded: its describing attributes are not sent in plain */
+  const isMasked = (el: Element) => {
+    const id = app.nodes.getID(el)
+    return id === undefined || app.sanitizer.isObscured(id)
+  }
+
   function getTargetLabel(target: Element): string {
     const dl = getLabelAttribute(target)
     if (dl !== null) {
       return dl
     }
     if (hasTag(target, 'input')) {
-      return getInputLabel(target, customAttributes)
+      return getInputLabel(target, customAttributes, getSecureInnerText, isMasked(target))
     }
     const customAttributeLabel = getCustomAttributeLabel(target, customAttributes)
     if (customAttributeLabel) return customAttributeLabel
-    return getTextualLabel(target, getSecureInnerText)
+    return getTextualLabel(target, getSecureInnerText, isMasked)
   }
 
   let mousePositionX = -1
@@ -204,6 +211,7 @@ export default function (app: App, options?: MouseHandlerOptions): void {
   let mouseTarget: Element | null = null
   let mouseTargetTime = 0
   let selectorMap: { [id: number]: string } = {}
+  let maskedSelectorMap: { [id: number]: string } = {}
 
   let velocity = 0
   let direction = 0
@@ -243,6 +251,7 @@ export default function (app: App, options?: MouseHandlerOptions): void {
     mousePositionChanged = false
     mouseTarget = null
     selectorMap = {}
+    maskedSelectorMap = {}
     if (checkIntervalId) {
       clearInterval(checkIntervalId as unknown as number)
     }
@@ -262,18 +271,21 @@ export default function (app: App, options?: MouseHandlerOptions): void {
 
   const patchDocument = (document: Document, topframe = false) => {
     function getSelector(id: number, target: Element): string {
-      if (selectorMap[id]) return selectorMap[id]
+      // the element may be masked or unmasked after its first click
+      const dataMasked = app.sanitizer.stateAttributesMasked(id, target)
+      const cache = dataMasked ? maskedSelectorMap : selectorMap
+      if (cache[id]) return cache[id]
       // class uniqueness is only valid for the DOM it was computed on
       docClassCache = new WeakMap()
       const tagMatch = app.tagMatcher.match(target)
       if (tagMatch) {
-        return (selectorMap[id] = tagMatch.selector)
+        return (cache[id] = tagMatch.selector)
       }
       if (!isDeepClickable(target)) {
         const cheapSelector = getCheapSelector(target, customAttributes)
-        if (cheapSelector) return (selectorMap[id] = cheapSelector)
+        if (cheapSelector) return (cache[id] = cheapSelector)
       }
-      return (selectorMap[id] = _getSelector(target, customAttributes))
+      return (cache[id] = _getSelector(target, customAttributes, dataMasked))
     }
 
     const attachListener = topframe
@@ -389,7 +401,7 @@ function wordLike(name: string): boolean {
     return false
 }
 
-export function getCSSPath(el: any, customAttributes?: string[]) {
+export function getCSSPath(el: any, customAttributes?: string[], dataMasked = false) {
     if (!el || el.nodeType !== 1) return false;
 
     // customer configured attributes are the most stable thing we can get
@@ -399,6 +411,7 @@ export function getCSSPath(el: any, customAttributes?: string[]) {
     // if has data attributes - use them as they are more likely to be stable and unique
     for (const attr of Array.from(el.attributes) as Attr[]) {
         if (!attr.name.startsWith('data-')) continue;
+        if (dataMasked && isStateAttribute(el, attr.name)) continue;
         const sel = `[${attr.name}="${cssAttrValue(attr.value)}"]`;
         try {
             if (el.ownerDocument.querySelectorAll(sel).length === 1) return sel;

@@ -82,6 +82,11 @@
   color: var(--m-content-decorative);
   flex: none;
 }
+.m-drawer__facts {
+  margin-top: var(--m-space-5);
+  padding-top: var(--m-space-4);
+  border-top: 1px solid var(--m-border-subtle);
+}
 
 .m-dsec {
   padding: var(--m-space-5) var(--m-space-6);

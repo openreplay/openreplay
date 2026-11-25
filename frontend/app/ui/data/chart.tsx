@@ -87,6 +87,22 @@ export function readChartTheme(
   };
 }
 
+/** `hex` moved toward `toward` by `k`, for two #rrggbb colours */
+export const mixHex = (hex: string, toward: string, k: number) => {
+  const c = (x: string) =>
+    [1, 3, 5].map((i) => parseInt(x.slice(i, i + 2), 16));
+  const a = c(hex);
+  const b = c(toward);
+  if (a.some(Number.isNaN) || b.some(Number.isNaN)) return hex;
+  return `#${a
+    .map((v, i) =>
+      Math.round(v + (b[i] - v) * k)
+        .toString(16)
+        .padStart(2, '0'),
+    )
+    .join('')}`;
+};
+
 /* One theme reader for the whole page: every chart used to install its own
    MutationObserver on <html> and re-render on each mutation. Charts re-render
    only when a token value actually changes. */
@@ -238,6 +254,9 @@ export interface EChartProps {
   }) => void;
 
   onAxisClick?: (dataIndex: number) => void;
+  /** the live instance, for a host that draws or listens on the canvas
+      itself; null when it goes */
+  onInstance?: (chart: echarts.ECharts | null) => void;
   ariaLabel?: string;
 }
 
@@ -248,6 +267,7 @@ export function EChart({
   style,
   onClick,
   onAxisClick,
+  onInstance,
   ariaLabel,
 }: EChartProps) {
   const box = useRef<HTMLDivElement>(null);
@@ -256,6 +276,8 @@ export function EChart({
   click.current = onClick;
   const axisClick = useRef(onAxisClick);
   axisClick.current = onAxisClick;
+  const instance = useRef(onInstance);
+  instance.current = onInstance;
 
   const last = useRef<string>('');
 
@@ -308,9 +330,11 @@ export function EChart({
       resizeFrame = requestAnimationFrame(() => c.resize());
     });
     ro.observe(el);
+    instance.current?.(c);
     return () => {
       cancelAnimationFrame(resizeFrame);
       ro.disconnect();
+      instance.current?.(null);
       c.dispose();
       chart.current = null;
     };

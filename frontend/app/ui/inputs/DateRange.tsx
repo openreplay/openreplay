@@ -9,7 +9,7 @@ import { PopoverPanel } from '@/ui/overlays/popover';
 import Period from 'Types/app/period';
 import { CalendarRange, ChevronDown } from 'lucide-react';
 import { DateTime } from 'luxon';
-import { Suspense, lazy, useEffect, useState } from 'react';
+import { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { CUSTOM_RANGE, DATE_RANGE_OPTIONS } from 'App/dateRange';
@@ -36,10 +36,21 @@ export interface DateRangeProps {
   /** Preset that counts as "at rest" (not highlighted). */
   resting?: string;
   variant?: 'outline' | 'subtle';
+  /** each end of a custom range is a day and a time of day, in separate fields */
+  withTime?: boolean;
 }
 
-const iso = (ms?: number) =>
-  ms ? DateTime.fromMillis(ms).toFormat('yyyy-MM-dd') : '';
+type End = 'from' | 'to';
+type Ends = { from?: number; to?: number };
+
+const dayText = (ms?: number) =>
+  ms != null ? DateTime.fromMillis(ms).toFormat('yyyy-MM-dd') : '';
+const clock = (ms?: number) =>
+  ms != null ? DateTime.fromMillis(ms).toFormat('HH:mm') : undefined;
+
+const DAY = /^\d{4}-\d{2}-\d{2}$/;
+const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
+const DEFAULT_TIMES = { from: '00:00', to: '23:59' };
 
 // The calendar draws browser-local days, the window is in the app's timezone
 // (luxon defaultZone): map by calendar day, not by instant, or a click lands on
@@ -63,11 +74,12 @@ export function DateRange({
   disableCustom = false,
   resting = 'LAST_24_HOURS',
   variant = 'outline',
+  withTime = false,
 }: DateRangeProps) {
   const { t } = useTranslation();
   const inSheet = useInFilterSheet();
   const [open, setOpen] = useState(false);
-  const [step, setStep] = useState<'from' | 'to'>('from');
+  const [step, setStep] = useState<End>('from');
   const rangeName: string = period?.rangeName ?? resting;
   useSheetCount(inSheet && rangeName !== resting ? 1 : 0);
   useEffect(() => {
@@ -78,77 +90,190 @@ export function DateRange({
   const from: number | undefined = custom ? period?.start : undefined;
   const to: number | undefined = custom ? period?.end : undefined;
 
-  const [draft, setDraft] = useState({ from: iso(from), to: iso(to) });
-  const [typed, setTyped] = useState<{
-    from: boolean | null;
-    to: boolean | null;
-  }>({ from: null, to: null });
-  useEffect(() => {
-    setDraft({ from: iso(from), to: iso(to) });
-    setTyped({ from: null, to: null });
-  }, [from, to]);
+  // a range being picked; applied only once both ends are set
+  const [draft, setDraft] = useState<Ends | null>(null);
+  const shown: Ends = draft ?? { from, to };
+  const showPicker = custom || draft != null;
 
-  const emitCustom = (start?: number, end?: number) => {
-    if (start == null) return;
-    onChange(
-      Period({
-        rangeName: CUSTOM_RANGE,
-        start,
-        end: end ?? DateTime.fromMillis(start).endOf('day').toMillis(),
-      }),
-    );
+  const [text, setText] = useState({
+    from: dayText(shown.from),
+    to: dayText(shown.to),
+  });
+  const [times, setTimes] = useState({
+    from: clock(shown.from) ?? DEFAULT_TIMES.from,
+    to: clock(shown.to) ?? DEFAULT_TIMES.to,
+  });
+  const [bad, setBad] = useState<{
+    from?: 'day' | 'time';
+    to?: 'day' | 'time';
+  }>({});
+  useEffect(() => {
+    setText({ from: dayText(shown.from), to: dayText(shown.to) });
+    setTimes((c) => ({
+      from: clock(shown.from) ?? c.from,
+      to: clock(shown.to) ?? c.to,
+    }));
+    setBad({});
+  }, [shown.from, shown.to, open]);
+  // times typed since the menu opened; the others reset with a new range
+  const edited = useRef<{ from?: boolean; to?: boolean }>({});
+  useEffect(() => {
+    edited.current = {};
+  }, [open]);
+
+  const close = () => {
+    setOpen(false);
+    setDraft(null);
   };
 
-  const label = custom
-    ? from
-      ? `${DateTime.fromMillis(from).toFormat('LLL d')} – ${to ? DateTime.fromMillis(to).toFormat('LLL d') : '…'}`
-      : t('Custom range')
-    : t(options.find((o) => o.value === rangeName)?.label ?? rangeName);
+  /** false when the ends would be inverted */
+  const commit = (next: Ends) => {
+    if (next.from == null || next.to == null) {
+      setDraft(next);
+      return true;
+    }
+    if (next.from > next.to) return false;
+    setDraft(null);
+    onChange(
+      Period({ rangeName: CUSTOM_RANGE, start: next.from, end: next.to }),
+    );
+    return true;
+  };
 
-  const onType = (end: 'from' | 'to', text: string) => {
-    setDraft((d) => ({ ...d, [end]: text }));
-    if (!text) {
-      setTyped((s) => ({ ...s, [end]: null }));
+  /** `day` is a start of day in the app's timezone */
+  const endAt = (day: DateTime, end: End, time = times[end]) => {
+    if (!withTime)
+      return (
+        end === 'from' ? day.startOf('day') : day.endOf('day')
+      ).toMillis();
+    const [hour, minute] = time.split(':').map(Number);
+    const at = day.set({ hour, minute });
+    return (
+      end === 'from' ? at.startOf('minute') : at.endOf('minute')
+    ).toMillis();
+  };
+
+  const sameDay =
+    shown.from != null &&
+    shown.to != null &&
+    DateTime.fromMillis(shown.from).hasSame(
+      DateTime.fromMillis(shown.to),
+      'day',
+    );
+  const stamp = (ms: number, day = true) =>
+    DateTime.fromMillis(ms).toFormat(
+      withTime ? (day ? 'LLL d, HH:mm' : 'HH:mm') : 'LLL d',
+    );
+  const label = shown.from
+    ? `${stamp(shown.from)} – ${shown.to ? stamp(shown.to, !(withTime && sameDay)) : '…'}`
+    : custom
+      ? t('Custom range')
+      : t(options.find((o) => o.value === rangeName)?.label ?? rangeName);
+
+  const onType = (end: End, value: string) => {
+    setText((d) => ({ ...d, [end]: value }));
+    if (!value) {
+      setBad((b) => ({ ...b, [end]: undefined }));
+      commit({ ...shown, [end]: undefined });
       return;
     }
-    const at = /^\d{4}-\d{2}-\d{2}$/.test(text) ? DateTime.fromISO(text) : null;
-    const ms = at?.isValid
-      ? end === 'from'
-        ? at.startOf('day').toMillis()
-        : at.endOf('day').toMillis()
-      : null;
-    // a bound past the other end would send an inverted range
+    const day = DAY.test(value) ? DateTime.fromISO(value) : null;
     const ok =
-      ms != null &&
-      at!.toMillis() <= Date.now() &&
-      (end === 'from' ? to == null || ms <= to : from == null || ms >= from);
-    setTyped((s) => ({ ...s, [end]: ok }));
-    if (!ok || ms == null) return;
-    if (end === 'from') emitCustom(ms, to);
-    else emitCustom(from, ms);
+      !!day?.isValid &&
+      day.toMillis() <= Date.now() &&
+      commit({ ...shown, [end]: endAt(day, end) });
+    setBad((b) => ({ ...b, [end]: ok ? undefined : 'day' }));
   };
 
-  const range: DayRange | undefined = from
-    ? { from: toGridDay(from), to: to ? toGridDay(to) : undefined }
+  // with no day on that end yet, the time waits for one
+  const onTime = (end: End, value: string) => {
+    if (!TIME.test(value)) return;
+    edited.current[end] = true;
+    setTimes((c) => ({ ...c, [end]: value }));
+    const cur = shown[end];
+    const day =
+      cur != null
+        ? DateTime.fromMillis(cur).startOf('day')
+        : DAY.test(text[end])
+          ? DateTime.fromISO(text[end])
+          : null;
+    if (!day?.isValid) return;
+    const ok = commit({ ...shown, [end]: endAt(day, end, value) });
+    setBad((b) => ({ ...b, [end]: ok ? undefined : 'time' }));
+  };
+
+  const range: DayRange | undefined = shown.from
+    ? {
+        from: toGridDay(shown.from),
+        to: shown.to ? toGridDay(shown.to) : undefined,
+      }
     : undefined;
 
   const onPickDay = (day: Date) => {
     const at = fromGridDay(day);
-    if (step === 'from' || (from != null && at.toMillis() < from)) {
-      emitCustom(at.startOf('day').toMillis(), at.endOf('day').toMillis());
+    const startDay =
+      shown.from != null
+        ? DateTime.fromMillis(shown.from).startOf('day').toMillis()
+        : null;
+    if (step === 'from' || startDay == null || at.toMillis() < startDay) {
+      const next = {
+        from: edited.current.from ? times.from : DEFAULT_TIMES.from,
+        to: edited.current.to ? times.to : DEFAULT_TIMES.to,
+      };
+      setTimes(next);
+      commit({ from: endAt(at, 'from', next.from) });
       setStep('to');
       return;
     }
-    emitCustom(from, at.endOf('day').toMillis());
+    const to = endAt(at, 'to');
+    const ok = commit({ from: shown.from, to });
+    if (!ok) {
+      // the day stays in its field so End time can still fix the range
+      setText((d) => ({ ...d, to: dayText(to) }));
+      setBad((b) => ({ ...b, to: 'time' }));
+      return;
+    }
     setStep('from');
-    setOpen(false);
+    // with times, the panel stays: the hours come after the days
+    if (!withTime) close();
   };
+
+  const ends = (['from', 'to'] as const).map((end) => (
+    <div key={end} className="m-dr__end">
+      <Input
+        className={cn(
+          'm-dr__input',
+          step === end && 'is-active',
+          bad[end] === 'day' && 'is-bad',
+        )}
+        value={text[end]}
+        placeholder={end === 'from' ? t('Start') : t('End')}
+        aria-label={end === 'from' ? t('Start date') : t('End date')}
+        onFocus={() => setStep(end)}
+        onChange={(e) => onType(end, e.target.value)}
+      />
+      {withTime && (
+        <Input
+          type="time"
+          className={cn(
+            'm-dr__time',
+            step === end && 'is-active',
+            bad[end] === 'time' && 'is-bad',
+          )}
+          value={times[end]}
+          aria-label={end === 'from' ? t('Start time') : t('End time')}
+          onFocus={() => setStep(end)}
+          onChange={(e) => onTime(end, e.target.value)}
+        />
+      )}
+    </div>
+  ));
 
   const menu = (
     <div
       role="menu"
       onKeyDown={menuKeyDown}
-      className={cn('m-dr__layout', custom && 'has-picker')}
+      className={cn('m-dr__layout', showPicker && 'has-picker')}
     >
       <div className="m-dr__list">
         {field && <p className="m-dr__field">{field}</p>}
@@ -156,10 +281,10 @@ export function DateRange({
           <CheckRow
             key={pr.value}
             single
-            on={rangeName === pr.value}
+            on={rangeName === pr.value && draft == null}
             onToggle={() => {
               onChange(Period({ rangeName: pr.value }));
-              setOpen(false);
+              close();
             }}
           >
             {t(pr.label)}
@@ -170,47 +295,23 @@ export function DateRange({
             <div className="m-dr__rule" />
             <CheckRow
               single
-              on={custom}
-              onToggle={() =>
-                emitCustom(
-                  DateTime.now().minus({ days: 7 }).startOf('day').toMillis(),
-                  DateTime.now().endOf('day').toMillis(),
-                )
-              }
+              on={showPicker}
+              onToggle={() => {
+                if (!custom && draft == null) {
+                  setDraft({});
+                  setTimes(DEFAULT_TIMES);
+                }
+                setStep(shown.from != null && shown.to == null ? 'to' : 'from');
+              }}
             >
               {t('Custom range')}
             </CheckRow>
           </>
         )}
       </div>
-      {custom && (
-        <div className="m-dr__picker">
-          <div className="m-dr__fields">
-            <Input
-              className={cn(
-                'm-dr__input',
-                step === 'from' && 'is-active',
-                typed.from === false && 'is-bad',
-              )}
-              value={draft.from}
-              placeholder={t('Start')}
-              aria-label={t('Start date')}
-              onFocus={() => setStep('from')}
-              onChange={(e) => onType('from', e.target.value)}
-            />
-            <Input
-              className={cn(
-                'm-dr__input',
-                step === 'to' && 'is-active',
-                typed.to === false && 'is-bad',
-              )}
-              value={draft.to}
-              placeholder={t('End')}
-              aria-label={t('End date')}
-              onFocus={() => setStep('to')}
-              onChange={(e) => onType('to', e.target.value)}
-            />
-          </div>
+      {showPicker && (
+        <div className={cn('m-dr__picker', withTime && 'has-time')}>
+          <div className="m-dr__fields">{ends}</div>
           <Suspense fallback={null}>
             <Calendar
               selected={range}
@@ -236,9 +337,11 @@ export function DateRange({
     <PopoverPanel
       open={open}
       onOpenChange={(o) => {
-        if (o) void loadCalendar();
-        setOpen(o);
-        if (o) setStep('from');
+        if (o) {
+          void loadCalendar();
+          setOpen(true);
+          setStep('from');
+        } else close();
       }}
       placement="bottomRight"
       className="m-dr__menu"

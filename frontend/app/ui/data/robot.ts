@@ -190,14 +190,6 @@ const styleOf = (faceOnly: boolean) =>
       } as unknown as StyleDefinition))
     : (style ??= new Style(DEFINITION as unknown as StyleDefinition));
 
-export const ROBOT_PARTS = {
-  eyes: Object.keys(DEFINITION.components.eyes.variants),
-  mouth: Object.keys(DEFINITION.components.mouth.variants),
-  cheeks: Object.keys(CHEEKS),
-  gear: Object.keys(GEAR),
-  glow: GLOWS,
-};
-
 export interface RobotArt {
   dark: string;
   light: string;

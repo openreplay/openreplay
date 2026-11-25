@@ -140,6 +140,8 @@ export function expectedTree(
       const p = n.parentNode as Element | null
       const data = (n as Text).data
       if (p && p.localName === 'style') return JSON.stringify(data)
+      // the text is the textarea's default value, sent as its input value instead
+      if (p && p.localName === 'textarea') return '""'
       return JSON.stringify(lvl >= SanitizeLevel.Obscured ? stringWiper(data) : maskEmails(data))
     }
     const el = n as Element

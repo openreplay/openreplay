@@ -46,8 +46,7 @@ jobs:
 
           # Define all available images with their versions
           # Format: image:version or just image (for single version)
-          # migration: DB migration scripts image, tagged with Chart.yaml AppVersion
-          ALL_IMAGES='["kafka", "postgres:17", "postgres:18", "migration", "valkey"]'
+          ALL_IMAGES='["kafka", "postgres:17", "postgres:18", "valkey"]'
 
           if [[ "$IMAGES_INPUT" == "all" ]] || [[ -z "$IMAGES_INPUT" ]]; then
             MATRIX="$ALL_IMAGES"
@@ -88,12 +87,6 @@ jobs:
             IMAGE_VERSION="${IMAGE_FULL##*:}"
             CONTEXT_PATH="./scripts/dockerfiles/${IMAGE_NAME}/${IMAGE_VERSION}"
             DOCKERFILE_PATH=""
-          elif [[ "$IMAGE_FULL" == "migration" ]]; then
-            # migration requires repo root as context for COPY paths
-            IMAGE_NAME="$IMAGE_FULL"
-            IMAGE_VERSION=""
-            CONTEXT_PATH="."
-            DOCKERFILE_PATH="./scripts/dockerfiles/migration/Dockerfile"
           else
             IMAGE_NAME="$IMAGE_FULL"
             IMAGE_VERSION=""
@@ -134,10 +127,6 @@ jobs:
               postgres)
                 VERSION=$(grep -oP "postgresql-\K[0-9]+" "$DOCKERFILE" | head -1 || echo "17")
                 ;;
-              migration)
-                # Extract AppVersion from Chart.yaml for migration image
-                VERSION=$(yq '.AppVersion' "./scripts/helmcharts/openreplay/Chart.yaml" | tr -d '"')
-                ;;
               valkey)
                 VERSION=$(grep -oP "valkey>=\K[0-9]+" "$DOCKERFILE" | head -1 || echo "8")
                 ;;
@@ -157,11 +146,11 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ steps.parse.outputs.name }}
           tags: |
-            type=raw,value=latest,enable=${{ matrix.image == 'postgres:18' || (matrix.image != 'postgres:17' && matrix.image != 'migration' && steps.parse.outputs.version == '') }}
+            type=raw,value=latest,enable=${{ matrix.image == 'postgres:18' || (matrix.image != 'postgres:17' && steps.parse.outputs.version == '') }}
             type=raw,value=${{ steps.app-version.outputs.version }}
             type=raw,value=${{ steps.app-version.outputs.major_version }},enable=${{ steps.parse.outputs.name == 'valkey' }}
-            type=schedule,pattern={{date 'YYYYMMDD'}},enable=${{ matrix.image != 'migration' }}
-            type=sha,prefix={{date 'YYYYMMDD'}}-,enable=${{ matrix.image != 'migration' }}
+            type=schedule,pattern={{date 'YYYYMMDD'}}
+            type=sha,prefix={{date 'YYYYMMDD'}}-
 
       - name: Login to GitHub Container Registry
         uses: nick-fields/retry@v3
@@ -224,11 +213,6 @@ jobs:
             IMAGE_NAME="${IMAGE_FULL%%:*}"
             IMAGE_VERSION="${IMAGE_FULL##*:}"
             CONTEXT_PATH="./scripts/dockerfiles/${IMAGE_NAME}/${IMAGE_VERSION}"
-          elif [[ "$IMAGE_FULL" == "migration" ]]; then
-            # migration requires repo root as context for COPY paths
-            IMAGE_NAME="$IMAGE_FULL"
-            IMAGE_VERSION=""
-            CONTEXT_PATH="."
           else
             IMAGE_NAME="$IMAGE_FULL"
             IMAGE_VERSION=""
@@ -271,10 +255,6 @@ jobs:
               postgres)
                 VERSION=$(grep -oP "postgresql-\K[0-9]+" "$DOCKERFILE" | head -1 || echo "17")
                 ;;
-              migration)
-                # Extract AppVersion from Chart.yaml for migration image
-                VERSION=$(yq '.AppVersion' "./scripts/helmcharts/openreplay/Chart.yaml" | tr -d '"')
-                ;;
               valkey)
                 VERSION=$(grep -oP "valkey>=\K[0-9]+" "$DOCKERFILE" | head -1 || echo "8")
                 ;;
@@ -294,11 +274,11 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ steps.parse.outputs.name }}
           tags: |
-            type=raw,value=latest,enable=${{ matrix.image == 'postgres:18' || (matrix.image != 'postgres:17' && matrix.image != 'migration' && steps.parse.outputs.version == '') }}
+            type=raw,value=latest,enable=${{ matrix.image == 'postgres:18' || (matrix.image != 'postgres:17' && steps.parse.outputs.version == '') }}
             type=raw,value=${{ steps.app-version.outputs.version }}
             type=raw,value=${{ steps.app-version.outputs.major_version }},enable=${{ steps.parse.outputs.name == 'valkey' }}
-            type=schedule,pattern={{date 'YYYYMMDD'}},enable=${{ matrix.image != 'migration' }}
-            type=sha,prefix={{date 'YYYYMMDD'}}-,enable=${{ matrix.image != 'migration' }}
+            type=schedule,pattern={{date 'YYYYMMDD'}}
+            type=sha,prefix={{date 'YYYYMMDD'}}-
 
       - name: Login to GitHub Container Registry
         uses: nick-fields/retry@v3

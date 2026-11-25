@@ -189,29 +189,38 @@ export function buildLevelTree(
 }
 
 /**
- * Compute a full selection Record from per-level topN settings.
- * Each key is a parentPath, value is null (all selected) or string[] (selected children).
+ * A selection keeping the n heaviest leaf combinations (n <= 0: all of them).
+ * Paths off those combinations stay unset, so checking one back selects all
+ * under it.
  */
-export function computeSelectionFromTopN(
+export function selectTopLeaves(
   levelTree: Map<string, { key: string; total: number }[]>,
-  topNPerLevel: number[],
   depth: number,
+  n: number,
 ): Record<string, string[] | null> {
-  const selection: Record<string, string[] | null> = {};
-
-  function processPath(parentPath: string, levelIdx: number) {
-    if (levelIdx >= depth) return;
-    const children = levelTree.get(parentPath) ?? [];
-    const n = topNPerLevel[levelIdx] ?? 0;
-    const selected = n > 0 ? children.slice(0, n).map((c) => c.key) : null;
-    selection[parentPath] = selected;
-    const toProcess = selected ?? children.map((c) => c.key);
-    toProcess.forEach((key) => {
-      const childPath = parentPath ? `${parentPath} / ${key}` : key;
-      processPath(childPath, levelIdx + 1);
+  const leaves: { path: string[]; total: number }[] = [];
+  const walk = (parent: string, path: string[]) => {
+    (levelTree.get(parent) ?? []).forEach((c) => {
+      const next = [...path, c.key];
+      const at = parent ? `${parent} / ${c.key}` : c.key;
+      if (next.length >= depth || !levelTree.has(at))
+        leaves.push({ path: next, total: c.total });
+      else walk(at, next);
     });
-  }
+  };
+  walk('', []);
+  if (n <= 0 || leaves.length <= n) return { '': null };
 
-  processPath('', 0);
-  return selection;
+  const picked: Record<string, string[]> = {};
+  leaves
+    .sort((a, b) => b.total - a.total)
+    .slice(0, n)
+    .forEach(({ path }) =>
+      path.forEach((key, i) => {
+        const parent = path.slice(0, i).join(' / ');
+        const keys = (picked[parent] ??= []);
+        if (!keys.includes(key)) keys.push(key);
+      }),
+    );
+  return picked;
 }

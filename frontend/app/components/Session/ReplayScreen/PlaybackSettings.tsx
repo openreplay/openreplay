@@ -30,8 +30,6 @@ import { ShortcutGrid } from 'Components/Session_/Player/Controls/components/Key
 
 import './replay-timeline.css';
 
-export { SKIP_INTERVALS };
-
 /** One button for every playback preference; non-default ones show as tags. */
 function PlaybackSettings({
   disabled,

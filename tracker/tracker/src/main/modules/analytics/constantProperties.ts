@@ -226,24 +226,10 @@ export default class ConstantProperties {
     this.localStorage.setItem(superPropKey, JSON.stringify({}))
   }
 
-  discard(clearSharedStorage: boolean) {
+  discard() {
     if (this.discarded) return
     this.discarded = true
     this.user_id = this.utmSource = this.utmMedium = this.utmCampaign = this.searchEngine = null
     this.initialReferrer = this.deviceId = ''
-    if (!clearSharedStorage) return
-    for (const [storage, keys] of [
-      [this.localStorage, [distinctIdKey, superPropKey]],
-      [this.sessionStorage, [userIdKey, refKey, utmParamsKey]],
-    ] as const) {
-      for (const key of keys) {
-        try {
-          if (storage.removeItem) storage.removeItem(key)
-          else storage.setItem(key, '')
-        } catch {
-          // Continue when one storage key is unavailable.
-        }
-      }
-    }
   }
 }

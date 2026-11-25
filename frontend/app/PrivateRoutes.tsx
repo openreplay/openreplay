@@ -1,5 +1,5 @@
 import { Loader } from '@/ui/feedback/Loader';
-import { debounceCall } from '@/utils';
+import { debounce } from '@/utils';
 import withSiteIdUpdater from 'HOCs/withSiteIdUpdater';
 import { observer } from 'mobx-react-lite';
 import React, { Suspense, lazy } from 'react';
@@ -14,6 +14,7 @@ import {
   useLocation,
 } from 'App/routing';
 import { CLIENT_TABS } from 'App/utils/routeUtils';
+import { otelLogsEnabled } from 'App/utils/split-utils';
 import OnboardingGate from 'Components/Onboarding/OnboardingGate';
 
 import { apiClient } from './api_client';
@@ -51,6 +52,8 @@ const components: any = {
   ),
   TagsPage: lazy(() => import('Components/DataManagement/Tags/index')),
   McpAuthorize: lazy(() => import('Components/McpAuthorize/McpAuthorize')),
+  LogsPure: lazy(() => import('Components/Observability/LogsPage')),
+  SoonPure: lazy(() => import('Components/Observability/SoonPage')),
 };
 
 const enhancedComponents: any = {
@@ -73,13 +76,14 @@ const enhancedComponents: any = {
   SegmentsPage: withSiteIdUpdater(components.SegmentsPage),
   SegmentPage: withSiteIdUpdater(components.SegmentPage),
   TagsPage: withSiteIdUpdater(components.TagsPage),
+  Logs: withSiteIdUpdater(components.LogsPure),
+  Soon: withSiteIdUpdater(components.SoonPure),
 };
 
 const { withSiteId } = routes;
 
 const METRICS_PATH = routes.metrics();
 const METRICS_DETAILS = routes.metricDetails();
-const METRICS_DETAILS_SUB = routes.metricDetailsSub();
 
 const ALERTS_PATH = routes.alerts();
 const ALERT_CREATE_PATH = routes.alertCreate();
@@ -264,7 +268,7 @@ function PrivateRoutes() {
   }, [filtersLoaded, searchStore.urlParsed, location.search, siteId]);
 
   const debouncedSearchCall = React.useMemo(
-    () => debounceCall(() => searchStore.fetchSessions(true), 250),
+    () => debounce(() => searchStore.fetchSessions(true), 250),
     [searchStore],
   );
   React.useEffect(() => {
@@ -350,10 +354,6 @@ function PrivateRoutes() {
           element={<enhancedComponents.Dashboard />}
         />
         <Route
-          path={withSiteId(`${METRICS_DETAILS_SUB}/*`, siteIdList)}
-          element={<enhancedComponents.Dashboard />}
-        />
-        <Route
           path={withSiteId(`${DASHBOARD_PATH}/*`, siteIdList)}
           element={<enhancedComponents.Dashboard />}
         />
@@ -408,6 +408,24 @@ function PrivateRoutes() {
           path={withSiteId(routes.dataManagement.activity(), siteIdList)}
           element={<enhancedComponents.Activity />}
         />
+        {otelLogsEnabled() && (
+          <Route
+            path={withSiteId(routes.logs(), siteIdList)}
+            element={<enhancedComponents.Logs />}
+          />
+        )}
+        {otelLogsEnabled() && (
+          <Route
+            path={withSiteId(routes.otelTraces(), siteIdList)}
+            element={<enhancedComponents.Soon what="traces" />}
+          />
+        )}
+        {otelLogsEnabled() && (
+          <Route
+            path={withSiteId(routes.otelMetrics(), siteIdList)}
+            element={<enhancedComponents.Soon what="metrics" />}
+          />
+        )}
         <Route
           path={withSiteId(routes.dataManagement.userPage(), siteIdList)}
           element={<enhancedComponents.UserPage />}

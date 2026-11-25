@@ -96,10 +96,4 @@ export default class IntegrationsService extends BaseService {
 
     return await r.json();
   };
-
-  testElastic = async (data: any) => {
-    const r = await this.client.post('/integrations/elasticsearch/test', data);
-
-    return r.json();
-  };
 }

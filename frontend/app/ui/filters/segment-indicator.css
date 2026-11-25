@@ -21,6 +21,7 @@
 }
 
 .m-segind__mark {
+  display: inline-flex;
   flex: none;
   color: var(--m-content-primary);
 }

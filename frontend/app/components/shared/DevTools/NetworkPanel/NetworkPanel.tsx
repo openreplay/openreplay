@@ -1,9 +1,7 @@
-import { Tooltip } from '@/ui/overlays/tooltip';
 import { IResourceRequest, IResourceTiming } from 'Player';
 import { WsChannel } from 'Player/web/messages';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import i18n from 'App/i18n';
 
 import {
   MobilePlayerContext,
@@ -12,70 +10,6 @@ import {
 import { useStore } from 'App/mstore';
 
 import { NetworkPanelComp } from './NetworkPanelComp';
-
-// Constants remain the same
-const ALL = 'ALL';
-const XHR = 'xhr';
-const JS = 'js';
-const CSS = 'css';
-const IMG = 'img';
-const MEDIA = 'media';
-const OTHER = 'other';
-const WS = 'websocket';
-const GRAPHQL = 'graphql';
-
-const TAP_KEYS = [ALL, XHR, JS, CSS, IMG, MEDIA, OTHER, WS, GRAPHQL] as const;
-export const NETWORK_TABS = TAP_KEYS.map((tab) => ({
-  text: tab === 'xhr' ? 'Fetch/XHR' : tab,
-  key: tab,
-}));
-
-export function renderType(r: any) {
-  return (
-    <Tooltip title={<div>{r.type}</div>}>
-      <div>{r.type}</div>
-    </Tooltip>
-  );
-}
-
-export function renderName(r: any) {
-  const maxTtipUrlLength = 800;
-  const tooltipUrl =
-    r.url && r.url.length > maxTtipUrlLength
-      ? `${r.url.slice(0, maxTtipUrlLength / 2)}......${r.url.slice(-maxTtipUrlLength / 2)}`
-      : r.url;
-
-  return (
-    <Tooltip title={<div>{tooltipUrl}</div>}>
-      <div
-        style={{ maxWidth: 250, overflow: 'hidden', textOverflow: 'ellipsis' }}
-      >
-        {r.name}
-      </div>
-    </Tooltip>
-  );
-}
-
-export function renderDuration(r: any) {
-  const t = i18n.t;
-  if (!r.success) return 'x';
-
-  const text = `${Math.floor(r.duration)}ms`;
-  if (!r.isRed && !r.isYellow) return text;
-
-  let tooltipText;
-  if (r.isYellow) {
-    tooltipText = t('Slower than average');
-  } else {
-    tooltipText = t('Much slower than average');
-  }
-
-  return (
-    <Tooltip title={tooltipText}>
-      <div> {text} </div>
-    </Tooltip>
-  );
-}
 
 // Main component for Network Panel
 function NetworkPanelCont({
