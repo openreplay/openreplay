@@ -348,10 +348,12 @@ function VitalCard({ v }: { v: VitalCardData }) {
             <span className="m-rep-v__avg num">
               <Figure v={d.avg} />
             </span>
-            <span className="m-rep-v__rate">
-              <i style={{ background: RATING[d.rating] }} />
-              {RATING_LABEL[d.rating]}
-            </span>
+            {d.rating != null && (
+              <span className="m-rep-v__rate">
+                <i style={{ background: RATING[d.rating] }} />
+                {RATING_LABEL[d.rating]}
+              </span>
+            )}
           </div>
           <div className="m-rep-v__sub">
             {d.delta && (

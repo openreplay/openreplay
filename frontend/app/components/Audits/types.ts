@@ -108,8 +108,8 @@ export interface Audit {
   segmentId?: string;
   /** Legacy segment's name; in segments mode the names joined with ", ". */
   segmentName?: string;
-  /** Segments mode: compared against all traffic, as they were at create time. */
-  segments: AuditSegment[];
+  /** Segments mode: compared against all traffic, as they were at create time. Absent on older audits. */
+  segments?: AuditSegment[];
   filter: FilterGroup;
   /** Empty only on audits made before report types existed. */
   reportType: ReportType | '';

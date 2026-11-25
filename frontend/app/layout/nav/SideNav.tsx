@@ -22,6 +22,7 @@ import { observer } from 'mobx-react-lite';
 import React, { type ComponentType, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { hasAuditsPermission } from 'App/components/Audits/access';
 import { useModal } from 'App/components/Modal';
 import { MENU, PREFERENCES_MENU } from 'App/layout/data';
 import { useStore } from 'App/mstore';
@@ -29,7 +30,6 @@ import { hasSiteId, siteChangeAvailable } from 'App/routes';
 import { useLocation, useNavigate } from 'App/routing';
 import { getInitials } from 'App/utils';
 import { mobileScreen } from 'App/utils/isMobile';
-import { hasAuditsPermission } from 'App/components/Audits/access';
 import {
   agentAuditsEnabled,
   agentIssuesEnabled,

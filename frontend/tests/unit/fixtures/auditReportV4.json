@@ -214,6 +214,7 @@
     },
     {
       "key": "journeys.actions", "group": "journeys", "kind": "ai", "block": "commonActions", "title": "Common actions",
+      "data": null,
       "error": "The model did not answer in time."
     },
     {

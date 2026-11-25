@@ -48,7 +48,10 @@ export function MultiSelect<T extends string>({
   const placeholder = placeholderProp ?? t('Not set');
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
-  const chosen = options.filter((o) => value.includes(o.value));
+  // a locked option is drawn unpicked, so the closed control doesn't name it either
+  const chosen = options.filter(
+    (o) => o.locked == null && value.includes(o.value),
+  );
   const textOf = (o: MultiSelectOption<T>) =>
     o.text ?? (typeof o.label === 'string' ? o.label : String(o.value));
   // names, not a count: two fit, past two the first two and how many more
@@ -61,8 +64,8 @@ export function MultiSelect<T extends string>({
           pickable.every((o) => value.includes(o.value))
         ? allLabel
         : chosen.length <= 2
-        ? chosen.map(textOf).join(', ')
-        : `${chosen.slice(0, 2).map(textOf).join(', ')} +${chosen.length - 2}`;
+          ? chosen.map(textOf).join(', ')
+          : `${chosen.slice(0, 2).map(textOf).join(', ')} +${chosen.length - 2}`;
 
   const toggle = (v: T) =>
     onChange(value.includes(v) ? value.filter((x) => x !== v) : [...value, v]);

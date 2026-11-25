@@ -91,8 +91,7 @@ export function PixelBurst({
   const REST = BURST.length - 1;
   const [tick, setTick] = useState(0);
   const animate =
-    playing &&
-    !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    playing && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   useEffect(() => {
     if (!animate) return;
     const id = window.setInterval(() => setTick((x) => x + 1), interval);

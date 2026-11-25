@@ -45,6 +45,20 @@ export function useAuditFilters(items: readonly AuditItem[] | undefined) {
   const picked = ui.filters.userId;
   if (picked != null && picked !== me && !names.has(picked))
     names.set(picked, t('User {{id}}', { id: picked }));
+  // a picked segment stays visible (and removable) while the list loads, or once it's gone
+  const segmentOptions = segments.map((s) => ({ value: s.id, label: s.name }));
+  const pickedSegment = ui.filters.segment;
+  if (
+    pickedSegment &&
+    pickedSegment !== FULL_TRAFFIC &&
+    !segmentOptions.some((o) => o.value === pickedSegment)
+  )
+    segmentOptions.push({
+      value: pickedSegment,
+      label:
+        items?.flatMap((a) => a.segments).find((s) => s.id === pickedSegment)
+          ?.name ?? t('Segment'),
+    });
   const creators = [...names.entries()]
     .filter(([id]) => id !== me)
     .sort((a, b) => a[1].localeCompare(b[1]));
@@ -58,7 +72,7 @@ export function useAuditFilters(items: readonly AuditItem[] | undefined) {
       single: true,
       options: [
         { value: FULL_TRAFFIC, label: t('Full traffic') },
-        ...segments.map((s) => ({ value: s.id, label: s.name })),
+        ...segmentOptions,
       ],
     },
     {
