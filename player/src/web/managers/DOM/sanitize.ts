@@ -58,6 +58,9 @@ const URL_ATTRS = new Set([
  */
 const SCRIPT_SCHEMES = new Set(['javascript', 'vbscript']);
 
+/** `referrerpolicy` values that send other origins no Referer at all. */
+const SAFE_REFERRER_POLICIES = new Set(['no-referrer', 'same-origin']);
+
 /** Whitespace and control characters a browser ignores inside a URL scheme. */
 const URL_SCHEME_NOISE = /[\u0000-\u0020]+/g;
 
@@ -91,6 +94,10 @@ export function sanitizeAttribute(
   name: string,
   value: string,
 ): SanitizedAttribute | null {
+  // live (JSON) messages can carry non-string values
+  if (typeof value !== 'string') {
+    return null;
+  }
   const lname = name.toLowerCase();
 
   // 1) Event handler content attributes (onload, onerror, onclick, ...) compile
@@ -112,6 +119,14 @@ export function sanitizeAttribute(
 
   // 3) Script-executing URL schemes in any URL-bearing attribute.
   if (URL_ATTRS.has(lname) && SCRIPT_SCHEMES.has(getScheme(value))) {
+    return null;
+  }
+
+  // 4) referrerpolicy may only narrow what the document sends.
+  if (
+    lname === 'referrerpolicy' &&
+    !SAFE_REFERRER_POLICIES.has(value.toLowerCase())
+  ) {
     return null;
   }
 
