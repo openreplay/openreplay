@@ -1,9 +1,12 @@
 package api
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"math"
 	"net/http"
 	"net/http/httputil"
@@ -26,6 +29,7 @@ const (
 	tenantIDHeader      = "X-Tenant-Id"
 	retentionDaysHeader = "X-Retention-Days"
 	collectorLogsPath   = "/v1/logs"
+	maxConvertedSize    = 16 << 20
 )
 
 type requestStartKey struct{}
@@ -81,41 +85,112 @@ func NewHandlers(cfg *otlpCfg.Config, log logger.Logger, responser api.Responser
 func (h *handlersImpl) GetAll() []*api.Description {
 	return []*api.Description{
 		{Path: "/v1/otlp/v1/logs", Method: "POST", Handler: h.ingestLogs, Permissions: api.NoPermissions, AuditTrail: api.DoNotTrack},
+		{Path: "/v1/otlp/logs/json", Method: "POST", Handler: h.ingestJSONLogs, Permissions: api.NoPermissions, AuditTrail: api.DoNotTrack},
 	}
 }
 
 func (h *handlersImpl) ingestLogs(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
+	project := h.authorize(w, r, startTime)
+	if project == nil {
+		return
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, h.bodyLimit)
+	h.forward(w, r, project, startTime)
+}
 
+func (h *handlersImpl) ingestJSONLogs(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+	project := h.authorize(w, r, startTime)
+	if project == nil {
+		return
+	}
+	body, status, err := readJSONBody(w, r, h.bodyLimit)
+	if err != nil {
+		h.responser.ResponseWithError(h.log, r.Context(), w, status, err, startTime, r.URL.Path, len(body))
+		return
+	}
+	payload, err := convertJSONLogs(body, startTime)
+	if err != nil {
+		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, len(body))
+		return
+	}
+	if len(payload) > maxConvertedSize {
+		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusRequestEntityTooLarge, errors.New("too many log records in one request"), startTime, r.URL.Path, len(body))
+		return
+	}
+	r.Body = io.NopCloser(bytes.NewReader(payload))
+	r.ContentLength = int64(len(payload))
+	r.TransferEncoding = nil
+	r.Header.Set("Content-Type", "application/json")
+	r.Header.Del("Content-Encoding")
+	h.forward(w, r, project, startTime)
+}
+
+func readJSONBody(w http.ResponseWriter, r *http.Request, limit int64) ([]byte, int, error) {
+	var src io.Reader = http.MaxBytesReader(w, r.Body, limit)
+	switch enc := r.Header.Get("Content-Encoding"); enc {
+	case "", "identity":
+	case "gzip":
+		zr, err := gzip.NewReader(src)
+		if err != nil {
+			status, err := bodyError(err, limit, "invalid gzip body")
+			return nil, status, err
+		}
+		defer zr.Close()
+		src = io.LimitReader(zr, maxConvertedSize+1)
+	default:
+		return nil, http.StatusUnsupportedMediaType, fmt.Errorf("content encoding %q is not supported", enc)
+	}
+	body, err := io.ReadAll(src)
+	if err != nil {
+		status, err := bodyError(err, limit, "can't read request body")
+		return nil, status, err
+	}
+	if len(body) > maxConvertedSize {
+		return nil, http.StatusRequestEntityTooLarge, fmt.Errorf("decompressed body exceeds %d bytes", maxConvertedSize)
+	}
+	return body, 0, nil
+}
+
+func bodyError(err error, limit int64, fallback string) (int, error) {
+	var tooLarge *http.MaxBytesError
+	if errors.As(err, &tooLarge) {
+		return http.StatusRequestEntityTooLarge, fmt.Errorf("body exceeds %d bytes", limit)
+	}
+	return http.StatusBadRequest, errors.New(fallback)
+}
+
+func (h *handlersImpl) authorize(w http.ResponseWriter, r *http.Request, startTime time.Time) *projects.Project {
 	key := ingestKey(r.Header.Get("Authorization"))
 	if key == "" {
 		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusUnauthorized, errors.New("missing authorization header"), startTime, r.URL.Path, 0)
-		return
+		return nil
 	}
 	clientIP := realip.FromRequest(r)
 	if delay := h.failures.blocked(clientIP, startTime); delay > 0 {
 		h.tooManyRequests(w, r, delay, errors.New("too many failed ingest key checks"), startTime)
-		return
+		return nil
 	}
 	projectID, err := h.keys.Resolve(key)
 	if errors.Is(err, ingest_keys.ErrNotFound) {
 		h.failures.record(clientIP, startTime)
 		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusUnauthorized, errors.New("invalid ingest key"), startTime, r.URL.Path, 0)
-		return
+		return nil
 	}
 	if err != nil {
 		h.log.Error(r.Context(), "ingest key lookup failed: %s", err)
 		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusServiceUnavailable, errors.New("ingest key check unavailable"), startTime, r.URL.Path, 0)
-		return
+		return nil
 	}
 	project, err := h.projects.GetProject(projectID)
 	if err != nil {
 		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusUnauthorized, errors.New("project is not active"), startTime, r.URL.Path, 0)
-		return
+		return nil
 	}
 	if r.ContentLength > h.bodyLimit {
 		h.responser.ResponseWithError(h.log, r.Context(), w, http.StatusRequestEntityTooLarge, fmt.Errorf("body exceeds %d bytes", h.bodyLimit), startTime, r.URL.Path, int(r.ContentLength))
-		return
+		return nil
 	}
 	charged := r.ContentLength
 	if charged < 0 {
@@ -123,10 +198,12 @@ func (h *handlersImpl) ingestLogs(w http.ResponseWriter, r *http.Request) {
 	}
 	if delay := h.limiter.wait(project.ProjectID, charged, startTime); delay > 0 {
 		h.tooManyRequests(w, r, delay, errors.New("ingest rate limit exceeded"), startTime)
-		return
+		return nil
 	}
+	return project
+}
 
-	r.Body = http.MaxBytesReader(w, r.Body, h.bodyLimit)
+func (h *handlersImpl) forward(w http.ResponseWriter, r *http.Request, project *projects.Project, startTime time.Time) {
 	r.Header.Set(projectIDHeader, strconv.FormatUint(uint64(project.ProjectID), 10))
 	r.Header.Del(tenantIDHeader)
 	if project.TenantID > 0 {
