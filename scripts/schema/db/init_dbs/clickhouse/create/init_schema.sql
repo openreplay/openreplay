@@ -999,14 +999,15 @@ CREATE TABLE IF NOT EXISTS otel.logs
                                                         ScopeAttributes::Array(Tuple(String, String))),
     LogAttributeItems      Array(String) ALIAS arrayMap((arr) -> concat(arr.1, '=', arr.2),
                                                         LogAttributes::Array(Tuple(String, String))),
+    SessionId              UInt64,
     _timestamp             DateTime DEFAULT now(),
     INDEX idx_trace_id TraceId TYPE text(tokenizer = 'array'),
     INDEX idx_res_attr_key mapKeys(ResourceAttributes) TYPE text(tokenizer = 'array'),
-    INDEX idx_res_attr_items ResourceAttributeItems TYPE text(tokenizer = 'array'),
+    INDEX idx_res_attr_kv ResourceAttributes TYPE text(tokenizer = 'keyValuePairs'),
     INDEX idx_scope_attr_key mapKeys(ScopeAttributes) TYPE text(tokenizer = 'array'),
-    INDEX idx_scope_attr_items ScopeAttributeItems TYPE text(tokenizer = 'array'),
+    INDEX idx_scope_attr_kv ScopeAttributes TYPE text(tokenizer = 'keyValuePairs'),
     INDEX idx_log_attr_key mapKeys(LogAttributes) TYPE text(tokenizer = 'array'),
-    INDEX idx_log_attr_items LogAttributeItems TYPE text(tokenizer = 'array'),
+    INDEX idx_log_attr_kv LogAttributes TYPE text(tokenizer = 'keyValuePairs'),
     INDEX idx_lower_body lower(Body) TYPE text(tokenizer = 'splitByNonAlpha')
 ) ENGINE = MergeTree
       PARTITION BY (toDate(Timestamp), _retention_days)
