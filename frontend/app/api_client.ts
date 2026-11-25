@@ -47,6 +47,7 @@ const newApiUrls = [
   'lexicon',
   '/tags',
   '/browser-tests',
+  '/audits',
   '/properties',
   '/filters',
   '/alerts',
