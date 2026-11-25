@@ -4,7 +4,6 @@ import {
   ALL_CHAPTERS,
   AuditDraft,
   AuditItem,
-  auditWindow,
   chapterSections,
   chaptersOfSections,
   draftProblem,
@@ -162,12 +161,10 @@ describe('toListParams', () => {
 });
 
 describe('dates', () => {
-  it('covers the days up to the day before creation', () => {
-    const { from, to } = auditWindow(Date.UTC(2026, 10, 20, 16, 48), 7);
-    expect(rangeLabel(from, to)).toBe('13–19 Nov 2026');
-  });
-
-  it('formats ranges across months and years', () => {
+  it('formats ranges within a month, across months and years', () => {
+    expect(rangeLabel(Date.UTC(2026, 10, 13), Date.UTC(2026, 10, 19))).toBe(
+      '13–19 Nov 2026',
+    );
     expect(rangeLabel(Date.UTC(2026, 9, 28), Date.UTC(2026, 10, 3))).toBe(
       '28 Oct – 3 Nov 2026',
     );
@@ -182,7 +179,7 @@ describe('AuditItem', () => {
     const item = new AuditItem(
       audit({ filter: { filters: [{ operator: 'is' }, { operator: 'is' }] } }),
     );
-    expect(item.scopeLabel).toBe('Full traffic, 2 filters · 13–19 Nov 2026');
+    expect(item.scopeLabel).toBe('Full traffic, 2 filters · Last 7 days');
     expect(item.creatorLabel(12)).toBe('You');
     expect(item.creatorLabel('7')).toBe('Sarah Kim');
   });
@@ -195,7 +192,7 @@ describe('AuditItem', () => {
         filter: { filters: [{ operator: 'is' }] },
       }),
     );
-    expect(item.scopeLabel).toBe('Mobile visitors · 13–19 Nov 2026');
+    expect(item.scopeLabel).toBe('Mobile visitors · Last 7 days');
   });
 
   it('tracks status', () => {

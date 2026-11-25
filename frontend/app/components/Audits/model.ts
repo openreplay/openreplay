@@ -163,7 +163,6 @@ export const DEFAULT_PERIOD: PeriodDays = 7;
 export const periodName = (days: number): string =>
   days === 1 ? 'Last 24 hours' : `Last ${days} days`;
 
-const DAY = 24 * 60 * 60 * 1000;
 const MONTHS = [
   'Jan',
   'Feb',
@@ -179,18 +178,7 @@ const MONTHS = [
   'Dec',
 ];
 
-/** First and last UTC day an audit covers: `periodDays` days up to the day before it was created. */
-export function auditWindow(
-  createdAt: number,
-  periodDays: number,
-): { from: number; to: number } {
-  const end = new Date(createdAt);
-  end.setUTCHours(0, 0, 0, 0);
-  const to = end.getTime() - DAY;
-  return { from: to - (periodDays - 1) * DAY, to };
-}
-
-/** "13–19 Nov 2026", "28 Oct – 3 Nov 2026", "30 Dec 2025 – 5 Jan 2026". */
+/** A report's own days (`meta.period`): "13–19 Nov 2026", "28 Oct – 3 Nov 2026". */
 export function rangeLabel(from: number, to: number): string {
   const f = new Date(from);
   const t = new Date(to);
@@ -420,16 +408,12 @@ export class AuditItem {
     return this.raw.periodDays;
   }
 
-  get window(): { from: number; to: number } {
-    return auditWindow(this.createdAt, this.raw.periodDays);
-  }
-
+  /** The API sends the period's length only; the report carries its real dates. */
   get periodLabel(): string {
-    const { from, to } = this.window;
-    return rangeLabel(from, to);
+    return periodName(this.raw.periodDays);
   }
 
-  /** "Mobile visitors · 13–19 Nov 2026", "Full traffic, 2 filters · …". */
+  /** "Mobile visitors · Last 7 days", "Full traffic, 2 filters · Last 30 days". */
   get scopeLabel(): string {
     const n = this.filterCount;
     const narrowed = n ? `, ${n} ${n === 1 ? 'filter' : 'filters'}` : '';
