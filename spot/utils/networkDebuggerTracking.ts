@@ -1,3 +1,9 @@
+import {
+  filterBody,
+  filterHeaders,
+  isSensitiveKey,
+  tryFilterUrl,
+} from "@openreplay/network-proxy/dist/sanitizers.js";
 import { getNetworkRequestType } from "./networkTrackingUtils";
 
 let requestMaps: Record<number, Record<string, any>> = {};
@@ -90,12 +96,32 @@ function handleRequestIntercept(source, method, params) {
   }
 }
 
+// the debugger reports multipart bodies as raw text, webRequest as parsed fields
+const multipartField =
+  /(Content-Disposition: form-data; name="([^"]*)"[^\r\n]*\r\n(?:[^\r\n]+\r\n)*\r\n)[^\r\n]*/gi;
+
+function maskRequest(request: Record<string, any>) {
+  const body = request.body.replace(
+    multipartField,
+    (field: string, head: string, name: string) =>
+      isSensitiveKey(name) ? `${head}******` : field,
+  );
+  return {
+    ...request,
+    url: tryFilterUrl(request.url),
+    body: filterBody(body),
+    responseBody: filterBody(request.responseBody),
+    requestHeaders: filterHeaders(request.requestHeaders),
+    responseHeaders: filterHeaders(request.responseHeaders),
+  };
+}
+
 export function getRequests(tabId?: number) {
   if (tabId) {
-    return Object.values(requestMaps[tabId] || {});
+    return Object.values(requestMaps[tabId] || {}).map(maskRequest);
   }
   return Object.values(requestMaps).reduce(
-    (acc: any[], curr) => acc.concat(Object.values(curr)),
+    (acc: any[], curr) => acc.concat(Object.values(curr).map(maskRequest)),
     [] as any[],
   );
 }
