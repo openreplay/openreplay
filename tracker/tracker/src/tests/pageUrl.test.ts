@@ -75,4 +75,12 @@ describe('page url handed to the worker for batch headers', () => {
     }
     expect(await startWith({ urls: { urlSanitizer } })).toBe('')
   })
+
+  test('a throwing urlSanitizer gives an empty URL to error stacks too', async () => {
+    const urlSanitizer = () => {
+      throw new Error('boom')
+    }
+    await startWith({ urls: { urlSanitizer } })
+    expect(app.sanitizeURL('https://shop.test/cart?token=abc')).toBe('')
+  })
 })

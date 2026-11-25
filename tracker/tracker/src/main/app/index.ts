@@ -1378,15 +1378,10 @@ export default class App {
   sanitizeURL(url: string): string {
     if (!url) return ''
     if (this.sanitizer.privateMode) return stringWiper(url)
-    return (this.options.urls?.urlSanitizer ?? defaultUrlSanitizer)(url)
-  }
-
-  /** the worker writes it into batch headers until the first SetPageLocation */
-  private sanitizedPageURL(): string {
     try {
-      return this.sanitizeURL(document.URL)
+      return (this.options.urls?.urlSanitizer ?? defaultUrlSanitizer)(url)
     } catch (e) {
-      // a throwing urlSanitizer must not leave start() stuck in Starting
+      // a throwing urlSanitizer must not drop what the URL belongs to or stall start()
       this._debug('url_sanitizer', e)
       return ''
     }
@@ -1958,7 +1953,7 @@ export default class App {
       pageNo: this.session.incPageNo(),
       ingestPoint: this.options.ingestPoint,
       timestamp: this.coldStartTs,
-      url: this.sanitizedPageURL(),
+      url: this.sanitizeURL(document.URL),
       connAttemptCount: this.options.connAttemptCount,
       connAttemptGap: this.options.connAttemptGap,
       flushInterval: this.options.flushInterval,
@@ -2056,7 +2051,7 @@ export default class App {
       pageNo: this.session.incPageNo(),
       ingestPoint: this.options.ingestPoint,
       timestamp: isColdStart ? this.coldStartTs : timestamp,
-      url: this.sanitizedPageURL(),
+      url: this.sanitizeURL(document.URL),
       connAttemptCount: this.options.connAttemptCount,
       connAttemptGap: this.options.connAttemptGap,
       flushInterval: this.options.flushInterval,

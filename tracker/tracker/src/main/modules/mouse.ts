@@ -211,6 +211,7 @@ export default function (app: App, options?: MouseHandlerOptions): void {
   let mouseTarget: Element | null = null
   let mouseTargetTime = 0
   let selectorMap: { [id: number]: string } = {}
+  let maskedSelectorMap: { [id: number]: string } = {}
 
   let velocity = 0
   let direction = 0
@@ -250,6 +251,7 @@ export default function (app: App, options?: MouseHandlerOptions): void {
     mousePositionChanged = false
     mouseTarget = null
     selectorMap = {}
+    maskedSelectorMap = {}
     if (checkIntervalId) {
       clearInterval(checkIntervalId as unknown as number)
     }
@@ -269,19 +271,21 @@ export default function (app: App, options?: MouseHandlerOptions): void {
 
   const patchDocument = (document: Document, topframe = false) => {
     function getSelector(id: number, target: Element): string {
-      if (selectorMap[id]) return selectorMap[id]
+      // the element may be masked or unmasked after its first click
+      const dataMasked = app.sanitizer.stateAttributesMasked(id, target)
+      const cache = dataMasked ? maskedSelectorMap : selectorMap
+      if (cache[id]) return cache[id]
       // class uniqueness is only valid for the DOM it was computed on
       docClassCache = new WeakMap()
       const tagMatch = app.tagMatcher.match(target)
       if (tagMatch) {
-        return (selectorMap[id] = tagMatch.selector)
+        return (cache[id] = tagMatch.selector)
       }
       if (!isDeepClickable(target)) {
         const cheapSelector = getCheapSelector(target, customAttributes)
-        if (cheapSelector) return (selectorMap[id] = cheapSelector)
+        if (cheapSelector) return (cache[id] = cheapSelector)
       }
-      const dataMasked = app.sanitizer.stateAttributesMasked(id, target)
-      return (selectorMap[id] = _getSelector(target, customAttributes, dataMasked))
+      return (cache[id] = _getSelector(target, customAttributes, dataMasked))
     }
 
     const attachListener = topframe

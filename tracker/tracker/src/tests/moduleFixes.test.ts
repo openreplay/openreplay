@@ -234,6 +234,42 @@ describe('mouse', () => {
     ])
     expect(JSON.stringify(clicks)).not.toMatch(/jane/i)
   })
+
+  test('a selector cached before an element was masked is not reused', () => {
+    document.body.innerHTML = '<p><a data-patient="jane.smith">File</a></p>'
+    const ids = new Map<Node, number>()
+    const register = (n: Node) => {
+      ids.set(n, ids.size + 1)
+      n.childNodes.forEach(register)
+    }
+    register(document.documentElement)
+    const app = {
+      attachStartCallback() {},
+      attachStopCallback() {},
+      attachEventListener: (t, type, fn) => t.addEventListener(type, fn),
+      nodes: { getID: (n: Node) => ids.get(n), attachNodeCallback() {} },
+      observer: { getDocumentOffset: () => [0, 0] },
+      tagMatcher: { match: () => null },
+      ticker: { attach() {} },
+      send: jest.fn(),
+    }
+    app.sanitizer = new Sanitizer({ app })
+    const a = document.querySelector('a')!
+    Object.defineProperty(a, 'innerText', { value: a.textContent })
+    setupMouse(app)
+    const click = () =>
+      a.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: 5, clientY: 5 }))
+    const clicks = () =>
+      app.send.mock.calls.map((c) => c[0]).filter((m) => m[0] === Type.MouseClick)
+
+    click()
+    expect(JSON.stringify(clicks())).toMatch(/jane/)
+    app.send.mockClear()
+    app.sanitizer.setLevel(ids.get(a), SanitizeLevel.Obscured)
+    click()
+    expect(clicks()).toHaveLength(1)
+    expect(JSON.stringify(clicks())).not.toMatch(/jane/i)
+  })
 })
 
 describe('webAnimations', () => {
