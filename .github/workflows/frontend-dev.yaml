@@ -30,6 +30,7 @@ jobs:
           minio_secret_key: ${{ secrets.DEV_MINIO_SECRET_KEY }}
           pg_password: ${{ secrets.DEV_PG_PASSWORD }}
           registry_url: ${{ secrets.OSS_REGISTRY_URL }}
+          jwt_mcp_secret: ${{ secrets.JWT_MCP_SECRET }}
         name: Update Keys
 
       - name: Docker login

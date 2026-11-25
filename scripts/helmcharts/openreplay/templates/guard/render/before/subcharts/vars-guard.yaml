@@ -1,0 +1,22 @@
+{{- /*
+Fails the install when vars.yaml is missing or not templated.
+This file sits 5 directories deep on purpose: Helm renders the deepest
+template paths first, and subchart templates (charts/<x>/templates/*,
+4 deep) crash on missing values before a shallower guard would run.
+The same file is used by the openreplay and databases charts.
+*/ -}}
+{{- $ns := ternary "db" "app" (eq .Chart.Name "databases") -}}
+{{- $help := printf `
+
+  curl -sLO https://raw.githubusercontent.com/openreplay/openreplay/%s/scripts/helmcharts/vars.yaml
+  # templater: https://github.com/rjshrjndrn/templater/releases
+  templater -i vars.yaml -o vars.yaml
+  yq -i '.global.domainName = "openreplay.example.com"' vars.yaml
+  helm upgrade --install %s oci://public.ecr.aws/op3nr3play/helm/%s --version %s -n %s --create-namespace -f vars.yaml
+` .Chart.AppVersion .Chart.Name .Chart.Name .Chart.Version $ns -}}
+{{- if not .Values.fromVersion -}}
+{{- fail (printf "\n\n[vars.yaml REQUIRED] Install this chart with a templated vars.yaml:%s" $help) -}}
+{{- end -}}
+{{- if contains "randAlphaNum" (toYaml .Values) -}}
+{{- fail (printf "\n\n[vars.yaml is not templated] Secrets still contain {{ randAlphaNum }} placeholders. Run:%s" $help) -}}
+{{- end -}}
