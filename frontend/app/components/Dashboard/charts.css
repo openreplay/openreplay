@@ -588,15 +588,10 @@
   background: var(--m-chart-1);
   opacity: 0.4;
 }
-.m-fn__more {
-  position: absolute;
-  top: -1.35rem;
-  left: var(--m-space-3);
-  font-size: var(--m-text-2xs);
-  color: var(--m-content-placeholder);
-}
-.m-fn.is-compact .m-fn__stage + .m-fn__stage {
-  margin-top: var(--m-space-6);
+/* a tile's hidden steps: a row between the first and the last, as .m-top__more */
+.m-fn__gap {
+  display: flex;
+  padding-block: var(--m-space-2);
 }
 .m-fn__foot {
   display: flex;
@@ -645,6 +640,11 @@
 }
 .m-fn--columns .m-fn__stage-btn {
   height: 100%;
+}
+.m-fn--columns .m-fn__gap {
+  flex: none;
+  align-items: center;
+  padding-block: 0;
 }
 .m-fn--columns .m-fn__head {
   flex-wrap: wrap;

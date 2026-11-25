@@ -1,7 +1,9 @@
 import { useStore } from '@/mstore';
+import { Button } from '@/ui/actions/button';
 import { EmptyState } from '@/ui/feedback/EmptyState';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import type { TFunction } from 'i18next';
+import { ChevronRight } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -31,6 +33,8 @@ interface Props {
   data: FunnelData;
   /** a stage was drilled into (a dashboard opens its card) */
   onDrill?: () => void;
+  /** a dashboard tile's hidden steps open its card */
+  onOpen?: () => void;
   /** the window the funnel is drawn over, when not the card's drill-down one */
   drillPeriod?: Record<string, any>;
   compData?: FunnelData;
@@ -65,6 +69,7 @@ function FunnelWidget({
   data,
   compData,
   onDrill,
+  onOpen,
   drillPeriod,
 }: Props) {
   const { t } = useTranslation();
@@ -262,47 +267,49 @@ function FunnelWidget({
             },
           );
           return (
-            <li
-              key={index}
-              className={`m-fn__stage${focusedFilter === index ? ' is-focused' : ''}${s.isActive ? '' : ' is-muted'}`}
-            >
+            <React.Fragment key={index}>
               {i === 1 && hidden > 0 && (
-                <span className="m-fn__more">
-                  {hidden === 1
-                    ? t('+1 step')
-                    : t('+{{n}} steps', { n: hidden, count: hidden })}
-                </span>
+                <li className="m-fn__gap">
+                  <Button variant="subtle" onClick={onOpen}>
+                    {t('{{n}} more steps', { n: hidden, count: hidden })}
+                    <ChevronRight size={13} />
+                  </Button>
+                </li>
               )}
-              {isWidget && !onDrill ? (
-                <span
-                  className="m-fn__stage-btn"
-                  role="group"
-                  aria-label={aria}
-                >
-                  {body}
-                </span>
-              ) : (
-                <button
-                  type="button"
-                  className="m-fn__stage-btn"
-                  aria-label={aria}
-                  onClick={() => focusStage(index)}
-                >
-                  {body}
-                </button>
-              )}
-              {parts.length ? (
-                <SubBars
-                  parts={parts}
-                  scale={scale}
-                  parent={s.count}
-                  topN={topN}
-                  unit={unit}
-                  bars={!horizontal}
-                  inert={isWidget}
-                />
-              ) : null}
-            </li>
+              <li
+                className={`m-fn__stage${focusedFilter === index ? ' is-focused' : ''}${s.isActive ? '' : ' is-muted'}`}
+              >
+                {isWidget && !onDrill ? (
+                  <span
+                    className="m-fn__stage-btn"
+                    role="group"
+                    aria-label={aria}
+                  >
+                    {body}
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    className="m-fn__stage-btn"
+                    aria-label={aria}
+                    onClick={() => focusStage(index)}
+                  >
+                    {body}
+                  </button>
+                )}
+                {parts.length ? (
+                  <SubBars
+                    parts={parts}
+                    scale={scale}
+                    parent={s.count}
+                    topN={topN}
+                    unit={unit}
+                    bars={!horizontal}
+                    inert={isWidget}
+                  />
+                ) : null}
+              </li>
+            </React.Fragment>
           );
         })}
       </ol>

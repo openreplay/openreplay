@@ -112,6 +112,8 @@ interface Props {
   isPreview?: boolean;
   /** on a dashboard: a datum was drilled into, open its card */
   onDatum?: () => void;
+  /** on a dashboard: open the card */
+  onOpen?: () => void;
 }
 
 function WidgetChart(props: Props) {
@@ -477,6 +479,7 @@ function WidgetChart(props: Props) {
           isWidget={isSaved}
           drillPeriod={drawnPeriod}
           onDrill={props.onDatum}
+          onOpen={props.onOpen}
         />
       );
     }

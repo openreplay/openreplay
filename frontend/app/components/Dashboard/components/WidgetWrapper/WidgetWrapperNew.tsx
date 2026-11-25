@@ -203,6 +203,7 @@ function WidgetWrapperDashboard({
             metric={widget}
             isSaved
             onDatum={isPredefined ? undefined : openDrilled}
+            onOpen={open}
           />
         </Suspense>
       </div>
