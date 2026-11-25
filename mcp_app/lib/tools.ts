@@ -180,10 +180,22 @@ const publicLookup: net.LookupFunction = (hostname, options, callback) => {
 const MAX_MOB_FILE_BYTES = 128 * 1024 * 1024;
 const MAX_CSS_BYTES = 5 * 1024 * 1024;
 const MAX_CSS_REDIRECTS = 5;
+const CSS_TIMEOUT_MS = 20_000;
 
+// the deadline covers connect, headers and body; aborting it errors the response stream
 function getCss(url: string): Promise<IncomingMessage> {
   return new Promise((resolve, reject) => {
-    https.get(url, { lookup: publicLookup, headers: { "user-agent": "node" } }, resolve).on("error", reject);
+    https
+      .get(
+        url,
+        {
+          lookup: publicLookup,
+          headers: { "user-agent": "node" },
+          signal: AbortSignal.timeout(CSS_TIMEOUT_MS),
+        },
+        resolve,
+      )
+      .on("error", reject);
   });
 }
 
