@@ -33,6 +33,8 @@ for c in databases openreplay; do
     helm template $c $charts/$c
   expect_fail "a/$c no -f: templater hint" "templater -i vars.yaml -o vars.yaml" \
     helm template $c $charts/$c
+  expect_fail "a/$c no -f: oci install hint" "oci://public.ecr.aws/op3nr3play/helm/$c" \
+    helm template $c $charts/$c
   # (b) vars.yaml passed but not templated
   expect_fail "b/$c raw vars.yaml" "vars.yaml is not templated" \
     helm template $c $charts/$c -f $tmp/raw-vars.yaml
@@ -41,6 +43,9 @@ for c in databases openreplay; do
 done
 
 # (d) published package
+make -s -n -C $charts publish VERSION=$V DEST=$tmp/pkg 2>&1 |
+  grep -q "helm push .* oci://public.ecr.aws/op3nr3play/helm" &&
+  ok "d/publish targets op3nr3play" || ko "d/publish targets op3nr3play"
 before=$(git -C $root status --porcelain -- scripts/helmcharts)
 expect_ok "d/make package" make -C $charts package VERSION=$V DEST=$tmp/pkg
 after=$(git -C $root status --porcelain -- scripts/helmcharts)

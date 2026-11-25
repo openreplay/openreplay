@@ -31,7 +31,7 @@ restart: ## Restart the application
 
 VERSION ?= $(patsubst v%,%,$(shell yq e '.AppVersion' openreplay/Chart.yaml))
 DEST ?= dist
-OCI_REPO ?= oci://public.ecr.aws/p1t3u8a3/helm
+OCI_REPO ?= oci://public.ecr.aws/op3nr3play/helm
 
 package: ## Package openreplay+databases for OCI into $(DEST) (VERSION=1.28.0)
 	@test -n "$(VERSION)" || { echo "VERSION is empty"; exit 1; }

@@ -12,7 +12,7 @@ The same file is used by the openreplay and databases charts.
   # templater: https://github.com/rjshrjndrn/templater/releases
   templater -i vars.yaml -o vars.yaml
   yq -i '.global.domainName = "openreplay.example.com"' vars.yaml
-  helm upgrade --install %s oci://public.ecr.aws/p1t3u8a3/helm/%s --version %s -n %s --create-namespace -f vars.yaml
+  helm upgrade --install %s oci://public.ecr.aws/op3nr3play/helm/%s --version %s -n %s --create-namespace -f vars.yaml
 ` .Chart.AppVersion .Chart.Name .Chart.Name .Chart.Version $ns -}}
 {{- if not .Values.fromVersion -}}
 {{- fail (printf "\n\n[vars.yaml REQUIRED] Install this chart with a templated vars.yaml:%s" $help) -}}
