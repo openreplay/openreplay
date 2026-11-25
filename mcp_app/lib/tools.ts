@@ -2,6 +2,8 @@ import { McpServer } from "@modelcontextprotocol/server";
 import { registerAppTool } from "@modelcontextprotocol/ext-apps/server";
 import net from "node:net";
 import dns from "node:dns/promises";
+import https from "node:https";
+import type { IncomingMessage } from "node:http";
 import { state, savePersistedState, clearPersistedState, clearInstanceCaches, setAppUrl, generateAuthCode, assertHttpsUrl, allowMobUrls, isMobUrlAllowed } from "./state.js";
 import { makeApiRequest, fetchRecentSessions, fetchProjects, fetchSessionReplay, fetchSessionEvents, fetchSessionsTimeseries, fetchPathAnalysis, fetchWebVitals, fetchTableData, fetchFunnel, resolveFilters, resolveFunnelSteps, parseDateRange, resolveSiteId, DAY_MS, getOrFetchFilters, fetchEvents, fetchUsers, pollForAuth } from "./api.js";
 import {
@@ -117,14 +119,20 @@ function isPrivateAddress(addr: string): boolean {
   }
   if (family === 6) {
     const lower = addr.toLowerCase();
-    if (lower === "::" || lower === "::1") return true;
     // IPv4-mapped (::ffff:10.0.0.1) — test the embedded address
     const mapped = lower.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);
     if (mapped) return isPrivateAddress(mapped[1]);
-    if (/^f[cd]/.test(lower)) return true; // fc00::/7 unique-local
-    if (/^fe[89ab]/.test(lower)) return true; // fe80::/10 link-local
-    if (lower.startsWith("ff")) return true; // multicast
-    return false;
+    // NAT64 64:ff9b::/96 (64:ff9b::a00:1 is 10.0.0.1) — test the embedded address
+    const nat64 = lower.match(/^64:ff9b::(?:([0-9a-f]{1,4}):)?([0-9a-f]{1,4})$/);
+    if (nat64) {
+      const hi = parseInt(nat64[1] ?? "0", 16);
+      const lo = parseInt(nat64[2], 16);
+      return isPrivateAddress(`${hi >> 8}.${hi & 255}.${lo >> 8}.${lo & 255}`);
+    }
+    // Only global unicast 2000::/3 is public, minus Teredo 2001::/32 and 6to4 2002::/16 (embedded IPv4)
+    const first = parseInt(lower.split(":")[0] || "0", 16);
+    if (first < 0x2000 || first > 0x3fff) return true;
+    return first === 0x2002 || /^2001:0*:/.test(lower);
   }
   return true;
 }
@@ -132,11 +140,9 @@ function isPrivateAddress(addr: string): boolean {
 // Validate a stylesheet URL before the server fetches it on the UI's behalf.
 //
 // These hrefs come out of the *recorded page*, so they are attacker-influenced
-// by whoever's site was recorded. Require https, reject IP literals, and reject
-// hostnames that resolve into private space. A hostile DNS record could still
-// flip between the check and the fetch; the size cap and the fact that only the
-// stylesheet body (never credentials) is returned keep the blast radius small.
-async function assertProxyableCssUrl(raw: string): Promise<string> {
+// by whoever's site was recorded. Require https and reject IP literals here;
+// publicLookup rejects hostnames that resolve into private space.
+function assertProxyableCssUrl(raw: string): string {
   let u: URL;
   try {
     u = new URL(raw);
@@ -151,15 +157,63 @@ async function assertProxyableCssUrl(raw: string): Promise<string> {
   if (net.isIP(host) !== 0) {
     throw new Error("Refusing to fetch a stylesheet from a raw IP address");
   }
-  const resolved = await dns.lookup(host, { all: true });
-  if (resolved.length === 0 || resolved.some((r) => isPrivateAddress(r.address))) {
-    throw new Error(`Refusing to fetch a stylesheet from a non-public host: ${host}`);
-  }
   return u.toString();
 }
 
+// Runs as the socket's own lookup, so the addresses checked are the ones connected to
+// (fetch() would resolve the name again after any earlier check).
+const publicLookup: net.LookupFunction = (hostname, options, callback) => {
+  dns.lookup(hostname, { all: true }).then(
+    (resolved) => {
+      if (resolved.length === 0 || resolved.some((r) => isPrivateAddress(r.address))) {
+        callback(new Error(`Refusing to fetch a stylesheet from a non-public host: ${hostname}`), "");
+      } else if (options.all) {
+        callback(null, resolved);
+      } else {
+        callback(null, resolved[0].address, resolved[0].family);
+      }
+    },
+    (err) => callback(err, ""),
+  );
+};
+
 const MAX_MOB_FILE_BYTES = 128 * 1024 * 1024;
 const MAX_CSS_BYTES = 5 * 1024 * 1024;
+const MAX_CSS_REDIRECTS = 5;
+
+function getCss(url: string): Promise<IncomingMessage> {
+  return new Promise((resolve, reject) => {
+    https.get(url, { lookup: publicLookup, headers: { "user-agent": "node" } }, resolve).on("error", reject);
+  });
+}
+
+// Redirects are followed here so every hop gets the same checks as the recorded URL.
+async function fetchCss(url: string): Promise<Uint8Array> {
+  for (let hop = 0; hop <= MAX_CSS_REDIRECTS; hop++) {
+    const response = await getCss(assertProxyableCssUrl(url));
+    const status = response.statusCode ?? 0;
+    if (status >= 300 && status < 400 && response.headers.location) {
+      response.destroy();
+      url = new URL(response.headers.location, url).toString();
+      continue;
+    }
+    if (status < 200 || status >= 300) {
+      response.destroy();
+      throw new Error(`HTTP ${status}`);
+    }
+    const chunks: Buffer[] = [];
+    let size = 0;
+    for await (const chunk of response) {
+      size += chunk.length;
+      if (size > MAX_CSS_BYTES) {
+        throw new Error(`Response too large: more than ${MAX_CSS_BYTES} bytes`);
+      }
+      chunks.push(chunk);
+    }
+    return new Uint8Array(Buffer.concat(chunks));
+  }
+  throw new Error("Too many redirects");
+}
 
 // Fetch with a hard ceiling on the response body. Without this a single large
 // (or hostile) response is base64-encoded straight into a JSON-RPC frame.
@@ -1132,7 +1186,7 @@ export function registerInternalTools(server: McpServer) {
     async (args) => {
       let url: string;
       try {
-        url = await assertProxyableCssUrl(args.url as string);
+        url = assertProxyableCssUrl(args.url as string);
       } catch (err: any) {
         return {
           content: [{ type: "text", text: JSON.stringify({ code: "invalid_url", error: err.message }) }],
@@ -1140,7 +1194,7 @@ export function registerInternalTools(server: McpServer) {
         };
       }
       try {
-        const bytes = await fetchCapped(url, MAX_CSS_BYTES);
+        const bytes = await fetchCss(url);
         return {
           content: [{ type: "text", text: Buffer.from(bytes).toString("base64") }],
         };
