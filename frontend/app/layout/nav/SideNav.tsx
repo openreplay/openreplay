@@ -22,6 +22,7 @@ import { observer } from 'mobx-react-lite';
 import React, { type ComponentType, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { hasAuditsPermission } from 'App/components/Audits/access';
 import { useModal } from 'App/components/Modal';
 import { MENU, PREFERENCES_MENU } from 'App/layout/data';
 import { useStore } from 'App/mstore';
@@ -111,7 +112,7 @@ function SideNav({
   const inPreferences = location.pathname.includes('/client/');
   const issues = agentIssuesEnabled();
   const tests = agentTestsEnabled();
-  const audits = agentAuditsEnabled();
+  const audits = agentAuditsEnabled() && hasAuditsPermission(userStore);
   const logs = otelLogsEnabled();
   const phone = useViewport() === 'phone';
 
