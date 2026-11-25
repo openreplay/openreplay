@@ -1,5 +1,5 @@
 /**
- * Alternative DOM core, enabled with `nextObserver: true`. Same wire protocol and public
+ * Default DOM core (`nextObserver: false` opts out). Same wire protocol and public
  * surface as TopObserver + Nodes; differs in how it keeps track of nodes:
  *
  *  - Liveness by structure (see NextNodes): removing a branch, an iframe or the document

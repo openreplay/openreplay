@@ -212,10 +212,10 @@ type AppOptions = {
     maintainer: Partial<MaintainerOptions>
   }
   /**
-   * Experimental DOM core: tracks node liveness structurally instead of with an id map and
+   * DOM core that tracks node liveness structurally instead of with an id map and
    * a periodic Maintainer, uses a single MutationObserver for all documents and shadow roots.
-   * Same recording format; meant for gradual testing.
-   * @default false
+   * Same recording format. Set to `false` to use the previous core.
+   * @default true
    * */
   nextObserver?: boolean
 } & WebworkerOptions &
@@ -432,8 +432,15 @@ export default class App {
       // ids are never reused, so a removed node's level would otherwise stay forever
       onUnregister: (id: number) => this.sanitizer.setLevel(id, SanitizeLevel.Plain),
     }
-    // the next core indexes nodes and listeners through WeakRef; without it, the default core
-    if (this.options.nextObserver && typeof WeakRef === 'function') {
+    // the next core indexes nodes and listeners through WeakRef; without it, the previous core
+    if (this.options.nextObserver !== false && typeof WeakRef === 'function') {
+      if (options.nextObserver === undefined && !insideIframe) {
+        console.warn(
+          'OpenReplay: the tracker now records the page with the new DOM observer by default. ' +
+            'If replays look broken or the page slows down, set `nextObserver: false` in the tracker options ' +
+            'to switch back to the previous one, and please report it at https://github.com/openreplay/openreplay/issues',
+        )
+      }
       // same public surface as Nodes/TopObserver, see next_observer.ts
       this.nodes = new NextNodes(nodesOptions) as unknown as Nodes
       this.observer = new NextObserver({ app: this, options }) as unknown as Observer
