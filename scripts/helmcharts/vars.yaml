@@ -35,7 +35,9 @@ clickhouse: &clickhouse
 quickwit: &quickwit
 
 kafka: &kafka
-  # For enterpriseEdition
+  # Enterprise Edition requires kafka.enabled: true.
+  # Without it no Kafka is deployed, topics are not created, and
+  # sink/ender/storage/db crash-loop on kafka.db.svc.cluster.local.
   enabled: false
   kafkaHost: "kafka.db.svc.cluster.local"
   # For now, clickhouse doesn't support zookeeper tls intgration.
