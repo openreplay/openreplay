@@ -30,8 +30,8 @@ const snippetFor = (platform: string, keys: string[]) =>
   keys
     .map((k) =>
       platform === 'web'
-        ? `tracker.setMetadata('${k}', value);`
-        : `ORTracker.shared.setMetadata(key: "${k}", value: value)`,
+        ? `tracker.setMetadata(${JSON.stringify(k)}, value);`
+        : `ORTracker.shared.setMetadata(key: ${JSON.stringify(k)}, value: value)`,
     )
     .join('\n');
 
