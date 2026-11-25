@@ -300,6 +300,18 @@ export const cases = [
     expect: (r) => ok(r.recorded === r.origin + "/echo" && r.seen[0] === r.origin + "/echo" && r.sent === "t", JSON.stringify(r)),
   },
   {
+    id: "fetch-request-token-copy",
+    title: "fetch(request) puts the token on a copy: the app's Request keeps none, and its referrerPolicy holds",
+    async run() {
+      h.setup({ token: (cb) => cb("X-T", "t"), tokenUrlMatcher: (u) => u.endsWith("/echo?matched") });
+      const req = new Request("/echo?matched", { referrerPolicy: "no-referrer" });
+      const a = await fetch(req).then((r) => r.json());
+      const b = await fetch(new Request("/echo?excluded", req)).then((r) => r.json());
+      return { sent: a.headers["x-t"], referer: a.headers.referer ?? null, left: req.headers.get("x-t"), excluded: b.headers["x-t"] ?? null };
+    },
+    expect: (r) => ok(r.sent === "t" && r.referer === null && r.left === null && r.excluded === null, JSON.stringify(r)),
+  },
+  {
     id: "iframe-relative-urls",
     title: "beacon and XHR inside an iframe resolve against the iframe",
     async run() {

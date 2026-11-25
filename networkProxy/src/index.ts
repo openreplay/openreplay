@@ -6,6 +6,7 @@ import type { AxiosInstance } from "./axiosHook.js";
 import type { INetworkMessage, NetworkProxyOptions, ProxyConfig, RequestResponseData } from "./types.js";
 
 export { BeaconProxy, FetchProxy, XHRProxy, hookAxios };
+export { tryFilterUrl } from "./sanitizers.js";
 export type { AxiosInstance, INetworkMessage, NetworkProxyOptions, RequestResponseData };
 
 const warn = (api: string) => {

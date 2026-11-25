@@ -405,6 +405,49 @@ describe("session token header with tokenUrlMatcher", () => {
     expect(new Headers(target.mock.calls[1][1]!.headers).get("x-app")).toBe("1");
   });
 
+  const sentBy = (target: any): Request[] => target.mock.calls.map(([input, init]: any) => new Request(input, init));
+
+  it("fetch doesn't add the token to the app's own Request", async () => {
+    const target = vi.fn((_input: any, _init?: RequestInit) => ok());
+    const wrapped = FetchProxy.create(false, token, identity, vi.fn(), () => false, onlyApi, target as any);
+    const request = new Request("https://api.example.com/b", { headers: { "X-App": "1" } });
+    await wrapped(request);
+    await wrapped(new Request("https://third.party.com/a", request));
+    const sent = sentBy(target);
+    expect(sent[0].headers.get("x-openreplay-sessiontoken")).toBe("t");
+    expect(sent[0].headers.get("x-app")).toBe("1");
+    expect(request.headers.has("x-openreplay-sessiontoken")).toBe(false);
+    expect(sent[1].headers.has("x-openreplay-sessiontoken")).toBe(false);
+  });
+
+  it("fetch sends the body of the app's Request with the token and uses it up", async () => {
+    const target = vi.fn((_input: any, _init?: RequestInit) => ok());
+    const wrapped = FetchProxy.create(false, token, identity, vi.fn(), () => false, onlyApi, target as any);
+    const request = new Request("https://api.example.com/b", { method: "POST", body: '{"a":1}' });
+    await wrapped(request);
+    const [sent] = sentBy(target);
+    expect(sent.headers.get("x-openreplay-sessiontoken")).toBe("t");
+    expect(await sent.text()).toBe('{"a":1}');
+    expect(request.bodyUsed).toBe(true);
+  });
+
+  it("fetch leaves the app's Request unread and without the token when init has a body", async () => {
+    const target = vi.fn((_input: any, _init?: RequestInit) => ok());
+    const wrapped = FetchProxy.create(false, token, identity, vi.fn(), () => false, onlyApi, target as any);
+    const request = new Request("https://api.example.com/b", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: '{"a":1}',
+    });
+    await wrapped(request, { body: '{"b":2}' });
+    const [sent] = sentBy(target);
+    expect(sent.headers.get("x-openreplay-sessiontoken")).toBe("t");
+    expect(sent.headers.get("content-type")).toBe("application/json");
+    expect(await sent.text()).toBe('{"b":2}');
+    expect(request.headers.has("x-openreplay-sessiontoken")).toBe(false);
+    expect(await request.text()).toBe('{"a":1}');
+  });
+
   it("fetch keeps the app's headers when its Headers object comes from another realm (iframe)", async () => {
     class ForeignHeaders {
       #h: Headers;
