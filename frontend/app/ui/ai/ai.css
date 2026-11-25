@@ -158,12 +158,15 @@
 .m-am__tile.is-hover .m-am__layer {
   animation-play-state: paused;
 }
+/* a paused animation still holds its values over these: stop it to show the hover state */
 .m-am__tile.is-hover .m-am__layer.is-bot {
+  animation: none;
   opacity: 1;
   scale: 1.08;
   transition: scale 200ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 .m-am__tile.is-hover .m-am__layer.is-draw {
+  animation: none;
   opacity: 0;
 }
 
@@ -178,7 +181,8 @@
 }
 
 .m-aiacc {
-  overflow: hidden;
+  /* clips the art to the corners; scrolls when the screen is shorter than the dialog */
+  overflow: hidden auto;
 }
 .m-aiacc__body {
   position: relative;

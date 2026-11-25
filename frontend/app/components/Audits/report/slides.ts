@@ -80,7 +80,8 @@ export interface VitalCardData {
   /** null: no page loads with this measure on that device */
   device: {
     avg: string;
-    rating: 0 | 1 | 2;
+    /** null: no thresholds, or no average to rate */
+    rating: 0 | 1 | 2 | null;
     delta?: Delta;
     p75: string;
     shares: [number, number, number];
@@ -693,14 +694,23 @@ const BUILDERS: Partial<Record<SectionKey, Builder>> = {
         share: r.share,
         unset: r.unset,
       }));
-      pushList(
-        X,
-        cap(plural(name)),
-        `Top ${plural(name)}`,
-        facts(f.facts),
-        topRows(rows),
-        f.note,
-      );
+      if (!rows.length)
+        pushMessage(
+          X,
+          cap(plural(name)),
+          `Top ${plural(name)}`,
+          'Nothing in this period.',
+          f.note,
+        );
+      else
+        pushList(
+          X,
+          cap(plural(name)),
+          `Top ${plural(name)}`,
+          facts(f.facts),
+          topRows(rows),
+          f.note,
+        );
     }
   },
   'product.features': (X, s) => {
@@ -801,6 +811,16 @@ const BUILDERS: Partial<Record<SectionKey, Builder>> = {
       const rows = f.rows ?? [];
       const top = Math.max(1e-9, ...rows.map((r) => r.rate ?? 0));
       const name = f.name || f.key || 'value';
+      if (!rows.length) {
+        pushMessage(
+          X,
+          `Errors by ${name}`,
+          `Errors by ${name}`,
+          'Nothing in this period.',
+          f.note,
+        );
+        continue;
+      }
       pushList(
         X,
         `Errors by ${name}`,
@@ -892,14 +912,19 @@ const BUILDERS: Partial<Record<SectionKey, Builder>> = {
     );
     const unitOf = (m: VitalMetric): Unit => (m.unit === 'cls' ? 'cls' : 'ms');
     const lim = (m: VitalMetric) => {
-      const [g, p] = m.thresholds ?? [0, 0];
+      if (!m.thresholds) return '';
+      const [g, p] = m.thresholds;
       return m.unit === 'cls'
         ? `≤ ${g} good · > ${p} poor`
         : `≤ ${msT(g)} good · > ${msT(p)} poor`;
     };
+    const rate = (m: VitalMetric, v: number | undefined) => {
+      if (!m.thresholds || v == null) return null;
+      const [g, p] = m.thresholds;
+      return v <= g ? 0 : v <= p ? 1 : 2;
+    };
     const card = (m: VitalMetric, dev: 'desktop' | 'mobile'): VitalCardData => {
       const x = m[dev];
-      const [g, p] = m.thresholds ?? [Infinity, Infinity];
       const delta =
         x && X.cmp.available ? deltaOf(x.avg, x.prev, unitOf(m), 'down') : null;
       return {
@@ -909,7 +934,7 @@ const BUILDERS: Partial<Record<SectionKey, Builder>> = {
         device: x
           ? {
               avg: val(x.avg, unitOf(m)),
-              rating: (x.avg ?? 0) <= g ? 0 : (x.avg ?? 0) <= p ? 1 : 2,
+              rating: rate(m, x.avg),
               delta: delta
                 ? { ...delta, vs: val(x.prev, unitOf(m)) }
                 : undefined,

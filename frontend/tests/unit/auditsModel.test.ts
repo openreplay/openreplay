@@ -133,7 +133,15 @@ describe('toCreateRequest', () => {
     );
     expect(req.segmentIds).toEqual(['s1', 's2']);
     expect(req.filter).toBeUndefined();
+  });
+
+  it('sends at most three segments', () => {
+    const req = toCreateRequest(
+      draft({ scope: 'segments', segmentIds: ['s1', 's2', 's3', 's4'] }),
+      true,
+    );
     expect(MAX_SEGMENTS).toBe(3);
+    expect(req.segmentIds).toEqual(['s1', 's2', 's3']);
   });
 
   it('never sends Issues and journeys without AI access', () => {

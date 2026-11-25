@@ -1,7 +1,6 @@
 import { PixelSpark } from './PixelArt';
 import './ai.css';
 
-
 export function AiTag({
   size = 'sm',
   className,

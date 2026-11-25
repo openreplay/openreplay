@@ -22,10 +22,9 @@ export function AiAccessDialog({
   const contact =
     onContact ??
     (() => {
-      window.open(
-        'mailto:support@openreplay.com?subject=Armada%20access',
-        '_blank',
-      );
+      // a mail link opens the mail app; a new tab would stay behind empty
+      window.location.href =
+        'mailto:support@openreplay.com?subject=Armada%20access';
       onClose();
     });
   return (

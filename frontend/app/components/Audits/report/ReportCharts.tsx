@@ -20,7 +20,12 @@ const niceMax = (v: number) => {
   return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * p;
 };
 const num1 = (v: number) => String(Math.round(v * 10) / 10);
-const ticks = (max: number) => [0, 1, 2, 3, 4].map((k) => (max * k) / 4);
+// max comes from niceMax (1, 2, 2.5 or 5 × 10^k): steps of 0.2, 0.5, 0.5 or 1 × 10^k
+const ticks = (max: number) => {
+  const n = Math.round((max / 10 ** Math.floor(Math.log10(max))) * 10) / 10;
+  const steps = n === 2 ? 4 : 5;
+  return Array.from({ length: steps + 1 }, (_, k) => (max * k) / steps);
+};
 
 /** A daily line; a day with no sessions (null) breaks it. */
 export function Spark({
@@ -77,6 +82,15 @@ export function Spark({
               strokeLinejoin="round"
             />
           </g>
+        ) : r[0] !== last ? (
+          <path
+            key={r[0]}
+            d={`M${X(r[0]!)} ${Y(values[r[0]!]!)} l0.01 0`}
+            stroke={color}
+            strokeWidth={4}
+            strokeLinecap="round"
+            vectorEffect="non-scaling-stroke"
+          />
         ) : null;
       })}
       <path

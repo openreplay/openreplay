@@ -185,7 +185,8 @@ function NewAuditDrawer({ open, onClose, onCreated }: Props) {
   );
   const hasAi = estimate.data?.aiAvailable ?? armada;
   const request = toCreateRequest(draft, hasAi);
-  const matched = estimate.data?.matchedSessions;
+  const counting = canEstimate(draft) && !estimate.settled;
+  const matched = counting ? undefined : estimate.data?.matchedSessions;
   const create = useCreateAudit();
 
   const problem = draftProblem(draft, hasAi, unfinished);
@@ -201,9 +202,11 @@ function NewAuditDrawer({ open, onClose, onCreated }: Props) {
             })
           : problem === 'sections'
             ? t('Pick at least one section')
-            : matched === 0
-              ? t('No sessions match this scope in the period')
-              : undefined;
+            : counting
+              ? t('Counting sessions…')
+              : matched === 0
+                ? t('No sessions match this scope in the period')
+                : undefined;
 
   // a pick past the cap is refused
   const pickSegments = (next: string[]) =>
@@ -221,7 +224,7 @@ function NewAuditDrawer({ open, onClose, onCreated }: Props) {
 
   const job = !canEstimate(draft) ? (
     <span className="m-nad__job-note">{t('Pick at least one segment')}</span>
-  ) : estimate.isPending ? (
+  ) : counting ? (
     <span className="m-nad__job-note">{t('Counting sessions…')}</span>
   ) : matched == null ? (
     <span className="m-nad__job-note">

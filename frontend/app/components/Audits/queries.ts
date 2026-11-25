@@ -100,7 +100,7 @@ export function useAudit(auditId: string | undefined) {
   });
 }
 
-/** A ready audit's report never changes; 409 (not ready) is not retried. */
+/** A ready audit's report never changes; 409 (not ready yet) is asked again on the poll. */
 export function useAuditReport(auditId: string | undefined, enabled = true) {
   const projectId = useProjectId();
   return useQuery({
@@ -112,6 +112,8 @@ export function useAuditReport(auditId: string | undefined, enabled = true) {
       api.errorStatus(error) !== 409 &&
       api.errorStatus(error) !== 404 &&
       count < 1,
+    refetchInterval: (query) =>
+      api.errorStatus(query.state.error) === 409 ? AUDITS_POLL_MS : false,
   });
 }
 
@@ -121,8 +123,9 @@ export function useAuditReport(auditId: string | undefined, enabled = true) {
  */
 export function useAuditEstimate(body: CreateAuditRequest | null, ms = 400) {
   const projectId = useProjectId();
-  const key = useDebouncedValue(body ? JSON.stringify(body) : '', ms);
-  return useQuery({
+  const wanted = body ? JSON.stringify(body) : '';
+  const key = useDebouncedValue(wanted, ms);
+  const query = useQuery({
     queryKey: auditsKeys.estimate(projectId, key),
     queryFn: ({ signal }) =>
       api.estimateAudit(projectId, JSON.parse(key), signal),
@@ -131,6 +134,10 @@ export function useAuditEstimate(body: CreateAuditRequest | null, ms = 400) {
     placeholderData: keepPreviousData,
     retry: false,
   });
+  /** the answer is for this body (not the previous one, kept on screen meanwhile) */
+  const settled =
+    !!wanted && key === wanted && !query.isFetching && !query.isPlaceholderData;
+  return { ...query, settled };
 }
 
 // ---- Cache updates ----

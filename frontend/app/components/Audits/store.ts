@@ -184,10 +184,15 @@ export class AuditsUiStore {
   // A preset's end is "now" at the moment it was picked: sending it would hide audits
   // created since, so only a custom range bounds the end.
   get window(): { startDate: number; endDate: number } {
-    const custom = this.period.rangeName === CUSTOM_RANGE;
+    if (this.period.rangeName === CUSTOM_RANGE)
+      return {
+        startDate: this.period.start || 0,
+        endDate: this.period.end || 0,
+      };
+    // the store outlives the page: a preset's start is taken from now, not from when it was picked
     return {
-      startDate: this.period.start || 0,
-      endDate: custom ? this.period.end || 0 : 0,
+      startDate: Period({ rangeName: this.period.rangeName }).start || 0,
+      endDate: 0,
     };
   }
 
