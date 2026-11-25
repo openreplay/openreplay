@@ -139,6 +139,32 @@ export const usesAiSections = (
 // Never more than 30 days (most projects keep 30 days of data).
 export const AUDIT_PERIODS: readonly PeriodDays[] = [1, 7, 30];
 export const DEFAULT_PERIOD: PeriodDays = 7;
+export const MAX_CUSTOM_DAYS = 30;
+
+/** Inclusive days, YYYY-MM-DD. */
+export interface CustomRange {
+  from: string;
+  to: string;
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const isoDay = (ms: number) => new Date(ms).toISOString().slice(0, 10);
+
+/** What the API accepts: ends no later than today (UTC), at most 30 days (the last 30 are kept). */
+export function clampCustomRange(
+  range: CustomRange,
+  today: string,
+): CustomRange & { days: number; clamped: boolean } {
+  const to = range.to > today ? today : range.to;
+  let from = range.from > to ? to : range.from;
+  let clamped = to !== range.to || from !== range.from;
+  if ((Date.parse(to) - Date.parse(from)) / DAY_MS + 1 > MAX_CUSTOM_DAYS) {
+    from = isoDay(Date.parse(to) - (MAX_CUSTOM_DAYS - 1) * DAY_MS);
+    clamped = true;
+  }
+  const days = Math.round((Date.parse(to) - Date.parse(from)) / DAY_MS) + 1;
+  return { from, to, days, clamped };
+}
 
 export const periodName = (days: number): string =>
   days === 1 ? 'Last 24 hours' : `Last ${days} days`;
@@ -298,6 +324,8 @@ export interface AuditDraft {
   /** Full traffic narrowed by these (FilterItem.toJson() shape). */
   filters: AuditFilter[];
   periodDays: PeriodDays;
+  /** wins over `periodDays` */
+  custom?: CustomRange;
   chapters: ChapterKey[];
 }
 
@@ -328,6 +356,9 @@ export function toCreateRequest(
         ? draft.segmentIds.slice(0, MAX_SEGMENTS)
         : undefined,
     filter: filters.length ? { filters, eventsOrder: 'then' } : undefined,
+    custom: draft.custom
+      ? { from: draft.custom.from, to: draft.custom.to }
+      : undefined,
     sections: orderChapters(draft.chapters, hasAi),
   };
 }

@@ -7,6 +7,7 @@ import {
   MAX_SEGMENTS,
   chapterOfGroup,
   chaptersOfSections,
+  clampCustomRange,
   draftProblem,
   emptyDraft,
   orderChapters,
@@ -138,6 +139,36 @@ describe('toCreateRequest', () => {
   it('never sends Issues and journeys without AI access', () => {
     const req = toCreateRequest(draft({ chapters: [...ALL_CHAPTERS] }), false);
     expect(req.sections).toEqual(['web', 'usage', 'errors', 'retention', 'ux']);
+  });
+});
+
+describe('custom range', () => {
+  it('ends today at the latest and keeps the last 30 days', () => {
+    expect(
+      clampCustomRange({ from: '2026-11-01', to: '2026-11-14' }, '2026-11-25'),
+    ).toEqual({
+      from: '2026-11-01',
+      to: '2026-11-14',
+      days: 14,
+      clamped: false,
+    });
+    expect(
+      clampCustomRange({ from: '2026-10-01', to: '2026-11-30' }, '2026-11-25'),
+    ).toEqual({
+      from: '2026-10-27',
+      to: '2026-11-25',
+      days: 30,
+      clamped: true,
+    });
+  });
+
+  it('is sent beside the preset, which the API then ignores', () => {
+    const req = toCreateRequest(
+      draft({ custom: { from: '2026-11-01', to: '2026-11-14' } }),
+      true,
+    );
+    expect(req.custom).toEqual({ from: '2026-11-01', to: '2026-11-14' });
+    expect(req.periodDays).toBe(7);
   });
 });
 
