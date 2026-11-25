@@ -87,6 +87,7 @@ exports[`static HTML detects pages, injects the snippet 1`] = `
       var initOpts = {
         projectKey: 'KEY123',
         __DISABLE_SECURE_MODE: location.hostname === 'localhost', // record on http://localhost while developing
+        nextObserver: false,
         privateMode: true,
       };
       var startOpts = {};
@@ -119,6 +120,7 @@ import { tracker } from '@openreplay/tracker'
 
 tracker.configure({
   projectKey: 'KEY123',
+  nextObserver: false,
   respectDoNotTrack: true,
   customAttributes: ['data-testid', 'data-cy'],
   inlineCss: 1, // read stylesheets in the browser; for CSS the backend can't fetch

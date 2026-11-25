@@ -87,8 +87,9 @@ bun run playground:down         # delete playground/
 For TypeScript projects below tracker 20 the `network` object is written with every field,
 because 19.x types reject a partial one.
 
-`nextObserver: true` is written only when the project ends up on tracker 20+ (older type
+`nextObserver` is written only when the project ends up on tracker 20+ (older type
 definitions reject the option): the installed version when the tracker is already there, otherwise
-the registry's `latest`, re-checked against what the package manager actually installed. The
-script tag loads `static.openreplay.com/latest/`, so it always gets the option; builds before 20
-ignore it.
+the registry's `latest`, re-checked against what the package manager actually installed. There it
+is written either way, `true` or `false` when unchecked: tracker 20 runs the new observer by
+default and warns in the console when the option is left unset. The script tag loads
+`static.openreplay.com/latest/`, so it always gets the option; builds before 20 ignore it.

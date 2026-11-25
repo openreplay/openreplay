@@ -330,12 +330,13 @@ describe('nextObserver (tracker 20+)', () => {
       'src/openreplay.js',
     )!.after
 
-  test('on for a v20 install, off below 20 or when unknown', () => {
+  test('written for a v20 install, left out below 20 or when unknown', () => {
     expect(config(20)).toContain('  nextObserver: true,\n')
     expect(config(19)).not.toContain('nextObserver')
     expect(config(undefined)).not.toContain('nextObserver')
+    // unchecked on 20+ must opt out explicitly, the tracker defaults to the new observer
     const off = buildPlan(detect(root), answers(), { major: 20, docs: true, partialNetwork: true })
-    expect(file(off, 'src/openreplay.js')!.after).not.toContain('nextObserver')
+    expect(file(off, 'src/openreplay.js')!.after).toContain('  nextObserver: false,\n')
   })
 
   test('target: existing tracker wins, new or too old ones get the latest', () => {
@@ -383,6 +384,8 @@ describe('nextObserver (tracker 20+)', () => {
       htmlFiles: ['index.html'],
     })
     expect(file(plan, 'index.html')!.after).toContain('      nextObserver: true,\n')
+    const off = buildPlan(detect(site), { ...answers(), method: 'script', htmlFiles: ['index.html'] })
+    expect(file(off, 'index.html')!.after).toContain('      nextObserver: false,\n')
   })
 })
 

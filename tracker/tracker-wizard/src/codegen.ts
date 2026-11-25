@@ -74,7 +74,9 @@ function devExpr(flag: DevFlag, s: Style): string {
 }
 
 export interface OptionContext {
-  nextObserver: boolean
+  /** Written either way so the tracker skips its new-default warning; undefined leaves it out
+   * (types before 20 reject the option). */
+  nextObserver?: boolean
   /** Tracker < 20 types reject a partial `network` object. */
   fullNetwork: boolean
 }
@@ -119,7 +121,7 @@ export function trackerOptions(a: Answers, flag: DevFlag, s: Style, ctx: OptionC
     lines.push(
       `__DISABLE_SECURE_MODE: ${devExpr(flag, s)}, // record on http://localhost while developing`,
     )
-  if (ctx.nextObserver) lines.push('nextObserver: true,')
+  if (ctx.nextObserver !== undefined) lines.push(`nextObserver: ${ctx.nextObserver},`)
   if (a.privacy === 'strict') lines.push('privateMode: true,')
   if (a.privacy === 'relaxed') lines.push('defaultInputMode: 0, // passwords stay hidden')
   if (has('numbers')) lines.push('obscureTextNumbers: true,')
@@ -328,8 +330,8 @@ export function cdnUrl(assist: boolean): string {
 
 /**
  * Script-tag install: the CDN loader with a call queue, same as the dashboard's snippet.
- * The CDN serves the latest tracker, so `nextObserver` follows the answer; builds before
- * 20 ignore the option.
+ * The CDN serves the latest tracker, so `nextObserver` is always written from the answer;
+ * builds before 20 ignore the option.
  */
 export function htmlSnippet(a: Answers): string {
   const s: Style = { quote: "'", semi: true, indent: '  ' }
