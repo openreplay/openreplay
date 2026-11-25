@@ -21,6 +21,7 @@ import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { type BreakdownPart, SubRows } from 'App/components/Charts/SubBars';
 import 'App/components/Dashboard/charts.css';
 import NoDataInWindow from 'Components/Dashboard/components/NoDataInWindow';
 
@@ -42,7 +43,7 @@ function SessionsBy(props: Props) {
   } = props;
   const rows = inGrid ? 4 : 3;
   const { t } = useTranslation();
-  const { filterStore, dashboardStore } = useStore();
+  const { filterStore, dashboardStore, metricStore } = useStore();
   // the row the card's drill points at (a dashboard datum opens it drilled)
   const drillFilter: any = dashboardStore.drillDownFilter.filters[0];
   const drilled =
@@ -193,20 +194,42 @@ function SessionsBy(props: Props) {
   }
   const more = Math.max(0, (total ?? values.length) - rows);
   const sum = values.reduce((a, r) => a + rowCount(r), 0);
+  const max = values.reduce((a, r) => Math.max(a, rowCount(r)), 0);
+  const unit =
+    metric.metricFormat === 'userCount'
+      ? t('users')
+      : metric.metricFormat === 'eventCount'
+        ? t('events')
+        : t('sessions');
   const pageRows = values.slice((page - 1) * DRAWER_PAGE, page * DRAWER_PAGE);
 
   return (
     <div className="m-top is-compact">
       <ol className="m-top__list">
-        {values.slice(0, rows).map((r) => (
-          <TopRow
-            key={r.name}
-            row={r}
-            dimension={metric.metricOf}
-            selected={selected === r.name}
-            onClick={() => void onClickHandler(null, r)}
-          />
-        ))}
+        {values.slice(0, rows).map((r) => {
+          const parts = partsOf(r);
+          return (
+            <React.Fragment key={r.name}>
+              <TopRow
+                row={r}
+                max={max}
+                dimension={metric.metricOf}
+                selected={selected === r.name}
+                onClick={() => void onClickHandler(null, r)}
+              />
+              {parts.length ? (
+                <SubRows
+                  parts={parts}
+                  scale={max}
+                  parent={rowCount(r)}
+                  topN={metricStore.breakdownTopN}
+                  unit={unit}
+                  inert={inGrid}
+                />
+              ) : null}
+            </React.Fragment>
+          );
+        })}
       </ol>
       {more > 0 && (
         <Button
@@ -254,6 +277,7 @@ function SessionsBy(props: Props) {
                   <TopRow
                     key={r.name}
                     row={r}
+                    max={max}
                     rank={(page - 1) * DRAWER_PAGE + i + 1}
                     share={sum ? rowCount(r) / sum : 0}
                     dimension={metric.metricOf}
@@ -278,6 +302,22 @@ const rowCount = (r: any) =>
   Number(String(r.sessionCount ?? 0).replace(/[^0-9.]/g, '')) || 0;
 const pct = (x: number) =>
   x >= 0.1 ? `${Math.round(x * 10) / 10}%` : x > 0 ? '<0.1%' : '0%';
+
+interface BreakdownNode {
+  key: string;
+  total: number;
+  children: BreakdownNode[];
+}
+const leavesOf = (nodes: BreakdownNode[], values: string[]): BreakdownPart[] =>
+  nodes.flatMap((n) =>
+    n.children.length
+      ? leavesOf(n.children, [...values, n.key])
+      : [{ values: [...values, n.key], count: n.total }],
+  );
+const partsOf = (row: any): BreakdownPart[] =>
+  leavesOf(row.breakdownRows ?? [], [])
+    .filter((p) => p.count > 0)
+    .sort((a, b) => b.count - a.count);
 
 /** A row's mark: avatar, browser, device, flag; shared with breakdown rows. */
 export function RowMark({ dimension, row }: { dimension: string; row: any }) {
@@ -327,6 +367,7 @@ export function RowMark({ dimension, row }: { dimension: string; row: any }) {
 
 function TopRow({
   row,
+  max,
   rank,
   share,
   dimension,
@@ -334,6 +375,7 @@ function TopRow({
   onClick,
 }: {
   row: any;
+  max: number;
   rank?: number;
   share?: number;
   dimension: string;
@@ -358,7 +400,11 @@ function TopRow({
           {row.displayName}
         </span>
         <span className="m-top__bar" aria-hidden="true">
-          <i style={{ width: `${Math.max(1.5, row.progress ?? 0)}%` }} />
+          <i
+            style={{
+              width: `${Math.max(1.5, max ? (rowCount(row) / max) * 100 : 0)}%`,
+            }}
+          />
         </span>
         <span className="m-top__value">
           {row.sessionCount}

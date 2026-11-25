@@ -397,6 +397,21 @@
   flex-wrap: wrap;
   min-width: 0;
 }
+/* the toolbar as the Preview's head: the head draws the rule and the inset */
+.m-cardp__toolbar--head {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border-bottom: 0;
+}
+.m-cardp__toolbar--head .m-pa__head-title {
+  margin-right: var(--m-space-3);
+}
+/* the Definition's and the Preview's heads sit side by side: one height */
+.m-cardp .m-panel__head {
+  min-height: 3rem;
+  padding-block: var(--m-space-2);
+}
 .m-cardp__switch {
   display: inline-flex;
   align-items: center;

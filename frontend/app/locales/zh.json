@@ -2868,5 +2868,8 @@
   "Step by step": "分步操作",
   "How to install": "安装方式",
   "Explore the documentation": "查看文档",
-  "Full SDK documentation": "完整 SDK 文档"
+  "Full SDK documentation": "完整 SDK 文档",
+  "Top {{n}}": "前 {{n}}",
+  "Top {{n}} only": "仅前 {{n}}",
+  "Values under each bar": "每个条形下的值"
 }

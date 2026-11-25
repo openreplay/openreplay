@@ -297,13 +297,11 @@ describe('Widget.transformFunnelSeriesFormat', () => {
     expect(result.funnelBreakdown['US / Chrome / mobile'].stages[1].count).toBe(
       40,
     );
-    expect(result.funnelBreakdownTree).toEqual({
-      US: {
-        Chrome: { mobile: { count: 70 }, desktop: { count: 30 } },
-        Firefox: { desktop: { count: 50 } },
-      },
-      EU: { Safari: { mobile: { count: 50 } } },
-    });
+    expect(result.funnelBreakdownValues['US / Chrome / mobile']).toEqual([
+      'US',
+      'Chrome',
+      'mobile',
+    ]);
   });
 
   it('returns empty funnel for empty series', () => {

@@ -32,10 +32,8 @@
 .m-flyout__sections {
   display: flex;
   flex-direction: column;
-  gap: var(--m-space-1);
-  margin-top: var(--m-space-3);
-  padding-top: var(--m-space-3);
-  border-top: 1px solid var(--m-border-subtle);
+  gap: 2px;
+  margin-top: var(--m-space-1);
 }
 
 /* the dropdown's row height, not the rail's nested one */

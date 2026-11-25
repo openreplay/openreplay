@@ -80,11 +80,6 @@
   border-top: 1px solid var(--m-border-subtle);
   padding-bottom: var(--m-space-3);
 }
-.m-ttable__tools {
-  display: flex;
-  justify-content: flex-end;
-  padding: var(--m-space-2) var(--m-space-5);
-}
 .m-ttable__scroll {
   overflow: auto;
   max-height: calc(10 * var(--m-row-height));
@@ -463,6 +458,22 @@
 .m-top.is-mini .m-top__bar i {
   background: color-mix(in oklab, var(--m-content-accent) 55%, transparent);
 }
+/* one grid for the whole list, every row a subgrid: bars start and end on one line */
+.m-top:not(.is-mini) .m-top__list {
+  display: grid;
+  grid-template-columns: auto minmax(8rem, 2fr) 3fr auto;
+  column-gap: var(--m-space-4);
+}
+.m-top:not(.is-mini) .m-top__list:has(> li > .has-rank) {
+  grid-template-columns: 1.75rem auto minmax(8rem, 3fr) 2fr auto;
+}
+.m-top:not(.is-mini) .m-top__list > li:not(.m-top__sub) {
+  display: contents;
+}
+.m-top:not(.is-mini) .m-top__row {
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+}
 .m-fn {
   display: flex;
   flex-direction: column;
@@ -562,15 +573,6 @@
   line-height: 1;
   color: var(--m-surface-default);
   font-variant-numeric: tabular-nums;
-}
-.m-fn__parts {
-  display: flex;
-  height: 100%;
-  gap: 2px;
-}
-.m-fn__part {
-  display: block;
-  min-width: 2px;
 }
 .m-fn__ghost {
   display: block;
@@ -672,11 +674,6 @@
   justify-content: center;
   border-radius: var(--m-radius-control) var(--m-radius-control) 0 0;
 }
-.m-fn--columns .m-fn__parts {
-  flex-direction: column-reverse;
-  width: 100%;
-  height: auto;
-}
 .m-fn--columns .m-fn__ghost {
   width: 4px;
   height: 100%;
@@ -689,6 +686,177 @@
 }
 .m-fn__stage.is-muted {
   opacity: 0.45;
+}
+
+/* a breakdown as sub-bars: the bar a size down, no track, on the bar's scale */
+.m-subs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-space-2);
+  margin: 0;
+  padding: var(--m-space-1) var(--m-space-3) var(--m-space-2);
+  list-style: none;
+}
+.m-subs__item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.m-subs__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--m-space-3);
+  min-width: 0;
+  font-size: var(--m-text-xs);
+  line-height: var(--m-leading-snug);
+}
+.m-subs__label {
+  flex: 1;
+  min-width: 0;
+  color: var(--m-content-secondary);
+}
+.m-subs__sep {
+  color: var(--m-content-placeholder);
+}
+.m-subs__figs {
+  flex: none;
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--m-space-3);
+  font-variant-numeric: tabular-nums;
+}
+.m-subs__count {
+  color: var(--m-content-secondary);
+}
+.m-subs__pct {
+  min-width: 2.25rem;
+  text-align: right;
+  color: var(--m-content-muted);
+}
+.m-subs__bar {
+  display: block;
+  height: 6px;
+}
+.m-subs__bar i,
+.m-top__sub-bar i,
+.m-subs__col i {
+  display: block;
+  background: color-mix(
+    in oklab,
+    var(--m-chart-1) 55%,
+    var(--m-surface-default)
+  );
+}
+.m-subs__bar i,
+.m-top__sub-bar i {
+  height: 100%;
+  border-radius: var(--m-radius-full);
+}
+.m-subs__more-btn {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: var(--m-text-xs);
+  color: var(--m-content-muted);
+  cursor: pointer;
+  transition: color var(--m-duration-instant) var(--m-ease-out);
+}
+.m-subs__more-btn:hover {
+  color: var(--m-content-primary);
+}
+.m-subs__more-text {
+  font-size: var(--m-text-xs);
+  color: var(--m-content-placeholder);
+}
+.m-fn:not(.m-fn--columns, .is-compact)
+  .m-fn__stage:has(> .m-subs)
+  + .m-fn__stage {
+  margin-top: var(--m-space-3);
+}
+.m-subs__cols {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 100%;
+}
+.m-subs__col {
+  display: flex;
+  align-items: flex-end;
+  width: 8px;
+  height: 100%;
+}
+.m-subs__col i {
+  width: 100%;
+  border-radius: 2px 2px 0 0;
+}
+.m-subs.is-figures {
+  gap: 2px;
+}
+.m-fn--columns .m-fn__stage:has(> .m-subs) {
+  display: flex;
+  flex-direction: column;
+}
+.m-fn--columns .m-fn__stage:has(> .m-subs) .m-fn__stage-btn {
+  height: auto;
+}
+.m-fn--columns .m-subs {
+  padding-top: var(--m-space-2);
+}
+.m-fn--columns .m-subs__head {
+  flex-wrap: wrap;
+  row-gap: 0;
+}
+.m-fn--columns .m-subs__label {
+  flex-basis: 100%;
+}
+.m-fn--columns .m-subs__pct {
+  min-width: 0;
+}
+
+/* a ranked table's sub-rows: rows of the list's grid */
+.m-top__sub {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  align-items: center;
+  min-height: 1.5rem;
+  padding: 0 var(--m-space-7);
+  list-style: none;
+}
+.m-top.is-compact .m-top__sub {
+  padding: 0 var(--m-space-5);
+}
+.m-top--drawer .m-top__sub {
+  padding: 0 var(--m-space-6);
+}
+.m-top__sub-label {
+  font-size: var(--m-text-xs);
+  color: var(--m-content-secondary);
+}
+.m-top__sub-bar {
+  display: block;
+  height: 5px;
+}
+.m-top__sub-value {
+  text-align: right;
+  font-size: var(--m-text-xs);
+  font-family: var(--m-font-num);
+  font-variant-numeric: tabular-nums;
+  color: var(--m-content-secondary);
+}
+.m-top__sub-pct {
+  margin-left: var(--m-space-2);
+  font-size: var(--m-text-2xs);
+  color: var(--m-content-muted);
+}
+.m-top__sub.is-more {
+  min-height: 1.25rem;
+  padding-bottom: var(--m-space-2);
+}
+.m-top__sub.is-more > :last-child {
+  grid-column: span 3;
+  justify-self: start;
 }
 .m-ttable__level {
   display: inline-flex;
@@ -709,10 +877,6 @@
 .m-ttable__table td {
   vertical-align: top;
   padding-top: var(--m-space-2);
-}
-.m-ttable__tools {
-  align-items: center;
-  gap: var(--m-space-2);
 }
 .m-vitals__bar {
   display: flex;

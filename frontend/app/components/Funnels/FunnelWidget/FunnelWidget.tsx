@@ -7,26 +7,22 @@ import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { CompareTag } from 'App/components/Charts/CompareTag';
+import {
+  type BreakdownPart,
+  SubBars,
+  SubColumns,
+} from 'App/components/Charts/SubBars';
 import 'App/components/Dashboard/charts.css';
-import BreakdownSelectionPanel from 'App/components/Dashboard/components/BreakdownFilter/BreakdownSelectionPanel';
-import { getBreakdownDisplayName } from 'App/components/Dashboard/components/BreakdownFilter/breakdownDimensions';
 import { useModal } from 'App/components/Modal';
 import type Funnel from 'App/mstore/types/funnel';
 import type FunnelStage from 'App/mstore/types/funnelStage';
 import type Widget from 'App/mstore/types/widget';
-import {
-  type NestedData,
-  buildLevelTree,
-  computeSelectionFromTopN,
-  getDepth,
-  isLeaf,
-} from 'App/utils/breakdownTree';
 import NoDataInWindow from 'Components/Dashboard/components/NoDataInWindow';
 
 interface FunnelData {
   funnel: Funnel;
   funnelBreakdown?: Record<string, Funnel>;
-  funnelBreakdownTree?: NestedData;
+  funnelBreakdownValues?: Record<string, string[]>;
 }
 
 interface Props {
@@ -72,7 +68,7 @@ function FunnelWidget({
   drillPeriod,
 }: Props) {
   const { t } = useTranslation();
-  const { dashboardStore, metricStore, filterStore } = useStore();
+  const { dashboardStore, metricStore } = useStore();
   const { hideModal } = useModal();
   // the drill-down filter outlives this component (a refetch remounts it):
   // start from the stage it still points at, so the next click clears it
@@ -146,40 +142,18 @@ function FunnelWidget({
   };
 
   const breakdown = data?.funnelBreakdown;
-  const allBreakdownKeys = breakdown ? Object.keys(breakdown) : [];
-  const tree = data?.funnelBreakdownTree;
-  const panelData = React.useMemo(() => (tree ? { tree } : null), [tree]);
-  const levelTopN = metricStore.breakdownLevelTopN;
-  const shownPaths = React.useMemo(() => {
-    if (!panelData || !tree) return null;
-    const sel = computeSelectionFromTopN(
-      buildLevelTree(panelData),
-      levelTopN,
-      getDepth(tree),
-    );
-    const out = new Set<string>();
-    const walk = (node: NestedData, path: string) => {
-      if (isLeaf(node)) {
-        out.add(path);
-        return;
-      }
-      const keep = sel[path];
-      Object.entries(node).forEach(([key, child]) => {
-        if (keep && !keep.includes(key)) return;
-        walk(child as NestedData, path ? `${path} / ${key}` : key);
-      });
-    };
-    walk(tree, '');
-    return out;
-  }, [panelData, levelTopN]);
-  const breakdownKeys = shownPaths
-    ? allBreakdownKeys.filter((k) => shownPaths.has(k))
-    : allBreakdownKeys;
-  const breakdowns = metric?.breakdowns ?? [];
-  const levelLabels = React.useMemo(() => {
-    const options = filterStore.getCurrentProjectFilters();
-    return breakdowns.map((b) => getBreakdownDisplayName(b, options));
-  }, [breakdowns, filterStore.isLoadingFilters]);
+  const breakdownValues = data?.funnelBreakdownValues;
+  const partsAt = (index: number): BreakdownPart[] =>
+    breakdown
+      ? Object.entries(breakdown)
+          .map(([key, f]) => ({
+            values: breakdownValues?.[key] ?? [key],
+            count: f?.stages?.[index]?.count ?? 0,
+          }))
+          .filter((p) => p.count > 0)
+          .sort((a, b) => b.count - a.count)
+      : [];
+  const topN = metricStore.breakdownTopN;
 
   const compLabel = React.useMemo(() => {
     if (!comparisonPeriod) return t('Previous period');
@@ -222,14 +196,8 @@ function FunnelWidget({
           const inside = share >= INSIDE_MIN;
           const label = stageText(s, t);
           const c = compStages?.[index];
-          const parts = breakdown
-            ? breakdownKeys
-                .map((key) => ({
-                  key,
-                  count: breakdown[key]?.stages?.[index]?.count ?? 0,
-                }))
-                .filter((p) => p.count > 0)
-            : null;
+          const parts = partsAt(index);
+          const scale = stages[0].count;
           const size = (pct: number) => ({
             [horizontal ? 'height' : 'width']: `${Math.max(2, pct)}%`,
           });
@@ -262,26 +230,13 @@ function FunnelWidget({
               </span>
               <span className="m-fn__bars">
                 <span className="m-fn__track" aria-hidden="true">
-                  {parts && parts.length ? (
-                    <span className="m-fn__parts" style={size(share)}>
-                      {parts.map((p, k) => (
-                        <span
-                          key={p.key}
-                          className="m-fn__part"
-                          style={{
-                            flex: p.count,
-                            background: `var(--m-chart-${(k % 8) + 1})`,
-                          }}
-                          title={`${p.key}: ${fmt(p.count)}`}
-                        />
-                      ))}
-                    </span>
-                  ) : (
-                    <span className="m-fn__fill" style={size(share)}>
-                      {inside && <span className="m-fn__inside">{share}%</span>}
-                    </span>
-                  )}
+                  <span className="m-fn__fill" style={size(share)}>
+                    {inside && <span className="m-fn__inside">{share}%</span>}
+                  </span>
                 </span>
+                {horizontal && parts.length ? (
+                  <SubColumns parts={parts} scale={scale} topN={topN} />
+                ) : null}
                 {c ? (
                   <span
                     className="m-fn__ghost"
@@ -336,6 +291,17 @@ function FunnelWidget({
                   {body}
                 </button>
               )}
+              {parts.length ? (
+                <SubBars
+                  parts={parts}
+                  scale={scale}
+                  parent={s.count}
+                  topN={topN}
+                  unit={unit}
+                  bars={!horizontal}
+                  inert={isWidget}
+                />
+              ) : null}
             </li>
           );
         })}
@@ -378,12 +344,6 @@ function FunnelWidget({
             </div>
           )}
         </dl>
-        {panelData && !isWidget ? (
-          <BreakdownSelectionPanel
-            data={panelData}
-            breakdownLabels={levelLabels}
-          />
-        ) : null}
       </footer>
     </div>
   );

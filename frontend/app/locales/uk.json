@@ -3059,5 +3059,8 @@
   "Step by step": "Покроково",
   "How to install": "Спосіб встановлення",
   "Explore the documentation": "Перегляньте документацію",
-  "Full SDK documentation": "Повна документація SDK"
+  "Full SDK documentation": "Повна документація SDK",
+  "Top {{n}}": "Топ {{n}}",
+  "Top {{n}} only": "Лише топ {{n}}",
+  "Values under each bar": "Значення під кожною смугою"
 }

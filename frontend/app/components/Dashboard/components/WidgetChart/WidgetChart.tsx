@@ -28,15 +28,14 @@ import {
   type NestedData,
   buildLevelTree,
   collectTimestamps,
-  computeSelectionFromTopN,
   getDepth,
   remapTimestamps,
+  selectTopLeaves,
 } from 'App/utils/breakdownTree';
 import { hasRuleValue } from 'App/utils/hasRuleValue';
 import { hasSampling } from 'App/utils/split-utils';
 import TrendChart from 'Components/Charts/TrendChart';
 import SessionsBy from 'Components/Dashboard/Widgets/CustomMetricsWidgets/SessionsBy';
-import SessionsByWithBreakdown from 'Components/Dashboard/Widgets/CustomMetricsWidgets/SessionsByWithBreakdown';
 import NoDataInWindow from 'Components/Dashboard/components/NoDataInWindow';
 
 import BugNumChart from '../../Widgets/CustomMetricsWidgets/BigNumChart';
@@ -656,15 +655,6 @@ function WidgetChart(props: Props) {
         );
       }
       if (viewType === TABLE) {
-        if (data.hasBreakdown) {
-          return (
-            <SessionsByWithBreakdown
-              metric={_metric}
-              data={data}
-              onClick={onChartClick}
-            />
-          );
-        }
         return (
           <SessionsBy
             metric={_metric}
@@ -806,35 +796,29 @@ function WidgetChart(props: Props) {
     return { ...data.breakdownData, ...remapped };
   }, [data?.breakdownData, compData?.breakdownData]);
 
-  const breakdownInitialized = React.useRef(false);
+  // the top N the selection was last built for; checkboxes refine it after
+  const selectedFor = React.useRef<number | null>(null);
 
-  // Reset selection when breakdown configuration changes
   React.useEffect(() => {
-    breakdownInitialized.current = false;
+    selectedFor.current = null;
     metricStore.clearBreakdownSelection();
   }, [_metric.breakdowns]);
 
-  // Initialise breakdown selection when data first loads
   React.useEffect(() => {
-    if (mergedBreakdownData && !breakdownInitialized.current) {
-      const depth = Math.max(
-        0,
-        ...Object.values(mergedBreakdownData).map((d) =>
-          getDepth(d as NestedData),
-        ),
-      );
-      if (depth > 0) {
-        breakdownInitialized.current = true;
-        const tree = buildLevelTree(mergedBreakdownData);
-        const selection = computeSelectionFromTopN(
-          tree,
-          metricStore.breakdownLevelTopN,
-          depth,
-        );
-        metricStore.setBreakdownSelection(selection);
-      }
-    }
-  }, [mergedBreakdownData, metricStore.breakdownLevelTopN]);
+    const topN = metricStore.breakdownTopN;
+    if (!mergedBreakdownData || selectedFor.current === topN) return;
+    const depth = Math.max(
+      0,
+      ...Object.values(mergedBreakdownData).map((d) =>
+        getDepth(d as NestedData),
+      ),
+    );
+    if (depth === 0) return;
+    selectedFor.current = topN;
+    metricStore.setBreakdownSelection(
+      selectTopLeaves(buildLevelTree(mergedBreakdownData), depth, topN),
+    );
+  }, [mergedBreakdownData, metricStore.breakdownTopN]);
 
   return (
     <div ref={ref}>

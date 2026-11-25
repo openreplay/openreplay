@@ -2868,5 +2868,8 @@
   "Step by step": "단계별",
   "How to install": "설치 방법",
   "Explore the documentation": "문서 살펴보기",
-  "Full SDK documentation": "전체 SDK 문서"
+  "Full SDK documentation": "전체 SDK 문서",
+  "Top {{n}}": "상위 {{n}}개",
+  "Top {{n}} only": "상위 {{n}}개만",
+  "Values under each bar": "막대별 값"
 }

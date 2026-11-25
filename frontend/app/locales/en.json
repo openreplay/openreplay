@@ -2927,5 +2927,8 @@
   "Step by step": "Step by step",
   "How to install": "How to install",
   "Explore the documentation": "Explore the documentation",
-  "Full SDK documentation": "Full SDK documentation"
+  "Full SDK documentation": "Full SDK documentation",
+  "Top {{n}}": "Top {{n}}",
+  "Top {{n}} only": "Top {{n}} only",
+  "Values under each bar": "Values under each bar"
 }

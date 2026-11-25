@@ -17,7 +17,6 @@ import {
 } from 'App/utils/breakdownTree';
 import { getLocalHourFormat } from 'App/utils/intlUtils';
 
-import BreakdownSelectionPanel from '../BreakdownFilter/BreakdownSelectionPanel';
 import {
   type StoredBreakdown,
   breakdownName,
@@ -202,7 +201,7 @@ function BreakdownDatatable(props: Props) {
   );
 
   const handleToggle = useCallback(
-    (parentPath: string, value: string, levelIdx: number) => {
+    (parentPath: string, value: string) => {
       const currentSelection = { ...metricStore.breakdownSelection };
       const currentSel = currentSelection[parentPath];
       const allSiblings =
@@ -230,7 +229,7 @@ function BreakdownDatatable(props: Props) {
         // Initialize children for the newly-checked value if not already set
         const childPath = parentPath ? `${parentPath} / ${value}` : value;
         if (!(childPath in currentSelection)) {
-          const childTopN = metricStore.breakdownLevelTopN[levelIdx + 1] ?? 0;
+          const childTopN = metricStore.breakdownTopN;
           const childKeys = levelTree.get(childPath)?.map((c) => c.key) ?? [];
           if (childKeys.length > 0) {
             currentSelection[childPath] =
@@ -340,7 +339,7 @@ function BreakdownDatatable(props: Props) {
         <Checkbox
           checked={partial ? 'indeterminate' : isSelected && parentOn}
           disabled={!parentOn}
-          onCheckedChange={() => handleToggle(parentPath, value, lvl)}
+          onCheckedChange={() => handleToggle(parentPath, value)}
           aria-label={value}
         />
         <span className="flex flex-col">
@@ -361,14 +360,6 @@ function BreakdownDatatable(props: Props) {
 
   return (
     <div className="m-ttable">
-      {!inGrid && hasBreakdowns && (
-        <div className="m-ttable__tools">
-          <BreakdownSelectionPanel
-            data={props.data}
-            breakdownLabels={breakdownLabels}
-          />
-        </div>
-      )}
       <div
         className="m-ttable__scroll"
         style={inGrid ? { maxHeight: 240 } : undefined}

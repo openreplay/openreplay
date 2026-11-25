@@ -2993,5 +2993,8 @@
   "Step by step": "Paso a paso",
   "How to install": "Cómo instalar",
   "Explore the documentation": "Consulta la documentación",
-  "Full SDK documentation": "Documentación completa del SDK"
+  "Full SDK documentation": "Documentación completa del SDK",
+  "Top {{n}}": "Top {{n}}",
+  "Top {{n}} only": "Solo top {{n}}",
+  "Values under each bar": "Valores bajo cada barra"
 }
