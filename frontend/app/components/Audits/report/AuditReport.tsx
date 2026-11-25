@@ -55,6 +55,7 @@ export interface AuditReportProps {
   initialSlide?: number;
   /** make the PDF as soon as the slides are drawn */
   exportOnOpen?: boolean;
+  onExportStart?: () => void;
   onSlide?: (index: number) => void;
   onClose: () => void;
 }
@@ -65,6 +66,7 @@ function AuditReport({
   scope,
   initialSlide = 0,
   exportOnOpen = false,
+  onExportStart,
   onSlide,
   onClose,
 }: AuditReportProps) {
@@ -120,11 +122,11 @@ function AuditReport({
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (tocOpen || shareOpen || exportOpen || e.defaultPrevented) return;
-      if (
-        (e.target as HTMLElement | null)?.closest?.(
-          'input, textarea, [contenteditable="true"]',
-        )
-      )
+      const target = e.target as HTMLElement | null;
+      if (target?.closest?.('input, textarea, [contenteditable="true"]'))
+        return;
+      // Space presses a focused control
+      if (e.key === ' ' && target?.closest?.('button, a, [role="button"]'))
         return;
       if (['ArrowRight', 'PageDown', ' '].includes(e.key)) {
         e.preventDefault();
@@ -151,6 +153,7 @@ function AuditReport({
   useEffect(() => {
     if (wantsExport.current && slides.length) {
       wantsExport.current = false;
+      onExportStart?.();
       exportPdf();
     }
   }, [slides.length]);

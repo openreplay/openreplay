@@ -184,7 +184,14 @@ function prependAudit(
     const newestFirst =
       (params.sortField ?? 'created_at') === 'created_at' &&
       (params.sortOrder ?? 'desc') === 'desc';
-    if (!first || !statusOk || !newestFirst || params.search) return null;
+    const narrowed =
+      params.search ||
+      params.endDate ||
+      params.segmentId ||
+      params.periodDays ||
+      params.userId ||
+      params.chapters;
+    if (!first || !statusOk || !newestFirst || narrowed) return null;
     return [audit, ...items.filter((a) => a.auditId !== audit.auditId)];
   });
   queryClient.setQueryData(auditsKeys.audit(projectId, audit.auditId), audit);
@@ -283,21 +290,19 @@ export function useOpenArtifact() {
       opts?: { onError?: (error: Error) => void },
     ) => {
       const tab = window.open('', '_blank');
-      mutation.mutate(
-        { auditId, kind },
-        {
-          onSuccess: ({ url }) => {
-            if (tab) tab.location.href = url;
-            else window.location.assign(url);
-          },
-          onError: (error) => {
-            tab?.close();
-            opts?.onError?.(error);
-          },
+      // per-call promise: mutate's callbacks only run for the latest call
+      void mutation.mutateAsync({ auditId, kind }).then(
+        ({ url }) => {
+          if (tab) tab.location.href = url;
+          else window.location.assign(url);
+        },
+        (error: Error) => {
+          tab?.close();
+          opts?.onError?.(error);
         },
       );
     },
-    [mutation.mutate],
+    [mutation.mutateAsync],
   );
   return { open, ...mutation };
 }
