@@ -1,0 +1,69 @@
+.m-audits__name-cell {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding-block: var(--m-space-3);
+}
+
+.m-audits__name {
+  font-size: var(--m-text-md);
+  font-weight: var(--m-title-weight);
+  line-height: var(--m-leading-tight);
+  color: var(--m-content-primary);
+}
+
+.m-audits__scope {
+  font-size: var(--m-text-xs);
+  line-height: var(--m-leading-tight);
+  color: var(--m-content-muted);
+}
+
+.m-audits__count {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--m-space-2);
+  white-space: nowrap;
+  font-size: var(--m-text-sm);
+  color: var(--m-content-muted);
+}
+
+.m-audits__count .num {
+  font-family: var(--m-font-num);
+  font-variant-numeric: tabular-nums;
+  color: var(--m-content-secondary);
+}
+
+.m-audits__by {
+  display: flex;
+  align-items: baseline;
+  gap: var(--m-space-3);
+  min-width: 0;
+  font-size: var(--m-text-sm);
+  color: var(--m-content-secondary);
+}
+
+.m-audits__dot,
+.m-audits__none {
+  color: var(--m-content-disabled);
+}
+
+.m-audits__artifacts {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--m-space-2);
+}
+
+/* the menu's seat on a row without one, so the icons line up */
+.m-audits__spacer {
+  width: var(--m-control-height-sm);
+}
+
+.m-audits__row {
+  cursor: pointer;
+}
+
+.m-audits__status {
+  display: inline-flex;
+  width: 100%;
+}
