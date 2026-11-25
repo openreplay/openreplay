@@ -3,6 +3,8 @@ const uaParser = require('ua-parser-js');
 const {geoip} = require('./geoIP');
 const {extractPeerId} = require('./helper');
 const {logger} = require('./logger');
+const sessionToken = require('./sessionToken');
+const {IncreaseSessionAuth} = require('./metrics');
 
 const IDENTITIES = {agent: 'agent', session: 'session'};
 const EVENTS_DEFINITION = {
@@ -154,10 +156,32 @@ function generateAccessToken(payload) {
 }
 
 const JWT_TOKEN_PREFIX = "Bearer ";
+const TOKEN_SECRET = process.env.TOKEN_SECRET;
+if (!TOKEN_SECRET) {
+    throw new Error('TOKEN_SECRET is required to verify session tokens');
+}
+
+function checkSession(socket, next) {
+    const token = socket.handshake.auth && socket.handshake.auth.token;
+    if (!token) {
+        logger.debug(`session without token, peerId: ${socket.handshake.query.peerId}`);
+        IncreaseSessionAuth('missing');
+        return next(new Error('Authentication error'));
+    }
+    try {
+        socket.decoded = sessionToken.parse(token, TOKEN_SECRET);
+    } catch (e) {
+        logger.debug(`invalid session token, peerId: ${socket.handshake.query.peerId}, err: ${e.message}`);
+        IncreaseSessionAuth('rejected');
+        return next(new Error('Authentication error'));
+    }
+    IncreaseSessionAuth('token');
+    return next();
+}
 
 function check(socket, next) {
     if (socket.handshake.query.identity === IDENTITIES.session) {
-        return next();
+        return checkSession(socket, next);
     }
     if (socket.handshake.query.peerId && socket.handshake.auth && socket.handshake.auth.token) {
         let token = socket.handshake.auth.token;
