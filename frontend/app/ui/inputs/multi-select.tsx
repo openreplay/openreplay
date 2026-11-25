@@ -14,6 +14,11 @@ export interface MultiSelectOption<T extends string> {
   label: ReactNode;
 
   text?: string;
+  /** a second line under the label */
+  hint?: ReactNode;
+  icon?: ReactNode;
+  /** drawn instead of the check row when this choice can't be made here */
+  locked?: ReactNode;
 }
 
 export function MultiSelect<T extends string>({
@@ -25,6 +30,7 @@ export function MultiSelect<T extends string>({
   ariaLabel,
   className,
   searchable,
+  allLabel,
 }: {
   id?: string;
   value: readonly T[];
@@ -35,6 +41,8 @@ export function MultiSelect<T extends string>({
   className?: string;
   /** a search field over a scrolling list, chosen ones first */
   searchable?: { placeholder: string; empty?: string };
+  /** the closed control's words when every choice that can be made is made */
+  allLabel?: string;
 }) {
   const { t } = useTranslation();
   const placeholder = placeholderProp ?? t('Not set');
@@ -44,10 +52,15 @@ export function MultiSelect<T extends string>({
   const textOf = (o: MultiSelectOption<T>) =>
     o.text ?? (typeof o.label === 'string' ? o.label : String(o.value));
   // names, not a count: two fit, past two the first two and how many more
+  const pickable = options.filter((o) => o.locked == null);
   const summary =
     chosen.length === 0
       ? null
-      : chosen.length <= 2
+      : allLabel &&
+          pickable.length > 1 &&
+          pickable.every((o) => value.includes(o.value))
+        ? allLabel
+        : chosen.length <= 2
         ? chosen.map(textOf).join(', ')
         : `${chosen.slice(0, 2).map(textOf).join(', ')} +${chosen.length - 2}`;
 
@@ -64,15 +77,22 @@ export function MultiSelect<T extends string>({
       ...hit.filter((o) => !value.includes(o.value)),
     ];
   }, [options, query, searchable, value]);
-  const rows = shown.map((o) => (
-    <CheckRow
-      key={o.value}
-      on={value.includes(o.value)}
-      onToggle={() => toggle(o.value)}
-    >
-      {o.label}
-    </CheckRow>
-  ));
+  const rich = options.some((o) => o.hint != null || o.icon != null);
+  const rows = shown.map((o) =>
+    o.locked != null ? (
+      <div key={o.value}>{o.locked}</div>
+    ) : (
+      <CheckRow
+        key={o.value}
+        on={value.includes(o.value)}
+        onToggle={() => toggle(o.value)}
+        hint={o.hint}
+        icon={o.icon}
+      >
+        {o.label}
+      </CheckRow>
+    ),
+  );
 
   return (
     <PopoverPanel
@@ -87,7 +107,9 @@ export function MultiSelect<T extends string>({
         'min-w-[var(--radix-popover-trigger-width)]',
         searchable
           ? 'm-mselect--search p-0'
-          : 'max-w-[max(var(--radix-popover-trigger-width),20rem)] p-3',
+          : rich
+            ? 'm-mselect--rich p-2'
+            : 'max-w-[max(var(--radix-popover-trigger-width),20rem)] p-3',
       )}
       content={
         searchable ? (
