@@ -112,6 +112,7 @@
     "app/utils/split-utils.ts",
     "app/withRecaptcha.tsx",
     "env.ts",
+    "saas/audits/AuditsPage.tsx",
     "saas/billing/PayAsYouGo.tsx",
     "saas/layout/AppBanners.tsx",
     "saas/nav/RecordingsMeter.tsx"
