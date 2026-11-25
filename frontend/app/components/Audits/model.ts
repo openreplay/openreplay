@@ -17,12 +17,7 @@ import {
 // Each maps to one API section group; picking a chapter sends all its sections.
 
 export type ChapterKey =
-  | 'web'
-  | 'usage'
-  | 'errors'
-  | 'retention'
-  | 'ux'
-  | 'journeys';
+  'web' | 'usage' | 'errors' | 'retention' | 'ux' | 'journeys';
 
 export interface Chapter {
   key: ChapterKey;
@@ -120,8 +115,7 @@ export const usableChapters = (hasAi: boolean): ChapterKey[] =>
 export const orderChapters = (
   picked: readonly ChapterKey[],
   hasAi: boolean,
-): ChapterKey[] =>
-  usableChapters(hasAi).filter((k) => picked.includes(k));
+): ChapterKey[] => usableChapters(hasAi).filter((k) => picked.includes(k));
 
 export const chapterSections = (
   picked: readonly ChapterKey[],
@@ -155,8 +149,7 @@ export const usesAiSections = (
 // Design: never more than 30 days (most projects keep 30 days of data); the API's enum is 7/30/90.
 export const AUDIT_PERIODS: readonly PeriodDays[] = [
   // 1, // Last 24 hours: not in the API's periodDays enum yet
-  7,
-  30,
+  7, 30,
 ];
 export const DEFAULT_PERIOD: PeriodDays = 7;
 
@@ -185,8 +178,7 @@ export function rangeLabel(from: number, to: number): string {
   const [fd, fm, fy] = [f.getUTCDate(), f.getUTCMonth(), f.getUTCFullYear()];
   const [td, tm, ty] = [t.getUTCDate(), t.getUTCMonth(), t.getUTCFullYear()];
   if (fd === td && fm === tm && fy === ty) return `${td} ${MONTHS[tm]} ${ty}`;
-  if (fy !== ty)
-    return `${fd} ${MONTHS[fm]} ${fy} – ${td} ${MONTHS[tm]} ${ty}`;
+  if (fy !== ty) return `${fd} ${MONTHS[fm]} ${fy} – ${td} ${MONTHS[tm]} ${ty}`;
   if (fm !== tm) return `${fd} ${MONTHS[fm]} – ${td} ${MONTHS[tm]} ${ty}`;
   return `${fd}–${td} ${MONTHS[tm]} ${ty}`;
 }
@@ -320,10 +312,7 @@ export function toCreateRequest(
 }
 
 export type DraftProblem =
-  | 'name'
-  | 'segment'
-  | 'unfinishedFilters'
-  | 'sections';
+  'name' | 'segment' | 'unfinishedFilters' | 'sections';
 
 /** Why Generate is disabled, or null. `unfinished` = filter rules still missing a value. */
 export function draftProblem(
@@ -396,7 +385,9 @@ export class AuditItem {
   }
 
   get segmentName(): string {
-    return this.raw.segmentId ? this.raw.segmentName || 'Segment' : 'Full traffic';
+    return this.raw.segmentId
+      ? this.raw.segmentName || 'Segment'
+      : 'Full traffic';
   }
 
   /** Rules that narrowed full traffic; a segment's own rules are not counted. */

@@ -1,5 +1,5 @@
-import { makeAutoObservable, observableRef } from 'mobx';
 import Period, { CUSTOM_RANGE, LAST_30_DAYS } from 'Types/app/period';
+import { makeAutoObservable, observableRef } from 'mobx';
 
 import {
   AuditFieldKey,
@@ -19,7 +19,10 @@ interface Display {
   fields: AuditFieldKey[];
 }
 
-const DEFAULT_DISPLAY: Display = { sort: 'recent', fields: [...DEFAULT_FIELDS] };
+const DEFAULT_DISPLAY: Display = {
+  sort: 'recent',
+  fields: [...DEFAULT_FIELDS],
+};
 
 function readDisplay(): Display {
   try {

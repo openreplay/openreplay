@@ -32,9 +32,7 @@ export function listAudits(
   projectId: string | number,
   params?: ListAuditsParams,
 ): Promise<AuditList> {
-  return client
-    .get(base(projectId), defined(params))
-    .then(toJson<AuditList>);
+  return client.get(base(projectId), defined(params)).then(toJson<AuditList>);
 }
 
 export function auditCounts(

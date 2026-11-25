@@ -1,0 +1,81 @@
+.m-nad__stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--m-space-5);
+}
+
+.m-nad__filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-space-3);
+  align-self: stretch;
+}
+
+.m-nad__label {
+  margin: 0;
+  font-size: var(--m-text-xs);
+  color: var(--m-content-secondary);
+}
+
+.m-nad__segment {
+  width: 20rem;
+  max-width: 100%;
+}
+
+.m-nad__sections-pick {
+  width: 100%;
+}
+
+.m-nad__job {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.3;
+}
+
+.m-nad__job-total {
+  font-size: var(--m-text-sm);
+  font-weight: var(--m-weight-medium);
+  color: var(--m-content-primary);
+}
+
+.m-nad__job-note {
+  font-size: var(--m-text-xs);
+  color: var(--m-content-muted);
+}
+
+.m-nad__job .num {
+  font-family: var(--m-font-num);
+}
+
+/* a chapter in the Sections dropdown: name, then a few words, one line */
+.m-nad__sec {
+  display: flex;
+  align-items: baseline;
+  gap: var(--m-space-3);
+  min-width: 0;
+}
+
+.m-nad__sec-name {
+  flex: none;
+  color: var(--m-content-primary);
+  font-weight: var(--m-weight-medium);
+}
+
+.m-nad__sec-brief {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: var(--m-text-xs);
+  color: var(--m-content-muted);
+}
+
+.m-ailock .m-nad__sec-name {
+  color: var(--m-content-muted);
+}
+
+.m-ailock .m-nad__sec-brief {
+  color: var(--m-content-placeholder);
+}
