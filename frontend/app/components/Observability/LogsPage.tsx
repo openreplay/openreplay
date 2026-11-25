@@ -18,7 +18,7 @@ import {
 } from '@/ui/layout/rows-per-page';
 import { useViewport } from '@/ui/layout/use-viewport';
 import { Tooltip } from '@/ui/overlays/tooltip';
-import { Bookmark, PanelLeftOpen } from 'lucide-react';
+import { Bookmark, PanelLeftOpen, Undo2 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import {
   type CSSProperties,
@@ -463,17 +463,8 @@ function LogsPage() {
       />
     );
 
-  const chartWait = status === 'loading' || store.histogramLoading;
   const chart =
-    status === 'error' || status === 'first' ? null : chartWait ? (
-      <div
-        className="m-logs__chart m-logs__chart--wait"
-        role="status"
-        aria-label={t('Loading the chart')}
-      >
-        <span className="m-logs__chart-wait" />
-      </div>
-    ) : store.chartFailed ? (
+    status === 'error' || status === 'first' ? null : store.chartFailed ? (
       <div className="m-logs__chart m-logs__chart--fail">
         <span>{t("The chart didn't load. The lines below are complete.")}</span>
         <Button
@@ -483,6 +474,20 @@ function LogsPage() {
         >
           {t('Try again')}
         </Button>
+        {zoomBack && (
+          <Button size="sm" variant="subtle" onClick={store.zoomOut}>
+            <Undo2 size={13} aria-hidden="true" />
+            {t('Back to {{label}}', { label: backLabel })}
+          </Button>
+        )}
+      </div>
+    ) : !store.histogram ? (
+      <div
+        className="m-logs__chart m-logs__chart--wait"
+        role="status"
+        aria-label={t('Loading the chart')}
+      >
+        <span className="m-logs__chart-wait" />
       </div>
     ) : (
       <LogHistogram
@@ -501,14 +506,14 @@ function LogsPage() {
     );
 
   const rail =
-    status === 'loading' || store.facetsLoading ? (
-      <div className="m-logs__railwait">
-        <SkeletonRows rows={7} columns={[70, 18]} />
-      </div>
-    ) : status === 'error' ? (
+    status === 'error' ? (
       <p className="m-logs__railnote">
         {t('The facets come back with the lines.')}
       </p>
+    ) : !store.facets && !store.facetsFailed ? (
+      <div className="m-logs__railwait">
+        <SkeletonRows rows={7} columns={[70, 18]} />
+      </div>
     ) : store.facetsFailed ? (
       <div className="m-logs__railnote">
         <p>{t("The facets didn't load.")}</p>
@@ -683,6 +688,7 @@ function LogsPage() {
                   />
                   <ExportControl
                     total={store.total}
+                    totalKnown={store.totalKnown}
                     loaded={store.logs.length}
                     collect={store.collectExport}
                     from={bounds.from}

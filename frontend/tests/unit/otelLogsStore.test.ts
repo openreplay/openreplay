@@ -245,6 +245,22 @@ describe('OtelLogsStore', () => {
     now.mockRestore();
   });
 
+  it('an empty past window asks about the 30 days up to now', async () => {
+    const store = new OtelLogsStore();
+    const now = jest.spyOn(Date, 'now').mockReturnValue(40 * 86_400_000);
+    store.setWindow({ from: 1 * 86_400_000, to: 2 * 86_400_000 });
+    mockSearch.mockResolvedValueOnce({ logs: [], nextCursor: null });
+    mockSearch.mockResolvedValueOnce({ logs: [log('a')], nextCursor: null });
+    await store.fetch();
+    expect(mockSearch.mock.calls[1][0]).toEqual({
+      startTime: 10 * 86_400_000,
+      endTime: 40 * 86_400_000,
+      limit: 1,
+    });
+    expect(store.neverSent).toBe(false);
+    now.mockRestore();
+  });
+
   it('claims no first run with filters or without an answer', async () => {
     const store = new OtelLogsStore();
     store.setSeverities(['error']);

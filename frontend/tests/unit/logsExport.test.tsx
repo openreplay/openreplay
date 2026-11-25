@@ -52,6 +52,7 @@ describe('ExportControl', () => {
         <TooltipProvider>
           <ExportControl
             total={10_000}
+            totalKnown
             loaded={loaded}
             collect={collect}
             from={0}

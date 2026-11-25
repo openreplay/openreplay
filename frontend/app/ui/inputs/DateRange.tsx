@@ -9,7 +9,7 @@ import { PopoverPanel } from '@/ui/overlays/popover';
 import Period from 'Types/app/period';
 import { CalendarRange, ChevronDown } from 'lucide-react';
 import { DateTime } from 'luxon';
-import { Suspense, lazy, useEffect, useState } from 'react';
+import { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { CUSTOM_RANGE, DATE_RANGE_OPTIONS } from 'App/dateRange';
@@ -115,6 +115,11 @@ export function DateRange({
     }));
     setBad({});
   }, [shown.from, shown.to, open]);
+  // times typed since the menu opened; the others reset with a new range
+  const edited = useRef<{ from?: boolean; to?: boolean }>({});
+  useEffect(() => {
+    edited.current = {};
+  }, [open]);
 
   const close = () => {
     setOpen(false);
@@ -183,10 +188,16 @@ export function DateRange({
   // with no day on that end yet, the time waits for one
   const onTime = (end: End, value: string) => {
     if (!TIME.test(value)) return;
+    edited.current[end] = true;
     setTimes((c) => ({ ...c, [end]: value }));
     const cur = shown[end];
-    if (cur == null) return;
-    const day = DateTime.fromMillis(cur).startOf('day');
+    const day =
+      cur != null
+        ? DateTime.fromMillis(cur).startOf('day')
+        : DAY.test(text[end])
+          ? DateTime.fromISO(text[end])
+          : null;
+    if (!day?.isValid) return;
     const ok = commit({ ...shown, [end]: endAt(day, end, value) });
     setBad((b) => ({ ...b, [end]: ok ? undefined : 'time' }));
   };
@@ -205,12 +216,20 @@ export function DateRange({
         ? DateTime.fromMillis(shown.from).startOf('day').toMillis()
         : null;
     if (step === 'from' || startDay == null || at.toMillis() < startDay) {
-      commit({ from: endAt(at, 'from') });
+      const next = {
+        from: edited.current.from ? times.from : DEFAULT_TIMES.from,
+        to: edited.current.to ? times.to : DEFAULT_TIMES.to,
+      };
+      setTimes(next);
+      commit({ from: endAt(at, 'from', next.from) });
       setStep('to');
       return;
     }
-    const ok = commit({ from: shown.from, to: endAt(at, 'to') });
+    const to = endAt(at, 'to');
+    const ok = commit({ from: shown.from, to });
     if (!ok) {
+      // the day stays in its field so End time can still fix the range
+      setText((d) => ({ ...d, to: dayText(to) }));
       setBad((b) => ({ ...b, to: 'time' }));
       return;
     }

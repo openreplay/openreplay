@@ -12,10 +12,10 @@ export function saveBlob(blob: Blob, filename: string) {
 }
 
 /** one CSV field, quoted when it holds a comma, a quote or a line break.
-    One a spreadsheet would run as a formula gets a leading quote. */
+    Text a spreadsheet would run as a formula gets a leading quote. */
 export const csvCell = (v: unknown) => {
   const raw = v == null ? '' : String(v);
-  const s = /^[=+\-@\t\r]/.test(raw) ? `'${raw}` : raw;
+  const s = typeof v !== 'number' && /^[=+\-@\t\r]/.test(raw) ? `'${raw}` : raw;
   return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 };
 

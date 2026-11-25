@@ -19,6 +19,7 @@ describe('csv export', () => {
     );
     expect(csvCell('+1 555')).toBe("'+1 555");
     expect(csvCell('-2')).toBe("'-2");
+    expect(csvCell(-5)).toBe('-5');
     expect(csvCell('@SUM(A1)')).toBe("'@SUM(A1)");
     expect(csvCell('\t=1')).toBe("'\t=1");
     expect(csvCell('a=b')).toBe('a=b');

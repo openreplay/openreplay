@@ -25,6 +25,8 @@ import {
 export interface ExportControlProps {
   /** lines matching, the export takes the newest EXPORT_LIMIT */
   total: number;
+  /** false when no histogram counted the lines past the loaded ones */
+  totalKnown: boolean;
   /** lines loaded so far */
   loaded: number;
   /** loads what the export needs and hands it over */
@@ -37,6 +39,7 @@ export interface ExportControlProps {
 
 export function ExportControl({
   total,
+  totalKnown,
   loaded,
   collect,
   from,
@@ -143,10 +146,15 @@ export function ExportControl({
           <>
             <span className="m-logs__export-progress">
               <LoaderCircle size={13} className="m-spin" aria-hidden="true" />
-              {t('{{shown}} of {{total}}', {
-                shown: Math.min(loaded, n).toLocaleString(),
-                total: n.toLocaleString(),
-              })}
+              {totalKnown
+                ? t('{{shown}} of {{total}}', {
+                    shown: Math.min(loaded, n).toLocaleString(),
+                    total: n.toLocaleString(),
+                  })
+                : t('{{n}} lines', {
+                    n: loaded.toLocaleString(),
+                    count: loaded,
+                  })}
             </span>
             <Button onClick={cancel}>{t('Cancel')}</Button>
           </>

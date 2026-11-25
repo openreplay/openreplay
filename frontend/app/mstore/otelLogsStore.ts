@@ -76,6 +76,7 @@ export default class OtelLogsStore {
   refreshing = false;
   loadingMore = false;
   exporting = false;
+  private exportJob = 0;
   histogramLoading = false;
   facetsLoading = false;
   /** the list request failed: what is held, if anything, is from the
@@ -145,8 +146,10 @@ export default class OtelLogsStore {
       | 'viewsKey'
       | 'generation'
       | 'keysSeq'
+      | 'exportJob'
     >(this, {
       controller: false,
+      exportJob: false,
       landed: false,
       counting: false,
       viewsKey: false,
@@ -249,8 +252,7 @@ export default class OtelLogsStore {
           !filter.severities?.length &&
           !filter.attributes?.length;
         const neverSent =
-          probe &&
-          (await this.nothingSentBy(filter.endTime, controller.signal));
+          probe && (await this.nothingSentBy(Date.now(), controller.signal));
         if (!current()) return;
         runInAction(() => {
           this.logs = r.logs;
@@ -398,6 +400,7 @@ export default class OtelLogsStore {
       what is held is from the window before. A failed histogram or facets
       request does not touch the lines. An abort stops it after the page out. */
   collectExport = async (signal?: AbortSignal): Promise<OtelLog[]> => {
+    const job = ++this.exportJob;
     this.exporting = true;
     // an earlier failed page would stop ensure() before it asks again
     this.pageError = null;
@@ -411,7 +414,8 @@ export default class OtelLogsStore {
       if (failed) throw new Error(failed);
       return this.logs;
     } finally {
-      runInAction(() => (this.exporting = false));
+      // a cancelled export can settle after the next one started
+      if (this.exportJob === job) runInAction(() => (this.exporting = false));
     }
   };
 

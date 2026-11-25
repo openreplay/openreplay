@@ -297,7 +297,7 @@ function WebPlayer(props: any) {
 
   return (
     <PlayerContext.Provider value={contextValue}>
-      <PlayerErrorBoundary>
+      <PlayerErrorBoundary key={contextValue.sessionId}>
         {fullView ? (
           player
         ) : (
