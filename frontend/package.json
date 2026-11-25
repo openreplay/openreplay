@@ -48,7 +48,7 @@
     "fflate": "^0.8.3",
     "fzstd": "^0.1.1",
     "html-to-image": "^1.11.13",
-    "i18next": "^24.2.3",
+    "i18next": "^26.0.0",
     "i18next-browser-languagedetector": "^8.2.0",
     "i18next-resources-to-backend": "^1.2.3",
     "jspdf": "4.2.1",
