@@ -1,6 +1,7 @@
 .m-rep {
   position: fixed;
   inset: 0;
+  outline: none;
   z-index: var(--m-z-overlay);
   display: flex;
   flex-direction: column;

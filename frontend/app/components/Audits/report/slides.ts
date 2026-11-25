@@ -1194,23 +1194,36 @@ const BUILDERS: Partial<Record<SectionKey, Builder>> = {
         few: c.few,
       };
     };
+    // five rows a slide, as feature use: more would run past the slide
+    const parts = chunk(d.journeys, 5);
     groups.forEach((idx, key) => {
       const by = key === 'segment' ? 'segment' : key.slice(5) || 'group';
-      X.S.push({
-        kind: 'matrix',
-        section: X.sec,
-        short: `Journeys by ${by}`,
-        title: `Journeys by ${by}`,
-        lead: 'Journey',
-        threshold: 5,
-        ai: true,
-        columns: [colOf(allAt), ...idx.map(colOf)],
-        rows: d.journeys.map((j) => ({
-          title: j.name ?? '',
-          values: [j.cells?.[allAt] ?? 0, ...idx.map((i) => j.cells?.[i] ?? 0)],
-        })),
-        foot: 'Each cell: the share of that column’s visits spent on the journey; read across a row to compare. Teal: the group does it more than all sessions read; orange: less. The deeper the shade, the bigger the gap, full from 10 points; under 2 points a cell stays plain. Under 50 sessions read is few, read with care.',
-      });
+      parts.forEach((part, k) =>
+        X.S.push({
+          kind: 'matrix',
+          section: X.sec,
+          short: pageName(
+            `Journeys by ${by}`,
+            parts.length,
+            k * 5,
+            part.length,
+          ),
+          title: `Journeys by ${by}`,
+          lead: 'Journey',
+          threshold: 5,
+          ai: true,
+          start: k * 5,
+          columns: [colOf(allAt), ...idx.map(colOf)],
+          rows: part.map((j) => ({
+            title: j.name ?? '',
+            values: [
+              j.cells?.[allAt] ?? 0,
+              ...idx.map((i) => j.cells?.[i] ?? 0),
+            ],
+          })),
+          foot: 'Each cell: the share of that column’s visits spent on the journey; read across a row to compare. Teal: the group does it more than all sessions read; orange: less. The deeper the shade, the bigger the gap, full from 10 points; under 2 points a cell stays plain. Under 50 sessions read is few, read with care.',
+        }),
+      );
     });
   },
   'journeys.actions': (X, s) => {

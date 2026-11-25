@@ -74,7 +74,8 @@ export function useAuditList(params: ListAuditsParams) {
 
 export function useAuditCounts(params?: CountsParams) {
   const projectId = useProjectId();
-  return useQuery({
+  const queryClient = useQueryClient();
+  const query = useQuery({
     queryKey: auditsKeys.counts(projectId, params),
     queryFn: () => api.auditCounts(projectId, params),
     enabled: !!projectId,
@@ -82,6 +83,22 @@ export function useAuditCounts(params?: CountsParams) {
     refetchInterval: (query) =>
       (query.state.data?.running ?? 0) > 0 ? AUDITS_POLL_MS : false,
   });
+  // lists poll only while their own rows run: a list with none of the running audits
+  // (the Ready tab) is refreshed when one of them finishes
+  const running = query.isPlaceholderData ? undefined : query.data?.running;
+  const scope = JSON.stringify([projectId, params ?? null]);
+  const before = React.useRef<{ scope: string; running?: number }>({ scope });
+  React.useEffect(() => {
+    if (running == null) return;
+    const b = before.current;
+    if (b.scope === scope && b.running != null && running < b.running)
+      void queryClient.invalidateQueries({
+        queryKey: auditsKeys.all(projectId),
+        predicate: (q) => q.queryKey[2] === 'list',
+      });
+    before.current = { scope, running };
+  }, [running, scope]);
+  return query;
 }
 
 const selectItem = (data: Audit) => new AuditItem(data);
@@ -230,7 +247,11 @@ export function useRenameAudit() {
   return useMutation({
     mutationFn: ({ auditId, name }: { auditId: string; name: string }) =>
       api.patchAudit(projectId, auditId, { name }),
-    onSuccess: (audit) => replaceAudit(queryClient, projectId, audit),
+    onSuccess: (audit) => {
+      replaceAudit(queryClient, projectId, audit);
+      // the name decides search matches and name order
+      void invalidateLists(queryClient, projectId);
+    },
   });
 }
 
