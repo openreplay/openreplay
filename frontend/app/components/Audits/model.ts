@@ -331,6 +331,16 @@ export function draftProblem(
 export const canEstimate = (draft: AuditDraft): boolean =>
   draft.scope === 'full' || !!draft.segmentId;
 
+/** The address that opens an audit's report; `slide` is 1-based. */
+export function reportLink(auditId: string, slide?: number): string {
+  const url = new URL(window.location.href);
+  url.hash = '';
+  url.search = '';
+  url.searchParams.set('audit', auditId);
+  if (slide != null) url.searchParams.set('slide', String(slide));
+  return url.toString();
+}
+
 // ---- A list row ----
 
 export class AuditItem {

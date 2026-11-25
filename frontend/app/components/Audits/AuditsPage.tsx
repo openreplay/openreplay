@@ -48,6 +48,7 @@ import { useTranslation } from 'react-i18next';
 import { useQueryParam } from 'App/components/Client/SmartTests/components/shared/useUrlState';
 import useDebouncedValue from 'App/hooks/useDebouncedValue';
 import { useStore } from 'App/mstore';
+import { useHistory } from 'App/routing';
 
 import { StartPath } from 'Shared/StartPath/StartPath';
 
@@ -61,8 +62,10 @@ import {
   AuditItem,
   AuditSortKey,
   AuditTab,
+  reportLink,
 } from './model';
 import {
+  useAudit,
   useAuditCounts,
   useAuditLandings,
   useAuditList,
@@ -76,15 +79,7 @@ import { auditsUi as ui } from './store';
 
 const fmt = (n: number) => n.toLocaleString('en-US');
 
-/** The address that opens an audit's report (`slide` is 1-based). */
-export function reportLink(auditId: string, slide?: number): string {
-  const url = new URL(window.location.href);
-  url.hash = '';
-  url.search = '';
-  url.searchParams.set('audit', auditId);
-  if (slide != null) url.searchParams.set('slide', String(slide));
-  return url.toString();
-}
+const AuditReport = React.lazy(() => import('./report/AuditReport'));
 
 function AuditsPage() {
   const { t } = useTranslation();
@@ -106,7 +101,21 @@ function AuditsPage() {
   const items = list.data?.items;
   const total = list.data?.total ?? 0;
 
-  const [, setOpenAudit] = useQueryParam('audit');
+  const history = useHistory();
+  const [openId] = useQueryParam('audit');
+  const [slideParam, setSlide] = useQueryParam('slide');
+  const [exportParam] = useQueryParam('export');
+  const opened = useAudit(openId ?? undefined);
+  const openedItem = items?.find((a) => a.id === openId) ?? opened.data;
+  const setReport = (id: string | null, extra: Record<string, string> = {}) => {
+    const params = new URLSearchParams(window.location.search);
+    ['audit', 'slide', 'export'].forEach((k) => params.delete(k));
+    if (id) params.set('audit', id);
+    Object.entries(extra).forEach(([k, v]) => params.set(k, v));
+    const to = { search: params.toString() };
+    if (id) history.push(to);
+    else history.replace(to);
+  };
   const [creating, setCreating] = React.useState(false);
   const [draftKey, setDraftKey] = React.useState(0);
   const [renaming, setRenaming] = React.useState<AuditItem | null>(null);
@@ -142,7 +151,12 @@ function AuditsPage() {
       );
       return;
     }
-    setOpenAudit(a.id, true);
+    setReport(a.id);
+  };
+
+  const downloadPdf = (a: AuditItem) => {
+    if (a.hasArtifact('pdf')) artifact.open(a.id, 'pdf', { onError: failed });
+    else setReport(a.id, { export: '1' });
   };
 
   const copyLink = (a: AuditItem) => {
@@ -237,7 +251,6 @@ function AuditsPage() {
 
   const actions = (a: AuditItem) => {
     const menu = rowMenu(a);
-    const pdf = a.hasArtifact('pdf');
     return (
       <div className="m-audits__artifacts" onClick={(e) => e.stopPropagation()}>
         <Tooltip title={whenReady(a, t('Copy link'))}>
@@ -253,20 +266,14 @@ function AuditsPage() {
             </Button>
           </span>
         </Tooltip>
-        <Tooltip
-          title={
-            a.isReady && !pdf
-              ? t('The PDF is not ready yet')
-              : whenReady(a, t('Download the PDF'))
-          }
-        >
+        <Tooltip title={whenReady(a, t('Download the PDF'))}>
           <span>
             <Button
               variant="subtle"
               size="icon"
-              disabled={!a.isReady || !pdf}
+              disabled={!a.isReady}
               aria-label={t('Download the PDF of {{name}}', { name: a.name })}
-              onClick={() => artifact.open(a.id, 'pdf', { onError: failed })}
+              onClick={() => downloadPdf(a)}
             >
               <Download size={14} />
             </Button>
@@ -544,6 +551,20 @@ function AuditsPage() {
     >
       {body()}
 
+      {openId && (
+        <React.Suspense fallback={null}>
+          <AuditReport
+            key={openId}
+            auditId={openId}
+            title={openedItem?.name ?? t('Audit')}
+            scope={openedItem?.scopeLabel ?? ''}
+            initialSlide={Math.max(0, Number(slideParam ?? 1) - 1)}
+            exportOnOpen={exportParam === '1'}
+            onSlide={(i) => setSlide(i > 0 ? String(i + 1) : null)}
+            onClose={() => setReport(null)}
+          />
+        </React.Suspense>
+      )}
       <NewAuditDrawer
         key={draftKey}
         open={creating}

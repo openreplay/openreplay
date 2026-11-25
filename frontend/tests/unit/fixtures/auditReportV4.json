@@ -1,0 +1,224 @@
+{
+  "schemaVersion": 4,
+  "health": null,
+  "reportType": {
+    "key": "analytics",
+    "title": "Analytics report",
+    "sections": ["web.numbers", "web.tops", "product.tops", "product.features", "errors.numbers", "errors.tops", "errors.vitals", "ux.numbers", "ux.frustrations", "ux.quickwins", "adoption.features", "adoption.retention", "journeys.overview", "journeys.popular", "journeys.actions", "journeys.issues"],
+    "sectionsFrom": "chosen on the audit"
+  },
+  "meta": {
+    "title": "Full traffic",
+    "subtitle": "Analytics report",
+    "periodLabel": "Last 7 days",
+    "sampleSize": 500,
+    "matchedSessions": 1932,
+    "generatedAt": "2026-11-20T16:48:00Z",
+    "auditId": "a5",
+    "auditName": "Full traffic, November 2026",
+    "projectId": 1,
+    "projectName": "OpenReplay Serverless",
+    "orgName": "Northfield Labs",
+    "createdBy": "Local Tester",
+    "sessions": 1932,
+    "users": 412,
+    "scope": { "kind": "full", "name": "Full traffic", "filter": "" },
+    "period": { "start": "2026-11-13", "end": "2026-11-19", "days": 7, "requestedDays": 7 },
+    "compare": { "kind": "previous", "label": "previous 7 days", "start": "2026-11-06", "end": "2026-11-12", "available": true, "gaps": ["2026-11-08"] },
+    "sample": { "mode": "journeys", "matched": 1932, "read": 340, "reviewed": 336 }
+  },
+  "summary": {
+    "headline": "Sessions rose, half hit a failed request",
+    "body": "",
+    "findings": [],
+    "points": [
+      { "figure": "+16.6%", "tone": "good", "lead": "Sessions rose to 1,932", "text": "from 412 users (+7.0%). The comparison week misses 8 Nov, so growth reads high." },
+      { "figure": "93.2%", "tone": "neutral", "lead": "Session replay is the product.", "text": "It appears in 93.2% of sessions; no other feature passes 12%." },
+      { "figure": "49.2%", "tone": "bad", "lead": "of sessions hit a failed request.", "text": "764 of those 950 sessions hit the same 400 on POST /:id/:id/signals." },
+      { "figure": "763", "tone": "bad", "lead": "of 772 sessions with a JS error", "text": "hit one error with no readable message." },
+      { "figure": "5.8 s", "tone": "bad", "lead": "Replay data is the slowest request", "text": "and 4 of the 5 top frustrations are replays that fail to load." },
+      { "figure": "68.3%", "tone": "good", "lead": "of new people came back within 7 days", "text": "(+0.8 pts). Dead clicks rose to 17.2% of sessions." }
+    ],
+    "insight": { "text": "Sessions grew 16.6%, but half of them hit a failed request, and 80% of those failures come from one endpoint.", "em": ["16.6%", "half", "80%"], "basis": "49.2% of sessions (950) hit a failed request; 764 of them hit the same 400." },
+    "unverified": []
+  },
+  "scorecard": [],
+  "journey": { "steps": [], "note": "", "callout": "" },
+  "artifacts": { "pdf": false, "slides": false, "html": false },
+  "sections": [
+    {
+      "key": "web.numbers", "group": "web", "kind": "data", "block": "numbers", "title": "Numbers", "compare": true,
+      "data": {
+        "metrics": [
+          { "key": "sessions", "label": "Sessions", "value": 1932, "prev": 1657, "unit": "count", "better": "up", "series": [261, 402, 431, 197, 102, 101, 438] },
+          { "key": "users", "label": "Unique users", "value": 412, "prev": 385, "unit": "count", "better": "up", "series": [80, 120, 118, 79, 41, 50, 70] },
+          { "key": "sessionsPerUser", "label": "Sessions per user", "value": 4.7, "prev": 4.3, "unit": "ratio", "better": "up", "series": [3.2, 3.4, 3.6, 2.5, 2.5, 2.0, null] },
+          { "key": "duration", "label": "Avg. session duration", "value": 1659, "prev": 1628, "unit": "duration", "better": "up", "series": [1500, 1700, 1600, 1650, 1640, 1500, 1520] },
+          { "key": "pagesPerSession", "label": "Avg. pages per session", "value": 6.5, "prev": 7.1, "unit": "ratio", "better": "up", "series": [6.4, 7.1, 6.8, 6.4, 6.2, 6.1, 6.6] },
+          { "key": "pageViews", "label": "Page views", "value": 12706, "prev": null, "unit": "count", "better": "up", "series": null, "split": { "desktop": 12646, "mobile": 60 } }
+        ]
+      }
+    },
+    {
+      "key": "web.tops", "group": "web", "kind": "data", "block": "tops", "title": "Tops",
+      "data": {
+        "lists": [
+          { "key": "referrers", "title": "Top referrers", "by": "sessions", "cols": [["sessions", "Sessions", "count"]], "facts": [{ "value": "78.8%", "label": "of sessions come from app.openreplay.com, the same site" }, { "value": "382", "label": "sessions had no referrer" }],
+            "rows": [{ "label": "app.openreplay.com", "sessions": 1523, "share": 78.8, "same": true }, { "label": "www.webpaes.com.br", "sessions": 15, "share": 0.8 }, { "label": "com.google.android.gm", "sessions": 3, "share": 0.2 }], "note": "By sessions, of the 1,932 in scope." },
+          { "key": "countries", "title": "Top countries", "by": "sessions", "cols": [], "facts": [{ "value": "28%", "label": "of sessions come from the United States" }],
+            "rows": [{ "label": "United States", "code": "US", "sessions": 540, "share": 28 }, { "label": "France", "code": "FR", "sessions": 155, "share": 8 }, { "label": "Unknown", "code": "UN", "sessions": 12, "share": 0.6 }] },
+          { "key": "browsers", "title": "Top browsers", "by": "sessions", "cols": [], "facts": [], "rows": [{ "label": "Chrome", "sessions": 1615, "share": 83.6 }, { "label": "Safari", "sessions": 137, "share": 7.1 }] },
+          { "key": "platforms", "title": "Top platforms", "by": "sessions", "cols": [], "facts": [], "rows": [{ "label": "Desktop", "kind": "desktop", "sessions": 1919, "share": 99.3 }, { "label": "Mobile", "kind": "mobile", "sessions": 13, "share": 0.7 }] },
+          { "key": "devices", "title": "Top devices", "by": "sessions", "cols": [], "facts": [], "rows": [] },
+          { "key": "pages", "title": "Top pages", "by": "views", "cols": [], "facts": [{ "value": "42.4%", "label": "of page views are the sessions list" }],
+            "rows": [{ "label": "Sessions", "code": "/:id/sessions", "views": 5381, "share": 42.4 }, { "label": "Session Player", "code": "/:id/session/:id", "views": 3650, "share": 28.7 }] },
+          { "key": "users", "title": "Top users", "by": "sessions", "cols": [], "facts": [],
+            "rows": [{ "label": "ana.ruiz@brightlane.example", "sessions": 54, "share": 2.8 }, { "label": "tom.okafor@quillstack.example", "sessions": 46, "share": 2.4 }, { "label": "li.chen@harborview.example", "sessions": 44, "share": 2.3 }, { "label": "marta.novak@pinecrest.example", "sessions": 42, "share": 2.2 }, { "label": "hello@tidewater.example", "sessions": 35, "share": 1.8 }, { "label": "sam.patel@orbitly.example", "sessions": 30, "share": 1.6 }] }
+        ]
+      }
+    },
+    {
+      "key": "product.tops", "group": "product", "kind": "data", "block": "tops", "title": "Tops",
+      "data": {
+        "lists": [
+          { "key": "clicks", "title": "Top clicks", "by": "events", "cols": [], "facts": [], "rows": [{ "label": "Playhead", "page": "session/:id", "events": 2461 }, { "label": null, "selector": "div.m-nav > button:nth-child(2)", "events": 900 }] },
+          { "key": "events", "title": "Top events", "by": "count", "cols": [], "facts": [], "rows": [{ "label": "session_list_viewed", "count": 3251 }, { "label": "session_opened", "count": 2706 }] },
+          { "key": "usersByTime", "title": "Top users by time spent", "by": "time", "cols": [], "facts": [], "rows": [{ "label": "tom.okafor@quillstack.example", "time": 133080 }, { "label": "li.chen@harborview.example", "time": 123660 }] }
+        ],
+        "metadata": { "title": "Metadata", "by": "sessions", "rate": false, "fields": [{ "key": "metadata_1", "name": "plan", "rows": [{ "label": "pay_as_you_go", "sessions": 990, "share": 51.2 }, { "label": "free", "sessions": 884, "share": 45.8 }], "facts": [{ "value": "51.2%", "label": "of sessions are on pay_as_you_go" }] }] }
+      }
+    },
+    {
+      "key": "product.features", "group": "product", "kind": "data", "block": "features", "title": "Features",
+      "data": {
+        "mode": "full", "source": "feature map",
+        "columns": [{ "key": "s1", "label": "Power Users", "sessions": 1326 }, { "key": "s2", "label": "401 Errors", "sessions": 160 }],
+        "rows": [
+          { "name": "Session replay", "sessions": 1800, "pct": 93.2, "cells": { "s1": 95.3, "s2": 98.1 } },
+          { "name": "Assist (Co-Browse)", "sessions": 223, "pct": 11.5, "cells": { "s1": 16.1, "s2": 10.6 } },
+          { "name": "Onboarding", "sessions": 155, "pct": 8.0, "cells": { "s1": 9.5, "s2": 6.9 } },
+          { "name": "Settings / Account", "sessions": 141, "pct": 7.3, "cells": { "s1": 10.3, "s2": 10.6 } },
+          { "name": "Dashboards and cards", "sessions": 130, "pct": 6.7, "cells": { "s1": 9.6, "s2": 6.9 } },
+          { "name": "Spot", "sessions": 77, "pct": 4.0, "cells": { "s1": 5.7, "s2": 3.8 } }
+        ],
+        "facts": []
+      }
+    },
+    {
+      "key": "errors.numbers", "group": "errors", "kind": "data", "block": "numbers", "title": "Numbers", "compare": true,
+      "data": { "metrics": [
+        { "key": "failed", "label": "Failed requests (4xx/5xx)", "value": 49.2, "prev": 49.8, "unit": "pct", "better": "down", "sessions": 950, "series": [40, 50, 45, 42, 41, 44, 60] },
+        { "key": "js", "label": "JS errors", "value": 40.0, "prev": 42.9, "unit": "pct", "better": "down", "sessions": 772, "series": [38, 39, 35, 35, 34, 37, 48] },
+        { "key": "crashes", "label": "Crashes", "value": 3.1, "prev": 3.8, "unit": "pct", "better": "down", "sessions": 60, "series": [3, 4, 3, 3, 3, 3, 4] }
+      ] }
+    },
+    {
+      "key": "errors.tops", "group": "errors", "kind": "data", "block": "tops", "title": "Tops",
+      "data": {
+        "lists": [
+          { "key": "jsErrors", "title": "Top JS errors", "by": "sessions", "cols": [], "facts": [], "rows": [{ "label": "Error without a readable message", "code": "[object Object]", "sessions": 763, "users": 221 }, { "label": "A network error occurred.", "sessions": 8, "users": 1 }] },
+          { "key": "failedRequests", "title": "Top failed requests", "by": "sessions", "cols": [], "facts": [], "rows": [{ "label": "POST /:id/:id/signals", "status": 400, "sessions": 764, "users": 221 }, { "label": "GET /:id/dom.mobe", "status": 404, "sessions": 255, "users": 116 }] },
+          { "key": "slowRequests", "title": "Slowest requests", "by": "avg", "cols": [], "facts": [], "rows": [{ "label": "GET /:id/dom.mobs", "avg": 5.8, "p75": 1.0 }, { "label": "GET /:id/devtools.mob", "avg": 2.3, "p75": 0 }] },
+          { "key": "slowPages", "title": "Slowest pages", "by": "avg", "cols": [], "facts": [], "rows": [] }
+        ],
+        "metadata": { "title": "Errors by metadata", "by": "sessions", "rate": true, "fields": [{ "key": "metadata_1", "name": "plan", "rows": [{ "label": "pay_as_you_go", "sessions": 500, "rate": 50.5 }, { "label": "enterprise", "sessions": 16, "rate": 30.2 }], "facts": [] }] }
+      }
+    },
+    {
+      "key": "errors.vitals", "group": "errors", "kind": "data", "block": "vitals", "title": "Web Vitals", "compare": true,
+      "data": {
+        "loads": { "desktop": 12646, "mobile": 20 },
+        "thresholdsFrom": "the dashboard Web Vitals widget",
+        "metrics": [
+          { "key": "lcp", "abbr": "LCP", "name": "Largest contentful paint", "unit": "ms", "thresholds": [2500, 4000], "better": "down", "desktop": { "n": 1931, "avg": 2050, "prev": 2010, "p75": 2360, "dist": [78, 15, 7] }, "mobile": { "n": 20, "avg": 2880, "prev": 2090, "p75": 3760, "dist": [45, 35, 20] } },
+          { "key": "ttfb", "abbr": "TTFB", "name": "Time to first byte", "unit": "ms", "thresholds": [200, 600], "better": "down", "desktop": { "n": 2352, "avg": 698, "prev": 741, "p75": 930, "dist": [16, 38, 46] }, "mobile": null },
+          { "key": "cls", "abbr": "CLS", "name": "Cumulative layout shift", "unit": "cls", "thresholds": [0.1, 0.25], "better": "down", "desktop": { "n": 997, "avg": 0.02, "prev": 0.01, "p75": 0.0, "dist": [95, 2, 3] }, "mobile": { "n": 7, "avg": 0.01, "prev": 0.08, "p75": 0.01, "dist": [100, 0, 0] } }
+        ]
+      }
+    },
+    {
+      "key": "ux.numbers", "group": "ux", "kind": "data", "block": "numbers", "title": "Numbers", "compare": true,
+      "data": { "metrics": [
+        { "key": "dead", "label": "Dead clicks", "value": 17.2, "prev": 15.8, "unit": "pct", "better": "down", "sessions": 332, "series": [16, 2, 5, 13, 18, 16, 18] },
+        { "key": "rage", "label": "Rage clicks", "value": 5.3, "prev": 5.1, "unit": "pct", "better": "down", "sessions": 103, "series": [6, 10, 3, 13, 18, 8, 11] },
+        { "key": "crashes", "label": "Crashes", "value": 3.1, "prev": 3.8, "unit": "pct", "better": "down", "sessions": 60, "series": null },
+        { "key": "thrash", "label": "Mouse thrashing", "value": 0.1, "prev": 0.1, "unit": "pct", "better": "down", "sessions": 1, "series": null }
+      ] }
+    },
+    {
+      "key": "ux.frustrations", "group": "ux", "kind": "data", "block": "frictions", "title": "Encountered frustrations",
+      "insight": { "text": "Four of the five top frustrations are replays that fail to load.", "em": ["Four of the five"], "basis": "Each is low impact." },
+      "data": {
+        "analysed": 340, "inScope": 1932, "seen": 5, "critical": 1,
+        "facts": [{ "value": "4 of 5", "label": "are replays that fail to load" }, { "value": "340", "label": "sessions read, of 1,932" }],
+        "highlight": { "rows": [1, 2], "says": "stop a replay from loading" },
+        "rows": [
+          { "name": "Session not found 404 error", "description": "Opening a replay from the list fails.", "categories": ["Errors"], "impact": "Low", "share": 12, "critical": true, "sessions": 41 },
+          { "name": "Co-browse replay loading failure", "description": "Co-browse sessions play back blank.", "categories": ["Errors"], "impact": "Medium", "share": 26, "critical": false, "sessions": 88 },
+          { "name": "Account already exists error", "description": "An error banner interrupts onboarding.", "categories": [], "impact": "High", "share": 0.4, "critical": false, "sessions": 2 }
+        ]
+      }
+    },
+    {
+      "key": "ux.quickwins", "group": "ux", "kind": "ai", "block": "quickwins", "title": "Quick wins",
+      "insight": { "text": "The smallest fix reaches the most sessions: 99% of sessions with a JS error hit one error.", "em": [], "basis": "763 of 772 sessions." },
+      "data": {
+        "items": [
+          { "title": "Replace the [object Object] error with a readable message", "do": "Pass a real message and stack to the error handler.", "effort": "S" },
+          { "title": "Fix the 400 on POST signals", "do": "Correct the payload or the validation.", "effort": "M" },
+          { "title": "Split the replay data request", "do": "Profile GET /:id/dom.mobs.", "effort": "L" }
+        ],
+        "facts": [], "unverified": [{ "field": "items[0].do", "number": "37%" }]
+      }
+    },
+    {
+      "key": "adoption.features", "group": "adoption", "kind": "data", "block": "featureAudit", "title": "Feature audit",
+      "data": {
+        "users": 412, "identified": 380, "uses": 56180,
+        "items": [
+          { "n": 1, "kind": "page", "label": "/:id/sessions", "users": 380, "popularity": 92.2, "frequency": 9.6, "perUser": 14.2 },
+          { "n": 2, "kind": "event", "label": "session_list_viewed", "users": 348, "popularity": 84.5, "frequency": 5.8, "perUser": 9.3 },
+          { "n": 3, "kind": "click", "label": "Sessions", "users": 219, "popularity": 53.2, "frequency": 4.1, "perUser": 10.6 },
+          { "n": 4, "kind": "click", "label": "Past 24 Hours", "users": 146, "popularity": 35.4, "frequency": 0.7, "perUser": 2.6 }
+        ]
+      }
+    },
+    {
+      "key": "adoption.retention", "group": "adoption", "kind": "data", "block": "retention", "title": "Retention", "compare": true,
+      "data": {
+        "unit": "day", "days": 7, "users": 126,
+        "points": [{ "k": 0, "users": 126, "of": 126, "pct": 100 }, { "k": 1, "users": 35, "of": 126, "pct": 28.1 }, { "k": 2, "users": 30, "of": 126, "pct": 23.7 }, { "k": 3, "users": 39, "of": 126, "pct": 31.2 }, { "k": 4, "users": 50, "of": 126, "pct": 40.2 }],
+        "first": { "all": { "users": 126, "returned": 86, "rate": 68.3, "prev": 67.5 }, "desktop": { "users": 126, "returned": 86, "rate": 68.3 }, "mobile": null },
+        "few": 30,
+        "facts": [{ "value": "68.3%", "label": "of people first seen on 13 Nov came back by 19 Nov" }, { "value": "+0.8 pts", "label": "against 67.5% the week before" }]
+      }
+    },
+    {
+      "key": "journeys.overview", "group": "journeys", "kind": "ai", "block": "journeyOverview", "title": "Overview",
+      "data": { "text": "A third of visits are spent browsing replays, yet only 24% of the people browsing finish what they came for.", "read": 340, "matched": 1932, "sample": { "matched": 1932, "read": 340 } }
+    },
+    {
+      "key": "journeys.popular", "group": "journeys", "kind": "ai", "block": "popularJourneys", "title": "Popular journeys",
+      "groupsInsight": { "text": "Free users browse; pay-as-you-go users filter to one user's replay nearly three times as often.", "em": ["browse", "filter"], "basis": "" },
+      "data": {
+        "read": 340, "matched": 1932, "restPct": 34, "more": 2, "outcomes": true,
+        "columns": [{ "key": "all", "kind": "all", "name": "All sessions", "sessions": 336 }, { "key": "s1", "kind": "segment", "name": "Power Users", "sessions": 280 }, { "key": "m1", "kind": "meta", "metaKey": "plan", "name": "free", "sessions": 163 }, { "key": "m2", "kind": "meta", "metaKey": "plan", "name": "enterprise", "sessions": 34, "few": true }],
+        "journeys": [
+          { "name": "Browse the sessions list and watch replays", "means": "Open replays from the list.", "visitsPct": 33, "margin": 6, "usersPct": 38, "estSessions": 641, "outcomes": { "completed": 24, "partly": 54, "dropped": 22 }, "cells": [33, 40, 42, 27] },
+          { "name": "Filter sessions to find a user's replay", "means": "Narrow the list by user ID.", "visitsPct": 15, "margin": 5, "usersPct": 26, "estSessions": 296, "outcomes": { "completed": 30, "partly": 57, "dropped": 13 }, "cells": [15, 20, 8, 21] },
+          { "name": "Complete onboarding", "means": "Run the onboarding wizard.", "visitsPct": 7, "margin": 3, "usersPct": 13, "estSessions": 134, "outcomes": null, "cells": [7, 8, 15, 1] },
+          { "name": "Join live Co-Browse sessions", "means": "Open the Co-Browse list.", "visitsPct": 6, "margin": 3, "usersPct": null, "estSessions": 117, "cells": [6, 8, 4, 7] }
+        ],
+        "facts": [{ "value": "33%", "label": "of visits browse the sessions list" }]
+      }
+    },
+    {
+      "key": "journeys.actions", "group": "journeys", "kind": "ai", "block": "commonActions", "title": "Common actions",
+      "error": "The model did not answer in time."
+    },
+    {
+      "key": "journeys.issues", "group": "journeys", "kind": "data", "block": "impactfulIssues", "title": "Most impactful issues",
+      "data": { "analysed": 340, "seen": 0, "rows": [], "empty": "No issue was seen in the sessions read." }
+    }
+  ]
+}
