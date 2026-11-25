@@ -1,8 +1,9 @@
 import { CopyButton } from '@/ui/actions/CopyButton';
 import { IconButton } from '@/ui/actions/IconButton';
+import { Button } from '@/ui/actions/button';
 import type { MenuItem } from '@/ui/actions/dropdown-menu';
 import { Chip } from '@/ui/data/Chip';
-import { FactStrip } from '@/ui/data/FactStrip';
+import { type Fact, FactStrip } from '@/ui/data/FactStrip';
 import {
   type KeyValueGroup,
   type KeyValueItem,
@@ -13,7 +14,13 @@ import { SearchField } from '@/ui/inputs/SearchField';
 import { Segmented } from '@/ui/inputs/toggle-group';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/ui/layout/tabs';
 import { EntityDrawer, Section } from '@/ui/overlays/EntityDrawer';
-import { ChevronDown, ChevronUp, Columns3, Copy } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronUp,
+  Columns3,
+  Copy,
+  PlayCircle,
+} from 'lucide-react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -30,6 +37,9 @@ import {
   lineHeadFacts,
   lineStamp,
   otelRow,
+  serviceLabel,
+  sessionOf,
+  valueLabel,
 } from './logs-logic';
 import { termMenuItems } from './termMenu';
 
@@ -59,6 +69,7 @@ export interface LogDrawerProps {
   ) => void;
   columns: readonly string[];
   onToggleColumn: (key: string) => void;
+  onPlay?: (line: OtelLog) => void;
   withDate: boolean;
 }
 
@@ -80,6 +91,7 @@ export function LogDrawer({
   onTerm,
   columns,
   onToggleColumn,
+  onPlay,
   withDate,
 }: LogDrawerProps) {
   const { t } = useTranslation();
@@ -88,6 +100,7 @@ export function LogDrawer({
   const [rawQuery, setRawQuery] = useState('');
   const [span, setSpan] = useState(DEFAULT_RELATED_SPAN);
   const [match, setMatch] = useState<RelatedMatch>('service');
+  const session = line ? sessionOf(line) : undefined;
 
   useEffect(() => {
     if (!line) return undefined;
@@ -111,10 +124,11 @@ export function LogDrawer({
 
   const item = (f: LineField): KeyValueItem => {
     const state = f.key ? termState(f.key, f.value) : undefined;
+    const shown = f.key ? valueLabel(t, f.key, f.value) : f.value;
     const menu: MenuItem[] = [];
     if (f.key && !f.multiline) {
       const k = f.key;
-      const pair = `${f.name}: ${f.value}`;
+      const pair = `${f.name}: ${shown}`;
       menu.push(
         ...termMenuItems(t, pair, state, (op, on) =>
           onTerm(k, f.value, op, on),
@@ -125,7 +139,7 @@ export function LogDrawer({
       key: 'copy',
       icon: <Copy size={14} />,
       label: t('Copy value'),
-      onClick: () => void copyText(f.value),
+      onClick: () => void copyText(shown),
     });
     if (f.key && !f.multiline) {
       const k = f.key;
@@ -138,7 +152,7 @@ export function LogDrawer({
     }
     return {
       key: f.name,
-      value: f.value,
+      value: shown,
       tone: f.tone,
       block: f.multiline,
       state,
@@ -146,25 +160,37 @@ export function LogDrawer({
     };
   };
 
-  const groups: KeyValueGroup[] = line
-    ? (() => {
-        const { log, resource, scope } = lineFields(line);
-        return [
-          { id: 'log', title: t('Log attributes'), items: log.map(item) },
-          {
-            id: 'resource',
-            title: t('Resource attributes'),
-            items: resource.map(item),
-          },
-          {
-            id: 'scope',
-            title: t('Scope'),
-            items: scope.map(item),
-            folded: true,
-          },
-        ];
-      })()
+  const fields = line ? lineFields(line) : null;
+  const groups: KeyValueGroup[] = fields
+    ? [
+        { id: 'log', title: t('Log attributes'), items: fields.log.map(item) },
+        {
+          id: 'resource',
+          title: t('Resource attributes'),
+          items: fields.resource.map(item),
+        },
+        {
+          id: 'scope',
+          title: t('Scope'),
+          items: fields.scope.map(item),
+          folded: true,
+        },
+      ]
     : [];
+  // the head's facts open the menu of the attribute row they repeat
+  const facts: Fact[][] =
+    line && fields
+      ? lineHeadFacts(t, line).map((g) =>
+          g.map((f) => {
+            const field =
+              f.key &&
+              [...fields.log, ...fields.resource].find((x) => x.key === f.key);
+            if (!field) return f;
+            const { menu, state } = item(field);
+            return { ...f, menu, state };
+          }),
+        )
+      : [];
 
   const raw = useMemo(() => (line ? otelRow(line) : null), [line]);
   const level = line ? levelOf(line) : 'info';
@@ -175,7 +201,7 @@ export function LogDrawer({
       onClose={onClose}
       size="wide"
       eyebrow={t('Log line')}
-      title={line?.serviceName ?? ''}
+      title={line ? serviceLabel(t, line.serviceName) : ''}
       meta={
         line && (
           <>
@@ -206,7 +232,7 @@ export function LogDrawer({
         line && (
           <FactStrip
             ariaLabel={t('About this line')}
-            groups={lineHeadFacts(t, line)}
+            groups={facts}
             columns="minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr)"
           />
         )
@@ -252,6 +278,27 @@ export function LogDrawer({
           >
             <pre className="m-logs__text">{line.body}</pre>
           </Section>
+
+          {session && (
+            <Section title={t('Session')}>
+              <div className="m-logs__session">
+                <div className="m-logs__session-lead">
+                  <span className="m-logs__session-who">
+                    {t('Recording {{id}}', { id: session })}
+                  </span>
+                  <span className="m-logs__session-what">
+                    {t('The session this line was written in')}
+                  </span>
+                </div>
+                {onPlay && (
+                  <Button variant="secondary" onClick={() => onPlay(line)}>
+                    <PlayCircle size={14} />
+                    {t('Watch session')}
+                  </Button>
+                )}
+              </div>
+            </Section>
+          )}
 
           <Tabs
             value={tab}
@@ -376,7 +423,11 @@ function Related({
           value={match}
           onChange={onMatch}
           options={[
-            { value: 'service', label: t('Service'), title: line.serviceName },
+            {
+              value: 'service',
+              label: t('Service'),
+              title: serviceLabel(t, line.serviceName),
+            },
             {
               value: 'pod',
               label: t('Pod'),
@@ -417,7 +468,9 @@ function Related({
                 {lineStamp(otelLogTimeMs(l), withDate)}
               </span>
               {match === 'all' && (
-                <span className="m-logs__relsvc">{l.serviceName}</span>
+                <span className="m-logs__relsvc">
+                  {serviceLabel(t, l.serviceName)}
+                </span>
               )}
               <span className="m-logs__msg">
                 <span>{l.body}</span>

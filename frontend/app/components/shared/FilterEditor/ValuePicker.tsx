@@ -8,6 +8,7 @@ import { observer } from 'mobx-react-lite';
 import { useContext, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { valueLabelOf } from './catalogue';
 import { ValueSourceContext, useValueOptions } from './data';
 import type { SearchFilter } from './types';
 import './value-picker.css';
@@ -29,8 +30,7 @@ function ValuePicker({ filter, value, onChange, live }: ValuePickerProps) {
   const { options, loading } = useValueOptions(filter, query, open, live);
   const shared = options.some((o) => o.share != null);
   const shareLabel = useContext(ValueSourceContext)?.shareLabel;
-  const labelOf = (v: string) =>
-    entry.options?.find((o) => o.value === v)?.label ?? v;
+  const labelOf = (v: string) => valueLabelOf(t, entry, v);
 
   const toggle = (v: string) =>
     onChange(value.includes(v) ? value.filter((x) => x !== v) : [...value, v]);

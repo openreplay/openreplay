@@ -81,6 +81,20 @@ function readLastPlayed(): string {
   }
 }
 
+export interface ReplayPin {
+  sessionId: string;
+  /** epoch ms of the moment */
+  at: number;
+  kind: 'log';
+  label: string;
+  detail?: string;
+  tone?: 'danger' | 'warning';
+  /** where "Open in Logs" goes */
+  backUrl: string;
+}
+/** the replay opens, and plays from, this long before the pin */
+export const PIN_LEAD = 5_000;
+
 export default class SessionStore {
   devTools: DevTools = new DevTools();
 
@@ -135,6 +149,8 @@ export default class SessionStore {
       session start). Empty for a regular session; populated by the issue
       player. */
   timelineIssues: { time: number; label?: string }[] = [];
+  /** what opened this replay from elsewhere (a log line), shown on the track */
+  replayPin: ReplayPin | null = null;
 
   createNoteTooltip = {
     time: 0,
@@ -480,9 +496,14 @@ export default class SessionStore {
     }
   };
 
+  setReplayPin = (pin: ReplayPin | null) => {
+    this.replayPin = pin;
+  };
+
   clearCurrentSession = () => {
     this.current = new Session();
     this.timelineIssues = [];
+    this.replayPin = null;
   };
 
   prefetchSession = (sessionData: Session) => {

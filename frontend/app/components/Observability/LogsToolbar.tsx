@@ -5,17 +5,18 @@ import { Segmented } from '@/ui/inputs/toggle-group';
 import { RenameDialog } from '@/ui/overlays/RenameDialog';
 import { PopoverPanel } from '@/ui/overlays/popover';
 import { toast } from '@/ui/overlays/toast';
-import { Download } from 'lucide-react';
+import { Download, LoaderCircle } from 'lucide-react';
 import { DateTime } from 'luxon';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { OtelLog } from 'App/services/OtelLogsService';
-import { saveBlob } from 'App/utils/download';
+import { CSV_BOM, saveBlob } from 'App/utils/download';
 
 import {
   EXPORT_LIMIT,
   type ExportFormat,
+  SearchChangedError,
   compactCount,
   exportFileName,
   exportLines,
@@ -24,8 +25,10 @@ import {
 export interface ExportControlProps {
   /** lines matching, the export takes the newest EXPORT_LIMIT */
   total: number;
+  /** lines loaded so far */
+  loaded: number;
   /** loads what the export needs and hands it over */
-  collect: () => Promise<readonly OtelLog[]>;
+  collect: (signal: AbortSignal) => Promise<readonly OtelLog[]>;
   from: number;
   to: number;
   columns: readonly string[];
@@ -34,6 +37,7 @@ export interface ExportControlProps {
 
 export function ExportControl({
   total,
+  loaded,
   collect,
   from,
   to,
@@ -42,8 +46,10 @@ export function ExportControl({
 }: ExportControlProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
-  const [busy, setBusy] = useState(false);
   const [format, setFormat] = useState<ExportFormat>('csv');
+  const [job, setJob] = useState<AbortController | null>(null);
+  const busy = job != null;
+  useEffect(() => () => job?.abort(), [job]);
   const n = Math.min(total, EXPORT_LIMIT);
   const capped = total > EXPORT_LIMIT;
   const sameDay = DateTime.fromMillis(from).hasSame(
@@ -54,21 +60,32 @@ export function ExportControl({
     from: DateTime.fromMillis(from).toFormat('LLL d, HH:mm'),
     to: DateTime.fromMillis(to).toFormat(sameDay ? 'HH:mm' : 'LLL d, HH:mm'),
   });
+  const cancel = () => {
+    job?.abort();
+    setJob(null);
+  };
   const download = async () => {
-    setBusy(true);
+    const ctl = new AbortController();
+    setJob(ctl);
     try {
-      const lines = await collect();
-      const body = exportLines(lines, format, columns);
-      const blob = new Blob([body], {
+      const lines = await collect(ctl.signal);
+      if (ctl.signal.aborted) return;
+      const body = exportLines(t, lines, format, columns);
+      const blob = new Blob(format === 'csv' ? [CSV_BOM, body] : [body], {
         type: format === 'csv' ? 'text/csv' : 'application/x-ndjson',
       });
       saveBlob(blob, exportFileName(from, to, format));
       setOpen(false);
-    } catch {
+    } catch (e) {
+      if (ctl.signal.aborted) return;
       // the popover stays open to try again
-      toast.error(t('Some lines could not load, so nothing was exported'));
+      toast.error(
+        e instanceof SearchChangedError
+          ? t('The search changed, export again.')
+          : t('Some lines could not load, so nothing was exported'),
+      );
     } finally {
-      setBusy(false);
+      setJob((j) => (j === ctl ? null : j));
     }
   };
   const content = (
@@ -121,23 +138,38 @@ export function ExportControl({
             : ''}
         </p>
       </div>
-      <div className="m-dm__foot">
-        <Button
-          variant="primary"
-          disabled={n === 0}
-          loading={busy}
-          onClick={() => void download()}
-        >
-          <Download size={13} />
-          {t('Download')}
-        </Button>
+      <div className="m-dm__foot m-logs__export-foot">
+        {busy ? (
+          <>
+            <span className="m-logs__export-progress">
+              <LoaderCircle size={13} className="m-spin" aria-hidden="true" />
+              {t('{{shown}} of {{total}}', {
+                shown: Math.min(loaded, n).toLocaleString(),
+                total: n.toLocaleString(),
+              })}
+            </span>
+            <Button onClick={cancel}>{t('Cancel')}</Button>
+          </>
+        ) : (
+          <Button
+            variant="primary"
+            disabled={n === 0}
+            onClick={() => void download()}
+          >
+            <Download size={13} />
+            {t('Download')}
+          </Button>
+        )}
       </div>
     </div>
   );
   return (
     <PopoverPanel
       open={open}
-      onOpenChange={setOpen}
+      onOpenChange={(o) => {
+        if (!o) cancel();
+        setOpen(o);
+      }}
       placement="bottomRight"
       content={content}
     >

@@ -87,6 +87,22 @@ export function readChartTheme(
   };
 }
 
+/** `hex` moved toward `toward` by `k`, for two #rrggbb colours */
+export const mixHex = (hex: string, toward: string, k: number) => {
+  const c = (x: string) =>
+    [1, 3, 5].map((i) => parseInt(x.slice(i, i + 2), 16));
+  const a = c(hex);
+  const b = c(toward);
+  if (a.some(Number.isNaN) || b.some(Number.isNaN)) return hex;
+  return `#${a
+    .map((v, i) =>
+      Math.round(v + (b[i] - v) * k)
+        .toString(16)
+        .padStart(2, '0'),
+    )
+    .join('')}`;
+};
+
 /* One theme reader for the whole page: every chart used to install its own
    MutationObserver on <html> and re-render on each mutation. Charts re-render
    only when a token value actually changes. */

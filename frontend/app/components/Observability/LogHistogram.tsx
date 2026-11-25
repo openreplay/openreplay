@@ -1,5 +1,5 @@
 import { Button } from '@/ui/actions/button';
-import { EChart, baseOption, useChartTheme } from '@/ui/data/chart';
+import { EChart, baseOption, mixHex, useChartTheme } from '@/ui/data/chart';
 import type * as echarts from 'echarts/core';
 import type { TFunction } from 'i18next';
 import { Undo2 } from 'lucide-react';
@@ -39,6 +39,8 @@ const lines = (t: TFunction, n: number) =>
   t('{{n}} lines', { n: compactCount(n), count: n });
 
 const ORDER: LogLevel[] = ['debug', 'info', 'warn', 'error'];
+/** Debug sits this far from the grid colour toward Info's; logs.css matches */
+const DEBUG_MIX = 0.38;
 
 function useTween(target: number, ms = 220): number {
   const [shown, setShown] = useState(target);
@@ -101,7 +103,7 @@ export function LogHistogram({
     error: marks.danger,
     warn: marks.warning,
     info: theme.axis,
-    debug: theme.grid,
+    debug: mixHex(theme.grid, theme.axis, DEBUG_MIX),
   };
   const secs = step < 60_000;
 

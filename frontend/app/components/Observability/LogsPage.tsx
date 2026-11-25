@@ -31,8 +31,16 @@ import { useTranslation } from 'react-i18next';
 
 import { CUSTOM_RANGE } from 'App/dateRange';
 import { useStore } from 'App/mstore';
-import { CLIENT_TABS, client } from 'App/routes';
+import { PIN_LEAD } from 'App/mstore/sessionStore';
+import {
+  CLIENT_TABS,
+  client,
+  logs as logsRoute,
+  session as sessionRoute,
+  withSiteId,
+} from 'App/routes';
 import { useNavigate } from 'App/routing';
+import { type OtelLog, otelLogTimeMs } from 'App/services/OtelLogsService';
 
 import {
   EntryField,
@@ -61,15 +69,20 @@ import {
   clockLabel,
   compactCount,
   drillCards,
+  facetChoices,
   isInternal,
   keyLabel,
   keyOf,
+  levelLabel,
+  levelOf,
   levelOfText,
   levelTotals,
   logFilter,
   nameOfKey,
   scopeOfKey,
+  sessionOf,
   toBuckets,
+  valueLabel,
   windowBounds,
 } from './logs-logic';
 import './logs.css';
@@ -85,7 +98,12 @@ const DEFAULT_FACETS = [
 
 function LogsPage() {
   const { t } = useTranslation();
-  const { otelLogsStore: store, projectsStore, userStore } = useStore();
+  const {
+    otelLogsStore: store,
+    projectsStore,
+    userStore,
+    sessionStore,
+  } = useStore();
   const navigate = useNavigate();
   const phone = useViewport() === 'phone';
   const siteId = projectsStore.siteId;
@@ -208,7 +226,7 @@ function LogsPage() {
         const top = values.reduce((m, v) => Math.max(m, v.count), 0);
         return values.map((v) => ({
           value: v.value,
-          label: v.value,
+          label: valueLabel(t, key, v.value),
           share: top ? v.count / top : undefined,
         }));
       },
@@ -284,6 +302,7 @@ function LogsPage() {
       'res.k8s.pod.name',
     ].filter((k) => resourceKeys.has(k)),
     'trace',
+    'session',
   ];
   const added = store.columns.filter((c) => !baseColumns.includes(c));
   const more = (['log', 'resource'] as const).flatMap((scope) =>
@@ -316,6 +335,30 @@ function LogsPage() {
     />
   );
 
+  const play = (l: OtelLog) => {
+    const id = sessionOf(l);
+    if (!id) return;
+    const at = otelLogTimeMs(l);
+    const level = levelOf(l);
+    sessionStore.setReplayPin({
+      sessionId: id,
+      at,
+      kind: 'log',
+      label: l.body,
+      detail: [l.serviceName, l.severityText || levelLabel(t, level)]
+        .filter(Boolean)
+        .join(' · '),
+      tone:
+        level === 'error' ? 'danger' : level === 'warn' ? 'warning' : undefined,
+      backUrl: withSiteId(logsRoute(), siteId),
+    });
+    // Open in Logs lands on this drawer even after newer lines push it out
+    store.openLog(l, true);
+    navigate(
+      `${withSiteId(sessionRoute(id), siteId)}?jumpto=${Math.max(0, at - PIN_LEAD)}`,
+    );
+  };
+
   const filters = store.rules.length > 0 && (
     <FilterBar
       editor={editor}
@@ -342,37 +385,178 @@ function LogsPage() {
     />
   );
 
-  const empty = store.error ? (
+  /* a part with no answer shows no figure */
+  const status = store.loading
+    ? 'loading'
+    : store.logs.length > 0
+      ? 'ready'
+      : store.searchFailed
+        ? 'error'
+        : store.neverSent
+          ? 'first'
+          : 'ready';
+  const failed = (onRetry: () => void) => (
     <EmptyState
-      title={t('Logs could not load')}
-      hint={store.error}
-      action={
-        <Button onClick={() => void store.run()}>{t('Try again')}</Button>
-      }
-    />
-  ) : ruleCount > 0 ? (
-    <EmptyState
-      title={t('No lines match')}
+      state="logs-error"
+      title={t("The logs didn't load")}
       hint={t(
-        'Every filter above is doing its job. Loosen one, or widen the window.',
+        "The logs service didn't answer. Try again, or narrow the window.",
       )}
-      action={
-        <Button onClick={store.clearRules}>{t('Show every line')}</Button>
-      }
-    />
-  ) : (
-    <EmptyState
-      title={t('No lines in this window')}
-      hint={t(
-        'Widen the window, or point your services at this project over OpenTelemetry.',
-      )}
-      action={
-        <Button onClick={() => navigate(client(CLIENT_TABS.OPENTELEMETRY))}>
-          {t('Send logs')}
-        </Button>
-      }
+      action={<Button onClick={onRetry}>{t('Try again')}</Button>}
     />
   );
+  const span =
+    'preset' in w
+      ? (LOG_PRESETS.find((p) => p.value === w.preset)?.minutes ?? 0)
+      : 0;
+  const widen = LOG_PRESETS.find(
+    (p) => p.minutes >= 24 * 60 && p.minutes > span,
+  );
+  const empty =
+    status === 'error' ? (
+      failed(() => void store.run())
+    ) : status === 'first' ? (
+      <EmptyState
+        state="logs-first"
+        title={t('No logs yet')}
+        hint={t(
+          "Logs arrive over OpenTelemetry. Point your services' exporter at this project and lines show here.",
+        )}
+        action={
+          <Button
+            variant="primary"
+            onClick={() => navigate(client(CLIENT_TABS.OPENTELEMETRY))}
+          >
+            {t('Send logs')}
+          </Button>
+        }
+      />
+    ) : ruleCount > 0 ? (
+      <EmptyState
+        state="logs-nomatch"
+        title={t('No lines match')}
+        hint={t(
+          'Every filter above is doing its job. Loosen one, or widen the window.',
+        )}
+        action={
+          <Button onClick={store.clearRules}>{t('Show every line')}</Button>
+        }
+      />
+    ) : (
+      <EmptyState
+        state="logs-window"
+        title={
+          'preset' in w
+            ? t('No lines in the {{window}}', {
+                window: presetLabel(w.preset).toLowerCase(),
+              })
+            : t('No lines in this window')
+        }
+        hint={t('Widen the window, or refresh for new lines.')}
+        action={
+          widen && (
+            <Button onClick={() => store.setWindow({ preset: widen.value })}>
+              {presetLabel(widen.value)}
+            </Button>
+          )
+        }
+      />
+    );
+
+  const chartWait = status === 'loading' || store.histogramLoading;
+  const chart =
+    status === 'error' || status === 'first' ? null : chartWait ? (
+      <div
+        className="m-logs__chart m-logs__chart--wait"
+        role="status"
+        aria-label={t('Loading the chart')}
+      >
+        <span className="m-logs__chart-wait" />
+      </div>
+    ) : store.chartFailed ? (
+      <div className="m-logs__chart m-logs__chart--fail">
+        <span>{t("The chart didn't load. The lines below are complete.")}</span>
+        <Button
+          size="sm"
+          variant="subtle"
+          onClick={() => store.retryPart('chart')}
+        >
+          {t('Try again')}
+        </Button>
+      </div>
+    ) : (
+      <LogHistogram
+        buckets={buckets}
+        step={step}
+        levels={levelsOn}
+        counts={counts}
+        onToggleLevel={toggleLevel}
+        onWindow={(from, to) => store.narrowWindow(clampWindow(from, to))}
+        back={
+          zoomBack ? { label: backLabel, onBack: store.zoomOut } : undefined
+        }
+        withDate={withDate}
+        legendSlot={legendSlot}
+      />
+    );
+
+  const rail =
+    status === 'loading' || store.facetsLoading ? (
+      <div className="m-logs__railwait">
+        <SkeletonRows rows={7} columns={[70, 18]} />
+      </div>
+    ) : status === 'error' ? (
+      <p className="m-logs__railnote">
+        {t('The facets come back with the lines.')}
+      </p>
+    ) : store.facetsFailed ? (
+      <div className="m-logs__railnote">
+        <p>{t("The facets didn't load.")}</p>
+        <Button
+          size="sm"
+          variant="subtle"
+          onClick={() => store.retryPart('facets')}
+        >
+          {t('Try again')}
+        </Button>
+      </div>
+    ) : (
+      <FacetRail
+        facets={facetKeys.map((key) => {
+          const { values, loading, failed } = store.facetValuesOf(key);
+          const on = store.valuesOn(key);
+          // the API matches these values exactly, case included
+          const list = values.map((v) => ({
+            value: v.value,
+            label: valueLabel(t, key, v.value),
+            count: v.count,
+            on: on.includes(v.value),
+          }));
+          for (const v of on)
+            if (!list.some((x) => x.value === v))
+              list.push({
+                value: v,
+                label: valueLabel(t, key, v),
+                count: 0,
+                on: true,
+              });
+          return {
+            key,
+            label: keyLabel(t, key),
+            values: list,
+            loading,
+            failed,
+          };
+        })}
+        onToggle={(k, v) => store.toggleValue(k, v)}
+        onClearFacet={store.clearFacet}
+        onHide={() => store.setRail(false)}
+        facetKeys={facetKeys}
+        onFacetKeys={store.setFacetKeys}
+        choices={facetChoices(t, store.facets)}
+      />
+    );
+  const withRail = !phone && status !== 'first';
 
   return (
     <ValueSourceContext.Provider value={valueSource}>
@@ -422,52 +606,22 @@ function LogsPage() {
               {
                 '--m-logs-rail-w': `${store.railWidth}px`,
                 '--m-logs-rail-cur':
-                  store.railOpen && !phone ? `${store.railWidth}px` : '0px',
+                  store.railOpen && withRail ? `${store.railWidth}px` : '0px',
               } as CSSProperties
             }
           >
             {!phone && (
+              // kept without a rail: it holds the grid's first column
               <div
                 className="m-logs__railbox"
-                {...(!store.railOpen
+                {...(!store.railOpen || !withRail
                   ? { inert: true, 'aria-hidden': true }
                   : {})}
               >
-                <div className="m-logs__railfill">
-                  <FacetRail
-                    facets={facetKeys.map((key) => {
-                      const { values, loading } = store.facetValuesOf(key);
-                      const on = store.valuesOn(key);
-                      // the API matches these values exactly, case included
-                      const list = values.map((v) => ({
-                        value: v.value,
-                        count: v.count,
-                        on: on.includes(v.value),
-                      }));
-                      for (const v of on)
-                        if (!list.some((x) => x.value === v))
-                          list.push({ value: v, count: 0, on: true });
-                      return {
-                        key,
-                        label: keyLabel(t, key),
-                        values: list,
-                        loading,
-                      };
-                    })}
-                    onToggle={(k, v) => store.toggleValue(k, v)}
-                    onClearFacet={store.clearFacet}
-                    onHide={() => store.setRail(false)}
-                    facetKeys={facetKeys}
-                    onFacetKeys={store.setFacetKeys}
-                    choices={[
-                      { key: 'service', label: t('Service') },
-                      ...more.map((m) => ({ key: m.value, label: m.label })),
-                    ]}
-                  />
-                </div>
+                <div className="m-logs__railfill">{withRail && rail}</div>
               </div>
             )}
-            {!phone && (
+            {withRail && (
               <PaneHandle
                 className="m-logs__handle"
                 open={store.railOpen}
@@ -482,7 +636,7 @@ function LogsPage() {
               />
             )}
             <div className="m-logs__main">
-              {!phone && !store.railOpen && (
+              {withRail && !store.railOpen && (
                 <div className="m-logs__edge">
                   <span className="m-logs__edge-show">
                     <IconButton
@@ -529,6 +683,7 @@ function LogsPage() {
                   />
                   <ExportControl
                     total={store.total}
+                    loaded={store.logs.length}
                     collect={store.collectExport}
                     from={bounds.from}
                     to={bounds.to}
@@ -538,23 +693,7 @@ function LogsPage() {
                   {displayControl}
                 </span>
               </div>
-              <LogHistogram
-                buckets={buckets}
-                step={step}
-                levels={levelsOn}
-                counts={counts}
-                onToggleLevel={toggleLevel}
-                onWindow={(from, to) =>
-                  store.narrowWindow(clampWindow(from, to))
-                }
-                back={
-                  zoomBack
-                    ? { label: backLabel, onBack: store.zoomOut }
-                    : undefined
-                }
-                withDate={withDate}
-                legendSlot={legendSlot}
-              />
+              {chart}
               <NewRowsBand
                 count={store.newCount}
                 label={t('Show {{n}} new lines', {
@@ -564,7 +703,7 @@ function LogsPage() {
                 stickyTop="var(--m-logs-bar-h, 3rem)"
                 onShow={store.showNew}
               />
-              {store.loading && store.logs.length === 0 ? (
+              {status === 'loading' ? (
                 <SkeletonRows rows={8} />
               ) : store.logs.length === 0 ? (
                 empty
@@ -583,22 +722,12 @@ function LogsPage() {
                 <>
                   {(store.pageError || store.searchFailed) &&
                   store.pageRows.length === 0 ? (
-                    <EmptyState
-                      title={t('Logs could not load')}
-                      hint={store.pageError ?? store.error}
-                      action={
-                        // a failed search has no page to ask again: search anew
-                        <Button
-                          onClick={
-                            store.searchFailed
-                              ? () => void store.run()
-                              : store.retryPage
-                          }
-                        >
-                          {t('Try again')}
-                        </Button>
-                      }
-                    />
+                    // a failed search has no page to ask again: search anew
+                    failed(
+                      store.searchFailed
+                        ? () => void store.run()
+                        : store.retryPage,
+                    )
                   ) : store.pageLoading ? (
                     <SkeletonRows rows={Math.min(store.pageSize, 12)} />
                   ) : (
@@ -607,6 +736,7 @@ function LogsPage() {
                       withDate={withDate}
                       openId={store.openId}
                       onOpen={store.openLog}
+                      onPlay={play}
                       columns={store.columns}
                     />
                   )}
@@ -662,9 +792,14 @@ function LogsPage() {
         related={store.related}
         onOpen={store.openLog}
         termState={store.termState}
-        onTerm={store.setTerm}
+        // the answer is the list; undoing a filter keeps the line open
+        onTerm={(key, value, operator, on) => {
+          store.setTerm(key, value, operator, on);
+          if (on) store.open(null);
+        }}
         columns={store.columns}
         onToggleColumn={store.toggleColumn}
+        onPlay={play}
         withDate={withDate}
       />
       <SaveViewDialog

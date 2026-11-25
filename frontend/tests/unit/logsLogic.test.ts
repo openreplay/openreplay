@@ -1,15 +1,25 @@
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 
 import {
+  NO_SERVICE,
   drillCards,
+  exportLines,
+  facetChoices,
+  isFacetKey,
   keepsValue,
   levelOfText,
+  lineFields,
   lineHeadFacts,
   logFilter,
   rulesToFilter,
   sameRules,
+  valueLabel,
   windowBounds,
 } from '../../app/components/Observability/logs-logic';
+import {
+  valueText,
+  viewOf,
+} from '../../app/components/shared/FilterEditor/catalogue';
 import OtelLogsStore from '../../app/mstore/otelLogsStore';
 import { otelLogsService } from '../../app/services';
 
@@ -51,6 +61,30 @@ describe('rulesToFilter', () => {
         },
         { scope: 'log', key: 'http.route', op: 'contains', values: ['/pay'] },
         { scope: 'resource', key: 'k8s.pod.name', op: 'exists', values: [] },
+      ],
+    });
+  });
+
+  test('the empty service is sent as the API names it', () => {
+    expect(
+      rulesToFilter([
+        { name: 'service', operator: 'is', value: [NO_SERVICE, 'web'] },
+        { name: 'service', operator: 'isNot', value: [NO_SERVICE] },
+        { name: 'service', operator: 'contains', value: [NO_SERVICE] },
+      ]),
+    ).toEqual({
+      query: '',
+      services: ['', 'web'],
+      severities: [],
+      attributes: [
+        { scope: 'resource', key: 'service.name', op: 'isNot', values: [''] },
+        { scope: 'resource', key: 'service.name', op: 'exists', values: [] },
+        {
+          scope: 'resource',
+          key: 'service.name',
+          op: 'contains',
+          values: [NO_SERVICE],
+        },
       ],
     });
   });
@@ -118,6 +152,116 @@ describe('keepsValue', () => {
       keeps('attr.x', [{ name: 'attr.x', operator: 'is', value: [' '] }]),
     ).toEqual(['a', 'b', 'c', 'A']);
   });
+
+  test('the empty service is a value like any other', () => {
+    const f = keepsValue('service', [
+      { name: 'service', operator: 'is', value: [NO_SERVICE] },
+    ]);
+    expect(['web', NO_SERVICE].filter(f!)).toEqual([NO_SERVICE]);
+  });
+});
+
+describe('the empty service', () => {
+  const t = ((k: string) => (k === '(no service)' ? 'none' : k)) as any;
+
+  test('reads as "(no service)" in cells and chips', () => {
+    expect(valueLabel(t, 'service', '')).toBe('none');
+    expect(valueLabel(t, 'service', NO_SERVICE)).toBe('none');
+    expect(valueLabel(t, 'service', 'web')).toBe('web');
+    expect(valueLabel(t, 'attr.x', '')).toBe('');
+    const rule = {
+      ...logFilter('service', 'Service'),
+      value: [NO_SERVICE, 'web'],
+    };
+    expect(valueText(t, viewOf(rule, '0'))).toBe('none, web');
+  });
+
+  test('the drawer offers it to filter by', () => {
+    const line = (serviceName: string, res: Record<string, string>) =>
+      ({ serviceName, logAttributes: {}, resourceAttributes: res }) as any;
+    const service = (l: any) =>
+      lineFields(l).resource.filter((f) => f.key === 'service');
+    expect(service(line('', { 'host.name': 'h' }))).toEqual([
+      {
+        name: 'service.name',
+        value: NO_SERVICE,
+        key: 'service',
+        multiline: false,
+      },
+    ]);
+    expect(service(line('', { 'service.name': '' }))[0].value).toBe(NO_SERVICE);
+    expect(service(line('web', { 'service.name': 'web' }))[0].value).toBe(
+      'web',
+    );
+    expect(service(line('web', {}))).toEqual([]);
+  });
+});
+
+describe('facet keys', () => {
+  test('ids, the message and the level are never facets', () => {
+    expect(
+      [
+        'request.id',
+        'trace_id',
+        'requestId',
+        'traceID',
+        'http.request.header.x-request-id',
+        'user.id',
+        'id',
+        'msg',
+        'level',
+        'severity',
+        'exception.stacktrace',
+        'openreplay.session.id',
+      ].filter(isFacetKey),
+    ).toEqual([]);
+    expect(
+      [
+        'http.route',
+        'http.response.status_code',
+        'deployment.environment.name',
+        'paid',
+        'valid',
+        'message.kind',
+        'log.level',
+      ].filter(isFacetKey),
+    ).toEqual([
+      'http.route',
+      'http.response.status_code',
+      'deployment.environment.name',
+      'paid',
+      'valid',
+      'message.kind',
+      'log.level',
+    ]);
+  });
+
+  test('Choose facets offers the service, then the keys that make one', () => {
+    const t = ((k: string) => k) as any;
+    expect(
+      facetChoices(t, {
+        services: [],
+        severities: [],
+        attributeKeys: {
+          log: [
+            { key: 'request.id', count: 9 },
+            { key: 'msg', count: 9 },
+            { key: 'http.route', count: 9 },
+          ],
+          resource: [
+            { key: 'service.name', count: 9 },
+            { key: 'service.instance.id', count: 9 },
+            { key: 'k8s.pod.name', count: 9 },
+          ],
+        },
+        sampled: false,
+      }),
+    ).toEqual([
+      { key: 'service', label: 'Service' },
+      { key: 'res.k8s.pod.name', label: 'Pod' },
+      { key: 'attr.http.route', label: 'Route' },
+    ]);
+  });
 });
 
 test('sameRules ignores order, and case only for levels', () => {
@@ -154,7 +298,7 @@ test('windowBounds anchors a preset at now', () => {
   });
 });
 
-test('drillCards: service and level first, internal keys out, by presence', () => {
+test('drillCards: service and level first, non-facet keys out, by presence', () => {
   const cards = drillCards(
     {
       services: [],
@@ -164,6 +308,9 @@ test('drillCards: service and level first, internal keys out, by presence', () =
           { key: 'http.route', count: 40 },
           { key: 'openreplay.session.id', count: 90 },
           { key: 'exception.stacktrace', count: 5 },
+          { key: 'request.id', count: 100 },
+          { key: 'msg', count: 100 },
+          { key: 'level', count: 100 },
         ],
         resource: [
           { key: 'service.name', count: 100 },
@@ -272,6 +419,94 @@ describe('lineHeadFacts', () => {
   test('a line with nothing keeps every cell', () => {
     expect(cells(line({}))).toEqual(['-', '-', '-', '-', '-', '-']);
   });
+
+  test('each fact filters by the key its value came from', () => {
+    const keys = (l: any) =>
+      lineHeadFacts(t, l)
+        .flat()
+        .map((f) => f.key ?? null);
+    expect(
+      keys(
+        line(
+          {
+            'http.request.method': 'GET',
+            'http.route': '/users/:id',
+            'http.response.status_code': '503',
+            duration_ms: '1500',
+          },
+          {
+            'k8s.pod.name': 'api-1',
+            'deployment.environment.name': 'prod',
+            'k8s.namespace.name': 'shop',
+          },
+        ),
+      ),
+    ).toEqual([
+      'res.k8s.pod.name',
+      'res.deployment.environment.name',
+      'res.k8s.namespace.name',
+      'attr.http.route',
+      'attr.http.response.status_code',
+      null,
+    ]);
+    expect(
+      keys(
+        line(
+          { 'http.method': 'POST', 'req.url': '/a', 'res.statusCode': '200' },
+          { 'deployment.environment': 'staging' },
+        ),
+      ),
+    ).toEqual([
+      null,
+      'res.deployment.environment',
+      null,
+      'attr.req.url',
+      'attr.res.statusCode',
+      null,
+    ]);
+  });
+});
+
+describe('exportLines', () => {
+  const t = ((k: string) => k) as any;
+  const l = (body: string, level: string, attrs: Record<string, string>) =>
+    ({
+      id: body,
+      timestamp: '1700000000123456789',
+      severityText: level,
+      severityNumber: 0,
+      serviceName: 'api',
+      body,
+      logAttributes: attrs,
+      resourceAttributes: { 'k8s.pod.name': 'api-1' },
+    }) as any;
+
+  test('CSV reads as the table: its names, its levels, no formulas', () => {
+    const csv = exportLines(
+      t,
+      [
+        l('=cmd|calc', 'WARN', { 'http.route': '/a' }),
+        l('ok, done', 'info', {}),
+      ],
+      'csv',
+      ['level', 'res.k8s.pod.name', 'attr.http.route'],
+    );
+    expect(csv.split('\n')).toEqual([
+      'Time,Level,Pod,Route,Message',
+      "2023-11-14T22:13:20.123Z,Warning,api-1,/a,'=cmd|calc",
+      '2023-11-14T22:13:20.123Z,Info,api-1,,"ok, done"',
+    ]);
+  });
+
+  test('JSON keeps the raw fields', () => {
+    const [row] = exportLines(t, [l('=x', 'WARN', {})], 'json', [
+      'level',
+    ]).split('\n');
+    expect(JSON.parse(row)).toMatchObject({
+      Body: '=x',
+      SeverityText: 'WARN',
+    });
+  });
 });
 
 describe('OtelLogsStore page model', () => {
@@ -336,6 +571,28 @@ describe('OtelLogsStore page model', () => {
     expect(store.total).toBe(20);
   });
 
+  test('the empty service ticks on the rail and narrows the list', async () => {
+    svc.search.mockClear();
+    svc.search.mockResolvedValue({ logs: [], nextCursor: null });
+    svc.histogram.mockResolvedValue({ step: 60, buckets: [] });
+    svc.facets.mockResolvedValue({
+      services: [
+        { value: 'web', count: 3 },
+        { value: '', count: 2 },
+      ],
+      severities: [],
+      attributeKeys: { log: [], resource: [] },
+      sampled: false,
+    });
+    await store.run();
+    const { values } = store.facetValuesOf('service');
+    expect(values.map((v) => v.value)).toEqual(['web', NO_SERVICE]);
+    store.toggleValue('service', values[1].value);
+    expect(store.valuesOn('service')).toEqual([NO_SERVICE]);
+    await store.run();
+    expect((svc.search.mock.lastCall![0] as any).services).toEqual(['']);
+  });
+
   test('views keep their rules per person and project', () => {
     store.loadViews(1, '7');
     store.toggleValue('service', 'web');
@@ -352,5 +609,12 @@ describe('OtelLogsStore page model', () => {
     expect(other.ruleList).toEqual([
       { name: 'service', operator: 'is', value: ['web'] },
     ]);
+  });
+
+  test('a damaged views value loads as no views', () => {
+    localStorage.setItem('__or_logs_views:2:7', '{"id":"v1"}');
+    store.loadViews(2, '7');
+    expect(store.views).toEqual([]);
+    expect(store.view).toBeNull();
   });
 });

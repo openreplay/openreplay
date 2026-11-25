@@ -163,6 +163,10 @@ export function levelTotals(buckets: readonly Bucket[]) {
 
 /* ── keys ───────────────────────────────────────────────────────────────── */
 
+const SESSION_ATTR = 'openreplay.session.id';
+export const sessionOf = (log: OtelLog): string | undefined =>
+  log.logAttributes?.[SESSION_ATTR] || undefined;
+
 const ATTR_LABEL: Record<string, string> = {
   'http.route': 'Route',
   'http.request.method': 'Method',
@@ -205,6 +209,7 @@ export function keyLabel(t: TFunction, key: string): string {
   if (key === 'level') return t('Level');
   if (key === 'service') return t('Service');
   if (key === 'trace') return t('Trace');
+  if (key === 'session') return t('Session');
   const name = nameOfKey(key);
   const label = key.startsWith('res.')
     ? RESOURCE_LABEL[name]
@@ -214,6 +219,48 @@ export function keyLabel(t: TFunction, key: string): string {
 
 export const isInternal = (name: string) =>
   name.startsWith(OTEL_INTERNAL_KEY_PREFIX);
+
+/** keys with a value per line, or copies of what the page already shows */
+const NOT_FACETS = new Set([
+  'msg',
+  'level',
+  'severity',
+  'exception.message',
+  'exception.stacktrace',
+]);
+const ID_KEY = /(?:^|[._-])(?:id|Id|ID)$|[a-z\d](?:Id|ID)$/;
+
+/** what Choose facets and the drilldown offer; filters take every key */
+export const isFacetKey = (name: string) =>
+  !isInternal(name) && !NOT_FACETS.has(name) && !ID_KEY.test(name);
+
+/** a line naming no service, as rules and pickers hold it; the API has '' */
+export const NO_SERVICE = '(no service)';
+export const serviceLabel = (t: TFunction, value: string) =>
+  value === '' || value === NO_SERVICE ? t('(no service)') : value;
+/** a key's value as the page shows it */
+export const valueLabel = (t: TFunction, key: string, value: string) =>
+  key === 'service' ? serviceLabel(t, value) : value;
+
+/** the keys Choose facets offers */
+export function facetChoices(
+  t: TFunction,
+  facets: OtelFacetsResponse | null,
+): { key: string; label: string }[] {
+  const keys = (['resource', 'log'] as const).flatMap((scope) =>
+    (facets?.attributeKeys?.[scope] ?? [])
+      .filter(
+        (k) =>
+          isFacetKey(k.key) &&
+          !(scope === 'resource' && k.key === 'service.name'),
+      )
+      .map((k) => keyOf(scope, k.key)),
+  );
+  return [
+    { key: 'service', label: t('Service') },
+    ...keys.map((key) => ({ key, label: keyLabel(t, key) })),
+  ];
+}
 
 export function valueOfLog(log: OtelLog, key: string): string | undefined {
   switch (key) {
@@ -225,6 +272,8 @@ export function valueOfLog(log: OtelLog, key: string): string | undefined {
       return log.serviceName;
     case 'trace':
       return log.traceId || undefined;
+    case 'session':
+      return sessionOf(log);
     default: {
       const scope = scopeOfKey(key);
       const bag =
@@ -233,6 +282,10 @@ export function valueOfLog(log: OtelLog, key: string): string | undefined {
     }
   }
 }
+
+/** a column's value as the table shows it */
+export const shownValue = (t: TFunction, log: OtelLog, key: string) =>
+  key === 'level' ? levelLabel(t, levelOf(log)) : valueOfLog(log, key);
 
 /* ── catalogue (synthetic store filters, read by the shared filter bar) ─── */
 
@@ -274,6 +327,7 @@ export function logFilter(
     value: [],
     filters: [],
     toJSON: () => ({}) as any,
+    ...(key === 'service' ? { valueLabel: serviceLabel } : {}),
     ...extra,
   } as Filter;
 }
@@ -366,23 +420,28 @@ export function rulesToFilter(rules: readonly LogRule[]): FilterParts {
   const severities: string[] = [];
   const attributes: OtelAttributeFilter[] = [];
   for (const r of rules) {
-    const values = r.value.map((v) => v.trim()).filter(Boolean);
+    const typed = r.value.map((v) => v.trim()).filter(Boolean);
     const nullary = r.operator === 'isAny';
-    if (!nullary && values.length === 0) continue;
+    if (!nullary && typed.length === 0) continue;
     if (r.name === 'message') {
-      words.push(...values);
+      words.push(...typed);
       continue;
     }
     if (r.name === 'level') {
-      severities.push(...values.map((v) => v.toLowerCase()));
+      severities.push(...typed.map((v) => v.toLowerCase()));
       continue;
     }
-    if (r.name === 'service' && r.operator === 'is') {
+    const service = r.name === 'service';
+    const values =
+      service && r.operator !== 'contains'
+        ? typed.map((v) => (v === NO_SERVICE ? '' : v))
+        : typed;
+    if (service && r.operator === 'is') {
       services.push(...values);
       continue;
     }
-    const scope = r.name === 'service' ? 'resource' : scopeOfKey(r.name);
-    const key = r.name === 'service' ? 'service.name' : nameOfKey(r.name);
+    const scope = service ? 'resource' : scopeOfKey(r.name);
+    const key = service ? 'service.name' : nameOfKey(r.name);
     const o = OP[r.operator];
     if (!scope || !o || isInternal(key)) continue;
     attributes.push({
@@ -391,6 +450,9 @@ export function rulesToFilter(rules: readonly LogRule[]): FilterParts {
       op: o,
       values: nullary ? [] : values.slice(0, OTEL_LOGS_LIMITS.maxListValues),
     });
+    // a line without a service carries no service.name for `isNot` to see
+    if (service && o === 'isNot' && values.includes(''))
+      attributes.push({ scope, key, op: 'exists', values: [] });
   }
   return {
     query: words.join(' ').slice(0, OTEL_LOGS_LIMITS.maxQueryLength),
@@ -477,9 +539,11 @@ const STATUS_KEYS = [
   'meta.res.statusCode',
 ];
 const DURATION_MS_KEYS = ['duration_ms', 'responseTime', 'meta.responseTime'];
+const ENV_KEYS = ['deployment.environment.name', 'deployment.environment'];
 
+/** the first of `keys` with a value, and the value */
 const firstOf = (bag: Record<string, string>, keys: readonly string[]) => {
-  for (const k of keys) if (bag[k]) return bag[k];
+  for (const k of keys) if (bag[k]) return { name: k, value: bag[k] };
   return undefined;
 };
 
@@ -497,6 +561,8 @@ function toneOf(name: string, value: string): FieldTone | undefined {
 
 export function lineFields(log: OtelLog) {
   const logFields = Object.entries(log.logAttributes ?? {})
+    // the session id is the drawer's Session block
+    .filter(([name]) => name !== SESSION_ATTR)
     .map(([name, value]) => ({
       name,
       value,
@@ -505,7 +571,10 @@ export function lineFields(log: OtelLog) {
       tone: toneOf(name, value),
     }))
     .sort(byLead(LEAD_ATTRIBUTES));
-  const resource = Object.entries(log.resourceAttributes ?? {})
+  const res = log.serviceName
+    ? log.resourceAttributes
+    : { ...log.resourceAttributes, 'service.name': NO_SERVICE };
+  const resource = Object.entries(res ?? {})
     .map(([name, value]) => ({
       name,
       value,
@@ -537,6 +606,8 @@ export interface HeadFact {
   mono?: boolean;
   tone?: FieldTone;
   empty?: boolean;
+  /** the rule key its value came from; none for a measure (the duration) */
+  key?: string;
 }
 
 const fmtMs = (ms: number) =>
@@ -555,27 +626,34 @@ export function lineHeadFacts(t: TFunction, log: OtelLog): HeadFact[][] {
     extra: Partial<HeadFact> = {},
   ): HeadFact =>
     value ? { label, value, ...extra } : { label, value: '', empty: true };
-  const method = firstOf(a, METHOD_KEYS);
+  const method = firstOf(a, METHOD_KEYS)?.value;
   const route = firstOf(a, ROUTE_KEYS);
   const status = firstOf(a, STATUS_KEYS);
-  const dur = firstOf(a, DURATION_MS_KEYS);
+  const env = firstOf(res, ENV_KEYS);
+  const dur = firstOf(a, DURATION_MS_KEYS)?.value;
   const ms = dur && !Number.isNaN(Number(dur)) ? Number(dur) : null;
   return [
     [
-      fact(t('Pod'), res['k8s.pod.name'], { mono: true }),
-      fact(
-        t('Environment'),
-        res['deployment.environment.name'] ?? res['deployment.environment'],
-      ),
-      fact(t('Namespace'), res['k8s.namespace.name']),
+      fact(t('Pod'), res['k8s.pod.name'], {
+        mono: true,
+        key: 'res.k8s.pod.name',
+      }),
+      fact(t('Environment'), env?.value, { key: env && `res.${env.name}` }),
+      fact(t('Namespace'), res['k8s.namespace.name'], {
+        key: 'res.k8s.namespace.name',
+      }),
     ],
     [
-      fact(t('Request'), route && (method ? `${method} ${route}` : route), {
+      // filters by the route alone, the method is only in the words
+      fact(
+        t('Request'),
+        route && (method ? `${method} ${route.value}` : route.value),
+        { mono: true, key: route && `attr.${route.name}` },
+      ),
+      fact(t('Status'), status?.value, {
         mono: true,
-      }),
-      fact(t('Status'), status, {
-        mono: true,
-        tone: toneOf('http.response.status_code', status ?? ''),
+        tone: toneOf('http.response.status_code', status?.value ?? ''),
+        key: status && `attr.${status.name}`,
       }),
       fact(t('Duration'), ms != null ? fmtMs(ms) : undefined, {
         mono: true,
@@ -608,7 +686,10 @@ export const EXPORT_LIMIT = 10_000;
 /** related lines shown on each side of the open one */
 export const RELATED_SIDE = 150;
 export type ExportFormat = 'csv' | 'json';
+/** the search changed while an export loaded its lines */
+export class SearchChangedError extends Error {}
 export function exportLines(
+  t: TFunction,
   logs: readonly OtelLog[],
   format: ExportFormat,
   columns: readonly string[],
@@ -623,11 +704,11 @@ export function exportLines(
         }),
       )
       .join('\n');
-  const head = ['timestamp', ...columns, 'message'];
+  const head = [t('Time'), ...columns.map((c) => keyLabel(t, c)), t('Message')];
   const rows = slice.map((l) =>
     [
       new Date(otelLogTimeMs(l)).toISOString(),
-      ...columns.map((c) => valueOfLog(l, c)),
+      ...columns.map((c) => shownValue(t, l, c)),
       l.body,
     ]
       .map(csvCell)
@@ -647,8 +728,6 @@ export function exportFileName(from: number, to: number, format: ExportFormat) {
 /* ── drilldown ──────────────────────────────────────────────────────────── */
 
 export const DRILL_VALUES = 5;
-/** keys whose every value is its own: no distribution to read */
-const DRILL_SKIP = new Set(['exception.stacktrace', 'exception.message']);
 
 export interface DrillCard {
   key: string;
@@ -669,7 +748,7 @@ export function drillCards(
   ];
   for (const scope of ['resource', 'log'] as const)
     for (const k of facets.attributeKeys?.[scope] ?? []) {
-      if (isInternal(k.key) || DRILL_SKIP.has(k.key)) continue;
+      if (!isFacetKey(k.key)) continue;
       if (scope === 'resource' && k.key === 'service.name') continue;
       cards.push({
         key: keyOf(scope, k.key),

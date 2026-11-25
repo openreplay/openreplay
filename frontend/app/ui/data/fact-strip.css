@@ -41,3 +41,42 @@
 .m-facts__cell dd.is-empty {
   color: var(--m-content-disabled);
 }
+
+/* a fact that opens its menu: the value hovers as a row does, the box
+   reaching a little past the words (the door truncates, so the cell
+   need not clip it) */
+.m-facts__cell dd:has(> .m-facts__door) {
+  overflow: visible;
+}
+.m-facts__door {
+  display: inline-block;
+  max-width: calc(100% + 12px);
+  margin: -2px -6px;
+  padding: 2px 6px;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--m-radius-control);
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: start;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--m-duration-fast) var(--m-ease-out);
+}
+.m-facts__door:hover,
+.m-facts__door[data-state='open'] {
+  background: var(--m-surface-hover);
+}
+.m-facts__door:focus-visible {
+  outline: 2px solid var(--m-accent-bright);
+  outline-offset: 1px;
+}
+.m-facts__door.is-in {
+  box-shadow: inset 2px 0 0 var(--m-accent-bright);
+}
+.m-facts__door.is-out {
+  text-decoration: line-through;
+  text-decoration-color: var(--m-content-muted);
+}

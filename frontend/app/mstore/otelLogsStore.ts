@@ -11,7 +11,9 @@ import {
   EXPORT_LIMIT,
   type LogRule,
   type LogWindow,
+  NO_SERVICE,
   RELATED_SIDE,
+  SearchChangedError,
   logFilter,
   rulesToFilter,
   sameRules,
@@ -76,11 +78,13 @@ export default class OtelLogsStore {
   exporting = false;
   histogramLoading = false;
   facetsLoading = false;
-  /** a request of the last search failed: the list, histogram or facets */
-  error: string | null = null;
-  /** the list request itself failed: what is held, if anything, is from
-      the window before, so nothing pages or exports from it */
-  searchFailed = false;
+  /** the list request failed: what is held, if anything, is from the
+      window before, so nothing pages or exports from it */
+  listError: string | null = null;
+  chartFailed = false;
+  facetsFailed = false;
+  /** the window came back empty with no filters and so did the past 30 days */
+  neverSent = false;
   /** a page past the first failed; asking again is safe */
   pageError: string | null = null;
 
@@ -113,7 +117,12 @@ export default class OtelLogsStore {
   /** top values per rail key, for the applied filter */
   facetValueCache = observable.map<
     string,
-    { values: OtelValueCount[]; loading: boolean; generation: number }
+    {
+      values: OtelValueCount[];
+      loading: boolean;
+      failed?: boolean;
+      generation: number;
+    }
   >();
 
   /** builds a rule's chip label; the page sets it with its translations */
@@ -180,19 +189,21 @@ export default class OtelLogsStore {
     };
   };
 
+  get searchFailed(): boolean {
+    return this.listError != null;
+  }
+
   /** Runs search, histogram and facets for the current filter; aborts any in-flight run.
-      `quiet` keeps what is shown until the new results land (auto-refresh). */
+      `quiet` keeps what is shown, each part's failure too, until the new
+      results land (auto-refresh). */
   fetch = async (quiet = false) => {
     this.controller?.abort();
     const controller = new AbortController();
     this.controller = controller;
     this.landed = false;
     const filter = this.buildFilter();
-    const { signal } = controller;
 
     this.appliedFilter = filter;
-    this.error = null;
-    this.searchFailed = false;
     this.pageError = null;
     this.loading = !quiet;
     this.refreshing = quiet;
@@ -202,6 +213,10 @@ export default class OtelLogsStore {
     this.generation += 1;
     this.fetchSeq += 1;
     if (!quiet) {
+      this.listError = null;
+      this.chartFailed = false;
+      this.facetsFailed = false;
+      this.neverSent = false;
       this.logs = [];
       this.nextCursor = null;
       this.histogramLoading = true;
@@ -209,64 +224,130 @@ export default class OtelLogsStore {
       this.facetValueCache.clear();
     }
 
-    const current = () => this.controller === controller;
-    const fail = (e: any) => {
-      if (isAbort(e) || !current()) return;
-      runInAction(() => {
-        if (!this.error) this.error = e?.message ?? 'Failed to load logs';
-      });
-    };
-
     await Promise.all([
-      otelLogsService
-        .search({ ...filter, limit: this.pageSize }, signal)
-        .then((r) => {
-          if (!current()) return;
-          runInAction(() => {
-            this.logs = r.logs;
-            this.nextCursor = r.nextCursor;
-          });
-        })
-        .catch((e) => {
-          if (isAbort(e) || !current()) return;
-          // the list's own message, over a histogram or facets one
-          runInAction(() => {
-            this.searchFailed = true;
-            this.error = e?.message ?? 'Failed to load logs';
-          });
-        })
-        .finally(() => {
-          if (current())
-            runInAction(() => {
-              this.loading = false;
-              this.refreshing = false;
-            });
-        }),
-      otelLogsService
-        .histogram(filter, signal)
-        .then((r) => {
-          if (current()) runInAction(() => (this.histogram = r));
-        })
-        .catch((e) => {
-          // the one held counts another window
-          if (!isAbort(e) && current())
-            runInAction(() => (this.histogram = null));
-          fail(e);
-        })
-        .finally(() => {
-          if (current()) runInAction(() => (this.histogramLoading = false));
-        }),
-      otelLogsService
-        .facets(filter, signal)
-        .then((r) => {
-          if (current()) runInAction(() => (this.facets = r));
-        })
-        .catch(fail)
-        .finally(() => {
-          if (current()) runInAction(() => (this.facetsLoading = false));
-        }),
+      this.askList(filter, controller, quiet),
+      this.askChart(filter, controller),
+      this.askFacets(filter, controller),
     ]);
-    if (current()) this.landed = true;
+    if (this.controller === controller) this.landed = true;
+  };
+
+  private askList = (
+    filter: OtelLogsFilter,
+    controller: AbortController,
+    quiet: boolean,
+  ) => {
+    const current = () => this.controller === controller;
+    return otelLogsService
+      .search({ ...filter, limit: this.pageSize }, controller.signal)
+      .then(async (r) => {
+        const probe =
+          !quiet &&
+          r.logs.length === 0 &&
+          !filter.query &&
+          !filter.services?.length &&
+          !filter.severities?.length &&
+          !filter.attributes?.length;
+        const neverSent =
+          probe &&
+          (await this.nothingSentBy(filter.endTime, controller.signal));
+        if (!current()) return;
+        runInAction(() => {
+          this.logs = r.logs;
+          this.nextCursor = r.nextCursor;
+          this.listError = null;
+          if (!quiet || r.logs.length) this.neverSent = neverSent;
+        });
+      })
+      .catch((e) => {
+        if (isAbort(e) || !current()) return;
+        runInAction(() => {
+          this.listError = e?.message ?? 'Failed to load logs';
+        });
+      })
+      .finally(() => {
+        if (current())
+          runInAction(() => {
+            this.loading = false;
+            this.refreshing = false;
+          });
+      });
+  };
+
+  /** no line over the longest window the API allows; an unanswered ask
+      claims nothing */
+  private nothingSentBy = (now: number, signal: AbortSignal) =>
+    otelLogsService
+      .search(
+        {
+          startTime: now - OTEL_LOGS_LIMITS.maxRangeMs,
+          endTime: now,
+          limit: 1,
+        },
+        signal,
+      )
+      .then(
+        (r) => r.logs.length === 0,
+        () => false,
+      );
+
+  private askChart = (filter: OtelLogsFilter, controller: AbortController) => {
+    const current = () => this.controller === controller;
+    return otelLogsService
+      .histogram(filter, controller.signal)
+      .then((r) => {
+        if (!current()) return;
+        runInAction(() => {
+          this.histogram = r;
+          this.chartFailed = false;
+        });
+      })
+      .catch((e) => {
+        if (isAbort(e) || !current()) return;
+        // the one held counts another window
+        runInAction(() => {
+          this.histogram = null;
+          this.chartFailed = true;
+        });
+      })
+      .finally(() => {
+        if (current()) runInAction(() => (this.histogramLoading = false));
+      });
+  };
+
+  private askFacets = (filter: OtelLogsFilter, controller: AbortController) => {
+    const current = () => this.controller === controller;
+    return otelLogsService
+      .facets(filter, controller.signal)
+      .then((r) => {
+        if (!current()) return;
+        runInAction(() => {
+          this.facets = r;
+          this.facetsFailed = false;
+        });
+      })
+      .catch((e) => {
+        if (isAbort(e) || !current()) return;
+        runInAction(() => (this.facetsFailed = true));
+      })
+      .finally(() => {
+        if (current()) runInAction(() => (this.facetsLoading = false));
+      });
+  };
+
+  /** the chart or the facets of the shown lines failed: asks that part again */
+  retryPart = (part: 'chart' | 'facets') => {
+    const { appliedFilter, controller } = this;
+    if (!appliedFilter || !controller) return;
+    if (part === 'chart') {
+      this.chartFailed = false;
+      this.histogramLoading = true;
+      void this.askChart(appliedFilter, controller);
+    } else {
+      this.facetsFailed = false;
+      this.facetsLoading = true;
+      void this.askFacets(appliedFilter, controller);
+    }
   };
 
   /** Next page of the applied filter; no-op while loading or at the end.
@@ -315,19 +396,18 @@ export default class OtelLogsStore {
   /** Every line up to the export limit; refresh ticks wait meanwhile so the
       pages are not swapped out under it. A failed list request refuses:
       what is held is from the window before. A failed histogram or facets
-      request does not touch the lines. */
-  collectExport = async (): Promise<OtelLog[]> => {
+      request does not touch the lines. An abort stops it after the page out. */
+  collectExport = async (signal?: AbortSignal): Promise<OtelLog[]> => {
     this.exporting = true;
     // an earlier failed page would stop ensure() before it asks again
     this.pageError = null;
     const { controller } = this;
     try {
-      await this.ensure(EXPORT_LIMIT);
+      await this.ensure(EXPORT_LIMIT, signal);
+      if (signal?.aborted) throw signal.reason;
       if (this.controller !== controller)
-        throw new Error('The search changed while exporting');
-      const failed = this.searchFailed
-        ? (this.error ?? 'Failed to load logs')
-        : this.pageError;
+        throw new SearchChangedError('The search changed while exporting');
+      const failed = this.listError ?? this.pageError;
       if (failed) throw new Error(failed);
       return this.logs;
     } finally {
@@ -342,10 +422,10 @@ export default class OtelLogsStore {
   };
 
   /** Loads pages until `count` lines are held (or the list ends). */
-  ensure = async (count: number) => {
+  ensure = async (count: number, signal?: AbortSignal) => {
     const want = Math.min(count, EXPORT_LIMIT);
     const controller = this.controller;
-    while (this.controller === controller) {
+    while (this.controller === controller && !signal?.aborted) {
       // a search still out decides the cursor: read it once it lands
       if (this.loading || this.refreshing || this.loadingMore) {
         await new Promise((r) => setTimeout(r, 50));
@@ -394,8 +474,10 @@ export default class OtelLogsStore {
     this.loadingMore = false;
     this.histogramLoading = false;
     this.facetsLoading = false;
-    this.error = null;
-    this.searchFailed = false;
+    this.listError = null;
+    this.chartFailed = false;
+    this.facetsFailed = false;
+    this.neverSent = false;
     this.pageError = null;
     this.ingestKeys = [];
     this.rules = [];
@@ -714,6 +796,7 @@ export default class OtelLogsStore {
             this.facetValueCache.set(key, {
               values: held?.values ?? [],
               loading: false,
+              failed: true,
               generation,
             }),
           );
@@ -724,10 +807,13 @@ export default class OtelLogsStore {
   /** a key's values with counts: service and level from the facets */
   facetValuesOf = (
     key: string,
-  ): { values: OtelValueCount[]; loading: boolean } => {
+  ): { values: OtelValueCount[]; loading: boolean; failed?: boolean } => {
     if (key === 'service')
       return {
-        values: this.facets?.services ?? [],
+        values: (this.facets?.services ?? []).map((s) => ({
+          ...s,
+          value: s.value || NO_SERVICE,
+        })),
         loading: this.facetsLoading,
       };
     if (key === 'level') {
@@ -813,8 +899,10 @@ export default class OtelLogsStore {
     this.openId = id;
   };
 
-  openLog = (log: OtelLog) => {
-    this.openExtra = this.logs.some((l) => l.id === log.id) ? null : log;
+  /** `keep` holds the line even once a refetch drops it from the list */
+  openLog = (log: OtelLog, keep = false) => {
+    this.openExtra =
+      keep || !this.logs.some((l) => l.id === log.id) ? log : null;
     this.openId = log.id;
   };
 
@@ -884,8 +972,8 @@ export default class OtelLogsStore {
     this.viewsKey = key;
     this.viewId = null;
     try {
-      const raw = localStorage.getItem(key);
-      this.views = raw ? JSON.parse(raw) : [];
+      const parsed = JSON.parse(localStorage.getItem(key) ?? '[]');
+      this.views = Array.isArray(parsed) ? parsed : [];
     } catch {
       this.views = [];
     }

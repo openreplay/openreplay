@@ -1,5 +1,5 @@
 import { FilterKey } from '@/types/filter/filterType';
-import { useChartTheme } from '@/ui/data/chart';
+import { mixHex, useChartTheme } from '@/ui/data/chart';
 import { NoContent } from '@/ui/feedback/NoContent';
 import { SankeyChart } from 'echarts/charts';
 import { Info } from 'lucide-react';
@@ -23,20 +23,6 @@ echarts.use([SankeyChart]);
 
 const NODE_W = 40;
 const ICON_W = 16;
-const mixHex = (hex: string, toward: string, k: number) => {
-  const c = (x: string) =>
-    [1, 3, 5].map((i) => parseInt(x.slice(i, i + 2), 16));
-  const a = c(hex);
-  const b = c(toward);
-  if (a.some(Number.isNaN) || b.some(Number.isNaN)) return hex;
-  return `#${a
-    .map((v, i) =>
-      Math.round(v + (b[i] - v) * k)
-        .toString(16)
-        .padStart(2, '0'),
-    )
-    .join('')}`;
-};
 let measurer: CanvasRenderingContext2D | null = null;
 /** Fits `text` into `px` at `font`, cutting the middle so a URL keeps its end. */
 function fitMiddle(text: string, px: number, font: string) {

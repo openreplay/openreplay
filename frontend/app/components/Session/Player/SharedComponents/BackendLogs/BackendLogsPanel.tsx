@@ -49,10 +49,11 @@ function BackendLogsPanel() {
   const { projectsStore, sessionStore, integrationsStore } = useStore();
   const integratedServices =
     integrationsStore.integrations.backendLogIntegrations;
-  const defaultTab = integratedServices[0]!.name;
+  // switching project from a replay can empty the list while this is open
+  const defaultTab = integratedServices[0]?.name as ServiceName | undefined;
   const sessionId = sessionStore.currentId;
   const projectId = projectsStore.siteId!;
-  const [tab, setTab] = React.useState<ServiceName>(defaultTab as ServiceName);
+  const [tab, setTab] = React.useState(defaultTab ?? null);
   const { data, isError, isPending, isSuccess, refetch } = useQuery<
     UnifiedLog[]
   >({
@@ -98,8 +99,8 @@ function BackendLogsPanel() {
       </BottomBlock.Header>
 
       <BottomBlock.Content className="overflow-y-auto">
-        {isPending ? <LoadingFetch provider={capitalize(tab)} /> : null}
-        {isError ? (
+        {tab && isPending ? <LoadingFetch provider={capitalize(tab)} /> : null}
+        {tab && isError ? (
           <FailedFetch provider={capitalize(tab)} onRetry={refetch} />
         ) : null}
         {isSuccess ? <LogsTable data={filtered} /> : null}

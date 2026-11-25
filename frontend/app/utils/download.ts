@@ -11,11 +11,16 @@ export function saveBlob(blob: Blob, filename: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-/** one CSV field, quoted when it holds a comma, a quote or a line break */
+/** one CSV field, quoted when it holds a comma, a quote or a line break.
+    One a spreadsheet would run as a formula gets a leading quote. */
 export const csvCell = (v: unknown) => {
-  const s = v == null ? '' : String(v);
+  const raw = v == null ? '' : String(v);
+  const s = /^[=+\-@\t\r]/.test(raw) ? `'${raw}` : raw;
   return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 };
+
+/** without it Excel reads the file in the system's code page: accents and emoji break */
+export const CSV_BOM = '\uFEFF';
 
 export function saveCsv(
   filename: string,
@@ -25,5 +30,8 @@ export function saveCsv(
   const csv = [header, ...rows]
     .map((r) => r.map(csvCell).join(','))
     .join('\r\n');
-  saveBlob(new Blob([csv], { type: 'text/csv;charset=utf-8;' }), filename);
+  saveBlob(
+    new Blob([CSV_BOM, csv], { type: 'text/csv;charset=utf-8;' }),
+    filename,
+  );
 }

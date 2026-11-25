@@ -61,6 +61,7 @@ export function entryFromFilter(f: Filter): CatalogueEntry {
       isEvent && category !== 'segments' && category !== 'features',
     autoCaptured: !!f.autoCaptured,
     options,
+    valueLabel: (f as any).valueLabel,
     // store filters carry an empty list by default: only a real one counts
     operators: f.operators?.length
       ? f.operators.map((o) => ({ value: o.value, label: o.label }))
@@ -250,11 +251,14 @@ export const operatorLabel = (f: SearchFilter) =>
   entryOperators(f.entry).find((o) => o.value === f.operator)?.label ??
   f.operator;
 
-/** The values as read: predefined ones by their label, not their id. */
-export const valueText = (f: SearchFilter) =>
-  f.value
-    .map((v) => f.entry.options?.find((o) => o.value === v)?.label ?? v)
-    .join(', ');
+/** A value as read: a predefined one by its label, not its id. */
+export const valueLabelOf = (t: TFunction, entry: CatalogueEntry, v: string) =>
+  entry.options?.find((o) => o.value === v)?.label ??
+  entry.valueLabel?.(t, v) ??
+  v;
+
+export const valueText = (t: TFunction, f: SearchFilter) =>
+  f.value.map((v) => valueLabelOf(t, f.entry, v)).join(', ');
 
 export function describeFilter(t: TFunction, f: SearchFilter): string {
   const { entry } = f;
@@ -277,7 +281,7 @@ export function describeFilter(t: TFunction, f: SearchFilter): string {
   }
   const op = operatorLabel(f);
   if (isNullary(f.operator)) return `${name} ${op}`;
-  return f.value.length ? `${name} ${op} ${valueText(f)}` : `${name} ${op}…`;
+  return f.value.length ? `${name} ${op} ${valueText(t, f)}` : `${name} ${op}…`;
 }
 
 /** A rule as the collapsed filter's pill shows it: the name, and the operator
@@ -309,7 +313,7 @@ export function ruleParts(
   }
   const op = operatorLabel(f);
   const value = f.value.length
-    ? `${op} ${valueText(f)}`
+    ? `${op} ${valueText(t, f)}`
     : !entry.isEvent && isNullary(f.operator)
       ? op
       : '';

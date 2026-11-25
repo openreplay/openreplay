@@ -29,6 +29,7 @@ import {
   compactCount,
   keepsValue,
   keyLabel,
+  valueLabel,
 } from './logs-logic';
 import { termMenuItems } from './termMenu';
 
@@ -135,7 +136,9 @@ export const LogDrilldown = observer(function LogDrilldown({
         (a) =>
           keyLabel(t, a.key).toLowerCase().includes(q) ||
           a.name.toLowerCase().includes(q) ||
-          valuesOf(a.key).values.some((v) => v.value.toLowerCase().includes(q)),
+          valuesOf(a.key).values.some((v) =>
+            valueLabel(t, a.key, v.value).toLowerCase().includes(q),
+          ),
       )
     : cards;
   const [page, setPage] = useState(1);
@@ -362,7 +365,8 @@ function DrillValueRow({
   onTerm: LogDrilldownProps['onTerm'];
 }) {
   const { t } = useTranslation();
-  const pair = `${label}: ${value}`;
+  const shown = valueLabel(t, attrKey, value);
+  const pair = `${label}: ${shown}`;
   const items: MenuItem[] = [
     // the API only takes levels to include
     ...termMenuItems(
@@ -376,7 +380,7 @@ function DrillValueRow({
       key: 'copy',
       icon: <Copy size={14} />,
       label: t('Copy value'),
-      onClick: () => void copyText(value),
+      onClick: () => void copyText(shown),
     },
   ];
   return (
@@ -385,7 +389,7 @@ function DrillValueRow({
         <button
           type="button"
           className={`m-logs__drill-row${state ? ` is-${state}` : ''}`}
-          title={value}
+          title={shown}
         >
           {share != null && (
             <span
@@ -394,7 +398,7 @@ function DrillValueRow({
               aria-hidden="true"
             />
           )}
-          <span className="m-logs__drill-value">{value}</span>
+          <span className="m-logs__drill-value">{shown}</span>
           {state === 'out' ? (
             <CircleMinus
               size={12}

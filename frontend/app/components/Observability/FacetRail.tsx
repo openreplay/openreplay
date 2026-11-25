@@ -11,6 +11,7 @@ import { compactCount } from './logs-logic';
 
 export interface FacetValue {
   value: string;
+  label: string;
   count: number;
   on: boolean;
 }
@@ -21,6 +22,7 @@ export interface FacetRailProps {
     label: string;
     values: readonly FacetValue[];
     loading?: boolean;
+    failed?: boolean;
   }[];
   onToggle: (key: string, value: string) => void;
   onClearFacet: (key: string) => void;
@@ -68,6 +70,7 @@ export function FacetRail({
           label={f.label}
           values={f.values}
           loading={f.loading}
+          failed={f.failed}
           onToggle={onToggle}
           onClear={() => onClearFacet(f.key)}
         />
@@ -155,6 +158,7 @@ function Facet({
   label,
   values,
   loading,
+  failed,
   onToggle,
   onClear,
 }: {
@@ -162,6 +166,7 @@ function Facet({
   label: string;
   values: readonly FacetValue[];
   loading?: boolean;
+  failed?: boolean;
   onToggle: (key: string, value: string) => void;
   onClear: () => void;
 }) {
@@ -173,7 +178,7 @@ function Facet({
   const searchable = values.length > 8;
   const lower = q.toLowerCase();
   const shown = (
-    q ? values.filter((v) => v.value.toLowerCase().includes(lower)) : values
+    q ? values.filter((v) => v.label.toLowerCase().includes(lower)) : values
   ).slice(0, all || q ? undefined : SHOWN);
   const hidden = values.length - SHOWN;
   return (
@@ -228,7 +233,7 @@ function Facet({
                 </span>
               }
             >
-              {v.value}
+              {v.label}
             </CheckRow>
           ))}
           {shown.length === 0 && (
@@ -237,7 +242,9 @@ function Facet({
                 ? t('Loading…')
                 : q
                   ? t('Nothing matches “{{q}}”', { q })
-                  : t('No values in this window')}
+                  : failed
+                    ? t("The values didn't load")
+                    : t('No values in this window')}
             </span>
           )}
           {!q && hidden > 0 && (
