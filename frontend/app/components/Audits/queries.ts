@@ -119,10 +119,7 @@ export function useAuditReport(auditId: string | undefined, enabled = true) {
  * Matched sessions for a draft (same body as create), settled for `ms` before it asks.
  * `null` body = not estimable yet. A null `matchedSessions` means the count timed out.
  */
-export function useAuditEstimate(
-  body: CreateAuditRequest | null,
-  ms = 400,
-) {
+export function useAuditEstimate(body: CreateAuditRequest | null, ms = 400) {
   const projectId = useProjectId();
   const key = useDebouncedValue(body ? JSON.stringify(body) : '', ms);
   return useQuery({
@@ -205,8 +202,7 @@ export function useCreateAudit() {
   const projectId = useProjectId();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (body: CreateAuditRequest) =>
-      api.createAudit(projectId, body),
+    mutationFn: (body: CreateAuditRequest) => api.createAudit(projectId, body),
     onSuccess: (audit) => {
       prependAudit(queryClient, projectId, audit);
       void invalidateLists(queryClient, projectId);
