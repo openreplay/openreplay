@@ -12,7 +12,7 @@ clickhouse-connect==1.12.0
 jira==3.10.5
 cachetools==8.0.0
 
-fastapi==0.162.2
+fastapi==0.165.0
 uvicorn[standard]==0.54.0
 python-decouple==3.8
 pydantic[email]==2.14.3
