@@ -18,5 +18,5 @@ export function hasAuditsPermission(user: PermissionSource): boolean {
   return (user.account?.permissions ?? []).includes(AUDITS_PERMISSION);
 }
 
-/** Armada (AI) sections can be picked. */
+/** A guess at AI access while the estimate loads; its `aiAvailable` (per project) decides. */
 export const hasArmadaAccess = (): boolean => anyAgentEnabled();
