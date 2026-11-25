@@ -37,6 +37,7 @@ import { errorStatus } from '../api';
 import { CHAPTERS, reportLink } from '../model';
 import { useAuditReport } from '../queries';
 import { ReportSlide } from './ReportSlide';
+import { addTextLayer } from './pdfText';
 import './report.css';
 import { type Slide, buildDeck, chapterName, pad2 } from './slides';
 
@@ -211,6 +212,7 @@ function AuditReport({
         });
         if (i > 0) pdf.addPage([SLIDE_W, SLIDE_H], 'landscape');
         pdf.addImage(img, 'JPEG', 0, 0, SLIDE_W, SLIDE_H, undefined, 'FAST');
+        addTextLayer(pdf, pages[i]!);
       }
       const name = (title || deck?.meta.title || '')
         .replace(/[^\w\s,.-]+/g, '')
