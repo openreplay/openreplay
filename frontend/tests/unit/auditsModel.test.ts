@@ -4,7 +4,8 @@ import {
   ALL_CHAPTERS,
   AuditDraft,
   AuditItem,
-  chapterSections,
+  MAX_SEGMENTS,
+  chapterOfGroup,
   chaptersOfSections,
   draftProblem,
   emptyDraft,
@@ -12,6 +13,7 @@ import {
   rangeLabel,
   toCreateRequest,
   toListParams,
+  usableChapters,
   usesAiSections,
 } from 'App/components/Audits/model';
 import { Audit } from 'App/components/Audits/types';
@@ -30,13 +32,20 @@ const audit = (patch: Partial<Audit> = {}): Audit => ({
   name: 'Checkout',
   segmentId: '',
   segmentName: '',
+  segments: [],
   filter: { filters: [] },
   reportType: 'analytics',
   typeInputs: {},
   periodDays: 7,
+  periodStart: '2026-11-13T00:00:00Z',
+  periodEnd: '2026-11-20T00:00:00Z',
+  periodCustom: false,
+  chapters: ['web', 'ux'],
+  ai: false,
   sampleSize: 500,
   requestedSampleSize: 500,
   matchedSessions: 8140,
+  matchedUsers: 3100,
   samplePct: 6.1,
   processedSessions: 0,
   progress: 0,
@@ -49,35 +58,38 @@ const audit = (patch: Partial<Audit> = {}): Audit => ({
   ...patch,
 });
 
-describe('chapters and sections', () => {
-  it('sends every section of the picked chapters, in report order', () => {
-    expect(chapterSections(['errors', 'web'], true)).toEqual([
-      'web.numbers',
-      'web.tops',
-      'errors.numbers',
-      'errors.tops',
-      'errors.vitals',
-    ]);
-  });
-
-  it('drops the AI chapters without Armada', () => {
-    expect(orderChapters(['ux', 'web', 'journeys'], false)).toEqual(['web']);
-    expect(emptyDraft(false).chapters).toEqual([
+describe('chapters', () => {
+  it('locks only Issues and journeys without AI access', () => {
+    expect(usableChapters(false)).toEqual([
       'web',
       'usage',
       'errors',
       'retention',
+      'ux',
     ]);
-    expect(emptyDraft(true).chapters).toEqual(ALL_CHAPTERS);
+    expect(usableChapters(true)).toEqual(ALL_CHAPTERS);
+    expect(orderChapters(['journeys', 'ux', 'web'], false)).toEqual([
+      'web',
+      'ux',
+    ]);
+    expect(orderChapters(['journeys', 'web'], true)).toEqual([
+      'web',
+      'journeys',
+    ]);
   });
 
-  it('reads chapters back from stored sections; empty = every chapter', () => {
+  it('maps section groups, old and new names, to chapters', () => {
+    expect(chapterOfGroup('usage')?.key).toBe('usage');
+    expect(chapterOfGroup('product')?.key).toBe('usage');
+    expect(chapterOfGroup('adoption')?.key).toBe('retention');
+  });
+
+  it('reads chapters back from stored sections on older audits', () => {
     expect(chaptersOfSections(['adoption.retention', 'web.tops'])).toEqual([
       'web',
       'retention',
     ]);
     expect(chaptersOfSections(undefined)).toEqual(ALL_CHAPTERS);
-    expect(chaptersOfSections([])).toEqual(ALL_CHAPTERS);
   });
 
   it('knows which sections are written by a model', () => {
@@ -91,7 +103,11 @@ describe('toCreateRequest', () => {
     const filter = { name: 'url', operator: 'contains', value: ['/cart'] };
     expect(
       toCreateRequest(
-        draft({ name: '  Cart  ', filters: [filter], chapters: ['web'] }),
+        draft({
+          name: '  Cart  ',
+          filters: [filter],
+          chapters: ['errors', 'web'],
+        }),
         true,
       ),
     ).toEqual({
@@ -99,61 +115,73 @@ describe('toCreateRequest', () => {
       type: 'analytics',
       periodDays: 7,
       notify: false,
-      segmentId: undefined,
+      segmentIds: undefined,
       filter: { filters: [filter], eventsOrder: 'then' },
-      inputs: { sections: ['web.numbers', 'web.tops'] },
+      sections: ['web', 'errors'],
     });
   });
 
-  it('sends a segment without the full-traffic filters', () => {
+  it('sends segments without the full-traffic filters', () => {
     const req = toCreateRequest(
       draft({
-        scope: 'segment',
-        segmentId: 's9',
+        scope: 'segments',
+        segmentIds: ['s1', 's2'],
         filters: [{ name: 'url', operator: 'is', value: ['/'] }],
       }),
       true,
     );
-    expect(req.segmentId).toBe('s9');
+    expect(req.segmentIds).toEqual(['s1', 's2']);
     expect(req.filter).toBeUndefined();
+    expect(MAX_SEGMENTS).toBe(3);
   });
 
-  it('never sends AI sections without Armada', () => {
+  it('never sends Issues and journeys without AI access', () => {
     const req = toCreateRequest(draft({ chapters: [...ALL_CHAPTERS] }), false);
-    expect(usesAiSections(req.inputs?.sections)).toBe(false);
-    expect(req.inputs?.sections).not.toContain('ux.numbers');
+    expect(req.sections).toEqual(['web', 'usage', 'errors', 'retention', 'ux']);
   });
 });
 
 describe('draftProblem', () => {
   it('names the first thing missing', () => {
     expect(draftProblem(draft({ name: ' ' }), true)).toBe('name');
-    expect(draftProblem(draft({ scope: 'segment' }), true)).toBe('segment');
+    expect(draftProblem(draft({ scope: 'segments' }), true)).toBe('segment');
     expect(draftProblem(draft(), true, 2)).toBe('unfinishedFilters');
-    expect(draftProblem(draft({ chapters: ['ux'] }), false)).toBe('sections');
+    expect(draftProblem(draft({ chapters: ['journeys'] }), false)).toBe(
+      'sections',
+    );
     expect(draftProblem(draft(), true)).toBeNull();
   });
 });
 
 describe('toListParams', () => {
-  it('maps tab, ordering and page to API params', () => {
+  it('maps tab, ordering, page and filters to API params', () => {
     expect(
       toListParams({
         tab: 'running',
         search: ' cart ',
         startDate: 100,
         endDate: 0,
-        sort: 'oldest',
+        sort: 'sessions',
         page: 3,
         pageSize: 25,
+        filters: {
+          segment: 'full',
+          periodDays: 30,
+          userId: 7,
+          chapters: ['ux', 'web'],
+        },
       }),
     ).toEqual({
       search: 'cart',
       startDate: 100,
       endDate: undefined,
       status: 'queued,running',
-      sortField: 'created_at',
-      sortOrder: 'asc',
+      segmentId: 'full',
+      periodDays: 30,
+      userId: 7,
+      chapters: 'web,ux',
+      sortField: 'sessions',
+      sortOrder: 'desc',
       limit: 25,
       offset: 50,
     });
@@ -175,24 +203,48 @@ describe('dates', () => {
 });
 
 describe('AuditItem', () => {
-  it('labels the scope and the creator', () => {
+  it('labels the scope with the stored window and the creator', () => {
     const item = new AuditItem(
       audit({ filter: { filters: [{ operator: 'is' }, { operator: 'is' }] } }),
     );
-    expect(item.scopeLabel).toBe('Full traffic, 2 filters · Last 7 days');
+    expect(item.scopeLabel).toBe('Full traffic, 2 filters · 13–19 Nov 2026');
     expect(item.creatorLabel(12)).toBe('You');
     expect(item.creatorLabel('7')).toBe('Sarah Kim');
+    expect(item.users).toBe(3100);
+    expect(item.chapters).toEqual(['web', 'ux']);
   });
 
-  it('does not count a segment’s own rules as filters', () => {
+  it('shows a rolling 24 hours as the two days it spans', () => {
     const item = new AuditItem(
       audit({
-        segmentId: 's1',
-        segmentName: 'Mobile visitors',
+        periodDays: 1,
+        periodStart: '2026-11-24T16:48:00Z',
+        periodEnd: '2026-11-25T16:48:00Z',
+      }),
+    );
+    expect(item.periodLabel).toBe('24–25 Nov 2026');
+  });
+
+  it('falls back to the period length on audits without a stored window', () => {
+    const item = new AuditItem(
+      audit({ periodStart: null, periodEnd: null, periodDays: 30 }),
+    );
+    expect(item.periodLabel).toBe('Last 30 days');
+  });
+
+  it('names the compared segments, without counting their rules as filters', () => {
+    const item = new AuditItem(
+      audit({
+        segments: [
+          { id: 's1', name: 'Mobile visitors' },
+          { id: 's2', name: 'New sign-ups' },
+        ],
         filter: { filters: [{ operator: 'is' }] },
       }),
     );
-    expect(item.scopeLabel).toBe('Mobile visitors · Last 7 days');
+    expect(item.scopeLabel).toBe(
+      'Mobile visitors, New sign-ups · 13–19 Nov 2026',
+    );
   });
 
   it('tracks status', () => {

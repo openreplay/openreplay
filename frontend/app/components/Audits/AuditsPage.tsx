@@ -14,6 +14,7 @@ import { RelativeTime } from '@/ui/data/RelativeTime';
 import { type Column, DataTable } from '@/ui/data/table';
 import { EmptyState } from '@/ui/feedback/EmptyState';
 import { SkeletonRows } from '@/ui/feedback/SkeletonRows';
+import { ActiveFilters } from '@/ui/filters/ActiveFilters';
 import { DisplayShell, MenuSelect } from '@/ui/filters/DisplayMenu';
 import { FilterStrip, type FilterStripProps } from '@/ui/filters/FilterStrip';
 import { PhoneFilters } from '@/ui/filters/PhoneFilters';
@@ -52,7 +53,7 @@ import { useHistory } from 'App/routing';
 
 import { StartPath } from 'Shared/StartPath/StartPath';
 
-import { AuditsFilterMenu } from './AuditsFilterMenu';
+import AuditsFilterMenu, { useAuditFilters } from './AuditsFilterMenu';
 import NewAuditDrawer from './NewAuditDrawer';
 import './audits-page.css';
 import {
@@ -75,7 +76,7 @@ import {
   useRenameAudit,
   useRerunAudit,
 } from './queries';
-import { auditsUi as ui } from './store';
+import { type AuditFilterKey, auditsUi as ui } from './store';
 
 const fmt = (n: number) => n.toLocaleString('en-US');
 
@@ -99,6 +100,7 @@ function AuditsPage() {
   const counts = useAuditCounts(ui.countsParams);
   const ever = useAuditCounts();
   const items = list.data?.items;
+  const { dimensions, chips } = useAuditFilters(items);
   const total = list.data?.total ?? 0;
 
   const history = useHistory();
@@ -329,6 +331,15 @@ function AuditsPage() {
           <span className="m-audits__count">
             <span className="num">{fmt(a.sessions)}</span>
             {t('sessions')}
+            {a.users != null && (
+              <>
+                <span className="m-audits__dot" aria-hidden="true">
+                  ·
+                </span>
+                <span className="num">{fmt(a.users)}</span>
+                {t('users')}
+              </>
+            )}
           </span>
         ),
     }),
@@ -417,11 +428,18 @@ function AuditsPage() {
     </EmptyState>
   );
 
+  const narrowed = ui.search || ui.filterCount > 0;
   const noMatch = (
     <EmptyState
-      state={ui.search ? 'audits-nomatch' : 'audits-tab'}
-      title={ui.search ? t('No audits match your search') : t('No audits here')}
-      hint={t('Clear the search, or pick another tab or period.')}
+      state={narrowed ? 'audits-nomatch' : 'audits-tab'}
+      title={
+        ui.filterCount > 0
+          ? t('No audits match these filters')
+          : ui.search
+            ? t('No audits match your search')
+            : t('No audits here')
+      }
+      hint={t('Clear the search and filters, or pick another tab or period.')}
       action={
         <Button
           onClick={() => {
@@ -514,7 +532,7 @@ function AuditsPage() {
                 period={ui.period}
                 onChange={ui.setPeriod}
               />
-              <AuditsFilterMenu />
+              <AuditsFilterMenu dimensions={dimensions} strip={statusStrip} />
               <DisplayShell
                 strip={statusStrip}
                 label={t('Display audits')}
@@ -549,6 +567,13 @@ function AuditsPage() {
         </>
       }
     >
+      <ActiveFilters<AuditFilterKey>
+        chips={chips}
+        onRemove={ui.toggleFilter}
+        onClearAll={ui.clearFilters}
+        resultCount={total}
+        noun={(count, n) => t('{{n}} audits', { count, n })}
+      />
       {body()}
 
       {openId && (
