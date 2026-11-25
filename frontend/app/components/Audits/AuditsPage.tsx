@@ -99,7 +99,7 @@ function AuditsPage() {
     if (settled !== ui.search) ui.setSearch(settled);
   }, [settled]);
 
-  const params = ui.listParams(pageSize);
+  const params = ui.listParams(pageSize, projectId);
   const list = useAuditList(params);
   const counts = useAuditCounts(ui.countsParams);
   const ever = useAuditCounts();

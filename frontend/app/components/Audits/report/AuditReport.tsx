@@ -8,6 +8,7 @@ import { Drawer } from '@/ui/overlays/drawer';
 import { layerRoot } from '@/ui/overlays/layer-root';
 import { PopoverPanel } from '@/ui/overlays/popover';
 import { useToast } from '@/ui/overlays/toast';
+import * as D from '@radix-ui/react-dialog';
 import {
   ArrowLeft,
   Check,
@@ -29,7 +30,6 @@ import {
   useRef,
   useState,
 } from 'react';
-import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
 import { SectionIcon } from '../SectionIcon';
@@ -87,6 +87,7 @@ function AuditReport({
     document.documentElement.classList.contains('dark') ? 'dark' : 'light',
   );
   const [scale, setScale] = useState(0.5);
+  const root = useRef<HTMLDivElement>(null);
   const stage = useRef<HTMLDivElement>(null);
   const exportBox = useRef<HTMLDivElement>(null);
 
@@ -136,11 +137,10 @@ function AuditReport({
         go(at - 1);
       } else if (e.key === 'Home') go(0);
       else if (e.key === 'End') go(last);
-      else if (e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [go, at, last, onClose, shareOpen, tocOpen, exportOpen]);
+  }, [go, at, last, shareOpen, tocOpen, exportOpen]);
 
   const exportPdf = () => {
     if (printing || !slides.length) return;
@@ -287,142 +287,155 @@ function AuditReport({
     );
   };
 
-  return createPortal(
-    <div
-      className="m-rep"
-      role="dialog"
-      aria-modal="true"
-      aria-label={t('{{title}} report', { title })}
-    >
-      <header className="m-rep__bar">
-        <IconButton
-          icon={<TableOfContents size={15} />}
-          label={t('Show contents')}
-          variant="ghost"
-          disabled={!slides.length}
-          onClick={() => setTocOpen(true)}
-        />
-        <Button variant="subtle" size="sm" onClick={onClose}>
-          <ArrowLeft size={14} />
-          {t('Audits')}
-        </Button>
-        <span className="m-rep__sep" aria-hidden="true" />
-        <div className="m-rep__name">
-          <b>{title}</b>
-          <span>
-            {deck?.meta.period
-              ? `${scope.split(' · ')[0]} · ${deck.meta.period}`
-              : scope}
-          </span>
-        </div>
-        <div className="m-rep__verbs">
-          <PopoverPanel
-            open={shareOpen}
-            onOpenChange={setShareOpen}
-            placement="bottomRight"
-            className="m-rep__share"
-            content={
-              <SharePanel
-                auditId={auditId}
-                index={at}
-                slideName={slide?.short ?? ''}
-              />
-            }
-          >
-            <Button
-              variant="subtle"
-              size="sm"
-              aria-expanded={shareOpen}
-              disabled={!slides.length}
-            >
-              <Link2 size={14} />
-              {t('Share')}
-            </Button>
-          </PopoverPanel>
-          <PopoverPanel
-            open={exportOpen}
-            onOpenChange={setExportOpen}
-            placement="bottomRight"
-            className="m-rep__share"
-            content={
-              <ExportPanel
-                busy={printing}
-                theme={theme}
-                onTheme={setTheme}
-                onExport={exportPdf}
-              />
-            }
-          >
-            <Button
-              variant="secondary"
-              size="sm"
-              aria-expanded={exportOpen}
-              disabled={printing || !slides.length}
-            >
-              <Download size={14} />
-              {printing ? t('Making the PDF…') : t('Export PDF')}
-            </Button>
-          </PopoverPanel>
-        </div>
-      </header>
-
-      <div className="m-rep__stage" ref={stage}>
-        {body()}
-      </div>
-
-      {printing && deck && (
-        <div
-          className={`m-rep__export ${scheme}`}
-          ref={exportBox}
-          aria-hidden="true"
+  // a modal dialog: focus moves in, stays in, and goes back to the list on close
+  return (
+    <D.Root open onOpenChange={(open) => !open && onClose()}>
+      <D.Portal container={layerRoot()}>
+        <D.Content
+          ref={root}
+          className="m-rep"
+          tabIndex={-1}
+          aria-describedby={undefined}
+          // focus on the dialog itself: the first button's tooltip would open on focus
+          onOpenAutoFocus={(e) => {
+            e.preventDefault();
+            root.current?.focus();
+          }}
+          onInteractOutside={(e) => e.preventDefault()}
         >
-          {slides.map((s, i) => (
-            <ReportSlide
-              key={i}
-              slide={s}
-              index={i}
-              slides={slides}
-              meta={deck.meta}
-              onGo={go}
+          <D.Title className="sr-only">
+            {t('{{title}} report', { title })}
+          </D.Title>
+          <header className="m-rep__bar">
+            <IconButton
+              icon={<TableOfContents size={15} />}
+              label={t('Show contents')}
+              variant="ghost"
+              disabled={!slides.length}
+              onClick={() => setTocOpen(true)}
             />
-          ))}
-        </div>
-      )}
+            <Button variant="subtle" size="sm" onClick={onClose}>
+              <ArrowLeft size={14} />
+              {t('Audits')}
+            </Button>
+            <span className="m-rep__sep" aria-hidden="true" />
+            <div className="m-rep__name">
+              <b>{title}</b>
+              <span>
+                {deck?.meta.period
+                  ? `${scope.split(' · ')[0]} · ${deck.meta.period}`
+                  : scope}
+              </span>
+            </div>
+            <div className="m-rep__verbs">
+              <PopoverPanel
+                open={shareOpen}
+                onOpenChange={setShareOpen}
+                placement="bottomRight"
+                className="m-rep__share"
+                content={
+                  <SharePanel
+                    auditId={auditId}
+                    index={at}
+                    slideName={slide?.short ?? ''}
+                  />
+                }
+              >
+                <Button
+                  variant="subtle"
+                  size="sm"
+                  aria-expanded={shareOpen}
+                  disabled={!slides.length}
+                >
+                  <Link2 size={14} />
+                  {t('Share')}
+                </Button>
+              </PopoverPanel>
+              <PopoverPanel
+                open={exportOpen}
+                onOpenChange={setExportOpen}
+                placement="bottomRight"
+                className="m-rep__share"
+                content={
+                  <ExportPanel
+                    busy={printing}
+                    theme={theme}
+                    onTheme={setTheme}
+                    onExport={exportPdf}
+                  />
+                }
+              >
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  aria-expanded={exportOpen}
+                  disabled={printing || !slides.length}
+                >
+                  <Download size={14} />
+                  {printing ? t('Making the PDF…') : t('Export PDF')}
+                </Button>
+              </PopoverPanel>
+            </div>
+          </header>
 
-      <footer className="m-rep__pager">
-        <IconButton
-          icon={<ChevronLeft size={15} />}
-          label={t('Previous slide')}
-          variant="ghost"
-          disabled={at === 0 || !slides.length}
-          onClick={() => go(at - 1)}
-        />
-        <span>
-          {pad2(slides.length ? at + 1 : 0)}
-          <span className="w">/</span>
-          {pad2(slides.length)}
-        </span>
-        <IconButton
-          icon={<ChevronRight size={15} />}
-          label={t('Next slide')}
-          variant="ghost"
-          disabled={at >= last}
-          onClick={() => go(at + 1)}
-        />
-      </footer>
+          <div className="m-rep__stage" ref={stage}>
+            {body()}
+          </div>
 
-      <ContentsDrawer
-        open={tocOpen}
-        onClose={() => setTocOpen(false)}
-        slides={slides}
-        current={at}
-        onGo={(i) => {
-          go(i);
-          setTocOpen(false);
-        }}
-      />
-    </div>,
-    layerRoot(),
+          {printing && deck && (
+            <div
+              className={`m-rep__export ${scheme}`}
+              ref={exportBox}
+              aria-hidden="true"
+            >
+              {slides.map((s, i) => (
+                <ReportSlide
+                  key={i}
+                  slide={s}
+                  index={i}
+                  slides={slides}
+                  meta={deck.meta}
+                  onGo={go}
+                />
+              ))}
+            </div>
+          )}
+
+          <footer className="m-rep__pager">
+            <IconButton
+              icon={<ChevronLeft size={15} />}
+              label={t('Previous slide')}
+              variant="ghost"
+              disabled={at === 0 || !slides.length}
+              onClick={() => go(at - 1)}
+            />
+            <span>
+              {pad2(slides.length ? at + 1 : 0)}
+              <span className="w">/</span>
+              {pad2(slides.length)}
+            </span>
+            <IconButton
+              icon={<ChevronRight size={15} />}
+              label={t('Next slide')}
+              variant="ghost"
+              disabled={at >= last}
+              onClick={() => go(at + 1)}
+            />
+          </footer>
+
+          <ContentsDrawer
+            open={tocOpen}
+            onClose={() => setTocOpen(false)}
+            slides={slides}
+            current={at}
+            onGo={(i) => {
+              go(i);
+              setTocOpen(false);
+            }}
+          />
+        </D.Content>
+      </D.Portal>
+    </D.Root>
   );
 }
 

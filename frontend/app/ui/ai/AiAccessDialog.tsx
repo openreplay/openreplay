@@ -1,6 +1,6 @@
 import { Button } from '@/ui/actions/button';
 import { Modal } from '@/ui/overlays/modal';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 
 import { AiTag } from './AiTag';
 import { ArmadaMosaic } from './ArmadaMosaic';
@@ -41,9 +41,10 @@ export function AiAccessDialog({
         <div className="m-aiacc__copy">
           <AiTag size="md" />
           <h2 className="m-aiacc__title">
-            <em>Armada</em> {t('reads')}
-            <br />
-            {t('your sessions')}
+            <Trans
+              i18nKey="<em>Armada</em> reads<br/>your sessions"
+              components={{ em: <em />, br: <br /> }}
+            />
           </h2>
           <p className="m-aiacc__lead">
             {t(

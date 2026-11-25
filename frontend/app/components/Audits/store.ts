@@ -196,20 +196,25 @@ export class AuditsUiStore {
     };
   }
 
-  listQuery(pageSize: number): ListQuery {
+  /** `projectId` the page is on: until `forProject` has run for it, what it resets is left out. */
+  listQuery(pageSize: number, projectId?: string): ListQuery {
+    const switched =
+      projectId != null && !!this.projectId && projectId !== this.projectId;
     return {
       tab: this.tab,
       search: this.search,
       ...this.window,
       sort: this.sort,
-      page: this.page,
+      page: switched ? 1 : this.page,
       pageSize,
-      filters: this.filters,
+      filters: switched
+        ? { ...this.filters, segment: undefined }
+        : this.filters,
     };
   }
 
-  listParams(pageSize: number): ListAuditsParams {
-    return toListParams(this.listQuery(pageSize));
+  listParams(pageSize: number, projectId?: string): ListAuditsParams {
+    return toListParams(this.listQuery(pageSize, projectId));
   }
 
   get countsParams(): CountsParams {
