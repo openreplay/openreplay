@@ -281,7 +281,11 @@ export function useOpenArtifact() {
       api.getArtifactLink(projectId, auditId, kind),
   });
   const open = React.useCallback(
-    (auditId: string, kind: ArtifactKind) => {
+    (
+      auditId: string,
+      kind: ArtifactKind,
+      opts?: { onError?: (error: Error) => void },
+    ) => {
       const tab = window.open('', '_blank');
       mutation.mutate(
         { auditId, kind },
@@ -290,7 +294,10 @@ export function useOpenArtifact() {
             if (tab) tab.location.href = url;
             else window.location.assign(url);
           },
-          onError: () => tab?.close(),
+          onError: (error) => {
+            tab?.close();
+            opts?.onError?.(error);
+          },
         },
       );
     },
@@ -301,30 +308,50 @@ export function useOpenArtifact() {
 
 /**
  * Calls `onLanded` once for each audit seen active before and finished (ready, failed or
- * cancelled) now, and refreshes the other tabs and the counts.
+ * cancelled) now, and refreshes the other tabs and the counts. `scope` identifies the
+ * list's params: within one scope, an active row that drops out (the Running tab) is
+ * looked up to see whether it finished.
  */
 export function useAuditLandings(
   items: readonly AuditItem[] | undefined,
+  scope: string,
   onLanded: (audit: AuditItem) => void,
 ) {
   const projectId = useProjectId();
   const queryClient = useQueryClient();
-  const active = React.useRef<Set<string>>(new Set());
+  const seen = React.useRef<{ scope: string; active: Set<string> }>({
+    scope,
+    active: new Set(),
+  });
   const callback = React.useRef(onLanded);
   React.useEffect(() => {
     callback.current = onLanded;
   }, [onLanded]);
   React.useEffect(() => {
     if (!items) return;
-    const landed = items.filter((a) => {
-      if (a.isActive) {
-        active.current.add(a.id);
-        return false;
-      }
-      return active.current.delete(a.id);
-    });
-    if (!landed.length) return;
+    const nowActive = new Set(items.filter((a) => a.isActive).map((a) => a.id));
+    const before = seen.current;
+    seen.current = { scope, active: nowActive };
+    if (before.scope !== scope) return;
+
+    const present = new Set(items.map((a) => a.id));
+    const landed = items.filter((a) => !a.isActive && before.active.has(a.id));
+    const vanished = [...before.active].filter((id) => !present.has(id));
     landed.forEach((a) => callback.current(a));
-    void invalidateLists(queryClient, projectId);
-  }, [items]);
+    vanished.forEach((id) => {
+      void queryClient
+        .query({
+          queryKey: auditsKeys.audit(projectId, id),
+          queryFn: () => api.getAudit(projectId, id),
+          staleTime: 0,
+        })
+        .then((audit) => {
+          if (!isActiveStatus(audit.status))
+            callback.current(new AuditItem(audit));
+        })
+        .catch(() => {});
+    });
+    if (landed.length || vanished.length)
+      void invalidateLists(queryClient, projectId);
+  }, [items, scope]);
 }
