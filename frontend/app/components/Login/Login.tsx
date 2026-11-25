@@ -14,7 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { ENTERPRISE_REQUEIRED } from 'App/constants';
 import { useStore } from 'App/mstore';
 import { forgotPassword, signup } from 'App/routes';
-import { useHistory, useLocation } from 'App/routing';
+import { useHistory } from 'App/routing';
 import withCaptcha, { WithCaptchaProps } from 'App/withRecaptcha';
 import AuthScreen from 'Components/Auth/AuthScreen';
 import { extKey } from 'Components/Spots/SpotsList/InstallCTA';
@@ -31,7 +31,6 @@ function Login({
 }: WithCaptchaProps) {
   const { t } = useTranslation();
   const toast = useToast();
-  const location = useLocation();
   const history = useHistory();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -42,7 +41,6 @@ function Login({
   const { authDetails } = userStore.authStore;
   const busy = loginStore.loading || isVerifyingCaptcha;
   const setJwt = userStore.updateJwt;
-  const params = new URLSearchParams(location.search);
 
   useEffect(() => {
     let int: ReturnType<typeof setInterval> | null = null;
@@ -74,13 +72,6 @@ function Login({
   }, [authDetails]);
 
   useEffect(() => {
-    const jwt = params.get('jwt');
-    const spotJwt = params.get('spotJwt');
-    if (spotJwt) handleSpotLogin(spotJwt);
-    if (jwt) setJwt({ jwt, spotJwt: spotJwt ?? undefined });
-  }, []);
-
-  useEffect(() => {
     if (errors?.length) passwordRef.current?.select();
   }, [errors]);
 
@@ -88,6 +79,7 @@ function Login({
     let tries = 0;
     let int: ReturnType<typeof setInterval>;
     const onSpotMsg = (event: any) => {
+      if (event.source !== window) return;
       if (event.data.type === 'orspot:logged' && extExist) {
         clearInterval(int);
         window.removeEventListener('message', onSpotMsg);

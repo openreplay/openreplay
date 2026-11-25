@@ -214,7 +214,7 @@ export class VElement extends VParent<Element> {
         this.tagName,
         e,
       );
-      return doc.createElement(this.tagName.replace(/[^a-z]/gi, ''));
+      return doc.createElement('span');
     }
   }
 

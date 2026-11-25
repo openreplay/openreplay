@@ -96,6 +96,20 @@ describe('AssistManager socket status', () => {
   });
 });
 
+describe('AssistManager call signaling', () => {
+  it('a videofeed for "__proto__" does not reach Object.prototype', () => {
+    const { manager } = connect();
+    mockSocket.fire('videofeed', {
+      meta: { tabId: 'tab' },
+      data: { streamId: '__proto__', enabled: 'set by the session' },
+    });
+    const polluted = ({} as any).enabled;
+    delete (Object.prototype as any).enabled;
+    expect(polluted).toBeUndefined();
+    manager.clean();
+  });
+});
+
 describe('AssistManager in a background tab', () => {
   it('drops the socket after 30s hidden and reconnects when visible', () => {
     jest.useFakeTimers();
