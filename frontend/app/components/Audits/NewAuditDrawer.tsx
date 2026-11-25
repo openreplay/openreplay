@@ -301,7 +301,6 @@ function NewAuditDrawer({ open, onClose, onCreated }: Props) {
                 editor={editor}
                 entries={entries}
                 lead={t('Add filter')}
-                ariaLabel={t('Session filters')}
               />
             </div>
           ) : (
