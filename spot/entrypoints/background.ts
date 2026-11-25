@@ -597,19 +597,16 @@ export default defineBackground(() => {
   });
 
   onMessage("ort:get-error-events", () => {
-    const logs = buffers.logs
-      .filter((log) => log.level === "error")
-      .map((l) => ({
-        title: "JS Error",
-        time: (l.time - buffers.startTs) / 1000,
-      }));
-    const network = [...injectNetworkRequests, ...buffers.network]
-      .filter((net) => net.statusCode >= 400 || net.error)
-      .map((n) => ({
-        title: "Network Error",
-        time: (n.time - buffers.startTs) / 1000,
-      }));
-    return [...logs, ...network].sort((a, b) => a.time - b.time);
+    const events: { title: string; time: number }[] = [];
+    const add = (title: string, time: number) => {
+      const t = videoTime(time);
+      if (t !== null) events.push({ title, time: t / 1000 });
+    };
+    buffers.logs.forEach((l) => l.level === "error" && add("JS Error", l.time));
+    [...injectNetworkRequests, ...buffers.network].forEach(
+      (n) => (n.statusCode >= 400 || n.error) && add("Network Error", n.time),
+    );
+    return events.sort((a, b) => a.time - b.time);
   });
 
   onMessage("ort:stop", async () => {
@@ -722,19 +719,23 @@ export default defineBackground(() => {
     const vendor = await browser.runtime.getPlatformInfo();
     const platform = `${vendor.os} ${vendor.arch}`;
 
-    // crop is in video time, which leaves out the pauses
+    // crop is in video time, which leaves out the pauses; kept events move onto that clock
     const [from, to] =
       crop && crop[0] + crop[1] > 0 ? crop : [-Infinity, Infinity];
-    const inVideo = ({ time }: { time: number }) => {
-      const t = videoTime(time);
-      return t !== null && t >= from && t <= to;
+    const inVideo = <T extends { time: number }>(events: T[]): T[] => {
+      const kept: T[] = [];
+      for (const e of events) {
+        const t = videoTime(e.time);
+        if (t !== null && t >= from && t <= to) kept.push({ ...e, time: buffers.startTs + t });
+      }
+      return kept;
     };
 
     const mobData = {
-      clicks: buffers.clicks.filter(inVideo),
-      logs: buffers.logs.filter(inVideo),
-      network: buffers.network.filter(inVideo),
-      locations: buffers.locations.filter(inVideo),
+      clicks: inVideo(buffers.clicks),
+      logs: inVideo(buffers.logs),
+      network: inVideo(buffers.network),
+      locations: inVideo(buffers.locations),
       startTs: buffers.startTs,
       resolution: meta.resolution,
       browserVersion: meta.browserVersion,

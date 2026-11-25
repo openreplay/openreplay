@@ -97,15 +97,25 @@ function handleRequestIntercept(source, method, params) {
 }
 
 // the debugger reports multipart bodies as raw text, webRequest as parsed fields
-const multipartField =
-  /(Content-Disposition: form-data; name="([^"]*)"[^\r\n]*\r\n(?:[^\r\n]+\r\n)*\r\n)[^\r\n]*/gi;
+const partHead =
+  /^\r\nContent-Disposition: form-data; name="([^"]*)"[^\r\n]*\r\n(?:[^\r\n]+\r\n)*\r\n/i;
+
+function maskMultipart(body: string): string {
+  const boundary = /^--([^\r\n]+)\r\n/.exec(body)?.[1];
+  if (!boundary) return body;
+  const delimiter = `--${boundary}`;
+  return body
+    .split(delimiter)
+    .map((part) => {
+      const head = partHead.exec(part);
+      return head && isSensitiveKey(head[1]) ? `${head[0]}******\r\n` : part;
+    })
+    .join(delimiter);
+}
 
 function maskRequest(request: Record<string, any>) {
-  const body = request.body.replace(
-    multipartField,
-    (field: string, head: string, name: string) =>
-      isSensitiveKey(name) ? `${head}******` : field,
-  );
+  const body =
+    typeof request.body === "string" ? maskMultipart(request.body) : request.body;
   return {
     ...request,
     url: tryFilterUrl(request.url),
