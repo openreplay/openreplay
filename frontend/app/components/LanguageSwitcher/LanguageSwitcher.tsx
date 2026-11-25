@@ -11,6 +11,7 @@ const langs = [
   { code: 'uk', label: 'Українська' },
   { code: 'zh', label: '简体中文' },
   { code: 'ko', label: '한국어' },
+  { code: 'tr', label: 'Türkçe' },
 ];
 const langLabels = {
   en: 'English',
@@ -20,6 +21,7 @@ const langLabels = {
   uk: 'Українська',
   zh: '中國人',
   ko: '한국어',
+  tr: 'Türkçe',
 };
 
 function LanguageSwitcher() {
