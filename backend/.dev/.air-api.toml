@@ -6,5 +6,6 @@ cmd = "go build -tags=dev -o ./tmp/api ./cmd/api"
 bin = "tmp/api"
 include_ext = ["go"]
 exclude_dir = ["tmp", "vendor"]
+include_file = [".env"]
 full_bin = "bash -c 'set -a; [ -f .env ] && . ./.env; set +a; exec ./tmp/api'"
 
