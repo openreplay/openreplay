@@ -28,6 +28,7 @@ import { hasSiteId, siteChangeAvailable } from 'App/routes';
 import { useLocation, useNavigate } from 'App/routing';
 import { getInitials } from 'App/utils';
 import { mobileScreen } from 'App/utils/isMobile';
+import { hasAuditsPermission } from 'App/components/Audits/access';
 import {
   agentAuditsEnabled,
   agentIssuesEnabled,
@@ -108,7 +109,7 @@ function SideNav({
   const inPreferences = location.pathname.includes('/client/');
   const issues = agentIssuesEnabled();
   const tests = agentTestsEnabled();
-  const audits = agentAuditsEnabled();
+  const audits = agentAuditsEnabled() && hasAuditsPermission(userStore);
   const phone = useViewport() === 'phone';
 
   const groups = useMemo(() => {
