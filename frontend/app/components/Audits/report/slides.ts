@@ -1195,7 +1195,8 @@ const BUILDERS: Partial<Record<SectionKey, Builder>> = {
       };
     };
     // five rows a slide, as feature use: more would run past the slide
-    const parts = chunk(d.journeys, 5);
+    const size = 5;
+    const parts = chunk(d.journeys, size);
     groups.forEach((idx, key) => {
       const by = key === 'segment' ? 'segment' : key.slice(5) || 'group';
       parts.forEach((part, k) =>
@@ -1205,14 +1206,14 @@ const BUILDERS: Partial<Record<SectionKey, Builder>> = {
           short: pageName(
             `Journeys by ${by}`,
             parts.length,
-            k * 5,
+            k * size,
             part.length,
           ),
           title: `Journeys by ${by}`,
           lead: 'Journey',
           threshold: 5,
           ai: true,
-          start: k * 5,
+          start: k * size,
           columns: [colOf(allAt), ...idx.map(colOf)],
           rows: part.map((j) => ({
             title: j.name ?? '',
