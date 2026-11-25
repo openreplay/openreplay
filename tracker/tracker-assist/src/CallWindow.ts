@@ -228,9 +228,13 @@ export default class CallWindow {
 	}
 
 	private localStreams: LocalStream[] = []
+	private audioEnabled = true
 	// !TODO: separate  streams manipulation from ui
 	setLocalStreams(streams: LocalStream[]) {
 		this.localStreams = streams
+		if (!this.audioEnabled) {
+			streams.forEach((s) => s.stream.getAudioTracks().forEach((t) => { t.enabled = false }))
+		}
 	}
 
 	playRemote() {
@@ -269,6 +273,7 @@ export default class CallWindow {
 		this.localStreams.forEach((stream) => {
 			enabled = stream.toggleAudio() || false
 		})
+		this.audioEnabled = enabled
 		this.toggleAudioUI(enabled)
 	}
 

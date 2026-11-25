@@ -1,4 +1,5 @@
 import Mouse from '../src/Mouse'
+import ConfirmWindow from '../src/ConfirmWindow/ConfirmWindow'
 import { describe, expect, test, jest, afterEach } from '@jest/globals'
 
 // jsdom has no layout: hit-testing and scroll geometry are stubbed
@@ -51,5 +52,30 @@ describe('Mouse inside shadow DOM', () => {
     mouse.scroll([0, 120])
     expect(top).toBe(120)
     expect(windowScroll).not.toHaveBeenCalled()
+  })
+})
+
+describe('Mouse over a confirm window', () => {
+  afterEach(() => {
+    delete (document as any).elementFromPoint
+    document.body.innerHTML = ''
+  })
+
+  test('elementFromPoint skips the confirm window', async () => {
+    const answer = new ConfirmWindow({ text: 'Answer?', confirmBtn: 'Answer', declineBtn: 'Reject', }).mount()
+    const confirmBtn = document.getElementById('openreplay-confirm-window-confirm-btn') as HTMLButtonElement
+    ;(document as any).elementFromPoint = () => confirmBtn
+    const onClick = jest.fn()
+    confirmBtn.addEventListener('click', onClick)
+
+    const mouse = new Mouse('agent')
+    expect(mouse.click([10, 10])).toBeNull()
+    mouse.startDrag([10, 10])
+    mouse.stopDrag()
+    expect(onClick).not.toHaveBeenCalled()
+    expect(document.activeElement).not.toBe(confirmBtn)
+
+    confirmBtn.click()
+    await expect(answer).resolves.toBe(true)
   })
 })
