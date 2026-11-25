@@ -3267,5 +3267,8 @@
   "Counted without its “contains” filter": "Пораховано без його фільтра «містить»",
   "About this line": "Про цей рядок",
   "the newest {{n}} · {{total}} in this window": "останні {{n}} · {{total}} за цей період",
-  "Auto-refresh works on relative windows, like Past hour. A custom range doesn't move.": "Автооновлення працює з відносними періодами, наприклад «Остання година». Заданий діапазон не зсувається."
+  "Auto-refresh works on relative windows, like Past hour. A custom range doesn't move.": "Автооновлення працює з відносними періодами, наприклад «Остання година». Заданий діапазон не зсувається.",
+  "Top {{n}}": "Топ {{n}}",
+  "Top {{n}} only": "Лише топ {{n}}",
+  "Values under each bar": "Значення під кожною смугою"
 }

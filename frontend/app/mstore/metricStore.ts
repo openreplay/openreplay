@@ -61,7 +61,6 @@ export default class MetricStore {
   drillDown = false;
   breakdownTopN: number = 3;
   breakdownSelection: Record<string, string[] | null> = {};
-  breakdownLevelTopN: number[] = [3];
 
   constructor() {
     makeAutoObservable(this);
@@ -116,13 +115,6 @@ export default class MetricStore {
 
   setBreakdownSelection(selection: Record<string, string[] | null>) {
     this.breakdownSelection = selection;
-  }
-
-  setBreakdownLevelTopN(level: number, n: number) {
-    const arr = [...this.breakdownLevelTopN];
-    while (arr.length <= level) arr.push(0);
-    arr[level] = n;
-    this.breakdownLevelTopN = arr;
   }
 
   clearBreakdownSelection() {

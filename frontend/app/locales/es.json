@@ -3193,5 +3193,8 @@
   "Counted without its “contains” filter": "Contado sin su filtro «contiene»",
   "About this line": "Sobre esta línea",
   "the newest {{n}} · {{total}} in this window": "las {{n}} más recientes · {{total}} en esta ventana",
-  "Auto-refresh works on relative windows, like Past hour. A custom range doesn't move.": "La actualización automática funciona con ventanas relativas, como Última hora. Un rango personalizado no se mueve."
+  "Auto-refresh works on relative windows, like Past hour. A custom range doesn't move.": "La actualización automática funciona con ventanas relativas, como Última hora. Un rango personalizado no se mueve.",
+  "Top {{n}}": "Top {{n}}",
+  "Top {{n}} only": "Solo top {{n}}",
+  "Values under each bar": "Valores bajo cada barra"
 }

@@ -541,11 +541,7 @@ function WidgetView({
               <WidgetFormNew layout={LEGACY_LAYOUT[layout]} />
             </PagePanel>
           </div>
-          <PagePanel
-            head={<span className="m-pa__head-title">{t('Preview')}</span>}
-          >
-            <WidgetPreview name={widget.name} isEditing={expanded} />
-          </PagePanel>
+          <WidgetPreview name={widget.name} isEditing={expanded} />
         </div>
         {showsSessions ? <WidgetSessions /> : null}
         {widget.metricType === RETENTION ? <CardUserList /> : null}

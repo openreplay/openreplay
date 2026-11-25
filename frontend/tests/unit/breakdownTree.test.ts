@@ -9,6 +9,8 @@ import {
   remapTimestamps,
   collectLeafLines,
   collectChartLines,
+  buildLevelTree,
+  selectTopLeaves,
   NestedData,
 } from 'App/utils/breakdownTree';
 
@@ -223,6 +225,36 @@ describe('breakdownTree utilities', () => {
     it('returns single line for leaf input', () => {
       const result = collectChartLines({ '1': 10 }, 'S');
       expect(result).toEqual([{ name: 'S', data: { '1': 10 } }]);
+    });
+  });
+
+  describe('selectTopLeaves', () => {
+    const data: Record<string, NestedData> = {
+      s1: {
+        US: { Chrome: { t1: 50 }, Safari: { t1: 30 } },
+        DE: { Chrome: { t1: 40 }, Firefox: { t1: 5 } },
+      },
+    };
+    const tree = buildLevelTree(data);
+
+    it('keeps the n heaviest combinations across parents', () => {
+      expect(selectTopLeaves(tree, 2, 3)).toEqual({
+        '': ['US', 'DE'],
+        US: ['Chrome', 'Safari'],
+        DE: ['Chrome'],
+      });
+    });
+
+    it('selects everything for 0 or when n covers every leaf', () => {
+      expect(selectTopLeaves(tree, 2, 0)).toEqual({ '': null });
+      expect(selectTopLeaves(tree, 2, 4)).toEqual({ '': null });
+    });
+
+    it('treats a shallower branch as a leaf', () => {
+      const uneven = buildLevelTree({
+        s1: { US: { Chrome: { t1: 50 } }, DE: { t1: 60 } },
+      });
+      expect(selectTopLeaves(uneven, 2, 1)).toEqual({ '': ['DE'] });
     });
   });
 });

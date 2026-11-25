@@ -3052,5 +3052,8 @@
   "Counted without its “contains” filter": "统计时未应用其“包含”筛选",
   "About this line": "关于此行",
   "the newest {{n}} · {{total}} in this window": "最新 {{n}} 条 · 此时间段共 {{total}} 条",
-  "Auto-refresh works on relative windows, like Past hour. A custom range doesn't move.": "自动刷新仅适用于相对时间段，例如“过去一小时”。自定义范围不会移动。"
+  "Auto-refresh works on relative windows, like Past hour. A custom range doesn't move.": "自动刷新仅适用于相对时间段，例如“过去一小时”。自定义范围不会移动。",
+  "Top {{n}}": "前 {{n}}",
+  "Top {{n}} only": "仅前 {{n}}",
+  "Values under each bar": "每个条形下的值"
 }
