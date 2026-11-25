@@ -57,7 +57,7 @@ func wrapErr(err error) error {
 }
 
 const searchColumns = `toUnixTimestamp64Nano(Timestamp), SeverityText, SeverityNumber, ServiceName, Body, TraceId, SpanId,
-	LogAttributes, ResourceAttributes, ScopeName, ScopeAttributes, _block_number, _block_offset`
+	LogAttributes, ResourceAttributes, ScopeName, ScopeAttributes, _block_number, _block_offset, SessionId`
 
 func (l *logsImpl) Search(ctx context.Context, projectID uint32, req *SearchRequest) (*SearchResponse, error) {
 	if err := req.validate(); err != nil {
