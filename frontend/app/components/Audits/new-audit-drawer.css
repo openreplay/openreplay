@@ -12,6 +12,13 @@
   align-self: stretch;
 }
 
+.m-nad__period {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--m-space-3);
+}
+
 .m-nad__label {
   margin: 0;
   font-size: var(--m-text-xs);

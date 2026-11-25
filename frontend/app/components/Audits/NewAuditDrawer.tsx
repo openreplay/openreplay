@@ -17,11 +17,13 @@ import Period, {
   LAST_24_HOURS,
   LAST_30_DAYS,
 } from 'Types/app/period';
+import { DateTime } from 'luxon';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { mapSegments } from 'App/components/DataManagement/Segments/api';
+import { CUSTOM_RANGE } from 'App/dateRange';
 import { useStore } from 'App/mstore';
 import FilterModel from 'App/mstore/types/filter';
 
@@ -43,11 +45,14 @@ import {
   CHAPTERS,
   type ChapterKey,
   DEFAULT_PERIOD,
+  MAX_CUSTOM_DAYS,
   MAX_SEGMENTS,
   canEstimate,
+  clampCustomRange,
   draftProblem,
   orderChapters,
   periodName,
+  rangeLabel,
   toCreateRequest,
   usableChapters,
 } from './model';
@@ -120,6 +125,39 @@ function NewAuditDrawer({ open, onClose, onCreated }: Props) {
     return [...mine, ...team].map((s) => ({ value: s.id, label: s.name }));
   }, [segments, me]);
 
+  // the days picked on the calendar (app timezone), as the API's UTC days
+  const daysOf = (p: typeof period) =>
+    clampCustomRange(
+      {
+        from: DateTime.fromMillis(p.start).toISODate() ?? '',
+        to: DateTime.fromMillis(p.end || p.start).toISODate() ?? '',
+      },
+      new Date().toISOString().slice(0, 10),
+    );
+  const [clamped, setClamped] = React.useState(false);
+  // a range past today or over 30 days snaps to what the API reads
+  const pickPeriod = (p: typeof period) => {
+    if (p.rangeName !== CUSTOM_RANGE || !p.start) {
+      setClamped(false);
+      setPeriod(p);
+      return;
+    }
+    const c = daysOf(p);
+    setClamped(c.clamped);
+    setPeriod(
+      c.clamped
+        ? Period({
+            rangeName: CUSTOM_RANGE,
+            start: DateTime.fromISO(c.from).startOf('day').toMillis(),
+            end: DateTime.fromISO(c.to).endOf('day').toMillis(),
+          })
+        : p,
+    );
+  };
+  const custom =
+    period.rangeName === CUSTOM_RANGE && period.start
+      ? daysOf(period)
+      : undefined;
   const rules = filter.filters.filter((f) => !f.isEvent);
   const unfinished =
     scope === 'full' ? rules.filter((f) => !hasValue(f)).length : 0;
@@ -131,6 +169,7 @@ function NewAuditDrawer({ open, onClose, onCreated }: Props) {
       .filter((f) => hasValue(f))
       .map((f) => f.toJson() as AuditFilter),
     periodDays: DAYS_OF[period.rangeName] ?? DEFAULT_PERIOD,
+    custom: custom ? { from: custom.from, to: custom.to } : undefined,
     chapters,
   };
   // the count doesn't depend on the name or the chapters; without chapters the API also
@@ -291,19 +330,49 @@ function NewAuditDrawer({ open, onClose, onCreated }: Props) {
 
       <Section
         title={t('Period')}
-        hint={t('Compared with the same length of time just before.')}
+        hint={t(
+          'Up to {{n}} days, compared with the same length of time just before.',
+          { n: MAX_CUSTOM_DAYS },
+        )}
       >
-        <DateRange
-          field={t('Period')}
-          period={period}
-          onChange={setPeriod}
-          resting={RANGE_OF[DEFAULT_PERIOD]}
-          disableCustom
-          options={AUDIT_PERIODS.map((d) => ({
-            value: RANGE_OF[d],
-            label: periodName(d),
-          }))}
-        />
+        <div className="m-nad__period">
+          <DateRange
+            field={t('Period')}
+            period={period}
+            onChange={pickPeriod}
+            resting={RANGE_OF[DEFAULT_PERIOD]}
+            options={[
+              ...AUDIT_PERIODS.map((d) => ({
+                value: RANGE_OF[d],
+                label: periodName(d),
+              })),
+              { value: CUSTOM_RANGE, label: t('Custom range') },
+            ]}
+          />
+          {custom && (
+            <p className="m-nad__label">
+              {clamped
+                ? t(
+                    'Reads {{range}}, {{n}} days: a custom range ends today at the latest and covers at most {{max}} days.',
+                    {
+                      range: rangeLabel(
+                        Date.parse(custom.from),
+                        Date.parse(custom.to),
+                      ),
+                      n: custom.days,
+                      max: MAX_CUSTOM_DAYS,
+                    },
+                  )
+                : t('Reads {{range}}, {{n}} days.', {
+                    range: rangeLabel(
+                      Date.parse(custom.from),
+                      Date.parse(custom.to),
+                    ),
+                    n: custom.days,
+                  })}
+            </p>
+          )}
+        </div>
       </Section>
 
       <Section

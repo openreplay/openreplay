@@ -3120,7 +3120,6 @@
   "Which sessions": "Which sessions",
   "Only sessions that match": "Only sessions that match",
   "No segments yet": "No segments yet",
-  "Compared with the same length of time just before.": "Compared with the same length of time just before.",
   "Sections": "Sections",
   "What the report covers. Each one is a chapter of its slides.": "What the report covers. Each one is a chapter of its slides.",
   "Pick sections": "Pick sections",
@@ -3170,5 +3169,8 @@
   "What the report counts: the full traffic, or up to 3 segments.": "What the report counts: the full traffic, or up to 3 segments.",
   "Up to {{n}}, each read side by side with the full traffic": "Up to {{n}}, each read side by side with the full traffic",
   "Pick segments": "Pick segments",
-  "User {{id}}": "User {{id}}"
+  "User {{id}}": "User {{id}}",
+  "Up to {{n}} days, compared with the same length of time just before.": "Up to {{n}} days, compared with the same length of time just before.",
+  "Reads {{range}}, {{n}} days: a custom range ends today at the latest and covers at most {{max}} days.": "Reads {{range}}, {{n}} days: a custom range ends today at the latest and covers at most {{max}} days.",
+  "Reads {{range}}, {{n}} days.": "Reads {{range}}, {{n}} days."
 }
