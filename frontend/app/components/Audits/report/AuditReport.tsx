@@ -88,6 +88,8 @@ function AuditReport({
   );
   const [scale, setScale] = useState(0.5);
   const root = useRef<HTMLDivElement>(null);
+  // no Dialog.Trigger here: focus goes back to whatever opened the report
+  const [opener] = useState(() => document.activeElement as HTMLElement | null);
   const stage = useRef<HTMLDivElement>(null);
   const exportBox = useRef<HTMLDivElement>(null);
 
@@ -302,6 +304,10 @@ function AuditReport({
             root.current?.focus();
           }}
           onInteractOutside={(e) => e.preventDefault()}
+          onCloseAutoFocus={(e) => {
+            e.preventDefault();
+            if (opener?.isConnected) opener.focus();
+          }}
         >
           <D.Title className="sr-only">
             {t('{{title}} report', { title })}

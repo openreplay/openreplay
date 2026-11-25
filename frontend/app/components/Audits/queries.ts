@@ -84,8 +84,10 @@ export function useAuditCounts(params?: CountsParams) {
       (query.state.data?.running ?? 0) > 0 ? AUDITS_POLL_MS : false,
   });
   // lists poll only while their own rows run: a list with none of the running audits
-  // (the Ready tab) is refreshed when one of them finishes
-  const running = query.isPlaceholderData ? undefined : query.data?.running;
+  // (the Ready tab) is refreshed when one of them finishes. Only the project-wide counts
+  // (no params) do it, so a page with both doesn't refresh twice.
+  const running =
+    params || query.isPlaceholderData ? undefined : query.data?.running;
   const scope = JSON.stringify([projectId, params ?? null]);
   const before = React.useRef<{ scope: string; running?: number }>({ scope });
   React.useEffect(() => {
@@ -120,6 +122,7 @@ export function useAudit(auditId: string | undefined) {
 /** A ready audit's report never changes; 409 (not ready yet) is asked again on the poll. */
 export function useAuditReport(auditId: string | undefined, enabled = true) {
   const projectId = useProjectId();
+  const queryClient = useQueryClient();
   return useQuery({
     queryKey: auditsKeys.report(projectId, auditId ?? ''),
     queryFn: () => api.getReport(projectId, auditId as string),
@@ -129,8 +132,16 @@ export function useAuditReport(auditId: string | undefined, enabled = true) {
       api.errorStatus(error) !== 409 &&
       api.errorStatus(error) !== 404 &&
       count < 1,
-    refetchInterval: (query) =>
-      api.errorStatus(query.state.error) === 409 ? AUDITS_POLL_MS : false,
+    // a failed or cancelled audit never gets a report: stop asking once it's known to be one
+    refetchInterval: (query) => {
+      if (api.errorStatus(query.state.error) !== 409) return false;
+      const status = queryClient.getQueryData<Audit>(
+        auditsKeys.audit(projectId, auditId ?? ''),
+      )?.status;
+      return status === 'failed' || status === 'cancelled'
+        ? false
+        : AUDITS_POLL_MS;
+    },
   });
 }
 

@@ -2,6 +2,13 @@
   position: fixed;
   inset: 0;
   outline: none;
+}
+/* the dialog takes focus on open; from the keyboard it shows, inside the edge */
+.m-rep:focus-visible {
+  outline: 2px solid var(--m-focus-ring);
+  outline-offset: -2px;
+}
+.m-rep {
   z-index: var(--m-z-overlay);
   display: flex;
   flex-direction: column;
