@@ -1392,7 +1392,9 @@ export function buildDeck(R: Report, fallbackTitle = 'Audit'): Deck {
   const scope =
     M.scope?.kind === 'segment'
       ? `the segment **${M.scope.name}**${M.scope.filter ? ` (${M.scope.filter})` : ''}`
-      : 'every session';
+      : M.scope?.kind === 'segments' && M.segmentName
+        ? `every session, with **${M.segmentName}** read beside it`
+        : 'every session';
   notes.push([
     'Scope',
     `${M.title}: ${scope} in the project **${M.projectName ?? ''}**${per.start ? `, ${range(per.start, per.end)}` : ''}${cmp.available ? `, against ${range(cmp.start, cmp.end)}` : ''}.${M.createdBy ? ` Created by ${M.createdBy};` : ''} generated ${stamp(M.generatedAt)}.`,

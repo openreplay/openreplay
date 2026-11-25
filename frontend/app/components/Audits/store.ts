@@ -3,14 +3,20 @@ import { makeAutoObservable, observableRef } from 'mobx';
 
 import {
   AuditFieldKey,
+  AuditFilters,
   AuditSortKey,
   AuditTab,
+  type ChapterKey,
   DEFAULT_FIELDS,
   ListQuery,
+  NO_FILTERS,
+  filterCount,
   toCountsParams,
   toListParams,
 } from './model';
 import { CountsParams, ListAuditsParams } from './types';
+
+export type AuditFilterKey = 'segment' | 'period' | 'creator' | 'chapters';
 
 const DISPLAY_KEY = '__or_audits_display';
 
@@ -54,6 +60,8 @@ export class AuditsUiStore {
 
   page = 1;
 
+  filters: AuditFilters = { ...NO_FILTERS };
+
   constructor() {
     const display = readDisplay();
     this.sort = display.sort;
@@ -75,6 +83,50 @@ export class AuditsUiStore {
     this.period = period;
     this.page = 1;
   };
+
+  /** Scope, period and creator take one value (picking it again clears it); chapters add up. */
+  toggleFilter = (key: AuditFilterKey, value: string) => {
+    const f = this.filters;
+    if (key === 'segment')
+      this.filters = { ...f, segment: f.segment === value ? undefined : value };
+    else if (key === 'period')
+      this.filters = {
+        ...f,
+        periodDays: f.periodDays === Number(value) ? undefined : Number(value),
+      };
+    else if (key === 'creator')
+      this.filters = {
+        ...f,
+        userId: f.userId === Number(value) ? undefined : Number(value),
+      };
+    else {
+      const k = value as ChapterKey;
+      this.filters = {
+        ...f,
+        chapters: f.chapters.includes(k)
+          ? f.chapters.filter((c) => c !== k)
+          : [...f.chapters, k],
+      };
+    }
+    this.page = 1;
+  };
+
+  isFilterActive = (key: AuditFilterKey, value: string): boolean => {
+    const f = this.filters;
+    if (key === 'segment') return f.segment === value;
+    if (key === 'period') return f.periodDays === Number(value);
+    if (key === 'creator') return f.userId === Number(value);
+    return f.chapters.includes(value as ChapterKey);
+  };
+
+  clearFilters = () => {
+    this.filters = { ...NO_FILTERS };
+    this.page = 1;
+  };
+
+  get filterCount(): number {
+    return filterCount(this.filters);
+  }
 
   setPage = (page: number) => {
     this.page = page;
@@ -114,6 +166,7 @@ export class AuditsUiStore {
     this.tab = 'all';
     this.search = '';
     this.period = defaultPeriod();
+    this.filters = { ...NO_FILTERS };
     this.page = 1;
   };
 
@@ -135,6 +188,7 @@ export class AuditsUiStore {
       sort: this.sort,
       page: this.page,
       pageSize,
+      filters: this.filters,
     };
   }
 

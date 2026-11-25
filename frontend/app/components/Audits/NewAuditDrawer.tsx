@@ -12,7 +12,11 @@ import {
 import { useToast } from '@/ui/overlays/toast';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import { useQuery } from '@tanstack/react-query';
-import Period, { LAST_7_DAYS, LAST_30_DAYS } from 'Types/app/period';
+import Period, {
+  LAST_7_DAYS,
+  LAST_24_HOURS,
+  LAST_30_DAYS,
+} from 'Types/app/period';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -32,11 +36,14 @@ import {
 import { SectionIcon } from './SectionIcon';
 import { hasArmadaAccess } from './access';
 import {
+  ALL_CHAPTERS,
   AUDIT_PERIODS,
   type AuditDraft,
   type AuditScope,
   CHAPTERS,
   type ChapterKey,
+  DEFAULT_PERIOD,
+  MAX_SEGMENTS,
   canEstimate,
   draftProblem,
   orderChapters,
@@ -48,11 +55,13 @@ import './new-audit-drawer.css';
 import { useAuditEstimate, useCreateAudit } from './queries';
 import type { AuditFilter, PeriodDays } from './types';
 
-// one segment until the API takes more (design: up to 3)
-const MAX_SEGMENTS = 1;
-
-const RANGE_OF: Record<number, string> = { 7: LAST_7_DAYS, 30: LAST_30_DAYS };
+const RANGE_OF: Record<number, string> = {
+  1: LAST_24_HOURS,
+  7: LAST_7_DAYS,
+  30: LAST_30_DAYS,
+};
 const DAYS_OF: Record<string, PeriodDays> = {
+  [LAST_24_HOURS]: 1,
   [LAST_7_DAYS]: 7,
   [LAST_30_DAYS]: 30,
 };
@@ -76,17 +85,17 @@ function NewAuditDrawer({ open, onClose, onCreated }: Props) {
   const { projectsStore, searchStore, userStore } = useStore();
   const siteId = projectsStore.activeSiteId;
   const me = Number(userStore.account?.id);
-  const hasAi = hasArmadaAccess();
+  const armada = hasArmadaAccess();
 
   const [name, setName] = React.useState('');
   const [scope, setScope] = React.useState<AuditScope>('full');
   const [segmentIds, setSegmentIds] = React.useState<string[]>([]);
   const [period, setPeriod] = React.useState(() =>
-    Period({ rangeName: RANGE_OF[AUDIT_PERIODS[0]] }),
+    Period({ rangeName: RANGE_OF[DEFAULT_PERIOD] }),
   );
-  const [chapters, setChapters] = React.useState<ChapterKey[]>(() =>
-    usableChapters(hasAi),
-  );
+  const [chapters, setChapters] = React.useState<ChapterKey[]>(() => [
+    ...ALL_CHAPTERS,
+  ]);
   const [aiInfo, setAiInfo] = React.useState(false);
   const [filter] = React.useState(() => new FilterModel());
   const [, bump] = React.useReducer((n: number) => n + 1, 0);
@@ -117,17 +126,26 @@ function NewAuditDrawer({ open, onClose, onCreated }: Props) {
   const draft: AuditDraft = {
     name,
     scope,
-    segmentId: segmentIds[0],
+    segmentIds,
     filters: rules
       .filter((f) => hasValue(f))
       .map((f) => f.toJson() as AuditFilter),
-    periodDays: DAYS_OF[period.rangeName] ?? AUDIT_PERIODS[0],
+    periodDays: DAYS_OF[period.rangeName] ?? DEFAULT_PERIOD,
     chapters,
   };
-  const request = toCreateRequest(draft, hasAi);
+  // the count doesn't depend on the name or the chapters; without chapters the API also
+  // says whether this project may use AI sections
   const estimate = useAuditEstimate(
-    open && canEstimate(draft) ? { ...request, name: undefined } : null,
+    open && canEstimate(draft)
+      ? {
+          ...toCreateRequest(draft, armada),
+          name: undefined,
+          sections: undefined,
+        }
+      : null,
   );
+  const hasAi = estimate.data?.aiAvailable ?? armada;
+  const request = toCreateRequest(draft, hasAi);
   const matched = estimate.data?.matchedSessions;
   const create = useCreateAudit();
 
@@ -136,7 +154,7 @@ function NewAuditDrawer({ open, onClose, onCreated }: Props) {
     problem === 'name'
       ? t('Give it a name first')
       : problem === 'segment'
-        ? t('Pick a segment')
+        ? t('Pick at least one segment')
         : problem === 'unfinishedFilters'
           ? t('{{n}} filters need a value', {
               n: unfinished,
@@ -148,12 +166,9 @@ function NewAuditDrawer({ open, onClose, onCreated }: Props) {
               ? t('No sessions match this scope in the period')
               : undefined;
 
+  // a pick past the cap is refused
   const pickSegments = (next: string[]) =>
-    setSegmentIds(
-      next.length > MAX_SEGMENTS
-        ? next.filter((id) => !segmentIds.includes(id)).slice(-MAX_SEGMENTS)
-        : next,
-    );
+    setSegmentIds(next.length > MAX_SEGMENTS ? segmentIds : next);
 
   const generate = () =>
     create.mutate(request, {
@@ -166,7 +181,7 @@ function NewAuditDrawer({ open, onClose, onCreated }: Props) {
     });
 
   const job = !canEstimate(draft) ? (
-    <span className="m-nad__job-note">{t('Pick a segment')}</span>
+    <span className="m-nad__job-note">{t('Pick at least one segment')}</span>
   ) : estimate.isPending ? (
     <span className="m-nad__job-note">{t('Counting sessions…')}</span>
   ) : matched == null ? (
@@ -221,7 +236,9 @@ function NewAuditDrawer({ open, onClose, onCreated }: Props) {
     >
       <Section
         title={t('Sessions')}
-        hint={t('What the report counts: the full traffic, or a segment.')}
+        hint={t(
+          'What the report counts: the full traffic, or up to 3 segments.',
+        )}
       >
         <div className="m-nad__stack">
           <Segmented<AuditScope>
@@ -230,7 +247,7 @@ function NewAuditDrawer({ open, onClose, onCreated }: Props) {
             ariaLabel={t('Which sessions')}
             options={[
               { value: 'full', label: t('Full traffic') },
-              { value: 'segment', label: t('Segment') },
+              { value: 'segments', label: t('Segments') },
             ]}
           />
           {scope === 'full' ? (
@@ -248,14 +265,19 @@ function NewAuditDrawer({ open, onClose, onCreated }: Props) {
           ) : (
             <div className="m-nad__filters">
               <p className="m-nad__label">
-                {t('Its own rules decide which sessions the report reads')}
+                {t(
+                  'Up to {{n}}, each read side by side with the full traffic',
+                  {
+                    n: MAX_SEGMENTS,
+                  },
+                )}
               </p>
               <MultiSelect<string>
                 className="m-nad__segment"
                 value={segmentIds}
                 onChange={pickSegments}
-                placeholder={t('Pick a segment')}
-                ariaLabel={t('Segment')}
+                placeholder={t('Pick segments')}
+                ariaLabel={t('Segments')}
                 searchable={{
                   placeholder: t('Search segments'),
                   empty: t('No segments yet'),
@@ -275,7 +297,7 @@ function NewAuditDrawer({ open, onClose, onCreated }: Props) {
           field={t('Period')}
           period={period}
           onChange={setPeriod}
-          resting={RANGE_OF[AUDIT_PERIODS[0]]}
+          resting={RANGE_OF[DEFAULT_PERIOD]}
           disableCustom
           options={AUDIT_PERIODS.map((d) => ({
             value: RANGE_OF[d],

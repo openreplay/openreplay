@@ -4,6 +4,7 @@ import {
   AuditFilter,
   AuditSortField,
   AuditStatus,
+  ChapterKey,
   CountsParams,
   CreateAuditRequest,
   ListAuditsParams,
@@ -12,78 +13,74 @@ import {
   SectionKey,
 } from './types';
 
-// ---- Chapters ----
-// The six report chapters the UI offers (New audit's Sections, the report's contents).
-// Each maps to one API section group; picking a chapter sends all its sections.
+export type { ChapterKey } from './types';
 
-export type ChapterKey =
-  'web' | 'usage' | 'errors' | 'retention' | 'ux' | 'journeys';
+// ---- Chapters ----
+// The six report chapters (New audit's Sections, the report's contents). The API takes
+// chapter keys and expands them into its sections.
 
 export interface Chapter {
   key: ChapterKey;
-  group: SectionGroup;
+  /** the sections' group in reports made before groups took the chapter keys */
+  legacyGroup: SectionGroup;
   name: string;
   /** A few words for a one-line row. */
   brief: string;
   hint: string;
-  /** Needs Armada (AI) access to be picked. */
-  ai: boolean;
+  /** `whole`: needs AI access to be picked; `part`: without it, the API leaves its AI parts out. */
+  ai?: 'whole' | 'part';
   sections: readonly SectionKey[];
 }
 
 export const CHAPTERS: readonly Chapter[] = [
   {
     key: 'web',
-    group: 'web',
+    legacyGroup: 'web',
     name: 'Web analytics',
     brief: 'Traffic, pages, referrers, devices',
     hint: 'Sessions, users, top pages, referrers, countries, browsers and devices',
-    ai: false,
     sections: ['web.numbers', 'web.tops'],
   },
   {
     key: 'usage',
-    group: 'product',
+    legacyGroup: 'product',
     name: 'Product usage',
     brief: 'Clicks, events, time spent, plans',
     hint: 'Top clicks, events, time spent, plans and which features each group uses',
-    ai: false,
     sections: ['product.tops', 'product.features'],
   },
   {
     key: 'errors',
-    group: 'errors',
+    legacyGroup: 'errors',
     name: 'Errors and performance',
     brief: 'Errors, failed requests, Web Vitals',
     hint: 'Error rates, top errors and failed requests, slowest requests and pages, Web Vitals',
-    ai: false,
     sections: ['errors.numbers', 'errors.tops', 'errors.vitals'],
   },
   {
     key: 'retention',
-    group: 'adoption',
+    legacyGroup: 'adoption',
     name: 'Features and retention',
     brief: 'Feature use and who comes back',
     hint: 'Popularity, frequency and intensity of the top features, and who comes back',
-    ai: false,
     sections: ['adoption.features', 'adoption.retention'],
   },
   {
     key: 'ux',
-    group: 'ux',
+    legacyGroup: 'ux',
     name: 'UX and frustrations',
     brief: 'Rage clicks, crashes, quick wins',
     hint: 'Dead and rage clicks, crashes, plus the frustrations found and quick wins',
-    ai: true,
+    ai: 'part',
     sections: ['ux.numbers', 'ux.frustrations', 'ux.quickwins'],
   },
   {
     key: 'journeys',
-    group: 'journeys',
+    legacyGroup: 'journeys',
     name: 'Issues and journeys',
     brief: 'Journeys and the issues in them',
     hint: 'Why people come, the steps they take and the issues that hit them most',
-    ai: true,
+    ai: 'whole',
     sections: [
       'journeys.overview',
       'journeys.popular',
@@ -95,11 +92,10 @@ export const CHAPTERS: readonly Chapter[] = [
 
 export const ALL_CHAPTERS: readonly ChapterKey[] = CHAPTERS.map((c) => c.key);
 
-const chapterByKey = new Map(CHAPTERS.map((c) => [c.key, c]));
-const chapterByGroup = new Map(CHAPTERS.map((c) => [c.group, c]));
-
-export const chapterOf = (key: ChapterKey): Chapter =>
-  chapterByKey.get(key) as Chapter;
+const chapterByGroup = new Map<string, Chapter>([
+  ...CHAPTERS.map((c) => [c.legacyGroup, c] as const),
+  ...CHAPTERS.map((c) => [c.key, c] as const),
+]);
 
 export const chapterOfGroup = (group: SectionGroup): Chapter | undefined =>
   chapterByGroup.get(group);
@@ -107,29 +103,23 @@ export const chapterOfGroup = (group: SectionGroup): Chapter | undefined =>
 export const sectionGroup = (key: SectionKey): SectionGroup =>
   key.slice(0, key.indexOf('.')) as SectionGroup;
 
-/** The chapters an account may pick. */
+/** The chapters a project may pick: without AI access (`aiAvailable`), all but `journeys`. */
 export const usableChapters = (hasAi: boolean): ChapterKey[] =>
-  CHAPTERS.filter((c) => hasAi || !c.ai).map((c) => c.key);
+  CHAPTERS.filter((c) => hasAi || c.ai !== 'whole').map((c) => c.key);
 
-/** In report order, whatever order they were picked in; AI chapters dropped without access. */
+/** In report order, whatever order they were picked in; chapters needing AI dropped without it. */
 export const orderChapters = (
   picked: readonly ChapterKey[],
   hasAi: boolean,
 ): ChapterKey[] => usableChapters(hasAi).filter((k) => picked.includes(k));
 
-export const chapterSections = (
-  picked: readonly ChapterKey[],
-  hasAi: boolean,
-): SectionKey[] =>
-  orderChapters(picked, hasAi).flatMap((k) => chapterOf(k).sections);
-
-/** Empty or missing = the API's default (every data section), which touches every chapter. */
+/** Audits made before chapters were stored: read back from their sections; empty = all. */
 export const chaptersOfSections = (
   sections?: readonly SectionKey[] | null,
 ): ChapterKey[] => {
   if (!sections?.length) return [...ALL_CHAPTERS];
   const groups = new Set(sections.map(sectionGroup));
-  return CHAPTERS.filter((c) => groups.has(c.group)).map((c) => c.key);
+  return CHAPTERS.filter((c) => groups.has(c.legacyGroup)).map((c) => c.key);
 };
 
 // Written by a model (kind `ai` in the API's section registry).
@@ -146,11 +136,8 @@ export const usesAiSections = (
 
 // ---- Period ----
 
-// Design: never more than 30 days (most projects keep 30 days of data); the API's enum is 7/30/90.
-export const AUDIT_PERIODS: readonly PeriodDays[] = [
-  // 1, // Last 24 hours: not in the API's periodDays enum yet
-  7, 30,
-];
+// Never more than 30 days (most projects keep 30 days of data).
+export const AUDIT_PERIODS: readonly PeriodDays[] = [1, 7, 30];
 export const DEFAULT_PERIOD: PeriodDays = 7;
 
 export const periodName = (days: number): string =>
@@ -171,7 +158,7 @@ const MONTHS = [
   'Dec',
 ];
 
-/** A report's own days (`meta.period`): "13–19 Nov 2026", "28 Oct – 3 Nov 2026". */
+/** "13–19 Nov 2026", "28 Oct – 3 Nov 2026", "30 Dec 2025 – 5 Jan 2026" (UTC days). */
 export function rangeLabel(from: number, to: number): string {
   const f = new Date(from);
   const t = new Date(to);
@@ -209,8 +196,6 @@ export const AUDIT_SORT_CHOICES: ReadonlyArray<{
   { value: 'sessions', label: 'Most sessions' },
 ];
 
-// "Most sessions" orders by the API's sample_size: the matched count for an
-// analytics audit without AI sections, the AI sample otherwise.
 export const SORT_PARAMS: Record<
   AuditSortKey,
   { sortField: AuditSortField; sortOrder: 'asc' | 'desc' }
@@ -218,7 +203,7 @@ export const SORT_PARAMS: Record<
   recent: { sortField: 'created_at', sortOrder: 'desc' },
   oldest: { sortField: 'created_at', sortOrder: 'asc' },
   name: { sortField: 'name', sortOrder: 'asc' },
-  sessions: { sortField: 'sample_size', sortOrder: 'desc' },
+  sessions: { sortField: 'sessions', sortOrder: 'desc' },
 };
 
 export type AuditFieldKey = 'sessions' | 'status' | 'created';
@@ -238,6 +223,25 @@ export const DEFAULT_FIELDS: readonly AuditFieldKey[] = [
   'created',
 ];
 
+/** `full` = audits over full traffic, else a saved segment's id. */
+export const FULL_TRAFFIC = 'full';
+
+export interface AuditFilters {
+  segment?: string;
+  periodDays?: number;
+  userId?: number;
+  /** the audit covers all of them */
+  chapters: ChapterKey[];
+}
+
+export const NO_FILTERS: AuditFilters = { chapters: [] };
+
+export const filterCount = (f: AuditFilters): number =>
+  (f.segment ? 1 : 0) +
+  (f.periodDays ? 1 : 0) +
+  (f.userId != null ? 1 : 0) +
+  f.chapters.length;
+
 export interface ListQuery {
   tab: AuditTab;
   search: string;
@@ -247,6 +251,7 @@ export interface ListQuery {
   sort: AuditSortKey;
   page: number;
   pageSize: number;
+  filters?: AuditFilters;
 }
 
 export function toCountsParams(
@@ -260,9 +265,18 @@ export function toCountsParams(
 }
 
 export function toListParams(q: ListQuery): ListAuditsParams {
+  const f = q.filters ?? NO_FILTERS;
   return {
     ...toCountsParams(q),
     status: TAB_STATUS[q.tab],
+    segmentId: f.segment || undefined,
+    periodDays: f.periodDays || undefined,
+    userId: f.userId ?? undefined,
+    chapters: f.chapters.length
+      ? CHAPTERS.filter((c) => f.chapters.includes(c.key))
+          .map((c) => c.key)
+          .join(',')
+      : undefined,
     ...SORT_PARAMS[q.sort],
     limit: q.pageSize,
     offset: Math.max(0, q.page - 1) * q.pageSize,
@@ -271,13 +285,16 @@ export function toListParams(q: ListQuery): ListAuditsParams {
 
 // ---- New audit ----
 
-export type AuditScope = 'full' | 'segment';
+export type AuditScope = 'full' | 'segments';
+
+/** Segments mode compares up to this many saved segments against all traffic. */
+export const MAX_SEGMENTS = 3;
 
 export interface AuditDraft {
   name: string;
   scope: AuditScope;
-  /** One saved search; the API resolves it into the stored filter. */
-  segmentId?: string;
+  /** Segments mode: 1-3 saved segments. */
+  segmentIds: string[];
   /** Full traffic narrowed by these (FilterItem.toJson() shape). */
   filters: AuditFilter[];
   periodDays: PeriodDays;
@@ -287,6 +304,7 @@ export interface AuditDraft {
 export const emptyDraft = (hasAi: boolean): AuditDraft => ({
   name: '',
   scope: 'full',
+  segmentIds: [],
   filters: [],
   periodDays: DEFAULT_PERIOD,
   chapters: usableChapters(hasAi),
@@ -297,17 +315,20 @@ export function toCreateRequest(
   draft: AuditDraft,
   hasAi: boolean,
 ): CreateAuditRequest {
-  const segment = draft.scope === 'segment';
-  const filters = segment ? [] : draft.filters;
+  const segments = draft.scope === 'segments';
+  const filters = segments ? [] : draft.filters;
   return {
     name: draft.name.trim() || undefined,
     type: 'analytics',
     periodDays: draft.periodDays,
-    // no email for now (OR-4041); the API defaults to true when omitted
+    // no email for now (OR-4041)
     notify: false,
-    segmentId: segment ? draft.segmentId : undefined,
+    segmentIds:
+      segments && draft.segmentIds.length
+        ? draft.segmentIds.slice(0, MAX_SEGMENTS)
+        : undefined,
     filter: filters.length ? { filters, eventsOrder: 'then' } : undefined,
-    inputs: { sections: chapterSections(draft.chapters, hasAi) },
+    sections: orderChapters(draft.chapters, hasAi),
   };
 }
 
@@ -321,7 +342,7 @@ export function draftProblem(
   unfinished = 0,
 ): DraftProblem | null {
   if (!draft.name.trim()) return 'name';
-  if (draft.scope === 'segment' && !draft.segmentId) return 'segment';
+  if (draft.scope === 'segments' && !draft.segmentIds.length) return 'segment';
   if (draft.scope === 'full' && unfinished > 0) return 'unfinishedFilters';
   if (orderChapters(draft.chapters, hasAi).length === 0) return 'sections';
   return null;
@@ -329,7 +350,7 @@ export function draftProblem(
 
 /** Can the scope be estimated yet (the estimate takes the same body as create). */
 export const canEstimate = (draft: AuditDraft): boolean =>
-  draft.scope === 'full' || !!draft.segmentId;
+  draft.scope === 'full' || draft.segmentIds.length > 0;
 
 /** The address that opens an audit's report; `slide` is 1-based. */
 export function reportLink(auditId: string, slide?: number): string {
@@ -362,7 +383,11 @@ export class AuditItem {
     this.name = raw.name;
     this.status = raw.status;
     this.createdAt = Date.parse(raw.createdAt);
-    this.chapters = chaptersOfSections(raw.typeInputs?.sections);
+    this.chapters = raw.chapters?.length
+      ? raw.chapters
+      : raw.typeInputs?.chapters?.length
+        ? raw.typeInputs.chapters
+        : chaptersOfSections(raw.typeInputs?.sections);
   }
 
   get isActive(): boolean {
@@ -394,7 +419,14 @@ export class AuditItem {
     return this.isReady ? 100 : this.raw.progress;
   }
 
+  get segments(): readonly { id: string; name: string }[] {
+    return this.raw.segments ?? [];
+  }
+
+  /** What was read: the segments compared, a legacy segment, or full traffic. */
   get segmentName(): string {
+    if (this.segments.length)
+      return this.segments.map((s) => s.name).join(', ');
     return this.raw.segmentId
       ? this.raw.segmentName || 'Segment'
       : 'Full traffic';
@@ -402,19 +434,29 @@ export class AuditItem {
 
   /** Rules that narrowed full traffic; a segment's own rules are not counted. */
   get filterCount(): number {
-    return this.raw.segmentId ? 0 : (this.raw.filter?.filters?.length ?? 0);
+    return this.segments.length || this.raw.segmentId
+      ? 0
+      : (this.raw.filter?.filters?.length ?? 0);
   }
 
   get periodDays(): number {
     return this.raw.periodDays;
   }
 
-  /** The API sends the period's length only; the report carries its real dates. */
+  /** The stored window; "Last N days" on audits made before windows were stored. */
   get periodLabel(): string {
-    return periodName(this.raw.periodDays);
+    const { periodStart, periodEnd } = this.raw;
+    if (!periodStart || !periodEnd) return periodName(this.raw.periodDays);
+    const from = Date.parse(periodStart);
+    let to = Date.parse(periodEnd);
+    // a whole-day window ends at the next midnight
+    const end = new Date(to);
+    if (end.getUTCHours() === 0 && end.getUTCMinutes() === 0 && to > from)
+      to -= 1;
+    return rangeLabel(from, to);
   }
 
-  /** "Mobile visitors · Last 7 days", "Full traffic, 2 filters · Last 30 days". */
+  /** "Mobile visitors · 13–19 Nov 2026", "Full traffic, 2 filters · 28 Oct – 3 Nov 2026". */
   get scopeLabel(): string {
     const n = this.filterCount;
     const narrowed = n ? `, ${n} ${n === 1 ? 'filter' : 'filters'}` : '';
@@ -426,8 +468,12 @@ export class AuditItem {
     return this.raw.matchedSessions;
   }
 
+  get users(): number | null {
+    return this.raw.matchedUsers ?? null;
+  }
+
   get usesAi(): boolean {
-    return usesAiSections(this.raw.typeInputs?.sections);
+    return this.raw.ai ?? usesAiSections(this.raw.typeInputs?.sections);
   }
 
   isMine(userId: number | string | undefined): boolean {

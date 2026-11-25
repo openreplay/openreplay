@@ -37,10 +37,15 @@ export type SectionKey =
   | 'journeys.actions'
   | 'journeys.issues';
 
-export type SectionGroup =
-  'web' | 'product' | 'errors' | 'ux' | 'adoption' | 'journeys';
+/** A report chapter, in report order. */
+export type ChapterKey =
+  'web' | 'usage' | 'errors' | 'retention' | 'ux' | 'journeys';
 
-export type PeriodDays = 7 | 30 | 90;
+/** A section's group: the chapter key (older reports: product / adoption). */
+export type SectionGroup = ChapterKey | 'product' | 'adoption';
+
+/** 1 = the rolling last 24 hours; 7 and 30 = whole UTC days up to today. */
+export type PeriodDays = 1 | 7 | 30;
 export type SampleSize = 500 | 1000 | 2000 | 5000 | 10000;
 export type ArtifactKind = 'pdf' | 'slides' | 'html';
 
@@ -78,7 +83,10 @@ export interface TypeInputs {
   features?: Array<Matcher & { name: string }>;
   goal?: Matcher & { name?: string };
   pages?: string[];
+  /** The engine's sections, expanded from `chapters` by the API. */
   sections?: SectionKey[];
+  /** Read-only: the chosen chapters in report order. */
+  chapters?: ChapterKey[];
   compare?: { splitAt?: string };
   breakdown?: { field?: string; label?: string };
 }
@@ -96,18 +104,32 @@ export interface Audit {
   /** Empty when the creator's account is gone. */
   userName: string;
   name: string;
+  /** Legacy single segment. */
   segmentId?: string;
+  /** Legacy segment's name; in segments mode the names joined with ", ". */
   segmentName?: string;
+  /** Segments mode: compared against all traffic, as they were at create time. */
+  segments: AuditSegment[];
   filter: FilterGroup;
   /** Empty only on audits made before report types existed. */
   reportType: ReportType | '';
   typeInputs: TypeInputs;
-  periodDays: PeriodDays;
+  /** 1, 7 or 30 (90 on older audits), or a custom range's day count. */
+  periodDays: number;
+  /** The window read, UTC; null on audits made before windows were stored. */
+  periodStart?: string | null;
+  periodEnd?: string | null;
+  periodCustom: boolean;
+  /** In report order. */
+  chapters: ChapterKey[];
+  /** Uses AI sections. */
+  ai: boolean;
   /** Effective sample, may be clamped below `requestedSampleSize`. */
   sampleSize: number;
   requestedSampleSize: SampleSize;
   /** null = no estimate was available, not zero matches. */
   matchedSessions: number | null;
+  matchedUsers?: number | null;
   samplePct: number | null;
   processedSessions: number;
   /** 0-100, held at 99 until ready. */
@@ -138,7 +160,7 @@ export interface AuditCounts {
 }
 
 export type AuditSortField =
-  'created_at' | 'name' | 'health' | 'status' | 'sample_size';
+  'created_at' | 'name' | 'health' | 'status' | 'sample_size' | 'sessions';
 
 export interface ListAuditsParams {
   /** Comma-separated statuses, e.g. "queued,running". */
@@ -147,6 +169,12 @@ export interface ListAuditsParams {
   /** Created at or after, epoch ms. */
   startDate?: number;
   endDate?: number;
+  /** A saved segment among the audit's segments, or `full` for full traffic. */
+  segmentId?: string;
+  periodDays?: number;
+  userId?: number;
+  /** Comma-separated chapter keys; the audit must include all of them. */
+  chapters?: string;
   sortField?: AuditSortField;
   sortOrder?: 'asc' | 'desc';
   /** Clamped to 100 by the API. */
@@ -159,15 +187,29 @@ export type CountsParams = Pick<
   'search' | 'startDate' | 'endDate'
 >;
 
+export interface AuditSegment {
+  id: string;
+  name: string;
+}
+
 export interface CreateAuditRequest {
   name?: string;
+  /** Legacy; use `segmentIds`. */
   segmentId?: string;
+  /** Segments mode: 1-3 distinct saved segments; not with a non-empty `filter`. */
+  segmentIds?: string[];
+  /** Full traffic mode only. */
   filter?: FilterGroup;
   periodDays: PeriodDays;
+  /** Inclusive UTC days (YYYY-MM-DD), at most 30; wins over `periodDays`. */
+  custom?: { from: string; to: string };
+  /** Analytics: the chapters; omitted = every chapter the project may use. */
+  sections?: ChapterKey[];
   /** Optional for `type: analytics` (500 read when an AI section is chosen). */
   sampleSize?: SampleSize;
-  /** Defaults to true when omitted. */
+  /** Defaults to false. */
   notify?: boolean | null;
+  /** Omitted = analytics. */
   type?: ReportType;
   inputs?: TypeInputs;
 }
@@ -180,8 +222,19 @@ export interface PatchAuditRequest {
 export interface Estimate {
   /** null = the count could not be produced in time. */
   matchedSessions: number | null;
+  /** null whenever `matchedSessions` is. */
+  matchedUsers: number | null;
   trafficPct: number | null;
-  periodDays: PeriodDays;
+  periodDays: number;
+  periodStart: string;
+  periodEnd: string;
+  /** The project may use AI sections. */
+  aiAvailable: boolean;
+  chapters: ChapterKey[];
+  /** Segments mode: each segment counted over the window. */
+  segments: Array<
+    AuditSegment & { sessions: number | null; users: number | null }
+  >;
   sampleSize: number;
   reportType: ReportType;
   usesAI: boolean;
@@ -228,7 +281,8 @@ export interface UnverifiedNumber {
 }
 
 export interface ReportScope {
-  kind: 'full' | 'segment';
+  /** `segments`: comparison segments, the scope is still all traffic. */
+  kind: 'full' | 'segment' | 'segments';
   name: string;
   /** The compiled filter in words; empty for full traffic. */
   filter?: string;
