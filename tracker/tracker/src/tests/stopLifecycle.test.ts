@@ -232,6 +232,27 @@ describe('stop() is final for pending starts and restarts', () => {
       expect(app.observer.observe).toHaveBeenCalledTimes(1)
     })
 
+    test('a cold start after stop() does not carry over what the stopped one buffered', async () => {
+      const stale = [27, 'stale', '{}']
+      await app.coldStart()
+      app.send(stale)
+      app.stop()
+      await app.coldStart()
+      app.send([27, 'fresh', '{}'])
+
+      expect([...app.bufferedMessages1, ...app.bufferedMessages2]).not.toContainEqual(stale)
+      expect(app.bufferedMessages1).toContainEqual([27, 'fresh', '{}'])
+    })
+
+    test('cold start keeps the previous cycle in one buffer', async () => {
+      const previous = [27, 'previous', '{}']
+      await app.coldStart()
+      app.send(previous)
+      await jest.advanceTimersByTimeAsync(30_000)
+
+      expect([...app.bufferedMessages1, ...app.bufferedMessages2]).toContainEqual(previous)
+    })
+
     test('cold start keeps cycling until stopped', async () => {
       await app.coldStart()
       await jest.advanceTimersByTimeAsync(30_000)

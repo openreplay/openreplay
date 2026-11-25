@@ -101,6 +101,7 @@ function cleanLabel(str: string): string {
 function getOwnTextLabel(
   e: Element,
   getInnerText: (el: HTMLElement) => string,
+  isMasked: (el: Element) => boolean,
   isAncestor: boolean,
 ): string {
   const tag = e.tagName.toUpperCase()
@@ -112,6 +113,7 @@ function getOwnTextLabel(
       if (text) return text
     }
   }
+  if (isMasked(e)) return ''
   for (const attr of TEXT_LABEL_ATTRIBUTES) {
     const value = e.getAttribute(attr)
     if (value) {
@@ -125,7 +127,7 @@ function getOwnTextLabel(
   }
   // icon-only elements carry their meaning on a child
   const describedChild = e.querySelector('[aria-label], img[alt], [title]')
-  if (describedChild) {
+  if (describedChild && !isMasked(describedChild)) {
     for (const attr of TEXT_LABEL_ATTRIBUTES) {
       const value = describedChild.getAttribute(attr)
       if (value) {
@@ -144,11 +146,12 @@ function getOwnTextLabel(
 export function getTextualLabel(
   e: Element,
   getInnerText: (el: HTMLElement) => string,
+  isMasked: (el: Element) => boolean,
   maxAncestors = 2,
 ): string {
   let el: Element | null = e
   for (let depth = 0; el !== null && depth <= maxAncestors; depth++) {
-    const label = getOwnTextLabel(el, getInnerText, depth > 0)
+    const label = getOwnTextLabel(el, getInnerText, isMasked, depth > 0)
     if (label) return label
     el = el.parentElement
   }

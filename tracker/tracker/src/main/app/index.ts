@@ -181,11 +181,11 @@ type AppOptions = {
      * */
     enabled?: boolean
     /**
-     * used to send message up, will be '*' by default
-     * (check your CSP settings)
+     * iframe only: origin of the page embedding this one, or a list of them.
+     * The iframe posts only to that origin and takes commands only from it.
      * @default '*'
      * */
-    parentDomain?: string
+    parentDomain?: string | string[]
     /**
      * parent page only: origins of the child iframes allowed to join this session,
      * e.g. ['https://widget.example.com']. Any child iframe on the page when omitted.
@@ -264,6 +264,20 @@ const toOrigin = (domain: string): string | null => {
   }
 }
 
+/**
+ * Target origins for posts to the parent: the embedding page's origin when it is allowed,
+ * none when it is known and not allowed. When it is unknown (no ancestorOrigins, or "null"
+ * under a no-referrer policy) and the referrer doesn't tell, every allowed origin is tried
+ * until the parent answers.
+ */
+const parentTargets = (origins: Set<string> | null): string[] => {
+  if (!origins) return ['*']
+  const ancestor = window.location.ancestorOrigins?.[0]
+  if (ancestor && ancestor !== 'null') return origins.has(ancestor) ? [ancestor] : []
+  const referrer = document.referrer ? toOrigin(document.referrer) : null
+  return referrer && origins.has(referrer) ? [referrer] : [...origins]
+}
+
 /** sandboxed frames report origin 'null' and can only be reached with '*' */
 const replyTarget = (event: MessageEvent): string =>
   event.origin && event.origin !== 'null' ? event.origin : '*'
@@ -308,8 +322,9 @@ export default class App {
   public socketMode = false
   private readonly bc: BroadcastChannel | null = null
   private readonly contextId: string
-  /** child side: origin from crossdomain.parentDomain, null when '*' or unset */
-  private readonly parentOrigin: string | null
+  /** child side: origins from crossdomain.parentDomain, null when '*' or unset */
+  private readonly parentOrigins: Set<string> | null
+  private parentTargets: string[]
   /** parent side: crossdomain.childDomains as origins, null when any child is allowed */
   private readonly childOrigins: Set<string> | null
   private canvasRecorder: CanvasRecorder | null = null
@@ -324,6 +339,8 @@ export default class App {
   private stopEpoch = 0
   private workerRestartEpoch: number | null = null
   private rootId: number | null = null
+  /** child: level of our <iframe> on the parent page, which our document inherits */
+  private rootLevel: SanitizeLevel = SanitizeLevel.Plain
   private pageFrames: HTMLIFrameElement[] = []
   private frameOderNumber = 0
   private frameLevel = 0
@@ -380,8 +397,12 @@ export default class App {
       disableThrottling: false,
     }
     this.options = simpleMerge(defaultOptions, options)
-    const parentDomain = this.options.crossdomain?.parentDomain
-    this.parentOrigin = parentDomain && parentDomain !== '*' ? toOrigin(parentDomain) : null
+    const parentDomains = [this.options.crossdomain?.parentDomain ?? []].flat()
+    this.parentOrigins =
+      parentDomains.length && !parentDomains.includes('*')
+        ? new Set(parentDomains.map(toOrigin).filter((o): o is string => !!o))
+        : null
+    this.parentTargets = insideIframe ? parentTargets(this.parentOrigins) : []
     const childDomains = this.options.crossdomain?.childDomains
     this.childOrigins = childDomains?.length
       ? new Set(childDomains.map((d) => toOrigin(d) ?? d))
@@ -465,14 +486,10 @@ export default class App {
       window.addEventListener('message', this.parentCrossDomainFrameListener)
       window.addEventListener('message', this.crossDomainIframeListener)
       this.childPollingInterval = setInterval(() => {
-        window.parent.postMessage(
-          {
-            line: proto.polling,
-            context: this.contextId,
-          },
-          options.crossdomain?.parentDomain ?? '*',
-        )
-        this.markSentToParent()
+        this.postToParent({
+          line: proto.polling,
+          context: this.contextId,
+        })
       }, 250)
       // Child-only: once per minute, post an encoded snapshot of our own tracking state
       // (active?, token received, last comms) up to the parent so it lands in the replay.
@@ -573,7 +590,8 @@ export default class App {
   private lastSentToParentAt = 0
   private iframeDebugInterval: ReturnType<typeof setInterval> | null = null
   /** stamp every outbound post to the parent window, for the child debug snapshot */
-  private markSentToParent() {
+  private postToParent(message: Record<string, unknown>) {
+    for (const origin of this.parentTargets) window.parent.postMessage(message, origin)
     this.lastSentToParentAt = Date.now()
   }
 
@@ -610,11 +628,7 @@ export default class App {
       encoded = json
     }
     try {
-      window.parent.postMessage(
-        { line: proto.iframeDebug, context: this.contextId, debug: encoded },
-        this.options.crossdomain?.parentDomain ?? '*',
-      )
-      this.markSentToParent()
+      this.postToParent({ line: proto.iframeDebug, context: this.contextId, debug: encoded })
     } catch (e) {
       this.debug.error('iframe debug post failed', e)
     }
@@ -622,7 +636,10 @@ export default class App {
   parentCrossDomainFrameListener = (event: MessageEvent) => {
     const { data } = event
     if (!data || event.source !== window.parent) return
-    if (this.parentOrigin && event.origin !== this.parentOrigin) return
+    if (this.parentOrigins) {
+      if (!this.parentOrigins.has(event.origin)) return
+      this.parentTargets = [event.origin]
+    }
     // Debug: remember the last time the parent talked to us.
     if (
       data.line === proto.startIframe ||
@@ -648,6 +665,7 @@ export default class App {
         }
         if (data.id !== undefined) {
           this.rootId = data.id
+          this.rootLevel = data.level ?? SanitizeLevel.Plain
         }
         this.allowAppStart()
         void this.start()
@@ -661,6 +679,7 @@ export default class App {
     if (data.line === proto.iframeId) {
       this.parentActive = true
       this.rootId = data.id
+      if (!this.active()) this.rootLevel = data.level ?? SanitizeLevel.Plain
       this.session.setSessionToken(data.token as string, this.projectKey)
       this.lastTokenReceived = { tok: String(data.token).slice(-8), at: Date.now() }
       this.frameOderNumber = data.frameOrderNumber
@@ -786,19 +805,28 @@ export default class App {
       line: proto.startIframe,
       token: this.session.getSessionToken(this.projectKey),
     }
-    const targetFrame =
-      this.pageFrames.find((f) => f.contentWindow === event.source) ||
-      Array.from(document.querySelectorAll('iframe')).find((f) => f.contentWindow === event.source)
+    const targetFrame = this.frameOf(event.source)
     if (targetFrame) {
       const nodeId = this.nodes.getID(targetFrame)
       if (nodeId !== undefined) {
+        if (this.sanitizer.isHidden(nodeId)) return
         message.id = nodeId
+        message.level = this.sanitizer.getLevel(nodeId)
       }
     }
     // @ts-ignore
     event.source?.postMessage(message, replyTarget(event))
     this.recordSentToFrame(ctx, proto.startIframe)
     this.debug.log('Re-adopting orphaned crossdomain iframe', ctx)
+  }
+
+  private frameOf(source: MessageEventSource | null): HTMLIFrameElement | undefined {
+    let frame = this.pageFrames.find((f) => f.contentWindow === source)
+    if (!frame) {
+      this.pageFrames = Array.from(document.querySelectorAll('iframe'))
+      frame = this.pageFrames.find((f) => f.contentWindow === source)
+    }
+    return frame
   }
 
   /**
@@ -864,7 +892,8 @@ export default class App {
     this.send(ConsoleLog('info', `[OR_XDOMAIN_DEBUG] ${encoded}`))
   }
   crossDomainIframeListener = (event: MessageEvent) => {
-    if (event.source === window) return
+    // only this window's own iframes, not an opener, popup or deeper frame
+    if (event.source === window || (event.source as Window | null)?.parent !== window) return
     if (this.childOrigins && !this.childOrigins.has(event.origin)) return
     const { data } = event
     if (!data) return
@@ -895,7 +924,7 @@ export default class App {
           return console.error('Couldnt connect to event.source for child iframe tracking')
         }
         const id = await this.checkNodeId(event.source)
-        if (!id) {
+        if (!id || this.sanitizer.isHidden(id)) {
           this.debug.log('Couldnt get node id for iframe', event.source)
           return
         }
@@ -916,6 +945,7 @@ export default class App {
           const iframeData = {
             line: proto.iframeId,
             id,
+            level: this.sanitizer.getLevel(id),
             token,
             frameOrderNumber: order,
             frameLevel,
@@ -937,6 +967,17 @@ export default class App {
     if (data.line === proto.iframeBatch) {
       if (data.context) {
         this.frameBatchLastSeen.set(data.context, Date.now())
+      }
+      const frame = this.frameOf(event.source)
+      if (frame) {
+        const frameId = this.nodes.getID(frame)
+        // not recorded (under a hidden ancestor) or hidden
+        if (frameId === undefined || this.sanitizer.isHidden(frameId)) return
+        if (data.level !== undefined && data.level < this.sanitizer.getLevel(frameId)) {
+          // masked after the child joined: restart it at the new level
+          if (data.context) this.reAdoptOrphanFrame(event, data.context)
+          return
+        }
       }
       const msgBatch = data.messages
       // pushed one by one: spreading a large child snapshot into push() overflows the call stack
@@ -1023,18 +1064,20 @@ export default class App {
         const message: Record<string, any> = { line: nextCommand }
         if (nextCommand === proto.startIframe) {
           message.token = this.session.getSessionToken(this.projectKey)
-          const targetFrame = this.pageFrames.find((f) => f.contentWindow === event.source)
-            || Array.from(document.querySelectorAll('iframe')).find((f) => f.contentWindow === event.source)
+          const targetFrame = this.frameOf(event.source)
           if (targetFrame) {
             const nodeId = this.nodes.getID(targetFrame)
             if (nodeId !== undefined) {
               message.id = nodeId
+              message.level = this.sanitizer.getLevel(nodeId)
             }
           }
         }
-        // @ts-ignore
-        event.source?.postMessage(message, replyTarget(event))
-        this.recordSentToFrame(data.context, nextCommand)
+        if (message.level !== SanitizeLevel.Hidden) {
+          // @ts-ignore
+          event.source?.postMessage(message, replyTarget(event))
+          this.recordSentToFrame(data.context, nextCommand)
+        }
         if (this.pollingQueue[nextCommand].length === 0) {
           delete this.pollingQueue[nextCommand]
           this.pollingQueue.order.shift()
@@ -1073,15 +1116,11 @@ export default class App {
 
   signalIframeTracker = () => {
     const thisTab = this.session.getTabId()
-    window.parent.postMessage(
-      {
-        line: proto.iframeSignal,
-        source: thisTab,
-        context: this.contextId,
-      },
-      this.options.crossdomain?.parentDomain ?? '*',
-    )
-    this.markSentToParent()
+    this.postToParent({
+      line: proto.iframeSignal,
+      source: thisTab,
+      context: this.contextId,
+    })
 
     /**
      * since we need to wait uncertain amount of time
@@ -1099,15 +1138,11 @@ export default class App {
         stopAttempts = true
         return
       }
-      window.parent.postMessage(
-        {
-          line: proto.iframeSignal,
-          source: thisTab,
-          context: this.contextId,
-        },
-        this.options.crossdomain?.parentDomain ?? '*',
-      )
-      this.markSentToParent()
+      this.postToParent({
+        line: proto.iframeSignal,
+        source: thisTab,
+        context: this.contextId,
+      })
       this.debug.info('Trying to signal to parent, attempt:', retries + 1)
       retries++
     }
@@ -1339,10 +1374,17 @@ export default class App {
     this.debug.error('OpenReplay error: ', context, e)
   }
 
-  private sanitizeReferrer(referrer: string): string {
-    if (!referrer) return ''
-    if (this.sanitizer.privateMode) return stringWiper(referrer)
-    return (this.options.urls?.urlSanitizer ?? defaultUrlSanitizer)(referrer)
+  /** a page URL as the recording sends it: privateMode / urls.urlSanitizer applied */
+  sanitizeURL(url: string): string {
+    if (!url) return ''
+    if (this.sanitizer.privateMode) return stringWiper(url)
+    try {
+      return (this.options.urls?.urlSanitizer ?? defaultUrlSanitizer)(url)
+    } catch (e) {
+      // a throwing urlSanitizer must not drop what the URL belongs to or stall start()
+      this._debug('url_sanitizer', e)
+      return ''
+    }
   }
 
   send = (message: Message, urgent = false): void => {
@@ -1390,15 +1432,12 @@ export default class App {
       if (!this.messages.length) {
         return
       }
-      window.parent.postMessage(
-        {
-          line: proto.iframeBatch,
-          messages: this.messages,
-          context: this.contextId,
-        },
-        this.options.crossdomain?.parentDomain ?? '*',
-      )
-      this.markSentToParent()
+      this.postToParent({
+        line: proto.iframeBatch,
+        messages: this.messages,
+        context: this.contextId,
+        level: this.rootLevel,
+      })
       this.commitCallbacks.forEach((cb) => cb(this.messages))
       this.messages.length = 0
       return
@@ -1710,6 +1749,10 @@ export default class App {
    * and we will then send buffered batch, so it won't get lost
    * */
   public async coldStart(startOpts: StartOptions = {}, conditional?: boolean) {
+    // stop() keeps the buffers
+    if (this.activityState === ActivityState.NotActive) {
+      this.clearBuffers()
+    }
     this.singleBuffer = false
     const second = 1000
     const isNewSession = this.checkSessionToken(startOpts.forceNew)
@@ -1910,7 +1953,7 @@ export default class App {
       pageNo: this.session.incPageNo(),
       ingestPoint: this.options.ingestPoint,
       timestamp: this.coldStartTs,
-      url: document.URL,
+      url: this.sanitizeURL(document.URL),
       connAttemptCount: this.options.connAttemptCount,
       connAttemptGap: this.options.connAttemptGap,
       flushInterval: this.options.flushInterval,
@@ -2008,7 +2051,7 @@ export default class App {
       pageNo: this.session.incPageNo(),
       ingestPoint: this.options.ingestPoint,
       timestamp: isColdStart ? this.coldStartTs : timestamp,
-      url: document.URL,
+      url: this.sanitizeURL(document.URL),
       connAttemptCount: this.options.connAttemptCount,
       connAttemptGap: this.options.connAttemptGap,
       flushInterval: this.options.flushInterval,
@@ -2037,7 +2080,7 @@ export default class App {
           assistOnly: startOpts.assistOnly ?? this.socketMode,
           width: window.screen.width,
           height: window.screen.height,
-          referrer: this.sanitizeReferrer(document.referrer),
+          referrer: this.sanitizeURL(document.referrer),
         },
       )
       if (epoch !== this.stopEpoch) {
@@ -2182,7 +2225,12 @@ export default class App {
         }
       }
       if (this.insideIframe && this.rootId) {
-        this.observer.crossdomainObserve(this.rootId, this.frameOderNumber, this.frameLevel)
+        this.observer.crossdomainObserve(
+          this.rootId,
+          this.frameOderNumber,
+          this.frameLevel,
+          this.rootLevel,
+        )
       } else {
         this.observer.observe()
       }

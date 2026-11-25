@@ -51,6 +51,15 @@ function getNodeName(eventType: string, nodeName: string | null): string {
   return nodeName;
 }
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function shortenString(str: string, limit = 60): string {
   if (str.length <= limit) return str;
   const left = Math.floor(limit / 2) - 2;
@@ -166,8 +175,8 @@ function SankeyView({ data }: SankeyViewProps) {
           trigger: 'item',
           formatter: (params: any) => {
             if ('source' in params.data && 'target' in params.data) {
-              const sourceName = shortenString(echartNodes[params.data.source]?.name || '');
-              const targetName = shortenString(echartNodes[params.data.target]?.name || '');
+              const sourceName = escapeHtml(shortenString(echartNodes[params.data.source]?.name || ''));
+              const targetName = escapeHtml(shortenString(echartNodes[params.data.target]?.name || ''));
               const sourceVal = nodeValues[params.data.source] || 0;
               return `<div style="font-size:13px;max-width:300px">
                 <div style="font-weight:600;color:${c.accent}">&larr; ${sourceName}</div>
@@ -178,7 +187,7 @@ function SankeyView({ data }: SankeyViewProps) {
             }
             if ('name' in params.data) {
               return `<div style="font-size:13px">
-                <div style="font-weight:600">${params.data.name}</div>
+                <div style="font-weight:600">${escapeHtml(params.data.name)}</div>
                 <div>${params.value} sessions</div>
               </div>`;
             }

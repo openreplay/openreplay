@@ -1,6 +1,7 @@
 import type App from './index.js'
 import { stars, hasOpenreplayAttribute } from '../utils.js'
 import { isElementNode, isTextNode } from './guards.js'
+import { firstChild, nextSibling, parentNode } from './untaintedDom.js'
 
 export enum SanitizeLevel {
   Plain,
@@ -66,9 +67,9 @@ function composedParentElement(node: Node): Element | null {
   return root && root.nodeType === Node.DOCUMENT_FRAGMENT_NODE && root.host ? root.host : null
 }
 
-// Where the root of `el`'s tree takes its level from: a shadow host, or the <iframe> of a recorded document.
-function hostOf(el: Element): Element | null {
-  const root = el.getRootNode() as ShadowRoot | Document
+// Where the root of `node`'s tree takes its level from: a shadow host, or the <iframe> of a recorded document.
+function hostOf(node: Node): Element | null {
+  const root = node.getRootNode() as ShadowRoot | Document
   if (root.nodeType === Node.DOCUMENT_FRAGMENT_NODE) return (root as ShadowRoot).host ?? null
   if (root.nodeType !== Node.DOCUMENT_NODE || root === document) return null
   try {
@@ -210,6 +211,26 @@ export default class Sanitizer {
     }
   }
 
+  // handleNode() for a shadow root or iframe document, whose host may have moved under a mask
+  handleRoot(id: number, root: Node) {
+    const host = hostOf(root)
+    if (host === null) return
+    const level = this.currentLevel(host)
+    if (level > this.getLevel(id)) {
+      this.setLevel(id, level)
+    }
+  }
+
+  // from the live tree: the stored levels below a node moved or masked since lag behind
+  private currentLevel(el: Element): SanitizeLevel {
+    const parent = parentNode(el)
+    const above = parent !== null && isElementNode(parent) ? parent : hostOf(el)
+    const level = this.computeLevel(el, above ? this.currentLevel(above) : SanitizeLevel.Plain)
+    const id = this.app.nodes.getID(el)
+    const stored = id === undefined ? SanitizeLevel.Plain : this.getLevel(id)
+    return stored > level ? stored : level
+  }
+
   sanitize(id: number, data: string): string {
     if (this.getLevel(id) >= SanitizeLevel.Obscured) {
       // TODO: is it the best place to put trim() ? Might trimmed spaces be considered in layout in certain cases?
@@ -219,7 +240,7 @@ export default class Sanitizer {
     if (this.options.obscureTextNumbers) {
       data = data.replace(/\d/g, '0')
     }
-    if (this.options.obscureTextEmails) {
+    if (this.options.obscureTextEmails && data.includes('@')) {
       // Match every email-like substring anywhere in the text (not just when the
       // whole node is a single email), and preserve every domain label including
       // multi-part TLDs (e.g. .co.uk) so nothing leaks through unmasked.
@@ -251,14 +272,20 @@ export default class Sanitizer {
    * under the page-wide privateMode default.
    */
   masksStateAttributes(id: number, el: Element): boolean {
+    const masked = this.stateAttributesMasked(id, el)
+    if (this.options.privateMode && this.getLevel(id) === SanitizeLevel.Obscured) {
+      if (masked) this.maskedData.add(id)
+      else this.maskedData.delete(id)
+    }
+    return masked
+  }
+
+  /** masksStateAttributes() without noting the state for stateMaskChanged() */
+  stateAttributesMasked(id: number, el: Element): boolean {
     const level = this.getLevel(id)
     if (level === SanitizeLevel.Hidden) return true
     if (level !== SanitizeLevel.Obscured) return false
-    if (!this.options.privateMode) return true
-    const masked = this.explicitlyMasked(el)
-    if (masked) this.maskedData.add(id)
-    else this.maskedData.delete(id)
-    return masked
+    return !this.options.privateMode || this.explicitlyMasked(el)
   }
 
   /**
@@ -298,10 +325,27 @@ export default class Sanitizer {
     return this.getLevel(id) === SanitizeLevel.Hidden
   }
 
+  /** `node` has non-blank text of a masked or hidden element in it (`masked`: it is inside one) */
+  private hasMaskedText(node: Node, masked: boolean): boolean {
+    if (isTextNode(node)) return masked && /\S/.test(node.data)
+    if (!isElementNode(node)) return false
+    if (!masked) {
+      const id = this.app.nodes.getID(node)
+      masked = id !== undefined && this.isObscured(id)
+    }
+    for (let c = firstChild(node); c !== null; c = nextSibling(c)) {
+      if (this.hasMaskedText(c, masked)) return true
+    }
+    return false
+  }
+
   getInnerTextSecure(el: HTMLElement): string {
     const id = this.app.nodes.getID(el)
     if (id === undefined) {
       return ''
+    }
+    if (!this.isObscured(id) && this.hasMasked() && this.hasMaskedText(el, false)) {
+      return stringWiper(el.innerText)
     }
     return this.sanitize(id, el.innerText)
   }

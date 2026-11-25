@@ -40,14 +40,15 @@ export default class Call {
     calling: CallingState.NoCall,
   };
 
-  private connections: Record<string, RTCPeerConnection> = {};
+  private connections: Record<string, RTCPeerConnection> = Object.create(null);
 
-  private videoStreams: Record<string, MediaStreamTrack> = {};
+  private videoStreams: Record<string, MediaStreamTrack> = Object.create(null);
 
-  private videoTrackUnsubscribers: Record<string, () => void> = {};
+  private videoTrackUnsubscribers: Record<string, () => void> =
+    Object.create(null);
 
   private peerDisconnectTimers: Record<string, ReturnType<typeof setTimeout>> =
-    {};
+    Object.create(null);
 
   /** Set when the user's tab went away mid-call; the call is redialed once messages resume. */
   private reconnecting = false;
@@ -419,7 +420,7 @@ export default class Call {
     const wasInCall = this.store.get().calling !== CallingState.NoCall;
     this.reconnecting = false;
     Object.keys(this.connections).forEach((id) => this.closePeer(id));
-    this.videoStreams = {};
+    this.videoStreams = Object.create(null);
     this.store.update({ calling: CallingState.NoCall });
     const args = this.callArgs;
     this.callArgs = null;

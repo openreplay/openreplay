@@ -111,6 +111,24 @@ describe('input module', () => {
     ])
   })
 
+  test('hidden checkboxes and radios are recorded unchecked', () => {
+    plain()
+    h.app.sanitizer.isHidden.mockImplementation((id) => id !== 1)
+    const boxes = [input('checkbox'), input('checkbox'), input('radio')]
+    boxes.forEach((box) => (box.checked = true))
+    const [plainId, hiddenId, radioId] = boxes.map((box) => h.add(box))
+    boxes[1].checked = false
+    boxes[1].dispatchEvent(new Event('change'))
+    boxes[1].checked = true
+    boxes[1].dispatchEvent(new Event('change'))
+    h.tick()
+    expect(h.sent(Type.SetInputChecked)).toEqual([
+      [Type.SetInputChecked, plainId, true],
+      [Type.SetInputChecked, hiddenId, false],
+      [Type.SetInputChecked, radioId, false],
+    ])
+  })
+
   test('stops polling nodes that are gone', () => {
     plain()
     const el = input('text', 'a')
@@ -131,6 +149,20 @@ describe('input module', () => {
       [Type.SetInputValue, 1, '', -1],
       [Type.SetInputValue, 2, '', 3],
     ])
+  })
+
+  test('an obscured node does not lower hidden mode', () => {
+    setupInput(h.app as any, { defaultInputMode: InputMode.Hidden })
+    h.app.sanitizer.isObscured.mockReturnValue(true)
+    const el = input('text', 'secret')
+    const id = h.add(el)
+    h.resanitize(el, id)
+    el.dispatchEvent(new Event('change'))
+    expect(h.sent(Type.SetInputValue)).toEqual([
+      [Type.SetInputValue, id, '', -1],
+      [Type.SetInputValue, id, '', -1],
+    ])
+    expect(h.sent(Type.InputChange)[0].slice(2, 4)).toEqual(['', true])
   })
 
   test.each([
@@ -238,7 +270,7 @@ describe('input module: password fields', () => {
     el.value = 'secret2'
     h.tick()
     const sent = h.sent(Type.SetInputValue)
-    expect(sent).toHaveLength(2)
+    expect(sent).toHaveLength(1)
     for (const m of sent) {
       expect(m[2]).toBe('')
       expect(m[3]).toBe(-1)
@@ -256,5 +288,47 @@ describe('input module: password fields', () => {
     el.value = 'hunter2'
     h.tick()
     expect(h.sent(Type.SetInputValue).at(-1)).toEqual([Type.SetInputValue, h.app.nodes.getID(el), '', -1])
+  })
+})
+
+describe('input module: hidden fields are sent once, not per keystroke', () => {
+  afterEach(() => {
+    document.body.innerHTML = ''
+  })
+
+  function typeInto(h: ReturnType<typeof createApp>, el: HTMLInputElement, text: string) {
+    for (const key of text) {
+      el.value += key
+      h.tick()
+    }
+  }
+
+  test.each([
+    ['a password field', 'password', {}],
+    ['a text field with defaultInputMode hidden', 'text', { defaultInputMode: InputMode.Hidden }],
+  ])('%s', (_, type, opts) => {
+    const h = createApp()
+    setupInput(h.app as any, opts)
+    const el = input(type)
+    const id = h.add(el)
+    typeInto(h, el, 'hunter2')
+    expect(h.sent(Type.SetInputValue)).toEqual([[Type.SetInputValue, id, '', -1]])
+  })
+
+  test('a field hidden by the sanitizer is sent again once it is no longer hidden', () => {
+    const h = createApp()
+    setupInput(h.app as any, { defaultInputMode: InputMode.Plain })
+    h.app.sanitizer.isHidden.mockReturnValue(true)
+    const el = input()
+    const id = h.add(el)
+    typeInto(h, el, 'abc')
+    h.app.sanitizer.isHidden.mockReturnValue(false)
+    el.value += 'd'
+    h.tick()
+    h.tick()
+    expect(h.sent(Type.SetInputValue)).toEqual([
+      [Type.SetInputValue, id, '', -1],
+      [Type.SetInputValue, id, 'abcd', 0],
+    ])
   })
 })

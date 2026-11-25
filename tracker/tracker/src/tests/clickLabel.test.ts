@@ -4,32 +4,33 @@ import { getCSSPath, isDeepClickable, resolvePointerRoot } from '../main/modules
 
 // jsdom has no innerText, textContent is close enough for these cases
 const innerText = (el: HTMLElement) => el.textContent || ''
+const plain = () => false
 
 describe('getTextualLabel', () => {
   test('uses own text of a clickable element', () => {
     const button = document.createElement('button')
     button.textContent = '  Add   to cart '
-    expect(getTextualLabel(button, innerText)).toBe('Add to cart')
+    expect(getTextualLabel(button, innerText, plain)).toBe('Add to cart')
   })
 
   test('skips symbol only text in favour of a description', () => {
     const button = document.createElement('button')
     button.textContent = '×'
     button.setAttribute('aria-label', 'Close dialog')
-    expect(getTextualLabel(button, innerText)).toBe('Close dialog')
+    expect(getTextualLabel(button, innerText, plain)).toBe('Close dialog')
   })
 
   test('reads a describing attribute of an icon child', () => {
     const div = document.createElement('div')
     div.innerHTML = '<img alt="Delete row" />'
-    expect(getTextualLabel(div, innerText)).toBe('Delete row')
+    expect(getTextualLabel(div, innerText, plain)).toBe('Delete row')
   })
 
   test('uses value of button-like inputs', () => {
     const input = document.createElement('input')
     input.type = 'submit'
     input.value = 'Send'
-    expect(getTextualLabel(input, innerText)).toBe('Send')
+    expect(getTextualLabel(input, innerText, plain)).toBe('Send')
   })
 
   test('climbs to an ancestor when element has nothing', () => {
@@ -37,7 +38,7 @@ describe('getTextualLabel', () => {
     wrapper.setAttribute('aria-label', 'Pagination')
     const icon = document.createElement('i')
     wrapper.appendChild(icon)
-    expect(getTextualLabel(icon, innerText)).toBe('Pagination')
+    expect(getTextualLabel(icon, innerText, plain)).toBe('Pagination')
   })
 
   test('does not take multiline text of an ancestor', () => {
@@ -45,7 +46,7 @@ describe('getTextualLabel', () => {
     card.textContent = 'Product title\nAdd to cart'
     const icon = document.createElement('i')
     card.appendChild(icon)
-    expect(getTextualLabel(icon, innerText)).toBe('')
+    expect(getTextualLabel(icon, innerText, plain)).toBe('')
   })
 
   test('does not take truncated text of an ancestor', () => {
@@ -53,7 +54,7 @@ describe('getTextualLabel', () => {
     card.textContent = 'a'.repeat(150)
     const icon = document.createElement('i')
     card.appendChild(icon)
-    expect(getTextualLabel(icon, innerText)).toBe('')
+    expect(getTextualLabel(icon, innerText, plain)).toBe('')
   })
 
   test('stops climbing after maxAncestors', () => {
@@ -65,7 +66,19 @@ describe('getTextualLabel', () => {
     top.appendChild(mid)
     mid.appendChild(inner)
     inner.appendChild(icon)
-    expect(getTextualLabel(icon, innerText)).toBe('')
+    expect(getTextualLabel(icon, innerText, plain)).toBe('')
+  })
+
+  test('does not read descriptions of masked elements, own or of an icon child', () => {
+    const button = document.createElement('button')
+    button.textContent = '×'
+    button.setAttribute('aria-label', 'Remove Jane Smith')
+    expect(getTextualLabel(button, innerText, (el) => el === button)).toBe('')
+
+    const div = document.createElement('div')
+    div.innerHTML = '<i></i><img alt="Jane Smith" />'
+    const img = div.querySelector('img') as Element
+    expect(getTextualLabel(div.querySelector('i') as Element, innerText, (el) => el === img)).toBe('')
   })
 })
 
@@ -186,5 +199,12 @@ describe('getCSSPath data attributes', () => {
     expect(getCSSPath(cancel)).toBe('[data-action="cancel"]')
     const saveMatches = document.querySelectorAll(getCSSPath(save) as string)
     expect(Array.from(saveMatches)).toEqual([save])
+  })
+
+  test('leaves out data attributes recorded masked', () => {
+    document.body.innerHTML = '<p><a data-patient="jane.smith" data-openreplay-obscured="">File</a></p>'
+    const link = document.querySelector('a') as Element
+    expect(getCSSPath(link)).toBe('[data-patient="jane.smith"]')
+    expect(getCSSPath(link, undefined, true)).toBe('[data-openreplay-obscured=""]')
   })
 })

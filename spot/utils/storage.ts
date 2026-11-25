@@ -56,6 +56,8 @@ export type RecordingStatus = "recording" | "paused" | "stopped";
  */
 export interface RecState {
   recording: RecordingStatus;
+  /** Wall-clock spans the video was paused for; `end` is null while paused. */
+  pauses: { start: number; end: number | null }[];
   area: "tab" | "desktop" | null;
   activeTabId: number | null;
   /** Tab being recorded in "tab" mode; used to discard if it is closed. */
@@ -71,6 +73,7 @@ export interface RecState {
 
 export const DEFAULT_REC_STATE: RecState = {
   recording: "stopped",
+  pauses: [],
   area: null,
   activeTabId: null,
   trackedTab: null,

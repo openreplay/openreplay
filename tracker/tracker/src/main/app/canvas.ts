@@ -354,6 +354,11 @@ class CanvasRecorder {
       return
     }
     const canvas = snapshot.node
+    // hidden (rebuilt under a new id), moved or masked without a resanitizeCanvas call
+    if (this.app.nodes.getID(canvas) !== id || this.app.sanitizer.isObscured(id)) {
+      this.cleanupCanvas(id)
+      return
+    }
     // createImageBitmap rejects and drawImage throws on an empty canvas
     if (!canvas.width || !canvas.height) {
       return

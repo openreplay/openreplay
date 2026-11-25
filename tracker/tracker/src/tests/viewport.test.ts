@@ -94,10 +94,31 @@ describe('viewport module', () => {
     expect(locations(app)[0][1]).toBe('http://example.com/path/to/page?query=123')
   })
 
+  test('hash router replacer keeps the page query visible to the sanitizer', () => {
+    mockUrl('http://example.com/?token=abc#/path?query=123')
+    setup({ replaceHashSymbol: true })
+    startCb()
+    expect(locations(app)[0][1]).toBe('http://example.com/path?query=123&token=***')
+  })
+
   test('sanitizes the url with the default sanitizer', () => {
     mockUrl('http://localhost/reset?token=abc&page=2')
     startCb()
     expect(locations(app)[0][1]).toBe('http://localhost/reset?token=***&page=2')
+  })
+
+  test('default sanitizer masks secrets in the hash', () => {
+    mockUrl('http://localhost/#/reset?Token=abc&page=2')
+    startCb()
+    mockUrl('http://localhost/cb#state=1&jwt=abc')
+    locationTick()
+    mockUrl('http://localhost/#/list?tokens=1&mytoken=2&q=a%20b')
+    locationTick()
+    const locs = locations(app)
+    expect(locs[0][1]).toBe('http://localhost/#/reset?Token=***&page=2')
+    expect(locs[1][1]).toBe('http://localhost/cb#state=1&jwt=***')
+    expect(locs[1][2]).toBe('http://localhost/#/reset?Token=***&page=2')
+    expect(locs[2][1]).toBe('http://localhost/#/list?tokens=1&mytoken=2&q=a%20b')
   })
 
   describe('referrer', () => {

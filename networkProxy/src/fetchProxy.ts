@@ -204,11 +204,26 @@ export class FetchProxyHandler<T extends typeof fetch> implements ProxyHandler<T
       if (this.config.tokenUrlMatcher !== undefined && !this.config.tokenUrlMatcher(item.url)) return;
       // init.headers replaces the Request's headers entirely, so only add it there if it's already set
       if (argsList[1]?.headers === undefined && isRequest(argsList[0])) {
+        const request = argsList[0];
         // already set by the app or the axios hook: append would join the values
-        if (!argsList[0].headers.has(name)) {
-          argsList[0].headers.append(name, value);
-          item.sessionTokenSent = true;
+        if (request.headers.has(name)) return;
+        // on a copy, the app's Request stays unchanged
+        if (argsList[1]?.body != null) {
+          const headers = new Headers(request.headers);
+          headers.append(name, value);
+          argsList[1] = { ...copyInit(argsList[1]), headers };
+        } else {
+          let copy: Request;
+          try {
+            // not through init, which resets referrer and referrerPolicy
+            copy = new Request(request);
+          } catch {
+            return;
+          }
+          copy.headers.append(name, value);
+          argsList[0] = copy;
         }
+        item.sessionTokenSent = true;
         return;
       }
       // copies, not the app's own headers: it may reuse them for a url that must not get the token

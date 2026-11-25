@@ -84,6 +84,17 @@ export default defineBackground(() => {
     await setRecState({ ...DEFAULT_REC_STATE, audioPerm: recState.audioPerm });
   }
 
+  /** ms into the recorded video, or null when the video was paused then */
+  function videoTime(time: number): number | null {
+    let paused = 0;
+    for (const p of recState.pauses) {
+      if (time < p.start) break;
+      if (p.end === null || time <= p.end) return null;
+      paused += p.end - p.start;
+    }
+    return time - buffers.startTs - paused;
+  }
+
   const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
   const permToState = (permissions: boolean, mic: boolean): 0 | 1 | 2 =>
     permissions ? (mic ? 2 : 1) : 0;
@@ -586,19 +597,16 @@ export default defineBackground(() => {
   });
 
   onMessage("ort:get-error-events", () => {
-    const logs = buffers.logs
-      .filter((log) => log.level === "error")
-      .map((l) => ({
-        title: "JS Error",
-        time: (l.time - buffers.startTs) / 1000,
-      }));
-    const network = [...injectNetworkRequests, ...buffers.network]
-      .filter((net) => net.statusCode >= 400 || net.error)
-      .map((n) => ({
-        title: "Network Error",
-        time: (n.time - buffers.startTs) / 1000,
-      }));
-    return [...logs, ...network].sort((a, b) => a.time - b.time);
+    const events: { title: string; time: number }[] = [];
+    const add = (title: string, time: number) => {
+      const t = videoTime(time);
+      if (t !== null) events.push({ title, time: t / 1000 });
+    };
+    buffers.logs.forEach((l) => l.level === "error" && add("JS Error", l.time));
+    [...injectNetworkRequests, ...buffers.network].forEach(
+      (n) => (n.statusCode >= 400 || n.error) && add("Network Error", n.time),
+    );
+    return events.sort((a, b) => a.time - b.time);
   });
 
   onMessage("ort:stop", async () => {
@@ -616,7 +624,11 @@ export default defineBackground(() => {
           recState.area === "tab" ? recState.activeTabId ?? undefined : undefined,
         );
         stopTrackingNetwork();
-        mappedNetwork = mergeRequests(networkRequests, injectNetworkRequests);
+        // webRequest times are at completion
+        mappedNetwork = mergeRequests(
+          networkRequests,
+          injectNetworkRequests,
+        ).filter((n) => videoTime(n.time - n.duration) !== null);
       }
     }
     injectNetworkRequests = [];
@@ -647,11 +659,21 @@ export default defineBackground(() => {
 
   onMessage("ort:pause", async () => {
     void sendMessage("offscr:pause-recording").catch(() => {});
-    await setRecState({ recording: "paused" });
+    const { pauses } = recState;
+    await setRecState({
+      recording: "paused",
+      pauses: pauses.some((p) => p.end === null)
+        ? pauses
+        : [...pauses, { start: Date.now(), end: null }],
+    });
   });
   onMessage("ort:resume", async () => {
     void sendMessage("offscr:resume-recording").catch(() => {});
-    await setRecState({ recording: "recording" });
+    const end = Date.now();
+    await setRecState({
+      recording: "recording",
+      pauses: recState.pauses.map((p) => (p.end === null ? { ...p, end } : p)),
+    });
   });
 
   onMessage("ort:mute-microphone", () => {
@@ -697,25 +719,23 @@ export default defineBackground(() => {
     const vendor = await browser.runtime.getPlatformInfo();
     const platform = `${vendor.os} ${vendor.arch}`;
 
-    const cropped = !!crop && crop[0] + crop[1] > 0;
-    let logs = buffers.logs;
-    let network = buffers.network;
-    let locations = buffers.locations;
-    if (cropped && crop) {
-      const start = buffers.startTs + crop[0];
-      const end = buffers.startTs + crop[1];
-      logs = buffers.logs.filter((l) => l.time >= start && l.time <= end);
-      network = buffers.network.filter((n) => n.time >= start && n.time <= end);
-      locations = buffers.locations.filter(
-        (l) => l.time >= start && l.time <= end,
-      );
-    }
+    // crop is in video time, which leaves out the pauses; kept events move onto that clock
+    const [from, to] =
+      crop && crop[0] + crop[1] > 0 ? crop : [-Infinity, Infinity];
+    const inVideo = <T extends { time: number }>(events: T[]): T[] => {
+      const kept: T[] = [];
+      for (const e of events) {
+        const t = videoTime(e.time);
+        if (t !== null && t >= from && t <= to) kept.push({ ...e, time: buffers.startTs + t });
+      }
+      return kept;
+    };
 
     const mobData = {
-      clicks: buffers.clicks,
-      logs,
-      network,
-      locations,
+      clicks: inVideo(buffers.clicks),
+      logs: inVideo(buffers.logs),
+      network: inVideo(buffers.network),
+      locations: inVideo(buffers.locations),
       startTs: buffers.startTs,
       resolution: meta.resolution,
       browserVersion: meta.browserVersion,
@@ -844,7 +864,7 @@ export default defineBackground(() => {
 
   // Rehydrate the in-memory caches whenever the worker (re)starts.
   void recStateStore.getValue().then((s) => {
-    recState = s;
+    recState = { ...DEFAULT_REC_STATE, ...s };
   });
   void settingsStore.getValue().then((s) => {
     settingsCache = s;

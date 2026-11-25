@@ -278,6 +278,7 @@ export const handleSpotJWT = (jwt: string) => {
   sendingRequest = true;
   let int: ReturnType<typeof setInterval>;
   const onSpotMsg = (event: any) => {
+    if (event.source !== window) return;
     if (event.data.type === 'orspot:logged') {
       clearInterval(int);
       sendingRequest = false;

@@ -184,7 +184,12 @@ export default class NextObserver
     }
   }
 
-  crossdomainObserve(rootNodeId: number, frameOrder: number, frameLevel: number) {
+  crossdomainObserve(
+    rootNodeId: number,
+    frameOrder: number,
+    frameLevel: number,
+    level = SanitizeLevel.Plain,
+  ) {
     initUntaintedDom()
     this.active = true
     this.top = false
@@ -195,7 +200,7 @@ export default class NextObserver
     this.mo.observe(document, MO_OPTS)
     this.listen(document, 'load', this.onLoad)
     this.beginBatch()
-    const r = this.newRec(document, null, SanitizeLevel.Plain)
+    const r = this.newRec(document, null, level)
     this.root = r
     this.app.send(CreateIFrameDocument(rootNodeId, r.id))
     this.created.push(document)

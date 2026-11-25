@@ -9,6 +9,7 @@ import IFrameOffsets, { Offset } from './iframe_offsets.js'
 import { CreateDocument, SetNodeAttribute } from '../messages.gen.js'
 import App from '../index.js'
 import { IN_BROWSER, hasOpenreplayAttribute, canAccessIframe } from '../../utils.js'
+import { SanitizeLevel } from '../sanitizer.js'
 
 export enum InlineCssMode {
   Unset = -1,
@@ -317,7 +318,12 @@ export default class TopObserver extends Observer {
   private colorSchemeListener: ((e: MediaQueryListEvent) => void) | null = null
 
 
-  crossdomainObserve(rootNodeId: number, frameOder: number, frameLevel: number) {
+  crossdomainObserve(
+    rootNodeId: number,
+    frameOder: number,
+    frameLevel: number,
+    level = SanitizeLevel.Plain,
+  ) {
     initUntaintedDom()
     const observer = this
     Element.prototype.attachShadow = function () {
@@ -333,7 +339,8 @@ export default class TopObserver extends Observer {
       ...getInlineOptions(this.options.inlineCss, console.warn),
     })
     this.iframeObservers.set(window.document, iframeObserver)
-    iframeObserver.syntheticObserve(rootNodeId, window.document)
+    this.iframeObserversArr.push(iframeObserver)
+    iframeObserver.syntheticObserve(rootNodeId, window.document, level)
   }
 
   disconnect() {

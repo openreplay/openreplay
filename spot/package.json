@@ -23,19 +23,19 @@
     "web-vitals": "^5.3.0"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.3.3",
-    "@tailwindcss/vite": "^4.3.3",
+    "@tailwindcss/postcss": "^4.3.5",
+    "@tailwindcss/vite": "^4.3.5",
     "@thedutchcoder/postcss-rem-to-px": "^0.0.2",
     "@types/chrome": "^0.1.43",
     "@wxt-dev/module-solid": "^1.1.4",
-    "autoprefixer": "^10.5.4",
-    "daisyui": "5.5.23",
-    "postcss": "^8.5.25",
-    "prettier": "^3.9.6",
-    "tailwindcss": "4.3.3",
+    "autoprefixer": "^10.6.2",
+    "daisyui": "5.8.1",
+    "postcss": "^8.5.33",
+    "prettier": "^3.10.1",
+    "tailwindcss": "4.3.5",
     "typescript": "^5.9.3",
     "web-ext": "^10.8.0",
-    "wxt": "0.21.4"
+    "wxt": "0.21.5"
   },
   "overrides": {
     "shell-quote": "^1.11.0"

@@ -81,6 +81,9 @@ const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const SITE_ID_RE = new RegExp(`^(?:${siteIdRequiredPaths.map(escapeRe).join('|')})`);
 const NEW_API_RE = new RegExp(newApiUrls.map(escapeRe).join('|'));
 const EXCEPT_RE = new RegExp(except.map(escapeRe).join('|'));
+// nginx decodes %2e/%2f
+const UNSAFE_PATH_RE =
+  /[\\\t\n\r]|(?:^|\/|%2f|%5c)(?:\.|%2e){1,2}(?:\/|%2f|%5c|$)/i;
 
 const SAAS_HOST = 'api.openreplay.com';
 
@@ -250,6 +253,9 @@ export default class APIClient {
     headers?: Record<string, any>,
     abortSignal?: AbortSignal,
   ): Promise<Response> {
+    if (UNSAFE_PATH_RE.test(path.split(/[?#]/, 1)[0])) {
+      throw new Error('Invalid request path');
+    }
     let _path = path;
     const jwt = this.getJwt();
     if (!path.includes('/refresh') && jwt && this.isTokenExpired(jwt)) {

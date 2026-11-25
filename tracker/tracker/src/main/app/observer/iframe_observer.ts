@@ -1,5 +1,6 @@
 import Observer from './observer.js'
 import { CreateIFrameDocument, RemoveNode } from '../messages.gen.js'
+import { SanitizeLevel } from '../sanitizer.js'
 
 export default class IFrameObserver extends Observer {
   docId: number | undefined
@@ -23,12 +24,14 @@ export default class IFrameObserver extends Observer {
     })
   }
 
-  syntheticObserve(rootNodeId: number, doc: Document) {
+  syntheticObserve(rootNodeId: number, doc: Document, level = SanitizeLevel.Plain) {
     this.observeRoot(doc, (docID) => {
       if (docID === undefined) {
         this.app.debug.log('OpenReplay: Iframe document not bound')
         return
       }
+      // crossdomain: the level of the host <iframe> on the parent page
+      this.app.sanitizer.setLevel(docID, level)
       this.app.send(CreateIFrameDocument(rootNodeId, docID))
     })
   }
