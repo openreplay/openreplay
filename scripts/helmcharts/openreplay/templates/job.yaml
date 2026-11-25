@@ -604,6 +604,10 @@ spec:
           {{- end }}
           - name: RETENTION_TIME
             value: "{{ .Values.global.kafka.retentionTime }}"
+          {{- with .Values.global.kafka.segmentTime }}
+          - name: SEGMENT_TIME
+            value: "{{ . }}"
+          {{- end }}
           - name: KAFKA_HOST
             value: "{{ .Values.global.kafka.kafkaHost }}"
           - name: KAFKA_PORT
