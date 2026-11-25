@@ -52,6 +52,8 @@ import { useStore } from 'App/mstore';
 import { StartPath } from 'Shared/StartPath/StartPath';
 
 import { AuditsFilterMenu } from './AuditsFilterMenu';
+import NewAuditDrawer from './NewAuditDrawer';
+import './audits-page.css';
 import {
   AUDIT_FIELD_CHOICES,
   AUDIT_SORT_CHOICES,
@@ -71,7 +73,6 @@ import {
   useRerunAudit,
 } from './queries';
 import { auditsUi as ui } from './store';
-import './audits-page.css';
 
 const fmt = (n: number) => n.toLocaleString('en-US');
 
@@ -106,7 +107,8 @@ function AuditsPage() {
   const total = list.data?.total ?? 0;
 
   const [, setOpenAudit] = useQueryParam('audit');
-  const [, setCreating] = React.useState(false);
+  const [creating, setCreating] = React.useState(false);
+  const [draftKey, setDraftKey] = React.useState(0);
   const [renaming, setRenaming] = React.useState<AuditItem | null>(null);
   const [deleting, setDeleting] = React.useState<AuditItem | null>(null);
   const [cancelling, setCancelling] = React.useState<AuditItem | null>(null);
@@ -121,17 +123,21 @@ function AuditsPage() {
 
   useAuditLandings(items, JSON.stringify(params), (a) => {
     if (a.isReady) toast.success(t('“{{name}}” is ready', { name: a.name }));
-    else if (a.isFailed)
-      toast.error(t('“{{name}}” failed', { name: a.name }));
+    else if (a.isFailed) toast.error(t('“{{name}}” failed', { name: a.name }));
   });
 
-  const newAudit = () => setCreating(true);
+  const newAudit = () => {
+    setDraftKey((k) => k + 1);
+    setCreating(true);
+  };
 
   const openReport = (a: AuditItem) => {
     if (!a.isReady) {
       toast.info(
         a.isActive
-          ? t('This audit is still being made. The report opens when it is ready.')
+          ? t(
+              'This audit is still being made. The report opens when it is ready.',
+            )
           : t('This audit has no report.'),
       );
       return;
@@ -260,9 +266,7 @@ function AuditsPage() {
               size="icon"
               disabled={!a.isReady || !pdf}
               aria-label={t('Download the PDF of {{name}}', { name: a.name })}
-              onClick={() =>
-                artifact.open(a.id, 'pdf', { onError: failed })
-              }
+              onClick={() => artifact.open(a.id, 'pdf', { onError: failed })}
             >
               <Download size={14} />
             </Button>
@@ -409,11 +413,7 @@ function AuditsPage() {
   const noMatch = (
     <EmptyState
       state={ui.search ? 'audits-nomatch' : 'audits-tab'}
-      title={
-        ui.search
-          ? t('No audits match your search')
-          : t('No audits here')
-      }
+      title={ui.search ? t('No audits match your search') : t('No audits here')}
       hint={t('Clear the search, or pick another tab or period.')}
       action={
         <Button
@@ -544,6 +544,15 @@ function AuditsPage() {
     >
       {body()}
 
+      <NewAuditDrawer
+        key={draftKey}
+        open={creating}
+        onClose={() => setCreating(false)}
+        onCreated={() => {
+          ui.showAll();
+          setQuery('');
+        }}
+      />
       <RenameDialog
         open={renaming != null}
         title={t('Rename audit')}
@@ -551,10 +560,7 @@ function AuditsPage() {
         onCancel={() => setRenaming(null)}
         onOk={(name) => {
           if (renaming)
-            rename.mutate(
-              { auditId: renaming.id, name },
-              { onError: failed },
-            );
+            rename.mutate({ auditId: renaming.id, name }, { onError: failed });
           setRenaming(null);
         }}
       />
@@ -573,9 +579,12 @@ function AuditsPage() {
         }}
       >
         {deleting?.isActive
-          ? t('“{{name}}” is still running. It stops and is removed from the list.', {
-              name: deleting?.name,
-            })
+          ? t(
+              '“{{name}}” is still running. It stops and is removed from the list.',
+              {
+                name: deleting?.name,
+              },
+            )
           : t('“{{name}}” and its report will be removed.', {
               name: deleting?.name,
             })}
@@ -587,14 +596,16 @@ function AuditsPage() {
         cancelText={t('Keep running')}
         onCancel={() => setCancelling(null)}
         onOk={() => {
-          if (cancelling)
-            cancel.mutate(cancelling.id, { onError: failed });
+          if (cancelling) cancel.mutate(cancelling.id, { onError: failed });
           setCancelling(null);
         }}
       >
-        {t('“{{name}}” stops and makes no report. You can run it again later.', {
-          name: cancelling?.name,
-        })}
+        {t(
+          '“{{name}}” stops and makes no report. You can run it again later.',
+          {
+            name: cancelling?.name,
+          },
+        )}
       </ConfirmDialog>
     </PageCard>
   );

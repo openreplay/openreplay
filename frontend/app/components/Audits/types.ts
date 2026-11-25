@@ -1,7 +1,8 @@
 // Audits API (saas `backend/docs/audits-api.openapi.yaml`): /v2/{projectId}/audits.
 // Responses are bare JSON (no `data` envelope); lists are `{ items, total }`.
 
-export type AuditStatus = 'queued' | 'running' | 'ready' | 'failed' | 'cancelled';
+export type AuditStatus =
+  'queued' | 'running' | 'ready' | 'failed' | 'cancelled';
 
 export type ReportType =
   | 'health'
@@ -37,12 +38,7 @@ export type SectionKey =
   | 'journeys.issues';
 
 export type SectionGroup =
-  | 'web'
-  | 'product'
-  | 'errors'
-  | 'ux'
-  | 'adoption'
-  | 'journeys';
+  'web' | 'product' | 'errors' | 'ux' | 'adoption' | 'journeys';
 
 export type PeriodDays = 7 | 30 | 90;
 export type SampleSize = 500 | 1000 | 2000 | 5000 | 10000;
@@ -142,11 +138,7 @@ export interface AuditCounts {
 }
 
 export type AuditSortField =
-  | 'created_at'
-  | 'name'
-  | 'health'
-  | 'status'
-  | 'sample_size';
+  'created_at' | 'name' | 'health' | 'status' | 'sample_size';
 
 export interface ListAuditsParams {
   /** Comma-separated statuses, e.g. "queued,running". */
@@ -528,7 +520,11 @@ export interface IssuesData {
 }
 
 export interface QuickWinsData {
-  items: Array<{ title?: string; do?: string; effort?: 'S' | 'M' | 'L' | null }>;
+  items: Array<{
+    title?: string;
+    do?: string;
+    effort?: 'S' | 'M' | 'L' | null;
+  }>;
   facts?: Fact[];
   unverified?: UnverifiedNumber[];
 }
