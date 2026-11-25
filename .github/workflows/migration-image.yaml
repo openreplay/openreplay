@@ -1,0 +1,66 @@
+name: Build migration image
+
+# Schema image for offline migrations (offlineMigration.enabled in the
+# openreplay chart). Tagged with the chart AppVersion and rebuilt from main
+# whenever the schemas change, so the released tag always carries the
+# released schemas.
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'scripts/schema/**'
+      - 'ee/scripts/schema/**'
+      - 'scripts/dockerfiles/migration/**'
+      - 'scripts/helmcharts/openreplay/Chart.yaml'
+      - '.github/workflows/migration-image.yaml'
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Git ref to build from (the image tag is that ref''s Chart.yaml AppVersion)'
+        required: false
+        default: 'main'
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: migration-image
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref || github.ref }}
+
+      - name: Read chart AppVersion
+        id: version
+        run: |
+          VERSION=$(yq '.AppVersion' scripts/helmcharts/openreplay/Chart.yaml)
+          if [[ -z "$VERSION" || "$VERSION" == "null" ]]; then
+            echo "AppVersion not found in scripts/helmcharts/openreplay/Chart.yaml" >&2
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Login to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Set up Depot CLI
+        uses: depot/setup-action@v1
+
+      - name: Build and push
+        uses: depot/build-push-action@v1
+        with:
+          project: ${{ secrets.DEPOT_PROJECT_ID }}
+          token: ${{ secrets.DEPOT_TOKEN }}
+          context: .
+          file: scripts/dockerfiles/migration/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ghcr.io/openreplay/migration:${{ steps.version.outputs.version }}
