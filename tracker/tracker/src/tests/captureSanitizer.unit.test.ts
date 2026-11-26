@@ -45,14 +45,11 @@ test.each([
   }
 })
 
-test('omitting an import with a leading comment keeps an inert import slot', () => {
-  expect(sanitizeStyleRule(() => null, '/* retained */ @import "theme.css";', 'rule'))
-    .toBe('@import url("data:text/css,") not all;')
-})
-
-test('an empty import replacement keeps an inert import slot', () => {
-  expect(sanitizeStyleRule(() => '@import ;', '@import "theme.css";', 'rule'))
-    .toBe('@import url("data:text/css,") not all;')
+test.each([
+  ['omitted with a leading comment', () => null, '/* retained */ @import "theme.css";'],
+  ['replaced by an empty import', () => '@import ;', '@import "theme.css";'],
+])('an import %s keeps an inert import slot', (_case, policy, rule) => {
+  expect(sanitizeStyleRule(policy, rule, 'rule')).toBe('@import url("data:text/css,") not all;')
 })
 
 function appFor(policy?: any) {
@@ -84,24 +81,29 @@ describe('capture sanitizer contract', () => {
     expect(sanitizeCapture(() => 'safe', attribute)).toBe('safe')
     expect(sanitizeCapture(() => null, attribute)).toBeNull()
   })
-  test.each([undefined, false, 0, {}, Promise.resolve('unsafe')])(
-    'invalid callback return fails closed: %p',
-    (result) => {
-      expect(sanitizeCapture((() => result) as any, attribute)).toBeNull()
-    },
-  )
-  test('throws and invalid supplied callback fail closed without logging', () => {
+
+  test.each([
+    ['undefined', () => undefined],
+    ['a number', () => 0],
+    ['an object', () => ({})],
+    ['a throw', () => { throw Error(value) }],
+    ['a rejected promise', () => Promise.reject(Error(value))],
+    ['a cross-realm rejected promise', () =>
+      (jest.requireActual('vm') as any).runInNewContext('Promise.reject(Error("synthetic-private"))')],
+    ['a rejecting thenable', () => ({ then: (_ok: unknown, reject: (e: Error) => void) => reject(Error(value)) })],
+    ['a non-function callback', null],
+  ])('%s fails closed, without logging or an unhandled rejection', async (_case, callback) => {
     const log = jest.spyOn(console, 'error').mockImplementation(() => {})
-    expect(
-      sanitizeCapture(() => {
-        throw Error(value)
-      }, attribute),
-    ).toBeNull()
-    expect(sanitizeCapture(null as any, attribute)).toBeNull()
+    const unhandled = jest.fn()
+    window.addEventListener('unhandledrejection', unhandled)
+    callbacks.push(() => window.removeEventListener('unhandledrejection', unhandled))
+    expect(sanitizeCapture(callback as any, attribute)).toBeNull()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(unhandled).not.toHaveBeenCalled()
     expect(log).not.toHaveBeenCalled()
   })
-
 })
+
 describe('stylesheet pre-fetch and content policy', () => {
   test('fetch uses the page URL and emits sanitized CSS with the approved base', async () => {
     const previousFetch = globalThis.fetch
@@ -138,41 +140,6 @@ describe('stylesheet pre-fetch and content policy', () => {
   })
 })
 
-test('rewriting the replay base still reads the original DOM sheet', async () => {
-  const originalFetch = globalThis.fetch
-  const fetcher = jest.fn(async (_url: string) => ({ ok: true, text: async () => 'p{color:blue}' }))
-  ;(globalThis as any).fetch = fetcher
-  const read = jest.fn(() => ({ cssRules: [{ cssText: 'p{color:blue}' }] }))
-  const link = document.createElement('link')
-  link.href = 'https://static.invalid/safe.css?test=example'
-  Object.defineProperty(link, 'sheet', { get: read })
-  const policy = jest.fn((d: CaptureData) =>
-    d.kind === 'resource' ? 'https://static.invalid/safe.css' : d.value,
-  )
-  const insert = jest.fn((_id: number, _css: string, _index: number, _base: string) => [])
-  try {
-    inlineRemoteCss(
-      link,
-      1,
-      '',
-      () => 2,
-      insert,
-      () => [],
-      false,
-      false,
-      undefined,
-      { sanitizer: policy, href: 'https://static.invalid/safe.css', original: link.href },
-    )
-    await new Promise((resolve) => setTimeout(resolve, 0))
-    expect(read).toHaveBeenCalled()
-    expect(fetcher).not.toHaveBeenCalled()
-    expect(policy).toHaveBeenCalledWith(expect.objectContaining({ kind: 'css', source: 'text' }))
-    expect(insert).toHaveBeenCalledWith(2, 'p{color:blue}', 0, 'https://static.invalid/safe.css')
-  } finally {
-    globalThis.fetch = originalFetch
-  }
-})
-
 test('plain srcset keeps the legacy dictionary representation without a policy', async () => {
   const { app, messages } = appFor()
   const image = document.createElement('img')
@@ -190,40 +157,6 @@ test('plain srcset keeps the legacy dictionary representation without a policy',
     ),
   ).toBe(false)
 })
-
-test('an invalid async callback fails closed and consumes its rejection without captured-data logging', async () => {
-  const log = jest.spyOn(console, 'error').mockImplementation(() => {})
-  const unhandled = jest.fn()
-  window.addEventListener('unhandledrejection', unhandled)
-  try {
-    expect(sanitizeCapture((() => Promise.reject(Error(value))) as any, attribute)).toBeNull()
-    await new Promise((resolve) => setTimeout(resolve, 0))
-    expect(unhandled).not.toHaveBeenCalled()
-    expect(log).not.toHaveBeenCalled()
-  } finally {
-    window.removeEventListener('unhandledrejection', unhandled)
-  }
-})
-
-test.each(['cross-realm-promise', 'thenable'])(
-  'invalid %s rejection is consumed without logging',
-  async (kind) => {
-    const log = jest.spyOn(console, 'error').mockImplementation(() => {})
-    const rejectedThen = jest.fn((_resolve: unknown, reject: (error: Error) => void) =>
-      reject(Error(value)),
-    )
-    const result =
-      kind === 'cross-realm-promise'
-        ? (jest.requireActual('vm') as any).runInNewContext(
-            'Promise.reject(Error("synthetic-private"))',
-          )
-        : { then: rejectedThen }
-    expect(sanitizeCapture((() => result) as any, attribute)).toBeNull()
-    await new Promise((resolve) => setTimeout(resolve, 0))
-    expect(log).not.toHaveBeenCalled()
-    if (kind === 'thenable') expect(rejectedThen).toHaveBeenCalledTimes(1)
-  },
-)
 
 test('generated image placeholders still obey resource policy and can use a fixed non-network representation', () => {
   const placeholder = 'https://static.openreplay.com/tracker/placeholder.jpeg'

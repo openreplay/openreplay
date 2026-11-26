@@ -72,6 +72,16 @@ function observe(html: string, policy?: (data: any) => string | null, core = 'le
   return fixture
 }
 
+function stubFetch(fetcher: (...args: any[]) => any) {
+  const previous = globalThis.fetch
+  ;(globalThis as any).fetch = fetcher
+  cleanups.push(() => { globalThis.fetch = previous })
+}
+const SPRITE = '_$OPENREPLAY_SPRITE$_'
+const spriteFile = (path: string) =>
+  `<svg xmlns="http://www.w3.org/2000/svg"><symbol id="icon"><path d="${path}"/></symbol></svg>`
+const tick = () => new Promise((resolve) => setTimeout(resolve, 0))
+
 describe.each(['legacy', 'next'])('%s native capture sanitizer boundaries', (core) => {
   test('rejects attribute value before dictionary insertion while preserving allowed class', () => {
     const { sent, sanitize } = observe(`<p title="${secret}" class="safe-panel"></p>`, undefined, core)
@@ -174,29 +184,6 @@ describe('module capture sanitizer boundaries', () => {
     )
     expect(JSON.stringify(sent)).not.toContain(secret)
   })
-  test('FontFace source/family/descriptor do not bypass policy', () => {
-    const descriptor = Object.getOwnPropertyDescriptor(window, 'FontFace')
-    Object.defineProperty(window, 'FontFace', {
-      configurable: true,
-      writable: true,
-      value: class {
-        constructor(..._args: any[]) {}
-      },
-    })
-    cleanups.push(() =>
-      descriptor
-        ? Object.defineProperty(window, 'FontFace', descriptor)
-        : delete (window as any).FontFace,
-    )
-    const { app, sent, sanitize } = appFixture()
-    app.observer = { attachContextCallback: jest.fn() }
-    fonts(app)
-    const font = new (window as any).FontFace(secret, `url(/${secret})`, { family: secret })
-    expect(font).toBeInstanceOf((window as any).FontFace)
-    for (const field of ['family', 'source', 'descriptors'])
-      expect(sanitize).toHaveBeenCalledWith(expect.objectContaining({ kind: 'font', field }))
-    expect(JSON.stringify(sent)).not.toContain(secret)
-  })
 })
 
 test.each(['legacy', 'next'])('%s callback sees existing alt/placeholder masking, blank href and truncated style', (core) => {
@@ -224,30 +211,56 @@ test.each(['legacy', 'next'])('%s callback sees existing alt/placeholder masking
   expect(JSON.stringify(sent)).not.toContain(secret)
 })
 
-test.each(['legacy', 'next'])('%s SVG sprite resource veto runs before fetch while the structural use node remains', async (core) => {
-  const fetcher = jest.fn()
-  const previous = globalThis.fetch
-  ;(globalThis as any).fetch = fetcher
-  cleanups.push(() => {
-    globalThis.fetch = previous
-  })
-  const { sent, sanitize } = observe(
-    `<svg><use href="https://example.invalid/${secret}.svg#icon"></use></svg>`,
-    undefined,
-    core,
-  )
-  await Promise.resolve()
-  expect(sanitize).toHaveBeenCalledWith(
-    expect.objectContaining({
-      kind: 'resource',
-      resourceType: 'svg',
-      value: expect.stringContaining(secret),
-    }),
-  )
-  expect(fetcher).not.toHaveBeenCalled()
-  expect(sent.some((m) => m[0] === Type.CreateElementNode && m[4] === 'use')).toBe(true)
-  expect(JSON.stringify(sent)).not.toContain(secret)
-})
+test.each(['legacy', 'next'].flatMap((core) => ['veto', 'blank', 'substitute'].map((o) => [core, o])))(
+  '%s sprite policy outcome %s records no sprite and fetches nothing',
+  async (core, outcome) => {
+    const fetcher = jest.fn()
+    stubFetch(fetcher)
+    const { sent } = observe(
+      `<svg><use href="https://static.invalid/${secret}.svg#icon"></use></svg>`,
+      (data) => data.kind !== 'resource'
+        ? data.value
+        : outcome === 'veto' ? null : outcome === 'blank' ? '' : 'https://static.invalid/placeholder.svg#icon',
+      core,
+    )
+    await tick()
+    expect(fetcher).not.toHaveBeenCalled()
+    expect(sent.some((m) => m[0] === Type.CreateElementNode && m[4] === 'use')).toBe(true)
+    expect(JSON.stringify(sent)).not.toContain(secret)
+    expect(JSON.stringify(sent)).not.toContain(SPRITE)
+    if (outcome === 'blank') expect(sent).toContainEqual([Type.SetNodeAttribute, expect.any(Number), 'href', ''])
+  },
+)
+
+test.each(['legacy', 'next'].flatMap((core) => [[core, 'none'], [core, 'token strip']]))(
+  '%s reads a sprite file once for all its icons, policy: %s',
+  async (core, mode) => {
+    // sprite files are cached per URL across observers
+    const file = `https://static.invalid/icons-${core}-${mode.replace(' ', '-')}.svg?token=example`
+    const fetcher = jest.fn(async (_url: string) => ({ ok: true, text: async () => spriteFile('M0 0') }))
+    stubFetch(fetcher)
+    const policy = jest.fn((data: any) =>
+      data.kind === 'svg' ? data.value.replace('M0 0', 'M1 1') : data.value.replace('?token=example', ''),
+    )
+    const { app, sent } = appFixture()
+    app.captureSanitizer = mode === 'none' ? undefined : policy
+    document.documentElement.innerHTML =
+      '<head></head><body><svg>' + `<use href="${file}#icon"></use>`.repeat(30) + '</svg></body>'
+    const observer = makeObserver(core, app)
+    cleanups.push(() => observer.disconnect())
+    observer.observe()
+    await tick()
+
+    expect(fetcher.mock.calls.map(([url]) => url)).toEqual([file])
+    const sprites = sent.filter((m) => m[0] === Type.SetNodeAttribute && String(m[3]).startsWith(SPRITE))
+    expect(sprites).toHaveLength(30)
+    expect(sprites[0][3]).toContain(mode === 'none' ? 'M0 0' : 'M1 1')
+    if (mode === 'none') return
+    expect(policy).toHaveBeenCalledWith(expect.objectContaining({ kind: 'svg', sourceUrl: file + '#icon' }))
+    expect(policy.mock.calls.some(([data]) => data.value.startsWith(SPRITE))).toBe(false)
+    expect(JSON.stringify(sent)).not.toContain('token=example')
+  },
+)
 
 test.each(['legacy', 'next'])('%s approves only the effective SVG sprite reference', (core) => {
   const { sanitize } = observe(
@@ -263,108 +276,18 @@ test.each(['legacy', 'next'])('%s approves only the effective SVG sprite referen
   expect(references).toEqual(['#primary'])
 })
 
-test.each(['legacy', 'next'])('%s sends an empty SVG href when the policy blanks it', (core) => {
-  const { sent } = observe('<svg><use href="#icon"></use></svg>', () => '', core)
-  expect(sent).toContainEqual([Type.SetNodeAttribute, expect.any(Number), 'href', ''])
-  expect(JSON.stringify(sent)).not.toContain('#icon')
-})
-
-test.each(['legacy', 'next'])('%s fetches an approved sprite at the original URL', async (core) => {
-  // sprite files are cached per URL across observers
-  const href = `https://static.invalid/sprite-${core}.svg?test=example`
-  const fetcher = jest.fn(async (url: string) => ({
-    ok: url === href,
-    text: async () => '<svg xmlns="http://www.w3.org/2000/svg"><symbol id="icon"><path d="M0 0"/></symbol></svg>',
-  }))
-  const previous = globalThis.fetch
-  ;(globalThis as any).fetch = fetcher
-  cleanups.push(() => { globalThis.fetch = previous })
-  const { sent, sanitize } = observe(
-    `<svg><use href="${href}#icon"></use></svg>`,
-    (data) => {
-      if (data.kind === 'attribute' && data.name === 'href') return null
-      if (data.kind === 'svg') return data.value.replace('M0 0', 'M1 1')
-      return data.value.replace('?test=example', '')
-    },
-    core,
-  )
-  await new Promise((resolve) => setTimeout(resolve, 0))
-
-  expect(fetcher.mock.calls.map(([url]) => url)).toEqual([href])
-  expect(sanitize).toHaveBeenCalledWith(expect.objectContaining({
-    kind: 'svg', sourceUrl: href + '#icon',
-  }))
-  expect(sanitize.mock.calls.some(([data]) => data.value.startsWith('_$OPENREPLAY_SPRITE$_'))).toBe(false)
-  expect(sent).toContainEqual([
-    Type.SetNodeAttribute, expect.any(Number), 'href',
-    expect.stringMatching(/_\$OPENREPLAY_SPRITE\$_[\s\S]*M1 1/),
-  ])
-  expect(JSON.stringify(sent)).not.toContain('?test=example')
-  expect(JSON.stringify(sent)).not.toContain('M0 0')
-})
-
-test.each(['legacy', 'next'])('%s does not fetch or inline a substituted sprite', async (core) => {
-  const fetcher = jest.fn()
-  const previous = globalThis.fetch
-  ;(globalThis as any).fetch = fetcher
-  cleanups.push(() => { globalThis.fetch = previous })
-  const { sent } = observe(
-    '<svg><use href="https://static.invalid/original.svg#icon"></use></svg>',
-    (data) => data.kind === 'resource' ? 'https://static.invalid/placeholder.svg#icon' : data.value,
-    core,
-  )
-  await new Promise((resolve) => setTimeout(resolve, 0))
-  expect(fetcher).not.toHaveBeenCalled()
-  expect(JSON.stringify(sent)).not.toContain('_$OPENREPLAY_SPRITE$_')
-})
-
-test.each(['legacy', 'next'].flatMap((core) => [[core, 'none'], [core, 'identity']]))(
-  '%s fetches a sprite file once for all its icons, policy: %s',
-  async (core, policy) => {
-    const url = `https://static.invalid/icons-${core}-${policy}.svg`
-    const fetcher = jest.fn(async (_url: string) => ({
-      ok: true,
-      text: async () => '<svg xmlns="http://www.w3.org/2000/svg"><symbol id="icon"><path d="M3 3"/></symbol></svg>',
-    }))
-    const previous = globalThis.fetch
-    ;(globalThis as any).fetch = fetcher
-    cleanups.push(() => { globalThis.fetch = previous })
-    const { app, sent } = appFixture()
-    app.captureSanitizer = policy === 'none' ? undefined : (data: any) => data.value
-    document.documentElement.innerHTML =
-      '<head></head><body><svg>' + `<use href="${url}#icon"></use>`.repeat(30) + '</svg></body>'
-    const observer = makeObserver(core, app)
-    cleanups.push(() => observer.disconnect())
-    observer.observe()
-    await new Promise((resolve) => setTimeout(resolve, 0))
-    expect(fetcher).toHaveBeenCalledTimes(1)
-    expect(sent.filter((m) => m[0] === Type.SetNodeAttribute && String(m[3]).startsWith('_$OPENREPLAY_SPRITE$_')))
-      .toHaveLength(30)
-  },
-)
-
 test.each(['legacy', 'next'])('%s resolves a padded fragment locally without fetching', async (core) => {
   const fetcher = jest.fn()
-  const previousFetch = globalThis.fetch
-  const previousCSS = Object.getOwnPropertyDescriptor(globalThis, 'CSS')
-  ;(globalThis as any).fetch = fetcher
-  Object.defineProperty(globalThis, 'CSS', {
-    configurable: true, value: { escape: (value: string) => value },
-  })
-  cleanups.push(() => {
-    globalThis.fetch = previousFetch
-    if (previousCSS) Object.defineProperty(globalThis, 'CSS', previousCSS)
-    else delete (globalThis as any).CSS
-  })
+  stubFetch(fetcher)
   const { sent } = observe(
     '<svg><symbol id="icon"><path d="M1 1"/></symbol><use href=" #icon "></use></svg>',
     (data) => data.value,
     core,
   )
-  await Promise.resolve()
+  await tick()
   expect(fetcher).not.toHaveBeenCalled()
   expect(sent).toContainEqual([
-    Type.SetNodeAttribute, expect.any(Number), 'href', expect.stringContaining('_$OPENREPLAY_SPRITE$_'),
+    Type.SetNodeAttribute, expect.any(Number), 'href', expect.stringContaining(SPRITE),
   ])
 })
 
@@ -384,36 +307,33 @@ test.each(['legacy', 'next'])('%s clears previously approved style text when an 
   expect(JSON.stringify(sent)).not.toContain('red')
 })
 
-test('FontFace buffers approved fields and leaves constructor arguments untouched', () => {
-  const original = Object.getOwnPropertyDescriptor(window, 'FontFace')
+test('FontFace values pass the policy once, rejected fonts are never sent, the constructor is untouched', () => {
+  const descriptor = Object.getOwnPropertyDescriptor(window, 'FontFace')
   class NativeFont {
-    constructor(
-      public family: string,
-      public source: string,
-    ) {}
+    constructor(public family: string, public source: string) {}
   }
-  Object.defineProperty(window, 'FontFace', {
-    configurable: true,
-    writable: true,
-    value: NativeFont,
-  })
+  Object.defineProperty(window, 'FontFace', { configurable: true, writable: true, value: NativeFont })
   cleanups.push(() =>
-    original
-      ? Object.defineProperty(window, 'FontFace', original)
-      : delete (window as any).FontFace,
+    descriptor ? Object.defineProperty(window, 'FontFace', descriptor) : delete (window as any).FontFace,
   )
   const { app, sent, sanitize } = appFixture()
   app.observer = { attachContextCallback: jest.fn() }
-  app.active = () => false
-  sanitize.mockImplementation((d: any) => d.value.replaceAll(secret, 'safe'))
+  sanitize.mockImplementation((d: any) => (d.value.includes(secret) ? null : 'approved:' + d.value))
   fonts(app)
-  const font = new (window as any).FontFace(secret, `url(/${secret})`)
-  expect(font.family).toBe(secret)
-  expect(font.source).toBe(`url(/${secret})`)
-  expect(sent).toHaveLength(0)
+  const rejected = new (window as any).FontFace(secret, 'url(/a)', { style: 'normal' })
+  const font = new (window as any).FontFace('Family', 'url(/safe)')
+  expect(rejected.family).toBe(secret)
+  expect(font.source).toBe('url(/safe)')
+  for (const field of ['family', 'source', 'descriptors'])
+    expect(sanitize).toHaveBeenCalledWith(expect.objectContaining({ kind: 'font', field }))
+  const approved = [Type.LoadFontFace, 0, 'approved:Family', 'approved:url("http://localhost/safe")', '']
+  expect(sent).toEqual([approved])
+
+  // a later document gets the approved values without a second callback
   sanitize.mockClear()
+  sent.length = 0
   app.nodes.callNodeCallbacks(document, true)
-  expect(sent).toContainEqual([Type.LoadFontFace, 0, 'safe', 'url("http://localhost/safe")', ''])
+  expect(sent).toEqual([approved])
   expect(sanitize).not.toHaveBeenCalled()
 })
 
@@ -497,28 +417,6 @@ test.each(['legacy', 'next'].flatMap((core) =>
     }
   },
 )
-
-test('font replay reuses the approved tuple without applying the callback twice', () => {
-  const original = Object.getOwnPropertyDescriptor(window, 'FontFace')
-  Object.defineProperty(window, 'FontFace', { configurable: true, writable: true, value: class {} })
-  const { app, sent, sanitize } = appFixture()
-  app.observer = { attachContextCallback: jest.fn() }
-  sanitize.mockImplementation((d: any) => 'approved:' + d.value)
-  fonts(app)
-  new (window as any).FontFace('Family', 'url(/safe)')
-  expect(sent).toContainEqual([
-    Type.LoadFontFace,
-    0,
-    'approved:Family',
-    'approved:url("http://localhost/safe")',
-    '',
-  ])
-  sent.length = 0
-  app.nodes.callNodeCallbacks(document, true)
-  expect(sent).toContainEqual([Type.LoadFontFace, 0, 'approved:Family', 'approved:url("http://localhost/safe")', ''])
-  if (original) Object.defineProperty(window, 'FontFace', original)
-  else delete (window as any).FontFace
-})
 
 test('a new registration of a former iframe node cannot reuse prior attribute emissions', () => {
   const { app, sent } = appFixture()
