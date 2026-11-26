@@ -41,7 +41,7 @@ type Log struct {
 	ResourceAttributes map[string]string `json:"resourceAttributes"`
 	ScopeName          string            `json:"scopeName"`
 	ScopeAttributes    map[string]string `json:"scopeAttributes"`
-	SessionID          uint64            `json:"sessionId,string,omitempty"`
+	SessionID          uint64            `json:"openreplay.session.id,string,omitempty"`
 }
 
 type SearchResponse struct {
