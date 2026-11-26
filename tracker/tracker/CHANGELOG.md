@@ -1,6 +1,7 @@
 ## 19.2.0
 
 - `captureSanitizer` option: a synchronous callback that gets attributes, resource URLs, CSS, fonts and inlined SVG sprites after the built-in masking and can rewrite or drop each value; canvas and cross-domain iframe capture are off while it is set
+- crossdomain: a parent's `discard()` discards the trackers in its cross-origin iframes as well (the iframes need this version too)
 - `discard()` (also on the singleton): stops recording for the page without sending buffered data, aborts canvas uploads and analytics requests in flight and clears the tracker's stored session and device keys (`stop()` still flushes)
 - `stop()` or `discard()` called from a start callback cancels that start (it went on to record)
 - SVG sprites: a sprite file is fetched once and shared by every `<use>` pointing at it (others waited on a 100 ms poll); a `<use>` with both `href` and `xlink:href` records `href`, as browsers render it; a hidden `<use>` gets no copy of its symbol

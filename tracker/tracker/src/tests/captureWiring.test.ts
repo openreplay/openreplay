@@ -427,6 +427,46 @@ test.each([false])('discard from a policy callback mid-capture records nothing m
   expect(app.messages).toEqual([])
 })
 
+test('a discarded parent tells each polling cross-domain child to discard; a stopped one does not', async () => {
+  const { tracker } = create()
+  const child = { parent: window, postMessage: jest.fn() }
+  const poll = () =>
+    app.crossDomainIframeListener({
+      source: child,
+      origin: 'https://child.example',
+      data: { line: 'hello-how-are-you-im-under-the-water-please-help-me', context: 'child-1' },
+    })
+  tracker.stop()
+  poll()
+  expect(child.postMessage).not.toHaveBeenCalled()
+
+  tracker.discard()
+  await teardown()
+  poll()
+  expect(child.postMessage).toHaveBeenCalledWith(
+    { line: 'stop tracker inside frame', discard: true },
+    'https://child.example',
+  )
+})
+
+test('a cross-domain child discards itself on its parent\'s discard, and only stops on a plain kill', async () => {
+  create()
+  const worker = app.worker
+  const fromParent = (data: object) => app.parentCrossDomainFrameListener({ source: window.parent, data })
+  fromParent({ line: 'stop tracker inside frame' })
+  await teardown()
+  expect(app.isDisposed()).toBe(false)
+  expect(app.activityState).toBe(0)
+
+  app.session.setSessionToken('synthetic-token', 'synthetic-unit-project')
+  fromParent({ line: 'stop tracker inside frame', discard: true })
+  await teardown()
+  expect(app.isDisposed()).toBe(true)
+  expect(worker.terminate).toHaveBeenCalled()
+  expect(sessionStorage.getItem(app.options.session_token_key)).toBeNull()
+  expect(await app.start()).toMatchObject({ success: false })
+})
+
 test('discard with analytics active drops its queue and never sends it', async () => {
   const { tracker, fetcher } = create(undefined, false, true, true)
   ;(fetcher as any).mockResolvedValue({ ok: true, status: 200 })

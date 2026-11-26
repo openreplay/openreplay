@@ -624,6 +624,11 @@ export default class App {
     ) {
       this.lastParentMsgAt = Date.now()
     }
+    // the parent was discarded: so is this frame (a plain kill only stops it)
+    if (data.line === proto.killIframe && data.discard === true) {
+      this.discard()
+      return
+    }
     if (this.frameIgnored) {
       return
     }
@@ -873,6 +878,13 @@ export default class App {
     // stale contexts reliably once we resume dispatching commands after a cycle.
     if ((data.line === proto.polling || data.line === proto.iframeSignal) && data.context) {
       this.frameLastSeen.set(data.context, Date.now())
+      // a discarded parent answers every child that polls or signals with a discard; the child
+      // stops polling once it has discarded
+      if (this.disposed) {
+        // @ts-ignore
+        event.source?.postMessage({ line: proto.killIframe, discard: true }, replyTarget(event))
+        return
+      }
     }
     if (!this.active()) return
     if (data.line === proto.iframeDebug) {
