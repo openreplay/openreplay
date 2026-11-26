@@ -2,15 +2,19 @@ import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 
 import {
   NO_SERVICE,
+  bodyOf,
   drillCards,
   exportLines,
   facetChoices,
   isFacetKey,
   keepsValue,
+  levelOf,
   levelOfText,
   lineFields,
   lineHeadFacts,
+  lineText,
   logFilter,
+  readBody,
   rulesToFilter,
   sameRules,
   valueLabel,
@@ -506,6 +510,98 @@ describe('exportLines', () => {
       Body: '=x',
       SeverityText: 'WARN',
     });
+  });
+});
+
+describe('JSON bodies', () => {
+  const line = (body: string, severityText = '', severityNumber = 0) =>
+    ({
+      id: body,
+      timestamp: '1700000000123456789',
+      severityText,
+      severityNumber,
+      serviceName: 'api',
+      body,
+      logAttributes: {},
+      resourceAttributes: {},
+    }) as any;
+
+  test('a JSON body with msg or message reads as its sentence', () => {
+    expect(
+      readBody(
+        '{"level": "info", "msg": "job completed in 2851ms", "duration_ms": 2851}',
+      ),
+    ).toEqual({
+      text: 'job completed in 2851ms',
+      rest: 'duration_ms=2851',
+      json: {
+        level: 'info',
+        msg: 'job completed in 2851ms',
+        duration_ms: 2851,
+      },
+      level: 'info',
+    });
+    const b = readBody(
+      '  {"time":1,"message":"paid","order":"o_1","ok":true,"user":{"id":7},"tags":null}',
+    );
+    expect(b?.text).toBe('paid');
+    expect(b?.rest).toBe('order=o_1 ok=true user={"id":7} tags=null');
+    expect(b?.level).toBeUndefined();
+    expect(readBody('{"msg":"a","message":"b"}')?.text).toBe('a');
+  });
+
+  test('any other body reads as written', () => {
+    for (const body of [
+      'plain text',
+      '',
+      '{"level":"info","event":"started"}',
+      '{"msg": 42}',
+      '{"msg": "cut',
+      '["msg"]',
+      'msg {"msg":"x"}',
+      '{"error":{"message":"nested"}}',
+    ])
+      expect(readBody(body)).toBeNull();
+    expect(lineText(line('plain text'))).toBe('plain text');
+    expect(lineText(line('{"msg":"hi","a":1}'))).toBe('hi');
+  });
+
+  test('the body level fills an empty severity only', () => {
+    expect(levelOf(line('{"level":"warning","msg":"x"}'))).toBe('warn');
+    expect(levelOf(line('{"level":"ERROR","msg":"x"}'))).toBe('error');
+    expect(levelOf(line('{"level":"warn","msg":"x"}', 'INFO'))).toBe('info');
+    expect(levelOf(line('{"level":"error","msg":"x"}', '', 9))).toBe('info');
+    expect(levelOf(line('{"level":30,"msg":"x"}'))).toBe('info');
+    expect(levelOf(line('{"level":"error"}'))).toBe('info');
+  });
+
+  test('a line is parsed once', () => {
+    const l = line('{"msg":"once"}');
+    const parse = jest.spyOn(JSON, 'parse');
+    expect(bodyOf(l)).toBe(bodyOf(l));
+    levelOf(l);
+    lineText(l);
+    expect(parse).toHaveBeenCalledTimes(1);
+    parse.mockRestore();
+  });
+
+  test('exports read the sentence, JSON keeps the body parsed', () => {
+    const t = ((k: string) => k) as any;
+    const lines = [line('{"level":"info","msg":"paid, ok","n":2}'), line('x')];
+    expect(exportLines(t, lines, 'csv', []).split('\n')).toEqual([
+      'Time,Message',
+      '2023-11-14T22:13:20.123Z,"paid, ok"',
+      '2023-11-14T22:13:20.123Z,x',
+    ]);
+    const [a, b] = exportLines(t, lines, 'json', [])
+      .split('\n')
+      .map((r) => JSON.parse(r));
+    expect(a).toMatchObject({
+      Body: '{"level":"info","msg":"paid, ok","n":2}',
+      body: { level: 'info', msg: 'paid, ok', n: 2 },
+    });
+    expect(b.Body).toBe('x');
+    expect('body' in b).toBe(false);
   });
 });
 

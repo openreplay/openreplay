@@ -16,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/ui/layout/tabs';
 import { EntityDrawer, Section } from '@/ui/overlays/EntityDrawer';
 import {
   ChevronDown,
+  ChevronRight,
   ChevronUp,
   Columns3,
   Copy,
@@ -27,9 +28,11 @@ import { useTranslation } from 'react-i18next';
 import { copyText } from 'App/lib/use-copy';
 import { type OtelLog, otelLogTimeMs } from 'App/services/OtelLogsService';
 
+import { BodyText } from './LogTable';
 import {
   type LineField,
   RELATED_SIDE,
+  bodyOf,
   byteSize,
   levelLabel,
   levelOf,
@@ -276,7 +279,7 @@ export function LogDrawer({
               />
             }
           >
-            <pre className="m-logs__text">{line.body}</pre>
+            <MessageBody line={line} />
           </Section>
 
           {session && (
@@ -473,12 +476,43 @@ function Related({
                 </span>
               )}
               <span className="m-logs__msg">
-                <span>{l.body}</span>
+                <BodyText log={l} />
               </span>
             </button>
           );
         })}
       </div>
     </div>
+  );
+}
+
+function MessageBody({ line }: { line: OtelLog }) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const body = bodyOf(line);
+  if (!body) return <pre className="m-logs__text">{line.body}</pre>;
+  const n = Object.keys(body.json).length;
+  return (
+    <>
+      <pre className="m-logs__text">{body.text}</pre>
+      <Button
+        variant="subtle"
+        size="sm"
+        className="m-logs__json-toggle"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+      >
+        {open ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+        {open ? t('Hide JSON') : t('Show JSON · {{n}} keys', { n, count: n })}
+      </Button>
+      {open && (
+        <JsonTree
+          value={body.json}
+          openDepth={1}
+          copyable
+          className="m-logs__json"
+        />
+      )}
+    </>
   );
 }

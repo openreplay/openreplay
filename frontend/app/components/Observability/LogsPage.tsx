@@ -77,6 +77,7 @@ import {
   levelOf,
   levelOfText,
   levelTotals,
+  lineText,
   logFilter,
   nameOfKey,
   scopeOfKey,
@@ -344,7 +345,7 @@ function LogsPage() {
       sessionId: id,
       at,
       kind: 'log',
-      label: l.body,
+      label: lineText(l),
       detail: [l.serviceName, l.severityText || levelLabel(t, level)]
         .filter(Boolean)
         .join(' · '),

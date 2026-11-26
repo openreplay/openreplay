@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { type OtelLog, otelLogTimeMs } from 'App/services/OtelLogsService';
 
 import {
+  bodyOf,
   keyLabel,
   levelOf,
   lineStamp,
@@ -80,7 +81,7 @@ export function LogTable({
       priority: 1,
       render: (l) => (
         <span className="m-logs__msg">
-          <span title={l.body}>{l.body}</span>
+          <BodyText log={l} />
           {onPlay && sessionOf(l) && (
             <Tooltip title={t('Watch session')}>
               <button
@@ -114,5 +115,16 @@ export function LogTable({
       ariaLabel={t('Log lines')}
       stickyHeader
     />
+  );
+}
+
+export function BodyText({ log }: { log: OtelLog }) {
+  const body = bodyOf(log);
+  if (!body) return <span title={log.body}>{log.body}</span>;
+  return (
+    <span title={body.rest ? `${body.text}  ${body.rest}` : body.text}>
+      {body.text}
+      {body.rest && <span className="m-logs__keys">{body.rest}</span>}
+    </span>
   );
 }

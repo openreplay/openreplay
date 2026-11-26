@@ -335,6 +335,9 @@
   white-space: pre-wrap;
   word-break: break-word;
 }
+.m-logs__keys { margin-left: var(--m-space-4); color: var(--m-content-muted); }
+.m-logs__json-toggle { margin-top: var(--m-space-2); }
+.m-logs__json { margin-top: var(--m-space-2); }
 .m-logs__ctx { display: flex; flex-direction: column; }
 .m-logs__ctx-row {
   display: grid;

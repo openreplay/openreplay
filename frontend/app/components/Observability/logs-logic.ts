@@ -97,14 +97,74 @@ export function levelOfText(text: string): LogLevel {
 export function levelOf(log: OtelLog): LogLevel {
   if (log.severityText) return levelOfText(log.severityText);
   const l = otelSeverityLevel(log.severityNumber);
-  return l === 'fatal'
-    ? 'error'
-    : l === 'trace'
-      ? 'debug'
-      : l === 'unspecified'
-        ? 'info'
-        : l;
+  if (l === 'unspecified') {
+    const own = bodyOf(log)?.level;
+    return own ? levelOfText(own) : 'info';
+  }
+  return l === 'fatal' ? 'error' : l === 'trace' ? 'debug' : l;
 }
+
+/* ── a JSON body ────────────────────────────────────────────────────────── */
+
+export interface LogBody {
+  text: string;
+  rest: string;
+  json: Record<string, unknown>;
+  level?: string;
+}
+
+const BODY_SKIP = new Set([
+  'msg',
+  'message',
+  'level',
+  'severity',
+  'time',
+  'timestamp',
+  '@timestamp',
+]);
+
+export function readBody(body: string): LogBody | null {
+  const s = body.trimStart();
+  if (s[0] !== '{' || (!s.includes('"msg"') && !s.includes('"message"')))
+    return null;
+  let json: unknown;
+  try {
+    json = JSON.parse(s);
+  } catch {
+    return null;
+  }
+  if (!json || typeof json !== 'object' || Array.isArray(json)) return null;
+  const o = json as Record<string, unknown>;
+  const text =
+    typeof o.msg === 'string'
+      ? o.msg
+      : typeof o.message === 'string'
+        ? o.message
+        : null;
+  if (text == null) return null;
+  const rest = Object.entries(o)
+    .filter(([k]) => !BODY_SKIP.has(k))
+    .map(([k, v]) => `${k}=${typeof v === 'string' ? v : JSON.stringify(v)}`)
+    .join(' ');
+  return {
+    text,
+    rest,
+    json: o,
+    level: typeof o.level === 'string' && o.level ? o.level : undefined,
+  };
+}
+
+const bodies = new WeakMap<OtelLog, LogBody | null>();
+export function bodyOf(log: OtelLog): LogBody | null {
+  let b = bodies.get(log);
+  if (b === undefined) {
+    b = readBody(log.body ?? '');
+    bodies.set(log, b);
+  }
+  return b;
+}
+
+export const lineText = (log: OtelLog) => bodyOf(log)?.text ?? log.body;
 
 /* ── histogram ──────────────────────────────────────────────────────────── */
 
@@ -697,19 +757,21 @@ export function exportLines(
   const slice = logs.slice(0, EXPORT_LIMIT);
   if (format === 'json')
     return slice
-      .map((l) =>
-        JSON.stringify({
+      .map((l) => {
+        const body = bodyOf(l);
+        return JSON.stringify({
           timestamp: new Date(otelLogTimeMs(l)).toISOString(),
           ...otelRow(l),
-        }),
-      )
+          ...(body ? { body: body.json } : {}),
+        });
+      })
       .join('\n');
   const head = [t('Time'), ...columns.map((c) => keyLabel(t, c)), t('Message')];
   const rows = slice.map((l) =>
     [
       new Date(otelLogTimeMs(l)).toISOString(),
       ...columns.map((c) => shownValue(t, l, c)),
-      l.body,
+      lineText(l),
     ]
       .map(csvCell)
       .join(','),
