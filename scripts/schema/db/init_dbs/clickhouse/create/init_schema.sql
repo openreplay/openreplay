@@ -970,7 +970,14 @@ CREATE TABLE IF NOT EXISTS otel.logs
     TraceId                String CODEC (ZSTD(1)),
     SpanId                 String CODEC (ZSTD(1)),
     TraceFlags             UInt8,
-    SeverityText           LowCardinality(String) CODEC (ZSTD(1)),
+    SeverityText           LowCardinality(String) MATERIALIZED CASE
+                                                                   WHEN SeverityNumber BETWEEN 1 AND 4 THEN 'trace'
+                                                                   WHEN SeverityNumber BETWEEN 5 AND 8 THEN 'debug'
+                                                                   WHEN SeverityNumber BETWEEN 9 AND 12 THEN 'info'
+                                                                   WHEN SeverityNumber BETWEEN 13 AND 16 THEN 'warn'
+                                                                   WHEN SeverityNumber BETWEEN 17 AND 20 THEN 'error'
+                                                                   WHEN SeverityNumber BETWEEN 21 AND 24 THEN 'fatal'
+                                                                   ELSE '' END CODEC (ZSTD(1)),
     SeverityNumber         UInt8,
     ServiceName            LowCardinality(String) CODEC (ZSTD(1)),
     Body                   String CODEC (ZSTD(1)),
