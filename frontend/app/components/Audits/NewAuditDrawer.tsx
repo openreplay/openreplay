@@ -5,6 +5,7 @@ import { DateRange } from '@/ui/inputs/DateRange';
 import { MultiSelect } from '@/ui/inputs/multi-select';
 import { Segmented } from '@/ui/inputs/toggle-group';
 import {
+  DrawerCount,
   DrawerFooter,
   EntityDrawer,
   Section,
@@ -70,8 +71,6 @@ const DAYS_OF: Record<string, PeriodDays> = {
   [LAST_7_DAYS]: 7,
   [LAST_30_DAYS]: 30,
 };
-
-const fmt = (n: number) => n.toLocaleString('en-US');
 
 const hasValue = (f: { operator?: string; value?: unknown[] }) =>
   isNullary(f.operator ?? '') ||
@@ -231,9 +230,7 @@ function NewAuditDrawer({ open, onClose, onCreated }: Props) {
       {t('The session count isn’t available right now')}
     </span>
   ) : (
-    <span className="m-nad__job-total">
-      <span className="num">{fmt(matched)}</span> {t('sessions')}
-    </span>
+    <DrawerCount n={matched} />
   );
 
   const usable = usableChapters(hasAi);

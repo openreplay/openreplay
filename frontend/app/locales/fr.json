@@ -1376,6 +1376,7 @@
   "Make owner": "Nommer propriétaire",
   "Remove {{name}}?": "Retirer {{name}} ?",
   "They lose access immediately. Nothing they recorded or bookmarked is deleted.": "They lose access immediately. Nothing they recorded or bookmarked is deleted.",
+  "The address is the account. To change it, invite the new one and remove this one.": "L'adresse est le compte. Pour la changer, invitez la nouvelle et retirez celle-ci.",
   "Transfer ownership?": "Transférer la propriété ?",
   "Yes, transfer": "Oui, transférer",
   "There can only be one owner account. By proceeding, the ownership will be transferred to {{name}}. You will lose your owner privileges.": "There can only be one owner account. By proceeding, the ownership will be transferred to {{name}}. You will lose your owner privileges.",

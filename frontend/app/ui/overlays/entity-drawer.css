@@ -141,6 +141,12 @@
   font-size: var(--m-text-2xs);
   color: var(--m-content-danger);
 }
+.m-dfield__note {
+  margin-top: var(--m-space-2);
+  font-size: var(--m-text-xs);
+  line-height: var(--m-leading-snug);
+  color: var(--m-content-muted);
+}
 
 .m-dgrid {
   display: grid;
@@ -173,6 +179,17 @@
   display: flex;
   align-items: center;
   gap: var(--m-space-3);
+}
+.m-dfoot__count {
+  font-size: var(--m-text-sm);
+  font-weight: var(--m-weight-medium);
+  line-height: 1.3;
+  color: var(--m-content-primary);
+  white-space: nowrap;
+}
+.m-dfoot__count .num {
+  font-family: var(--m-font-num);
+  font-variant-numeric: tabular-nums;
 }
 
 /* content that brings its own head into a bare drawer: head stays, body scrolls */

@@ -1344,6 +1344,7 @@
   "Make owner": "소유자로 지정",
   "Remove {{name}}?": "{{name}}을(를) 삭제하시겠습니까?",
   "They lose access immediately. Nothing they recorded or bookmarked is deleted.": "They lose access immediately. Nothing they recorded or bookmarked is deleted.",
+  "The address is the account. To change it, invite the new one and remove this one.": "주소가 곧 계정입니다. 바꾸려면 새 주소를 초대하고 이 주소를 삭제하세요.",
   "Transfer ownership?": "소유권을 이전하시겠습니까?",
   "Yes, transfer": "예, 이전합니다",
   "There can only be one owner account. By proceeding, the ownership will be transferred to {{name}}. You will lose your owner privileges.": "There can only be one owner account. By proceeding, the ownership will be transferred to {{name}}. You will lose your owner privileges.",

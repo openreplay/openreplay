@@ -16,10 +16,10 @@ import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { copyText } from 'App/lib/use-copy';
 import { useStore } from 'App/mstore';
 
 import { PrefToggle } from '../../../PrefSection';
-import { copyText } from 'App/lib/use-copy';
 
 /** Invite someone, or edit a member: name, admin rights, role, ownership. */
 function UserForm({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -95,7 +95,17 @@ function UserForm({ open, onClose }: { open: boolean; onClose: () => void }) {
               onChange={(e) => user.updateKey('name', e.target.value)}
             />
           </Field>
-          <Field label={t('Email address')} htmlFor="member-email">
+          <Field
+            label={t('Email address')}
+            htmlFor="member-email"
+            note={
+              exists && !user.isSuperAdmin
+                ? t(
+                    'The address is the account. To change it, invite the new one and remove this one.',
+                  )
+                : undefined
+            }
+          >
             <Input
               id="member-email"
               type="email"
