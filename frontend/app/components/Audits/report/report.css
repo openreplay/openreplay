@@ -242,6 +242,7 @@
     0 30px 80px rgb(0 0 0 / 0.12);
   font-family: var(--m-font-sans);
   color: var(--m-content-primary);
+  overflow-wrap: anywhere;
 }
 .m-rep-s .num {
   font-family: var(--m-font-num);
@@ -257,6 +258,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 24px;
   height: 24px;
   font-size: 13px;
   color: var(--m-content-muted);
@@ -278,10 +280,15 @@
   align-items: center;
   gap: 8px;
 }
+.m-rep-s__crumbs > :not(.is-root) {
+  flex: none;
+  white-space: nowrap;
+}
 .m-rep-s__crumbs button:hover {
   color: var(--m-content-primary);
 }
 .m-rep-s__crumbs .is-root {
+  min-width: 0;
   color: var(--m-content-secondary);
   font-weight: 500;
 }
@@ -296,6 +303,8 @@
   max-width: 640px;
 }
 .m-rep-s__page {
+  flex: none;
+  white-space: nowrap;
   font: 12px var(--m-font-num);
   color: var(--m-content-placeholder);
 }
@@ -368,6 +377,10 @@
 }
 .m-rep-s__org {
   flex: none;
+  max-width: 360px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-weight: 500;
   color: var(--m-content-muted);
 }
@@ -460,13 +473,16 @@
 }
 .m-rep-s__meta {
   display: flex;
-  gap: 48px;
+  flex-wrap: wrap;
+  gap: 20px 48px;
   max-width: 780px;
   margin-top: 56px;
   padding-top: 24px;
   border-top: 1px solid var(--m-border-default);
 }
 .m-rep-s__meta div {
+  min-width: 0;
+  max-width: 100%;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -478,6 +494,8 @@
   font-weight: 500;
   color: var(--m-content-primary);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .m-rep-s__toc {
@@ -795,17 +813,17 @@
 }
 .m-rep-s__row {
   display: grid;
-  grid-template-columns: 56px 1fr;
+  grid-template-columns: 56px minmax(0, 1fr);
   gap: 16px;
   padding: 14px 0 14px 16px;
   border-bottom: 1px solid var(--m-border-subtle);
 }
+.m-rep-s__row > div {
+  min-width: 0;
+}
 /* title, description and meta line one line each, so five fit above the footer */
 .m-rep-s__row.is-issue {
   padding-block: 12px;
-}
-.m-rep-s__row.is-issue > div {
-  min-width: 0;
 }
 .m-rep-s__row.is-issue p {
   white-space: nowrap;
@@ -853,8 +871,53 @@
   font: 500 19px/1.35 var(--m-font-sans);
   color: var(--m-content-primary);
 }
+.m-rep-s__rt > * {
+  flex: none;
+}
+.m-rep-s__rt > .t,
+.m-rep-s__rt > .m-rep-s__tc {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+/* a title beside its URL or code: one line each, free width shared equally, a short one kept whole */
+.m-rep-s__tc {
+  display: grid;
+  grid-template-columns: minmax(0, max-content) minmax(0, max-content);
+  justify-content: start;
+  align-items: center;
+  column-gap: 10px;
+}
+.m-rep-s__tc > * {
+  overflow: hidden;
+}
+.m-rep-s__tc > .t {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.m-rep-s__tc.is-wrap {
+  align-items: baseline;
+}
+/* Rows cuts these to the lines the slide has room for */
+.m-rep-s__rt .t.is-wrap {
+  white-space: normal;
+  overflow: hidden;
+}
 .m-rep-s__rt.is-mono {
   font-family: var(--m-font-num);
+}
+/* head and tail of one line: the head gives way first, the tail is the minimum width */
+.m-rep-s__mid {
+  display: inline-grid;
+  grid-template-columns: minmax(0, auto) auto;
+  justify-content: start;
+  white-space: pre;
+}
+.m-rep-s__rt > .m-rep-s__mid {
+  flex: 0 1 auto;
+}
+.m-rep-s__mid > :first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .m-rep-s__rt code {
   font: 400 14px var(--m-font-num);

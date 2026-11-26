@@ -11,7 +11,13 @@ import {
   Smartphone,
   TriangleAlert,
 } from 'lucide-react';
-import React, { Fragment, type ReactNode } from 'react';
+import React, {
+  Fragment,
+  type ReactNode,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import CountryFlagIcon from 'Shared/CountryFlagIcon';
 
@@ -87,6 +93,31 @@ export function Figure({ v }: { v: string }) {
     </>
   );
 }
+
+/** One line cut in the middle, so a URL or an id keeps both its start and its end. */
+function Middle({
+  text,
+  as: Tag = 'span',
+  className,
+}: {
+  text: string;
+  as?: 'span' | 'code';
+  className?: string;
+}) {
+  const t = text.replace(/\s+/g, ' ').trim();
+  const cut = t.length - Math.min(28, Math.ceil(t.length / 3));
+  return (
+    <Tag
+      className={`m-rep-s__mid${className ? ` ${className}` : ''}`}
+      title={t}
+    >
+      <span>{t.slice(0, cut)}</span>
+      <span>{t.slice(cut)}</span>
+    </Tag>
+  );
+}
+
+const oneWord = (t: string) => !/\s/.test(t.trim());
 
 function Effort({ n }: { n: 1 | 2 | 3 }) {
   const filled = 4 - n;
@@ -249,10 +280,74 @@ function Line({ line, journeys }: { line: RowLine; journeys?: string[] }) {
 }
 
 function Rows({ rows, start = 0 }: { rows: ReportRow[]; start?: number }) {
+  const list = useRef<HTMLOListElement>(null);
+  const [cut, setCut] = useState<{ rows: ReportRow[]; titles: string[] }>();
+  const titles = cut?.rows === rows ? cut.titles : undefined;
+  const wraps = rows.some((r) => r.wrap);
+  useLayoutEffect(() => {
+    const body = list.current?.closest<HTMLElement>('.m-rep-s__body');
+    if (!wraps || !body) return;
+    let live = true;
+    // wrapped titles give up lines, longest first, until the slide holds them; the text
+    // itself is cut (not line-clamp, which the PDF rasteriser drops) so every output matches
+    void document.fonts.ready.then(() => {
+      const ts = Array.from(body.querySelectorAll<HTMLElement>('.t.is-wrap'));
+      const lh = ts[0] && parseFloat(getComputedStyle(ts[0]).lineHeight);
+      if (!live || !lh) return;
+      let n = Math.max(...ts.map((t) => Math.round(t.offsetHeight / lh)));
+      const fits = (t: HTMLElement) => t.offsetHeight <= n * lh + 1;
+      while (n > 1 && body.scrollHeight > body.clientHeight) {
+        n--;
+        ts.forEach((t) => (t.style.maxHeight = `${n * lh}px`));
+      }
+      ts.forEach((t) => t.style.removeProperty('max-height'));
+      const next = rows.map((r) => r.title);
+      for (const t of ts) {
+        const full = t.textContent ?? '';
+        if (fits(t)) continue;
+        let lo = 0;
+        let hi = full.length;
+        while (lo < hi) {
+          const mid = Math.ceil((lo + hi) / 2);
+          t.textContent = `${full.slice(0, mid).trimEnd()}…`;
+          if (fits(t)) lo = mid;
+          else hi = mid - 1;
+        }
+        t.textContent = full;
+        const sp = full.lastIndexOf(' ', lo);
+        const end = sp > 0 && sp > lo - 30 ? sp : lo;
+        next[Number(t.dataset.i)] = `${full.slice(0, end).trimEnd()}…`;
+      }
+      setCut({ rows, titles: next });
+    });
+    return () => {
+      live = false;
+    };
+  }, [rows, wraps]);
   return (
-    <ol className="m-rep-s__rows">
+    <ol className="m-rep-s__rows" ref={list}>
       {rows.map((r, i) => {
         const issue = r.journeys != null;
+        const title =
+          !issue && (r.mono || oneWord(r.title)) ? (
+            <Middle text={r.title} />
+          ) : (
+            <span
+              className={
+                issue
+                  ? 't m-truncate'
+                  : r.unlabelled
+                    ? 't m-rep-s__unl'
+                    : r.wrap
+                      ? 't is-wrap'
+                      : 't'
+              }
+              title={r.code || r.wrap ? r.title : undefined}
+              data-i={r.wrap ? i : undefined}
+            >
+              {titles?.[i] ?? r.title}
+            </span>
+          );
         return (
           <li
             key={`${r.title}-${i}`}
@@ -270,18 +365,14 @@ function Rows({ rows, start = 0 }: { rows: ReportRow[]; start?: number }) {
                     aria-label="Flagged critical"
                   />
                 )}
-                <span
-                  className={
-                    issue
-                      ? 'm-truncate'
-                      : r.unlabelled
-                        ? 'm-rep-s__unl'
-                        : undefined
-                  }
-                >
-                  {r.title}
-                </span>
-                {r.code && <code>{r.code}</code>}
+                {r.code ? (
+                  <span className={`m-rep-s__tc${r.wrap ? ' is-wrap' : ''}`}>
+                    {title}
+                    <Middle as="code" text={r.code} />
+                  </span>
+                ) : (
+                  title
+                )}
                 {r.effort && <Effort n={r.effort} />}
                 {r.tag && (
                   <Chip
@@ -563,7 +654,7 @@ export function ReportSlide({
       <nav className="m-rep-s__crumbs" aria-label="Breadcrumbs">
         <button type="button" className="is-root" onClick={() => onGo(0)}>
           <OpenReplayMark size={17} variant="brand" />
-          {meta.title} audit
+          <span className="m-truncate">{meta.title} audit</span>
         </button>
         <span className="sep">/</span>
         <button type="button" onClick={() => onGo(firstOf(slide.section))}>
@@ -862,12 +953,16 @@ export function ReportSlide({
                   >
                     {f.n}
                   </span>
-                  <span
-                    className={`t${f.kind === 'page' && f.name.startsWith('/') ? ' num' : ''}`}
-                    title={f.name}
-                  >
-                    {f.name}
-                  </span>
+                  {oneWord(f.name) ? (
+                    <Middle
+                      className={`t${f.kind === 'page' && f.name.startsWith('/') ? ' num' : ''}`}
+                      text={f.name}
+                    />
+                  ) : (
+                    <span className="t" title={f.name}>
+                      {f.name}
+                    </span>
+                  )}
                   <span className="v num">
                     <Figure
                       v={
