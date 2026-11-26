@@ -136,6 +136,20 @@ tracker.configure({
 
 - Mask everything by default: `privateMode: true`, then mark safe areas with `data-openreplay-unmask`.
 - After changing masking attributes at runtime, call `tracker.resanitize(el)`.
+- Filter what masking leaves in: `captureSanitizer` gets every attribute, resource URL, CSS and font value and can rewrite it or return `null` to drop it ([details](./api.md#capturesanitizer-option)). It turns off canvas and cross-domain iframe capture.
+- Withdrawn consent: `tracker.discard()` stops recording without sending what is buffered and clears the tracker's stored ids. Data already sent stays on the server; recording again needs a page reload.
+
+```ts
+tracker.configure({
+  projectKey,
+  captureSanitizer: (d) => {
+    if (d.kind === 'attribute' && d.name.startsWith('data-user-')) return null
+    // strip signed-URL tokens; the tracker still reads the original asset for inlined CSS and sprites
+    if (d.kind === 'resource') return d.value.replace(/([?&])token=[^&#\s]*&?/g, '$1')
+    return d.value
+  },
+})
+```
 
 ## 5. Network capture
 

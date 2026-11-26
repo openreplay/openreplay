@@ -3,6 +3,16 @@ import { getUTCOffsetString, uaParse } from './utils.js'
 export interface StorageLike {
   getItem: (key: string) => string | null
   setItem: (key: string, value: string) => void
+  removeItem?: (key: string) => void
+}
+
+function clearStoredValue(storage: StorageLike, key: string): void {
+  try {
+    if (storage.removeItem) storage.removeItem(key)
+    else storage.setItem(key, '')
+  } catch {
+    // storage can be unavailable
+  }
 }
 
 const refKey = '$__or__initial_ref__$'
@@ -216,5 +226,11 @@ export default class ConstantProperties {
 
   clearSuperProperties = () => {
     this.localStorage.setItem(superPropKey, JSON.stringify({}))
+  }
+
+  /** Forgets the stored device and user identity (tracker discard). */
+  clearStorage() {
+    for (const key of [distinctIdKey, superPropKey]) clearStoredValue(this.localStorage, key)
+    for (const key of [userIdKey, refKey, utmParamsKey]) clearStoredValue(this.sessionStorage, key)
   }
 }

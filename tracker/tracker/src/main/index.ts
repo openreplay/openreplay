@@ -1,3 +1,4 @@
+export type { CaptureData, CaptureSanitizer } from './app/captureSanitizer.js'
 import App from './app/index'
 
 export { default as App } from './app/index.js'
@@ -128,12 +129,16 @@ const canAccessTop = () => {
  * `node_modules/@openreplay/tracker/docs/usage.md` (setup) and `docs/api.md` (methods, options).
  */
 export default class API {
-  private readonly app: App | null = null
+  private app: App | null = null
   public readonly analytics: AnalyticsSDK | null = null
   private readonly crossdomainMode: boolean = false
 
   constructor(public readonly options: Partial<Options>) {
     this.crossdomainMode = Boolean(inIframe() && options.crossdomain?.enabled)
+    if (this.crossdomainMode && options.captureSanitizer !== undefined) {
+      console.warn('OpenReplay: cross-domain child capture is disabled with captureSanitizer')
+      return
+    }
     if (!IN_BROWSER || !processOptions(options)) {
       return
     }
@@ -233,7 +238,8 @@ export default class API {
         this.analytics?.onStart()
       })
       app.attachStopCallback(() => {
-        this.analytics?.onStop()
+        if (app.isDisposed()) this.analytics?.onDiscard()
+        else this.analytics?.onStop()
       })
     }
     if (!this.crossdomainMode) {
@@ -456,6 +462,16 @@ export default class API {
     }
     this.app.stop()
     return this.app.session.getSessionHash()
+  }
+
+  /**
+   * Stops recording for good without sending what is buffered (e.g. consent withdrawn). Requests
+   * already sent can't be retracted; recording again needs a page reload.
+   */
+  discard(): void {
+    if (this.app === null) return
+    this.app.discard()
+    this.app = null
   }
 
   forceFlushBatch() {

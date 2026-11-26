@@ -100,6 +100,7 @@ class CanvasRecorder {
   private readonly mime: 'image/webp' | 'image/jpeg'
   private timer: ReturnType<typeof setInterval> | null = null
   private worker: Worker | null = null
+  private discarded = false
   private workerDisabled = !canUseWorker()
   private readonly uploader: FramesUploader
 
@@ -150,6 +151,7 @@ class CanvasRecorder {
   }
 
   captureCanvas = (node: Node) => {
+    if (this.discarded) return
     const id = this.app.nodes.getID(node)
     if (!id || !hasTag(node, 'canvas')) {
       return
@@ -478,6 +480,7 @@ class CanvasRecorder {
   }
 
   clear() {
+    if (this.discarded) return
     Object.keys(this.snapshots).forEach((key) => {
       const id = Number(key)
       this.flushSnapshot(id, this.snapshots[id])
@@ -487,7 +490,20 @@ class CanvasRecorder {
       target: this.uploadTarget(),
       debug: !!this.options.isDebug,
     } satisfies ToCanvasWorker)
+    this.reset()
+    // pending uploads keep going in the background
+  }
 
+  /** Stops capture without sending pending frames; uploads in flight are aborted. */
+  discard() {
+    this.discarded = true
+    this.uploader.discard()
+    this.worker?.terminate()
+    this.worker = null
+    this.reset()
+  }
+
+  private reset() {
     Object.keys(this.snapshots).forEach((key) => {
       this.cleanupCanvas(Number(key))
     })
@@ -495,7 +511,6 @@ class CanvasRecorder {
     this.observers.forEach((observer) => observer.disconnect())
     this.observers.clear()
     this.snapshots = {}
-    // pending uploads keep going in the background
   }
 }
 

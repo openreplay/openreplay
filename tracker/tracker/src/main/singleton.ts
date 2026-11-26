@@ -71,6 +71,14 @@ class TrackerSingleton {
     return this.instance.stop()
   }
 
+  /** Stops recording for good without sending what is buffered; see the class `discard()`. */
+  discard(): void {
+    if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
+      return
+    }
+    this.instance.discard()
+  }
+
   setUserID = (id: string): void => {
     if (!IN_BROWSER || !this.ensureConfigured() || !this.instance) {
       return

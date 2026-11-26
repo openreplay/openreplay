@@ -4,6 +4,7 @@ import {
   Type,
 } from '../../common/messages.gen.js'
 import App from '../app/index.js'
+import { SetNodeAttributeURLBased, RemoveNodeAttribute } from '../app/messages.gen.js'
 
 // Bounds tracker memory on long sessions with ever-changing attribute values.
 // Evicted strings get a fresh key and are re-sent if they show up again;
@@ -69,6 +70,7 @@ export class StringDictionary {
 }
 
 export default class AttributeSender {
+  private emittedAttributes = new WeakMap<Element, { id: number; names: Set<string> }>()
   private dict: StringDictionary
   private readonly app: App
   private readonly isDictDisabled: boolean
@@ -78,8 +80,18 @@ export default class AttributeSender {
     this.dict = new StringDictionary()
   }
 
-  public sendSetAttribute = (id: number, name: string, value: string) => {
-    if (this.isDictDisabled) {
+  public sendURLBasedAttribute = (id: number, name: string, value: string, node?: Element) => {
+    const baseHref = this.app.getBaseHref()
+    if (baseHref === null) return this.removeAttribute(id, name, node)
+    this.rememberAttribute(id, name, node)
+    this.app.send(SetNodeAttributeURLBased(id, name, value, baseHref))
+  }
+
+  public sendSetAttribute = (
+    id: number, name: string, value: string, plain = false, node?: Element,
+  ) => {
+    this.rememberAttribute(id, name, node)
+    if (this.isDictDisabled || plain) {
       const msg: SetNodeAttribute = [Type.SetNodeAttribute, id, name, value]
       return this.app.send(msg)
     } else {
@@ -93,6 +105,29 @@ export default class AttributeSender {
     }
   }
 
+  private rememberAttribute(id: number, name: string, node?: Element) {
+    if (this.app.captureSanitizer === undefined || node === undefined) return
+    let entry = this.emittedAttributes.get(node)
+    if (entry?.id !== id) {
+      entry = { id, names: new Set() }
+      this.emittedAttributes.set(node, entry)
+    }
+    entry.names.add(name)
+  }
+
+  public removeAttribute(id: number, name: string, node?: Element) {
+    // Never disclose a newly rejected attribute name in a removal message.
+    if (this.app.captureSanitizer !== undefined) {
+      const entry = node && this.emittedAttributes.get(node)
+      if (entry?.id !== id || !entry.names.delete(name)) return
+    }
+    this.app.send(RemoveNodeAttribute(id, name))
+  }
+
+  public resetEmittedAttributes() {
+    this.emittedAttributes = new WeakMap()
+  }
+
   private applyDict(str: string): number {
     const [key, isNew] = this.dict.getKey(str)
     if (isNew) {
@@ -102,6 +137,7 @@ export default class AttributeSender {
   }
 
   clear() {
+    this.resetEmittedAttributes()
     this.dict.clear()
   }
 }

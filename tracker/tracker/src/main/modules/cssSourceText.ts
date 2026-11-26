@@ -9,10 +9,12 @@
 const EMPTY_DECLARATION = /:\s*;/
 
 /** Top-level rules of a stylesheet text, or null when it can't be split reliably. */
-export function splitTopLevelRules(text: string): string[] | null {
+export function splitTopLevelRules(text: string, commentSeparator = ''): string[] | null {
   const rules: string[] = []
   let depth = 0
+  let parens = 0
   let start = 0
+  let prefix = ''
   let i = 0
   const n = text.length
   while (i < n) {
@@ -20,7 +22,9 @@ export function splitTopLevelRules(text: string): string[] | null {
     if (c === '/' && text[i + 1] === '*') {
       const end = text.indexOf('*/', i + 2)
       if (end < 0) return null
+      prefix += text.slice(start, i) + commentSeparator
       i = end + 2
+      start = i
       continue
     }
     if (c === '"' || c === "'") {
@@ -29,26 +33,41 @@ export function splitTopLevelRules(text: string): string[] | null {
         if (text[i] === '\\') i++
         i++
       }
+      if (i >= n) return null
       i++
       continue
     }
-    if (c === '{') {
+    if (c === '\\') {
+      i += 2
+      continue
+    }
+    if (c === '(') {
+      parens++
+    } else if (c === ')') {
+      if (--parens < 0) return null
+    } else if (parens === 0 && c === '{') {
       depth++
-    } else if (c === '}') {
+    } else if (parens === 0 && c === '}') {
       depth--
       if (depth < 0) return null
       if (depth === 0) {
-        rules.push(text.slice(start, i + 1))
+        rules.push((prefix + text.slice(start, i + 1)).trim())
+        prefix = ''
         start = i + 1
       }
-    } else if (c === ';' && depth === 0) {
-      rules.push(text.slice(start, i + 1))
+    } else if (c === ';' && depth === 0 && parens === 0) {
+      const rule = (prefix + text.slice(start, i + 1)).trim()
+      if (!rule.startsWith('@')) return null
+      rules.push(rule)
+      prefix = ''
       start = i + 1
     }
     i++
   }
-  if (depth !== 0) return null
-  return rules.map((r) => r.replace(/\/\*[\s\S]*?\*\//g, '').trim()).filter(Boolean)
+  if (depth !== 0 || parens !== 0 || (prefix + text.slice(start)).trim()) {
+    return null
+  }
+  return rules
 }
 
 const loose = (s: string) => s.replace(/[\s"']/g, '')

@@ -1,3 +1,4 @@
+import { isSameAsset, sanitizeCapture, type CaptureSanitizer } from '../captureSanitizer.js'
 let fakeIdHolder = 1000000 * 99;
 
 export function inlineRemoteCss(
@@ -5,12 +6,35 @@ export function inlineRemoteCss(
   id: number,
   baseHref: string,
   getNextID: () => number,
-  insertRule: (id: number, cssText: string, index: number, baseHref: string) => any[],
-  addOwner: (sheetId: number, ownerId: number) => any[],
+  insertRule: (id: number, cssText: string, index: number, baseHref: string) => void,
+  addOwner: (sheetId: number, ownerId: number) => void,
   forceFetch?: boolean,
   sendPlain?: boolean,
-  onPlain?: (cssText: string, id: number) => void,
+  onPlain?: (cssText: string, id: number, baseHref: string) => void,
+  capture?: { sanitizer: CaptureSanitizer; href: string; original: string },
 ) {
+  const isStale = () => capture !== undefined && node.getAttribute('href') !== capture.original
+  if (isStale()) return
+  const sourceUrl = node.href
+  let cssBaseHref = baseHref
+  if (capture) {
+    // the page's copy is read only when the approved URL is the same file; the tracker fetches no other URL
+    if (!capture.href || !isSameAsset(capture.original, capture.href, node.baseURI)) return
+    cssBaseHref = new URL(capture.href, node.baseURI).href
+  }
+  const deliver = (cssText: string) => {
+    if (isStale()) return
+    const approved = sanitizeCapture(capture?.sanitizer, {
+      kind: 'css',
+      source: 'text',
+      value: cssText,
+      node,
+      sourceUrl,
+    })
+    if (approved === null || isStale()) return
+    if (sendPlain && onPlain) onPlain(approved, fakeIdHolder++, cssBaseHref)
+    else processCssText(approved)
+  }
   const sheetId = sendPlain ? null : getNextID();
   if (!sendPlain) {
     addOwner(sheetId!, id);
@@ -23,7 +47,7 @@ export function inlineRemoteCss(
       const cssText = stringifyStylesheet(sheet);
 
       if (cssText) {
-        processCssText(cssText);
+        deliver(cssText)
         return;
       }
     } catch (e) {
@@ -32,8 +56,8 @@ export function inlineRemoteCss(
   }
 
   // Fall back to fetching if we couldn't get or stringify the sheet
-  if (node.href) {
-    fetch(node.href)
+  if (sourceUrl && !isStale()) {
+    fetch(sourceUrl)
       .then(response => {
         if (!response.ok) {
           throw new Error(`response status ${response.status}`);
@@ -41,14 +65,12 @@ export function inlineRemoteCss(
         return response.text();
       })
       .then(cssText => {
-        if (sendPlain && onPlain) {
-          onPlain(cssText, fakeIdHolder++);
-        } else {
-          processCssText(cssText);
-        }
+        deliver(cssText)
       })
       .catch(error => {
-        console.error(`OpenReplay: Failed to fetch CSS from ${node.href}:`, error);
+        if (capture !== undefined)
+          console.error('OpenReplay: failed to capture stylesheet')
+        else console.error(`OpenReplay: Failed to fetch CSS from ${node.href}:`, error);
         // Fetch failed (likely CORS) — retry via load event + sheet access
         retryViaLoadEvent();
       });
@@ -57,17 +79,15 @@ export function inlineRemoteCss(
   }
 
   function retryViaLoadEvent() {
+    if (isStale()) return
     const trySheet = () => {
+      if (isStale()) return
       const loadedSheet = node.sheet;
       if (loadedSheet) {
         try {
           const cssText = stringifyStylesheet(loadedSheet);
           if (cssText) {
-            if (sendPlain && onPlain) {
-              onPlain(cssText, fakeIdHolder++);
-            } else {
-              processCssText(cssText);
-            }
+            deliver(cssText)
             return;
           }
         } catch (e) {
@@ -78,10 +98,7 @@ export function inlineRemoteCss(
     if (node.sheet) {
       trySheet();
     } else {
-      node.addEventListener('load', function onLoad() {
-        node.removeEventListener('load', onLoad);
-        trySheet();
-      });
+      node.addEventListener('load', trySheet, { once: true })
     }
   }
 
@@ -93,7 +110,7 @@ export function inlineRemoteCss(
     const ruleTexts = parseCSS(cssText);
 
     for (let i = 0; i < ruleTexts.length; i++) {
-      insertRule(sheetId!, ruleTexts[i], i, baseHref);
+      insertRule(sheetId!, ruleTexts[i], i, cssBaseHref);
     }
   }
 

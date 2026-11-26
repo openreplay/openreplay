@@ -1,3 +1,4 @@
+import { emptyStyleRule, sanitizeStyleRule } from '../app/captureSanitizer.js'
 import type App from '../app/index.js'
 import {
   AdoptedSSInsertRuleURLBased,
@@ -37,6 +38,13 @@ export default function (app: App, opts: CssRulesOptions) {
     app.send(TechnicalInfo('no_stylesheet_prototype_in_window', ''))
     return
   }
+  const sendRule = (sheetID: number, value: string, index: number) => {
+    const baseHref = app.getBaseHref()
+    const approved = baseHref === null
+      ? emptyStyleRule(value)
+      : sanitizeStyleRule(app.captureSanitizer, value, 'rule')
+    app.send(AdoptedSSInsertRuleURLBased(sheetID, approved, index, baseHref ?? ''))
+  }
   const options = { ...defaults, ...opts }
 
   //  sheetID:index -> ruleText
@@ -73,10 +81,10 @@ export default function (app: App, opts: CssRulesOptions) {
               if (oldText !== undefined) {
                 // Rule is changed
                 app.send(AdoptedSSDeleteRule(sheetID, j))
-                app.send(AdoptedSSInsertRuleURLBased(sheetID, newText, j, app.getBaseHref()))
+                sendRule(sheetID, newText, j)
               } else {
                 // Rule added
-                app.send(AdoptedSSInsertRuleURLBased(sheetID, newText, j, app.getBaseHref()))
+                sendRule(sheetID, newText, j)
               }
               ruleSnapshots.set(key, newText)
             }
@@ -112,7 +120,7 @@ export default function (app: App, opts: CssRulesOptions) {
     if (!sheetID) return
 
     if (typeof rule === 'string') {
-      app.send(AdoptedSSInsertRuleURLBased(sheetID, rule, index, app.getBaseHref()))
+      sendRule(sheetID, rule, index)
       if (isRuleEmpty(rule)) {
         ruleSnapshots.set(`${sheetID}:${index}`, rule)
         trackedSheets.add(sheet)
@@ -139,7 +147,7 @@ export default function (app: App, opts: CssRulesOptions) {
     const idx = Array.from(sheet.cssRules).indexOf(topmostRule)
 
     if (idx >= 0) {
-      app.send(AdoptedSSInsertRuleURLBased(sheetID, cssText, idx, app.getBaseHref()))
+      sendRule(sheetID, cssText, idx)
       app.send(AdoptedSSDeleteRule(sheetID, idx + 1))
       if (isRuleEmpty(cssText)) {
         ruleSnapshots.set(`${sheetID}:${idx}`, cssText)
@@ -164,8 +172,10 @@ export default function (app: App, opts: CssRulesOptions) {
     }
 
     context.CSSStyleSheet.prototype.deleteRule = function (index: number) {
+      // native first: an index it rejects deleted nothing
+      const result = deleteRule.call(this, index)
       sendInsertDeleteRule(this, index)
-      return deleteRule.call(this, index)
+      return result
     }
 
     context.CSSGroupingRule.prototype.insertRule = function (rule: string, index = 0) {

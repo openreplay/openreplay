@@ -83,6 +83,7 @@ describe('TagWatcher', () => {
     await watcher.fetchTags('https://localhost.com', '123')
     expect(fetchMock).toHaveBeenCalledWith('https://localhost.com/v1/web/tags', {
       method: 'GET',
+      signal: expect.any(AbortSignal),
       headers: { Authorization: 'Bearer 123' },
     })
     expect(watcher.tags).toEqual([

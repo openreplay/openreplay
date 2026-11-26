@@ -1,3 +1,9 @@
+import {
+  emptyStyleRule,
+  hasStyleRuleCount,
+  sanitizeCapture,
+  sanitizeStyleRule,
+} from '../app/captureSanitizer.js'
 import type App from '../app/index.js'
 import {
   AdoptedSSReplaceURLBased,
@@ -35,6 +41,13 @@ export default function (app: App | null) {
     return
   }
 
+  const sendRule = (sheetID: number, value: string, index: number) => {
+    const baseHref = app.getBaseHref()
+    const approved = baseHref === null
+      ? emptyStyleRule(value)
+      : sanitizeStyleRule(app.captureSanitizer, value, 'adopted')
+    app.send(AdoptedSSInsertRuleURLBased(sheetID, approved, index, baseHref ?? ''))
+  }
   const adoptedStyleSheetsOwnings: Map<number, number[]> = new Map()
   // text the sheet was filled with: its rules' cssText can lose declarations (see cssSourceText)
   const sheetSources = new WeakMap<CSSStyleSheet, string>()
@@ -70,14 +83,7 @@ export default function (app: App | null) {
               const rules = s.cssRules
               const sources = sourceRules(sheetSources.get(s), rules)
               for (let i = 0; i < rules.length; i++) {
-                app.send(
-                  AdoptedSSInsertRuleURLBased(
-                    sheetID,
-                    ruleText(rules[i], sources?.[i]),
-                    i,
-                    app.getBaseHref(),
-                  ),
-                )
+                sendRule(sheetID, ruleText(rules[i], sources?.[i]), i)
               }
             } catch (e) {
               app.debug.log('Couldnt access adopted stylesheet', e)
@@ -160,6 +166,25 @@ export default function (app: App | null) {
     }
   }
 
+  const sendReplacement = (sheet: CSSStyleSheet, text: string) => {
+    sheetSources.set(sheet, text)
+    const sheetID = styleSheetIDMap.get(sheet)
+    if (!sheetID) return
+    const baseHref = app.getBaseHref()
+    const approved = baseHref === null ? null : sanitizeCapture(app.captureSanitizer, {
+      kind: 'css',
+      source: 'adopted',
+      value: text,
+      node: null,
+    })
+    // a rewrite with another rule count would shift the indexes of later rule messages
+    const css =
+      approved === text || (approved && hasStyleRuleCount(approved, sheet.cssRules.length))
+        ? approved
+        : Array.from(sheet.cssRules, (rule) => emptyStyleRule(rule.cssText)).join('\n')
+    app.send(AdoptedSSReplaceURLBased(sheetID, css, baseHref ?? ''))
+  }
+
   const patchContext = (context: typeof globalThis): void => {
     // @ts-ignore
     if (context.__openreplay_adpss_patched__) {
@@ -177,22 +202,15 @@ export default function (app: App | null) {
     //@ts-ignore
     context.CSSStyleSheet.prototype.replace = function (text: string) {
       return replace.call(this, text).then((sheet: CSSStyleSheet) => {
-        sheetSources.set(this, text)
-        const sheetID = styleSheetIDMap.get(this)
-        if (sheetID) {
-          app.send(AdoptedSSReplaceURLBased(sheetID, text, app.getBaseHref()))
-        }
+        sendReplacement(this, text)
         return sheet
       })
     }
     //@ts-ignore
     context.CSSStyleSheet.prototype.replaceSync = function (text: string) {
-      sheetSources.set(this, text)
-      const sheetID = styleSheetIDMap.get(this)
-      if (sheetID) {
-        app.send(AdoptedSSReplaceURLBased(sheetID, text, app.getBaseHref()))
-      }
-      return replaceSync.call(this, text)
+      // native first: the policy check compares against the new rules, and a rejected call replaced nothing
+      replaceSync.call(this, text)
+      sendReplacement(this, text)
     }
   }
 

@@ -3,6 +3,7 @@ import TagMatcher, { type Tag, matchesLocation } from './tagMatcher.js'
 export const WATCHED_TAGS_KEY = '__or__watched_tags__'
 
 class TagWatcher {
+  private readonly abort = new AbortController()
   interval: ReturnType<typeof setInterval> | null = null
   tags: Tag[] = []
   readonly matcher: TagMatcher = new TagMatcher()
@@ -43,19 +44,23 @@ class TagWatcher {
   async fetchTags(ingest: string, token: string) {
     return fetch(`${ingest}/v1/web/tags`, {
       method: 'GET',
+      signal: this.abort.signal,
       headers: {
         Authorization: `Bearer ${token}`,
       },
     })
       .then((r) => r.json())
       .then(({ tags }: { tags: Tag[] }) => {
+        if (this.abort.signal.aborted) return
         if (tags && tags.length) {
           this.setTags(tags)
           const tagString = JSON.stringify(tags)
           this.sessionStorage.setItem(WATCHED_TAGS_KEY, tagString || '')
         }
       })
-      .catch((e) => this.errLog(e))
+      .catch((e) => {
+        if (!this.abort.signal.aborted) this.errLog(e)
+      })
   }
 
   setTags(tags: Tag[]) {
@@ -86,6 +91,12 @@ class TagWatcher {
       if (!matchesLocation(tag)) return
     }
     this.onTag(tagId)
+  }
+
+  /** A late response would store tags again and restart the interval. */
+  discard() {
+    this.abort.abort()
+    this.clear()
   }
 
   clear() {

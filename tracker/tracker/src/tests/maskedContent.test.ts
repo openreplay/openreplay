@@ -36,6 +36,9 @@ function makeApp(options: Partial<SanitizerOptions>) {
   a.attributeSender = {
     sendSetAttribute: (id: number, name: string, value: string) =>
       a.send([Type.SetNodeAttribute, id, name, value]),
+    sendURLBasedAttribute: (id: number, name: string, value: string) =>
+      a.send([Type.SetNodeAttributeURLBased, id, name, value, '']),
+    removeAttribute: (id: number, name: string) => a.send([Type.RemoveNodeAttribute, id, name]),
   }
   return a
 }

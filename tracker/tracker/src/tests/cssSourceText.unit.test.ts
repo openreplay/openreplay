@@ -21,6 +21,13 @@ describe('cssSourceText', () => {
     expect(splitTopLevelRules('.a{}}')).toBeNull()
   })
 
+  test('a comment inside a compound selector does not introduce a descendant combinator', () => {
+    expect(splitTopLevelRules('a/* note */.b{color:red}')).toEqual(['a.b{color:red}'])
+    expect(splitTopLevelRules('@import/* note */url(theme.css);', ' ')).toEqual([
+      '@import url(theme.css);',
+    ])
+  })
+
   test('uses the source text only for rules whose serialization lost declarations', () => {
     const source = '.button-native{background:var(--background);background-clip:padding-box}'
     const lossy = rule('.button-native { background-image: ; background-color: ; background-clip: padding-box; }')

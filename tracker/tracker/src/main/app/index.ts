@@ -4,10 +4,11 @@ import type {
   ToWorkerData,
 } from '../../common/interaction.js'
 import AttributeSender from '../modules/attributeSender.js'
+import { sanitizeCapture, type CaptureSanitizer } from './captureSanitizer.js'
 import ConditionsManager from '../modules/conditionsManager.js'
 import type { Options as NetworkOptions } from '../modules/network.js'
 import { deviceMemory, jsHeapSizeLimit } from '../modules/performance.js'
-import TagWatcher from '../modules/tagWatcher.js'
+import TagWatcher, { WATCHED_TAGS_KEY } from '../modules/tagWatcher.js'
 import type TagMatcher from '../modules/tagMatcher.js'
 import {
   adjustTimeOrigin,
@@ -125,6 +126,7 @@ enum ActivityState {
 }
 
 type AppOptions = {
+  captureSanitizer?: CaptureSanitizer
   revID: string
   urls?: Partial<ViewportOptions>
   node_id: string
@@ -288,12 +290,19 @@ export default class App {
   private readonly startCallbacks: Array<StartCallback> = []
   private readonly stopCallbacks: Array<() => any> = []
   private readonly commitCallbacks: Array<CommitCallback> = []
+  public readonly captureSanitizer?: CaptureSanitizer
+  private captureBase?: { original: string; approved: string | null }
   public readonly options: Options
   public readonly networkOptions?: Partial<NetworkOptions>
   private readonly revID: string
   private activityState: ActivityState = ActivityState.NotActive
   private readonly version = 'TRACKER_VERSION' // TODO: version compatability check inside each plugin.
   private worker?: TypedWorker
+  private disposed = false
+
+  isDisposed(): boolean {
+    return this.disposed
+  }
 
   public attributeSender: AttributeSender
   public socketMode = false
@@ -332,6 +341,7 @@ export default class App {
     this.projectKey = projectKey
 
     this.networkOptions = options.network
+    this.captureSanitizer = options.captureSanitizer
 
     const defaultOptions: Options = {
       revID: '',
@@ -404,6 +414,12 @@ export default class App {
     this.ticker = new Ticker(this)
     this.ticker.attach(() => this.commit())
     this.debug = new Logger(this.options.__debug__)
+    if (this.captureSanitizer && !this.options.canvas.disableCanvas) {
+      this.debug.warn('OpenReplay: canvas capture is disabled with captureSanitizer')
+    }
+    if (this.captureSanitizer && this.options.crossdomain?.enabled) {
+      this.debug.warn('OpenReplay: cross-domain child capture is disabled with captureSanitizer')
+    }
     this.session = new Session({ app: this, options: this.options })
     this.attributeSender = new AttributeSender({
       app: this,
@@ -456,7 +472,7 @@ export default class App {
       this.iframeDebugInterval = setInterval(this.emitIframeDebug, 60_000)
     } else {
       this.initWorker()
-      if (this.options.crossdomain?.enabled) {
+      if (this.options.crossdomain?.enabled && !this.captureSanitizer) {
         /**
          * if we get a signal from child iframes, we check for their node_id and send it back,
          * so they can act as if it was just a same-domain iframe
@@ -840,6 +856,8 @@ export default class App {
     this.send(ConsoleLog('info', `[OR_XDOMAIN_DEBUG] ${encoded}`))
   }
   crossDomainIframeListener = (event: MessageEvent) => {
+    // child frames are not captured with a capture policy
+    if (this.captureSanitizer) return
     if (event.source === window) return
     if (this.childOrigins && !this.childOrigins.has(event.origin)) return
     const { data } = event
@@ -882,7 +900,7 @@ export default class App {
             this.trackedFrames.push(data.context)
           }
           this.everTrackedFrames.add(data.context)
-          await this.waitStarted()
+          if (!(await this.waitStarted())) return
           const token = this.session.getSessionToken(this.projectKey)
           // Persistent, collision-free order (NOT the shifting array index). A restart of the
           // same context keeps its order/id-block for continuity; distinct live frames at the
@@ -1041,7 +1059,7 @@ export default class App {
   }
 
   public bootChildrenFrames = async () => {
-    await this.waitStarted()
+    if (!(await this.waitStarted())) return
     this.addCommand(proto.startIframe)
   }
 
@@ -1303,6 +1321,7 @@ export default class App {
   }
 
   private _debug(context: string, e: any) {
+    if (this.disposed) return
     if (this.options.__debug_report_edp !== null) {
       void fetch(this.options.__debug_report_edp, {
         method: 'POST',
@@ -1324,12 +1343,23 @@ export default class App {
   }
 
   send = (message: Message, urgent = false): void => {
-    if (this.activityState === ActivityState.NotActive) {
+    if (this.disposed || this.activityState === ActivityState.NotActive) {
       return
     }
     // ids past the frame's block would corrupt a sibling frame in replay
     if (this.frameIgnored) {
       return
+    }
+    if (this.captureSanitizer && message[0] === MType.ResourceTiming) {
+      const url = sanitizeCapture(this.captureSanitizer, {
+        kind: 'resource',
+        resourceType: 'timing',
+        value: message[7],
+        node: null,
+      })
+      if (url === null) return
+      message = [...message]
+      message[7] = url
     }
     // ====================================================
     if (this.activityState === ActivityState.ColdStart) {
@@ -1590,24 +1620,30 @@ export default class App {
     return this.projectKey
   }
 
-  getBaseHref(): string {
-    if (typeof this.options.resourceBaseHref === 'string') {
-      return this.options.resourceBaseHref
-    } else if (typeof this.options.resourceBaseHref === 'object') {
-      //TODO: switch between types
+  getBaseHref(): string | null {
+    const value =
+      typeof this.options.resourceBaseHref === 'string'
+        ? this.options.resourceBaseHref
+        : document.baseURI ||
+          document.head?.getElementsByTagName('base')[0]?.getAttribute('href') ||
+          location.origin + location.pathname
+    if (!this.captureSanitizer) return value
+    if (this.captureBase?.original !== value) {
+      const approved = sanitizeCapture(this.captureSanitizer, {
+        kind: 'resource',
+        resourceType: 'base',
+        value,
+        node: null,
+      })
+      this.captureBase = { original: value, approved }
     }
-    if (document.baseURI) {
-      return document.baseURI
-    }
-    // IE only
-    return (
-      document.head?.getElementsByTagName('base')[0]?.getAttribute('href') ||
-      location.origin + location.pathname
-    )
+    return this.captureBase.approved
   }
 
   resolveResourceURL(resourceURL: string): string {
-    const base = new URL(this.getBaseHref())
+    const baseHref = this.getBaseHref()
+    if (!baseHref) return ''
+    const base = new URL(baseHref)
     base.pathname += '/' + new URL(resourceURL).pathname
     base.pathname.replace(/\/+/g, '/')
     return base.toString()
@@ -1675,6 +1711,7 @@ export default class App {
    * and we will then send buffered batch, so it won't get lost
    * */
   public async coldStart(startOpts: StartOptions = {}, conditional?: boolean) {
+    if (this.disposed) return
     this.singleBuffer = false
     const second = 1000
     const isNewSession = this.checkSessionToken(startOpts.forceNew)
@@ -1788,6 +1825,7 @@ export default class App {
    * @param {Function} onSessionSent - callback that will be called once session is fully sent
    * */
   public offlineRecording(startOpts: StartOptions = {}, onSessionSent: () => void) {
+    if (this.disposed) return
     this.onSessionSent = onSessionSent
     this.singleBuffer = true
     const isNewSession = this.checkSessionToken(startOpts.forceNew)
@@ -1861,6 +1899,7 @@ export default class App {
    * @reject {string} - error message
    * */
   public async uploadOfflineRecording() {
+    if (this.disposed) return
     this.stop(false)
     const timestamp = now()
     this.worker?.postMessage({
@@ -2126,16 +2165,20 @@ export default class App {
       const onStartInfo = { sessionToken: token, userUUID, sessionID }
       // TODO: start as early as possible (before receiving the token)
       /** after start */
-      this.startCallbacks.forEach((cb) => cb(onStartInfo)) // MBTODO: callbacks after DOM "mounted" (observed)
-      if (this.userStartCallback) {
-        this.userStartCallback(SuccessfulStart(onStartInfo))
+      // MBTODO: callbacks after DOM "mounted" (observed)
+      for (const cb of this.startCallbacks) {
+        cb(onStartInfo)
+        // a start callback may have called stop() or discard()
+        if (epoch !== this.stopEpoch) return UnsuccessfulStart(CANCELED)
       }
+      this.userStartCallback?.(SuccessfulStart(onStartInfo))
+      if (epoch !== this.stopEpoch) return UnsuccessfulStart(CANCELED)
       this.activityState = ActivityState.Active
       if (this.options.crossdomain?.enabled) {
         void this.bootChildrenFrames()
       }
 
-      if (canvasEnabled && !this.options.canvas.disableCanvas) {
+      if (canvasEnabled && !this.captureSanitizer && !this.options.canvas.disableCanvas) {
         this.canvasRecorder =
           this.canvasRecorder ??
           new CanvasRecorder(this, {
@@ -2254,7 +2297,7 @@ export default class App {
   async waitStart() {
     return new Promise((resolve) => {
       const int = setInterval(() => {
-        if (this.canStart) {
+        if (this.canStart || this.disposed) {
           clearInterval(int)
           resolve(true)
         }
@@ -2271,6 +2314,8 @@ export default class App {
       const check = () => {
         if (this.activityState === status) {
           resolve(true)
+        } else if (this.disposed) {
+          resolve(false)
         } else {
           setTimeout(check, 25)
         }
@@ -2284,6 +2329,7 @@ export default class App {
    * and here we just apply 10ms delay just in case
    * */
   async start(...args: Parameters<App['_start']>): Promise<StartPromiseReturn> {
+    if (this.disposed) return UnsuccessfulStart('Tracker discarded')
     if (
       this.activityState === ActivityState.Active ||
       this.activityState === ActivityState.Starting
@@ -2361,6 +2407,52 @@ export default class App {
       }
       this.send(WSChannel('websocket', channel, data, this.timestamp(), dir, msgType))
     }
+  }
+
+  /**
+   * Ends capture for good, without sending what is buffered: the worker is terminated, timers and
+   * stored session/device ids are cleared, and start() refuses. Patched browser APIs stay inert.
+   */
+  discard(): void {
+    if (this.disposed) return
+    this.disposed = true
+    this.stopEpoch++
+    this.worker?.terminate()
+    this.worker = undefined
+    this.commitCallbacks.length = 0
+    this.messages.length = 0
+    this.clearBuffers()
+    this.canvasRecorder?.discard()
+    this.tagWatcher.discard()
+    for (const timer of [
+      this.startTimeout,
+      this.coldInterval,
+      this.childPollingInterval,
+      this.iframeDebugInterval,
+      this.xdomainDebugInterval,
+    ]) {
+      if (timer !== null) clearInterval(timer)
+    }
+    // another tab could hand this one a session token again
+    this.bc?.close()
+    try {
+      this.session.reset()
+      for (const key of [
+        this.options.session_pageno_key,
+        this.options.session_tabid_key,
+        this.options.session_reset_key,
+        this.sessionVersionKey,
+        WATCHED_TAGS_KEY,
+      ]) {
+        this.sessionStorage.removeItem(key)
+      }
+      this.localStorage.removeItem(this.options.local_uuid_key)
+      this.localStorage.removeItem(bufferStorageKey)
+    } catch (e) {
+      this.debug.error('OpenReplay: could not clear tracker storage', e)
+    }
+    // a capture callback may be running (a sanitizer, a start callback): tear down after it returns
+    void Promise.resolve().then(() => this.stop(false))
   }
 
   stop(stopWorker = true): void {

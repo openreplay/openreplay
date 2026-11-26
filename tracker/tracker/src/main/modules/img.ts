@@ -1,10 +1,7 @@
+import { PLACEHOLDER_SRC, sanitizeCapture } from '../app/captureSanitizer.js'
 import type App from '../app/index.js'
 import { isURL, IS_FIREFOX, MAX_STR_LEN, createMutationObserver } from '../utils.js'
-import {
-  RemoveNodeAttribute,
-  ResourceTiming,
-  SetNodeAttributeURLBased,
-} from '../app/messages.gen.js'
+import { ResourceTiming } from '../app/messages.gen.js'
 import { hasTag } from '../app/guards.js'
 import { SanitizeLevel } from '../app/sanitizer.js'
 
@@ -36,17 +33,33 @@ function isSVGInFireFox(url: string) {
   return IS_FIREFOX && (url.startsWith('data:image/svg+xml') || /\.svg([?#]|$)/i.test(url))
 }
 
-const PLACEHOLDER_SRC = 'https://static.openreplay.com/tracker/placeholder.jpeg'
-
 export default function (app: App): void {
+  function sendImageAttribute(
+    id: number,
+    node: HTMLImageElement | HTMLSourceElement,
+    name: 'src' | 'srcset',
+    value: string,
+    urlBased = false,
+  ) {
+    const approved = sanitizeCapture(app.captureSanitizer, {
+      kind: 'resource',
+      resourceType: 'image',
+      value,
+      node,
+    })
+    if (approved === null) app.attributeSender.removeAttribute(id, name, node)
+    else if (urlBased) app.attributeSender.sendURLBasedAttribute(id, name, approved, node)
+    else app.attributeSender.sendSetAttribute(id, name, approved, false, node)
+  }
+
   function sendPlaceholder(id: number, node: HTMLImageElement): void {
-    app.attributeSender.sendSetAttribute(id, 'src', PLACEHOLDER_SRC)
+    sendImageAttribute(id, node, 'src', PLACEHOLDER_SRC)
     const { width, height } = node.getBoundingClientRect()
     if (!node.hasAttribute('width')) {
-      app.attributeSender.sendSetAttribute(id, 'width', String(width))
+      app.attributeSender.sendSetAttribute(id, 'width', String(width), false, node)
     }
     if (!node.hasAttribute('height')) {
-      app.attributeSender.sendSetAttribute(id, 'height', String(height))
+      app.attributeSender.sendSetAttribute(id, 'height', String(height), false, node)
     }
   }
 
@@ -59,11 +72,13 @@ export default function (app: App): void {
     if (!srcset) {
       return
     }
+    const baseHref = app.getBaseHref()
+    if (baseHref === null) return app.attributeSender.removeAttribute(id, 'srcset', el)
     const resolvedSrcset = srcset
       .split(srcset.match(/,\s+/) ? /,\s+/ : ',')
-      .map((str) => resolveSrcsetCandidate(str, app.getBaseHref()))
+      .map((str) => resolveSrcsetCandidate(str, baseHref))
       .join(', ')
-    app.attributeSender.sendSetAttribute(id, 'srcset', resolvedSrcset)
+    sendImageAttribute(id, el, 'srcset', resolvedSrcset)
   }
 
   const sendSrc = function (id: number, img: HTMLImageElement): void {
@@ -71,7 +86,7 @@ export default function (app: App): void {
       sendPlaceholder(id, img)
       return
     }
-    app.send(SetNodeAttributeURLBased(id, 'src', img.src, app.getBaseHref()))
+    sendImageAttribute(id, img, 'src', img.src, true)
   }
 
   const sendImgError = app.safe(function (img: HTMLImageElement): void {
@@ -103,7 +118,7 @@ export default function (app: App): void {
       sendPlaceholder(id, img)
       // a srcset sent before masking would win over the placeholder
       if (resanitize && img.srcset) {
-        app.send(RemoveNodeAttribute(id, 'srcset'))
+        app.attributeSender.removeAttribute(id, 'srcset', img)
       }
     } else {
       if (img.getAttribute('src')) {
@@ -133,7 +148,7 @@ export default function (app: App): void {
     }
     if (isMasked(id) || isPictureMasked(picture)) {
       if (resanitize) {
-        app.send(RemoveNodeAttribute(id, 'srcset'))
+        app.attributeSender.removeAttribute(id, 'srcset', source)
       }
     } else {
       sendSrcset(id, source)

@@ -12,6 +12,7 @@ function createApp() {
   const resanitizeCallbacks: Array<(node: Node) => void> = []
   const app: any = {
     send: jest.fn(),
+    isDisposed: () => false,
     safe:
       (fn: any) =>
       (...args: any[]) => {
@@ -22,7 +23,12 @@ function createApp() {
     timestamp: () => 0,
     getBaseHref: () => BASE,
     options: { forceNgOff: true },
-    attributeSender: { sendSetAttribute: jest.fn() },
+    attributeSender: {
+      sendSetAttribute: jest.fn(),
+      sendURLBasedAttribute: (id: number, name: string, value: string) =>
+        app.send(SetNodeAttributeURLBased(id, name, value, BASE)),
+      removeAttribute: (id: number, name: string) => app.send(RemoveNodeAttribute(id, name)),
+    },
     attachStopCallback: jest.fn(),
     attachResanitizeCallback: (cb: any) => resanitizeCallbacks.push(cb),
     nodes: {
@@ -102,7 +108,8 @@ describe('img module', () => {
     t.app.send.mock.calls
       .map((c: any[]) => c[0])
       .filter((m: any) => m[0] === Type.SetNodeAttributeURLBased)
-  const attrCalls = () => t.app.attributeSender.sendSetAttribute.mock.calls
+  const attrCalls = () =>
+    t.app.attributeSender.sendSetAttribute.mock.calls.map((call: any[]) => call.slice(0, 3))
   const resourceErrors = () =>
     t.app.send.mock.calls.map((c: any[]) => c[0]).filter((m: any) => m[0] === Type.ResourceTiming)
 

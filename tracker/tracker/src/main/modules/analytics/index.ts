@@ -130,6 +130,13 @@ export default class Analytics {
       this.batcher.restart()
     }
   }
+  /** Drops queued events for good and forgets the stored identity. */
+  onDiscard = () => {
+    this.token = null
+    this.batcher.discard()
+    this.constantProperties.clearStorage()
+    if (this.standalone) this.sessionStorage.removeItem?.(STORAGEKEY)
+  }
   onStop = () => {
     if (!this.standalone) {
       this.batcher.stop()

@@ -1,3 +1,4 @@
+import { sanitizeCapture } from '../app/captureSanitizer.js'
 import type App from '../app/index.js'
 import { isDocument } from '../app/guards.js'
 import { LoadFontFace } from '../app/messages.gen.js'
@@ -9,9 +10,24 @@ export default function (app: App) {
     return
   }
 
+  const sanitise = (data: FFData): FFData | null => {
+    const fields = ['family', 'source', 'descriptors'] as const
+    const values = data.map((value, index) =>
+      index === 2 && value === '' ? value : sanitizeCapture(app.captureSanitizer, {
+        kind: 'font',
+        field: fields[index],
+        value,
+        node: null,
+      }),
+    )
+    return values.some((value) => value === null) ? null : (values as FFData)
+  }
   const docFonts: Map<Document, FFData[]> = new Map()
+  const patched = new WeakSet<Document>()
 
   const patchWindow = (wnd: typeof globalThis) => {
+    if (patched.has(wnd.document) || !wnd.FontFace) return
+    patched.add(wnd.document)
     // @ts-ignore
     class FontFaceInterceptor extends wnd.FontFace {
       constructor(...args: ConstructorParameters<typeof FontFace>) {
@@ -25,7 +41,8 @@ export default function (app: App) {
               })()
             }
 
-            const ffData: FFData = [args[0], args[1] as string, desc]
+            const ffData = sanitise([args[0], args[1] as string, desc])
+            if (ffData === null) return
             const ffDataArr = docFonts.get(wnd.document) || []
             ffDataArr.push(ffData)
             docFonts.set(wnd.document, ffDataArr)

@@ -105,6 +105,7 @@ interface UploaderHooks {
 }
 
 export class FramesUploader {
+  private readonly abort = new AbortController()
   private active = 0
   private readonly pending: { batch: FramesBatch; target: UploadTarget; debug: boolean }[] = []
   private readonly maxConcurrent = 2
@@ -113,12 +114,19 @@ export class FramesUploader {
   constructor(private readonly hooks: UploaderHooks) {}
 
   push(batch: FramesBatch, target: UploadTarget, debug = false) {
+    if (this.abort.signal.aborted) return
     if (this.pending.length >= this.maxQueue) {
       this.hooks.error('Upload queue full, dropping canvas batch')
       return
     }
     this.pending.push({ batch, target, debug })
     this.pump()
+  }
+
+  /** Drops queued batches and aborts uploads in flight (tracker discard). */
+  discard() {
+    this.pending.length = 0
+    this.abort.abort()
   }
 
   private pump() {
@@ -143,6 +151,7 @@ export class FramesUploader {
       if (!body) return
       const r = await fetch(target.url, {
         method: 'POST',
+        signal: this.abort.signal,
         headers: { Authorization: `Bearer ${target.token}` },
         body,
       })
@@ -150,6 +159,7 @@ export class FramesUploader {
         this.hooks.unauthorized()
       }
     } catch (e) {
+      if (this.abort.signal.aborted) return
       this.hooks.error(`error saving canvas: ${e instanceof Error ? e.message : String(e)}`)
     }
   }

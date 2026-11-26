@@ -30,6 +30,8 @@ class Batcher {
   }
   private intervalId: any = null
   private stopped = false
+  private discarded = false
+  private readonly abort = new AbortController()
 
   constructor(
     private readonly backendUrl: string,
@@ -50,6 +52,7 @@ class Batcher {
   }
 
   addEvent(event: any) {
+    if (this.discarded) return
     this.batch[event.category].push(event.data)
   }
 
@@ -175,6 +178,8 @@ class Batcher {
     const sentBatch = batch
     let attempts = 0
     const send = () => {
+      // also ends retries scheduled before a discard
+      if (this.discarded) return
       const token = this.getToken()
       if (!token) {
         // No token yet: keep the events so they go out once one is available.
@@ -184,6 +189,7 @@ class Batcher {
       attempts++
       return fetch(`${this.backendUrl}${this.apiEdp}`, {
         method: 'POST',
+        signal: this.abort.signal,
         keepalive,
         headers: {
           'Content-Type': 'application/json',
@@ -302,7 +308,20 @@ class Batcher {
     this.stopped = true
   }
 
+  /** Drops queued events and aborts requests in flight; nothing is sent afterwards. */
+  discard() {
+    this.discarded = true
+    this.abort.abort()
+    this.batch[categories.people] = []
+    this.batch[categories.events] = []
+    this.stopped = true
+    if (this.intervalId) clearInterval(this.intervalId)
+    this.intervalId = null
+    document.removeEventListener('visibilitychange', this.onVisibilityChange)
+  }
+
   restart() {
+    if (this.discarded) return
     this.stopped = false
     this.startAutosend()
   }
