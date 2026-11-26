@@ -1,5 +1,6 @@
 import { useStore } from '@/mstore';
 import Filter from '@/mstore/types/filter';
+import FilterItem from '@/mstore/types/filterItem';
 import { Tag, Tooltip } from 'antd';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
@@ -36,6 +37,36 @@ interface Props {
   compData: FunnelData;
 }
 
+// the backend reads an event whose properties are all negative as one the
+// session must not have; operators without a negative twin can't be excluded
+const NEGATED: Record<string, string> = {
+  is: 'isNot',
+  contains: 'notContains',
+  on: 'notOn',
+  '=': '!=',
+};
+
+/** the step negated, so a drill stops at the step before it */
+function excludeStep(step?: FilterItem): FilterItem | null {
+  if (!step?.isEvent) return null;
+  // the properties toJson sends
+  const props = (step.filters ?? []).filter(
+    (p) =>
+      p.operator === 'isAny' ||
+      p.value?.some((v) => v !== '' && v !== null && v !== undefined),
+  );
+  if (!props.length || props.some((p) => !NEGATED[p.operator || 'is'])) {
+    return null;
+  }
+  return new FilterItem({
+    ...JSON.parse(JSON.stringify(step)),
+    filters: props.map((p) => ({
+      ...JSON.parse(JSON.stringify(p)),
+      operator: NEGATED[p.operator || 'is'],
+    })),
+  });
+}
+
 function FunnelWidget(props: Props) {
   const { t } = useTranslation();
   const { dashboardStore, metricStore, filterStore } = useStore();
@@ -60,8 +91,9 @@ function FunnelWidget(props: Props) {
   const metricFilters = metric?.series[0]?.filter.filters || [];
 
   const applyDrillDown = (index: number, isComp?: boolean) => {
+    const next = index > -1 ? excludeStep(metricFilters[index + 1]) : null;
     const filter = {
-      filters: metricFilters.slice(0, index + 1),
+      filters: [...metricFilters.slice(0, index + 1), ...(next ? [next] : [])],
     };
     const periodTimestamps =
       isComp && index > -1
