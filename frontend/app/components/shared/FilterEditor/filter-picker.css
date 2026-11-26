@@ -202,6 +202,25 @@
   font-size: var(--m-text-2xs);
   color: var(--m-content-decorative);
 }
+.m-pick2__enter {
+  display: inline-flex;
+  flex: none;
+  color: var(--m-content-muted);
+}
+.m-pick2__free {
+  margin-bottom: var(--m-space-1);
+  color: var(--m-content-muted);
+}
+.m-pick2__free-q {
+  color: var(--m-content-primary);
+  font-weight: var(--m-weight-medium);
+}
+.m-pick2__free:disabled {
+  cursor: default;
+}
+.m-pick2__free:disabled:hover {
+  background: none;
+}
 
 @media (prefers-reduced-motion: reduce) {
   .m-pick2__rail,

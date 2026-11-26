@@ -11,7 +11,7 @@ import {
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
-import { PickerBody } from './FilterPicker';
+import { type FreeTextOffer, PickerBody } from './FilterPicker';
 import './filter-panel.css';
 import type { CatalogueEntry } from './types';
 
@@ -26,6 +26,7 @@ export interface FilterPanelProps {
   onQueryChange?: (q: string) => void;
   hideSearch?: boolean;
   commitRef?: MutableRefObject<(() => void) | null>;
+  freeText?: FreeTextOffer;
   anchorRef?: RefObject<HTMLElement | null>;
   placeholder?: string;
   kind?: 'all' | 'event' | 'group';
@@ -44,6 +45,7 @@ export function FilterPanel({
   onQueryChange,
   hideSearch,
   commitRef,
+  freeText,
   anchorRef,
   placeholder,
   kind = 'all',
@@ -172,6 +174,7 @@ export function FilterPanel({
         onQueryChange={onQueryChange}
         hideSearch={hideSearch}
         commitRef={commitRef}
+        freeText={freeText}
         placeholder={placeholder ?? t('Search filters and group properties')}
       />
     </div>

@@ -3339,5 +3339,9 @@
   "User {{id}}": "User {{id}}",
   "Up to {{n}} days, compared with the same length of time just before.": "Up to {{n}} days, compared with the same length of time just before.",
   "Reads {{range}}, {{n}} days: a custom range ends today at the latest and covers at most {{max}} days.": "Reads {{range}}, {{n}} days: a custom range ends today at the latest and covers at most {{max}} days.",
-  "Reads {{range}}, {{n}} days.": "Reads {{range}}, {{n}} days."
+  "Reads {{range}}, {{n}} days.": "Reads {{range}}, {{n}} days.",
+  "Message contains": "El mensaje contiene",
+  "A search holds up to {{n}} filters": "Una búsqueda admite hasta {{n}} filtros",
+  "A search is up to {{n}} characters": "Una búsqueda admite hasta {{n}} caracteres",
+  "A filter holds up to {{n}} values. Remove one to add another.": "Un filtro admite hasta {{n}} valores. Quita uno para añadir otro."
 }

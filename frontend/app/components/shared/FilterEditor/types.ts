@@ -22,6 +22,8 @@ export interface CatalogueEntry {
   options?: readonly { value: string; label: string }[];
   /** Names an open set's value that reads otherwise (Logs' empty service). */
   valueLabel?: (t: TFunction, value: string) => string;
+  /** How all the values read together, when a list would mislead (Logs' message search). */
+  valuesLabel?: (t: TFunction, values: readonly string[]) => string;
   /** Overrides the operators of the data type (a source that supports fewer). */
   operators?: readonly { value: string; label: string }[];
   source: Filter;

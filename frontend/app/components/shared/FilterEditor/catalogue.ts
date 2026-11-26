@@ -62,6 +62,7 @@ export function entryFromFilter(f: Filter): CatalogueEntry {
     autoCaptured: !!f.autoCaptured,
     options,
     valueLabel: (f as any).valueLabel,
+    valuesLabel: (f as any).valuesLabel,
     // store filters carry an empty list by default: only a real one counts
     operators: f.operators?.length
       ? f.operators.map((o) => ({ value: o.value, label: o.label }))
@@ -258,6 +259,7 @@ export const valueLabelOf = (t: TFunction, entry: CatalogueEntry, v: string) =>
   v;
 
 export const valueText = (t: TFunction, f: SearchFilter) =>
+  f.entry.valuesLabel?.(t, f.value) ??
   f.value.map((v) => valueLabelOf(t, f.entry, v)).join(', ');
 
 export function describeFilter(t: TFunction, f: SearchFilter): string {

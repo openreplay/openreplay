@@ -3190,5 +3190,9 @@
   "User {{id}}": "User {{id}}",
   "Up to {{n}} days, compared with the same length of time just before.": "Up to {{n}} days, compared with the same length of time just before.",
   "Reads {{range}}, {{n}} days: a custom range ends today at the latest and covers at most {{max}} days.": "Reads {{range}}, {{n}} days: a custom range ends today at the latest and covers at most {{max}} days.",
-  "Reads {{range}}, {{n}} days.": "Reads {{range}}, {{n}} days."
+  "Reads {{range}}, {{n}} days.": "Reads {{range}}, {{n}} days.",
+  "Message contains": "메시지에 포함",
+  "A search holds up to {{n}} filters": "검색에는 필터를 최대 {{n}}개까지 쓸 수 있습니다",
+  "A search is up to {{n}} characters": "검색어는 최대 {{n}}자까지 입력할 수 있습니다",
+  "A filter holds up to {{n}} values. Remove one to add another.": "필터 하나에 값은 최대 {{n}}개입니다. 하나를 지운 뒤 추가하세요."
 }

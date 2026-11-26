@@ -3417,5 +3417,9 @@
   "User {{id}}": "User {{id}}",
   "Up to {{n}} days, compared with the same length of time just before.": "Up to {{n}} days, compared with the same length of time just before.",
   "Reads {{range}}, {{n}} days: a custom range ends today at the latest and covers at most {{max}} days.": "Reads {{range}}, {{n}} days: a custom range ends today at the latest and covers at most {{max}} days.",
-  "Reads {{range}}, {{n}} days.": "Reads {{range}}, {{n}} days."
+  "Reads {{range}}, {{n}} days.": "Reads {{range}}, {{n}} days.",
+  "Message contains": "Повідомлення містить",
+  "A search holds up to {{n}} filters": "У пошуку не більше {{n}} фільтрів",
+  "A search is up to {{n}} characters": "Пошук не довший за {{n}} символів",
+  "A filter holds up to {{n}} values. Remove one to add another.": "У фільтрі не більше {{n}} значень. Видаліть одне, щоб додати інше."
 }

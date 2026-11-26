@@ -7,6 +7,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
+  CornerDownLeft,
   Flag,
   Globe,
   Hash,
@@ -82,6 +83,14 @@ const categoryIcon = (key: string) => CATEGORY_ICON[key] ?? <List size={13} />;
 
 const ALL = '__all';
 
+/** Typed text as a search of its own, offered first unless it names an entry. */
+export interface FreeTextOffer {
+  label: string;
+  onPick: (text: string) => void;
+  /** why the text can't be taken, said in place of the offer */
+  blocked?: (text: string) => string | null;
+}
+
 export interface FilterPickerProps {
   entries: readonly CatalogueEntry[];
   taken?: readonly string[];
@@ -102,6 +111,7 @@ export interface PickerBodyProps extends Omit<FilterPickerProps, 'children'> {
   onQueryChange?: (q: string) => void;
   hideSearch?: boolean;
   commitRef?: MutableRefObject<(() => void) | null>;
+  freeText?: FreeTextOffer;
 }
 
 export function PickerBody({
@@ -120,6 +130,7 @@ export function PickerBody({
   onQueryChange,
   hideSearch = false,
   commitRef,
+  freeText,
 }: PickerBodyProps) {
   const { t } = useTranslation();
   const [ownQuery, setOwnQuery] = useState(seed ?? '');
@@ -133,15 +144,23 @@ export function PickerBody({
     [query, entries],
   );
   const q = query.trim();
+  const freeQ = freeText ? q : '';
+  const isExact = (e: CatalogueEntry) =>
+    e.displayName.toLowerCase() === freeQ.toLowerCase();
+  const exact = !!freeQ && matches.some(isExact);
   const shown = useMemo(
     () =>
       q
-        ? matches
+        ? exact
+          ? [...matches.filter(isExact), ...matches.filter((e) => !isExact(e))]
+          : matches
         : cat === ALL
           ? [...entries]
           : entries.filter((e) => e.category === cat),
-    [q, matches, cat, entries],
+    [q, matches, cat, entries, exact],
   );
+  const freeBlocked = freeQ ? (freeText?.blocked?.(freeQ) ?? null) : null;
+  const freeFirst = !!freeQ && !exact;
 
   // a project's catalogue can run to thousands of entries: draw a page of them
   // the page size belongs to a (query, category): derived, so a new question
@@ -205,8 +224,14 @@ export function PickerBody({
     onPick(e);
     close();
   };
+  const takeFree = () => {
+    if (!freeText || !freeQ || freeBlocked) return;
+    freeText.onPick(freeQ);
+    close();
+  };
   const commit = () => {
-    if (shown.length) pick(shown[0]);
+    if (freeFirst) takeFree();
+    else if (shown.length) pick(shown[0]);
   };
   useEffect(() => {
     if (!commitRef) return undefined;
@@ -263,6 +288,36 @@ export function PickerBody({
       </button>
     );
   };
+
+  const lit = freeFirst && !freeBlocked;
+  const freeRow = freeQ ? (
+    <button
+      type="button"
+      role="menuitem"
+      disabled={!!freeBlocked}
+      className={`m-pick2__row m-pick2__free${lit ? ' is-cursor' : ''}`}
+      onClick={takeFree}
+    >
+      <span className="m-pick2__glyph" aria-hidden="true">
+        <Search size={13} />
+      </span>
+      <span className="m-pick2__name m-truncate">
+        {freeBlocked ?? (
+          <>
+            {freeText!.label}{' '}
+            <span className="m-pick2__free-q">
+              {freeQ.includes('"') ? freeQ : `“${freeQ}”`}
+            </span>
+          </>
+        )}
+      </span>
+      {lit && (
+        <span className="m-pick2__enter" aria-hidden="true">
+          <CornerDownLeft size={11} />
+        </span>
+      )}
+    </button>
+  ) : null;
 
   return (
     <div className="m-pick2 m-pick2--panes" role="menu" onKeyDown={menuKeyDown}>
@@ -355,10 +410,11 @@ export function PickerBody({
         <div className="m-pick2__list">
           {loading ? (
             <p className="m-pick__none">{t('Loading…')}</p>
-          ) : shown.length === 0 ? (
+          ) : shown.length === 0 && !freeRow ? (
             <p className="m-pick__none">{t('Nothing matches that.')}</p>
           ) : (
             <>
+              {freeFirst && freeRow}
               {shown.slice(0, limit).map(row)}
               {shown.length > limit && (
                 <button
@@ -372,6 +428,7 @@ export function PickerBody({
                   })}
                 </button>
               )}
+              {!freeFirst && freeRow}
             </>
           )}
         </div>

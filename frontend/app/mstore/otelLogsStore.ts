@@ -18,6 +18,7 @@ import {
   rulesToFilter,
   sameRules,
   sameValue,
+  textSearchLimit,
   windowBounds,
 } from 'App/components/Observability/logs-logic';
 import type { Filter } from 'App/mstore/types/filterConstants';
@@ -536,6 +537,17 @@ export default class OtelLogsStore {
   clearRules = () => {
     this.setRules([]);
     this.viewId = null;
+  };
+
+  /** typed text in the search: a message rule of its own, so a second
+      search narrows the first */
+  searchText = (text: string) => {
+    const value = text.trim();
+    if (!value || textSearchLimit(this.ruleList, value)) return;
+    this.setRules([
+      ...this.rules,
+      { ...logFilter('message', this.labelOf('message')), value: [value] },
+    ]);
   };
 
   setWindow = (w: LogWindow) => {

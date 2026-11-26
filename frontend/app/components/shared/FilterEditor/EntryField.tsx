@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
 import { FilterPanel } from './FilterPanel';
+import type { FreeTextOffer } from './FilterPicker';
 import { TorchRing } from './TorchRing';
 import './filter-bar.css';
 import type { CatalogueEntry } from './types';
@@ -29,6 +30,7 @@ export interface EntryFieldProps {
   /** the phone's door: a button in the field's look that opens the filter
       drawer, where the rules are edited */
   opens?: { onOpen: () => void; summary?: ReactNode; count?: number };
+  freeText?: FreeTextOffer;
 }
 
 /** The search field under a page title; typing opens the catalogue. */
@@ -41,6 +43,7 @@ export function EntryField({
   trailing,
   after,
   opens,
+  freeText,
 }: EntryFieldProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -166,6 +169,7 @@ export function EntryField({
           onQueryChange={setQuery}
           hideSearch
           commitRef={commitRef}
+          freeText={freeText}
           onClose={close}
           onPick={(e) => {
             onPick(e);

@@ -29,15 +29,18 @@ function ValuePicker({ filter, value, onChange, live }: ValuePickerProps) {
   const freeText = !entry.options;
   const { options, loading } = useValueOptions(filter, query, open, live);
   const shared = options.some((o) => o.share != null);
-  const shareLabel = useContext(ValueSourceContext)?.shareLabel;
+  const { shareLabel, limit } = useContext(ValueSourceContext) ?? {};
+  const atLimit = limit != null && value.length >= limit;
   const labelOf = (v: string) => valueLabelOf(t, entry, v);
 
-  const toggle = (v: string) =>
-    onChange(value.includes(v) ? value.filter((x) => x !== v) : [...value, v]);
+  const toggle = (v: string) => {
+    if (value.includes(v)) onChange(value.filter((x) => x !== v));
+    else if (!atLimit) onChange([...value, v]);
+  };
 
   const acceptFirst = () => {
     const first = options[0].value;
-    if (!value.includes(first)) onChange([...value, first]);
+    if (!value.includes(first) && !atLimit) onChange([...value, first]);
     setQuery('');
   };
 
@@ -46,17 +49,20 @@ function ValuePicker({ filter, value, onChange, live }: ValuePickerProps) {
       .split(',')
       .map((s) => s.trim())
       .filter((s) => s && !value.includes(s));
-    if (!typed.length) return;
-    onChange([...value, ...typed]);
-    setQuery('');
+    const room = limit == null ? typed.length : limit - value.length;
+    if (!typed.length || room <= 0) return;
+    onChange([...value, ...typed.slice(0, room)]);
+    setQuery(typed.slice(room).join(', '));
   };
 
   const label =
     value.length === 0
       ? t('value')
-      : value.length <= 2
-        ? value.map(labelOf).join(', ')
-        : `${labelOf(value[0])} +${value.length - 1}`;
+      : entry.valuesLabel
+        ? entry.valuesLabel(t, value)
+        : value.length <= 2
+          ? value.map(labelOf).join(', ')
+          : `${labelOf(value[0])} +${value.length - 1}`;
 
   const content = (
     <div className="m-vp">
@@ -84,7 +90,7 @@ function ValuePicker({ filter, value, onChange, live }: ValuePickerProps) {
           }}
           aria-label={t('Values for {{name}}', { name })}
         />
-        {freeText && query.trim() && (
+        {freeText && query.trim() && !atLimit && (
           <button type="button" className="m-vp__commit" onClick={commitTyped}>
             <CornerDownLeft size={12} aria-hidden="true" />
             {t('use “{{value}}”', { value: query.trim() })}
@@ -93,6 +99,16 @@ function ValuePicker({ filter, value, onChange, live }: ValuePickerProps) {
       </div>
 
       <div className="m-vp__body">
+        {atLimit && (
+          <p className="m-vp__none">
+            {t(
+              'A filter holds up to {{n}} values. Remove one to add another.',
+              {
+                n: limit,
+              },
+            )}
+          </p>
+        )}
         {value
           .filter((v) => !options.some((o) => o.value === v))
           .map((v) => (
@@ -116,6 +132,7 @@ function ValuePicker({ filter, value, onChange, live }: ValuePickerProps) {
           <CheckRow
             key={o.value}
             on={value.includes(o.value)}
+            disabled={atLimit && !value.includes(o.value)}
             onToggle={() => toggle(o.value)}
             meta={
               i === 0 || shared ? (
@@ -182,7 +199,7 @@ function ValuePicker({ filter, value, onChange, live }: ValuePickerProps) {
         <Truncated
           text={label}
           full={
-            value.length > 2 ? (
+            value.length > 2 && !entry.valuesLabel ? (
               <span className="m-vp__all">
                 {value.map((v) => (
                   <span key={v}>{labelOf(v)}</span>

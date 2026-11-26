@@ -360,6 +360,42 @@ export function valueOfLog(log: OtelLog, key: string): string | undefined {
 export const shownValue = (t: TFunction, log: OtelLog, key: string) =>
   key === 'level' ? levelLabel(t, levelOf(log)) : valueOfLog(log, key);
 
+/* ── the message search ─────────────────────────────────────────────────── */
+
+/** `payment "gateway timeout"` → payment, the phrase gateway timeout */
+export function textTerms(value: string): { text: string; phrase: boolean }[] {
+  const out: { text: string; phrase: boolean }[] = [];
+  for (const m of value.matchAll(/"([^"]*)"|(\S+)/g)) {
+    const text = (m[1] ?? m[2] ?? '').trim();
+    if (text) out.push({ text, phrase: m[1] != null });
+  }
+  return out;
+}
+
+// the API ANDs every word of `query` and has no phrase: a quoted run goes as its words
+const textWords = (values: readonly string[]) =>
+  values.flatMap((v) =>
+    textTerms(v).flatMap((x) => (x.phrase ? x.text.split(/\s+/) : [x.text])),
+  );
+
+export const describeText = (t: TFunction, values: readonly string[]) =>
+  textWords(values).join(` ${t('and')} `);
+
+export const byteSize = (text: string) => new TextEncoder().encode(text).length;
+
+/** the API counts the query in bytes */
+export function textSearchLimit(
+  rules: readonly LogRule[],
+  text: string,
+): 'length' | 'rules' | null {
+  if (rules.length >= OTEL_LOGS_LIMITS.maxAttributes) return 'rules';
+  const typed = rules
+    .filter((r) => r.name === 'message')
+    .flatMap((r) => r.value);
+  const query = textWords([...typed, text]).join(' ');
+  return byteSize(query) > OTEL_LOGS_LIMITS.maxQueryLength ? 'length' : null;
+}
+
 /* ── catalogue (synthetic store filters, read by the shared filter bar) ─── */
 
 const op = (value: string, label: string) => ({
@@ -401,6 +437,7 @@ export function logFilter(
     filters: [],
     toJSON: () => ({}) as any,
     ...(key === 'service' ? { valueLabel: serviceLabel } : {}),
+    ...(key === 'message' ? { valuesLabel: describeText } : {}),
     ...extra,
   } as Filter;
 }
@@ -497,7 +534,7 @@ export function rulesToFilter(rules: readonly LogRule[]): FilterParts {
     const nullary = r.operator === 'isAny';
     if (!nullary && typed.length === 0) continue;
     if (r.name === 'message') {
-      words.push(...typed);
+      words.push(...textWords(typed));
       continue;
     }
     if (r.name === 'level') {
@@ -750,8 +787,6 @@ export const otelRow = (log: OtelLog): Record<string, unknown> => ({
   ScopeName: log.scopeName,
   ScopeAttributes: log.scopeAttributes,
 });
-
-export const byteSize = (text: string) => new TextEncoder().encode(text).length;
 
 /* ── export ─────────────────────────────────────────────────────────────── */
 

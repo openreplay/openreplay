@@ -40,7 +40,11 @@ import {
   withSiteId,
 } from 'App/routes';
 import { useNavigate } from 'App/routing';
-import { type OtelLog, otelLogTimeMs } from 'App/services/OtelLogsService';
+import {
+  OTEL_LOGS_LIMITS,
+  type OtelLog,
+  otelLogTimeMs,
+} from 'App/services/OtelLogsService';
 
 import {
   EntryField,
@@ -84,6 +88,7 @@ import {
   sameLogDay,
   scopeOfKey,
   sessionOf,
+  textSearchLimit,
   toBuckets,
   valueLabel,
   windowBounds,
@@ -207,6 +212,23 @@ function LogsPage() {
   }));
   const editor = buildFilterEditor(logsTarget(store));
   const ruleCount = store.rules.length;
+  const ruleList = store.ruleList;
+  const textSearch = {
+    label: t('Message contains'),
+    onPick: store.searchText,
+    blocked: (text: string) => {
+      const limit = textSearchLimit(ruleList, text);
+      return limit === 'rules'
+        ? t('A search holds up to {{n}} filters', {
+            n: OTEL_LOGS_LIMITS.maxAttributes,
+          })
+        : limit === 'length'
+          ? t('A search is up to {{n}} characters', {
+              n: OTEL_LOGS_LIMITS.maxQueryLength,
+            })
+          : null;
+    },
+  };
   const sentence = (props = editor.properties) =>
     describeRules(t, [], props, 'and');
 
@@ -235,6 +257,7 @@ function LogsPage() {
         }));
       },
       shareLabel: (pct: number) => t('{{pct}}% of the top value', { pct }),
+      limit: OTEL_LOGS_LIMITS.maxListValues,
     }),
     [store, t],
   );
@@ -583,6 +606,7 @@ function LogsPage() {
             hasRules={ruleCount > 0}
             entries={[...viewEntries, ...entries]}
             placeholder={t('Search logs')}
+            freeText={textSearch}
           />
         )}
 

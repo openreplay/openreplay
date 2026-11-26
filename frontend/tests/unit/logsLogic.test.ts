@@ -13,6 +13,7 @@ import {
   NO_SERVICE,
   bodyOf,
   clockLabel,
+  describeText,
   drillCards,
   exportFileName,
   exportLines,
@@ -31,10 +32,13 @@ import {
   rulesToFilter,
   sameLogDay,
   sameRules,
+  textSearchLimit,
+  textTerms,
   valueLabel,
   windowBounds,
 } from '../../app/components/Observability/logs-logic';
 import {
+  ruleParts,
   valueText,
   viewOf,
 } from '../../app/components/shared/FilterEditor/catalogue';
@@ -114,6 +118,63 @@ describe('rulesToFilter', () => {
       value: ['v'],
     }));
     expect(rulesToFilter(rules).attributes).toHaveLength(20);
+  });
+});
+
+describe('the message search', () => {
+  const t = ((k: string) => k) as any;
+  const message = (...value: string[]) => ({
+    name: 'message',
+    operator: 'contains',
+    value,
+  });
+
+  test('quotes make a phrase, a lone quote is a character', () => {
+    expect(textTerms('payment  "gateway timeout" x')).toEqual([
+      { text: 'payment', phrase: false },
+      { text: 'gateway timeout', phrase: true },
+      { text: 'x', phrase: false },
+    ]);
+    expect(textTerms('pay"ment ""')).toEqual([
+      { text: 'pay"ment', phrase: false },
+    ]);
+  });
+
+  test('every word of every search is sent, a phrase as its words', () => {
+    expect(
+      rulesToFilter([
+        message('loaded cart'),
+        message('"gateway timeout"', 'refund'),
+      ]).query,
+    ).toBe('loaded cart gateway timeout refund');
+  });
+
+  test('the chip says what the API matches', () => {
+    expect(describeText(t, ['payment failed'])).toBe('payment and failed');
+    expect(describeText(t, ['"gateway timeout"'])).toBe('gateway and timeout');
+    expect(describeText(t, ['payment', 'refund'])).toBe('payment and refund');
+    const rule = viewOf(
+      { ...logFilter('message', 'Message'), value: ['payment failed'] },
+      '0',
+    );
+    expect(valueText(t, rule)).toBe('payment and failed');
+    expect(ruleParts(t, rule)).toEqual({
+      name: 'Message',
+      rest: 'contains payment and failed',
+    });
+  });
+
+  test('limits are the API query length, in bytes, and its filter count', () => {
+    expect(textSearchLimit([], 'payment')).toBeNull();
+    expect(textSearchLimit([message('a'.repeat(495))], 'b'.repeat(4))).toBe(
+      null,
+    );
+    expect(textSearchLimit([message('a'.repeat(495))], 'b'.repeat(5))).toBe(
+      'length',
+    );
+    expect(textSearchLimit([], 'ж'.repeat(251))).toBe('length');
+    const twenty = Array.from({ length: 20 }, () => message('x'));
+    expect(textSearchLimit(twenty, 'y')).toBe('rules');
   });
 });
 
@@ -778,6 +839,19 @@ describe('OtelLogsStore page model', () => {
     expect(other.ruleList).toEqual([
       { name: 'service', operator: 'is', value: ['web'] },
     ]);
+  });
+
+  test('each typed search is a message rule of its own', () => {
+    store.searchText('  payment ');
+    store.searchText('"gateway timeout"');
+    expect(store.ruleList).toEqual([
+      { name: 'message', operator: 'contains', value: ['payment'] },
+      { name: 'message', operator: 'contains', value: ['"gateway timeout"'] },
+    ]);
+    expect(store.restCollapsed).toBe(false);
+    store.searchText('x'.repeat(600));
+    store.searchText('   ');
+    expect(store.ruleList).toHaveLength(2);
   });
 
   test('a damaged views value loads as no views', () => {

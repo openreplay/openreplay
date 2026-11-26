@@ -29,6 +29,8 @@ export interface ValueSource {
     signal: AbortSignal,
   ) => Promise<ValueOption[]>;
   shareLabel?: (pct: number) => string;
+  /** the most values one rule holds */
+  limit?: number;
 }
 export const ValueSourceContext = createContext<ValueSource | undefined>(
   undefined,

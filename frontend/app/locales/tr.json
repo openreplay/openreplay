@@ -1558,5 +1558,9 @@
   "Send message": "Mesaj gönder",
   "Hey": "Merhaba",
   "how can I help you?": "size nasıl yardımcı olabilirim?",
-  "Ask": "Sor"
+  "Ask": "Sor",
+  "Message contains": "Mesaj şunu içeriyor",
+  "A search holds up to {{n}} filters": "Bir arama en fazla {{n}} filtre içerebilir",
+  "A search is up to {{n}} characters": "Bir arama en fazla {{n}} karakter olabilir",
+  "A filter holds up to {{n}} values. Remove one to add another.": "Bir filtre en fazla {{n}} değer içerebilir. Başka bir değer eklemek için birini kaldırın."
 }

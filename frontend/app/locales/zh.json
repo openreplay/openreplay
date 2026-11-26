@@ -3190,5 +3190,9 @@
   "User {{id}}": "User {{id}}",
   "Up to {{n}} days, compared with the same length of time just before.": "Up to {{n}} days, compared with the same length of time just before.",
   "Reads {{range}}, {{n}} days: a custom range ends today at the latest and covers at most {{max}} days.": "Reads {{range}}, {{n}} days: a custom range ends today at the latest and covers at most {{max}} days.",
-  "Reads {{range}}, {{n}} days.": "Reads {{range}}, {{n}} days."
+  "Reads {{range}}, {{n}} days.": "Reads {{range}}, {{n}} days.",
+  "Message contains": "消息包含",
+  "A search holds up to {{n}} filters": "一次搜索最多 {{n}} 个筛选条件",
+  "A search is up to {{n}} characters": "搜索最多 {{n}} 个字符",
+  "A filter holds up to {{n}} values. Remove one to add another.": "一个筛选条件最多 {{n}} 个值。移除一个后才能再添加。"
 }
