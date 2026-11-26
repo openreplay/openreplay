@@ -476,15 +476,21 @@ func isGenericType(mediaType string) bool {
 }
 
 func resolveContentType(header, ext string) (contentType, mediaType string) {
-	contentType = header
-	if contentType == "" {
-		contentType = typeByExtension(ext)
+	if header == "" {
+		header = typeByExtension(ext)
 	}
-	mediaType = strings.ToLower(strings.TrimSpace(strings.SplitN(contentType, ";", 2)[0]))
+	mediaType, params, err := mime.ParseMediaType(header)
+	if err != nil && !errors.Is(err, mime.ErrInvalidMediaParameter) {
+		return header, ""
+	}
 	if isGenericType(mediaType) {
 		if mapped, ok := extContentTypes[ext]; ok {
 			return mapped, mapped
 		}
+	}
+	contentType = mediaType
+	if charset := params["charset"]; charset != "" {
+		contentType = mime.FormatMediaType(mediaType, map[string]string{"charset": charset})
 	}
 	return contentType, mediaType
 }
@@ -503,6 +509,15 @@ func isAllowedContentType(mediaType, ext string, isJS bool) bool {
 	}
 	if mediaType == "text/css" {
 		return true
+	}
+	if strings.HasSuffix(mediaType, "+xml") {
+		return false
+	}
+	if strings.HasPrefix(mediaType, "font/") || strings.HasPrefix(mediaType, "x-font/") {
+		return true
+	}
+	if !strings.HasPrefix(mediaType, "application/") {
+		return false
 	}
 	for _, hint := range []string{"font", "woff", "opentype", "truetype"} {
 		if strings.Contains(mediaType, hint) {

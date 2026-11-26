@@ -125,7 +125,7 @@ func (s *storageImpl) GetCreationTime(key string) *time.Time {
 	return get.LastModified
 }
 
-func (s *storageImpl) GetPreSignedUploadUrl(key string) (string, error) {
+func (s *storageImpl) GetPreSignedUploadUrl(key, contentType string) (string, error) {
 	// Set the desired SAS permissions and options for uploading
 	sasQueryParams, err := sas.BlobSignatureValues{
 		Protocol:      sas.ProtocolHTTPS,

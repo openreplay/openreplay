@@ -143,7 +143,7 @@ func getSpotPreview(preview string) ([]byte, error) {
 
 func (e *handlersImpl) getUploadMobURL(spotID uint64) (string, error) {
 	mobKey := fmt.Sprintf("%d/events.mob", spotID)
-	mobURL, err := e.objStorage.GetPreSignedUploadUrl(mobKey)
+	mobURL, err := e.objStorage.GetPreSignedUploadUrl(mobKey, "application/json")
 	if err != nil {
 		return "", fmt.Errorf("can't get mob URL: %s", err)
 	}
@@ -152,7 +152,7 @@ func (e *handlersImpl) getUploadMobURL(spotID uint64) (string, error) {
 
 func (e *handlersImpl) getUploadVideoURL(spotID uint64) (string, error) {
 	mobKey := fmt.Sprintf("%d/video.webm", spotID)
-	mobURL, err := e.objStorage.GetPreSignedUploadUrl(mobKey)
+	mobURL, err := e.objStorage.GetPreSignedUploadUrl(mobKey, "video/webm")
 	if err != nil {
 		return "", fmt.Errorf("can't get video URL: %s", err)
 	}

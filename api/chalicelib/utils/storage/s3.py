@@ -50,12 +50,15 @@ class AmazonS3Storage(ObjectStorage):
         )
 
     def get_presigned_url_for_upload(self, bucket, expires_in, key, **args):
+        params = {
+            'Bucket': bucket,
+            'Key': key
+        }
+        if args.get("content_type"):
+            params['ContentType'] = args["content_type"]
         return self.client.generate_presigned_url(
             'put_object',
-            Params={
-                'Bucket': bucket,
-                'Key': key
-            },
+            Params=params,
             ExpiresIn=expires_in
         )
 

@@ -209,10 +209,11 @@ func (s *storageImpl) GetFrequentlyUsedKeys(projectID uint64) ([]string, error) 
 	return keyList, nil
 }
 
-func (s *storageImpl) GetPreSignedUploadUrl(key string) (string, error) {
+func (s *storageImpl) GetPreSignedUploadUrl(key, contentType string) (string, error) {
 	req, _ := s.svc.PutObjectRequest(&s3.PutObjectInput{
-		Bucket: aws.String(*s.bucket),
-		Key:    aws.String(key),
+		Bucket:      aws.String(*s.bucket),
+		Key:         aws.String(key),
+		ContentType: aws.String(contentType),
 	})
 	urlStr, err := req.Presign(15 * time.Minute)
 	if err != nil {
@@ -223,8 +224,9 @@ func (s *storageImpl) GetPreSignedUploadUrl(key string) (string, error) {
 
 func (s *storageImpl) GetPreSignedDownloadUrl(key string) (string, error) {
 	req, _ := s.svc.GetObjectRequest(&s3.GetObjectInput{
-		Bucket: aws.String(*s.bucket),
-		Key:    aws.String(key),
+		Bucket:                     aws.String(*s.bucket),
+		Key:                        aws.String(key),
+		ResponseContentDisposition: aws.String("attachment"),
 	})
 	urlStr, err := req.Presign(15 * time.Minute)
 	if err != nil {

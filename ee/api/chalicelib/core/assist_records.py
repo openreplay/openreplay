@@ -29,7 +29,7 @@ def __presign_for_sharing(project_id, key):
 def presign_record(project_id, data: schemas.AssistRecordPayloadSchema, context: schemas.CurrentContext):
     key = generate_file_key(project_id=project_id, key=f"{TimeUTC.now()}-{data.name}")
     presigned_url = StorageClient.get_presigned_url_for_upload(bucket=config('ASSIST_RECORDS_BUCKET'), expires_in=1800,
-                                                               key=key)
+                                                               key=key, content_type="video/webm")
     return {"URL": presigned_url, "key": key}
 
 
