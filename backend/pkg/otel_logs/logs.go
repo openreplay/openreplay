@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
@@ -13,6 +14,8 @@ import (
 )
 
 const chTimeoutCode = 159
+
+const sessionAttr = "openreplay.session.id"
 
 var ErrTimeout = errors.New("query timed out, narrow the time range or filters")
 
@@ -114,13 +117,19 @@ func (l *logsImpl) searchWindow(ctx context.Context, projectID uint32, f *Filter
 	var logs []Log
 	for rows.Next() {
 		var r Log
-		var blockNumber, blockOffset uint64
+		var blockNumber, blockOffset, sessionID uint64
 		if err := rows.Scan(&r.Timestamp, &r.SeverityText, &r.SeverityNumber, &r.ServiceName, &r.Body, &r.TraceID, &r.SpanID,
-			&r.LogAttributes, &r.ResourceAttributes, &r.ScopeName, &r.ScopeAttributes, &blockNumber, &blockOffset, &r.SessionID); err != nil {
+			&r.LogAttributes, &r.ResourceAttributes, &r.ScopeName, &r.ScopeAttributes, &blockNumber, &blockOffset, &sessionID); err != nil {
 			return nil, err
 		}
 		r.ID = logID(r.Timestamp, blockNumber, blockOffset)
 		r.LogAttributes = stripInternal(r.LogAttributes)
+		if sessionID != 0 {
+			if r.LogAttributes == nil {
+				r.LogAttributes = map[string]string{}
+			}
+			r.LogAttributes[sessionAttr] = strconv.FormatUint(sessionID, 10)
+		}
 		logs = append(logs, r)
 	}
 	return logs, wrapErr(rows.Err())
