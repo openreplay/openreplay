@@ -67,6 +67,11 @@ class TrackerSingleton {
     return this.t?.stop()
   }
 
+  /** Stops recording for good without sending what is buffered; see the class `discard()`. */
+  discard(): void {
+    this.t?.discard()
+  }
+
   setUserID = (id: string): void => {
     this.t?.setUserID(id)
   }

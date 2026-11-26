@@ -470,20 +470,14 @@ export default class API {
     return this.app.session.getSessionHash()
   }
 
-  /** Terminally drop pending capture; dispatched requests cannot be retracted. */
+  /**
+   * Stops recording for good without sending what is buffered (e.g. consent withdrawn). Requests
+   * already sent can't be retracted; recording again needs a page reload.
+   */
   discard(): void {
-    const app = this.app
-    if (app === null) return
+    if (this.app === null) return
+    this.app.discard()
     this.app = null
-    this.analyticsToken = null
-    try {
-      app.discard()
-    } finally {
-      // A new constructor must not race the old global-patch detach callbacks.
-      if (IN_BROWSER && (window as any).__OPENREPLAY__ === this) {
-        delete (window as any).__OPENREPLAY__
-      }
-    }
   }
 
   forceFlushBatch() {
@@ -597,7 +591,7 @@ export default class API {
           }
           payload = JSON.stringify(payload)
         } catch (_) {}
-        this.app?.send(CustomEvent(key, payload))
+        this.app.send(CustomEvent(key, payload))
       }
     }
   }
@@ -609,7 +603,7 @@ export default class API {
       } catch (e) {
         return
       }
-      this.app?.send(CustomIssue(key, payload))
+      this.app.send(CustomIssue(key, payload))
     }
   }
 
@@ -648,11 +642,9 @@ export default class API {
    * Use custom token for analytics events without session recording
    * */
   public setAnalyticsToken = (token: string) => {
-    if (this.app === null) return
     this.analyticsToken = token
   }
   public getAnalyticsToken = () => {
-    if (this.app === null) return ''
     if (this.analyticsToken) {
       return this.analyticsToken
     } else {

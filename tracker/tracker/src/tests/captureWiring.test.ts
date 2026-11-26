@@ -8,6 +8,7 @@ jest.mock('@openreplay/network-proxy', () => ({
 }))
 import Tracker from '../main/index.js'
 import Analytics from '../main/modules/analytics/index.js'
+import { FramesUploader } from '../common/canvas.js'
 import NextObserver from '../main/app/observer/next_observer.js'
 import TopObserver from '../main/app/observer/top_observer.js'
 import { styleSheetIDMap } from '../main/modules/constructedStyleSheets.js'
@@ -342,63 +343,128 @@ test('a rejected base suppresses dependent capture while preserving CSS rule ind
   expect(app.messages).toContainEqual([Type.AdoptedSSInsertRuleURLBased, 102, ':not(*) {}', 0, ''])
 })
 
-test.each([false, true])('discard during style filtering skips base approval with nextObserver=%s', (nextObserver) => {
-  const policy = jest.fn((data: CaptureData) => {
-    if (data.kind === 'css' && data.source === 'text') tracker.discard()
-    return data.value
-  })
-  const { tracker } = create(policy, false, true, false, 0, nextObserver)
-  document.head.innerHTML = '<style>p { color: blue; }</style>'
-  app.observer.observe()
+// discard(): final for the page. Nothing buffered is sent, start() refuses, stored ids are cleared,
+// and teardown runs once the calling code has returned.
+const teardown = () => Promise.resolve()
+const startResponse = {
+  status: 200,
+  json: async () => ({ token: 'synthetic-token', userUUID: 'synthetic-uuid', sessionID: 'synthetic-id', delay: 0 }),
+}
 
-  expect(policy).toHaveBeenCalledWith(expect.objectContaining({ kind: 'css', source: 'text' }))
-  expect(app.getBaseHref()).toBeNull()
-  expect(policy).not.toHaveBeenCalledWith(expect.objectContaining({ resourceType: 'base' }))
-})
-
-test('a discarded tracker has no resource base without a capture policy', () => {
+test('discard terminates the worker without a stop, clears only owned storage and refuses start', async () => {
   const { tracker } = create()
-  expect(app.getBaseHref()).toBe(document.baseURI)
+  const worker = app.worker
+  app.session.setSessionToken('synthetic-token', 'synthetic-unit-project')
+  localStorage.setItem(app.options.local_uuid_key, 'synthetic-uuid')
+  sessionStorage.setItem('application-owned', 'keep')
   tracker.discard()
-  expect(app.getBaseHref()).toBeNull()
+  await teardown()
+
+  expect(worker.terminate).toHaveBeenCalledTimes(1)
+  expect(worker.postMessage).not.toHaveBeenCalled()
+  expect(app.activityState).toBe(0)
+  expect(app.tagWatcher.interval).toBeNull()
+  expect(sessionStorage.getItem(app.options.session_token_key)).toBeNull()
+  expect(localStorage.getItem(app.options.local_uuid_key)).toBeNull()
+  expect(sessionStorage.getItem('application-owned')).toBe('keep')
+  expect(await app.start()).toMatchObject({ success: false })
+  const error = jest.spyOn(console, 'error').mockImplementation(() => {})
+  new Tracker({ projectKey: 'synthetic-unit-project', ingestPoint: 'https://example.invalid/ingest' })
+  expect(error).toHaveBeenCalledWith('OpenReplay: one tracker instance has been initialised already')
+  sessionStorage.removeItem('application-owned')
 })
 
-test('discard clears analytics identity before a new tracker can reuse it', () => {
+test('discard inside a start callback cancels the start before later callbacks', async () => {
+  const { tracker, fetcher } = create()
+  app.activityState = 0
+  app.startCallbacks = []
+  const later = jest.fn()
+  app.startCallbacks.push(() => tracker.discard(), later)
+  ;(fetcher as any).mockResolvedValue(startResponse)
+  const result = await app._start()
+  expect(result.success).toBe(false)
+  expect(later).not.toHaveBeenCalled()
+  expect(app.activityState).toBe(0)
+})
+
+test('a start response that arrives after discard writes no token and authorizes nothing', async () => {
+  const { tracker, fetcher } = create()
+  app.activityState = 0
+  let resolve: (value: any) => void = () => {}
+  ;(fetcher as any).mockImplementation(() => new Promise((r) => { resolve = r }))
+  const worker = app.worker
+  const pending = app._start()
+  tracker.discard()
+  resolve(startResponse)
+  expect((await pending).success).toBe(false)
+  expect(worker.postMessage.mock.calls.some(([m]: any[]) => m?.type === 'auth')).toBe(false)
+  expect(sessionStorage.getItem(app.options.session_token_key)).toBeNull()
+})
+
+test('a pending restart cannot restart a discarded tracker', async () => {
+  const { tracker } = create()
+  let release: (value: boolean) => void = () => {}
+  jest.spyOn(app, 'waitStatus').mockImplementation(() => new Promise<boolean>((r) => { release = r }))
+  const start = jest.spyOn(app, 'start')
+  app.restart()
+  tracker.discard()
+  release(true)
+  await teardown()
+  expect(start).not.toHaveBeenCalled()
+})
+
+test.each([false, true])('discard from a policy callback mid-capture records nothing more, nextObserver=%s', async (nextObserver) => {
+  let tracker: Tracker
+  tracker = create((data) => {
+    if (data.kind === 'attribute' && data.name === 'title') tracker.discard()
+    return data.value
+  }, false, true, false, 0, nextObserver).tracker
+  document.body.innerHTML = '<p title="first"></p><p class="later"></p>'
+  expect(() => app.observer.observe()).not.toThrow()
+  expect(app.messages).toEqual([])
+  await teardown()
+  expect(app.activityState).toBe(0)
+  document.body.appendChild(document.createElement('section'))
+  await teardown()
+  expect(app.messages).toEqual([])
+})
+
+test('discard with analytics active drops its queue and never sends it', async () => {
+  const { tracker, fetcher } = create(undefined, false, true, true)
+  ;(fetcher as any).mockResolvedValue({ ok: true, status: 200 })
+  tracker.setAnalyticsToken('synthetic-analytics-token')
+  tracker.track('synthetic-event', { safe: 'synthetic' })
+  const batcher = (tracker.analytics as any).batcher
+  tracker.discard()
+  document.dispatchEvent(new Event('visibilitychange'))
+  await jest.advanceTimersByTimeAsync(6000)
+  tracker.analytics!.track('late-synthetic', {}, { send_immediately: true })
+  expect(fetcher).not.toHaveBeenCalled()
+  expect(batcher.getBatches()).toEqual({ data: { user_actions: [], events: [] } })
+})
+
+test('ordinary stop with analytics active still flushes its queued batch', () => {
+  const { tracker, fetcher } = create(undefined, false, true, true)
+  ;(fetcher as any).mockResolvedValue({ ok: true, status: 200 })
+  tracker.setAnalyticsToken('synthetic-analytics-token')
+  tracker.track('synthetic-event', { safe: 'synthetic' })
+  tracker.stop()
+  expect(fetcher).toHaveBeenCalledTimes(1)
+})
+
+test('discard clears the stored analytics identity', async () => {
   const { tracker } = create(undefined, false, true, true)
   const analytics = tracker.analytics!
-  const identityKey = '$__or__distinct_device_id__$'
-  const userKey = '$__or__user_id__$'
-  const propsKey = '$__or__super_properties__$'
-  const refKey = '$__or__initial_ref__$'
-  const utmKey = '$__or__utm_params__$'
-  sessionStorage.setItem(refKey, 'synthetic-referrer')
-  sessionStorage.setItem(utmKey, '{"utm_source":"synthetic"}')
+  sessionStorage.setItem('$__or__initial_ref__$', 'synthetic-referrer')
   analytics.constantProperties.setUserId('synthetic')
   analytics.constantProperties.saveSuperProperties({ name: 'synthetic' })
-  analytics.people.setProperties('name', 'synthetic')
-  expect(analytics.people.ownProperties).toEqual({ name: 'synthetic' })
-  expect(localStorage.getItem(identityKey)).toBeTruthy()
-  const identity = localStorage.getItem(identityKey)
-  expect(sessionStorage.getItem(userKey)).toBe('synthetic')
-
+  expect(localStorage.getItem('$__or__distinct_device_id__$')).toBeTruthy()
   tracker.discard()
-  expect(analytics.people.ownProperties).toEqual({})
-  analytics.people.identify('synthetic-late')
-  analytics.people.setProperties('late', 'synthetic-late')
-  analytics.people.reset(true)
-  analytics.people.deleteUser()
-  expect(analytics.people.ownProperties).toEqual({})
-  analytics.constantProperties.saveSuperProperties({ name: 'synthetic-late' })
-  expect(localStorage.getItem(identityKey)).toBeNull()
-  expect(localStorage.getItem(propsKey)).toBeNull()
-  expect(sessionStorage.getItem(userKey)).toBeNull()
-  expect(sessionStorage.getItem(refKey)).toBeNull()
-  expect(sessionStorage.getItem(utmKey)).toBeNull()
-
-  const next = create(undefined, false, true, true).tracker.analytics!
-  expect(next.constantProperties.deviceId).not.toBe(identity)
-  expect(next.people.user_id).toBeNull()
-  expect(next.constantProperties.getSuperProperties()).toEqual({})
+  await teardown()
+  for (const key of ['$__or__distinct_device_id__$', '$__or__super_properties__$'])
+    expect(localStorage.getItem(key)).toBeNull()
+  for (const key of ['$__or__user_id__$', '$__or__initial_ref__$'])
+    expect(sessionStorage.getItem(key)).toBeNull()
 })
 
 test('standalone analytics discards its saved token without changing unrelated storage', () => {
@@ -418,375 +484,28 @@ test('standalone analytics discards its saved token without changing unrelated s
     sessionStorage: storage,
   })
   analytics.onDiscard()
-
   expect(values.has('__or_sdk_analytics_token')).toBe(false)
   expect(values.get('unrelated')).toBe('keep')
 })
 
-test.each(['conditional', 'offline'])('%s recording settles when discard aborts its request', async (path) => {
-  const { tracker, fetcher } = create()
-  fetcher.mockImplementation(((_url: string, init: RequestInit) =>
-    new Promise((_resolve, reject) => {
-      init.signal?.addEventListener('abort', () => reject(new DOMException('', 'AbortError')))
-    })) as typeof fetcher)
-  const start = path === 'conditional' ? app.coldStart({}, true) : tracker.uploadOfflineRecording()
-  expect(fetcher).toHaveBeenCalledTimes(1)
-
-  tracker.discard()
-
-  await expect(start).resolves.toBeUndefined()
-  expect(app.coldInterval).toBeNull()
-})
-
-test.each([false, true])('discard during stylesheet approval prevents a fetch with nextObserver=%s', async (nextObserver) => {
-  const { tracker, fetcher } = create((data) => {
-    if (data.kind === 'resource' && data.resourceType === 'stylesheet') tracker.discard()
-    return data.value
-  }, false, true, false, 2, nextObserver)
-  document.head.innerHTML = '<link rel="stylesheet" href="https://static.invalid/fixture.css">'
-  app.observer.observe()
-  await jest.advanceTimersByTimeAsync(1000)
-  expect(fetcher).not.toHaveBeenCalled()
-  expect(app.isDisposed()).toBe(true)
-})
-
-test('discard during adopted rule approval stops the rest of the sheet update', () => {
-  const { tracker } = create((data) => {
-    if (data.kind === 'css' && data.source === 'adopted') tracker.discard()
-    return data.value
-  })
-  const first = new CSSStyleSheet()
-  first.insertRule('.first {}', 0)
-  const second = new CSSStyleSheet()
-  second.insertRule('.second {}', 0)
-
-  document.adoptedStyleSheets = [first, second]
-  jest.advanceTimersByTime(20)
-
-  expect(app.isDisposed()).toBe(true)
-  expect(styleSheetIDMap.has(first)).toBe(false)
-  expect(styleSheetIDMap.has(second)).toBe(false)
-})
-
-
-test('discard releases only its singleton and allows a fresh real Tracker', () => {
-  const first = create().tracker
-  const oldApp = app
-  expect(typeof (first as any).discard).toBe('function')
-  ;(first as any).discard()
-  expect((window as any).__OPENREPLAY__).toBeUndefined()
-  const second = create().tracker
-  expect(app).not.toBe(oldApp)
-  expect((window as any).__OPENREPLAY__).toBe(second)
-  ;(first as any).discard()
-  expect((window as any).__OPENREPLAY__).toBe(second)
-  ;(second as any).discard()
-})
-
-test('discard tears down a never-started real App and never posts stop', () => {
-  const { tracker } = create()
-  app.activityState = 0
-  const worker = app.worker
-  const interval = app.tagWatcher.interval
-  expect(interval).not.toBeNull()
-  expect(typeof (tracker as any).discard).toBe('function')
-  ;(tracker as any).discard()
-  expect(worker.terminate).toHaveBeenCalledTimes(1)
-  expect(worker.postMessage).not.toHaveBeenCalled()
-  expect(app.worker).toBeUndefined()
-  expect(app.tagWatcher.interval).toBeNull()
-})
-
-test('discard inside a real start callback prevents later callbacks and Active state', async () => {
-  const { tracker, fetcher } = create()
-  app.activityState = 0
-  app.startCallbacks = []
-  const later = jest.fn()
-  app.startCallbacks.push(() => (tracker as any).discard(), later)
-  ;(fetcher as any).mockResolvedValue({ status: 200, json: async () => ({
-    token: 'synthetic-token', userUUID: 'synthetic-uuid', sessionID: 'synthetic-id', delay: 0,
-  }) })
-  const result = await app._start()
-  expect(result.success).toBe(false)
-  expect(later).not.toHaveBeenCalled()
-  expect(app.activityState).toBe(0)
-  expect(app.worker).toBeUndefined()
-})
-
-test('pending restart wait cannot restart a discarded real App', async () => {
-  const { tracker } = create()
-  let release: (value: boolean) => void = () => {}
-  jest.spyOn(app, 'waitStatus').mockImplementation(() => new Promise<boolean>((r) => { release = r }))
-  const start = jest.spyOn(app, 'start')
-  app.restart()
-  expect(typeof (tracker as any).discard).toBe('function')
-  ;(tracker as any).discard()
-  release(true)
-  await Promise.resolve()
-  expect(start).not.toHaveBeenCalled()
-})
-
-
-test('single-tab construction never creates a BroadcastChannel', () => {
-  const channel = jest.fn()
-  install(window, 'BroadcastChannel', channel)
-  create()
-  expect(channel).not.toHaveBeenCalled()
-})
-
-test('discard fences a delayed start response and does not write token or auth', async () => {
-  const { tracker, fetcher } = create()
-  app.activityState = 0
-  let resolve: (value: any) => void = () => {}
-  ;(fetcher as any).mockImplementation(() => new Promise((r) => { resolve = r }))
-  const worker = app.worker
-  const signalError = jest.spyOn(app, 'signalError')
-  const pending = app._start()
-  expect(typeof (tracker as any).discard).toBe('function')
-  ;(tracker as any).discard()
-  resolve({status: 200, json: async () => ({ token: 'late-synthetic-token' })})
-  const result = await pending
-  expect(result.success).toBe(false)
-  expect(signalError).not.toHaveBeenCalled()
-  expect(app.activityState).toBe(0)
-  expect(worker.postMessage.mock.calls.some(([m]: any[]) => m?.type === 'auth')).toBe(false)
-  expect(app.sessionStorage.getItem(app.options.session_token_key)).toBeNull()
-})
-
-test('discard settles hidden start and removes its visibility listener', async () => {
-  const { tracker, fetcher } = create()
-  app.activityState = 0
-  install(document, 'hidden', true)
-  const pending = app.start()
-  expect(typeof (tracker as any).discard).toBe('function')
-  ;(tracker as any).discard()
-  const result = await pending
-  expect(result.success).toBe(false)
-  document.dispatchEvent(new Event('visibilitychange'))
-  expect(fetcher).not.toHaveBeenCalled()
-})
-
-test('discard continues teardown after one throwing stop callback and clears only owned keys', () => {
-  const { tracker } = create()
-  const opts = app.options
-  const keys = [opts.session_token_key, opts.session_pageno_key, opts.session_tabid_key,
-    opts.session_reset_key, `${opts.session_token_key}_version`, '__or__watched_tags__']
-  keys.forEach((key) => app.sessionStorage.setItem(key, 'synthetic'))
-  app.localStorage.setItem(opts.local_uuid_key, 'synthetic')
-  app.localStorage.setItem('or_buffer_1', 'synthetic')
-  app.sessionStorage.setItem('application-owned', 'keep')
-  app.stopCallbacks.unshift(() => { throw Error('synthetic detach failure') })
-  const later = jest.fn()
-  app.stopCallbacks.push(later)
-  expect(typeof (tracker as any).discard).toBe('function')
-  ;(tracker as any).discard()
-  expect(later).toHaveBeenCalledTimes(1)
-  keys.forEach((key) => expect(app.sessionStorage.getItem(key)).toBeNull())
-  expect(app.localStorage.getItem(opts.local_uuid_key)).toBeNull()
-  expect(app.localStorage.getItem('or_buffer_1')).toBeNull()
-  expect(app.sessionStorage.getItem('application-owned')).toBe('keep')
-  app.sessionStorage.removeItem('application-owned')
-})
-
-
-test.each([false, true])('discard during initial capture fences startup with nextObserver=%s', async (nextObserver) => {
-  let tracker: Tracker
-  const created = create((data) => {
-    ;(tracker as any).discard()
-    return null
-  }, false, true, false, 0, nextObserver)
-  tracker = created.tracker
-  app.activityState = 0
-  app.startCallbacks = []
-  document.documentElement.innerHTML = '<head></head><body><p title="synthetic">safe</p></body>'
-  ;(created.fetcher as any).mockResolvedValue({status:200,json:async()=>({
-    token:'synthetic-token',userUUID:'synthetic-uuid',sessionID:'synthetic-id',delay:0,
-  })})
-  expect(typeof (tracker as any).discard).toBe('function')
-  const result = await app._start()
-  expect(result.success).toBe(false)
-  expect(app.activityState).toBe(0)
-  expect(app.ticker.timer).toBeNull()
-  expect(created.fetcher).toHaveBeenCalledTimes(1)
-  app.ticker.start()
-  expect(app.ticker.timer).toBeNull()
-})
-
-
-test.each([false, true])('discard prevents dictionary writes with nextObserver=%s', (nextObserver) => {
-  let tracker: Tracker
-  tracker = create((data) => { tracker.discard(); return data.value }, false, true, false, 0, nextObserver).tracker
-  document.body.innerHTML = '<p title="synthetic-private"></p>'
-  app.observer.observe()
-  expect(app.attributeSender.dict.totalChars).toBe(0)
-  expect(app.attributeSender.emittedAttributes.has(document.querySelector('p'))).toBe(false)
-  expect(app.messages).toEqual([])
-})
-
-test('three discard/new cycles leave only the current FontFace wrapper capturing', () => {
-  const policies: any[] = []
-  const apps: any[] = []
-  for (let i = 0; i < 3; i++) {
-    const policy = jest.fn((data: CaptureData) => data.value)
-    const { tracker } = create(policy, i > 0)
-    policies.push(policy); apps.push(app)
-    policies.forEach((p) => p.mockClear())
-    new (window as any).FontFace('SafeFont', 'url(https://example.invalid/safe.woff2)')
-    expect(policy).toHaveBeenCalledTimes(2)
-    policies.slice(0, -1).forEach((p) => expect(p).not.toHaveBeenCalled())
-    expect(app.messages.some((m: any[]) => m[0] === Type.LoadFontFace)).toBe(true)
-    ;(tracker as any).discard()
-    expect(app.messages).toEqual([])
-  }
-})
-
-
-test('never-started discard closes its channel and revokes only its owned worker URL', () => {
-  const channel = { postMessage: jest.fn(), close: jest.fn(), onmessage: null }
-  install(window, 'BroadcastChannel', jest.fn(() => channel))
-  const { tracker } = create(undefined, false, false)
-  app.activityState = 0
-  expect(channel.postMessage).toHaveBeenCalledTimes(1)
-  ;(tracker as any).discard()
-  expect(channel.close).toHaveBeenCalledTimes(1)
-  expect(channel.onmessage).toBeNull()
-  expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:synthetic-unit-test')
-  const plugin = jest.fn()
-  tracker.use(plugin)
-  expect(plugin).toHaveBeenCalledWith(null, tracker.options)
-})
-
-test('discard fences JSON already being read and suppresses stale worker callbacks', async () => {
-  const { tracker, fetcher } = create()
-  app.activityState = 0
-  let resolve: (value: any) => void = () => {}
-  const json = jest.fn(() => new Promise((r) => { resolve = r }))
-  ;(fetcher as any).mockResolvedValue({ status: 200, json })
-  const worker = app.worker
-  const callback = worker.onmessage
-  const pending = app._start()
-  await Promise.resolve()
-  expect(json).toHaveBeenCalledTimes(1)
-  ;(tracker as any).discard()
-  const calls = worker.postMessage.mock.calls.length
-  callback({data: 'a_start'})
-  resolve({token:'late-synthetic',userUUID:'late-uuid',sessionID:'late-id',delay:0})
-  expect((await pending).success).toBe(false)
-  await Promise.resolve()
-  expect(worker.postMessage).toHaveBeenCalledTimes(calls)
-  expect(app.sessionStorage.getItem(app.options.session_token_key)).toBeNull()
-  expect(app.activityState).toBe(0)
-})
-
-test('discard settles both polling waits and refuses direct cold/offline/save/flush access', async () => {
-  const { tracker } = create()
-  app.activityState = 0
-  app.canStart = false
-  const ready = app.waitStart(), active = app.waitStarted()
-  const save = jest.spyOn(Storage.prototype, 'setItem')
-  ;(tracker as any).discard()
-  await expect(ready).resolves.toBe(false)
-  await expect(active).resolves.toBe(false)
-  await app.coldStart()
-  app.offlineRecording({}, jest.fn())
-  await app.uploadOfflineRecording()
-  app.setBuffer([[0,1]])
-  app.saveBuffer(); app.forceFlushBatch()
-  expect(save).not.toHaveBeenCalled()
-  expect(app.getBuffer()).toEqual([])
-  expect(app.activityState).toBe(0)
-})
-
-
-test('discard with analytics active drops its queue and never flushes or sends', async () => {
-  const { tracker, fetcher } = create(undefined, false, true, true)
-  ;(fetcher as any).mockResolvedValue({ok:true,status:200})
-  tracker.setAnalyticsToken('synthetic-analytics-token')
-  tracker.track('synthetic-event', {safe:'synthetic'})
-  const batcher = (tracker.analytics as any).batcher
-  const flush = jest.spyOn(batcher, 'flush')
-  ;(tracker as any).discard()
-  document.dispatchEvent(new Event('visibilitychange'))
-  await jest.advanceTimersByTimeAsync(6000)
-  tracker.track('late-synthetic', {}, {send_immediately:true})
-  expect(tracker.getAnalyticsToken()).toBe('')
-  expect(flush).not.toHaveBeenCalled()
-  expect(fetcher).not.toHaveBeenCalled()
-  expect(batcher.getBatches()).toEqual({data:{user_actions:[],events:[]}})
-  expect(batcher.intervalId).toBeNull()
-})
-
-test('ordinary stop with analytics active still flushes its queued batch', () => {
-  const { tracker, fetcher } = create(undefined, false, true, true)
-  ;(fetcher as any).mockResolvedValue({ok:true,status:200})
-  tracker.setAnalyticsToken('synthetic-analytics-token')
-  tracker.track('synthetic-event', {safe:'synthetic'})
-  tracker.stop()
-  expect(fetcher).toHaveBeenCalledTimes(1)
-})
-
-test.each(['start tracker inside frame','getting node id for child iframe'])('retired parent listener ignores %s and cannot restore identity', (line) => {
-  const { tracker, fetcher } = create()
-  const listener = app.parentCrossDomainFrameListener
-  window.addEventListener('message', listener)
-  const remove = jest.spyOn(window, 'removeEventListener')
-  ;(tracker as any).discard()
-  listener({source:{},data:{line,token:'synthetic-old-token',id:7,frameOrderNumber:1,frameLevel:1}})
-  expect(app.sessionStorage.getItem(app.options.session_token_key)).toBeNull()
-  expect(app.rootId).toBeNull()
-  expect(app.parentActive).toBe(false)
-  expect(fetcher).not.toHaveBeenCalled()
-  expect(remove).toHaveBeenCalledWith('message', listener)
-})
-
-test.each(['event','issue'])('%s payload serialization may discard without throwing or emitting', (method) => {
-  const { tracker } = create()
-  expect(() => (tracker as any)[method]('synthetic',{toJSON(){(tracker as any).discard();return {safe:true}}})).not.toThrow()
-  expect(app.messages).toEqual([])
-})
-
-test('DOM sanitizer discard does not retain nodes or attach new per-node listeners', () => {
-  const { tracker } = create()
-  app.sanitizer.options.domSanitizer = () => { (tracker as any).discard(); return 1 }
-  document.documentElement.innerHTML='<head></head><body><div><input><iframe></iframe><slot></slot></div></body>'
-  app.observer.observe()
-  expect(app.nodes.nodes.size).toBe(0)
-  expect(app.nodes.elementListeners.size).toBe(0)
-  expect(app.observer.iframeObserversArr).toEqual([])
-})
-
-
-test.each(['insertRule', 'replaceSync', 'replace'] as const)(
-  'retired CSS %s wrappers do not call the capture policy',
-  async (method) => {
-    const policy = jest.fn((data: CaptureData) => data.value)
-    const { tracker } = create(policy)
-    const sheet = new CSSStyleSheet()
-    styleSheetIDMap.set(sheet, 101)
-    await sheet[method]('.before { color: blue; }')
-    expect(policy).toHaveBeenCalled()
-
-    tracker.discard()
-    // A later tracker can register this sheet in the shared map.
-    styleSheetIDMap.set(sheet, 102)
-    policy.mockClear()
-    await sheet[method]('.after { color: red; }')
-    expect(policy).not.toHaveBeenCalled()
-    expect(sheet.cssRules[0].cssText).toContain('red')
-    expect(app.messages).toEqual([])
-  },
-)
-
-test('discard fences a pending CSS replacement before its policy callback', async () => {
-  const policy = jest.fn((data: CaptureData) => data.value)
-  const { tracker } = create(policy)
-  const sheet = new CSSStyleSheet()
-  styleSheetIDMap.set(sheet, 101)
-  const pending = sheet.replace('.after { color: red; }')
-  tracker.discard()
-  styleSheetIDMap.set(sheet, 102)
-  await pending
-  expect(policy).not.toHaveBeenCalled()
-  expect(sheet.cssRules[0].cssText).toContain('red')
-  expect(app.messages).toEqual([])
+test('a discarded canvas uploader aborts the upload in flight and takes no new batches', async () => {
+  const error = jest.fn()
+  const uploader = new FramesUploader({ error, unauthorized: jest.fn() })
+  const signals: AbortSignal[] = []
+  install(globalThis, 'fetch', jest.fn((_url: string, init: RequestInit) => {
+    signals.push(init.signal!)
+    return new Promise((_resolve, reject) => {
+      init.signal!.addEventListener('abort', () => reject(new DOMException('', 'AbortError')))
+    })
+  }))
+  const batch = { images: [{ id: 1, data: new Blob(['x']) }], canvasId: 1, createdAt: 1 } as any
+  const target = { url: 'https://example.invalid/ingest/v1/web/images', token: 't', framesSupport: false }
+  uploader.push(batch, target)
+  await new Promise((resolve) => setTimeout(resolve, 0))
+  uploader.discard()
+  uploader.push(batch, target)
+  await new Promise((resolve) => setTimeout(resolve, 0))
+  expect(signals).toHaveLength(1)
+  expect(signals[0].aborted).toBe(true)
+  expect(error).not.toHaveBeenCalled()
 })

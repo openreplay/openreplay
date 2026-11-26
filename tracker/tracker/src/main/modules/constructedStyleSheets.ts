@@ -1,4 +1,3 @@
-import ContextPatches from '../app/contextPatches.js'
 import {
   emptyStyleRule,
   hasStyleRuleCount,
@@ -45,21 +44,17 @@ export default function (app: App | null) {
 
   const sendRule = (sheetID: number, value: string, index: number) => {
     const baseHref = app.getBaseHref()
-    if (app.isDisposed()) return
     const approved = baseHref === null
       ? emptyStyleRule(value)
       : sanitizeStyleRule(app.captureSanitizer, value, 'adopted')
-    if (app.isDisposed()) return
     app.send(AdoptedSSInsertRuleURLBased(sheetID, approved, index, baseHref ?? ''))
   }
   const adoptedStyleSheetsOwnings: Map<number, number[]> = new Map()
   // text the sheet was filled with: its rules' cssText can lose declarations (see cssSourceText)
-  let sheetSources = new WeakMap<CSSStyleSheet, string>()
-  const restoreContexts = new ContextPatches()
+  const sheetSources = new WeakMap<CSSStyleSheet, string>()
 
   const sendAdoptedStyleSheetsUpdate = (root: StyleSheetOwner) =>
     setTimeout(() => {
-      if (app.isDisposed()) return
       let nodeID = app.nodes.getID(root)
       if (root === document) {
         nodeID = 0 // main document doesn't have nodeID. ID count starts from the documentElement
@@ -90,7 +85,6 @@ export default function (app: App | null) {
               const sources = sourceRules(sheetSources.get(s), rules)
               for (let i = 0; i < rules.length; i++) {
                 sendRule(sheetID, ruleText(rules[i], sources?.[i]), i)
-                if (app.isDisposed()) return
               }
             } catch (e) {
               app.debug.log('Couldnt access adopted stylesheet', e)
@@ -121,108 +115,104 @@ export default function (app: App | null) {
   const arrayProxies = new WeakMap<object, { arr: object; proxy: object }>()
   const pendingUpdates = new WeakSet<object>()
   const scheduleUpdate = (root: StyleSheetOwner) => {
-    if (app.isDisposed() || pendingUpdates.has(root)) return
+    if (pendingUpdates.has(root)) return
     pendingUpdates.add(root)
     setTimeout(() => {
       pendingUpdates.delete(root)
-      if (!app.isDisposed()) sendAdoptedStyleSheetsUpdate(root)
+      sendAdoptedStyleSheetsUpdate(root)
     }, 0)
   }
 
-  const patchAdoptedStyleSheets = (
+  function patchAdoptedStyleSheets(
     prototype: typeof Document.prototype | typeof ShadowRoot.prototype,
-  ) => {
+  ) {
     const nativeAdoptedStyleSheetsDescriptor = Object.getOwnPropertyDescriptor(
       prototype,
       'adoptedStyleSheets',
     )
-    if (!nativeAdoptedStyleSheetsDescriptor) return () => {}
-    const { get: nativeGet, set: nativeSet } = nativeAdoptedStyleSheetsDescriptor
-    const get = nativeGet && function (this: StyleSheetOwner) {
-      const arr = nativeGet.call(this)
-      if (app.isDisposed() || !arr || typeof arr !== 'object') return arr
-      const cached = arrayProxies.get(this)
-      if (cached && cached.arr === arr) return cached.proxy
-      const root = this
-      const proxy = new Proxy(arr, {
-        set(target, key, value) {
-          const ok = Reflect.set(target, key, value)
-          scheduleUpdate(root)
-          return ok
-        },
-        deleteProperty(target, key) {
-          const ok = Reflect.deleteProperty(target, key)
-          scheduleUpdate(root)
-          return ok
+    if (nativeAdoptedStyleSheetsDescriptor) {
+      const nativeGet = nativeAdoptedStyleSheetsDescriptor.get
+      Object.defineProperty(prototype, 'adoptedStyleSheets', {
+        ...nativeAdoptedStyleSheetsDescriptor,
+        get: nativeGet
+          ? function (this: StyleSheetOwner) {
+              const arr = nativeGet.call(this)
+              if (!arr || typeof arr !== 'object') return arr
+              const cached = arrayProxies.get(this)
+              if (cached && cached.arr === arr) return cached.proxy
+              const root = this
+              const proxy = new Proxy(arr, {
+                set(target, key, value) {
+                  const ok = Reflect.set(target, key, value)
+                  scheduleUpdate(root)
+                  return ok
+                },
+                deleteProperty(target, key) {
+                  const ok = Reflect.deleteProperty(target, key)
+                  scheduleUpdate(root)
+                  return ok
+                },
+              })
+              arrayProxies.set(this, { arr, proxy })
+              return proxy
+            }
+          : undefined,
+        set: function (this: StyleSheetOwner, value) {
+          // @ts-ignore
+          const retVal = nativeAdoptedStyleSheetsDescriptor.set.call(this, value)
+          sendAdoptedStyleSheetsUpdate(this)
+          return retVal
         },
       })
-      arrayProxies.set(this, { arr, proxy })
-      return proxy
-    }
-    const set = nativeSet && function (this: StyleSheetOwner, value: CSSStyleSheet[]) {
-      nativeSet.call(this, value)
-      if (!app.isDisposed()) sendAdoptedStyleSheetsUpdate(this)
-    }
-    Object.defineProperty(prototype, 'adoptedStyleSheets', {
-      ...nativeAdoptedStyleSheetsDescriptor,
-      get,
-      set,
-    })
-    return () => {
-      const current = Object.getOwnPropertyDescriptor(prototype, 'adoptedStyleSheets')
-      if (current?.get === get && current?.set === set) {
-        Object.defineProperty(prototype, 'adoptedStyleSheets', nativeAdoptedStyleSheetsDescriptor)
-      }
     }
   }
 
+  const sendReplacement = (sheet: CSSStyleSheet, text: string) => {
+    sheetSources.set(sheet, text)
+    const sheetID = styleSheetIDMap.get(sheet)
+    if (!sheetID) return
+    const baseHref = app.getBaseHref()
+    const approved = baseHref === null ? null : sanitizeCapture(app.captureSanitizer, {
+      kind: 'css',
+      source: 'adopted',
+      value: text,
+      node: null,
+    })
+    // a rewrite with another rule count would shift the indexes of later rule messages
+    const css =
+      approved === text || (approved && hasStyleRuleCount(approved, sheet.cssRules.length))
+        ? approved
+        : Array.from(sheet.cssRules, (rule) => emptyStyleRule(rule.cssText)).join('\n')
+    app.send(AdoptedSSReplaceURLBased(sheetID, css, baseHref ?? ''))
+  }
+
   const patchContext = (context: typeof globalThis): void => {
-    if (app.isDisposed() || restoreContexts.has(context)) return
-    const documentPrototype = context.Document.prototype
-    const shadowPrototype = context.ShadowRoot.prototype
-    const prototype = context.CSSStyleSheet.prototype
-    const restoreDocument = patchAdoptedStyleSheets(documentPrototype)
-    const restoreShadowRoot = patchAdoptedStyleSheets(shadowPrototype)
-    const { replace, replaceSync } = prototype
-    const sendReplacement = (sheet: CSSStyleSheet, text: string) => {
-      if (app.isDisposed()) return
-      sheetSources.set(sheet, text)
-      const sheetID = styleSheetIDMap.get(sheet)
-      if (!sheetID) return
-      const baseHref = app.getBaseHref()
-      if (app.isDisposed()) return
-      const approved = baseHref === null ? null : sanitizeCapture(app.captureSanitizer, {
-        kind: 'css',
-        source: 'adopted',
-        value: text,
-        node: null,
-      })
-      if (app.isDisposed()) return
-      const css =
-        approved === text || (approved && hasStyleRuleCount(approved, sheet.cssRules.length))
-          ? approved
-          : Array.from(sheet.cssRules, (rule) => emptyStyleRule(rule.cssText)).join('\n')
-      app.send(AdoptedSSReplaceURLBased(sheetID, css, baseHref ?? ''))
+    // @ts-ignore
+    if (context.__openreplay_adpss_patched__) {
+      return
+    } else {
+      // @ts-ignore
+      context.__openreplay_adpss_patched__ = true
     }
-    const trackReplace = function (this: CSSStyleSheet, text: string) {
-      return replace.call(this, text).then((sheet) => {
+    patchAdoptedStyleSheets(context.Document.prototype)
+    patchAdoptedStyleSheets(context.ShadowRoot.prototype)
+
+    //@ts-ignore TODO: upgrade ts to 4.8+
+    const { replace, replaceSync } = context.CSSStyleSheet.prototype
+
+    //@ts-ignore
+    context.CSSStyleSheet.prototype.replace = function (text: string) {
+      return replace.call(this, text).then((sheet: CSSStyleSheet) => {
         sendReplacement(this, text)
         return sheet
       })
     }
-    const trackReplaceSync = function (this: CSSStyleSheet, text: string) {
-      if (!app.captureSanitizer) sendReplacement(this, text)
+    //@ts-ignore
+    context.CSSStyleSheet.prototype.replaceSync = function (text: string) {
+      // native first: the policy check compares against the new rules, and a rejected call replaced nothing
       replaceSync.call(this, text)
-      if (app.captureSanitizer) sendReplacement(this, text)
+      sendReplacement(this, text)
     }
-    if (typeof replace === 'function') prototype.replace = trackReplace
-    if (typeof replaceSync === 'function') prototype.replaceSync = trackReplaceSync
-    restoreContexts.set(context, () => {
-      restoreDocument()
-      restoreShadowRoot()
-      if (prototype.replace === trackReplace) prototype.replace = replace
-      if (prototype.replaceSync === trackReplaceSync) prototype.replaceSync = replaceSync
-    })
   }
 
   patchContext(window)
@@ -231,10 +221,6 @@ export default function (app: App | null) {
   app.attachStopCallback(() => {
     styleSheetIDMap = new WeakMap()
     adoptedStyleSheetsOwnings.clear()
-    if (app.isDisposed()) {
-      sheetSources = new WeakMap()
-      restoreContexts.clear()
-    }
   })
 
   // So far main Document is not triggered with nodeCallbacks

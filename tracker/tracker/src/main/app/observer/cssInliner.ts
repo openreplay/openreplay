@@ -12,10 +12,8 @@ export function inlineRemoteCss(
   sendPlain?: boolean,
   onPlain?: (cssText: string, id: number, baseHref: string) => void,
   capture?: { sanitizer: CaptureSanitizer; href: string; original: string },
-  signal?: AbortSignal,
 ) {
-  const isStale = () => signal?.aborted ||
-    (capture !== undefined && node.getAttribute('href') !== capture.original)
+  const isStale = () => capture !== undefined && node.getAttribute('href') !== capture.original
   if (isStale()) return
   const sourceUrl = node.href
   let cssBaseHref = baseHref
@@ -35,14 +33,14 @@ export function inlineRemoteCss(
     })
     if (approved === null || isStale()) return
     if (sendPlain && onPlain) onPlain(approved, fakeIdHolder++, cssBaseHref)
-    else processCssText(approved, cssBaseHref)
+    else processCssText(approved)
   }
   const sheetId = sendPlain ? null : getNextID();
   if (!sendPlain) {
     addOwner(sheetId!, id);
   }
 
-  const sheet = node.sheet
+  const sheet = node.sheet;
 
   if (sheet && !forceFetch) {
     try {
@@ -59,8 +57,7 @@ export function inlineRemoteCss(
 
   // Fall back to fetching if we couldn't get or stringify the sheet
   if (sourceUrl && !isStale()) {
-    const request = signal ? fetch(sourceUrl, { signal }) : fetch(sourceUrl)
-    request
+    fetch(sourceUrl)
       .then(response => {
         if (!response.ok) {
           throw new Error(`response status ${response.status}`);
@@ -71,7 +68,6 @@ export function inlineRemoteCss(
         deliver(cssText)
       })
       .catch(error => {
-        if (signal?.aborted) return
         if (capture !== undefined)
           console.error('OpenReplay: failed to capture stylesheet')
         else console.error(`OpenReplay: Failed to fetch CSS from ${node.href}:`, error);
@@ -102,11 +98,11 @@ export function inlineRemoteCss(
     if (node.sheet) {
       trySheet();
     } else {
-      node.addEventListener('load', trySheet, { once: true, signal })
+      node.addEventListener('load', trySheet, { once: true })
     }
   }
 
-  function processCssText(cssText: string, cssBaseHref: string) {
+  function processCssText(cssText: string) {
     // Remove comments
     cssText = cssText.replace(/\/\*[\s\S]*?\*\//g, '');
 

@@ -51,16 +51,12 @@ export type FromCanvasWorker =
   | { type: 'debugFrames'; name: string; buffer: ArrayBuffer }
 
 /** [uint64 LE timestamp][uint32 LE size][data] per frame */
-export async function packFrames(
-  images: CanvasFrame[],
-  signal?: AbortSignal,
-): Promise<ArrayBuffer | null> {
+export async function packFrames(images: CanvasFrame[]): Promise<ArrayBuffer | null> {
   const frames: { ts: number; bytes: Uint8Array }[] = []
   let totalSize = 0
   for (const image of images) {
     if (!image.data) continue
     const bytes = new Uint8Array(await image.data.arrayBuffer())
-    if (signal?.aborted) return null
     frames.push({ ts: image.id, bytes })
     totalSize += 8 + 4 + bytes.byteLength
   }
@@ -128,6 +124,7 @@ export class FramesUploader {
     this.pump()
   }
 
+  /** Drops queued batches and aborts uploads in flight (tracker discard). */
   discard() {
     this.pending.length = 0
     this.abort.abort()
@@ -145,29 +142,26 @@ export class FramesUploader {
   }
 
   private async upload(batch: FramesBatch, target: UploadTarget, debug: boolean) {
-    const { signal } = this.abort
     try {
-      const packed = target.framesSupport || debug ? await packFrames(batch.images, signal) : null
-      if (signal.aborted) return
+      const packed =
+        target.framesSupport || debug ? await packFrames(batch.images) : null
       if (debug && packed && this.hooks.debugFrames) {
         this.hooks.debugFrames(framesFileName(batch), packed.slice(0))
       }
-      if (signal.aborted) return
       const body = buildForm(batch, packed, target.framesSupport)
       if (!body) return
       const r = await fetch(target.url, {
         method: 'POST',
-        signal,
+        signal: this.abort.signal,
         headers: { Authorization: `Bearer ${target.token}` },
         body,
       })
-      if (!signal.aborted && r.status === 401) {
+      if (r.status === 401) {
         this.hooks.unauthorized()
       }
     } catch (e) {
-      if (!signal.aborted) {
-        this.hooks.error(`error saving canvas: ${e instanceof Error ? e.message : String(e)}`)
-      }
+      if (this.abort.signal.aborted) return
+      this.hooks.error(`error saving canvas: ${e instanceof Error ? e.message : String(e)}`)
     }
   }
 }

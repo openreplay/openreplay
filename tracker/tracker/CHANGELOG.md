@@ -2,7 +2,8 @@
 
 - SVG sprites: a sprite file is fetched once and shared by every `<use>` pointing at it (others waited on a 100 ms poll); a `<use>` with both `href` and `xlink:href` records `href`, as browsers render it
 - `captureSanitizer` option: a synchronous callback that gets attributes, resource URLs, CSS, fonts and inlined SVG sprites after the built-in masking and can rewrite or drop each value; canvas and cross-domain iframe capture are off while it is set
-- `discard()`: stops recording without sending buffered data, aborts the tracker's in-flight requests, removes its browser API patches and clears its stored session and device keys (`stop()` still flushes)
+- `stop()` or `discard()` called from a start callback cancels that start (it went on to record)
+- `discard()` (also on the singleton): stops recording for the page without sending buffered data, aborts canvas uploads and analytics requests in flight and clears the tracker's stored session and device keys (`stop()` still flushes)
 - crossdomain: a child frame's DOM observer is disconnected on `stop()`; a restart no longer leaves two observers running
 - `coldStart()` after `stop()` no longer uploads what the stopped cold start buffered
 - crossdomain: `parentDomain` takes a list of origins; the iframe talks to the listed one that embeds it

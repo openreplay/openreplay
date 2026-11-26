@@ -178,16 +178,14 @@ class Batcher {
     const sentBatch = batch
     let attempts = 0
     const send = () => {
+      // also ends retries scheduled before a discard
       if (this.discarded) return
       const token = this.getToken()
-      if (this.discarded) return
       if (!token) {
         // No token yet: keep the events so they go out once one is available.
         onTerminalFailure?.()
         return
       }
-      const body = JSON.stringify(sentBatch)
-      if (this.discarded) return
       attempts++
       return fetch(`${this.backendUrl}${this.apiEdp}`, {
         method: 'POST',
@@ -197,13 +195,11 @@ class Batcher {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body,
+        body: JSON.stringify(sentBatch),
       })
         .then(async (response) => {
-          if (this.discarded) return
           if (response.status === 401) {
             const body = await response.json().catch(() => null)
-            if (this.discarded) return
             if (!this.standalone && body?.error === 'token expired') {
               this.stop()
               return
@@ -230,15 +226,8 @@ class Batcher {
           }
         })
         .catch(() => {
-          if (this.discarded) return
           if (attempts < this.retryLimit) {
-            const signal = this.abort.signal
-            const cancel = () => clearTimeout(timer)
-            const timer = setTimeout(() => {
-              signal.removeEventListener('abort', cancel)
-              void send()
-            }, this.retryTimeout)
-            signal.addEventListener('abort', cancel, { once: true })
+            setTimeout(() => void send(), this.retryTimeout)
           } else {
             onTerminalFailure?.()
           }
@@ -261,7 +250,6 @@ class Batcher {
   }
 
   startAutosend() {
-    if (this.discarded) return
     if (this.intervalId) {
       clearInterval(this.intervalId)
     }
@@ -275,7 +263,6 @@ class Batcher {
   }
 
   flush(keepalive = false) {
-    if (this.discarded) return
     const cats = Object.keys(this.batch)
     const isEmpty = cats.every((category) => this.batch[category].length === 0)
     if (isEmpty) {
@@ -311,17 +298,6 @@ class Batcher {
     ]
   }
 
-  discard() {
-    this.discarded = true
-    this.stopped = true
-    this.abort.abort()
-    if (this.intervalId) clearInterval(this.intervalId)
-    this.intervalId = null
-    document.removeEventListener('visibilitychange', this.onVisibilityChange)
-    this.batch[categories.people] = []
-    this.batch[categories.events] = []
-  }
-
   stop() {
     this.flush()
     if (this.intervalId) {
@@ -330,6 +306,18 @@ class Batcher {
     }
     document.removeEventListener('visibilitychange', this.onVisibilityChange)
     this.stopped = true
+  }
+
+  /** Drops queued events and aborts requests in flight; nothing is sent afterwards. */
+  discard() {
+    this.discarded = true
+    this.abort.abort()
+    this.batch[categories.people] = []
+    this.batch[categories.events] = []
+    this.stopped = true
+    if (this.intervalId) clearInterval(this.intervalId)
+    this.intervalId = null
+    document.removeEventListener('visibilitychange', this.onVisibilityChange)
   }
 
   restart() {

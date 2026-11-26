@@ -35,7 +35,6 @@ export default class Ticker {
   }
 
   start(): void {
-    if (this.app.isDisposed()) return
     if (this.timer === null) {
       this.timer = setInterval(
         () =>

@@ -41,14 +41,12 @@ export default function (app: App): void {
     value: string,
     urlBased = false,
   ) {
-    if (app.isDisposed()) return
     const approved = sanitizeCapture(app.captureSanitizer, {
       kind: 'resource',
       resourceType: 'image',
       value,
       node,
     })
-    if (app.isDisposed()) return
     if (approved === null) app.attributeSender.removeAttribute(id, name, node)
     else if (urlBased) app.attributeSender.sendURLBasedAttribute(id, name, approved, node)
     else app.attributeSender.sendSetAttribute(id, name, approved, false, node)
@@ -56,7 +54,6 @@ export default function (app: App): void {
 
   function sendPlaceholder(id: number, node: HTMLImageElement): void {
     sendImageAttribute(id, node, 'src', PLACEHOLDER_SRC)
-    if (app.isDisposed()) return
     const { width, height } = node.getBoundingClientRect()
     if (!node.hasAttribute('width')) {
       app.attributeSender.sendSetAttribute(id, 'width', String(width), false, node)
@@ -76,7 +73,6 @@ export default function (app: App): void {
       return
     }
     const baseHref = app.getBaseHref()
-    if (app.isDisposed()) return
     if (baseHref === null) return app.attributeSender.removeAttribute(id, 'srcset', el)
     const resolvedSrcset = srcset
       .split(srcset.match(/,\s+/) ? /,\s+/ : ',')
@@ -192,7 +188,7 @@ export default function (app: App): void {
   app.nodes.attachNodeCallback((node: Node): void => {
     if (hasTag(node, 'source')) {
       sendSourceSrcset(node)
-      if (!app.isDisposed()) observer.observe(node, { attributes: true, attributeFilter: ['srcset'] })
+      observer.observe(node, { attributes: true, attributeFilter: ['srcset'] })
       return
     }
     if (!hasTag(node, 'img')) {
@@ -200,9 +196,7 @@ export default function (app: App): void {
     }
     app.nodes.attachNodeListener(node, 'error', () => sendImgError(node))
     sendImgAttrs(node)
-    if (!app.isDisposed()) {
-      observer.observe(node, { attributes: true, attributeFilter: ['src', 'srcset'] })
-    }
+    observer.observe(node, { attributes: true, attributeFilter: ['src', 'srcset'] })
   })
 
   // On a runtime level change, re-evaluate placeholder vs real src for this image

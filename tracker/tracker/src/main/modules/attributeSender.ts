@@ -77,7 +77,6 @@ export class StringDictionary {
 }
 
 export default class AttributeSender {
-  private disposed = false
   private emittedAttributes = new WeakMap<Element, { id: number; names: Set<string> }>()
   private dict: StringDictionary
   private readonly app: App
@@ -89,9 +88,7 @@ export default class AttributeSender {
   }
 
   public sendURLBasedAttribute = (id: number, name: string, value: string, node?: Element) => {
-    if (this.disposed) return
     const baseHref = this.app.getBaseHref()
-    if (this.disposed) return
     if (baseHref === null) return this.removeAttribute(id, name, node)
     this.rememberAttribute(id, name, node)
     this.app.send(SetNodeAttributeURLBased(id, name, value, baseHref))
@@ -100,7 +97,6 @@ export default class AttributeSender {
   public sendSetAttribute = (
     id: number, name: string, value: string, plain = false, node?: Element,
   ) => {
-    if (this.disposed) return
     this.rememberAttribute(id, name, node)
     if (this.isDictDisabled || plain) {
       const msg: SetNodeAttribute = [Type.SetNodeAttribute, id, name, value]
@@ -127,7 +123,6 @@ export default class AttributeSender {
   }
 
   public removeAttribute(id: number, name: string, node?: Element) {
-    if (this.disposed) return
     // Never disclose a newly rejected attribute name in a removal message.
     if (this.app.captureSanitizer !== undefined) {
       const entry = node && this.emittedAttributes.get(node)
@@ -146,11 +141,6 @@ export default class AttributeSender {
       this.app.send([Type.StringDictGlobal, key, str])
     }
     return key
-  }
-
-  discard() {
-    this.disposed = true
-    this.clear()
   }
 
   clear() {

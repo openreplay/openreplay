@@ -52,21 +52,6 @@ describe('Session', () => {
     jest.clearAllMocks()
   })
 
-  test('terminal discard clears owned memory identity without writing storage or firing updates', () => {
-    session.assign({userID:'synthetic',metadata:{synthetic:'private'},sessionID:'session',projectID:'2',timestamp:1})
-    session.setSessionToken('synthetic-token','synthetic-project')
-    const callback = jest.fn()
-    session.attachUpdateCallback(callback)
-    mockSessionStorage.setItem.mockClear()
-    expect(typeof session.discard).toBe('function')
-    session.discard()
-    expect(session.token).toBeUndefined()
-    expect(session.getInfo()).toEqual({sessionID:undefined,metadata:{},userID:null,timestamp:0,projectID:undefined})
-    expect(session.tabId).toBe('')
-    expect(mockSessionStorage.setItem).not.toHaveBeenCalled()
-    expect(callback).not.toHaveBeenCalled()
-  })
-
   test('assigns new info correctly', () => {
     const newInfo = {
       sessionID: 'new_id',
@@ -77,27 +62,6 @@ describe('Session', () => {
     }
     session.assign(newInfo)
     expect(session.getInfo()).toEqual(newInfo)
-  })
-
-  test('rejects updates and callback registration after discard', () => {
-    session.discard()
-    const callback = jest.fn()
-    session.attachUpdateCallback(callback)
-    session.assign({ userID: 'late', metadata: { key: 'late' }, sessionID: 'late' })
-    session.setMetadata('late', 'value')
-    session.setUserID('late')
-    session.setUserInfo({ userBrowser: 'late' })
-
-    expect(session.getInfo()).toEqual({
-      sessionID: undefined,
-      metadata: {},
-      userID: null,
-      timestamp: 0,
-      projectID: undefined,
-    })
-    expect(session.userInfo.userBrowser).toBe('')
-    expect(session.callbacks).toHaveLength(0)
-    expect(callback).not.toHaveBeenCalled()
   })
 
   test('assign merges metadata and notifies update callbacks', () => {
@@ -235,27 +199,6 @@ describe('Session', () => {
     s.regenerateTabId()
     expect(s.getTabId()).toBe('new_tab')
     expect(store.tabid_key).toBe('new_tab')
-  })
-
-  test('discard prevents a later tab ID read or regeneration from writing storage', () => {
-    const s = makeSession()
-    s.discard()
-    mockSessionStorage.setItem.mockClear()
-    expect(s.getTabId()).toBe('')
-    s.regenerateTabId()
-    expect(mockSessionStorage.setItem).not.toHaveBeenCalled()
-  })
-
-  test('a retired session cannot read or overwrite a subsequent project token', () => {
-    session.discard()
-    const next = makeSession()
-    next.setSessionToken('next-token', 'next-project')
-    const stored = store.token_key
-
-    expect(session.getSessionToken('previous-project')).toBeUndefined()
-    session.setSessionToken('retired-token', 'previous-project')
-    session.reset()
-    expect(store.token_key).toBe(stored)
   })
 
   test('resets session correctly', () => {

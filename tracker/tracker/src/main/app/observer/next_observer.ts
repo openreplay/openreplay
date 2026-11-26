@@ -50,7 +50,6 @@ import {
   sendContentAttributes,
   refreshStateAttributes,
   AttributeContext,
-  resetAttributeContext,
   sendStyleText,
 } from './observer.js'
 import type TopObserver from './top_observer.js'
@@ -169,7 +168,6 @@ export default class NextObserver
   }
 
   observe(): void {
-    if (this.app.captureSignal?.aborted) return
     initUntaintedDom()
     this.active = true
     this.top = true
@@ -177,7 +175,6 @@ export default class NextObserver
     this.throttledSetNodeData.clear()
     this.nodes.resetIdSpace()
     this.startTop()
-    if (!this.active) return
     sendColorScheme(this.app)
     // "DOM parsed" signal: the worker finalizes the initial visual batch on it
     this.app.send(SetNodeAttribute(0, 'orloaded', 'true'))
@@ -193,7 +190,6 @@ export default class NextObserver
     frameLevel: number,
     level = SanitizeLevel.Plain,
   ) {
-    if (this.app.captureSignal?.aborted) return
     initUntaintedDom()
     this.active = true
     this.top = false
@@ -227,11 +223,8 @@ export default class NextObserver
     this.colorSchemeMQL = null
     this.iframeOffsets.clear()
     this.throttledSetNodeData.clear()
-    resetAttributeContext(this.attrCtx)
+    this.attrCtx.generation++
     this.root = null
-    this.created = []
-    this.snapshotRoots.clear()
-    this.newContexts = []
     this.resetBatch()
   }
 
@@ -244,7 +237,6 @@ export default class NextObserver
       return
     }
     this.flushRecords()
-    if (!this.active) return
     const parent = parentNode(root)
     const parentLevel =
       parent !== null ? (this.nodes.live(parent)?.lvl ?? SanitizeLevel.Plain) : SanitizeLevel.Plain
@@ -259,7 +251,7 @@ export default class NextObserver
   private startTop() {
     this.nodes.clear()
     if (this.app.captureSanitizer) {
-      resetAttributeContext(this.attrCtx)
+      this.attrCtx.generation++
       this.app.attributeSender.resetEmittedAttributes()
     }
     this.app.sanitizer.clear()
@@ -267,15 +259,11 @@ export default class NextObserver
     this.listen(document, 'load', this.onLoad)
     this.app.send(CreateDocument())
     this.app.nodes.callNodeCallbacks(document, true)
-    if (!this.active) return
     const html = document.documentElement
-    const level = this.app.sanitizer.computeLevel(html, SanitizeLevel.Plain)
-    if (!this.active) return
     this.beginBatch()
-    const r = this.newRec(html, null, level)
+    const r = this.newRec(html, null, this.app.sanitizer.computeLevel(html, SanitizeLevel.Plain))
     this.root = r
     this.sendAttrs(r, html)
-    if (!this.active) return
     for (let c = firstChild(html); c !== null; c = nextSibling(c)) this.collect(c)
     this.place()
     this.finish(true)
@@ -313,7 +301,6 @@ export default class NextObserver
           const host = self.nodes.live(this)
           if (host === undefined) return
           self.flushRecords()
-          if (!self.active) return
           self.beginBatch()
           self.attachShadowRoot(host, sr)
           self.place()
@@ -384,7 +371,6 @@ export default class NextObserver
       const host = this.nodes.live(t)
       if (host === undefined) return
       this.flushRecords()
-      if (!this.active) return
       this.beginBatch()
       this.attachFrame(host, t as HTMLIFrameElement)
       this.place()
@@ -680,7 +666,6 @@ export default class NextObserver
   }
 
   private placeOne(n: Node) {
-    if (!this.active) return
     const batch = this.batch
     const dp = parentNode(n)
     const pr = dp !== null ? this.nodes.live(dp) : undefined
@@ -700,7 +685,6 @@ export default class NextObserver
       return
     }
     const lvl = this.app.sanitizer.computeLevel(n, pr.lvl)
-    if (!this.active) return
     if (moved) {
       const mr = r!
       if (lvl !== mr.lvl) {
@@ -748,7 +732,7 @@ export default class NextObserver
     // elements only, to match the removal side (getElementsByTagName)
     if (n.nodeType === ELEMENT) this.nodes.approxTotal++
     this.emitCreate(r, pr, ix, n)
-    if (this.active) this.created.push(n)
+    this.created.push(n)
   }
 
   private dropMoved(r: Rec, n: Node) {
@@ -819,7 +803,6 @@ export default class NextObserver
       const tag = isStylesheetLink(el) && this.inlineCss ? 'STYLE' : el.tagName
       this.app.send(CreateElementNode(r.id, pr.id, ix, tag, isSVGElement(n as Element)))
       this.sendAttrs(r, el, this.app.captureSanitizer ? n as Element : el)
-      if (!this.active) return
       const sr = this.shadowOf(n as Element)
       if (sr !== null) this.attachShadowRoot(r, sr)
       if (hasTag(n, 'iframe')) this.attachFrame(r, n)
@@ -879,7 +862,6 @@ export default class NextObserver
    */
   private applyExplicitMask(node: Node, r: Rec) {
     if (node.nodeType === ELEMENT) refreshStateAttributes(this.attrCtx, r.id, node as Element, true)
-    if (!this.active) return
     const visit = (c: Node) => {
       const cr = this.nodes.live(c)
       if (cr === undefined) return
@@ -905,7 +887,6 @@ export default class NextObserver
       const r = this.nodes.live(n)
       if (r === undefined || (r.b === batch && r.f & FRESH) || n.nodeType !== ELEMENT) continue
       for (const name of names) {
-        if (!this.active) return
         sendNodeAttribute(this.attrCtx, r.id, n as Element, name, (n as Element).getAttribute(name))
       }
     }
@@ -917,14 +898,12 @@ export default class NextObserver
   }
 
   private finish(isStart: boolean) {
-    if (!this.active) return
     const created = this.created
     const roots = this.snapshotRoots
     this.created = []
     this.snapshotRoots = new Set()
     this.resetBatch()
     for (const n of created) {
-      if (!this.active) return
       const r = n === document ? undefined : this.nodes.live(n)
       if (n !== document && r === undefined) continue
       this.app.nodes.callNodeCallbacks(n, isStart || (roots.size > 0 && this.underRoot(r, roots)))
@@ -932,10 +911,7 @@ export default class NextObserver
     const contexts = this.newContexts
     this.newContexts = []
     for (const win of contexts) {
-      for (const cb of this.contextCallbacks) {
-        if (!this.active) return
-        cb(win)
-      }
+      this.contextCallbacks.forEach((cb) => cb(win))
     }
     this.nodes.maybeSweep()
   }
@@ -965,7 +941,6 @@ export default class NextObserver
     // untracked: new or under a hidden ancestor, the live observer handles it
     if (r === undefined) return
     const newLevel = this.app.sanitizer.computeLevel(node, parentLevel)
-    if (!this.active) return
     const wasHidden = r.lvl === SanitizeLevel.Hidden
     const willHidden = newLevel === SanitizeLevel.Hidden
     if (wasHidden !== willHidden) {
@@ -992,14 +967,13 @@ export default class NextObserver
    */
   private raiseLevel(node: Node, r: Rec, parentLevel: SanitizeLevel): boolean {
     const lvl = this.app.sanitizer.computeLevel(node, parentLevel)
-    if (!this.active || lvl <= r.lvl) return false
+    if (lvl <= r.lvl) return false
     if (lvl === SanitizeLevel.Hidden) {
       if (r.p !== null) this.rebuild(r, node)
       else this.rebuildChildren(r, node, lvl)
       return true
     }
     this.setLevel(r, node, lvl)
-    if (!this.active) return false
     let rebuilt = false
     for (let c = firstChild(node); c !== null; c = nextSibling(c)) {
       const cr = this.nodes.live(c)
@@ -1027,14 +1001,13 @@ export default class NextObserver
     } else if (node.nodeType === ELEMENT) {
       sendContentAttributes(this.attrCtx, r.id, node as Element)
       // inputs/images/canvas re-emit their own payload via registered callbacks
-      if (this.active) this.app.callResanitizeCallbacks(node, r.id)
+      this.app.callResanitizeCallbacks(node, r.id)
     }
   }
 
   /** The root (<html>) can't become a placeholder: its children are recreated at its new level. */
   private rebuildChildren(r: Rec, node: Node, lvl: SanitizeLevel) {
     this.setLevel(r, node, lvl)
-    if (!this.active) return
     for (let c = firstChild(node); c !== null; c = nextSibling(c)) {
       const cr = this.nodes.live(c)
       if (cr !== undefined) this.rebuild(cr, c)
@@ -1084,7 +1057,7 @@ export default class NextObserver
 
   private sendAttrs(r: Rec, el: Element, source = el) {
     const attrs = el.attributes
-    for (let i = 0; this.active && i < attrs.length; i++) {
+    for (let i = 0; i < attrs.length; i++) {
       sendNodeAttribute(this.attrCtx, r.id, source, attrs[i].nodeName, attrs[i].value)
     }
   }

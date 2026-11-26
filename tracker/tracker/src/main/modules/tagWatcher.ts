@@ -3,7 +3,6 @@ import TagMatcher, { type Tag, matchesLocation } from './tagMatcher.js'
 export const WATCHED_TAGS_KEY = '__or__watched_tags__'
 
 class TagWatcher {
-  private disposed = false
   private readonly abort = new AbortController()
   interval: ReturnType<typeof setInterval> | null = null
   tags: Tag[] = []
@@ -43,7 +42,6 @@ class TagWatcher {
   }
 
   async fetchTags(ingest: string, token: string) {
-    if (this.disposed) return
     return fetch(`${ingest}/v1/web/tags`, {
       method: 'GET',
       signal: this.abort.signal,
@@ -53,18 +51,19 @@ class TagWatcher {
     })
       .then((r) => r.json())
       .then(({ tags }: { tags: Tag[] }) => {
-        if (this.disposed) return
+        if (this.abort.signal.aborted) return
         if (tags && tags.length) {
           this.setTags(tags)
           const tagString = JSON.stringify(tags)
           this.sessionStorage.setItem(WATCHED_TAGS_KEY, tagString || '')
         }
       })
-      .catch((e) => { if (!this.disposed) this.errLog(e) })
+      .catch((e) => {
+        if (!this.abort.signal.aborted) this.errLog(e)
+      })
   }
 
   setTags(tags: Tag[]) {
-    if (this.disposed) return
     this.tags = tags
     this.matcher.setTags(tags)
     if (this.interval) {
@@ -86,7 +85,6 @@ class TagWatcher {
   }
 
   onTagRendered(tagId: number) {
-    if (this.disposed) return
     const tag = this.tags.find(t => t.id === tagId)
     if (tag) {
       this.tags = this.tags.filter((t) => t.id !== tagId)
@@ -95,10 +93,10 @@ class TagWatcher {
     this.onTag(tagId)
   }
 
+  /** A late response would store tags again and restart the interval. */
   discard() {
-    if (this.disposed) return
-    this.disposed = true
-    try { this.abort.abort() } finally { this.clear() }
+    this.abort.abort()
+    this.clear()
   }
 
   clear() {

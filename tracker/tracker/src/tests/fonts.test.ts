@@ -9,8 +9,6 @@ class NativeFontFace {
 function createApp() {
   return {
     send: jest.fn(),
-    isDisposed: jest.fn(() => false),
-    attachStopCallback: jest.fn(),
     safe:
       (fn: any) =>
       (...args: any[]) => {
@@ -81,20 +79,6 @@ describe('fonts module', () => {
     expect(app.send).not.toHaveBeenCalled()
     nodeCallback(document)
     expect(app.send).toHaveBeenCalledWith(LoadFontFace(0, 'Late', 'url("http://localhost/late.woff2")', ''))
-  })
-
-  test('terminal cleanup restores FontFace and drops buffered fonts', () => {
-    const dispose = app.attachStopCallback.mock.calls[0][0]
-    app.active.mockReturnValue(false)
-    new (window as any).FontFace('Buffered', 'url(font.woff2)')
-    dispose()
-    expect(window.FontFace).not.toBe(NativeFontFace)
-    app.isDisposed.mockReturnValue(true)
-    dispose()
-
-    expect(window.FontFace).toBe(NativeFontFace)
-    nodeCallback(document)
-    expect(app.send).not.toHaveBeenCalled()
   })
 
   test('unserializable descriptor does not break construction', () => {

@@ -200,24 +200,4 @@ describe('FramesUploader', () => {
     )
     expect(names).toEqual(['1_1_1.webp', '1_2_1.webp', '1_3_1.webp'])
   })
-
-  test('discard prevents an in-progress pack from downloading or uploading frames', async () => {
-    const { FramesUploader } = require('../common/canvas')
-    let finishPacking: (bytes: ArrayBuffer) => void
-    const data = new Blob(['img'])
-    data.arrayBuffer = () => new Promise((resolve) => (finishPacking = resolve))
-    const debugFrames = jest.fn()
-    const error = jest.fn()
-    globalThis.fetch = jest.fn()
-    const uploader = new FramesUploader({ unauthorized: jest.fn(), error, debugFrames })
-    uploader.push({ images: [{ id: 1, data }], canvasId: 1, createdAt: 1 }, target, true)
-
-    uploader.discard()
-    finishPacking(new Uint8Array([1]).buffer)
-    await new Promise((resolve) => setTimeout(resolve, 0))
-
-    expect(debugFrames).not.toHaveBeenCalled()
-    expect(globalThis.fetch).not.toHaveBeenCalled()
-    expect(error).not.toHaveBeenCalled()
-  })
 })

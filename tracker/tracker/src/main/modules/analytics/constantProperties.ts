@@ -6,12 +6,12 @@ export interface StorageLike {
   removeItem?: (key: string) => void
 }
 
-export function clearStoredValue(storage: StorageLike, key: string): void {
+function clearStoredValue(storage: StorageLike, key: string): void {
   try {
     if (storage.removeItem) storage.removeItem(key)
     else storage.setItem(key, '')
   } catch {
-    // Storage can be unavailable during discard.
+    // storage can be unavailable
   }
 }
 
@@ -83,7 +83,6 @@ export default class ConstantProperties {
   deviceId: string
   searchEngine: string | null
   user_id: string | null = null
-  private discarded = false
 
   constructor(
     private readonly localStorage: StorageLike,
@@ -136,13 +135,11 @@ export default class ConstantProperties {
   }
 
   setUserId = (user_id: string | null) => {
-    if (this.discarded) return
     this.user_id = user_id
     this.sessionStorage.setItem(userIdKey, user_id ?? '')
   }
 
   resetUserId = (hard?: boolean) => {
-    if (this.discarded) return
     this.user_id = null
     this.sessionStorage.setItem(userIdKey, '')
     if (hard) {
@@ -220,26 +217,19 @@ export default class ConstantProperties {
   }
 
   getSuperProperties = (): Record<string, any> => {
-    if (this.discarded) return {}
     return parseJSON(this.localStorage.getItem(superPropKey)) ?? {}
   }
 
   saveSuperProperties = (props: Record<string, any>) => {
-    if (this.discarded) return
-    const serialized = JSON.stringify(props)
-    if (!this.discarded) this.localStorage.setItem(superPropKey, serialized)
+    this.localStorage.setItem(superPropKey, JSON.stringify(props))
   }
 
   clearSuperProperties = () => {
-    if (this.discarded) return
     this.localStorage.setItem(superPropKey, JSON.stringify({}))
   }
 
-  discard() {
-    if (this.discarded) return
-    this.discarded = true
-    this.user_id = this.utmSource = this.utmMedium = this.utmCampaign = this.searchEngine = null
-    this.initialReferrer = this.deviceId = ''
+  /** Forgets the stored device and user identity (tracker discard). */
+  clearStorage() {
     for (const key of [distinctIdKey, superPropKey]) clearStoredValue(this.localStorage, key)
     for (const key of [userIdKey, refKey, utmParamsKey]) clearStoredValue(this.sessionStorage, key)
   }

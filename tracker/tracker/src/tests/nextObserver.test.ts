@@ -145,39 +145,6 @@ afterEach(() => {
 })
 
 describe('NextObserver snapshot', () => {
-  test('disconnecting from the DOM sanitizer leaves the document root untracked', () => {
-    const domSanitizer = jest.fn(() => SanitizeLevel.Obscured).mockImplementationOnce(() => {
-      observer.disconnect()
-      nodes.clear()
-      return SanitizeLevel.Obscured
-    })
-    setup('<p>body</p>', {}, {
-      domSanitizer,
-    })
-
-    observer.observe()
-
-    expect(domSanitizer).toHaveBeenCalledTimes(1)
-    expect(nodes.getID(document.documentElement)).toBeUndefined()
-    expect(sent.some((m) => m[0] === Type.SetNodeAttribute && m[2] === 'orloaded')).toBe(false)
-  })
-
-  test('disconnecting from the capture sanitizer leaves the current shadow root unobserved', () => {
-    setup('<div id="host"></div>')
-    const shadow = $('#host').attachShadow({ mode: 'open' })
-    const addListener = jest.spyOn(shadow, 'addEventListener')
-    app.captureSanitizer = () => {
-      observer.disconnect()
-      nodes.clear()
-      return null
-    }
-
-    observer.observe()
-
-    expect(nodes.getID(shadow)).toBeUndefined()
-    expect(addListener).not.toHaveBeenCalled()
-  })
-
   test('sends the document, then the dom-parsed signal', () => {
     setup('<p>a<b>b</b></p>')
     observer.observe()

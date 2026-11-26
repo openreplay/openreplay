@@ -38,16 +38,16 @@ const slotOf = new WeakMap<Node, number>()
 // bumped on level changes: shadow roots and iframe documents below may lag
 let levelChanges = 0
 
-function spriteFile(url: string, parser: DOMParser, signal?: AbortSignal): Promise<Document | null> {
+function spriteFile(url: string, parser: DOMParser): Promise<Document | null> {
   let file = spriteFiles.get(url)
   if (file === undefined) {
-    const request = fetch(url, { signal }).then((response) =>
+    const request = fetch(url).then((response) =>
       response.ok
         ? response.text().then((text) => parser.parseFromString(text, 'image/svg+xml'))
         : null,
     )
     file = request
-    // a network error or an abort is retried by the next <use>
+    // after a network error the next <use> tries again
     request.catch(() => {
       if (spriteFiles.get(url) === request) spriteFiles.delete(url)
     })
@@ -62,7 +62,6 @@ async function spriteMarkup(
   use: SVGUseElement,
   href: string,
   parser: DOMParser,
-  signal?: AbortSignal,
 ): Promise<string | undefined> {
   const reference = href.trim()
   const hash = reference.indexOf('#')
@@ -71,7 +70,7 @@ async function spriteMarkup(
   const file =
     hash === 0
       ? use.ownerDocument
-      : await spriteFile(new URL(reference.slice(0, hash), use.baseURI).href, parser, signal)
+      : await spriteFile(new URL(reference.slice(0, hash), use.baseURI).href, parser)
   const symbol = file?.getElementById(id)
   if (!symbol) return
   const viewBox = symbol.getAttribute('viewBox') || '0 0 24 24'
@@ -163,10 +162,6 @@ export interface AttributeContext {
   readonly domParser: DOMParser
   /** bumped on disconnect: async work (sprites, css inlining) of an older session bails */
   generation: number
-}
-
-export function resetAttributeContext(ctx: AttributeContext): void {
-  ctx.generation++
 }
 
 export function sendNodeAttribute(
@@ -303,13 +298,11 @@ function sendSprite(ctx: AttributeContext, id: number, node: SVGUseElement, name
     }
   }
   const { generation } = ctx
-  const signal = app.captureSignal
   const isCurrent = () =>
-    !signal?.aborted &&
     ctx.generation === generation &&
     app.nodes.getID(node) === id &&
     (node.getAttribute('href') ?? node.getAttribute('xlink:href')) === href
-  spriteMarkup(node, href, ctx.domParser, signal)
+  spriteMarkup(node, href, ctx.domParser)
     .then((svg) => {
       if (!svg || !isCurrent()) return
       const approved = policy
@@ -324,7 +317,6 @@ function sendSprite(ctx: AttributeContext, id: number, node: SVGUseElement, name
       else app.attributeSender.sendSetAttribute(id, name, approved && SPRITE_MARKER + approved, true, node)
     })
     .catch((error: unknown) => {
-      if (signal?.aborted) return
       // a policy may be hiding the URL, which error messages can carry
       if (policy) console.error('OpenReplay: failed to capture SVG sprite')
       else console.error('Openreplay: Error processing <use> element:', error)
@@ -336,8 +328,7 @@ function inlineStylesheet(
 ): void {
   const { app, generation, inlinerOptions } = ctx
   const policy = app.captureSanitizer
-  const signal = app.captureSignal
-  const isCurrent = () => !signal?.aborted && ctx.generation === generation &&
+  const isCurrent = () => ctx.generation === generation &&
     (!policy || (app.nodes.getID(node) === id && node.getAttribute('href') === original))
   setTimeout(() => {
     if (!isCurrent()) return
@@ -362,7 +353,6 @@ function inlineStylesheet(
         app.send(SetCSSDataURLBased(fakeTextId, cssText, cssBaseHref))
       },
       policy && { sanitizer: policy, href, original },
-      signal,
     )
   }, 0)
 }
@@ -372,9 +362,7 @@ export function sendStyleText(app: App, id: number, parent: Element, data: strin
   const approved = policy
     ? sanitizeCapture(policy, { kind: 'css', source: 'text', value: data, node: parent })
     : data
-  if (app.isDisposed()) return
   const baseHref = approved === null ? null : app.getBaseHref()
-  if (app.isDisposed()) return
   app.send(SetCSSDataURLBased(id, baseHref === null ? '' : approved ?? '', baseHref ?? ''))
 }
 
@@ -549,7 +537,7 @@ export default abstract class Observer {
     this.app.sanitizer.clear()
     this.app.nodes.clear()
     if (this.app.captureSanitizer) {
-      resetAttributeContext(this.attrCtx)
+      this.attrCtx.generation++
       this.app.attributeSender.resetEmittedAttributes()
     }
     this.app.send(CreateDocument())
@@ -1079,7 +1067,7 @@ export default abstract class Observer {
     this.observer.disconnect()
     this.clear()
     this.throttledSetNodeData.clear()
-    resetAttributeContext(this.attrCtx)
+    this.attrCtx.generation++
   }
 
   protected resetThrottledSetNodeData(): void {
