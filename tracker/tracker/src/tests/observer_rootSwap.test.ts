@@ -26,7 +26,6 @@ function makeApp() {
     options: { forceNgOff: true },
     safe: (f: any) => f,
     send: (msg: Message) => sent.push(msg),
-    isDisposed: () => false,
     getBaseHref: () => 'http://localhost/',
     debug: { log: jest.fn(), warn: jest.fn(), info: jest.fn(), error: jest.fn() },
   }

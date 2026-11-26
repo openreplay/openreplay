@@ -187,13 +187,7 @@ export function sendNodeAttribute(
       app.attributeSender.removeAttribute(id, name, node)
       return
     }
-    // a masked <use> points at its symbol, recorded masked, instead of a copy
-    if (
-      isUseElement(node) &&
-      name === 'href' &&
-      !ctx.disableSprites &&
-      !((app.captureSanitizer || value.startsWith('#')) && app.sanitizer.isObscured(id))
-    ) {
+    if (isUseElement(node) && name === 'href' && !ctx.disableSprites && inlinesSprite(app, id, value)) {
       sendSprite(ctx, id, node, name, value)
       return
     }
@@ -276,12 +270,23 @@ export function sendNodeAttribute(
   sendAttributeValue(app, id, node, name, value)
 }
 
+/** A hidden <use> gets no copy of its symbol, nor does a masked one (it points at it, recorded masked). */
+function inlinesSprite(app: App, id: number, href: string): boolean {
+  if (app.sanitizer.isHidden(id)) return false
+  return !((app.captureSanitizer || href.startsWith('#')) && app.sanitizer.isObscured(id))
+}
+
 function sendAttributeValue(
   app: App, id: number, node: Element, name: string, value: string,
 ): void {
   value = maskAttribute(app, id, node, name, value)
   const policy = app.captureSanitizer
-  const approved = policy ? sanitizeCapture(policy, { kind: 'attribute', name, value, node }) : value
+  // SVG elements keep style as a plain attribute; the policy still sees it as CSS
+  const approved = !policy
+    ? value
+    : name === 'style'
+      ? sanitizeCapture(policy, { kind: 'css', source: 'attribute', value, node })
+      : sanitizeCapture(policy, { kind: 'attribute', name, value, node })
   if (approved === null) app.attributeSender.removeAttribute(id, name, node)
   else app.attributeSender.sendSetAttribute(id, name, approved, false, node)
 }
@@ -298,10 +303,12 @@ function sendSprite(ctx: AttributeContext, id: number, node: SVGUseElement, name
     }
   }
   const { generation } = ctx
+  // the element may have been masked or its href changed while the file loaded
   const isCurrent = () =>
     ctx.generation === generation &&
     app.nodes.getID(node) === id &&
-    (node.getAttribute('href') ?? node.getAttribute('xlink:href')) === href
+    (node.getAttribute('href') ?? node.getAttribute('xlink:href')) === href &&
+    inlinesSprite(app, id, href)
   spriteMarkup(node, href, ctx.domParser)
     .then((svg) => {
       if (!svg || !isCurrent()) return

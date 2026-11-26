@@ -83,6 +83,7 @@ export default class ConstantProperties {
   deviceId: string
   searchEngine: string | null
   user_id: string | null = null
+  private cleared = false
 
   constructor(
     private readonly localStorage: StorageLike,
@@ -135,11 +136,13 @@ export default class ConstantProperties {
   }
 
   setUserId = (user_id: string | null) => {
+    if (this.cleared) return
     this.user_id = user_id
     this.sessionStorage.setItem(userIdKey, user_id ?? '')
   }
 
   resetUserId = (hard?: boolean) => {
+    if (this.cleared) return
     this.user_id = null
     this.sessionStorage.setItem(userIdKey, '')
     if (hard) {
@@ -221,15 +224,18 @@ export default class ConstantProperties {
   }
 
   saveSuperProperties = (props: Record<string, any>) => {
+    if (this.cleared) return
     this.localStorage.setItem(superPropKey, JSON.stringify(props))
   }
 
   clearSuperProperties = () => {
+    if (this.cleared) return
     this.localStorage.setItem(superPropKey, JSON.stringify({}))
   }
 
-  /** Forgets the stored device and user identity (tracker discard). */
+  /** Forgets the stored device and user identity for good (tracker discard): later calls don't write it back. */
   clearStorage() {
+    this.cleared = true
     for (const key of [distinctIdKey, superPropKey]) clearStoredValue(this.localStorage, key)
     for (const key of [userIdKey, refKey, utmParamsKey]) clearStoredValue(this.sessionStorage, key)
   }

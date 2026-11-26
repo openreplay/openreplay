@@ -58,7 +58,6 @@ describe('value attribute wiring', () => {
       options: { forceNgOff: true },
       safe: (f: any) => f,
       send: (msg: any) => sent.push(msg),
-      isDisposed: () => false,
     getBaseHref: () => 'http://localhost/',
       debug: { log: jest.fn(), warn: jest.fn(), info: jest.fn(), error: jest.fn() },
     }

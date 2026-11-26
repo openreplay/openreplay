@@ -133,6 +133,7 @@ const canAccessTop = () => {
  */
 export default class API {
   private app: App | null = null
+  private discarded = false
   public readonly analytics: AnalyticsSDK | null = null
   private readonly crossdomainMode: boolean = false
 
@@ -241,8 +242,8 @@ export default class API {
         this.analytics?.onStart()
       })
       app.attachStopCallback(() => {
-        if (app.isDisposed()) this.analytics?.onDiscard()
-        else this.analytics?.onStop()
+        // discard() drops the analytics queue itself; a stop flushes it
+        if (!app.isDisposed()) this.analytics?.onStop()
       })
     }
     if (!this.crossdomainMode) {
@@ -386,6 +387,7 @@ export default class API {
   start(startOpts?: Partial<StartOptions>): Promise<StartPromiseReturn> {
     if (this.browserEnvCheck()) {
       if (this.app === null) {
+        if (this.discarded) return Promise.resolve({ success: false, reason: 'Tracker discarded' })
         return Promise.reject("Browser doesn't support required api, or doNotTrack is active.")
       }
       if (startOpts?.userID) {
@@ -476,6 +478,9 @@ export default class API {
    */
   discard(): void {
     if (this.app === null) return
+    this.discarded = true
+    // directly: the app's stop callbacks only run when it was recording
+    this.analytics?.onDiscard()
     this.app.discard()
     this.app = null
   }

@@ -195,7 +195,6 @@ export default class NextObserver
     this.top = false
     this.patchShadow()
     this.nodes.clear()
-    if (this.app.captureSanitizer) this.app.attributeSender.resetEmittedAttributes()
     this.nodes.crossdomainMode(frameLevel, frameOrder)
     this.app.sanitizer.clear()
     this.mo.observe(document, MO_OPTS)

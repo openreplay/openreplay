@@ -56,7 +56,6 @@ function appFor(policy?: any) {
   const messages: any[][] = []
   const app: any = {
     captureSanitizer: policy,
-    isDisposed: () => false,
     options: { forceNgOff: true },
     safe: (fn: any) => fn,
     send: (m: any[]) => messages.push(m),

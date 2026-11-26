@@ -12,7 +12,6 @@ function createApp() {
   const resanitizeCallbacks: Array<(node: Node) => void> = []
   const app: any = {
     send: jest.fn(),
-    isDisposed: () => false,
     safe:
       (fn: any) =>
       (...args: any[]) => {
