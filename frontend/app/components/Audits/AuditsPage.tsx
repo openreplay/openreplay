@@ -32,15 +32,12 @@ import { LAST_30_DAYS } from 'Types/app/period';
 import {
   Ban,
   Download,
-  FileText,
   Link2,
   MoreHorizontal,
   Pencil,
   Plus,
   Presentation,
   RotateCcw,
-  ScanSearch,
-  Split,
   Trash2,
 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
@@ -51,8 +48,6 @@ import { useQueryParam } from 'App/components/Client/SmartTests/components/share
 import useDebouncedValue from 'App/hooks/useDebouncedValue';
 import { useStore } from 'App/mstore';
 import { useHistory } from 'App/routing';
-
-import { StartPath } from 'Shared/StartPath/StartPath';
 
 import AuditsFilterMenu, { useAuditFilters } from './AuditsFilterMenu';
 import NewAuditDrawer from './NewAuditDrawer';
@@ -417,36 +412,14 @@ function AuditsPage() {
     <EmptyState
       art="audit"
       title={t('No audits yet')}
-      hint={t(
-        'An audit turns a period of your sessions into a report you can present: traffic, usage, errors and speed, friction, retention, and with AI, the journeys people take and the issues that stop them.',
-      )}
+      hint={t('Turn a period of your sessions into a report you can present.')}
       action={
         <Button onClick={newAudit}>
           <Plus size={14} />
           {t('New audit')}
         </Button>
       }
-    >
-      <StartPath
-        steps={[
-          {
-            icon: <Split />,
-            label: t('Pick the traffic and the days'),
-            hint: t('All of it, a segment or a filter'),
-          },
-          {
-            icon: <ScanSearch />,
-            label: t('It reads every session'),
-            hint: t('And AI reads a sample for journeys'),
-          },
-          {
-            icon: <FileText />,
-            label: t('Present the report'),
-            hint: t('Slides, a link and a PDF'),
-          },
-        ]}
-      />
-    </EmptyState>
+    />
   );
 
   const narrowed = ui.search || ui.filterCount > 0;

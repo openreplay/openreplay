@@ -3,6 +3,7 @@ import { AiAccessDialog } from '@/ui/ai/AiAccessDialog';
 import { AiLockedRow } from '@/ui/ai/AiLockedRow';
 import { DateRange } from '@/ui/inputs/DateRange';
 import { MultiSelect } from '@/ui/inputs/multi-select';
+import { Switch } from '@/ui/inputs/switch';
 import { Segmented } from '@/ui/inputs/toggle-group';
 import {
   DrawerCount,
@@ -100,6 +101,7 @@ function NewAuditDrawer({ open, onClose, onCreated }: Props) {
   const [chapters, setChapters] = React.useState<ChapterKey[]>(() => [
     ...ALL_CHAPTERS,
   ]);
+  const [notify, setNotify] = React.useState(true);
   const [aiInfo, setAiInfo] = React.useState(false);
   const [filter] = React.useState(() => new FilterModel());
   const [, bump] = React.useReducer((n: number) => n + 1, 0);
@@ -170,14 +172,16 @@ function NewAuditDrawer({ open, onClose, onCreated }: Props) {
     periodDays: DAYS_OF[period.rangeName] ?? DEFAULT_PERIOD,
     custom: custom ? { from: custom.from, to: custom.to } : undefined,
     chapters,
+    notify,
   };
-  // the count doesn't depend on the name or the chapters; without chapters the API also
-  // says whether this project may use AI sections
+  // the count doesn't depend on the name, the email or the chapters; without chapters the
+  // API also says whether this project may use AI sections
   const estimate = useAuditEstimate(
     open && canEstimate(draft)
       ? {
           ...toCreateRequest(draft, armada),
           name: undefined,
+          notify: undefined,
           sections: undefined,
         }
       : null,
@@ -410,6 +414,18 @@ function NewAuditDrawer({ open, onClose, onCreated }: Props) {
             };
           })}
         />
+      </Section>
+
+      <Section
+        title={t('When it is ready')}
+        hint={t(
+          "It takes a few minutes. The report opens from the audit's row.",
+        )}
+      >
+        <label className="m-nad__row">
+          <Switch checked={notify} onCheckedChange={setNotify} />
+          <span>{t('Email me when it is ready')}</span>
+        </label>
       </Section>
       <AiAccessDialog open={aiInfo} onClose={() => setAiInfo(false)} />
     </EntityDrawer>

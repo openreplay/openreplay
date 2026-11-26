@@ -4,11 +4,12 @@ import { Chip } from '@/ui/data/Chip';
 import { ImpactMeter } from '@/ui/data/ImpactMeter';
 import { SessionAvatar } from '@/ui/data/SessionAvatar';
 import { Illustration } from '@/ui/illustrations/Illustration';
+import { Tooltip } from '@/ui/overlays/tooltip';
 import {
-  AlertTriangle,
   Monitor,
   MonitorSmartphone,
   Smartphone,
+  TriangleAlert,
 } from 'lucide-react';
 import React, { Fragment, type ReactNode } from 'react';
 
@@ -169,7 +170,27 @@ function Mark({ mark }: { mark: RowMark }) {
   return <span className="m-rep-s__mark">{inner}</span>;
 }
 
-function Line({ line }: { line: RowLine }) {
+function Journeys({ journeys }: { journeys: string[] }) {
+  if (!journeys.length) return null;
+  return (
+    <Tooltip
+      title={
+        <span className="flex flex-col gap-2">
+          {journeys.map((j, i) => (
+            <span key={i}>{j}</span>
+          ))}
+        </span>
+      }
+    >
+      <span className="m-rep-s__jn" tabIndex={0}>
+        <span className="m-truncate">{journeys[0]}</span>
+        {journeys.length > 1 && <b className="num">+{journeys.length - 1}</b>}
+      </span>
+    </Tooltip>
+  );
+}
+
+function Line({ line, journeys }: { line: RowLine; journeys?: string[] }) {
   switch (line.kind) {
     case 'bar':
       return (
@@ -193,6 +214,7 @@ function Line({ line }: { line: RowLine }) {
         <div className="m-rep-s__line">
           <ImpactMeter level={line.level} />
           <span className="pm">{line.text}</span>
+          {journeys && <Journeys journeys={journeys} />}
         </div>
       );
     case 'outcome':
@@ -229,52 +251,72 @@ function Line({ line }: { line: RowLine }) {
 function Rows({ rows, start = 0 }: { rows: ReportRow[]; start?: number }) {
   return (
     <ol className="m-rep-s__rows">
-      {rows.map((r, i) => (
-        <li
-          key={`${r.title}-${i}`}
-          className={`m-rep-s__row${r.highlight ? ' is-hl' : ''}`}
-        >
-          <span className="in num">{pad2(start + i + 1)}</span>
-          <div>
-            <b className={`m-rep-s__rt${r.mono ? ' is-mono' : ''}`}>
-              {r.mark && <Mark mark={r.mark} />}
-              {r.critical && (
-                <span className="m-rep-s__crit" title="Critical">
-                  <AlertTriangle size={16} aria-label="Critical" />
-                </span>
-              )}
-              <span className={r.unlabelled ? 'm-rep-s__unl' : undefined}>
-                {r.title}
-              </span>
-              {r.code && <code>{r.code}</code>}
-              {r.effort && <Effort n={r.effort} />}
-              {r.tag && (
-                <Chip
-                  kind="status"
-                  tone={
-                    r.tag.tone === 'bad'
-                      ? 'danger'
-                      : r.tag.tone === 'good'
-                        ? 'success'
-                        : 'neutral'
+      {rows.map((r, i) => {
+        const issue = r.journeys != null;
+        return (
+          <li
+            key={`${r.title}-${i}`}
+            className={`m-rep-s__row${issue ? ' is-issue' : ''}`}
+          >
+            <span className="in num">{pad2(start + i + 1)}</span>
+            <div>
+              <b className={`m-rep-s__rt${r.mono ? ' is-mono' : ''}`}>
+                {r.mark && <Mark mark={r.mark} />}
+                {r.critical && (
+                  <TriangleAlert
+                    className="m-rep-s__crit"
+                    size={18}
+                    role="img"
+                    aria-label="Flagged critical"
+                  />
+                )}
+                <span
+                  className={
+                    issue
+                      ? 'm-truncate'
+                      : r.unlabelled
+                        ? 'm-rep-s__unl'
+                        : undefined
                   }
                 >
-                  {r.tag.text}
-                </Chip>
-              )}
-              {r.tags?.map((tg) => (
-                <span key={tg} className="m-rep-s__tag">
-                  {tg}
+                  {r.title}
                 </span>
+                {r.code && <code>{r.code}</code>}
+                {r.effort && <Effort n={r.effort} />}
+                {r.tag && (
+                  <Chip
+                    kind="status"
+                    tone={
+                      r.tag.tone === 'bad'
+                        ? 'danger'
+                        : r.tag.tone === 'good'
+                          ? 'success'
+                          : 'neutral'
+                    }
+                  >
+                    {r.tag.text}
+                  </Chip>
+                )}
+              </b>
+              {r.description &&
+                (issue ? (
+                  <Tooltip title={r.description}>
+                    <p tabIndex={0}>{r.description}</p>
+                  </Tooltip>
+                ) : (
+                  <p>{r.description}</p>
+                ))}
+              {r.lines?.map((l, k) => (
+                <Line
+                  key={k}
+                  line={l}
+                  journeys={l.kind === 'impact' ? r.journeys : undefined}
+                />
               ))}
-            </b>
-            {r.description && <p>{r.description}</p>}
-            {r.lines?.map((l, k) => (
-              <Line key={k} line={l} />
-            ))}
-          </div>
-        </li>
-      ))}
+            </div>
+          </li>
+        );
+      })}
     </ol>
   );
 }
