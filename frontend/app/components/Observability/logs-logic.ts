@@ -584,6 +584,126 @@ export function sameRules(a: readonly LogRule[], b: readonly LogRule[]) {
   return sa.length === sb.length && sa.every((x, i) => x === sb[i]);
 }
 
+/* ── the address ────────────────────────────────────────────────────────── */
+
+export interface LogsLink {
+  window: LogWindow;
+  rules: LogRule[];
+  line: { id: string; at: number } | null;
+}
+
+const LINK_KEYS = ['window', 'from', 'to', 'filters', 'line', 'at'];
+
+const tokenOf = (preset: string) => preset.replace(/^LOGS_/, '').toLowerCase();
+const isTime = (n: number) => Number.isSafeInteger(n) && n > 0;
+
+const toBase64Url = (text: string) => {
+  let bin = '';
+  for (const b of new TextEncoder().encode(text)) bin += String.fromCharCode(b);
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+};
+const fromBase64Url = (s: string) =>
+  new TextDecoder('utf-8', { fatal: true }).decode(
+    Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), (c) =>
+      c.charCodeAt(0),
+    ),
+  );
+
+const narrows = (r: LogRule) =>
+  r.operator === 'isAny' || r.value.some((v) => v.trim() !== '');
+
+/** the rules that narrow the search, as the address keeps them */
+export function filtersParam(rules: readonly LogRule[]): string | null {
+  const kept = rules.filter(narrows);
+  return kept.length
+    ? toBase64Url(
+        JSON.stringify(kept.map((r) => [r.name, r.operator, r.value])),
+      )
+    : null;
+}
+
+export function linkParams(link: LogsLink): URLSearchParams {
+  const p = new URLSearchParams();
+  const w = link.window;
+  if ('from' in w) {
+    p.set('from', String(Math.round(w.from)));
+    p.set('to', String(Math.round(w.to)));
+  } else if (w.preset !== DEFAULT_LOG_PRESET)
+    p.set('window', tokenOf(w.preset));
+  const filters = filtersParam(link.rules);
+  if (filters) p.set('filters', filters);
+  if (link.line) {
+    p.set('line', link.line.id);
+    p.set('at', String(link.line.at));
+  }
+  return p;
+}
+
+function ruleOfLink(x: unknown): LogRule | null {
+  if (!Array.isArray(x) || x.length !== 3) return null;
+  const [name, operator, value] = x;
+  if (
+    typeof name !== 'string' ||
+    typeof operator !== 'string' ||
+    !Array.isArray(value) ||
+    !value.every((v) => typeof v === 'string')
+  )
+    return null;
+  const known =
+    ['message', 'level', 'service'].includes(name) ||
+    (scopeOfKey(name) != null && nameOfKey(name) !== '');
+  const ops = logFilter(name, name).operators ?? [];
+  const rule = { name, operator, value };
+  return known && ops.some((o) => o.value === operator) && narrows(rule)
+    ? rule
+    : null;
+}
+
+/** what the address asks for, null when it names no search; anything it
+    can't read is left at its default */
+export function readLink(search: string): LogsLink | null {
+  const p = new URLSearchParams(search);
+  if (!LINK_KEYS.some((k) => p.has(k))) return null;
+  const from = Number(p.get('from'));
+  const to = Number(p.get('to'));
+  const preset = LOG_PRESETS.find((x) => tokenOf(x.value) === p.get('window'));
+  const w: LogWindow =
+    isTime(from) && isTime(to) && from < to
+      ? clampWindow(from, to)
+      : { preset: preset?.value ?? DEFAULT_LOG_PRESET };
+  let rules: LogRule[] = [];
+  try {
+    const raw = JSON.parse(fromBase64Url(p.get('filters') ?? ''));
+    if (Array.isArray(raw))
+      rules = raw.map(ruleOfLink).filter((r): r is LogRule => r != null);
+  } catch {
+    /* a cut or hand-edited address: no filters */
+  }
+  const id = p.get('line');
+  const at = Number(p.get('at'));
+  return { window: w, rules, line: id && isTime(at) ? { id, at } : null };
+}
+
+/** `search` with the link's keys in place of its own */
+export function withLink(search: string, link: LogsLink): string {
+  const p = new URLSearchParams(search);
+  for (const k of LINK_KEYS) p.delete(k);
+  linkParams(link).forEach((v, k) => p.append(k, v));
+  return p.toString();
+}
+
+/** a line's link keeps the window it was seen in as fixed times, or one as
+    long around the line when it was seen outside it */
+export function lineWindow(
+  bounds: { from: number; to: number },
+  at: number,
+): LogWindow {
+  if (at >= bounds.from && at < bounds.to)
+    return { from: bounds.from, to: bounds.to };
+  const half = Math.max(1, Math.ceil((bounds.to - bounds.from) / 2));
+  return { from: at - half, to: at + half };
+}
+
 /* ── the drawer's reading of a line ─────────────────────────────────────── */
 
 export type FieldTone = 'danger' | 'warning';

@@ -1563,5 +1563,9 @@
   "A search holds up to {{n}} filters": "Bir arama en fazla {{n}} filtre içerebilir",
   "A search is up to {{n}} characters": "Bir arama en fazla {{n}} karakter olabilir",
   "A filter holds up to {{n}} values. Remove one to add another.": "Bir filtre en fazla {{n}} değer içerebilir. Başka bir değer eklemek için birini kaldırın.",
-  "The address is the account. To change it, invite the new one and remove this one.": "Adres hesabın kendisidir. Değiştirmek için yeni adresi davet edin ve bunu kaldırın."
+  "The address is the account. To change it, invite the new one and remove this one.": "Adres hesabın kendisidir. Değiştirmek için yeni adresi davet edin ve bunu kaldırın.",
+  "Hide the chart": "Grafiği gizle",
+  "Show the chart": "Grafiği göster",
+  "Copy link to this line": "Bu satırın bağlantısını kopyala",
+  "The linked line wasn't found. Its search is open.": "Bağlantıdaki satır bulunamadı. Araması açık."
 }

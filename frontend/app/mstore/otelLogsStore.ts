@@ -11,9 +11,11 @@ import {
   EXPORT_LIMIT,
   type LogRule,
   type LogWindow,
+  type LogsLink,
   NO_SERVICE,
   RELATED_SIDE,
   SearchChangedError,
+  filtersParam,
   logFilter,
   rulesToFilter,
   sameRules,
@@ -34,6 +36,7 @@ import {
   OtelLog,
   OtelLogsFilter,
   OtelValueCount,
+  otelLogTimeMs,
 } from 'App/services/OtelLogsService';
 
 /** Relative ranges are re-anchored to now on every fetch. */
@@ -56,6 +59,14 @@ const ruleOf = (f: Filter): LogRule => ({
   operator: f.operator ?? 'is',
   value: (f.value ?? []).map(String),
 });
+const CHART_KEY = '__or_logs_chart';
+const storedChartOpen = () => {
+  try {
+    return localStorage.getItem(CHART_KEY) !== '0';
+  } catch {
+    return true;
+  }
+};
 
 export default class OtelLogsStore {
   range: OtelLogsRange = { durationMs: 15 * 60 * 1000 };
@@ -104,11 +115,14 @@ export default class OtelLogsStore {
   facetKeys: string[] | null = null;
   railOpen = true;
   railWidth = 232;
+  chartOpen = storedChartOpen();
   refreshEvery: number | null = null;
   paused = false;
   openId: string | null = null;
   /** an open line from outside the list (a related line, a link) */
   openExtra: OtelLog | null = null;
+  /** a link's line is being looked up at this time */
+  seekAt: number | null = null;
   /** the last rules came from outside the bar (rail, legend, drawer) */
   restCollapsed = false;
   newCount = 0;
@@ -490,6 +504,7 @@ export default class OtelLogsStore {
     this.zoomStack = [];
     this.page = 1;
     this.openId = null;
+    this.seekAt = null;
     this.newCount = 0;
     this.viewId = null;
     this.views = [];
@@ -508,6 +523,27 @@ export default class OtelLogsStore {
   get signature(): string {
     return JSON.stringify([this.window, this.ruleList]);
   }
+
+  get link(): LogsLink {
+    return { window: this.window, rules: this.ruleList, line: this.lineRef };
+  }
+
+  /** returns the line's lookup when the link's line isn't held */
+  applyLink = (link: LogsLink): Promise<boolean> | null => {
+    if (JSON.stringify(link.window) !== JSON.stringify(this.window))
+      this.setWindow(link.window);
+    if (filtersParam(link.rules) !== filtersParam(this.ruleList)) {
+      this.setRules(this.filtersOf(link.rules), true);
+      this.viewId = null;
+    }
+    const line = this.lineRef;
+    if (link.line?.id === line?.id) return null;
+    if (!link.line) {
+      this.open(null);
+      return null;
+    }
+    return this.seekLine(link.line.id, link.line.at);
+  };
 
   /** applies the rules and window, then fetches the first page */
   run = (now = Date.now(), quiet = false) => {
@@ -768,6 +804,15 @@ export default class OtelLogsStore {
     this.railOpen = open;
   };
 
+  setChartOpen = (open: boolean) => {
+    this.chartOpen = open;
+    try {
+      localStorage.setItem(CHART_KEY, open ? '1' : '0');
+    } catch {
+      /* private mode: the choice lasts the visit */
+    }
+  };
+
   setRailWidth = (w: number) => {
     this.railWidth = w;
   };
@@ -913,6 +958,7 @@ export default class OtelLogsStore {
 
   open = (id: string | null) => {
     this.openId = id;
+    this.seekAt = null;
   };
 
   /** `keep` holds the line even once a refetch drops it from the list */
@@ -920,6 +966,48 @@ export default class OtelLogsStore {
     this.openExtra =
       keep || !this.logs.some((l) => l.id === log.id) ? log : null;
     this.openId = log.id;
+    this.seekAt = null;
+  };
+
+  get lineRef(): { id: string; at: number } | null {
+    const l = this.openLine;
+    if (l) return { id: l.id, at: otelLogTimeMs(l) };
+    return this.openId && this.seekAt != null
+      ? { id: this.openId, at: this.seekAt }
+      : null;
+  }
+
+  /** opens a linked line; one not in the list is asked for at its time.
+      Resolves false when it is gone */
+  seekLine = async (id: string, at: number): Promise<boolean> => {
+    this.openId = id;
+    this.seekAt = null;
+    if (this.openLine) return true;
+    this.seekAt = at;
+    let found: OtelLog | undefined;
+    try {
+      let cursor: string | undefined;
+      for (let page = 0; page < RELATED_PAGES && !found; page += 1) {
+        const r = await otelLogsService.search({
+          startTime: at,
+          endTime: at + 1,
+          limit: OTEL_LOGS_LIMITS.maxPageSize,
+          cursor,
+        });
+        found = r.logs.find((l) => l.id === id);
+        if (!r.nextCursor) break;
+        cursor = r.nextCursor;
+      }
+    } catch {
+      /* unanswered: the line stays closed */
+    }
+    if (this.openId !== id || this.seekAt !== at) return true;
+    runInAction(() => {
+      this.seekAt = null;
+      if (found) this.openExtra = found;
+      else if (!this.openLine) this.openId = null;
+    });
+    return found != null || this.openLine != null;
   };
 
   /** steps through the list, loading the next page at its end */
@@ -931,6 +1019,7 @@ export default class OtelLogsStore {
     if (next)
       runInAction(() => {
         this.openId = next.id;
+        this.seekAt = null;
         const page = Math.floor((i + dir) / this.pageSize) + 1;
         if (page !== this.page) this.page = page;
       });
@@ -1012,17 +1101,17 @@ export default class OtelLogsStore {
     return this.view != null && !sameRules(this.view.rules, this.ruleList);
   }
 
+  private filtersOf = (rules: readonly LogRule[]): Filter[] =>
+    rules.map((r) => ({
+      ...logFilter(r.name, this.labelOf(r.name)),
+      operator: r.operator,
+      value: [...r.value],
+    }));
+
   applyView = (id: string) => {
     const v = this.views.find((x) => x.id === id);
     if (!v) return;
-    this.setRules(
-      v.rules.map((r) => ({
-        ...logFilter(r.name, this.labelOf(r.name)),
-        operator: r.operator,
-        value: [...r.value],
-      })),
-      true,
-    );
+    this.setRules(this.filtersOf(v.rules), true);
     this.viewId = id;
   };
 

@@ -15,14 +15,17 @@ import {
   getRowsPerPage,
   setRowsPerPage,
   useRowsChoice,
+  useRowsPerPage,
 } from '@/ui/layout/rows-per-page';
 import { useViewport } from '@/ui/layout/use-viewport';
+import { toast } from '@/ui/overlays/toast';
 import { Tooltip } from '@/ui/overlays/tooltip';
-import { Bookmark, PanelLeftOpen, Undo2 } from 'lucide-react';
+import { Bookmark, ChartColumn, PanelLeftOpen, Undo2 } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 import {
   type CSSProperties,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -39,7 +42,7 @@ import {
   session as sessionRoute,
   withSiteId,
 } from 'App/routes';
-import { useNavigate } from 'App/routing';
+import { useHistory, useLocation, useNavigate } from 'App/routing';
 import {
   OTEL_LOGS_LIMITS,
   type OtelLog,
@@ -67,6 +70,7 @@ import {
   EXPORT_LIMIT,
   LOG_PRESETS,
   type LogLevel,
+  type LogsLink,
   VIEW_CATEGORY,
   catalogue,
   clampWindow,
@@ -82,9 +86,12 @@ import {
   levelOfText,
   levelTotals,
   lineText,
+  lineWindow,
+  linkParams,
   logFilter,
   logZone,
   nameOfKey,
+  readLink,
   sameLogDay,
   scopeOfKey,
   sessionOf,
@@ -92,6 +99,7 @@ import {
   toBuckets,
   valueLabel,
   windowBounds,
+  withLink,
 } from './logs-logic';
 import './logs.css';
 
@@ -103,6 +111,11 @@ const DEFAULT_FACETS = [
   'res.k8s.namespace.name',
   'res.k8s.pod.name',
 ];
+const NO_LINK: LogsLink = {
+  window: { preset: DEFAULT_LOG_PRESET },
+  rules: [],
+  line: null,
+};
 
 function LogsPage() {
   const { t } = useTranslation();
@@ -114,6 +127,8 @@ function LogsPage() {
     settingsStore,
   } = useStore();
   const navigate = useNavigate();
+  const history = useHistory();
+  const { pathname, search } = useLocation();
   const phone = useViewport() === 'phone';
   const siteId = projectsStore.siteId;
   const userId = userStore.account.id;
@@ -128,6 +143,38 @@ function LogsPage() {
     if (siteId && userId != null) store.loadViews(userId, siteId);
   }, [siteId, userId]);
 
+  // a first address naming no search keeps the one held
+  const linked = linkParams(store.link).toString();
+  const seen = useRef<string | null>(null);
+  const wrote = useRef(0);
+  useLayoutEffect(() => {
+    // a navigation away is under way (Watch session)
+    if (window.location.pathname !== pathname) return;
+    const before = readLink(search);
+    const moved = seen.current !== search;
+    if (moved) {
+      const first = seen.current == null;
+      seen.current = search;
+      if (before || !first)
+        void store.applyLink(before ?? NO_LINK)?.then((found) => {
+          if (!found)
+            toast.info(t("The linked line wasn't found. Its search is open."));
+        });
+    }
+    const next = withLink(search, store.link);
+    if (next === new URLSearchParams(search).toString()) return;
+    const bare = (l: LogsLink | null) =>
+      l ? linkParams({ ...l, line: null }).toString() : '';
+    const opened = !moved && !before?.line && store.lineRef != null;
+    const edited = !moved && bare(before) !== bare(store.link);
+    // edits less than a second apart share one history entry
+    const push = opened || (edited && Date.now() - wrote.current > 1000);
+    if (edited) wrote.current = Date.now();
+    seen.current = next ? `?${next}` : '';
+    if (push) history.push({ search: next });
+    else history.replace({ search: next });
+  }, [pathname, search, linked]);
+
   // a rule typed into the bar settles before it asks
   useEffect(() => {
     if (!siteId) return undefined;
@@ -140,6 +187,16 @@ function LogsPage() {
   useEffect(() => {
     store.resize(getRowsPerPage('logs'));
   }, [rowsChoice]);
+  // folding the chart is the one change above the list taken at once
+  const fitRows = useRowsPerPage('logs');
+  const refitUntil = useRef(0);
+  useEffect(() => {
+    if (performance.now() < refitUntil.current) store.resize(fitRows);
+  }, [fitRows]);
+  const toggleChart = () => {
+    refitUntil.current = performance.now() + 1000;
+    store.setChartOpen(!store.chartOpen);
+  };
 
   const relative = 'preset' in store.window;
   useEffect(() => {
@@ -363,6 +420,16 @@ function LogsPage() {
     />
   );
 
+  const lineLink = (l: OtelLog) => {
+    const at = otelLogTimeMs(l);
+    const params = linkParams({
+      window: lineWindow(bounds, at),
+      rules: store.ruleList,
+      line: { id: l.id, at },
+    });
+    return `${withSiteId(logsRoute(), siteId)}?${params}`;
+  };
+
   const play = (l: OtelLog) => {
     const id = sessionOf(l);
     if (!id) return;
@@ -378,7 +445,7 @@ function LogsPage() {
         .join(' · '),
       tone:
         level === 'error' ? 'danger' : level === 'warn' ? 'warning' : undefined,
-      backUrl: withSiteId(logsRoute(), siteId),
+      backUrl: lineLink(l),
     });
     // Open in Logs lands on this drawer even after newer lines push it out
     store.openLog(l, true);
@@ -510,13 +577,15 @@ function LogsPage() {
         )}
       </div>
     ) : !store.histogram ? (
-      <div
-        className="m-logs__chart m-logs__chart--wait"
-        role="status"
-        aria-label={t('Loading the chart')}
-      >
-        <span className="m-logs__chart-wait" />
-      </div>
+      store.chartOpen && (
+        <div
+          className="m-logs__chart m-logs__chart--wait"
+          role="status"
+          aria-label={t('Loading the chart')}
+        >
+          <span className="m-logs__chart-wait" />
+        </div>
+      )
     ) : (
       <LogHistogram
         buckets={buckets}
@@ -531,6 +600,7 @@ function LogsPage() {
         withDate={withDate}
         zone={zone}
         legendSlot={legendSlot}
+        folded={!store.chartOpen}
       />
     );
 
@@ -716,6 +786,16 @@ function LogsPage() {
                     onRefresh={() => void store.run()}
                     unavailable={relative ? undefined : fixedRange}
                   />
+                  <IconButton
+                    icon={<ChartColumn size={15} />}
+                    label={
+                      store.chartOpen
+                        ? t('Hide the chart')
+                        : t('Show the chart')
+                    }
+                    pressed={store.chartOpen}
+                    onClick={toggleChart}
+                  />
                   <ExportControl
                     total={store.total}
                     totalKnown={store.totalKnown}
@@ -840,6 +920,11 @@ function LogsPage() {
         onPlay={play}
         withDate={withDate}
         zone={zone}
+        link={
+          store.openLine
+            ? `${window.location.origin}${lineLink(store.openLine)}`
+            : undefined
+        }
       />
       <SaveViewDialog
         open={naming}

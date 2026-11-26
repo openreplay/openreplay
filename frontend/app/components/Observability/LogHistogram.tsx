@@ -28,6 +28,7 @@ export interface LogHistogramProps {
   withDate: boolean;
   zone: string;
   legendSlot?: HTMLElement | null;
+  folded?: boolean;
 }
 
 const STEP_WORDS = (ms: number): string => {
@@ -77,6 +78,7 @@ export function LogHistogram({
   zone,
   legendSlot,
   back,
+  folded,
 }: LogHistogramProps) {
   const { t } = useTranslation();
   const theme = useChartTheme();
@@ -341,14 +343,16 @@ export function LogHistogram({
   const legend = (
     <span className={`m-logs__keys${focus ? ' is-reading' : ''}`}>{keys}</span>
   );
+  const head = legendSlot ? (
+    createPortal(legend, legendSlot)
+  ) : (
+    <div className="m-logs__chart-head">{legend}</div>
+  );
+  if (folded) return head;
 
   return (
     <div className="m-logs__chart">
-      {legendSlot ? (
-        createPortal(legend, legendSlot)
-      ) : (
-        <div className="m-logs__chart-head">{legend}</div>
-      )}
+      {head}
       {mix(' m-logs__mix--top')}
       <div className="m-logs__plot">
         <EChart

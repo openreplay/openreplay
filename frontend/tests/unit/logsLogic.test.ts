@@ -10,6 +10,7 @@ import {
 import { Settings } from 'luxon';
 
 import {
+  DEFAULT_LOG_PRESET,
   NO_SERVICE,
   bodyOf,
   clockLabel,
@@ -26,9 +27,12 @@ import {
   lineHeadFacts,
   lineStamp,
   lineText,
+  lineWindow,
+  linkParams,
   logFilter,
   logZone,
   readBody,
+  readLink,
   rulesToFilter,
   sameLogDay,
   sameRules,
@@ -36,6 +40,7 @@ import {
   textTerms,
   valueLabel,
   windowBounds,
+  withLink,
 } from '../../app/components/Observability/logs-logic';
 import {
   ruleParts,
@@ -739,6 +744,110 @@ describe('JSON bodies', () => {
   });
 });
 
+describe('the address', () => {
+  const none = {
+    window: { preset: DEFAULT_LOG_PRESET },
+    rules: [],
+    line: null,
+  };
+  const b64 = (x: unknown) =>
+    btoa(JSON.stringify(x))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+
+  test('a search and its line come back as they went', () => {
+    const link = {
+      window: { preset: 'LOGS_6H' },
+      rules: [
+        { name: 'service', operator: 'is', value: ['web', NO_SERVICE] },
+        {
+          name: 'message',
+          operator: 'contains',
+          value: ['"gateway timeout", ünïcödé & ?a=b#c'],
+        },
+        { name: 'attr.http.route', operator: 'isAny', value: [] },
+      ],
+      line: { id: '1700000000123456789-3-9', at: 1_700_000_000_123 },
+    };
+    const search = linkParams(link).toString();
+    expect(readLink(search)).toEqual(link);
+    expect(readLink(`?${search}`)).toEqual(link);
+  });
+
+  test('a relative window stays relative, a fixed one is two times', () => {
+    const at = (window: object) => linkParams({ ...none, window } as any);
+    expect(at({ preset: 'LOGS_6H' }).toString()).toBe('window=6h');
+    expect(at({ from: 1000, to: 2000 }).toString()).toBe('from=1000&to=2000');
+    expect(readLink('from=1000&to=2000')?.window).toEqual({
+      from: 1000,
+      to: 2000,
+    });
+  });
+
+  test('the resting search and rules without a value write nothing', () => {
+    const empty = [{ name: 'service', operator: 'is', value: [' '] }];
+    expect(linkParams({ ...none, rules: empty }).toString()).toBe('');
+    expect(readLink('')).toBeNull();
+    expect(readLink('?vmode=1')).toBeNull();
+  });
+
+  test('what the address cannot read falls back to the default', () => {
+    const read = (s: string) => readLink(s)!;
+    const day = 86_400_000;
+    expect(read('window=3w').window).toEqual({ preset: DEFAULT_LOG_PRESET });
+    expect(read('from=2000&to=1000').window).toEqual({
+      preset: DEFAULT_LOG_PRESET,
+    });
+    expect(read('from=abc&to=1000&window=15m').window).toEqual({
+      preset: 'LOGS_15M',
+    });
+    expect(read(`from=1&to=${40 * day}`).window).toEqual({
+      from: 10 * day,
+      to: 40 * day,
+    });
+    expect(read('filters=%%%').rules).toEqual([]);
+    expect(read('filters=bm90IGpzb24').rules).toEqual([]);
+    expect(read(`filters=${b64({ a: 1 })}`).rules).toEqual([]);
+    expect(
+      read(
+        `filters=${b64([
+          ['service', 'is', ['web']],
+          ['nope', 'is', ['x']],
+          ['level', 'contains', ['e']],
+          ['service', 'is', [1]],
+          ['attr.', 'is', ['x']],
+          ['service', 'is'],
+          'junk',
+        ])}`,
+      ).rules,
+    ).toEqual([{ name: 'service', operator: 'is', value: ['web'] }]);
+    expect(read('line=abc').line).toBeNull();
+    expect(read('line=abc&at=soon').line).toBeNull();
+    expect(read('at=5').line).toBeNull();
+  });
+
+  test('the link takes its own keys of the address and leaves the rest', () => {
+    expect(
+      withLink('?vmode=1&window=15m&line=a&at=1', {
+        ...none,
+        window: { preset: 'LOGS_24H' },
+      }),
+    ).toBe('vmode=1&window=24h');
+  });
+
+  test("a line's link keeps the window it was seen in", () => {
+    expect(lineWindow({ from: 100, to: 200 }, 150)).toEqual({
+      from: 100,
+      to: 200,
+    });
+    expect(lineWindow({ from: 100, to: 200 }, 500)).toEqual({
+      from: 450,
+      to: 550,
+    });
+  });
+});
+
 describe('OtelLogsStore page model', () => {
   let store: OtelLogsStore;
   beforeEach(() => {
@@ -859,5 +968,49 @@ describe('OtelLogsStore page model', () => {
     store.loadViews(2, '7');
     expect(store.views).toEqual([]);
     expect(store.view).toBeNull();
+  });
+
+  test('a link opens its line, asked for at its time when not held', async () => {
+    svc.search.mockClear();
+    const line = { id: 'x1', timestamp: '1700000000123456789' };
+    svc.search.mockResolvedValueOnce({
+      logs: [{ id: 'other' }, line],
+      nextCursor: null,
+    });
+    const rules = [{ name: 'service', operator: 'is', value: ['web'] }];
+    const found = await store.applyLink({
+      window: { from: 1000, to: 2000 },
+      rules,
+      line: { id: 'x1', at: 1_700_000_000_123 },
+    });
+    expect(found).toBe(true);
+    expect(store.window).toEqual({ from: 1000, to: 2000 });
+    expect(store.ruleList).toEqual(rules);
+    expect(store.openLine).toEqual(line);
+    expect(svc.search.mock.calls[0][0]).toMatchObject({
+      startTime: 1_700_000_000_123,
+      endTime: 1_700_000_000_124,
+    });
+    expect(store.link.line).toEqual({ id: 'x1', at: 1_700_000_000_123 });
+  });
+
+  test('a linked line that is gone closes and leaves the link', async () => {
+    svc.search.mockResolvedValueOnce({ logs: [], nextCursor: null });
+    const lookup = store.applyLink({
+      window: { preset: DEFAULT_LOG_PRESET },
+      rules: [],
+      line: { id: 'gone', at: 5 },
+    });
+    expect(store.link.line).toEqual({ id: 'gone', at: 5 });
+    expect(await lookup).toBe(false);
+    expect(store.openId).toBeNull();
+    expect(store.link.line).toBeNull();
+  });
+
+  test('the folded chart is remembered', () => {
+    store.setChartOpen(false);
+    expect(new OtelLogsStore().chartOpen).toBe(false);
+    store.setChartOpen(true);
+    expect(new OtelLogsStore().chartOpen).toBe(true);
   });
 });

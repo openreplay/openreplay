@@ -75,6 +75,7 @@ export interface LogDrawerProps {
   onPlay?: (line: OtelLog) => void;
   withDate: boolean;
   zone: string;
+  link?: string;
 }
 
 type Tab = 'attributes' | 'raw' | 'related';
@@ -98,6 +99,7 @@ export function LogDrawer({
   onPlay,
   withDate,
   zone,
+  link,
 }: LogDrawerProps) {
   const { t } = useTranslation();
   const [tab, setTab] = useState<Tab>('attributes');
@@ -244,6 +246,13 @@ export function LogDrawer({
       }
       headerActions={
         <>
+          {link && (
+            <CopyButton
+              variant="ghost"
+              text={link}
+              label={t('Copy link to this line')}
+            />
+          )}
           <IconButton
             icon={<ChevronUp size={15} />}
             label={t('Previous line (k)')}
