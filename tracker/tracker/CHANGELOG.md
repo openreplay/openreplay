@@ -3,7 +3,7 @@
 - `captureSanitizer` option: a synchronous callback that gets attributes, resource URLs, CSS, fonts and inlined SVG sprites after the built-in masking and can rewrite or drop each value; canvas and cross-domain iframe capture are off while it is set
 - `discard()` (also on the singleton): stops recording for the page without sending buffered data, aborts canvas uploads and analytics requests in flight and clears the tracker's stored session and device keys (`stop()` still flushes)
 - `stop()` or `discard()` called from a start callback cancels that start (it went on to record)
-- SVG sprites: a sprite file is fetched once and shared by every `<use>` pointing at it (others waited on a 100 ms poll); a `<use>` with both `href` and `xlink:href` records `href`, as browsers render it
+- SVG sprites: a sprite file is fetched once and shared by every `<use>` pointing at it (others waited on a 100 ms poll); a `<use>` with both `href` and `xlink:href` records `href`, as browsers render it; a hidden `<use>` gets no copy of its symbol
 - CSS: `deleteRule()` and `replaceSync()` are recorded after the browser applies them, so a call it rejects is not recorded; constructed stylesheet source text that can't be split into rules reliably falls back to the browser's serialization
 
 ## 19.1.3

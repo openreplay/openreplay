@@ -368,13 +368,17 @@ export default abstract class Observer {
         return
       }
 
-      if (isUseElement(node) && name === 'href' && !this.disableSprites) {
+      if (isUseElement(node) && name === 'href' && !this.disableSprites && this.inlinesSprite(id)) {
         this.sendSprite(id, node, name, value)
         return
       }
 
       if (name === 'href') {
         if (value.length > 1e5) {
+          value = ''
+        }
+        // a masked or hidden <use> with a policy points at its symbol only
+        if (policy && app.sanitizer.isObscured(id) && !value.startsWith('#')) {
           value = ''
         }
         const approved = policy
@@ -449,10 +453,21 @@ export default abstract class Observer {
     this.sendAttributeValue(id, node, name, value)
   }
 
+  /** A hidden <use> gets no copy of its symbol; with a policy, neither does a masked one. */
+  private inlinesSprite(id: number): boolean {
+    const sanitizer = this.app.sanitizer
+    return !sanitizer.isHidden(id) && !(this.app.captureSanitizer && sanitizer.isObscured(id))
+  }
+
   private sendAttributeValue(id: number, node: Element, name: string, value: string): void {
     value = this.maskAttribute(id, node, name, value)
     const policy = this.app.captureSanitizer
-    const approved = policy ? sanitizeCapture(policy, { kind: 'attribute', name, value, node }) : value
+    // SVG elements keep style as a plain attribute; the policy still sees it as CSS
+    const approved = !policy
+      ? value
+      : name === 'style'
+        ? sanitizeCapture(policy, { kind: 'css', source: 'attribute', value, node })
+        : sanitizeCapture(policy, { kind: 'attribute', name, value, node })
     if (approved === null) this.app.attributeSender.removeAttribute(id, name, node)
     else this.app.attributeSender.sendSetAttribute(id, name, approved, false, node)
   }
@@ -469,10 +484,12 @@ export default abstract class Observer {
       }
     }
     const gen = this.generation
+    // the element may have been masked or its href changed while the file loaded
     const isCurrent = () =>
       this.generation === gen &&
       app.nodes.getID(node) === id &&
-      (node.getAttribute('href') ?? node.getAttribute('xlink:href')) === href
+      (node.getAttribute('href') ?? node.getAttribute('xlink:href')) === href &&
+      this.inlinesSprite(id)
     spriteMarkup(node, href, this.domParser)
       .then((svg) => {
         if (!svg || !isCurrent()) return

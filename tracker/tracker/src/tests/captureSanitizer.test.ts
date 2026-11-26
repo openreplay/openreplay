@@ -2,7 +2,7 @@ import { afterEach, describe, expect, jest, test } from '@jest/globals'
 import AttributeSender from '../main/modules/attributeSender.js'
 import TopObserver from '../main/app/observer/top_observer.js'
 import Nodes from '../main/app/nodes/index.js'
-import Sanitizer, { stringWiper } from '../main/app/sanitizer.js'
+import Sanitizer, { SanitizeLevel, stringWiper } from '../main/app/sanitizer.js'
 import images from '../main/modules/img.js'
 import fonts from '../main/modules/fonts.js'
 import { Type } from '../common/messages.gen.js'
@@ -30,7 +30,6 @@ function appFixture() {
     captureSanitizer: sanitize,
     safe: (fn: any) => fn,
     send: (message: any[]) => sent.push(message),
-    isDisposed: () => false,
     getBaseHref: () => 'https://example.invalid/',
     timestamp: () => 1,
     active: () => true,
@@ -255,6 +254,43 @@ test.each(['legacy'].flatMap((core) => [[core, 'none'], [core, 'token strip']]))
     expect(JSON.stringify(sent)).not.toContain('token=example')
   },
 )
+
+test.each(['legacy'])('%s drops a sprite whose <use> is masked while its file loads', async (core) => {
+  let respond: (value: any) => void = () => {}
+  stubFetch(jest.fn(() => new Promise((resolve) => { respond = resolve })))
+  const { app, sent } = observe(
+    `<svg><use href="https://static.invalid/masked-${core}.svg#icon"></use></svg>`,
+    (data) => data.value,
+    core,
+  )
+  app.sanitizer.setLevel(app.nodes.getID(document.querySelector('use')!), SanitizeLevel.Obscured)
+  respond({ ok: true, text: async () => spriteFile('M5 5') })
+  await tick()
+  expect(JSON.stringify(sent)).not.toContain(SPRITE)
+})
+
+test.each(['legacy'])('%s gives a hidden <use> no copy of its symbol', async (core) => {
+  const fetcher = jest.fn()
+  stubFetch(fetcher)
+  const { app, sent } = appFixture()
+  app.captureSanitizer = undefined
+  document.documentElement.innerHTML =
+    '<head></head><body><svg><symbol id="icon"><path d="M6 6"/></symbol>' +
+    '<use data-openreplay-hidden href="#icon"></use></svg></body>'
+  const observer = makeObserver(core, app)
+  cleanups.push(() => observer.disconnect())
+  observer.observe()
+  await tick()
+  expect(JSON.stringify(sent)).not.toContain(SPRITE)
+})
+
+test.each(['legacy'])('%s passes an SVG style attribute to the policy as CSS', (core) => {
+  const { sanitize } = observe('<svg style="fill: red"></svg>', (data) => data.value, core)
+  expect(sanitize).toHaveBeenCalledWith(
+    expect.objectContaining({ kind: 'css', source: 'attribute', value: 'fill: red' }),
+  )
+  expect(sanitize).not.toHaveBeenCalledWith(expect.objectContaining({ kind: 'attribute', name: 'style' }))
+})
 
 test.each(['legacy'])('%s approves only the effective SVG sprite reference', (core) => {
   const { sanitize } = observe(

@@ -16,7 +16,6 @@ function makeApp() {
     safe: (f: any) => f,
     send: (msg: any) => sent.push(msg),
     callResanitizeCallbacks: jest.fn(),
-    isDisposed: () => false,
     getBaseHref: () => 'http://localhost/',
     debug: { log: jest.fn(), warn: jest.fn(), info: jest.fn(), error: jest.fn() },
   }

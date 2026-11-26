@@ -441,6 +441,24 @@ test('discard with analytics active drops its queue and never sends it', async (
   expect(batcher.getBatches()).toEqual({ data: { user_actions: [], events: [] } })
 })
 
+test('discard while not recording still drops analytics and keeps its ids out of storage', async () => {
+  const { tracker, fetcher } = create(undefined, false, true, true)
+  app.activityState = 0
+  ;(fetcher as any).mockResolvedValue({ ok: true, status: 200 })
+  tracker.setAnalyticsToken('synthetic-analytics-token')
+  tracker.track('before-discard', { safe: 'synthetic' })
+  tracker.discard()
+  tracker.analytics!.track('after-discard', {}, { send_immediately: true })
+  tracker.analytics!.people.reset(true)
+  tracker.analytics!.people.identify('synthetic-late')
+  await jest.advanceTimersByTimeAsync(6000)
+
+  expect(fetcher).not.toHaveBeenCalled()
+  expect(localStorage.getItem('$__or__distinct_device_id__$')).toBeNull()
+  expect(sessionStorage.getItem('$__or__user_id__$')).toBeNull()
+  expect(await tracker.start()).toEqual({ success: false, reason: 'Tracker discarded' })
+})
+
 test('ordinary stop with analytics active still flushes its queued batch', () => {
   const { tracker, fetcher } = create(undefined, false, true, true)
   ;(fetcher as any).mockResolvedValue({ ok: true, status: 200 })
