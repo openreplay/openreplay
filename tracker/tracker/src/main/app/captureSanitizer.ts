@@ -22,6 +22,7 @@ export type CaptureData =
 /** Return a replacement string or null to omit the value after existing masking.
  * Must be synchronous; exceptions and non-string results omit the value.
  * Inlining retains the original asset only for unchanged URLs or query-parameter removal.
+ * Canvas capture is disabled when this policy is set.
  */
 export type CaptureSanitizer = (data: Readonly<CaptureData>) => string | null
 

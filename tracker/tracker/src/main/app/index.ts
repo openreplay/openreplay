@@ -473,7 +473,7 @@ export default class App {
       this.nodes = new Nodes(nodesOptions)
       this.observer = new Observer({ app: this, options })
     }
-    if (IN_BROWSER && !this.options.canvas.disableCanvas) {
+    if (IN_BROWSER && !this.captureSanitizer && !this.options.canvas.disableCanvas) {
       // WebGL canvases are captured on draw; that needs their contexts from creation on
       watchCanvasContexts(window)
       this.observer.attachContextCallback(watchCanvasContexts)
@@ -481,6 +481,9 @@ export default class App {
     this.ticker = new Ticker(this)
     this.ticker.attach(() => this.commit())
     this.debug = new Logger(this.options.__debug__)
+    if (this.captureSanitizer && !this.options.canvas.disableCanvas) {
+      this.debug.warn('OpenReplay: canvas capture is disabled with captureSanitizer')
+    }
     if (this.captureSanitizer && this.options.crossdomain?.enabled) {
       this.debug.warn('OpenReplay: cross-domain child capture is disabled with captureSanitizer')
     }
@@ -2310,7 +2313,7 @@ export default class App {
         void this.bootChildrenFrames()
       }
 
-      if (canvasEnabled && !this.options.canvas.disableCanvas) {
+      if (canvasEnabled && !this.captureSanitizer && !this.options.canvas.disableCanvas) {
         this.canvasRecorder =
           this.canvasRecorder ??
           new CanvasRecorder(this, {
