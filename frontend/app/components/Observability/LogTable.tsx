@@ -18,6 +18,7 @@ import {
 export interface LogTableProps {
   rows: readonly OtelLog[];
   withDate: boolean;
+  zone: string;
   openId: string | null;
   onOpen: (log: OtelLog) => void;
   onPlay?: (log: OtelLog) => void;
@@ -37,6 +38,7 @@ const COLUMN_WIDTH: Record<string, number> = {
 export function LogTable({
   rows,
   withDate,
+  zone,
   openId,
   onOpen,
   onPlay,
@@ -54,7 +56,7 @@ export function LogTable({
       priority: 1,
       render: (l) => (
         <span className="m-logs__stamp">
-          {lineStamp(otelLogTimeMs(l), withDate)}
+          {lineStamp(otelLogTimeMs(l), withDate, zone)}
         </span>
       ),
     },

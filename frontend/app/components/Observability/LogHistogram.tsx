@@ -26,6 +26,7 @@ export interface LogHistogramProps {
   onWindow: (from: number, to: number) => void;
   back?: { label: string; onBack: () => void };
   withDate: boolean;
+  zone: string;
   legendSlot?: HTMLElement | null;
 }
 
@@ -73,6 +74,7 @@ export function LogHistogram({
   onToggleLevel,
   onWindow,
   withDate,
+  zone,
   legendSlot,
   back,
 }: LogHistogramProps) {
@@ -109,7 +111,7 @@ export function LogHistogram({
 
   const option = useMemo(() => {
     const base = baseOption(theme);
-    const labels = buckets.map((b) => clockLabel(b.from, withDate, secs));
+    const labels = buckets.map((b) => clockLabel(b.from, withDate, zone, secs));
     return {
       ...base,
       animationDuration: 0,
@@ -167,7 +169,7 @@ export function LogHistogram({
       })),
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [buckets, theme, levels, withDate, marks, secs]);
+  }, [buckets, theme, levels, withDate, zone, marks, secs]);
 
   useEffect(() => {
     if (!inst) return undefined;
@@ -280,7 +282,7 @@ export function LogHistogram({
     const b = bs[bs.length - 1];
     if (!a || !b) return '';
     const s = b.to - a.from < 10 * 60_000 || secs;
-    return `${clockLabel(a.from, withDate, s)} to ${clockLabel(b.to, withDate, s)}`;
+    return `${clockLabel(a.from, withDate, zone, s)} to ${clockLabel(b.to, withDate, zone, s)}`;
   };
   const stampAt = hover != null && !brush ? px(hover) : null;
 
@@ -368,7 +370,7 @@ export function LogHistogram({
           aria-hidden="true"
         >
           {hover != null && buckets[hover]
-            ? clockLabel(buckets[hover].from, false, secs)
+            ? clockLabel(buckets[hover].from, false, zone, secs)
             : ''}
         </span>
       </div>

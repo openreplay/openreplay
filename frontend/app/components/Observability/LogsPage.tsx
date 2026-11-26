@@ -79,7 +79,9 @@ import {
   levelTotals,
   lineText,
   logFilter,
+  logZone,
   nameOfKey,
+  sameLogDay,
   scopeOfKey,
   sessionOf,
   toBuckets,
@@ -104,6 +106,7 @@ function LogsPage() {
     projectsStore,
     userStore,
     sessionStore,
+    settingsStore,
   } = useStore();
   const navigate = useNavigate();
   const phone = useViewport() === 'phone';
@@ -166,13 +169,13 @@ function LogsPage() {
 
   useEffect(() => setViewOpen(false), [store.viewId]);
 
+  const zone = logZone(settingsStore.sessionSettings);
   const applied = store.appliedFilter;
   const bounds = applied
     ? { from: applied.startTime, to: applied.endTime }
     : windowBounds(store.window);
   const withDate =
-    bounds.to - bounds.from > DAY ||
-    new Date(bounds.from).getDate() !== new Date(bounds.to).getDate();
+    bounds.to - bounds.from > DAY || !sameLogDay(bounds.from, bounds.to, zone);
 
   const resourceKeys = useMemo(
     () =>
@@ -264,7 +267,7 @@ function LogsPage() {
   const backLabel = zoomBack
     ? 'preset' in zoomBack
       ? presetLabel(zoomBack.preset).toLowerCase()
-      : `${clockLabel(zoomBack.from, withDate)} – ${clockLabel(zoomBack.to, withDate)}`
+      : `${clockLabel(zoomBack.from, withDate, zone)} – ${clockLabel(zoomBack.to, withDate, zone)}`
     : '';
 
   /* the controls on the list's head */
@@ -285,6 +288,7 @@ function LogsPage() {
           options={LOG_PRESETS.map((p) => ({ value: p.value, label: p.label }))}
           resting={DEFAULT_LOG_PRESET}
           withTime
+          zone={zone}
           onChange={(p: any) =>
             p.rangeName === CUSTOM_RANGE
               ? store.setWindow(clampWindow(p.start, p.end))
@@ -502,6 +506,7 @@ function LogsPage() {
           zoomBack ? { label: backLabel, onBack: store.zoomOut } : undefined
         }
         withDate={withDate}
+        zone={zone}
         legendSlot={legendSlot}
       />
     );
@@ -696,6 +701,7 @@ function LogsPage() {
                     to={bounds.to}
                     columns={store.columns}
                     ruleCount={ruleCount}
+                    zone={zone}
                   />
                   {displayControl}
                 </span>
@@ -741,6 +747,7 @@ function LogsPage() {
                     <LogTable
                       rows={store.pageRows}
                       withDate={withDate}
+                      zone={zone}
                       openId={store.openId}
                       onOpen={store.openLog}
                       onPlay={play}
@@ -808,6 +815,7 @@ function LogsPage() {
         onToggleColumn={store.toggleColumn}
         onPlay={play}
         withDate={withDate}
+        zone={zone}
       />
       <SaveViewDialog
         open={naming}

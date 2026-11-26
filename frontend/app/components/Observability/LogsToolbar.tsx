@@ -6,7 +6,6 @@ import { RenameDialog } from '@/ui/overlays/RenameDialog';
 import { PopoverPanel } from '@/ui/overlays/popover';
 import { toast } from '@/ui/overlays/toast';
 import { Download, LoaderCircle } from 'lucide-react';
-import { DateTime } from 'luxon';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -17,9 +16,11 @@ import {
   EXPORT_LIMIT,
   type ExportFormat,
   SearchChangedError,
+  clockLabel,
   compactCount,
   exportFileName,
   exportLines,
+  sameLogDay,
 } from './logs-logic';
 
 export interface ExportControlProps {
@@ -35,6 +36,7 @@ export interface ExportControlProps {
   to: number;
   columns: readonly string[];
   ruleCount: number;
+  zone: string;
 }
 
 export function ExportControl({
@@ -46,6 +48,7 @@ export function ExportControl({
   to,
   columns,
   ruleCount,
+  zone,
 }: ExportControlProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -55,13 +58,9 @@ export function ExportControl({
   useEffect(() => () => job?.abort(), [job]);
   const n = Math.min(total, EXPORT_LIMIT);
   const capped = total > EXPORT_LIMIT;
-  const sameDay = DateTime.fromMillis(from).hasSame(
-    DateTime.fromMillis(to),
-    'day',
-  );
   const span = t('{{from}} to {{to}}', {
-    from: DateTime.fromMillis(from).toFormat('LLL d, HH:mm'),
-    to: DateTime.fromMillis(to).toFormat(sameDay ? 'HH:mm' : 'LLL d, HH:mm'),
+    from: clockLabel(from, true, zone),
+    to: clockLabel(to, !sameLogDay(from, to, zone), zone),
   });
   const cancel = () => {
     job?.abort();
@@ -77,7 +76,7 @@ export function ExportControl({
       const blob = new Blob(format === 'csv' ? [CSV_BOM, body] : [body], {
         type: format === 'csv' ? 'text/csv' : 'application/x-ndjson',
       });
-      saveBlob(blob, exportFileName(from, to, format));
+      saveBlob(blob, exportFileName(from, to, format, zone));
       setOpen(false);
     } catch (e) {
       if (ctl.signal.aborted) return;

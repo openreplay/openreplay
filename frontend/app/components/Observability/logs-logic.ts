@@ -1,4 +1,5 @@
 import type { TFunction } from 'i18next';
+import { DateTime } from 'luxon';
 
 import type { Filter } from 'App/mstore/types/filterConstants';
 import {
@@ -44,25 +45,37 @@ export const clampWindow = (from: number, to: number): LogWindow => ({
   to,
 });
 
-const pad = (n: number, w = 2) => String(n).padStart(w, '0');
+/** a server line has no end user: that choice reads as the computer's clock */
+export const logZone = (s: {
+  shownTimezone: string;
+  timezone?: { value: string } | null;
+}): string =>
+  s.shownTimezone !== 'user' && s.timezone?.value ? s.timezone.value : 'local';
 
-export function lineStamp(ms: number, withDate: boolean): string {
-  const d = new Date(ms);
-  const t = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${pad(d.getMilliseconds(), 3)}`;
-  return withDate
-    ? `${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} ${t}`
-    : t;
+export const logTime = (ms: number, zone: string) =>
+  DateTime.fromMillis(ms, { zone });
+
+export const sameLogDay = (a: number, b: number, zone: string) =>
+  logTime(a, zone).hasSame(logTime(b, zone), 'day');
+
+const dayLabel = (d: DateTime) =>
+  d.toLocaleString({ month: 'short', day: 'numeric' });
+
+export function lineStamp(ms: number, withDate: boolean, zone: string): string {
+  const d = logTime(ms, zone);
+  const t = d.toFormat('HH:mm:ss.SSS');
+  return withDate ? `${dayLabel(d)} ${t}` : t;
 }
 
 export function clockLabel(
   ms: number,
   withDate: boolean,
+  zone: string,
   withSeconds = false,
 ): string {
-  const d = new Date(ms);
-  const hm = `${pad(d.getHours())}:${pad(d.getMinutes())}${withSeconds ? `:${pad(d.getSeconds())}` : ''}`;
-  if (!withDate) return hm;
-  return `${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}, ${hm}`;
+  const d = logTime(ms, zone);
+  const hm = d.toFormat(withSeconds ? 'HH:mm:ss' : 'HH:mm');
+  return withDate ? `${dayLabel(d)}, ${hm}` : hm;
 }
 
 export function compactCount(n: number): string {
@@ -760,13 +773,17 @@ export function exportLines(
       .map((l) => {
         const body = bodyOf(l);
         return JSON.stringify({
-          timestamp: new Date(otelLogTimeMs(l)).toISOString(),
+          timestamp_utc: new Date(otelLogTimeMs(l)).toISOString(),
           ...otelRow(l),
           ...(body ? { body: body.json } : {}),
         });
       })
       .join('\n');
-  const head = [t('Time'), ...columns.map((c) => keyLabel(t, c)), t('Message')];
+  const head = [
+    'timestamp_utc',
+    ...columns.map((c) => keyLabel(t, c)),
+    t('Message'),
+  ];
   const rows = slice.map((l) =>
     [
       new Date(otelLogTimeMs(l)).toISOString(),
@@ -779,11 +796,13 @@ export function exportLines(
   return [head.map(csvCell).join(','), ...rows].join('\n');
 }
 
-export function exportFileName(from: number, to: number, format: ExportFormat) {
-  const stamp = (ms: number) => {
-    const d = new Date(ms);
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}`;
-  };
+export function exportFileName(
+  from: number,
+  to: number,
+  format: ExportFormat,
+  zone: string,
+) {
+  const stamp = (ms: number) => logTime(ms, zone).toFormat('yyyy-MM-dd_HHmm');
   return `logs_${stamp(from)}_to_${stamp(to)}.${format === 'json' ? 'ndjson' : 'csv'}`;
 }
 

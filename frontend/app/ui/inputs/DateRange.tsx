@@ -38,15 +38,18 @@ export interface DateRangeProps {
   variant?: 'outline' | 'subtle';
   /** each end of a custom range is a day and a time of day, in separate fields */
   withTime?: boolean;
+  /** shown and picked in this zone; luxon defaultZone (the app's) when unset */
+  zone?: string;
 }
 
 type End = 'from' | 'to';
 type Ends = { from?: number; to?: number };
 
-const dayText = (ms?: number) =>
-  ms != null ? DateTime.fromMillis(ms).toFormat('yyyy-MM-dd') : '';
-const clock = (ms?: number) =>
-  ms != null ? DateTime.fromMillis(ms).toFormat('HH:mm') : undefined;
+const inZone = (ms: number, zone?: string) => DateTime.fromMillis(ms, { zone });
+const dayText = (ms?: number, zone?: string) =>
+  ms != null ? inZone(ms, zone).toFormat('yyyy-MM-dd') : '';
+const clock = (ms?: number, zone?: string) =>
+  ms != null ? inZone(ms, zone).toFormat('HH:mm') : undefined;
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -55,16 +58,19 @@ const DEFAULT_TIMES = { from: '00:00', to: '23:59' };
 // The calendar draws browser-local days, the window is in the app's timezone
 // (luxon defaultZone): map by calendar day, not by instant, or a click lands on
 // the day before whenever the browser is east of that timezone.
-const toGridDay = (ms: number) => {
-  const d = DateTime.fromMillis(ms);
+const toGridDay = (ms: number, zone?: string) => {
+  const d = inZone(ms, zone);
   return new Date(d.year, d.month - 1, d.day);
 };
-const fromGridDay = (day: Date) =>
-  DateTime.fromObject({
-    year: day.getFullYear(),
-    month: day.getMonth() + 1,
-    day: day.getDate(),
-  });
+const fromGridDay = (day: Date, zone?: string) =>
+  DateTime.fromObject(
+    {
+      year: day.getFullYear(),
+      month: day.getMonth() + 1,
+      day: day.getDate(),
+    },
+    { zone },
+  );
 
 export function DateRange({
   period,
@@ -75,6 +81,7 @@ export function DateRange({
   resting = 'LAST_24_HOURS',
   variant = 'outline',
   withTime = false,
+  zone,
 }: DateRangeProps) {
   const { t } = useTranslation();
   const inSheet = useInFilterSheet();
@@ -96,25 +103,25 @@ export function DateRange({
   const showPicker = custom || draft != null;
 
   const [text, setText] = useState({
-    from: dayText(shown.from),
-    to: dayText(shown.to),
+    from: dayText(shown.from, zone),
+    to: dayText(shown.to, zone),
   });
   const [times, setTimes] = useState({
-    from: clock(shown.from) ?? DEFAULT_TIMES.from,
-    to: clock(shown.to) ?? DEFAULT_TIMES.to,
+    from: clock(shown.from, zone) ?? DEFAULT_TIMES.from,
+    to: clock(shown.to, zone) ?? DEFAULT_TIMES.to,
   });
   const [bad, setBad] = useState<{
     from?: 'day' | 'time';
     to?: 'day' | 'time';
   }>({});
   useEffect(() => {
-    setText({ from: dayText(shown.from), to: dayText(shown.to) });
+    setText({ from: dayText(shown.from, zone), to: dayText(shown.to, zone) });
     setTimes((c) => ({
-      from: clock(shown.from) ?? c.from,
-      to: clock(shown.to) ?? c.to,
+      from: clock(shown.from, zone) ?? c.from,
+      to: clock(shown.to, zone) ?? c.to,
     }));
     setBad({});
-  }, [shown.from, shown.to, open]);
+  }, [shown.from, shown.to, open, zone]);
   // times typed since the menu opened; the others reset with a new range
   const edited = useRef<{ from?: boolean; to?: boolean }>({});
   useEffect(() => {
@@ -156,12 +163,9 @@ export function DateRange({
   const sameDay =
     shown.from != null &&
     shown.to != null &&
-    DateTime.fromMillis(shown.from).hasSame(
-      DateTime.fromMillis(shown.to),
-      'day',
-    );
+    inZone(shown.from, zone).hasSame(inZone(shown.to, zone), 'day');
   const stamp = (ms: number, day = true) =>
-    DateTime.fromMillis(ms).toFormat(
+    inZone(ms, zone).toFormat(
       withTime ? (day ? 'LLL d, HH:mm' : 'HH:mm') : 'LLL d',
     );
   const label = shown.from
@@ -177,7 +181,7 @@ export function DateRange({
       commit({ ...shown, [end]: undefined });
       return;
     }
-    const day = DAY.test(value) ? DateTime.fromISO(value) : null;
+    const day = DAY.test(value) ? DateTime.fromISO(value, { zone }) : null;
     const ok =
       !!day?.isValid &&
       day.toMillis() <= Date.now() &&
@@ -193,9 +197,9 @@ export function DateRange({
     const cur = shown[end];
     const day =
       cur != null
-        ? DateTime.fromMillis(cur).startOf('day')
+        ? inZone(cur, zone).startOf('day')
         : DAY.test(text[end])
-          ? DateTime.fromISO(text[end])
+          ? DateTime.fromISO(text[end], { zone })
           : null;
     if (!day?.isValid) return;
     const ok = commit({ ...shown, [end]: endAt(day, end, value) });
@@ -204,16 +208,16 @@ export function DateRange({
 
   const range: DayRange | undefined = shown.from
     ? {
-        from: toGridDay(shown.from),
-        to: shown.to ? toGridDay(shown.to) : undefined,
+        from: toGridDay(shown.from, zone),
+        to: shown.to ? toGridDay(shown.to, zone) : undefined,
       }
     : undefined;
 
   const onPickDay = (day: Date) => {
-    const at = fromGridDay(day);
+    const at = fromGridDay(day, zone);
     const startDay =
       shown.from != null
-        ? DateTime.fromMillis(shown.from).startOf('day').toMillis()
+        ? inZone(shown.from, zone).startOf('day').toMillis()
         : null;
     if (step === 'from' || startDay == null || at.toMillis() < startDay) {
       const next = {
@@ -229,7 +233,7 @@ export function DateRange({
     const ok = commit({ from: shown.from, to });
     if (!ok) {
       // the day stays in its field so End time can still fix the range
-      setText((d) => ({ ...d, to: dayText(to) }));
+      setText((d) => ({ ...d, to: dayText(to, zone) }));
       setBad((b) => ({ ...b, to: 'time' }));
       return;
     }

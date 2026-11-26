@@ -74,6 +74,7 @@ export interface LogDrawerProps {
   onToggleColumn: (key: string) => void;
   onPlay?: (line: OtelLog) => void;
   withDate: boolean;
+  zone: string;
 }
 
 type Tab = 'attributes' | 'raw' | 'related';
@@ -96,6 +97,7 @@ export function LogDrawer({
   onToggleColumn,
   onPlay,
   withDate,
+  zone,
 }: LogDrawerProps) {
   const { t } = useTranslation();
   const [tab, setTab] = useState<Tab>('attributes');
@@ -214,7 +216,7 @@ export function LogDrawer({
             {/* a line with a trace has a copy button, taller than the words */}
             <span className="m-logs__meta-strut" aria-hidden="true" />
             <span className="m-logs__stamp">
-              {lineStamp(otelLogTimeMs(line), true)}
+              {lineStamp(otelLogTimeMs(line), true, zone)}
             </span>
             {line.traceId && (
               <span className="m-logs__trace">
@@ -350,6 +352,7 @@ export function LogDrawer({
                   onMatch={setMatch}
                   onOpen={onOpen}
                   withDate={withDate}
+                  zone={zone}
                 />
               )}
             </TabsContent>
@@ -369,6 +372,7 @@ function Related({
   onMatch,
   onOpen,
   withDate,
+  zone,
 }: {
   line: OtelLog;
   fetch: LogDrawerProps['related'];
@@ -378,6 +382,7 @@ function Related({
   onMatch: (m: RelatedMatch) => void;
   onOpen: (line: OtelLog) => void;
   withDate: boolean;
+  zone: string;
 }) {
   const { t } = useTranslation();
   const [lines, setLines] = useState<OtelLog[] | null>(null);
@@ -468,7 +473,7 @@ function Related({
               aria-current={self || undefined}
             >
               <span className="m-logs__stamp">
-                {lineStamp(otelLogTimeMs(l), withDate)}
+                {lineStamp(otelLogTimeMs(l), withDate, zone)}
               </span>
               {match === 'all' && (
                 <span className="m-logs__relsvc">

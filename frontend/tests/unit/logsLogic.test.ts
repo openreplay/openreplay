@@ -1,9 +1,20 @@
-import { beforeEach, describe, expect, jest, test } from '@jest/globals';
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  jest,
+  test,
+} from '@jest/globals';
+import { Settings } from 'luxon';
 
 import {
   NO_SERVICE,
   bodyOf,
+  clockLabel,
   drillCards,
+  exportFileName,
   exportLines,
   facetChoices,
   isFacetKey,
@@ -12,10 +23,13 @@ import {
   levelOfText,
   lineFields,
   lineHeadFacts,
+  lineStamp,
   lineText,
   logFilter,
+  logZone,
   readBody,
   rulesToFilter,
+  sameLogDay,
   sameRules,
   valueLabel,
   windowBounds,
@@ -471,6 +485,64 @@ describe('lineHeadFacts', () => {
   });
 });
 
+describe('the Logs clock', () => {
+  // 2023-11-14T22:13:20.123Z
+  const at = 1700000000123;
+  let locale: string;
+  beforeAll(() => {
+    locale = Settings.defaultLocale;
+    Settings.defaultLocale = 'en-US';
+  });
+  afterAll(() => {
+    Settings.defaultLocale = locale;
+  });
+
+  test('reads the Preferences zone, the computer for the end user', () => {
+    expect(
+      logZone({ shownTimezone: 'local', timezone: { value: 'UTC+05:30' } }),
+    ).toBe('UTC+05:30');
+    expect(
+      logZone({ shownTimezone: 'user', timezone: { value: 'UTC+05:30' } }),
+    ).toBe('local');
+    expect(logZone({ shownTimezone: 'local', timezone: null })).toBe('local');
+  });
+
+  test('stamps a line on that zone', () => {
+    expect(lineStamp(at, false, 'America/Sao_Paulo')).toBe('19:13:20.123');
+    expect(lineStamp(at, false, 'UTC-03')).toBe('19:13:20.123');
+    expect(lineStamp(at, true, 'Asia/Kolkata')).toBe('Nov 15 03:43:20.123');
+    expect(lineStamp(at, true, 'UTC+05:30')).toBe('Nov 15 03:43:20.123');
+  });
+
+  test('labels the chart and the window on that zone', () => {
+    expect(clockLabel(at, false, 'America/Sao_Paulo')).toBe('19:13');
+    expect(clockLabel(at, true, 'Asia/Kolkata', true)).toBe('Nov 15, 03:43:20');
+    const nov9 = Date.UTC(2026, 10, 9, 3);
+    expect(clockLabel(nov9, true, 'UTC-03')).toBe('Nov 9, 00:00');
+    expect(clockLabel(nov9, true, 'UTC')).toBe('Nov 9, 03:00');
+  });
+
+  test("a day is that zone's day", () => {
+    const a = Date.UTC(2023, 10, 14, 23);
+    const b = Date.UTC(2023, 10, 15, 1);
+    expect(sameLogDay(a, b, 'UTC')).toBe(false);
+    expect(sameLogDay(a, b, 'America/Sao_Paulo')).toBe(true);
+    expect(sameLogDay(a, b, 'Asia/Kolkata')).toBe(true);
+    expect(sameLogDay(Date.UTC(2023, 10, 14, 18), a, 'Asia/Kolkata')).toBe(
+      false,
+    );
+  });
+
+  test('names the export file on that zone', () => {
+    expect(exportFileName(at, at + 3_600_000, 'csv', 'UTC-03')).toBe(
+      'logs_2023-11-14_1913_to_2023-11-14_2013.csv',
+    );
+    expect(exportFileName(at, at, 'json', 'Asia/Kolkata')).toBe(
+      'logs_2023-11-15_0343_to_2023-11-15_0343.ndjson',
+    );
+  });
+});
+
 describe('exportLines', () => {
   const t = ((k: string) => k) as any;
   const l = (body: string, level: string, attrs: Record<string, string>) =>
@@ -496,7 +568,7 @@ describe('exportLines', () => {
       ['level', 'res.k8s.pod.name', 'attr.http.route'],
     );
     expect(csv.split('\n')).toEqual([
-      'Time,Level,Pod,Route,Message',
+      'timestamp_utc,Level,Pod,Route,Message',
       "2023-11-14T22:13:20.123Z,Warning,api-1,/a,'=cmd|calc",
       '2023-11-14T22:13:20.123Z,Info,api-1,,"ok, done"',
     ]);
@@ -507,6 +579,7 @@ describe('exportLines', () => {
       'level',
     ]).split('\n');
     expect(JSON.parse(row)).toMatchObject({
+      timestamp_utc: '2023-11-14T22:13:20.123Z',
       Body: '=x',
       SeverityText: 'WARN',
     });
@@ -589,7 +662,7 @@ describe('JSON bodies', () => {
     const t = ((k: string) => k) as any;
     const lines = [line('{"level":"info","msg":"paid, ok","n":2}'), line('x')];
     expect(exportLines(t, lines, 'csv', []).split('\n')).toEqual([
-      'Time,Message',
+      'timestamp_utc,Message',
       '2023-11-14T22:13:20.123Z,"paid, ok"',
       '2023-11-14T22:13:20.123Z,x',
     ]);
