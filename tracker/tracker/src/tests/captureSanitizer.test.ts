@@ -270,7 +270,8 @@ test.each(['legacy', 'next'])('%s sends an empty SVG href when the policy blanks
 })
 
 test.each(['legacy', 'next'])('%s fetches an approved sprite at the original URL', async (core) => {
-  const href = 'https://static.invalid/sprite.svg?test=example'
+  // sprite files are cached per URL across observers
+  const href = `https://static.invalid/sprite-${core}.svg?test=example`
   const fetcher = jest.fn(async (url: string) => ({
     ok: url === href,
     text: async () => '<svg xmlns="http://www.w3.org/2000/svg"><symbol id="icon"><path d="M0 0"/></symbol></svg>',
@@ -302,7 +303,7 @@ test.each(['legacy', 'next'])('%s fetches an approved sprite at the original URL
   expect(JSON.stringify(sent)).not.toContain('M0 0')
 })
 
-test.each(['legacy', 'next'])('%s does not inline a substituted sprite', async (core) => {
+test.each(['legacy', 'next'])('%s does not fetch or inline a substituted sprite', async (core) => {
   const fetcher = jest.fn()
   const previous = globalThis.fetch
   ;(globalThis as any).fetch = fetcher
@@ -312,10 +313,35 @@ test.each(['legacy', 'next'])('%s does not inline a substituted sprite', async (
     (data) => data.kind === 'resource' ? 'https://static.invalid/placeholder.svg#icon' : data.value,
     core,
   )
-  await Promise.resolve()
+  await new Promise((resolve) => setTimeout(resolve, 0))
   expect(fetcher).not.toHaveBeenCalled()
   expect(JSON.stringify(sent)).not.toContain('_$OPENREPLAY_SPRITE$_')
 })
+
+test.each(['legacy', 'next'].flatMap((core) => [[core, 'none'], [core, 'identity']]))(
+  '%s fetches a sprite file once for all its icons, policy: %s',
+  async (core, policy) => {
+    const url = `https://static.invalid/icons-${core}-${policy}.svg`
+    const fetcher = jest.fn(async (_url: string) => ({
+      ok: true,
+      text: async () => '<svg xmlns="http://www.w3.org/2000/svg"><symbol id="icon"><path d="M3 3"/></symbol></svg>',
+    }))
+    const previous = globalThis.fetch
+    ;(globalThis as any).fetch = fetcher
+    cleanups.push(() => { globalThis.fetch = previous })
+    const { app, sent } = appFixture()
+    app.captureSanitizer = policy === 'none' ? undefined : (data: any) => data.value
+    document.documentElement.innerHTML =
+      '<head></head><body><svg>' + `<use href="${url}#icon"></use>`.repeat(30) + '</svg></body>'
+    const observer = makeObserver(core, app)
+    cleanups.push(() => observer.disconnect())
+    observer.observe()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(fetcher).toHaveBeenCalledTimes(1)
+    expect(sent.filter((m) => m[0] === Type.SetNodeAttribute && String(m[3]).startsWith('_$OPENREPLAY_SPRITE$_')))
+      .toHaveLength(30)
+  },
+)
 
 test.each(['legacy', 'next'])('%s resolves a padded fragment locally without fetching', async (core) => {
   const fetcher = jest.fn()

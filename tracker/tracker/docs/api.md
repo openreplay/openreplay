@@ -172,7 +172,7 @@ type CaptureData =
 | `svg` | Markup of an inlined `<use>` sprite icon. |
 
 - Not passed to it: page text and input values (use masking), page URLs and titles (`urls`), network requests (`network.sanitizer`), console.
-- Inlined stylesheets (`inlineCss` other than `0`) and sprite icons are read from the original URL. Return it unchanged or with query parameters removed (e.g. a signed `?token=`) to keep them; any other URL leaves the stylesheet or icon out of the replay.
+- Inlined stylesheets (`inlineCss` other than `0`) and sprite icons are read from the copy the page loaded, and their content goes through the `css` / `svg` kinds. Return the URL unchanged or with query parameters removed (e.g. a signed `?token=`) to keep them; any other URL leaves them out of the replay, since the tracker doesn't fetch URLs the policy returns. With `inlineCss: 0` the replay loads the stylesheet URL you return.
 - Canvas and cross-domain iframe capture are off while it is set.
 
 ## Other

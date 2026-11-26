@@ -1,4 +1,4 @@
-import { resolveInlineAsset, sanitizeCapture, type CaptureSanitizer } from '../captureSanitizer.js'
+import { isSameAsset, sanitizeCapture, type CaptureSanitizer } from '../captureSanitizer.js'
 let fakeIdHolder = 1000000 * 99;
 
 export function inlineRemoteCss(
@@ -11,18 +11,18 @@ export function inlineRemoteCss(
   forceFetch?: boolean,
   sendPlain?: boolean,
   onPlain?: (cssText: string, id: number, baseHref: string) => void,
-  capture?: { sanitizer: CaptureSanitizer | undefined; href: string; original: string },
+  capture?: { sanitizer: CaptureSanitizer; href: string; original: string },
   signal?: AbortSignal,
 ) {
-  const url = node.href
   const isStale = () => signal?.aborted ||
-    (capture !== undefined && (node.getAttribute('href') !== capture.original || node.href !== url))
+    (capture !== undefined && node.getAttribute('href') !== capture.original)
   if (isStale()) return
+  const sourceUrl = node.href
   let cssBaseHref = baseHref
   if (capture) {
-    const asset = resolveInlineAsset(capture.original, capture.href, node.baseURI)
-    if (!asset) return
-    cssBaseHref = asset.replayUrl
+    // the page's copy is read only when the approved URL is the same file; the tracker fetches no other URL
+    if (!capture.href || !isSameAsset(capture.original, capture.href, node.baseURI)) return
+    cssBaseHref = new URL(capture.href, node.baseURI).href
   }
   const deliver = (cssText: string) => {
     if (isStale()) return
@@ -31,7 +31,7 @@ export function inlineRemoteCss(
       source: 'text',
       value: cssText,
       node,
-      sourceUrl: url,
+      sourceUrl,
     })
     if (approved === null || isStale()) return
     if (sendPlain && onPlain) onPlain(approved, fakeIdHolder++, cssBaseHref)
@@ -58,8 +58,8 @@ export function inlineRemoteCss(
   }
 
   // Fall back to fetching if we couldn't get or stringify the sheet
-  if (url && !isStale()) {
-    const request = signal ? fetch(url, { signal }) : fetch(url)
+  if (sourceUrl && !isStale()) {
+    const request = signal ? fetch(sourceUrl, { signal }) : fetch(sourceUrl)
     request
       .then(response => {
         if (!response.ok) {
@@ -72,7 +72,7 @@ export function inlineRemoteCss(
       })
       .catch(error => {
         if (signal?.aborted) return
-        if (capture?.sanitizer !== undefined)
+        if (capture !== undefined)
           console.error('OpenReplay: failed to capture stylesheet')
         else console.error(`OpenReplay: Failed to fetch CSS from ${node.href}:`, error);
         // Fetch failed (likely CORS) — retry via load event + sheet access

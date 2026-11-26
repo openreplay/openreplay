@@ -1,6 +1,6 @@
 import { describe, expect, test, jest, afterEach } from '@jest/globals'
 import {
-  resolveInlineAsset,
+  isSameAsset,
   sanitizeCapture,
   sanitizeStyleRule,
   type CaptureData,
@@ -19,16 +19,14 @@ afterEach(() => {
 })
 const value = 'synthetic-private'
 
-test('inline assets permit query redaction while preserving the source and sprite fragment', () => {
+test('an inline asset is the same file only when query parameters were removed', () => {
   const base = 'https://static.invalid/'
   const original = 'icons.svg?test=example&theme=light#one'
-  expect(resolveInlineAsset(original, 'icons.svg?theme=light#one', base)).toEqual({
-    sourceUrl: base + original,
-    replayUrl: base + 'icons.svg?theme=light#one',
-  })
-  expect(resolveInlineAsset(original, 'icons.svg?theme=dark#one', base)).toBeNull()
-  expect(resolveInlineAsset(original, 'icons.svg?theme=light#two', base)).toBeNull()
-  expect(resolveInlineAsset(original, 'https://other.invalid/icons.svg#one', base)).toBeNull()
+  expect(isSameAsset(original, original, base)).toBe(true)
+  expect(isSameAsset(original, 'icons.svg?theme=light#one', base)).toBe(true)
+  expect(isSameAsset(original, 'icons.svg?theme=dark#one', base)).toBe(false)
+  expect(isSameAsset(original, 'icons.svg?theme=light#two', base)).toBe(false)
+  expect(isSameAsset(original, 'https://other.invalid/icons.svg#one', base)).toBe(false)
 })
 
 test.each([

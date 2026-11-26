@@ -1,4 +1,4 @@
-import { resolveInlineAsset, sanitizeCapture } from '../captureSanitizer.js'
+import { isSameAsset, sanitizeCapture } from '../captureSanitizer.js'
 import { createMutationObserver, throttleWithTrailing, canAccessIframe } from '../../utils.js'
 import {
   CreateDocument,
@@ -29,158 +29,53 @@ import { nextID } from '../../modules/constructedStyleSheets.js'
 import { SanitizeLevel, stringWiper, isStateAttribute } from '../sanitizer.js'
 import { parentNode, previousSibling, nextSibling, firstChild } from '../untaintedDom.js'
 
-const iconCache = {}
-const svgUrlCache = {}
+const SPRITE_MARKER = '_$OPENREPLAY_SPRITE$_'
+// parsed sprite files shared by every <use>; null when the server answered with an error
+const spriteFiles = new Map<string, Promise<Document | null>>()
+const MAX_SPRITE_FILES = 20
 // slotted nodes and their slot live in different roots (and observers), so this is shared
 const slotOf = new WeakMap<Node, number>()
 // bumped on level changes: shadow roots and iframe documents below may lag
 let levelChanges = 0
 
-export async function parseUseEl(
-  useElement: SVGUseElement,
-  mode: 'inline' | 'dataurl' | 'svgtext',
-  domParser: DOMParser,
-  signal?: AbortSignal,
-  sourceHref?: string,
-) {
-  try {
-    if (signal?.aborted) return
-    const href = sourceHref ?? (useElement.getAttribute('xlink:href') || useElement.getAttribute('href'))
-    if (!href) {
-      console.debug('Openreplay: xlink:href or href not found on <use>.')
-      return
-    }
-
-    let [url, symbolId] = href.split('#')
-
-    if (!url && !symbolId) {
-      console.warn('Openreplay: Invalid xlink:href or href found on <use>.')
-      return
-    }
-
-    // Key the cache by url + symbol + mode: the same symbol id lives in different
-    // sprite files, and different modes store different value shapes (object vs
-    // string vs data-url), so keying by symbolId alone returns the wrong asset.
-    // Namespace remote vs in-document sprites so a relative sprite file literally
-    // named "local" can't collide with the in-document bucket.
-    const cacheKey = url ? `url:${url}#${symbolId}#${mode}` : `doc:${symbolId}#${mode}`
-
-    if (sourceHref === undefined && iconCache[cacheKey]) {
-      return iconCache[cacheKey]
-    }
-
-    // happens if svg spritemap is local, fastest case for us
-    if (!url && symbolId) {
-      const hasHashtag = href.startsWith('#')
-      let escapedURL;
-      if (hasHashtag) {
-        escapedURL = `#${CSS.escape(href.substring(1))}`
-      } else {
-        escapedURL = CSS.escape(href)
-      }
-
-      const symbol = useElement.ownerDocument.querySelector(escapedURL)
-      if (symbol) {
-        const inlineSvg = `
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="${symbol.getAttribute('viewBox') || '0 0 24 24'}">
-          ${symbol.innerHTML}
-        </svg>
-      `
-
-        if (sourceHref === undefined) iconCache[cacheKey] = inlineSvg
-
-        return inlineSvg
-      } else {
-        console.warn('Openreplay: Sprite symbol not found in the document.')
-        return
-      }
-    }
-    let svgDoc: Document | undefined
-    if (sourceHref === undefined && svgUrlCache[url]) {
-      if (svgUrlCache[url] === 1) {
-        await new Promise((resolve) => {
-          let tries = 0
-          const interval = setInterval(() => {
-            if (signal?.aborted || tries > 100) {
-              clearInterval(interval)
-              resolve(false)
-              return
-            }
-            if (svgUrlCache[url] !== 1) {
-              svgDoc = svgUrlCache[url]
-              clearInterval(interval)
-              resolve(true)
-            } else {
-              tries++
-            }
-          }, 100)
-        })
-      } else {
-        svgDoc = svgUrlCache[url] ?? `<svg xmlns="http://www.w3.org/2000/svg"></svg>`
-      }
-    } else {
-      if (sourceHref === undefined) svgUrlCache[url] = 1
-      try {
-        const response = await (signal ? fetch(url, { signal }) : fetch(url))
-        if (sourceHref !== undefined && !response.ok) return
-        const svgText = await response.text()
-        svgDoc = domParser.parseFromString(svgText, 'image/svg+xml')
-        if (sourceHref === undefined) svgUrlCache[url] = svgDoc
-      } catch (e) {
-        // Clear the in-flight sentinel so a failed fetch doesn't wedge every
-        // future <use> for this url into a 10s poll-then-give-up loop.
-        if (sourceHref === undefined) delete svgUrlCache[url]
-        throw e
-      }
-    }
-
-    if (signal?.aborted || !svgDoc) {
-      return
-    }
-
-    // @ts-ignore
-    const symbol = svgDoc.getElementById(symbolId)
-
-    if (!symbol) {
-      console.debug('Openreplay: Symbol not found in SVG.')
-      return ''
-    }
-
-    if (mode === 'inline') {
-      const res = { paths: symbol.innerHTML, vbox: symbol.getAttribute('viewBox') || '0 0 24 24' }
-      if (sourceHref === undefined) iconCache[cacheKey] = res
-      return res
-    }
-    if (mode === 'svgtext') {
-      const inlineSvg = `
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="${symbol.getAttribute('viewBox') || '0 0 24 24'}">
-          ${symbol.innerHTML}
-        </svg>
-      `
-
-      if (sourceHref === undefined) iconCache[cacheKey] = inlineSvg
-
-      return inlineSvg
-    }
-    if (mode === 'dataurl') {
-      const inlineSvg = `
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="${symbol.getAttribute('viewBox') || '0 0 24 24'}">
-          ${symbol.innerHTML}
-        </svg>
-      `
-      const encodedSvg = btoa(inlineSvg)
-      const dataUrl = `data:image/svg+xml;base64,${encodedSvg}`
-
-      if (sourceHref === undefined) iconCache[cacheKey] = dataUrl
-
-      return dataUrl
-    }
-    console.debug(`Openreplay: Unknown mode: ${mode}. Use "inline" or "dataurl".`)
-  } catch (error) {
-    if (signal?.aborted) return
-    if (sourceHref !== undefined) console.error('OpenReplay: failed to capture SVG sprite')
-    else console.error('Openreplay: Error processing <use> element:', error)
+function spriteFile(url: string, parser: DOMParser, signal?: AbortSignal): Promise<Document | null> {
+  let file = spriteFiles.get(url)
+  if (file === undefined) {
+    const request = fetch(url, { signal }).then((response) =>
+      response.ok
+        ? response.text().then((text) => parser.parseFromString(text, 'image/svg+xml'))
+        : null,
+    )
+    file = request
+    // a network error or an abort is retried by the next <use>
+    request.catch(() => {
+      if (spriteFiles.get(url) === request) spriteFiles.delete(url)
+    })
+    spriteFiles.set(url, request)
+    if (spriteFiles.size > MAX_SPRITE_FILES) spriteFiles.delete(spriteFiles.keys().next().value!)
   }
+  return file
+}
+
+/** The symbol `href` points at, as a standalone <svg>; local symbols are read from the element's document. */
+async function spriteMarkup(
+  use: SVGUseElement,
+  href: string,
+  parser: DOMParser,
+  signal?: AbortSignal,
+): Promise<string | undefined> {
+  const reference = href.trim()
+  const hash = reference.indexOf('#')
+  const id = hash < 0 ? '' : reference.slice(hash + 1)
+  if (!id) return
+  const file =
+    hash === 0
+      ? use.ownerDocument
+      : await spriteFile(new URL(reference.slice(0, hash), use.baseURI).href, parser, signal)
+  const symbol = file?.getElementById(id)
+  if (!symbol) return
+  const viewBox = symbol.getAttribute('viewBox') || '0 0 24 24'
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}">${symbol.innerHTML}</svg>`
 }
 
 export function isIgnored(node: Node): boolean {
@@ -287,7 +182,8 @@ export function sendNodeAttribute(
     if (name.startsWith('xlink:')) {
       name = name.substring(6)
     }
-    if (app.captureSanitizer && isUseElement(node) && name === 'href' && !ctx.disableSprites) {
+    // browsers use href over xlink:href
+    if (isUseElement(node) && name === 'href' && !ctx.disableSprites) {
       const href = node.getAttribute('href')
       if (attributeName === 'xlink:href' && href !== null) return
       if (value === null && href === null) value = node.getAttribute('xlink:href')
@@ -395,53 +291,43 @@ function sendAttributeValue(
   else app.attributeSender.sendSetAttribute(id, name, approved, false, node)
 }
 
-function sendSprite(ctx: AttributeContext, id: number, node: SVGUseElement, name: string, original: string): void {
+function sendSprite(ctx: AttributeContext, id: number, node: SVGUseElement, name: string, href: string): void {
   const app = ctx.app
   const policy = app.captureSanitizer
+  if (policy) {
+    const approved = sanitizeCapture(policy, { kind: 'resource', resourceType: 'svg', value: href, node })
+    if (approved === '') return app.attributeSender.sendSetAttribute(id, name, '', true, node)
+    // the page's file is read only when the approved URL is the same file; the tracker fetches no other URL
+    if (approved === null || !isSameAsset(href, approved, node.baseURI)) {
+      return app.attributeSender.removeAttribute(id, name, node)
+    }
+  }
+  const { generation } = ctx
   const signal = app.captureSignal
-  const generation = ctx.generation
-  const isCurrent = () => !signal?.aborted && ctx.generation === generation &&
-    (!policy || (app.nodes.getID(node) === id &&
-      (node.getAttribute('href') ?? node.getAttribute('xlink:href')) === original))
-  if (!isCurrent()) return
-  const href = policy
-    ? sanitizeCapture(policy, { kind: 'resource', resourceType: 'svg', value: original, node })
-    : undefined
-  if (!isCurrent()) return
-  if (href === null) {
-    app.attributeSender.removeAttribute(id, name, node)
-    return
-  }
-  if (href === '') {
-    app.attributeSender.sendSetAttribute(id, name, '', true, node)
-    return
-  }
-  const asset = href === undefined ? null : resolveInlineAsset(original, href, node.baseURI)
-  if (policy && !asset) {
-    app.attributeSender.removeAttribute(id, name, node)
-    return
-  }
-  const reference = original.trim()
-  const sourceHref = asset && (reference.startsWith('#') ? reference : asset.sourceUrl)
-  void parseUseEl(node, 'svgtext', ctx.domParser, signal, sourceHref ?? undefined)
-    .then((svgData) => {
-      if (typeof svgData !== 'string' || !svgData || !isCurrent()) return
-      if (policy && asset) {
-        const approved = sanitizeCapture(policy, {
-          kind: 'svg', value: svgData, node, sourceUrl: asset.sourceUrl,
-        })
-        if (!isCurrent()) return
-        if (approved === null) app.attributeSender.removeAttribute(id, name, node)
-        else app.attributeSender.sendSetAttribute(
-          id, name, approved === '' ? '' : `_$OPENREPLAY_SPRITE$_${approved}`, true, node,
-        )
-      } else {
-        app.send(SetNodeAttribute(id, name, `_$OPENREPLAY_SPRITE$_${svgData}`))
-      }
+  const isCurrent = () =>
+    !signal?.aborted &&
+    ctx.generation === generation &&
+    app.nodes.getID(node) === id &&
+    (node.getAttribute('href') ?? node.getAttribute('xlink:href')) === href
+  spriteMarkup(node, href, ctx.domParser, signal)
+    .then((svg) => {
+      if (!svg || !isCurrent()) return
+      const approved = policy
+        ? sanitizeCapture(policy, {
+            kind: 'svg',
+            value: svg,
+            node,
+            sourceUrl: new URL(href.trim(), node.baseURI).href,
+          })
+        : svg
+      if (approved === null) app.attributeSender.removeAttribute(id, name, node)
+      else app.attributeSender.sendSetAttribute(id, name, approved && SPRITE_MARKER + approved, true, node)
     })
     .catch((error: unknown) => {
+      if (signal?.aborted) return
+      // a policy may be hiding the URL, which error messages can carry
       if (policy) console.error('OpenReplay: failed to capture SVG sprite')
-      else console.error('Openreplay: Error parsing <use> element:', error)
+      else console.error('Openreplay: Error processing <use> element:', error)
     })
 }
 
