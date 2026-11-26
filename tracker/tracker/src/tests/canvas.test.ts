@@ -69,6 +69,20 @@ describe('CanvasRecorder', () => {
       expect(appMock.nodes.attachNodeCallback).toHaveBeenCalledWith(canvasRecorder.captureCanvas)
       expect(appMock.attachResanitizeCallback).toHaveBeenCalledWith(canvasRecorder.resanitizeCanvas)
     })
+
+    test('discard cancels delayed tracking and ignores later tracking calls', () => {
+      jest.useFakeTimers()
+      canvasRecorder.startTracking()
+
+      canvasRecorder.discard()
+      canvasRecorder.startTracking()
+      canvasRecorder.restartTracking()
+      jest.advanceTimersByTime(125)
+
+      expect(appMock.nodes.scanTree).not.toHaveBeenCalled()
+      expect(appMock.nodes.attachNodeCallback).not.toHaveBeenCalled()
+      expect(appMock.attachResanitizeCallback).not.toHaveBeenCalled()
+    })
   })
 
   describe('captureCanvas', () => {
@@ -314,6 +328,30 @@ describe('CanvasRecorder', () => {
       expect(canvasRecorder['observers'].size).toBe(0)
     })
 
+    test('discard aborts active uploads and drops queued and partial fallback batches', async () => {
+      const completeUploads: (() => void)[] = []
+      const fetchMock = jest.fn(
+        () => new Promise((resolve) => completeUploads.push(() => resolve({ status: 401 }))),
+      )
+      globalThis.fetch = fetchMock
+      appMock.stop = jest.fn()
+      appMock.start = jest.fn()
+      canvasRecorder.recordCanvas(nodeMock, 1)
+      jest.advanceTimersByTime(3100)
+      expect(nodeMock.toBlob).toHaveBeenCalledTimes(31)
+      expect(fetchMock).toHaveBeenCalledTimes(2)
+
+      canvasRecorder.discard()
+      completeUploads.forEach((complete) => complete())
+      await jest.advanceTimersByTimeAsync(2000)
+
+      expect(fetchMock.mock.calls.every(([, init]) => init.signal?.aborted)).toBe(true)
+      expect(fetchMock).toHaveBeenCalledTimes(2)
+      expect(nodeMock.toBlob).toHaveBeenCalledTimes(31)
+      expect(appMock.stop).not.toHaveBeenCalled()
+      expect(appMock.start).not.toHaveBeenCalled()
+    })
+
     test('packs frames when the backend supports them', async () => {
       // jsdom's Blob has no arrayBuffer()
       nodeMock.toBlob = jest.fn((cb: BlobCallback) => {
@@ -348,6 +386,7 @@ describe('CanvasRecorder', () => {
       document.body.appendChild(nodeMock)
       globalsToMock.forEach((k) => (saved[k] = (globalThis as any)[k]))
       saved.createObjectURL = URL.createObjectURL
+      saved.revokeObjectURL = URL.revokeObjectURL
       workers = []
       bitmap = { close: jest.fn() }
       Object.assign(globalThis, {
@@ -367,6 +406,7 @@ describe('CanvasRecorder', () => {
         createImageBitmap: jest.fn(() => Promise.resolve(bitmap)),
       })
       URL.createObjectURL = jest.fn(() => 'blob:worker')
+      URL.revokeObjectURL = jest.fn()
       jest.isolateModules(() => {
         Recorder = require('../main/app/canvas').default
       })
@@ -377,6 +417,7 @@ describe('CanvasRecorder', () => {
     afterEach(() => {
       globalsToMock.forEach((k) => ((globalThis as any)[k] = saved[k]))
       URL.createObjectURL = saved.createObjectURL
+      URL.revokeObjectURL = saved.revokeObjectURL
     })
 
     const frameMessages = () =>
@@ -441,10 +482,34 @@ describe('CanvasRecorder', () => {
       await jest.advanceTimersByTimeAsync(100)
       reply({ type: 'fail', reason: 'no 2d context on OffscreenCanvas' })
       expect(workers[0].terminate).toHaveBeenCalled()
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:worker')
       await jest.advanceTimersByTimeAsync(100)
       expect(nodeMock.toBlob).toHaveBeenCalledTimes(1)
       expect(workers).toHaveLength(1)
     })
+
+    test.each([false, true])(
+      'tries to revoke the worker URL and falls back when construction fails (revoke throws: %s)',
+      async (revokeThrows) => {
+        globalThis.Worker = jest.fn().mockImplementation(() => {
+          throw new Error('Worker unavailable')
+        })
+        if (revokeThrows) {
+          URL.revokeObjectURL.mockImplementation(() => {
+            throw new Error('Cannot revoke URL')
+          })
+        }
+
+        canvasRecorder.recordCanvas(nodeMock, 1)
+        await jest.advanceTimersByTimeAsync(200)
+
+        expect(globalThis.Worker).toHaveBeenCalledTimes(1)
+        expect(globalThis.Worker).toHaveBeenCalledWith('blob:worker')
+        expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1)
+        expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:worker')
+        expect(nodeMock.toBlob).toHaveBeenCalledTimes(2)
+      },
+    )
 
     test('stops capturing a canvas the worker reports as tainted', async () => {
       canvasRecorder.recordCanvas(nodeMock, 1)
@@ -465,6 +530,20 @@ describe('CanvasRecorder', () => {
       expect(appMock.start).toHaveBeenCalled()
     })
 
+    test('discard cancels a tracker restart scheduled after token expiration', async () => {
+      appMock.stop = jest.fn()
+      appMock.start = jest.fn()
+      canvasRecorder.recordCanvas(nodeMock, 1)
+      await jest.advanceTimersByTimeAsync(100)
+      reply({ type: 'unauthorized' })
+      expect(appMock.stop).toHaveBeenCalledWith(false)
+
+      canvasRecorder.discard()
+      jest.advanceTimersByTime(250)
+
+      expect(appMock.start).not.toHaveBeenCalled()
+    })
+
     test('a removed canvas flushes its worker frames before dropping them', async () => {
       canvasRecorder.recordCanvas(nodeMock, 1)
       await jest.advanceTimersByTimeAsync(100)
@@ -481,6 +560,45 @@ describe('CanvasRecorder', () => {
       canvasRecorder.clear()
       const types = workers[0].postMessage.mock.calls.map(([m]: any[]) => m.type)
       expect(types).toEqual(['frame', 'flush', 'drop'])
+    })
+
+    test('discard terminates the worker without flushing and closes an in-flight bitmap', async () => {
+      canvasRecorder.recordCanvas(nodeMock, 1)
+      await jest.advanceTimersByTimeAsync(100)
+      reply({ type: 'done', canvasId: 1 })
+      jest.advanceTimersByTime(100)
+      const lateReply = workers[0].onmessage
+      appMock.stop = jest.fn()
+
+      canvasRecorder.discard()
+      canvasRecorder.clear()
+      lateReply({ data: { type: 'unauthorized' } })
+      await jest.advanceTimersByTimeAsync(1000)
+
+      expect(workers[0].terminate).toHaveBeenCalledTimes(1)
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:worker')
+      expect(workers[0].postMessage.mock.calls.map(([m]: any[]) => m.type)).toEqual(['frame'])
+      expect(bitmap.close).toHaveBeenCalledTimes(1)
+      expect(appMock.stop).not.toHaveBeenCalled()
+    })
+
+    test('discard clears snapshots, observers, and timers when worker termination throws', async () => {
+      const disconnect = jest.fn()
+      window.IntersectionObserver = jest.fn(() => ({ observe: jest.fn(), disconnect }))
+      canvasRecorder.captureCanvas(nodeMock)
+      canvasRecorder.recordCanvas(nodeMock, 1)
+      await jest.advanceTimersByTimeAsync(100)
+      canvasRecorder.startTracking()
+      workers[0].terminate.mockImplementation(() => {
+        throw new Error('Cannot terminate worker')
+      })
+
+      canvasRecorder.discard()
+
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:worker')
+      expect(canvasRecorder['snapshots']).toEqual({})
+      expect(disconnect).toHaveBeenCalledTimes(1)
+      expect(jest.getTimerCount()).toBe(0)
     })
   })
 

@@ -9,6 +9,7 @@ describe('cssrules scanInMemoryCSS', () => {
     let nodeCb
     const app = {
       send: jest.fn(),
+      isDisposed: () => false,
       safe: (f) => f,
       getBaseHref: () => 'http://x/',
       debug: { log() {} },

@@ -1,3 +1,4 @@
+export type { CaptureData, CaptureSanitizer } from './app/captureSanitizer.js'
 import App from './app/index'
 
 export { default as App } from './app/index.js'
@@ -131,12 +132,16 @@ const canAccessTop = () => {
  * `node_modules/@openreplay/tracker/docs/usage.md` (setup) and `docs/api.md` (methods, options).
  */
 export default class API {
-  private readonly app: App | null = null
+  private app: App | null = null
   public readonly analytics: AnalyticsSDK | null = null
   private readonly crossdomainMode: boolean = false
 
   constructor(public readonly options: Partial<Options>) {
     this.crossdomainMode = Boolean(inIframe() && options.crossdomain?.enabled)
+    if (this.crossdomainMode && options.captureSanitizer !== undefined) {
+      console.warn('OpenReplay: cross-domain child capture is disabled with captureSanitizer')
+      return
+    }
     if (!IN_BROWSER || !processOptions(options)) {
       return
     }
@@ -236,7 +241,8 @@ export default class API {
         this.analytics?.onStart()
       })
       app.attachStopCallback(() => {
-        this.analytics?.onStop()
+        if (app.isDisposed()) this.analytics?.onDiscard()
+        else this.analytics?.onStop()
       })
     }
     if (!this.crossdomainMode) {
@@ -464,6 +470,22 @@ export default class API {
     return this.app.session.getSessionHash()
   }
 
+  /** Terminally drop pending capture; dispatched requests cannot be retracted. */
+  discard(): void {
+    const app = this.app
+    if (app === null) return
+    this.app = null
+    this.analyticsToken = null
+    try {
+      app.discard()
+    } finally {
+      // A new constructor must not race the old global-patch detach callbacks.
+      if (IN_BROWSER && (window as any).__OPENREPLAY__ === this) {
+        delete (window as any).__OPENREPLAY__
+      }
+    }
+  }
+
   forceFlushBatch() {
     if (this.app === null) {
       return
@@ -575,7 +597,7 @@ export default class API {
           }
           payload = JSON.stringify(payload)
         } catch (_) {}
-        this.app.send(CustomEvent(key, payload))
+        this.app?.send(CustomEvent(key, payload))
       }
     }
   }
@@ -587,7 +609,7 @@ export default class API {
       } catch (e) {
         return
       }
-      this.app.send(CustomIssue(key, payload))
+      this.app?.send(CustomIssue(key, payload))
     }
   }
 
@@ -626,9 +648,11 @@ export default class API {
    * Use custom token for analytics events without session recording
    * */
   public setAnalyticsToken = (token: string) => {
+    if (this.app === null) return
     this.analyticsToken = token
   }
   public getAnalyticsToken = () => {
+    if (this.app === null) return ''
     if (this.analyticsToken) {
       return this.analyticsToken
     } else {

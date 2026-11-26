@@ -187,7 +187,11 @@ class CanvasRecorder {
   private readonly quality: number
   private readonly mime: 'image/webp' | 'image/jpeg'
   private timer: ReturnType<typeof setInterval> | null = null
+  private trackingTimer: ReturnType<typeof setTimeout> | null = null
+  private restartTimer: ReturnType<typeof setTimeout> | null = null
+  private discarded = false
   private worker: Worker | null = null
+  private workerURL: string | null = null
   private workerDisabled = !canUseWorker()
   private readonly uploader: FramesUploader
 
@@ -206,8 +210,11 @@ class CanvasRecorder {
   }
 
   startTracking() {
-    setTimeout(() => {
+    if (this.discarded || this.trackingTimer !== null) return
+    this.trackingTimer = setTimeout(() => {
+      this.trackingTimer = null
       this.app.nodes.scanTree(this.captureCanvas)
+      if (this.discarded) return
       this.app.nodes.attachNodeCallback(this.captureCanvas)
       this.app.attachResanitizeCallback(this.resanitizeCanvas)
     }, 125)
@@ -233,11 +240,13 @@ class CanvasRecorder {
   }
 
   restartTracking = () => {
+    if (this.discarded) return
     this.clear()
     this.app.nodes.scanTree(this.captureCanvas)
   }
 
   captureCanvas = (node: Node) => {
+    if (this.discarded) return
     const id = this.app.nodes.getID(node)
     if (!id || !hasTag(node, 'canvas')) {
       return
@@ -275,6 +284,7 @@ class CanvasRecorder {
   }
 
   recordCanvas = (node: Node, id: number) => {
+    if (this.discarded) return
     const ts = this.app.timestamp()
     this.snapshots[id] = {
       node: node as HTMLCanvasElement,
@@ -290,6 +300,7 @@ class CanvasRecorder {
     }
     const canvasMsg = CanvasNode(id.toString(), ts)
     this.app.send(canvasMsg as Message)
+    if (this.discarded) return
 
     const gl = glContexts.get(node as HTMLCanvasElement)
     if (gl && !gl.getContextAttributes()?.preserveDrawingBuffer) {
@@ -477,9 +488,8 @@ class CanvasRecorder {
     }
     if (!this.worker) {
       try {
-        this.worker = new Worker(
-          URL.createObjectURL(new Blob([canvasWorkerBody!], { type: 'text/javascript' })),
-        )
+        this.workerURL = URL.createObjectURL(new Blob([canvasWorkerBody!], { type: 'text/javascript' }))
+        this.worker = new Worker(this.workerURL)
         this.worker.onmessage = this.onWorkerMessage
         this.worker.onerror = (e) => {
           this.app.debug.error('Canvas worker error, encoding on main thread', e)
@@ -494,6 +504,7 @@ class CanvasRecorder {
   }
 
   private onWorkerMessage = ({ data }: MessageEvent<FromCanvasWorker>) => {
+    if (this.discarded) return
     switch (data.type) {
       case 'done': {
         const snapshot = this.snapshots[data.canvasId]
@@ -523,11 +534,26 @@ class CanvasRecorder {
 
   private disableWorker() {
     this.workerDisabled = true
-    this.worker?.terminate()
-    this.worker = null
+    this.releaseWorker()
     Object.values(this.snapshots).forEach((snapshot) => {
       snapshot.isCapturing = false
     })
+  }
+
+  private releaseWorker() {
+    const worker = this.worker
+    const url = this.workerURL
+    this.worker = this.workerURL = null
+    try {
+      worker?.terminate()
+    } catch {
+      // Attempt URL revocation even if the host rejects termination.
+    }
+    try {
+      if (url !== null) URL.revokeObjectURL(url)
+    } catch {
+      // Keep capture cleanup and fallback available if the host rejects revocation.
+    }
   }
 
   private uploadTarget(): UploadTarget {
@@ -551,9 +577,12 @@ class CanvasRecorder {
   }
 
   private initRestart = () => {
+    if (this.discarded || this.restartTimer !== null) return
     this.app.debug.log('Restarting tracker; token expired')
     this.app.stop(false)
-    setTimeout(() => {
+    if (this.discarded) return
+    this.restartTimer = setTimeout(() => {
+      this.restartTimer = null
       void this.app.start({}, true)
     }, 250)
   }
@@ -598,6 +627,7 @@ class CanvasRecorder {
   }
 
   clear() {
+    if (this.discarded) return
     Object.keys(this.snapshots).forEach((key) => {
       const id = Number(key)
       this.flushSnapshot(id, this.snapshots[id])
@@ -607,7 +637,22 @@ class CanvasRecorder {
       target: this.uploadTarget(),
       debug: !!this.options.isDebug,
     } satisfies ToCanvasWorker)
+    this.resetCapture()
+    // pending uploads keep going in the background
+  }
 
+  discard() {
+    if (this.discarded) return
+    this.discarded = true
+    if (this.trackingTimer !== null) clearTimeout(this.trackingTimer)
+    if (this.restartTimer !== null) clearTimeout(this.restartTimer)
+    this.trackingTimer = this.restartTimer = null
+    this.uploader.discard()
+    this.releaseWorker()
+    this.resetCapture()
+  }
+
+  private resetCapture() {
     Object.keys(this.snapshots).forEach((key) => {
       this.cleanupCanvas(Number(key))
     })
@@ -615,7 +660,6 @@ class CanvasRecorder {
     this.observers.forEach((observer) => observer.disconnect())
     this.observers.clear()
     this.snapshots = {}
-    // pending uploads keep going in the background
   }
 }
 

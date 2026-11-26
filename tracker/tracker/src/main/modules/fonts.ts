@@ -1,3 +1,5 @@
+import ContextPatches from '../app/contextPatches.js'
+import { sanitizeCapture } from '../app/captureSanitizer.js'
 import type App from '../app/index.js'
 import { isDocument } from '../app/guards.js'
 import { LoadFontFace } from '../app/messages.gen.js'
@@ -22,14 +24,34 @@ export default function (app: App) {
     return
   }
 
-  const docFonts: WeakMap<Document, FFData[]> = new WeakMap()
+  const sanitise = (data: FFData): FFData | null => {
+    const fields = ['family', 'source', 'descriptors'] as const
+    const values = data.map((value, index) =>
+      index === 2 && value === '' ? value : sanitizeCapture(app.captureSanitizer, {
+        kind: 'font',
+        field: fields[index],
+        value,
+        node: null,
+      }),
+    )
+    return values.some((value) => value === null) ? null : (values as FFData)
+  }
+  let docFonts = new WeakMap<Document, FFData[]>()
+  const restoreFonts = new ContextPatches()
+  app.attachStopCallback(() => {
+    if (!app.isDisposed()) return
+    docFonts = new WeakMap()
+    restoreFonts.clear()
+  })
 
   const patchWindow = (wnd: typeof globalThis) => {
+    if (app.isDisposed() || restoreFonts.has(wnd) || !wnd.FontFace) return
+    const FontFace = wnd.FontFace
     // @ts-ignore
-    class FontFaceInterceptor extends wnd.FontFace {
+    class FontFaceInterceptor extends FontFace {
       constructor(...args: ConstructorParameters<typeof FontFace>) {
         //maybe do this on load(). In this case check if the document.fonts.load(...) function calls the font's load()
-        if (typeof args[1] === 'string') {
+        if (!app.isDisposed() && typeof args[1] === 'string') {
           app.safe(() => {
             let desc = ''
             if (args[2]) {
@@ -38,7 +60,9 @@ export default function (app: App) {
               })()
             }
 
-            const ffData: FFData = [args[0], absoluteSources(args[1] as string, wnd.document.baseURI), desc]
+            const source = absoluteSources(args[1] as string, wnd.document.baseURI)
+            const ffData = sanitise([args[0], source, desc])
+            if (app.isDisposed() || ffData === null) return
             const ffDataArr = docFonts.get(wnd.document) || []
             ffDataArr.push(ffData)
             docFonts.set(wnd.document, ffDataArr)
@@ -53,6 +77,9 @@ export default function (app: App) {
       }
     }
     wnd.FontFace = FontFaceInterceptor
+    restoreFonts.set(wnd, () => {
+      if (wnd.FontFace === FontFaceInterceptor) wnd.FontFace = FontFace
+    })
   }
   app.observer.attachContextCallback(patchWindow)
   patchWindow(window)
@@ -72,9 +99,7 @@ export default function (app: App) {
         return
       }
 
-      ffDataArr.forEach((ffData) => {
-        app.send(LoadFontFace(parentID, ...ffData))
-      })
+      ffDataArr.forEach((ffData) => app.send(LoadFontFace(parentID, ...ffData)))
     }),
   )
 }

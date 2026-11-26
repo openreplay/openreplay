@@ -42,6 +42,21 @@ describe('stop() is final for pending starts and restarts', () => {
     fetchMock.mockClear()
   }
 
+  const createApp = (captureSanitizer?: (data: { value: string }) => string) => {
+    app = new App(
+      'key',
+      undefined,
+      { ingestPoint: 'https://ingest.test', __debug_report_edp: null, captureSanitizer },
+      () => {},
+      false,
+    ) as any
+    workerMsgs = []
+    app.worker = { postMessage: (m: any) => workerMsgs.push(m), terminate() {} }
+    app.allowAppStart()
+    jest.spyOn(app.observer, 'observe').mockImplementation(() => {})
+    jest.spyOn(app.ticker, 'start').mockImplementation(() => {})
+  }
+
   beforeEach(() => {
     jest.useFakeTimers()
     ;(global as any).IntersectionObserver = class {
@@ -51,18 +66,7 @@ describe('stop() is final for pending starts and restarts', () => {
     }
     fetchMock = jest.fn(async () => okResponse())
     window.fetch = fetchMock
-    app = new App(
-      'key',
-      undefined,
-      { ingestPoint: 'https://ingest.test', __debug_report_edp: null } as any,
-      () => {},
-      false,
-    ) as any
-    workerMsgs = []
-    app.worker = { postMessage: (m: any) => workerMsgs.push(m), terminate() {} }
-    app.allowAppStart()
-    jest.spyOn(app.observer, 'observe').mockImplementation(() => {})
-    jest.spyOn(app.ticker, 'start').mockImplementation(() => {})
+    createApp()
   })
 
   afterEach(() => {
@@ -70,6 +74,32 @@ describe('stop() is final for pending starts and restarts', () => {
     jest.clearAllTimers()
     jest.useRealTimers()
     jest.restoreAllMocks()
+  })
+
+  test.each([true, false])('server-enabled canvas respects captureSanitizer=%s', async (withPolicy) => {
+    app.discard()
+    createApp(withPolicy ? ({ value }) => value : undefined)
+    fetchMock.mockResolvedValue(okResponse({ ...START_OK, canvasEnabled: true }))
+    await startActive()
+
+    expect(app.canvasRecorder !== null).toBe(!withPolicy)
+  })
+
+  test('tears down capture if queueing the child stop command throws', async () => {
+    await startActive()
+    app.options.crossdomain = { enabled: true }
+    const disconnected = jest.spyOn(app.observer, 'disconnect')
+    jest.spyOn(app, 'killChildrenFrames').mockImplementation(() => {
+      expect(app.active()).toBe(true)
+      expect(disconnected).not.toHaveBeenCalled()
+      expect(workerMsgs).not.toContain('stop')
+      throw Error('queue failure')
+    })
+
+    expect(() => app.stop()).toThrow('queue failure')
+    expect(app.active()).toBe(false)
+    expect(disconnected).toHaveBeenCalledTimes(1)
+    expect(workerMsgs).toContain('stop')
   })
 
   describe('start()', () => {

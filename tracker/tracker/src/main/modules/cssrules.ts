@@ -1,3 +1,5 @@
+import ContextPatches from '../app/contextPatches.js'
+import { emptyStyleRule, sanitizeStyleRule } from '../app/captureSanitizer.js'
 import type App from '../app/index.js'
 import {
   AdoptedSSInsertRuleURLBased,
@@ -37,6 +39,15 @@ export default function (app: App, opts: CssRulesOptions) {
     app.send(TechnicalInfo('no_stylesheet_prototype_in_window', ''))
     return
   }
+  const sendRule = (sheetID: number, value: string, index: number) => {
+    const baseHref = app.getBaseHref()
+    if (app.isDisposed()) return
+    const approved = baseHref === null
+      ? emptyStyleRule(value)
+      : sanitizeStyleRule(app.captureSanitizer, value, 'rule')
+    if (app.isDisposed()) return
+    app.send(AdoptedSSInsertRuleURLBased(sheetID, approved, index, baseHref ?? ''))
+  }
   const options = { ...defaults, ...opts }
 
   // rules inserted empty (css-in-js fills them through rule.style later) -> last sent text;
@@ -46,9 +57,10 @@ export default function (app: App, opts: CssRulesOptions) {
   const trackedSheets: Set<CSSStyleSheet> = new Set();
   const checkIntervalMs = options.checkCssInterval || 200
   let checkIterations: Record<number, number> = {}
+  const restoreContexts = new ContextPatches()
 
   function checkRuleChanges() {
-    if (!options.scanInMemoryCSS) return
+    if (app.isDisposed() || !options.scanInMemoryCSS) return
     const allSheets = trackedSheets.values()
     for (const sheet of allSheets) {
       try {
@@ -72,7 +84,8 @@ export default function (app: App, opts: CssRulesOptions) {
             const newText = rule.cssText
             if (oldText !== newText) {
               app.send(AdoptedSSDeleteRule(sheetID, j))
-              app.send(AdoptedSSInsertRuleURLBased(sheetID, newText, j, app.getBaseHref()))
+              sendRule(sheetID, newText, j)
+              if (app.isDisposed()) return
               ruleSnapshots.set(rule, newText)
             }
           } catch (e) {
@@ -92,11 +105,13 @@ export default function (app: App, opts: CssRulesOptions) {
   }
 
   const sendInsertDeleteRule = app.safe((sheet: CSSStyleSheet, index: number, rule?: string) => {
+    if (app.isDisposed()) return
     const sheetID = styleSheetIDMap.get(sheet)
     if (!sheetID) return
 
     if (typeof rule === 'string') {
-      app.send(AdoptedSSInsertRuleURLBased(sheetID, rule, index, app.getBaseHref()))
+      sendRule(sheetID, rule, index)
+      if (app.isDisposed()) return
       if (isRuleEmpty(rule)) {
         const inserted = sheet.cssRules[index]
         if (inserted) {
@@ -110,6 +125,7 @@ export default function (app: App, opts: CssRulesOptions) {
   })
 
   const sendReplaceGroupingRule = app.safe((rule: CSSGroupingRule) => {
+    if (app.isDisposed()) return
     let topmostRule: CSSRule = rule
     while (topmostRule.parentRule) topmostRule = topmostRule.parentRule
 
@@ -123,7 +139,8 @@ export default function (app: App, opts: CssRulesOptions) {
     const idx = Array.from(sheet.cssRules).indexOf(topmostRule)
 
     if (idx >= 0) {
-      app.send(AdoptedSSInsertRuleURLBased(sheetID, cssText, idx, app.getBaseHref()))
+      sendRule(sheetID, cssText, idx)
+      if (app.isDisposed()) return
       app.send(AdoptedSSDeleteRule(sheetID, idx + 1))
       if (isRuleEmpty(cssText)) {
         ruleSnapshots.set(topmostRule, cssText)
@@ -134,34 +151,48 @@ export default function (app: App, opts: CssRulesOptions) {
 
   // Patch prototype methods
   const patchContext = app.safe((context: typeof globalThis) => {
-    if ((context as any).__css_tracking_patched__) return
-    ;(context as any).__css_tracking_patched__ = true
+    if (app.isDisposed() || restoreContexts.has(context)) return
+    const sheet = context.CSSStyleSheet.prototype
+    const group = context.CSSGroupingRule?.prototype
+    const { insertRule, deleteRule } = sheet
+    let restoreGroup = () => {}
 
-    const { insertRule, deleteRule } = context.CSSStyleSheet.prototype
-    const { insertRule: groupInsertRule, deleteRule: groupDeleteRule } =
-      context.CSSGroupingRule.prototype
-
-    context.CSSStyleSheet.prototype.insertRule = function (rule: string, index = 0) {
+    const trackInsert: typeof insertRule = function (this: CSSStyleSheet, rule, index = 0) {
       const result = insertRule.call(this, rule, index)
       sendInsertDeleteRule(this, result, rule)
       return result
     }
 
-    context.CSSStyleSheet.prototype.deleteRule = function (index: number) {
-      sendInsertDeleteRule(this, index)
-      return deleteRule.call(this, index)
+    const trackDelete: typeof deleteRule = function (this: CSSStyleSheet, index) {
+      if (!app.captureSanitizer) sendInsertDeleteRule(this, index)
+      deleteRule.call(this, index)
+      if (app.captureSanitizer) sendInsertDeleteRule(this, index)
     }
 
-    context.CSSGroupingRule.prototype.insertRule = function (rule: string, index = 0) {
-      const result = groupInsertRule.call(this, rule, index)
+    sheet.insertRule = trackInsert
+    sheet.deleteRule = trackDelete
+    restoreContexts.set(context, () => {
+      if (sheet.insertRule === trackInsert) sheet.insertRule = insertRule
+      if (sheet.deleteRule === trackDelete) sheet.deleteRule = deleteRule
+      restoreGroup()
+    })
+
+    if (!group) return
+    const { insertRule: groupInsert, deleteRule: groupDelete } = group
+    const trackGroupInsert: typeof groupInsert = function (this: CSSGroupingRule, rule, index = 0) {
+      const result = groupInsert.call(this, rule, index)
       sendReplaceGroupingRule(this)
       return result
     }
-
-    context.CSSGroupingRule.prototype.deleteRule = function (index: number) {
-      const result = groupDeleteRule.call(this, index)
+    const trackGroupDelete: typeof groupDelete = function (this: CSSGroupingRule, index) {
+      groupDelete.call(this, index)
       sendReplaceGroupingRule(this)
-      return result
+    }
+    group.insertRule = trackGroupInsert
+    group.deleteRule = trackGroupDelete
+    restoreGroup = () => {
+      if (group.insertRule === trackGroupInsert) group.insertRule = groupInsert
+      if (group.deleteRule === trackGroupDelete) group.deleteRule = groupDelete
     }
   })
 
@@ -196,6 +227,7 @@ export default function (app: App, opts: CssRulesOptions) {
     for (let i = 0; i < rules.length; i++) {
       try {
         sendInsertDeleteRule(sheet, i, rules[i].cssText)
+        if (app.isDisposed()) return
       } catch (e) {
         // Skip inaccessible rules
         app.debug.log('Couldnt access stylesheet rule during initial scan', e)
@@ -204,13 +236,17 @@ export default function (app: App, opts: CssRulesOptions) {
   })
 
   function startChecking() {
-    if (checkInterval || !options.scanInMemoryCSS) return
+    if (app.isDisposed() || checkInterval || !options.scanInMemoryCSS) return
     checkInterval = window.setInterval(checkRuleChanges, checkIntervalMs)
   }
 
   setTimeout(startChecking, 50)
 
   app.attachStopCallback(() => {
+    if (app.isDisposed()) {
+      restoreContexts.clear()
+      trackedSheets.clear()
+    }
     if (checkInterval) {
       clearInterval(checkInterval)
       checkInterval = null

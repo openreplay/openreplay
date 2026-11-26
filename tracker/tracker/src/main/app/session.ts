@@ -35,6 +35,7 @@ export default class Session {
   private timestamp = 0
   private projectID: string | undefined
   private tabId: string
+  private disposed = false
   public userInfo: UserInfo
   private token: string | undefined
   private readonly app: App
@@ -47,6 +48,7 @@ export default class Session {
   }
 
   attachUpdateCallback(cb: OnUpdateCallback) {
+    if (this.disposed) return
     this.callbacks.push(cb)
   }
   private handleUpdate(newInfo: Partial<SessionInfo>) {
@@ -60,6 +62,7 @@ export default class Session {
   }
 
   assign(newInfo: Partial<SessionInfo>): void {
+    if (this.disposed) return
     if (newInfo.userID !== undefined) {
       // TODO clear nullable/undefinable types
       this.userID = newInfo.userID
@@ -80,20 +83,24 @@ export default class Session {
   }
 
   setMetadata(key: string, value: string) {
+    if (this.disposed) return
     this.metadata[key] = value
     this.handleUpdate({ metadata: { [key]: value } })
   }
 
   setUserID(userID: string) {
+    if (this.disposed) return
     this.userID = userID
     this.handleUpdate({ userID })
   }
 
   setUserInfo(userInfo: UserInfo) {
+    if (this.disposed) return
     this.userInfo = userInfo
   }
 
   public getPageNumber = (): number | undefined => {
+    if (this.disposed) return
     const pageNoStr = this.app.sessionStorage.getItem(this.options.session_pageno_key)
     if (pageNoStr == null) {
       return undefined
@@ -102,6 +109,7 @@ export default class Session {
   }
 
   incPageNo = (): number => {
+    if (this.disposed) return 0
     let pageNo = this.getPageNumber()
     if (pageNo === undefined) {
       pageNo = 0
@@ -113,6 +121,7 @@ export default class Session {
   }
 
   getSessionToken = (projectKey?: string): string | undefined => {
+    if (this.disposed) return
     const tokenWithProject = this.token || this.app.sessionStorage.getItem(this.options.session_token_key)
     if (projectKey && tokenWithProject) {
       const savedProject = tokenWithProject.split(tokenSeparator)[1]
@@ -127,15 +136,18 @@ export default class Session {
   }
 
   getRawTokenWithProject = (): string | undefined => {
+    if (this.disposed) return
     return this.token || this.app.sessionStorage.getItem(this.options.session_token_key) || undefined
   }
 
   setSessionToken = (token: string, projectKey: string): void => {
+    if (this.disposed) return
     this.token = `${token}${tokenSeparator}${projectKey}`
     this.app.sessionStorage.setItem(this.options.session_token_key, `${token}${tokenSeparator}${projectKey}`)
   }
 
   applySessionHash(hash: string): void {
+    if (this.disposed) return
     const hashParts = decodeURI(hash).split('&')
     let token = hash
     let pageNoStr = '100500' // back-compat for sessionToken
@@ -161,11 +173,13 @@ export default class Session {
   }
 
   public getTabId(): string {
+    if (this.disposed) return ''
     if (!this.tabId) this.createTabId()
     return this.tabId
   }
 
   public regenerateTabId() {
+    if (this.disposed) return
     const randomId = generateRandomId(12)
     this.app.sessionStorage.setItem(this.options.session_tabid_key, randomId)
     this.tabId = randomId
@@ -190,7 +204,20 @@ export default class Session {
     }
   }
 
+  discard(): void {
+    this.disposed = true
+    this.token = undefined
+    this.metadata = {}
+    this.userID = null
+    this.sessionID = this.projectID = undefined
+    this.timestamp = 0
+    this.tabId = ''
+    this.userInfo = { userBrowser: '', userCity: '', userCountry: '', userDevice: '', userOS: '', userState: '' }
+    this.callbacks.length = 0
+  }
+
   reset(): void {
+    if (this.disposed) return
     this.app.sessionStorage.removeItem(this.options.session_token_key)
     this.token = undefined
     this.metadata = {}

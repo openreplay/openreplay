@@ -1,3 +1,4 @@
+import AttributeSender from '../main/modules/attributeSender.js'
 // @ts-nocheck
 import { describe, expect, test, beforeEach, afterEach, jest } from '@jest/globals'
 import NextObserver from '../main/app/observer/next_observer.js'
@@ -92,8 +93,8 @@ function liveHtml(root: Element = document.documentElement): string {
     if (n.nodeType !== 1) return ''
     const el = n as Element
     if (['script', 'meta', 'title', 'noscript', 'base'].includes(el.localName)) return ''
-    const sr = el.shadowRoot ? `{${[...el.shadowRoot.childNodes].map(ser).join('')}}` : ''
-    return `<${el.localName}>${sr}${[...el.childNodes].map(ser).join('')}</${el.localName}>`
+    const sr = el.shadowRoot ? `{${Array.from(el.shadowRoot.childNodes, ser).join('')}}` : ''
+    return `<${el.localName}>${sr}${Array.from(el.childNodes, ser).join('')}</${el.localName}>`
   }
   return ser(root)
 }
@@ -122,10 +123,7 @@ function setup(body: string, options: any = {}, sanitizerOptions: any = {}) {
     forceNgOff: true,
     onUnregister: (id: number) => app.sanitizer.setLevel(id, SanitizeLevel.Plain),
   })
-  app.attributeSender = {
-    sendSetAttribute: (id: number, name: string, value: string) =>
-      app.send([Type.SetNodeAttribute, id, name, value]),
-  }
+  app.attributeSender = new AttributeSender({ app, isDictDisabled: true })
   observer = new NextObserver({ app, options: { disableThrottling: true, ...options } })
 }
 
@@ -147,6 +145,39 @@ afterEach(() => {
 })
 
 describe('NextObserver snapshot', () => {
+  test('disconnecting from the DOM sanitizer leaves the document root untracked', () => {
+    const domSanitizer = jest.fn(() => SanitizeLevel.Obscured).mockImplementationOnce(() => {
+      observer.disconnect()
+      nodes.clear()
+      return SanitizeLevel.Obscured
+    })
+    setup('<p>body</p>', {}, {
+      domSanitizer,
+    })
+
+    observer.observe()
+
+    expect(domSanitizer).toHaveBeenCalledTimes(1)
+    expect(nodes.getID(document.documentElement)).toBeUndefined()
+    expect(sent.some((m) => m[0] === Type.SetNodeAttribute && m[2] === 'orloaded')).toBe(false)
+  })
+
+  test('disconnecting from the capture sanitizer leaves the current shadow root unobserved', () => {
+    setup('<div id="host"></div>')
+    const shadow = $('#host').attachShadow({ mode: 'open' })
+    const addListener = jest.spyOn(shadow, 'addEventListener')
+    app.captureSanitizer = () => {
+      observer.disconnect()
+      nodes.clear()
+      return null
+    }
+
+    observer.observe()
+
+    expect(nodes.getID(shadow)).toBeUndefined()
+    expect(addListener).not.toHaveBeenCalled()
+  })
+
   test('sends the document, then the dom-parsed signal', () => {
     setup('<p>a<b>b</b></p>')
     observer.observe()
@@ -183,7 +214,7 @@ describe('NextObserver mutations', () => {
 
   test('several moves under one parent in one batch', async () => {
     const l = $('#l')
-    const kids = [...l.children]
+    const kids = Array.from(l.children)
     for (let i = kids.length - 1; i >= 0; i--) l.append(kids[i])
     await flush()
     expectInSync()

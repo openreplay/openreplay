@@ -1,3 +1,4 @@
+import AttributeSender from '../main/modules/attributeSender.js'
 // @ts-nocheck
 import { describe, expect, test, afterEach, jest } from '@jest/globals'
 import TopObserver from '../main/app/observer/top_observer.js'
@@ -33,10 +34,7 @@ function setup(core: 'default' | 'next', body: string, sanitizerOptions: any = {
           maintainer: { enabled: false },
           onUnregister,
         })
-  app.attributeSender = {
-    sendSetAttribute: (id: number, name: string, value: string) =>
-      sent.push([Type.SetNodeAttribute, id, name, value]),
-  }
+  app.attributeSender = new AttributeSender({ app, isDictDisabled: true })
   const options = { disableThrottling: true }
   observer =
     core === 'next' ? new NextObserver({ app, options }) : new TopObserver({ app, options })

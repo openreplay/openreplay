@@ -1,3 +1,4 @@
+import ContextPatches from '../app/contextPatches.js'
 import type App from '../app/index.js'
 import { NetworkRequest } from '../app/messages.gen.js'
 import { getTimeOrigin } from '../utils.js'
@@ -76,7 +77,7 @@ export default function (app: App, opts: Partial<Options> = {}) {
     options.sessionTokenHeader === true ? 'X-OpenReplay-SessionToken' : options.sessionTokenHeader
 
   function setSessionTokenHeader(setRequestHeader: (name: string, value: string) => void) {
-    if (stHeader) {
+    if (stHeader && !app.isDisposed()) {
       const sessionToken = app.getSessionToken()
       if (sessionToken) {
         app.safe(setRequestHeader)(stHeader, sessionToken)
@@ -85,6 +86,7 @@ export default function (app: App, opts: Partial<Options> = {}) {
   }
 
   function sanitize(reqResInfo: RequestResponseData) {
+    if (app.isDisposed()) return null
     if (!options.capturePayload || app.sanitizer.privateMode) {
       // @ts-ignore
       delete reqResInfo.request.body
@@ -104,7 +106,7 @@ export default function (app: App, opts: Partial<Options> = {}) {
   }
 
   const sendMessage = (message: INetworkMessage) => {
-    if (options.failuresOnly && message.status < 400) {
+    if (app.isDisposed() || (options.failuresOnly && message.status < 400)) {
       return
     }
     const url = app.sanitizer.privateMode ? '************' : message.url
@@ -122,7 +124,7 @@ export default function (app: App, opts: Partial<Options> = {}) {
       ),
     )
   }
-  const isServiceURL = (url: string) => app.isServiceURL(url)
+  const isServiceURL = (url: string) => app.isDisposed() || app.isServiceURL(url)
   const proxyOptions = () => ({
     sendMessage,
     sanitize,
@@ -131,17 +133,27 @@ export default function (app: App, opts: Partial<Options> = {}) {
     ignoredHeaders: app.sanitizer.privateMode ? true : options.ignoreHeaders,
     tokenUrlMatcher: options.tokenUrlMatcher,
     // bodies sanitize would delete aren't read at all
-    captureBody: () => options.capturePayload && !app.sanitizer.privateMode,
+    captureBody: () => !app.isDisposed() && options.capturePayload && !app.sanitizer.privateMode,
   })
 
-  const patchWindow = (context: typeof globalThis) => {
-    createNetworkProxy(context, proxyOptions())
+  const restoreContexts = new ContextPatches()
+  const install = (context: typeof globalThis) => {
+    if (app.isDisposed() || restoreContexts.has(context)) return
+    restoreContexts.set(context, createNetworkProxy(context, proxyOptions()))
   }
-
-  patchWindow(window)
-  options.axiosInstances?.forEach((instance) => hookAxios(instance, proxyOptions()))
+  app.attachStopCallback(() => {
+    if (!app.isDisposed()) return
+    restoreContexts.clear()
+  })
+  install(window)
+  options.axiosInstances?.forEach((instance) => {
+    const unhook = hookAxios(instance, proxyOptions())
+    app.attachStopCallback(() => {
+      if (app.isDisposed()) unhook()
+    })
+  })
 
   if (options.captureInIframes) {
-    app.observer.attachContextCallback(app.safe(patchWindow))
+    app.observer.attachContextCallback(app.safe(install))
   }
 }

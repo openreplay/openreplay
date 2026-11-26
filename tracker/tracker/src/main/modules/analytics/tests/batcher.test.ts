@@ -296,6 +296,22 @@ describe('Batcher', () => {
     expect(flushSpy).toHaveBeenCalledTimes(2)
   })
 
+  test('terminal discard drops queued events and fences delayed retries', async () => {
+    fetchMock.mockRejectedValueOnce(Error('synthetic network error'))
+    batcher.sendImmediately(makeEventsEvent('synthetic',1,{}))
+    await jest.advanceTimersByTimeAsync(0)
+    batcher.addEvent(makeEventsEvent('queued',2,{}))
+    expect(typeof batcher.discard).toBe('function')
+    expect(jest.getTimerCount()).toBe(1)
+    batcher.discard()
+    expect(jest.getTimerCount()).toBe(0)
+    await jest.runAllTimersAsync()
+    batcher.restart()
+    batcher.sendImmediately(makeEventsEvent('late',3,{}))
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(batcher.getBatches()).toEqual({data:{user_actions:[],events:[]}})
+  })
+
   test('stop flushes then clears interval', () => {
     const flushSpy = jest.spyOn(batcher, 'flush').mockImplementation(() => {})
 
@@ -341,6 +357,17 @@ describe('Batcher', () => {
       'first',
       'second',
     ])
+  })
+
+  test('discard during payload serialization skips dispatch', () => {
+    batcher.sendImmediately(makeEventsEvent('evt', 1, {
+      toJSON: () => {
+        batcher.discard()
+        return { value: 'discarded' }
+      },
+    }))
+
+    expect(fetchMock).not.toHaveBeenCalled()
   })
 
   test('401 token expired stops a non-standalone batcher', async () => {

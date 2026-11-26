@@ -1,5 +1,7 @@
 ## 20.0.0
 
+- `captureSanitizer` option: a synchronous callback that gets attributes, resource URLs, CSS, fonts and inlined SVG sprites after the built-in masking and can rewrite or drop each value; canvas and cross-domain iframe capture are off while it is set
+- `discard()`: stops recording without sending buffered data, aborts the tracker's in-flight requests, removes its browser API patches and clears its stored session and device keys (`stop()` still flushes)
 - crossdomain: a child frame's DOM observer is disconnected on `stop()`; a restart no longer leaves two observers running
 - `coldStart()` after `stop()` no longer uploads what the stopped cold start buffered
 - crossdomain: `parentDomain` takes a list of origins; the iframe talks to the listed one that embeds it

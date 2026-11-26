@@ -1,8 +1,7 @@
+import { resolveInlineAsset, sanitizeCapture } from '../captureSanitizer.js'
 import { createMutationObserver, throttleWithTrailing, canAccessIframe } from '../../utils.js'
 import {
   CreateDocument,
-  RemoveNodeAttribute,
-  SetNodeAttributeURLBased,
   SetCSSDataURLBased,
   SetNodeData,
   CreateTextNode,
@@ -41,9 +40,12 @@ export async function parseUseEl(
   useElement: SVGUseElement,
   mode: 'inline' | 'dataurl' | 'svgtext',
   domParser: DOMParser,
+  signal?: AbortSignal,
+  sourceHref?: string,
 ) {
   try {
-    const href = useElement.getAttribute('xlink:href') || useElement.getAttribute('href')
+    if (signal?.aborted) return
+    const href = sourceHref ?? (useElement.getAttribute('xlink:href') || useElement.getAttribute('href'))
     if (!href) {
       console.debug('Openreplay: xlink:href or href not found on <use>.')
       return
@@ -63,7 +65,7 @@ export async function parseUseEl(
     // named "local" can't collide with the in-document bucket.
     const cacheKey = url ? `url:${url}#${symbolId}#${mode}` : `doc:${symbolId}#${mode}`
 
-    if (iconCache[cacheKey]) {
+    if (sourceHref === undefined && iconCache[cacheKey]) {
       return iconCache[cacheKey]
     }
 
@@ -77,7 +79,7 @@ export async function parseUseEl(
         escapedURL = CSS.escape(href)
       }
 
-      const symbol = document.querySelector(escapedURL)
+      const symbol = useElement.ownerDocument.querySelector(escapedURL)
       if (symbol) {
         const inlineSvg = `
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="${symbol.getAttribute('viewBox') || '0 0 24 24'}">
@@ -85,7 +87,7 @@ export async function parseUseEl(
         </svg>
       `
 
-        iconCache[cacheKey] = inlineSvg
+        if (sourceHref === undefined) iconCache[cacheKey] = inlineSvg
 
         return inlineSvg
       } else {
@@ -94,14 +96,15 @@ export async function parseUseEl(
       }
     }
     let svgDoc: Document | undefined
-    if (svgUrlCache[url]) {
+    if (sourceHref === undefined && svgUrlCache[url]) {
       if (svgUrlCache[url] === 1) {
         await new Promise((resolve) => {
           let tries = 0
           const interval = setInterval(() => {
-            if (tries > 100) {
+            if (signal?.aborted || tries > 100) {
               clearInterval(interval)
               resolve(false)
+              return
             }
             if (svgUrlCache[url] !== 1) {
               svgDoc = svgUrlCache[url]
@@ -116,21 +119,22 @@ export async function parseUseEl(
         svgDoc = svgUrlCache[url] ?? `<svg xmlns="http://www.w3.org/2000/svg"></svg>`
       }
     } else {
-      svgUrlCache[url] = 1
+      if (sourceHref === undefined) svgUrlCache[url] = 1
       try {
-        const response = await fetch(url)
+        const response = await (signal ? fetch(url, { signal }) : fetch(url))
+        if (sourceHref !== undefined && !response.ok) return
         const svgText = await response.text()
         svgDoc = domParser.parseFromString(svgText, 'image/svg+xml')
-        svgUrlCache[url] = svgDoc
+        if (sourceHref === undefined) svgUrlCache[url] = svgDoc
       } catch (e) {
         // Clear the in-flight sentinel so a failed fetch doesn't wedge every
         // future <use> for this url into a 10s poll-then-give-up loop.
-        delete svgUrlCache[url]
+        if (sourceHref === undefined) delete svgUrlCache[url]
         throw e
       }
     }
 
-    if (!svgDoc) {
+    if (signal?.aborted || !svgDoc) {
       return
     }
 
@@ -144,7 +148,7 @@ export async function parseUseEl(
 
     if (mode === 'inline') {
       const res = { paths: symbol.innerHTML, vbox: symbol.getAttribute('viewBox') || '0 0 24 24' }
-      iconCache[cacheKey] = res
+      if (sourceHref === undefined) iconCache[cacheKey] = res
       return res
     }
     if (mode === 'svgtext') {
@@ -154,7 +158,7 @@ export async function parseUseEl(
         </svg>
       `
 
-      iconCache[cacheKey] = inlineSvg
+      if (sourceHref === undefined) iconCache[cacheKey] = inlineSvg
 
       return inlineSvg
     }
@@ -167,13 +171,15 @@ export async function parseUseEl(
       const encodedSvg = btoa(inlineSvg)
       const dataUrl = `data:image/svg+xml;base64,${encodedSvg}`
 
-      iconCache[cacheKey] = dataUrl
+      if (sourceHref === undefined) iconCache[cacheKey] = dataUrl
 
       return dataUrl
     }
     console.debug(`Openreplay: Unknown mode: ${mode}. Use "inline" or "dataurl".`)
   } catch (error) {
-    console.error('Openreplay: Error processing <use> element:', error)
+    if (signal?.aborted) return
+    if (sourceHref !== undefined) console.error('OpenReplay: failed to capture SVG sprite')
+    else console.error('Openreplay: Error processing <use> element:', error)
   }
 }
 
@@ -264,6 +270,10 @@ export interface AttributeContext {
   generation: number
 }
 
+export function resetAttributeContext(ctx: AttributeContext): void {
+  ctx.generation++
+}
+
 export function sendNodeAttribute(
   ctx: AttributeContext,
   id: number,
@@ -273,11 +283,17 @@ export function sendNodeAttribute(
 ): void {
   const app = ctx.app
   if (isSVGElement(node)) {
+    const attributeName = name
     if (name.startsWith('xlink:')) {
       name = name.substring(6)
     }
+    if (app.captureSanitizer && isUseElement(node) && name === 'href' && !ctx.disableSprites) {
+      const href = node.getAttribute('href')
+      if (attributeName === 'xlink:href' && href !== null) return
+      if (value === null && href === null) value = node.getAttribute('xlink:href')
+    }
     if (value === null) {
-      app.send(RemoveNodeAttribute(id, name))
+      app.attributeSender.removeAttribute(id, name, node)
       return
     }
     // a masked <use> points at its symbol, recorded masked, instead of a copy
@@ -285,18 +301,9 @@ export function sendNodeAttribute(
       isUseElement(node) &&
       name === 'href' &&
       !ctx.disableSprites &&
-      !(value.startsWith('#') && app.sanitizer.isObscured(id))
+      !((app.captureSanitizer || value.startsWith('#')) && app.sanitizer.isObscured(id))
     ) {
-      const gen = ctx.generation
-      parseUseEl(node, 'svgtext', ctx.domParser)
-        .then((svgData) => {
-          if (svgData && gen === ctx.generation) {
-            app.send(SetNodeAttribute(id, name, `_$OPENREPLAY_SPRITE$_${svgData}`))
-          }
-        })
-        .catch((e: any) => {
-          console.error('Openreplay: Error parsing <use> element:', e)
-        })
+      sendSprite(ctx, id, node, name, value)
       return
     }
     if (name === 'href') {
@@ -304,9 +311,13 @@ export function sendNodeAttribute(
         value = ''
       }
       value = maskAttribute(app, id, node, name, value)
-      app.send(SetNodeAttributeURLBased(id, name, value, app.getBaseHref()))
+      const approved = app.captureSanitizer
+        ? sanitizeCapture(app.captureSanitizer, { kind: 'resource', resourceType: 'svg', value, node })
+        : value
+      if (approved === null) app.attributeSender.removeAttribute(id, name, node)
+      else app.attributeSender.sendURLBasedAttribute(id, name, approved, node)
     } else {
-      app.attributeSender.sendSetAttribute(id, name, maskAttribute(app, id, node, name, value))
+      sendAttributeValue(app, id, node, name, value)
     }
     return
   }
@@ -344,45 +355,141 @@ export function sendNodeAttribute(
     return
   }
   if (value === null) {
-    app.send(RemoveNodeAttribute(id, name))
+    app.attributeSender.removeAttribute(id, name, node)
     return
   }
   if (name === 'style' || (name === 'href' && hasTag(node, 'link'))) {
-    if ('rel' in node && node.rel === 'stylesheet' && ctx.inlineRemoteCss) {
-      const gen = ctx.generation
-      setTimeout(() => {
-        inlineRemoteCss(
-          node as HTMLLinkElement,
-          id,
-          app.getBaseHref(),
-          nextID,
-          (sheetId: number, cssText: string, index: number, baseHref: string) => {
-            if (ctx.generation !== gen) return
-            app.send(AdoptedSSInsertRuleURLBased(sheetId, cssText, index, baseHref))
-          },
-          (sheetId: number, ownerId: number) => {
-            if (ctx.generation !== gen) return
-            app.send(AdoptedSSAddOwner(sheetId, ownerId))
-          },
-          ctx.inlinerOptions?.forceFetch,
-          ctx.inlinerOptions?.forcePlain,
-          (cssText: string, fakeTextId: number) => {
-            if (ctx.generation !== gen) return
-            app.send(CreateTextNode(fakeTextId, id, 0))
-            app.send(SetCSSDataURLBased(fakeTextId, cssText, app.getBaseHref()))
-          },
-        )
-      }, 0)
-      return
-    }
+    const policy = app.captureSanitizer
+    const original = value
     value = maskAttribute(app, id, node, name, value)
-    app.send(SetNodeAttributeURLBased(id, name, value, app.getBaseHref()))
+    if (policy && value.length > 1e5) value = ''
+    const approved = !policy
+      ? value
+      : name === 'style'
+        ? sanitizeCapture(policy, { kind: 'css', source: 'attribute', value, node })
+        : sanitizeCapture(policy, { kind: 'resource', resourceType: 'stylesheet', value, node })
+    if (approved === null) {
+      app.attributeSender.removeAttribute(id, name, node)
+    } else if (
+      (name === 'href' || !policy) && 'rel' in node && node.rel === 'stylesheet' && ctx.inlineRemoteCss
+    ) {
+      inlineStylesheet(ctx, id, node as HTMLLinkElement, original, approved)
+    } else {
+      app.attributeSender.sendURLBasedAttribute(id, name, approved, node)
+    }
     return
   }
   if (name === 'href' || value.length > 1e5) {
     value = ''
   }
-  app.attributeSender.sendSetAttribute(id, name, maskAttribute(app, id, node, name, value))
+  sendAttributeValue(app, id, node, name, value)
+}
+
+function sendAttributeValue(
+  app: App, id: number, node: Element, name: string, value: string,
+): void {
+  value = maskAttribute(app, id, node, name, value)
+  const policy = app.captureSanitizer
+  const approved = policy ? sanitizeCapture(policy, { kind: 'attribute', name, value, node }) : value
+  if (approved === null) app.attributeSender.removeAttribute(id, name, node)
+  else app.attributeSender.sendSetAttribute(id, name, approved, false, node)
+}
+
+function sendSprite(ctx: AttributeContext, id: number, node: SVGUseElement, name: string, original: string): void {
+  const app = ctx.app
+  const policy = app.captureSanitizer
+  const signal = app.captureSignal
+  const generation = ctx.generation
+  const isCurrent = () => !signal?.aborted && ctx.generation === generation &&
+    (!policy || (app.nodes.getID(node) === id &&
+      (node.getAttribute('href') ?? node.getAttribute('xlink:href')) === original))
+  if (!isCurrent()) return
+  const href = policy
+    ? sanitizeCapture(policy, { kind: 'resource', resourceType: 'svg', value: original, node })
+    : undefined
+  if (!isCurrent()) return
+  if (href === null) {
+    app.attributeSender.removeAttribute(id, name, node)
+    return
+  }
+  if (href === '') {
+    app.attributeSender.sendSetAttribute(id, name, '', true, node)
+    return
+  }
+  const asset = href === undefined ? null : resolveInlineAsset(original, href, node.baseURI)
+  if (policy && !asset) {
+    app.attributeSender.removeAttribute(id, name, node)
+    return
+  }
+  const reference = original.trim()
+  const sourceHref = asset && (reference.startsWith('#') ? reference : asset.sourceUrl)
+  void parseUseEl(node, 'svgtext', ctx.domParser, signal, sourceHref ?? undefined)
+    .then((svgData) => {
+      if (typeof svgData !== 'string' || !svgData || !isCurrent()) return
+      if (policy && asset) {
+        const approved = sanitizeCapture(policy, {
+          kind: 'svg', value: svgData, node, sourceUrl: asset.sourceUrl,
+        })
+        if (!isCurrent()) return
+        if (approved === null) app.attributeSender.removeAttribute(id, name, node)
+        else app.attributeSender.sendSetAttribute(
+          id, name, approved === '' ? '' : `_$OPENREPLAY_SPRITE$_${approved}`, true, node,
+        )
+      } else {
+        app.send(SetNodeAttribute(id, name, `_$OPENREPLAY_SPRITE$_${svgData}`))
+      }
+    })
+    .catch((error: unknown) => {
+      if (policy) console.error('OpenReplay: failed to capture SVG sprite')
+      else console.error('Openreplay: Error parsing <use> element:', error)
+    })
+}
+
+function inlineStylesheet(
+  ctx: AttributeContext, id: number, node: HTMLLinkElement, original: string, href: string,
+): void {
+  const { app, generation, inlinerOptions } = ctx
+  const policy = app.captureSanitizer
+  const signal = app.captureSignal
+  const isCurrent = () => !signal?.aborted && ctx.generation === generation &&
+    (!policy || (app.nodes.getID(node) === id && node.getAttribute('href') === original))
+  setTimeout(() => {
+    if (!isCurrent()) return
+    const baseHref = app.getBaseHref()
+    if (baseHref === null || !isCurrent()) return
+    inlineRemoteCss(
+      node,
+      id,
+      baseHref,
+      nextID,
+      (sheetId, cssText, index, baseHref) => {
+        if (isCurrent()) app.send(AdoptedSSInsertRuleURLBased(sheetId, cssText, index, baseHref))
+      },
+      (sheetId, ownerId) => {
+        if (isCurrent()) app.send(AdoptedSSAddOwner(sheetId, ownerId))
+      },
+      inlinerOptions?.forceFetch,
+      inlinerOptions?.forcePlain,
+      (cssText, fakeTextId, cssBaseHref) => {
+        if (!isCurrent()) return
+        app.send(CreateTextNode(fakeTextId, id, 0))
+        app.send(SetCSSDataURLBased(fakeTextId, cssText, cssBaseHref))
+      },
+      policy && { sanitizer: policy, href, original },
+      signal,
+    )
+  }, 0)
+}
+
+export function sendStyleText(app: App, id: number, parent: Element, data: string): void {
+  const policy = app.captureSanitizer
+  const approved = policy
+    ? sanitizeCapture(policy, { kind: 'css', source: 'text', value: data, node: parent })
+    : data
+  if (app.isDisposed()) return
+  const baseHref = approved === null ? null : app.getBaseHref()
+  if (app.isDisposed()) return
+  app.send(SetCSSDataURLBased(id, baseHref === null ? '' : approved ?? '', baseHref ?? ''))
 }
 
 /** After a level change: re-sends the attributes whose masking depends on it. */
@@ -555,6 +662,10 @@ export default abstract class Observer {
     this.clear()
     this.app.sanitizer.clear()
     this.app.nodes.clear()
+    if (this.app.captureSanitizer) {
+      resetAttributeContext(this.attrCtx)
+      this.app.attributeSender.resetEmittedAttributes()
+    }
     this.app.send(CreateDocument())
     this.app.nodes.callNodeCallbacks(document, true)
     this.bindTree(document.documentElement)
@@ -615,7 +726,7 @@ export default abstract class Observer {
 
   private sendNodeData(id: number, parentElement: Element, data: string): void {
     if (hasTag(parentElement, 'style')) {
-      this.app.send(SetCSSDataURLBased(id, data, this.app.getBaseHref()))
+      sendStyleText(this.app, id, parentElement, data)
       return
     }
     // textarea text is its default value (React rewrites it on each keystroke);
@@ -802,7 +913,7 @@ export default abstract class Observer {
         }
         for (let i = 0; i < el.attributes.length; i++) {
           const attr = el.attributes[i]
-          sendNodeAttribute(this.attrCtx, id, el, attr.nodeName, attr.value)
+          sendNodeAttribute(this.attrCtx, id, this.app.captureSanitizer ? node : el, attr.nodeName, attr.value)
         }
       } else if (isTextNode(node)) {
         // for text node id != 0, hence parentID !== undefined and parent is Element
@@ -1082,10 +1193,11 @@ export default abstract class Observer {
     this.observer.disconnect()
     this.clear()
     this.throttledSetNodeData.clear()
-    this.attrCtx.generation++
+    resetAttributeContext(this.attrCtx)
   }
 
   protected resetThrottledSetNodeData(): void {
     this.throttledSetNodeData.clear()
+    if (this.app.captureSanitizer) this.app.attributeSender.resetEmittedAttributes()
   }
 }

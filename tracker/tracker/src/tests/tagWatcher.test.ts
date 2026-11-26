@@ -83,6 +83,7 @@ describe('TagWatcher', () => {
     await watcher.fetchTags('https://localhost.com', '123')
     expect(fetchMock).toHaveBeenCalledWith('https://localhost.com/v1/web/tags', {
       method: 'GET',
+      signal: expect.any(AbortSignal),
       headers: { Authorization: 'Bearer 123' },
     })
     expect(watcher.tags).toEqual([
@@ -94,6 +95,24 @@ describe('TagWatcher', () => {
       WATCHED_TAGS_KEY,
       '[{"id":1,"selector":"div"},{"id":2,"selector":"span"},{"id":3,"selector":"p"}]',
     )
+  })
+
+  test('discard aborts and fences late tags without interval or storage resurrection', async () => {
+    let resolve: (value: any) => void = () => {}
+    const fetchMock = jest.fn((_url: string, _init: RequestInit) =>
+      new Promise((r) => { resolve = r }),
+    )
+    ;(globalThis as any).fetch = fetchMock
+    const watcher = makeWatcher()
+    const pending = watcher.fetchTags('https://example.invalid', 'synthetic')
+    expect(typeof (watcher as any).discard).toBe('function')
+    watcher.discard()
+    expect(fetchMock.mock.calls[0][1].signal?.aborted).toBe(true)
+    resolve({ json: async () => ({ tags: [{id: 1, selector: 'div'}] }) })
+    await pending
+    expect(watcher.interval).toBeNull()
+    expect(watcher.tags).toEqual([])
+    expect(sessionStorageMock.setItem).not.toHaveBeenCalled()
   })
 
   test('fetchTags logs errors instead of throwing', async () => {

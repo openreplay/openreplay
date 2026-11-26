@@ -1,4 +1,4 @@
-import ConstantProperties from './constantProperties.js'
+import ConstantProperties, { clearStoredValue } from './constantProperties.js'
 import type { StorageLike } from './constantProperties.js'
 import Events from './events.js'
 import People from './people.js'
@@ -29,6 +29,7 @@ export default class Analytics {
   public readonly people: People
 
   private token: string | null = null
+  private discarded = false
   private readonly batcher: Batcher
   private readonly backendUrl: string
   private readonly projectKey: string
@@ -80,6 +81,7 @@ export default class Analytics {
   }
 
   _getToken = () => {
+    if (this.discarded) return null
     if (this.standalone) {
       return this.token
     } else {
@@ -95,6 +97,7 @@ export default class Analytics {
   }
 
   init = async () => {
+    if (this.discarded) return
     if (!this.standalone) {
       this.batcher.startAutosend()
       return
@@ -113,6 +116,7 @@ export default class Analytics {
         throw new Error(`HTTP error! status: ${resp.status}`)
       }
       const result = await resp.json()
+      if (this.discarded) return
       if (result.token) {
         this.token = result.token
         this.sessionStorage.setItem(STORAGEKEY, result.token)
@@ -130,6 +134,16 @@ export default class Analytics {
       this.batcher.restart()
     }
   }
+  onDiscard = () => {
+    if (this.discarded) return
+    this.discarded = true
+    this.token = null
+    this.batcher.discard()
+    this.constantProperties.discard()
+    this.people.discard()
+    this.events.reset()
+    if (this.standalone) clearStoredValue(this.sessionStorage, STORAGEKEY)
+  }
   onStop = () => {
     if (!this.standalone) {
       this.batcher.stop()
@@ -137,6 +151,7 @@ export default class Analytics {
   }
 
   reset = () => {
+    if (this.discarded) return
     this.people.reset(true)
     this.events.reset()
     this.batcher.stop()

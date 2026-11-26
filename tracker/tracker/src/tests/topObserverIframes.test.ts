@@ -1,3 +1,4 @@
+import AttributeSender from '../main/modules/attributeSender.js'
 import { describe, expect, test, afterEach, jest } from '@jest/globals'
 import TopObserver from '../main/app/observer/top_observer.js'
 import IFrameObserver from '../main/app/observer/iframe_observer.js'
@@ -28,10 +29,7 @@ function setup(body: string, options: any = { disableThrottling: true }) {
     onUnregister: (id: number) => app.sanitizer.setLevel(id, 0),
   })
   app.sanitizer = new Sanitizer({ app, options: { obscureTextEmails: false } })
-  app.attributeSender = {
-    sendSetAttribute: (id: number, name: string, value: string) =>
-      app.send([Type.SetNodeAttribute, id, name, value]),
-  }
+  app.attributeSender = new AttributeSender({ app, isDictDisabled: true })
   observer = new TopObserver({ app, options })
 }
 

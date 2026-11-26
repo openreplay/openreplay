@@ -1,3 +1,4 @@
+import AttributeSender from '../main/modules/attributeSender.js'
 import { describe, expect, test, beforeEach, afterEach, jest } from '@jest/globals'
 import TopObserver from '../main/app/observer/top_observer.js'
 import Nodes from '../main/app/nodes/index.js'
@@ -25,6 +26,7 @@ function makeApp() {
     options: { forceNgOff: true },
     safe: (f: any) => f,
     send: (msg: Message) => sent.push(msg),
+    isDisposed: () => false,
     getBaseHref: () => 'http://localhost/',
     debug: { log: jest.fn(), warn: jest.fn(), info: jest.fn(), error: jest.fn() },
   }
@@ -37,10 +39,7 @@ function makeApp() {
     app,
     options: { obscureTextEmails: false, obscureTextNumbers: false, domSanitizer: undefined },
   })
-  app.attributeSender = {
-    sendSetAttribute: (id: number, name: string, value: string) =>
-      app.send([T.SetNodeAttribute, id, name, value]),
-  }
+  app.attributeSender = new AttributeSender({ app, isDictDisabled: true })
   return app
 }
 
