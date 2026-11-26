@@ -65,10 +65,28 @@ export function addTextLayer(pdf: jsPDF, slide: HTMLElement) {
   const range = document.createRange();
   const walker = document.createTreeWalker(slide, NodeFilter.SHOW_TEXT);
   pdf.setFont('helvetica', 'normal');
+  // a middle-cut line is two spans: its whole text goes over what is shown of it
+  slide.querySelectorAll<HTMLElement>('.m-rep-s__mid').forEach((mid) => {
+    const head = mid.firstElementChild?.getBoundingClientRect();
+    const tail = mid.lastElementChild?.getBoundingClientRect();
+    if (!head || !tail || !tail.width) return;
+    emit(
+      pdf,
+      {
+        text: mid.title,
+        left: head.left,
+        right: Math.min(tail.right, clipRight(mid, slide)),
+        top: tail.top,
+        bottom: tail.bottom,
+      },
+      parseFloat(getComputedStyle(mid).fontSize) || 12,
+      box,
+    );
+  });
   for (let node = walker.nextNode(); node; node = walker.nextNode()) {
     const text = node.textContent ?? '';
     const el = node.parentElement;
-    if (!text.trim() || !el) continue;
+    if (!text.trim() || !el || el.closest('.m-rep-s__mid')) continue;
     const cs = getComputedStyle(el);
     if (cs.visibility === 'hidden' || cs.display === 'none') continue;
     const size = parseFloat(cs.fontSize) || 12;

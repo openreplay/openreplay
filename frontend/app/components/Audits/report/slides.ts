@@ -62,6 +62,8 @@ export interface ReportRow {
   unlabelled?: boolean;
   code?: string;
   mono?: boolean;
+  /** a message read in full: the title wraps, cut to the lines the slide has room for */
+  wrap?: boolean;
   description?: string;
   mark?: RowMark;
   tag?: { text: string; tone: Tone };
@@ -433,6 +435,7 @@ interface TopOpts {
   mark?: (r: TopRow) => RowMark | undefined;
   code?: (r: TopRow) => string | undefined;
   mono?: boolean;
+  wrap?: boolean;
   value?: (r: TopRow) => string;
   rest?: (r: TopRow) => string | undefined;
   tag?: (r: TopRow) => ReportRow['tag'];
@@ -448,6 +451,7 @@ function topRows(rows: readonly TopRow[], o: TopOpts = {}): ReportRow[] {
     title: r.label ?? 'Unlabelled element',
     unlabelled: r.label == null,
     mono: o.mono,
+    wrap: o.wrap,
     mark: o.mark?.(r),
     code: o.code ? o.code(r) : r.label == null ? r.selector : undefined,
     tag: o.tag?.(r),
@@ -852,7 +856,7 @@ const BUILDERS: Partial<Record<SectionKey, Builder>> = {
         'jsErrors',
         'JS errors',
         'Top JS errors',
-        { code: (r) => r.code, rest: users },
+        { code: (r) => r.code, rest: users, wrap: true },
       ],
       [
         'failedRequests',
