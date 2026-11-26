@@ -116,7 +116,7 @@ func (l *logsImpl) searchWindow(ctx context.Context, projectID uint32, f *Filter
 		var r Log
 		var blockNumber, blockOffset uint64
 		if err := rows.Scan(&r.Timestamp, &r.SeverityText, &r.SeverityNumber, &r.ServiceName, &r.Body, &r.TraceID, &r.SpanID,
-			&r.LogAttributes, &r.ResourceAttributes, &r.ScopeName, &r.ScopeAttributes, &blockNumber, &blockOffset); err != nil {
+			&r.LogAttributes, &r.ResourceAttributes, &r.ScopeName, &r.ScopeAttributes, &blockNumber, &blockOffset, &r.SessionID); err != nil {
 			return nil, err
 		}
 		r.ID = logID(r.Timestamp, blockNumber, blockOffset)
