@@ -41,6 +41,11 @@
   min-width: 0;
 }
 
+/* a drawer's name field is its pickers' width */
+.m-drawer__lead .m-etitle__rename input {
+  flex: 0 1 20rem;
+}
+
 .m-page__lead .m-etitle__rename {
   width: 32rem;
   max-width: 100%;

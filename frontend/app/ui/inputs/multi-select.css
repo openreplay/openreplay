@@ -9,9 +9,14 @@
   overflow-y: auto;
   padding: var(--m-space-2);
 }
-/* rows with an icon or a line each: the trigger's width, so lines wrap */
+/* rows with an icon or a line each: at least the trigger's width, wider
+   until a row reads on one line, then lines wrap */
 .m-mselect--rich {
-  width: var(--radix-popover-trigger-width);
+  width: max-content;
+  max-width: min(
+    max(var(--radix-popover-trigger-width), 30rem),
+    calc(100vw - 1rem)
+  );
 }
 .m-mselect--rich [role='group'] {
   gap: 2px;

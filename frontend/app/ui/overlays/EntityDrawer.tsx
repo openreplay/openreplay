@@ -160,11 +160,14 @@ export function Section({
 
 export function Field({
   label,
+  note,
   error,
   htmlFor,
   children,
 }: {
   label: ReactNode;
+  /** a line under the control: a consequence or a rule */
+  note?: ReactNode;
   /** shown under the control while the value can't be saved */
   error?: ReactNode;
   /** the control's id, when wrapping alone doesn't name it */
@@ -179,6 +182,8 @@ export function Field({
         <span className="m-dfield__error" role="alert">
           {error}
         </span>
+      ) : note != null ? (
+        <span className="m-dfield__note">{note}</span>
       ) : null}
     </label>
   );
@@ -198,6 +203,23 @@ export function MetaGrid({
         </div>
       ))}
     </dl>
+  );
+}
+
+/** How many sessions the drawer's scope matches, at the footer's left. */
+export function DrawerCount({ n }: { n: number }) {
+  const { t } = useTranslation();
+  // the figure in its own face, wherever the language puts it
+  const [before, after = ''] = t('{{n}} sessions', {
+    n: '\u0001',
+    count: n,
+  }).split('\u0001');
+  return (
+    <span className="m-dfoot__count">
+      {before}
+      <span className="num">{n.toLocaleString('en-US')}</span>
+      {after}
+    </span>
   );
 }
 

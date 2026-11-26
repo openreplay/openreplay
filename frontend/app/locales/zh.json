@@ -1344,6 +1344,7 @@
   "Make owner": "设为所有者",
   "Remove {{name}}?": "移除 {{name}}？",
   "They lose access immediately. Nothing they recorded or bookmarked is deleted.": "They lose access immediately. Nothing they recorded or bookmarked is deleted.",
+  "The address is the account. To change it, invite the new one and remove this one.": "邮箱地址即账户。如需更改，请邀请新地址并移除此地址。",
   "Transfer ownership?": "转移所有权？",
   "Yes, transfer": "是，转移",
   "There can only be one owner account. By proceeding, the ownership will be transferred to {{name}}. You will lose your owner privileges.": "There can only be one owner account. By proceeding, the ownership will be transferred to {{name}}. You will lose your owner privileges.",

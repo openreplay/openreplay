@@ -25,13 +25,10 @@
   color: var(--m-content-secondary);
 }
 
-.m-nad__segment {
+.m-nad__segment,
+.m-nad__sections-pick {
   width: 20rem;
   max-width: 100%;
-}
-
-.m-nad__sections-pick {
-  width: 100%;
 }
 
 .m-nad__job {
@@ -41,19 +38,9 @@
   line-height: 1.3;
 }
 
-.m-nad__job-total {
-  font-size: var(--m-text-sm);
-  font-weight: var(--m-weight-medium);
-  color: var(--m-content-primary);
-}
-
 .m-nad__job-note {
   font-size: var(--m-text-xs);
   color: var(--m-content-muted);
-}
-
-.m-nad__job .num {
-  font-family: var(--m-font-num);
 }
 
 /* a chapter in the Sections dropdown: name, then a few words, one line */
