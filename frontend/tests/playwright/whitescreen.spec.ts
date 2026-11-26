@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { authStateFile, selectProject } from './helpers';
+import { authStateFile, pickRange, selectProject } from './helpers';
 
 test.use({ storageState: authStateFile });
 
@@ -13,14 +13,11 @@ test('The freshest session from openreplay website doesnt have white screen', as
   await page.goto('/');
   await selectProject(page);
 
-  await page
-    .locator('[data-test-id="session-list-header"]')
-    .locator('[data-test-id="widget-select-date-range"]')
-    .click();
-  await page.getByRole('menuitem', { name: 'Past 30 Days' }).click();
+  await pickRange(page, 'Past 30 Days');
 
-  await expect(page.locator('#session-item').first()).toBeVisible();
-  await page.locator('#session-item').nth(1).locator('#play-button a').click();
+  const rows = page.locator('.m-ss__row');
+  await expect(rows.nth(1)).toBeVisible();
+  await rows.nth(1).locator('.m-ss__play').click();
   await expect(page).toHaveURL(/\/session\/\d+/);
 
   /* The replay paints into Screen's iframe. Match on the css-module local name
