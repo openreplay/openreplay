@@ -242,8 +242,9 @@ export default class API {
         this.analytics?.onStart()
       })
       app.attachStopCallback(() => {
-        // discard() drops the analytics queue itself; a stop flushes it
-        if (!app.isDisposed()) this.analytics?.onStop()
+        // a discard drops the analytics queue (a cross-domain child is discarded by its parent)
+        if (app.isDisposed()) this.analytics?.onDiscard()
+        else this.analytics?.onStop()
       })
     }
     if (!this.crossdomainMode) {
