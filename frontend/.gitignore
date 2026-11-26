@@ -18,6 +18,7 @@ logs
 !.yarn/versions
 *.env.json
 test-results/
+test-results-login/
 playwright-report/
 tests/playwright/auth-state.json
 coverage

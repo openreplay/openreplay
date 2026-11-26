@@ -3,6 +3,12 @@ import { defineConfig, devices } from '@playwright/test';
 
 // another checkout's dev server may hold 3333; PW_PORT keeps a run on its own
 const port = process.env.PW_PORT ?? '3333';
+const CI = !!process.env.CI;
+
+/* CI uploads only test-results: real-backend runs keep no traces or
+   screenshots there, and the login specs write elsewhere. */
+const realBackend = CI ? ({ trace: 'off', screenshot: 'off' } as const) : {};
+const loginOutput = 'test-results-login';
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -11,10 +17,9 @@ const port = process.env.PW_PORT ?? '3333';
 export default defineConfig({
   testDir: './tests/playwright',
   fullyParallel: true,
-  retries: process.env.CI ? 1 : 0,
+  retries: CI ? 1 : 0,
   workers: 1,
-  // html only in CI, where the report is uploaded as a failure artifact
-  reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
+  reporter: 'list',
   use: {
     baseURL: `http://localhost:${port}`,
     trace: 'on-first-retry',
@@ -23,12 +28,23 @@ export default defineConfig({
 
   /* Configure projects for major browsers */
   projects: [
-    { name: 'setup', testMatch: /.*\.setup\.ts/ },
-
+    {
+      name: 'setup',
+      testMatch: /.*\.setup\.ts/,
+      outputDir: loginOutput,
+      use: realBackend,
+    },
+    {
+      name: 'sign-in',
+      testMatch: /sign-in\.spec\.ts/,
+      outputDir: loginOutput,
+      use: { ...devices['Desktop Chrome'], ...realBackend },
+      dependencies: ['setup'],
+    },
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-      testIgnore: /mocked\//,
+      use: { ...devices['Desktop Chrome'], ...realBackend },
+      testIgnore: [/mocked\//, /sign-in\.spec\.ts/],
       dependencies: ['setup'],
     },
     /* API fully mocked with page.route: no backend, no credentials */
