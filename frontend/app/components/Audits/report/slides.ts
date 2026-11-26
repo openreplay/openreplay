@@ -67,9 +67,9 @@ export interface ReportRow {
   tag?: { text: string; tone: Tone };
   /** 1 small · 2 medium · 3 high */
   effort?: 1 | 2 | 3;
-  highlight?: boolean;
   critical?: boolean;
-  tags?: string[];
+  /** set (even empty) on issue rows only: they draw as three single lines */
+  journeys?: string[];
   lines?: RowLine[];
 }
 
@@ -548,26 +548,30 @@ const sampleNote = (
 };
 
 function issueRows(d: IssuesData, tagKey: 'categories' | 'tags'): ReportRow[] {
-  const hl = new Set(d.highlight?.rows ?? []);
-  return d.rows.map((r, i) => {
+  return d.rows.map((r) => {
     const seen =
       r.share != null
         ? `seen in ${r.share < 1 ? 'under 1%' : pctT(r.share)} of the sessions read`
         : 'seen in the sessions read';
     const words = r[tagKey] ?? [];
-    const cats = words.length
-      ? ` · ${tagKey === 'categories' ? 'category' : 'tags'} ${words.join(', ')}`
-      : '';
     return {
       title: r.name,
       description: r.description,
-      highlight: r.hl || hl.has(i + 1),
       critical: r.critical,
-      tags: r.journeys?.length ? r.journeys : undefined,
-      lines: [{ kind: 'impact', level: r.impact, text: seen + cats }],
+      journeys: r.journeys ?? [],
+      lines: [
+        {
+          kind: 'impact',
+          level: r.impact,
+          text: words.length ? `${seen} · ${words.join(', ')}` : seen,
+        },
+      ],
     };
   });
 }
+
+const ISSUE_FOOT =
+  'Impact: share of sessions read where the issue was seen; High from 45%, Medium from 25%, Low below. The warning mark: flagged critical.';
 
 const browserMark = (r: TopRow): RowMark => ({
   kind: 'browser',
@@ -1000,7 +1004,7 @@ const BUILDERS: Partial<Record<SectionKey, Builder>> = {
       'Encountered frustrations',
       facts(d.facts),
       issueRows(d, 'categories'),
-      `Found by ${VISION} in ${fmt(d.analysed)} sessions of this period, highest impact first. Impact: share of analysed sessions where the issue was seen; High from 45%, Medium from 25%, Low below.${d.highlight?.says ? ` Marked rows ${d.highlight.says}.` : ''}`,
+      `Found by ${VISION} in ${fmt(d.analysed)} sessions of this period, highest impact first. ${ISSUE_FOOT}`,
       { ai: true },
     );
   },
@@ -1298,7 +1302,7 @@ const BUILDERS: Partial<Record<SectionKey, Builder>> = {
       'Most impactful issues',
       facts(d.facts),
       issueRows(d, 'tags'),
-      `Found by ${VISION} in the ${fmt(d.analysed)} sessions it analysed (${fmt(d.seen)} distinct), sorted by impact: share of analysed sessions where the issue was seen; High from 45%, Medium from 25%, Low below.${d.highlight?.says ? ` Marked rows ${d.highlight.says}.` : ''}`,
+      `Found by ${VISION} in the ${fmt(d.analysed)} sessions it read (${fmt(d.seen)} distinct), sorted by impact. ${ISSUE_FOOT}`,
       { ai: true },
     );
   },

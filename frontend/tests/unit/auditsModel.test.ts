@@ -115,11 +115,15 @@ describe('toCreateRequest', () => {
       name: 'Cart',
       type: 'analytics',
       periodDays: 7,
-      notify: false,
+      notify: true,
       segmentIds: undefined,
       filter: { filters: [filter], eventsOrder: 'then' },
       sections: ['web', 'errors'],
     });
+  });
+
+  it('sends notify off when the email is switched off', () => {
+    expect(toCreateRequest(draft({ notify: false }), true).notify).toBe(false);
   });
 
   it('sends segments without the full-traffic filters', () => {

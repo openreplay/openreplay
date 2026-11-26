@@ -73,3 +73,12 @@
 .m-ailock .m-nad__sec-brief {
   color: var(--m-content-placeholder);
 }
+
+.m-nad__row {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  font-size: var(--m-text-sm);
+  color: var(--m-content-primary);
+  cursor: pointer;
+}

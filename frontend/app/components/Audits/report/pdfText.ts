@@ -46,6 +46,16 @@ function emit(pdf: jsPDF, l: Line, size: number, origin: DOMRect) {
   });
 }
 
+/** Right edge of the nearest clipping ancestor below the slide (ellipsis-truncated lines). */
+function clipRight(el: HTMLElement, slide: HTMLElement) {
+  let right = Infinity;
+  for (let a: HTMLElement | null = el; a && a !== slide; a = a.parentElement) {
+    if (getComputedStyle(a).overflowX !== 'visible')
+      right = Math.min(right, a.getBoundingClientRect().right);
+  }
+  return right;
+}
+
 /**
  * The slide's words as invisible text over its picture, line by line where the browser
  * drew them, so the PDF can be searched and copied from while it looks exactly the same.
@@ -63,6 +73,7 @@ export function addTextLayer(pdf: jsPDF, slide: HTMLElement) {
     if (cs.visibility === 'hidden' || cs.display === 'none') continue;
     const size = parseFloat(cs.fontSize) || 12;
     const upper = cs.textTransform === 'uppercase';
+    const clip = clipRight(el, slide);
     let line: Line | null = null;
     for (const m of text.matchAll(/\S+/g)) {
       const at = m.index ?? 0;
@@ -72,6 +83,7 @@ export function addTextLayer(pdf: jsPDF, slide: HTMLElement) {
       const r = range.getBoundingClientRect();
       if (
         !r.width ||
+        r.right > clip + 0.5 ||
         r.right < box.left ||
         r.left > box.right ||
         r.bottom < box.top ||

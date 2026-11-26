@@ -800,8 +800,46 @@
   padding: 14px 0 14px 16px;
   border-bottom: 1px solid var(--m-border-subtle);
 }
-.m-rep-s__row.is-hl {
-  box-shadow: inset 2px 0 0 var(--m-chart-1);
+/* title, description and meta line one line each, so five fit above the footer */
+.m-rep-s__row.is-issue {
+  padding-block: 12px;
+}
+.m-rep-s__row.is-issue > div {
+  min-width: 0;
+}
+.m-rep-s__row.is-issue p {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.m-rep-s__row.is-issue .m-rep-s__line {
+  margin-top: 8px;
+  white-space: nowrap;
+}
+.m-rep-s__row.is-issue .m-rep-s__line .pm {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.m-rep-s__crit {
+  flex: none;
+  color: var(--m-mark-danger);
+}
+.m-rep-s__jn {
+  display: inline-flex;
+  align-items: center;
+  flex: 1 1 0;
+  gap: 6px;
+  min-width: 96px;
+  max-width: max-content;
+  padding-left: 14px;
+  border-left: 1px solid var(--m-border-default);
+  color: var(--m-content-muted);
+}
+.m-rep-s__jn b {
+  flex: none;
+  font-weight: 500;
+  color: var(--m-content-placeholder);
 }
 .m-rep-s__row .in {
   font-size: 18px;
@@ -1575,22 +1613,8 @@
   box-shadow: 0 0 0 1px var(--m-border-default);
   object-fit: cover;
 }
-.m-rep-s__crit {
-  display: inline-grid;
-  color: var(--m-content-danger);
-}
 .m-rep-s__unl {
   font-style: italic;
-  color: var(--m-content-muted);
-}
-.m-rep-s__tag {
-  display: inline-flex;
-  align-items: center;
-  height: 22px;
-  padding: 0 8px;
-  border-radius: 4px;
-  background: var(--m-surface-sunken);
-  font: 400 12px var(--m-font-sans);
   color: var(--m-content-muted);
 }
 .m-rep-s__flag {

@@ -327,6 +327,8 @@ export interface AuditDraft {
   /** wins over `periodDays` */
   custom?: CustomRange;
   chapters: ChapterKey[];
+  /** email the creator when the report is ready */
+  notify: boolean;
 }
 
 export const emptyDraft = (hasAi: boolean): AuditDraft => ({
@@ -336,6 +338,7 @@ export const emptyDraft = (hasAi: boolean): AuditDraft => ({
   filters: [],
   periodDays: DEFAULT_PERIOD,
   chapters: usableChapters(hasAi),
+  notify: true,
 });
 
 /** The analytics report; also the estimate's body. */
@@ -349,8 +352,7 @@ export function toCreateRequest(
     name: draft.name.trim() || undefined,
     type: 'analytics',
     periodDays: draft.periodDays,
-    // no email for now (OR-4041)
-    notify: false,
+    notify: draft.notify,
     segmentIds:
       segments && draft.segmentIds.length
         ? draft.segmentIds.slice(0, MAX_SEGMENTS)

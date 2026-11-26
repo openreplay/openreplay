@@ -138,11 +138,22 @@ describe('buildDeck (schema version 4)', () => {
     expect(wins.facts).toEqual([]);
     expect(wins.unverified).toEqual(['37%']);
     const frustrations = of(byShort('Frustrations'), 'list');
-    expect(frustrations.rows.map((r) => r.highlight)).toEqual([
-      true,
+    expect(frustrations.rows.map((r) => r.critical)).toEqual([
       true,
       false,
+      false,
     ]);
+    expect(frustrations.rows.map((r) => r.journeys)).toEqual([[], [], []]);
+    expect(
+      frustrations.rows.map(
+        (r) => r.lines?.[0]?.kind === 'impact' && r.lines[0].text,
+      ),
+    ).toEqual([
+      'seen in 12% of the sessions read · Errors',
+      'seen in 26% of the sessions read · Errors',
+      'seen in under 1% of the sessions read',
+    ]);
+    expect(frustrations.foot).toMatch(/The warning mark: flagged critical\.$/);
   });
 
   it('keeps a section that failed or found nothing as a message slide', () => {
