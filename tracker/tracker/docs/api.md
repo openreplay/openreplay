@@ -45,6 +45,11 @@ type StartPromiseReturn =
 ### `stop(): string | undefined`
 Stops recording and ends the session. Returns the `sessionHash`; pass it to `start({ sessionHash })` (e.g. on another subdomain) to continue the same session.
 
+### `discard(): void` — class only
+Stops recording for good without sending what is still buffered, e.g. when the user withdraws consent (`stop()` flushes it). Drops pending messages, retries, canvas uploads and analytics batches, aborts the tracker's in-flight requests and removes its browser API patches. Clears the tracker's own keys from the configured `localStorage` / `sessionStorage` (session token, tab id, device id, offline buffer, analytics identity); other app storage is left alone. Data already sent stays on the server.
+
+Every method is a no-op afterwards. To record again, create a new `Tracker`; the singleton can't be configured twice, so it needs a page reload. Singleton: `tracker.getInstance()?.discard()`. With `crossdomain.enabled`, call it inside cross-origin iframes too: the parent's `discard()` doesn't stop their trackers.
+
 ### `coldStart(startOpts?: Partial<StartOptions>, conditional?: boolean): Promise<never> | undefined`
 Records into a rolling ~30 s in-memory buffer without creating a session. Calling `start()` later creates the session and sends the buffer, so the moments before the trigger (an error, a checkout step) are kept. `conditional: true` loads the recording conditions set in the project settings and starts when one matches. Returns a rejected promise only when the tracker isn't initialized.
 
@@ -143,6 +148,33 @@ Re-applies sanitization after you change `data-openreplay-*` attributes or whate
 ### `checkSanitization(el: Node): SanitizeLevel | undefined`
 Current level of a recorded node: `0` Plain, `1` Obscured, `2` Hidden; `undefined` if not tracked. Useful for debugging masking.
 
+### `captureSanitizer` option
+Filters values the built-in masking leaves in: return the value, a replacement, or `null` to leave it out. It must be synchronous and fast (it runs for every recorded attribute); a throw or a non-string result counts as `null`.
+
+```ts
+import type { CaptureData } from '@openreplay/tracker'
+
+type CaptureSanitizer = (data: Readonly<CaptureData>) => string | null
+type CaptureData =
+  | { kind: 'attribute'; name: string; value: string; node: Element | null }
+  | { kind: 'resource'; resourceType: 'image' | 'stylesheet' | 'svg' | 'timing' | 'base'; value: string; node: Element | null }
+  | { kind: 'css'; source: 'attribute' | 'text' | 'rule' | 'adopted'; value: string; node: Element | null; sourceUrl?: string }
+  | { kind: 'font'; field: 'family' | 'source' | 'descriptors'; value: string; node: null }
+  | { kind: 'svg'; value: string; node: SVGUseElement; sourceUrl: string }
+```
+
+| `kind` | Values |
+|---|---|
+| `attribute` | Element attributes (`class`, `id`, `data-*`, `aria-*`, ...). |
+| `resource` | `image`: `<img>` / `<source>` `src` and `srcset`. `stylesheet`: `<link>` `href`. `svg`: SVG `href`, including `<use>` sprites. `timing`: resource timing URLs (after `resourceNameSanitizer`). `base`: the URL relative URLs are resolved against; `null` leaves out every URL-based value. |
+| `css` | `attribute`: `style` attributes. `text`: `<style>` text and inlined stylesheets (`sourceUrl` set). `rule`: rules added through `insertRule`. `adopted`: constructed stylesheets. A rule left out or rewritten into something that doesn't parse is replaced by an empty rule, so rule indexes stay aligned. |
+| `font` | `new FontFace()` family, source and descriptors; `null` for any of them drops the font. |
+| `svg` | Markup of an inlined `<use>` sprite icon. |
+
+- Not passed to it: page text and input values (use masking), page URLs and titles (`urls`), network requests (`network.sanitizer`), console.
+- Inlined stylesheets (`inlineCss` other than `0`) and sprite icons are read from the original URL. Return it unchanged or with query parameters removed (e.g. a signed `?token=`) to keep them; any other URL leaves the stylesheet or icon out of the replay.
+- Canvas and cross-domain iframe capture are off while it is set.
+
 ## Other
 
 ### `use<T>(plugin: (app: App | null, options?: Partial<Options>) => T): T`
@@ -183,6 +215,7 @@ Passed to `configure()` / `new Tracker()`. All optional except `projectKey`.
 | `domSanitizer` | `(node: Element) => SanitizeLevel` | Per-element masking rule. |
 | `urls` | `{ urlSanitizer?, titleSanitizer?, replaceHashSymbol? }` | Rewrite recorded page URLs/titles (strip tokens, PII). |
 | `resourceNameSanitizer` | `(url: string) => string` | Rewrite resource timing URLs. |
+| `captureSanitizer` | `(data: CaptureData) => string \| null` | Rewrite or drop attributes, resource URLs, CSS and fonts after masking, see [`captureSanitizer`](#capturesanitizer-option). Turns off canvas and cross-domain iframe capture. |
 | `excludedResourceUrls` | `string[]` | Skip resource timings for these URLs. |
 | `customAttributes` | `string[]` | Attributes (e.g. `'data-testid'`) to prefer in click selectors and input labels. |
 | `network` | object, see below | Fetch/XHR/beacon capture. |
