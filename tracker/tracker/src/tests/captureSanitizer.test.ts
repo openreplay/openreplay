@@ -290,6 +290,9 @@ test.each(['legacy', 'next'])('%s fetches an approved sprite at the original URL
   await new Promise((resolve) => setTimeout(resolve, 0))
 
   expect(fetcher.mock.calls.map(([url]) => url)).toEqual([href])
+  expect(sanitize).toHaveBeenCalledWith(expect.objectContaining({
+    kind: 'svg', sourceUrl: href + '#icon',
+  }))
   expect(sanitize.mock.calls.some(([data]) => data.value.startsWith('_$OPENREPLAY_SPRITE$_'))).toBe(false)
   expect(sent).toContainEqual([
     Type.SetNodeAttribute, expect.any(Number), 'href',
@@ -297,6 +300,46 @@ test.each(['legacy', 'next'])('%s fetches an approved sprite at the original URL
   ])
   expect(JSON.stringify(sent)).not.toContain('?test=example')
   expect(JSON.stringify(sent)).not.toContain('M0 0')
+})
+
+test.each(['legacy', 'next'])('%s does not inline a substituted sprite', async (core) => {
+  const fetcher = jest.fn()
+  const previous = globalThis.fetch
+  ;(globalThis as any).fetch = fetcher
+  cleanups.push(() => { globalThis.fetch = previous })
+  const { sent } = observe(
+    '<svg><use href="https://static.invalid/original.svg#icon"></use></svg>',
+    (data) => data.kind === 'resource' ? 'https://static.invalid/placeholder.svg#icon' : data.value,
+    core,
+  )
+  await Promise.resolve()
+  expect(fetcher).not.toHaveBeenCalled()
+  expect(JSON.stringify(sent)).not.toContain('_$OPENREPLAY_SPRITE$_')
+})
+
+test.each(['legacy', 'next'])('%s resolves a padded fragment locally without fetching', async (core) => {
+  const fetcher = jest.fn()
+  const previousFetch = globalThis.fetch
+  const previousCSS = Object.getOwnPropertyDescriptor(globalThis, 'CSS')
+  ;(globalThis as any).fetch = fetcher
+  Object.defineProperty(globalThis, 'CSS', {
+    configurable: true, value: { escape: (value: string) => value },
+  })
+  cleanups.push(() => {
+    globalThis.fetch = previousFetch
+    if (previousCSS) Object.defineProperty(globalThis, 'CSS', previousCSS)
+    else delete (globalThis as any).CSS
+  })
+  const { sent } = observe(
+    '<svg><symbol id="icon"><path d="M1 1"/></symbol><use href=" #icon "></use></svg>',
+    (data) => data.value,
+    core,
+  )
+  await Promise.resolve()
+  expect(fetcher).not.toHaveBeenCalled()
+  expect(sent).toContainEqual([
+    Type.SetNodeAttribute, expect.any(Number), 'href', expect.stringContaining('_$OPENREPLAY_SPRITE$_'),
+  ])
 })
 
 test.each(['legacy', 'next'])('%s clears previously approved style text when an update is rejected', async (core) => {
@@ -350,7 +393,7 @@ test('FontFace buffers approved fields and leaves constructor arguments untouche
 
 // Observer-level regression: raw relative hrefs must preserve the existing sheet/load path.
 test.each(['legacy', 'next'].flatMap((core) =>
-  ['absent', 'approve', 'rewrite', 'fallback', 'deny'].map((mode) => [core, mode]),
+  ['absent', 'approve', 'rewrite', 'fallback', 'deny', 'substitute'].map((mode) => [core, mode]),
 ))(
   '%s relative linked stylesheet preserves source semantics: %s',
   async (core, mode) => {
@@ -358,15 +401,17 @@ test.each(['legacy', 'next'].flatMap((core) =>
     const policy = jest.fn((d: any) =>
       d.kind === 'resource' && d.resourceType === 'stylesheet'
         ? mode === 'rewrite'
-          ? './approved.css'
-          : mode === 'deny'
-            ? null
-            : d.value
+          ? './relative.css'
+          : mode === 'substitute'
+            ? './placeholder.css'
+            : mode === 'deny'
+              ? null
+              : d.value
         : d.value,
     )
     app.captureSanitizer = mode === 'absent' ? undefined : policy
     document.documentElement.innerHTML =
-      '<head><link rel="stylesheet" href="./relative.css"></head><body><p>structure</p></body>'
+      '<head><link rel="stylesheet" href="./relative.css?test=example"></head><body><p>structure</p></body>'
     const link = document.querySelector('link')!
     Object.defineProperty(link, 'baseURI', { value: 'https://static.invalid/nested/' })
     let sheet: any =
@@ -384,7 +429,7 @@ test.each(['legacy', 'next'].flatMap((core) =>
     try {
       observer.observe()
       await new Promise((r) => setTimeout(r, 15))
-      if (mode === 'deny') {
+      if (mode === 'deny' || mode === 'substitute') {
         expect(read).not.toHaveBeenCalled()
         expect(fetcher).not.toHaveBeenCalled()
       } else if (mode === 'rewrite') {
@@ -395,7 +440,7 @@ test.each(['legacy', 'next'].flatMap((core) =>
           expect.any(Number),
           'p{color:blue}',
           0,
-          'https://static.invalid/nested/approved.css',
+          'https://static.invalid/nested/relative.css',
         ])
       } else if (mode === 'fallback') {
         expect(fetcher).toHaveBeenCalledWith(link.href)
@@ -417,7 +462,7 @@ test.each(['legacy', 'next'].flatMap((core) =>
             m[0] === Type.AdoptedSSInsertRuleURLBased &&
             m[2].includes('blue'),
         ),
-      ).toBe(mode !== 'deny')
+      ).toBe(mode !== 'deny' && mode !== 'substitute')
       expect(sent.some((m) => m[0] === Type.CreateElementNode && m[4] === 'P')).toBe(true)
     } finally {
       observer.disconnect()
@@ -507,22 +552,22 @@ test.each(['legacy', 'next'].flatMap((core) =>
     const { app, sent } = appFixture()
     const policy = jest.fn((d: any) =>
       d.kind === 'resource' && d.resourceType === 'stylesheet'
-        ? d.value === './approved-A.css'
+        ? d.value === './approved-A.css?test=example'
           ? phase === 'rewritten-load'
-            ? 'https://static.invalid/rewritten-A.css'
+            ? './approved-A.css'
             : d.value
           : null
         : d.value,
     )
     app.captureSanitizer = policy
     document.documentElement.innerHTML =
-      '<head><link rel="stylesheet" href="./approved-A.css"></head><body><p>structure</p></body>'
+      '<head><link rel="stylesheet" href="./approved-A.css?test=example"></head><body><p>structure</p></body>'
     const link = document.querySelector('link')!
     let loaded = phase === 'timer'
     const readB = jest.fn()
     Object.defineProperty(link, 'sheet', {
       get: () => {
-        if (link.getAttribute('href') !== './approved-A.css') readB()
+        if (link.getAttribute('href') !== './approved-A.css?test=example') readB()
         return loaded ? { cssRules: [{ cssText: 'p{color:blue}' }], href: link.href } : null
       },
     })

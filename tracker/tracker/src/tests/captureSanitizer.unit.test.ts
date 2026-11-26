@@ -1,5 +1,10 @@
 import { describe, expect, test, jest, afterEach } from '@jest/globals'
-import { sanitizeCapture, sanitizeStyleRule, type CaptureData } from '../main/app/captureSanitizer.js'
+import {
+  resolveInlineAsset,
+  sanitizeCapture,
+  sanitizeStyleRule,
+  type CaptureData,
+} from '../main/app/captureSanitizer.js'
 import AttributeSender from '../main/modules/attributeSender.js'
 import { Type } from '../common/messages.gen.js'
 import images from '../main/modules/img.js'
@@ -13,6 +18,18 @@ afterEach(() => {
   jest.restoreAllMocks()
 })
 const value = 'synthetic-private'
+
+test('inline assets permit query redaction while preserving the source and sprite fragment', () => {
+  const base = 'https://static.invalid/'
+  const original = 'icons.svg?test=example&theme=light#one'
+  expect(resolveInlineAsset(original, 'icons.svg?theme=light#one', base)).toEqual({
+    sourceUrl: base + original,
+    replayUrl: base + 'icons.svg?theme=light#one',
+  })
+  expect(resolveInlineAsset(original, 'icons.svg?theme=dark#one', base)).toBeNull()
+  expect(resolveInlineAsset(original, 'icons.svg?theme=light#two', base)).toBeNull()
+  expect(resolveInlineAsset(original, 'https://other.invalid/icons.svg#one', base)).toBeNull()
+})
 
 test.each([
   '@import url(https://static.invalid/theme.css?key=example);',
@@ -100,7 +117,7 @@ describe('stylesheet pre-fetch and content policy', () => {
       d.kind === 'resource' ? 'https://static.invalid/safe.css' : 'p{color:blue}',
     )
     const link = document.createElement('link')
-    link.href = 'https://example.invalid/private.css'
+    link.href = 'https://static.invalid/safe.css?test=example'
     const insert = jest.fn((_id: number, _css: string, _index: number, _base: string) => [])
     inlineRemoteCss(
       link,
@@ -117,7 +134,7 @@ describe('stylesheet pre-fetch and content policy', () => {
     await new Promise((resolve) => setTimeout(resolve, 0))
     expect(fetcher).toHaveBeenCalledWith(link.href)
     expect(policy).toHaveBeenCalledWith(
-      expect.objectContaining({ kind: 'css', source: 'text', value: 'p{color:red}' }),
+      expect.objectContaining({ kind: 'css', source: 'text', value: 'p{color:red}', sourceUrl: link.href }),
     )
     expect(insert).toHaveBeenCalledWith(2, 'p{color:blue}', 0, 'https://static.invalid/safe.css')
   })
@@ -129,7 +146,7 @@ test('rewriting the replay base still reads the original DOM sheet', async () =>
   ;(globalThis as any).fetch = fetcher
   const read = jest.fn(() => ({ cssRules: [{ cssText: 'p{color:blue}' }] }))
   const link = document.createElement('link')
-  link.href = 'https://example.invalid/private.css'
+  link.href = 'https://static.invalid/safe.css?test=example'
   Object.defineProperty(link, 'sheet', { get: read })
   const policy = jest.fn((d: CaptureData) =>
     d.kind === 'resource' ? 'https://static.invalid/safe.css' : d.value,

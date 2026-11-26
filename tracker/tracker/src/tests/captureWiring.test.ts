@@ -7,6 +7,7 @@ jest.mock('@openreplay/network-proxy', () => ({
   }),
 }))
 import Tracker from '../main/index.js'
+import Analytics from '../main/modules/analytics/index.js'
 import NextObserver from '../main/app/observer/next_observer.js'
 import TopObserver from '../main/app/observer/top_observer.js'
 import { styleSheetIDMap } from '../main/modules/constructedStyleSheets.js'
@@ -362,12 +363,16 @@ test('a discarded tracker has no resource base without a capture policy', () => 
   expect(app.getBaseHref()).toBeNull()
 })
 
-test('discard clears analytics memory without changing analytics persistence', () => {
+test('discard clears analytics identity before a new tracker can reuse it', () => {
   const { tracker } = create(undefined, false, true, true)
   const analytics = tracker.analytics!
   const identityKey = '$__or__distinct_device_id__$'
   const userKey = '$__or__user_id__$'
   const propsKey = '$__or__super_properties__$'
+  const refKey = '$__or__initial_ref__$'
+  const utmKey = '$__or__utm_params__$'
+  sessionStorage.setItem(refKey, 'synthetic-referrer')
+  sessionStorage.setItem(utmKey, '{"utm_source":"synthetic"}')
   analytics.constantProperties.setUserId('synthetic')
   analytics.constantProperties.saveSuperProperties({ name: 'synthetic' })
   analytics.people.setProperties('name', 'synthetic')
@@ -384,9 +389,38 @@ test('discard clears analytics memory without changing analytics persistence', (
   analytics.people.deleteUser()
   expect(analytics.people.ownProperties).toEqual({})
   analytics.constantProperties.saveSuperProperties({ name: 'synthetic-late' })
-  expect(localStorage.getItem(identityKey)).toBe(identity)
-  expect(localStorage.getItem(propsKey)).toBe('{"name":"synthetic"}')
-  expect(sessionStorage.getItem(userKey)).toBe('synthetic')
+  expect(localStorage.getItem(identityKey)).toBeNull()
+  expect(localStorage.getItem(propsKey)).toBeNull()
+  expect(sessionStorage.getItem(userKey)).toBeNull()
+  expect(sessionStorage.getItem(refKey)).toBeNull()
+  expect(sessionStorage.getItem(utmKey)).toBeNull()
+
+  const next = create(undefined, false, true, true).tracker.analytics!
+  expect(next.constantProperties.deviceId).not.toBe(identity)
+  expect(next.people.user_id).toBeNull()
+  expect(next.constantProperties.getSuperProperties()).toEqual({})
+})
+
+test('standalone analytics discards its saved token without changing unrelated storage', () => {
+  const values = new Map([
+    ['__or_sdk_analytics_token', 'synthetic-token'],
+    ['unrelated', 'keep'],
+  ])
+  const storage = {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => { values.set(key, value) },
+    removeItem: (key: string) => { values.delete(key) },
+  }
+  const analytics = new Analytics({
+    ingestPoint: 'https://example.invalid',
+    projectKey: 'synthetic',
+    localStorage: storage,
+    sessionStorage: storage,
+  })
+  analytics.onDiscard()
+
+  expect(values.has('__or_sdk_analytics_token')).toBe(false)
+  expect(values.get('unrelated')).toBe('keep')
 })
 
 test.each(['conditional', 'offline'])('%s recording settles when discard aborts its request', async (path) => {

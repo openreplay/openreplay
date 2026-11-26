@@ -1,4 +1,4 @@
-import ConstantProperties from './constantProperties.js'
+import ConstantProperties, { clearStoredValue } from './constantProperties.js'
 import type { StorageLike } from './constantProperties.js'
 import Events from './events.js'
 import People from './people.js'
@@ -142,6 +142,7 @@ export default class Analytics {
     this.constantProperties.discard()
     this.people.discard()
     this.events.reset()
+    if (this.standalone) clearStoredValue(this.sessionStorage, STORAGEKEY)
   }
   onStop = () => {
     if (!this.standalone) {

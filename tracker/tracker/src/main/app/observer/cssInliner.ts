@@ -1,4 +1,4 @@
-import { sanitizeCapture, type CaptureSanitizer } from '../captureSanitizer.js'
+import { resolveInlineAsset, sanitizeCapture, type CaptureSanitizer } from '../captureSanitizer.js'
 let fakeIdHolder = 1000000 * 99;
 
 export function inlineRemoteCss(
@@ -14,17 +14,15 @@ export function inlineRemoteCss(
   capture?: { sanitizer: CaptureSanitizer | undefined; href: string; original: string },
   signal?: AbortSignal,
 ) {
+  const url = node.href
   const isStale = () => signal?.aborted ||
-    (capture !== undefined && node.getAttribute('href') !== capture.original)
+    (capture !== undefined && (node.getAttribute('href') !== capture.original || node.href !== url))
   if (isStale()) return
   let cssBaseHref = baseHref
   if (capture) {
-    if (!capture.href) return
-    try {
-      cssBaseHref = new URL(capture.href, node.baseURI).href
-    } catch {
-      return
-    }
+    const asset = resolveInlineAsset(capture.original, capture.href, node.baseURI)
+    if (!asset) return
+    cssBaseHref = asset.replayUrl
   }
   const deliver = (cssText: string) => {
     if (isStale()) return
@@ -33,8 +31,9 @@ export function inlineRemoteCss(
       source: 'text',
       value: cssText,
       node,
+      sourceUrl: url,
     })
-    if (approved === null) return
+    if (approved === null || isStale()) return
     if (sendPlain && onPlain) onPlain(approved, fakeIdHolder++, cssBaseHref)
     else processCssText(approved, cssBaseHref)
   }
@@ -59,7 +58,6 @@ export function inlineRemoteCss(
   }
 
   // Fall back to fetching if we couldn't get or stringify the sheet
-  const url = node.href
   if (url && !isStale()) {
     const request = signal ? fetch(url, { signal }) : fetch(url)
     request

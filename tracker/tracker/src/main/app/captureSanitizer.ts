@@ -14,12 +14,14 @@ export type CaptureData =
       source: 'attribute' | 'text' | 'rule' | 'adopted'
       value: string
       node: Element | null
+      sourceUrl?: string
     }
   | { kind: 'font'; field: 'family' | 'source' | 'descriptors'; value: string; node: null }
-  | { kind: 'svg'; value: string; node: SVGUseElement }
+  | { kind: 'svg'; value: string; node: SVGUseElement; sourceUrl: string }
 
 /** Return a replacement string or null to omit the value after existing masking.
  * Must be synchronous; exceptions and non-string results omit the value.
+ * Inlining retains the original asset only for unchanged URLs or query-parameter removal.
  */
 export type CaptureSanitizer = (data: Readonly<CaptureData>) => string | null
 
@@ -41,6 +43,27 @@ export function sanitizeCapture(
 }
 
 export const PLACEHOLDER_SRC = 'https://static.openreplay.com/tracker/placeholder.jpeg'
+
+/** Inlining can strip query parameters, but must not substitute a different asset. */
+export function resolveInlineAsset(original: string, approved: string, base: string) {
+  if (!original || !approved) return null
+  try {
+    const source = new URL(original, base)
+    const replay = new URL(approved, base)
+    const sourceUrl = source.href
+    const replayUrl = replay.href
+    const kept = Array.from(replay.searchParams)
+    let index = 0
+    for (const [key, value] of source.searchParams) {
+      const entry = kept[index]
+      if (entry && key === entry[0] && value === entry[1]) index++
+    }
+    source.search = replay.search = ''
+    return source.href === replay.href && index === kept.length ? { sourceUrl, replayUrl } : null
+  } catch {
+    return null
+  }
+}
 
 function ruleHeader(rule: string): string | undefined {
   let start = rule.trimStart()

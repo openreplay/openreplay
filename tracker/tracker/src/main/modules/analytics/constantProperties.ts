@@ -6,6 +6,15 @@ export interface StorageLike {
   removeItem?: (key: string) => void
 }
 
+export function clearStoredValue(storage: StorageLike, key: string): void {
+  try {
+    if (storage.removeItem) storage.removeItem(key)
+    else storage.setItem(key, '')
+  } catch {
+    // Storage can be unavailable during discard.
+  }
+}
+
 const refKey = '$__or__initial_ref__$'
 const distinctIdKey = '$__or__distinct_device_id__$'
 const utmParamsKey = '$__or__utm_params__$'
@@ -231,5 +240,7 @@ export default class ConstantProperties {
     this.discarded = true
     this.user_id = this.utmSource = this.utmMedium = this.utmCampaign = this.searchEngine = null
     this.initialReferrer = this.deviceId = ''
+    for (const key of [distinctIdKey, superPropKey]) clearStoredValue(this.localStorage, key)
+    for (const key of [userIdKey, refKey, utmParamsKey]) clearStoredValue(this.sessionStorage, key)
   }
 }

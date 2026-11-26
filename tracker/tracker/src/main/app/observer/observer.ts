@@ -1,4 +1,4 @@
-import { sanitizeCapture } from '../captureSanitizer.js'
+import { resolveInlineAsset, sanitizeCapture } from '../captureSanitizer.js'
 import { createMutationObserver, throttleWithTrailing, canAccessIframe } from '../../utils.js'
 import {
   CreateDocument,
@@ -416,11 +416,20 @@ function sendSprite(ctx: AttributeContext, id: number, node: SVGUseElement, name
     app.attributeSender.sendSetAttribute(id, name, '', true, node)
     return
   }
-  void parseUseEl(node, 'svgtext', ctx.domParser, signal, policy ? original : undefined)
+  const asset = href === undefined ? null : resolveInlineAsset(original, href, node.baseURI)
+  if (policy && !asset) {
+    app.attributeSender.removeAttribute(id, name, node)
+    return
+  }
+  const reference = original.trim()
+  const sourceHref = asset && (reference.startsWith('#') ? reference : asset.sourceUrl)
+  void parseUseEl(node, 'svgtext', ctx.domParser, signal, sourceHref ?? undefined)
     .then((svgData) => {
       if (typeof svgData !== 'string' || !svgData || !isCurrent()) return
-      if (policy) {
-        const approved = sanitizeCapture(policy, { kind: 'svg', value: svgData, node })
+      if (policy && asset) {
+        const approved = sanitizeCapture(policy, {
+          kind: 'svg', value: svgData, node, sourceUrl: asset.sourceUrl,
+        })
         if (!isCurrent()) return
         if (approved === null) app.attributeSender.removeAttribute(id, name, node)
         else app.attributeSender.sendSetAttribute(
