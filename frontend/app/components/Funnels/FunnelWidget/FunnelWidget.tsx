@@ -16,6 +16,7 @@ import {
 } from 'App/components/Charts/SubBars';
 import 'App/components/Dashboard/charts.css';
 import { useModal } from 'App/components/Modal';
+import FilterItem from 'App/mstore/types/filterItem';
 import type Funnel from 'App/mstore/types/funnel';
 import type FunnelStage from 'App/mstore/types/funnelStage';
 import type Widget from 'App/mstore/types/widget';
@@ -42,8 +43,41 @@ interface Props {
 
 const INSIDE_MIN = 12;
 const fmt = (n: number) => (n ?? 0).toLocaleString();
-const eventCount = (filters: any[] = []) =>
-  filters.filter((f) => f.isEvent).length;
+
+// the backend reads an event whose properties are all negative as one the
+// session must not have; operators without a negative twin can't be excluded
+const NEGATED: Record<string, string> = {
+  is: 'isNot',
+  contains: 'notContains',
+  on: 'notOn',
+  '=': '!=',
+};
+const exclusions = new WeakSet<object>();
+
+/** the step negated, so a drill stops at the step before it */
+function excludeStep(step: FilterItem): FilterItem | null {
+  // the properties toJson sends
+  const props = (step.filters ?? []).filter(
+    (p) =>
+      p.operator === 'isAny' ||
+      p.value?.some((v) => v !== '' && v !== null && v !== undefined),
+  );
+  if (!props.length || props.some((p) => !NEGATED[p.operator || 'is'])) {
+    return null;
+  }
+  const copy = new FilterItem({
+    ...JSON.parse(JSON.stringify(step)),
+    filters: props.map((p) => ({
+      ...JSON.parse(JSON.stringify(p)),
+      operator: NEGATED[p.operator || 'is'],
+    })),
+  });
+  exclusions.add(copy);
+  return copy;
+}
+
+const stepCount = (filters: any[] = []) =>
+  filters.filter((f) => f.isEvent && !exclusions.has(f)).length;
 
 export function stageText(stage: FunnelStage, t: TFunction): string {
   const subs = Array.isArray(stage.subfilters) ? stage.subfilters : [];
@@ -79,7 +113,7 @@ function FunnelWidget({
   // start from the stage it still points at, so the next click clears it
   const [focusedFilter, setFocusedFilter] = React.useState<number | null>(
     () => {
-      const n = eventCount(dashboardStore.drillDownFilter.filters);
+      const n = stepCount(dashboardStore.drillDownFilter.filters);
       return n > 0 ? n - 1 : null;
     },
   );
@@ -111,7 +145,7 @@ function FunnelWidget({
   }, [stages]);
 
   // a drill applied from outside (a dashboard's stage) marks its stage
-  const drilledStages = eventCount(dashboardStore.drillDownFilter.filters);
+  const drilledStages = stepCount(dashboardStore.drillDownFilter.filters);
   useEffect(() => {
     const want = drilledStages > 0 ? drilledStages - 1 : null;
     if (want === focusedFilter) return;
@@ -123,12 +157,15 @@ function FunnelWidget({
 
   const applyDrillDown = (index: number) => {
     const ts = (drillPeriod ?? drillDownPeriod).toTimestamps();
+    const next =
+      index >= 0 && steps[index + 1] ? excludeStep(steps[index + 1]) : null;
     drillDownFilter.merge({
       filters:
         index < 0
           ? []
           : [
               ...steps.slice(0, index + 1),
+              ...(next ? [next] : []),
               ...metricFilters.filter((f) => !f.isEvent),
             ],
       startTimestamp: ts.startTimestamp,
