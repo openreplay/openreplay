@@ -23,7 +23,8 @@ type Logs interface {
 	Search(ctx context.Context, projectID uint32, req *SearchRequest) (*SearchResponse, error)
 	Histogram(ctx context.Context, projectID uint32, f *Filter) (*HistogramResponse, error)
 	Facets(ctx context.Context, projectID uint32, req *FacetsRequest) (any, error)
-	Autocomplete(ctx context.Context, projectID uint32, propertyName, source, q string) ([]AutocompleteRow, error)
+	FacetsList(ctx context.Context, projectID uint32) ([]Facet, error)
+	Autocomplete(ctx context.Context, projectID uint32, propertyName, source, q string) ([]ValueCount, error)
 }
 
 type logsImpl struct {

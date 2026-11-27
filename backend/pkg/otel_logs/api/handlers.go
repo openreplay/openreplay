@@ -23,6 +23,7 @@ func NewHandlers(log logger.Logger, req api.RequestHandler, logs otel_logs.Logs)
 		{Path: "/{project}/logs/search", Method: "POST", Handler: req.HandleWithBody(h.search), Permissions: api.NoPermissions, AuditTrail: api.DoNotTrack},
 		{Path: "/{project}/logs/histogram", Method: "POST", Handler: req.HandleWithBody(h.histogram), Permissions: api.NoPermissions, AuditTrail: api.DoNotTrack},
 		{Path: "/{project}/logs/facets", Method: "POST", Handler: req.HandleWithBody(h.facets), Permissions: api.NoPermissions, AuditTrail: api.DoNotTrack},
+		{Path: "/{project}/logs/facets", Method: "GET", Handler: req.Handle(h.facetsList), Permissions: api.NoPermissions, AuditTrail: api.DoNotTrack},
 		{Path: "/{project}/logs/autocomplete", Method: "GET", Handler: req.Handle(h.autocomplete), Permissions: api.NoPermissions, AuditTrail: api.DoNotTrack},
 	}
 	return h, nil
@@ -62,16 +63,35 @@ func (h *handlersImpl) facets(ctx *api.RequestContext) (any, int, error) {
 	return h.respond(ctx, resp, err)
 }
 
-// @Summary Logs autocomplete
-// @Description Suggests values of a native column (empty source) or of an
+// @Summary Logs facets list
+// @Description Lists the native columns (source = log_global) and attributes
 //
-//	attribute (source = log / resource / scope) matching the optional `q` query.
+//	(source = log / resource / scope) with few enough distinct values to be
+//	used as facets.
+//
+// @Tags Logs
+// @Param project path uint true "Project ID"
+// @Router /{project}/logs/facets [get]
+func (h *handlersImpl) facetsList(ctx *api.RequestContext) (any, int, error) {
+	projectID, err := ctx.GetProjectID()
+	if err != nil {
+		return nil, http.StatusBadRequest, err
+	}
+	resp, err := h.logs.FacetsList(ctx.Request.Context(), projectID)
+	return h.respond(ctx, resp, err)
+}
+
+// @Summary Logs autocomplete
+// @Description Suggests the most frequent values of a native column (empty
+//
+//	source) or of an attribute (source = log / resource / scope) starting
+//	with the optional `q` prefix.
 //
 // @Tags Logs
 // @Param project path uint true "Project ID"
 // @Param propertyName query string true "Column name or attribute key"
 // @Param source query string false "Attribute source (log/resource/scope), empty for native columns"
-// @Param q query string false "Search query"
+// @Param q query string false "Value prefix"
 // @Router /{project}/logs/autocomplete [get]
 func (h *handlersImpl) autocomplete(ctx *api.RequestContext) (any, int, error) {
 	projectID, err := ctx.GetProjectID()

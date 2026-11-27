@@ -82,7 +82,8 @@ type FacetValuesResponse struct {
 	Sampled bool         `json:"sampled"`
 }
 
-type AutocompleteRow struct {
-	Value         string  `json:"value"`
-	RowPercentage float64 `json:"rowPercentage"`
+type Facet struct {
+	Source         string `json:"source"`
+	Key            string `json:"key"`
+	DistinctValues uint64 `json:"distinctValues"`
 }
