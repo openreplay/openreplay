@@ -551,27 +551,23 @@ const sampleNote = (
     : `Read by ${VISION}.`;
 };
 
-function issueRows(d: IssuesData, tagKey: 'categories' | 'tags'): ReportRow[] {
-  return d.rows.map((r) => {
-    const seen =
-      r.share != null
-        ? `seen in ${r.share < 1 ? 'under 1%' : pctT(r.share)} of the sessions read`
-        : 'seen in the sessions read';
-    const words = r[tagKey] ?? [];
-    return {
-      title: r.name,
-      description: r.description,
-      critical: r.critical,
-      journeys: r.journeys ?? [],
-      lines: [
-        {
-          kind: 'impact',
-          level: r.impact,
-          text: words.length ? `${seen} · ${words.join(', ')}` : seen,
-        },
-      ],
-    };
-  });
+function issueRows(d: IssuesData): ReportRow[] {
+  return d.rows.map((r) => ({
+    title: r.name,
+    description: r.description,
+    critical: r.critical,
+    journeys: r.journeys ?? [],
+    lines: [
+      {
+        kind: 'impact',
+        level: r.impact,
+        text:
+          r.share != null
+            ? `seen in ${r.share < 1 ? 'under 1%' : pctT(r.share)} of the sessions read`
+            : 'seen in the sessions read',
+      },
+    ],
+  }));
 }
 
 const ISSUE_FOOT =
@@ -1007,7 +1003,7 @@ const BUILDERS: Partial<Record<SectionKey, Builder>> = {
       'Frustrations',
       'Encountered frustrations',
       facts(d.facts),
-      issueRows(d, 'categories'),
+      issueRows(d),
       `Found by ${VISION} in ${fmt(d.analysed)} sessions of this period, highest impact first. ${ISSUE_FOOT}`,
       { ai: true },
     );
@@ -1141,7 +1137,7 @@ const BUILDERS: Partial<Record<SectionKey, Builder>> = {
       return;
     }
     const top = Math.max(1, ...d.journeys.map((j) => j.visitsPct ?? 0));
-    const foot = `${sampleNote(d, X.M)} Journeys named by a model from the sessions’ one-line descriptions. Shares of visits are weighted to all sessions in scope (± is the 95% margin). How each ended is per person, by their best session.${d.restPct ? ` ${d.more ? `${d.more} smaller journey${d.more === 1 ? '' : 's'} and sessions` : 'Sessions'} that matched none: ${share(d.restPct)} of visits.` : ''}`;
+    const foot = `${sampleNote(d, X.M)} Journeys named by a model from the sessions’ one-line descriptions. Shares of visits are weighted to all sessions in scope. How each ended is per person, by their best session.${d.restPct ? ` ${d.more ? `${d.more} smaller journey${d.more === 1 ? '' : 's'} and sessions` : 'Sessions'} that matched none: ${share(d.restPct)} of visits.` : ''}`;
     const rows: ReportRow[] = d.journeys.map((j) => ({
       title: j.name ?? '',
       description: j.means || j.text,
@@ -1151,7 +1147,7 @@ const BUILDERS: Partial<Record<SectionKey, Builder>> = {
           pct: (100 * (j.visitsPct ?? 0)) / top,
           value: share(j.visitsPct),
           unit: 'of visits',
-          rest: `±${j.margin ?? '–'}${j.usersPct != null ? ` · ${share(j.usersPct)} of users` : ''} · ≈ ${fmt(j.estSessions)} sessions`,
+          rest: `${j.usersPct != null ? `${share(j.usersPct)} of users · ` : ''}≈ ${fmt(j.estSessions)} sessions`,
         },
         ...(j.outcomes
           ? [
@@ -1270,11 +1266,11 @@ const BUILDERS: Partial<Record<SectionKey, Builder>> = {
             pct: a.pct ?? 0,
             value: share(a.pct),
             unit: 'of sessions',
-            rest: `±${a.margin ?? '–'} · ≈ ${fmt(a.estSessions)} sessions`,
+            rest: `≈ ${fmt(a.estSessions)} sessions`,
           },
         ],
       })),
-      `Steps ${VISION} noted in ${fmt(d.read)} sessions read, merged into named actions by a model and weighted to all ${fmt(d.matched)} sessions in scope; ± is the 95% margin.`,
+      `Steps ${VISION} noted in ${fmt(d.read)} sessions read, merged into named actions by a model and weighted to all ${fmt(d.matched)} sessions in scope.`,
       { ai: true },
     );
   },
@@ -1305,7 +1301,7 @@ const BUILDERS: Partial<Record<SectionKey, Builder>> = {
       'Impactful issues',
       'Most impactful issues',
       facts(d.facts),
-      issueRows(d, 'tags'),
+      issueRows(d),
       `Found by ${VISION} in the ${fmt(d.analysed)} sessions it read (${fmt(d.seen)} distinct), sorted by impact. ${ISSUE_FOOT}`,
       { ai: true },
     );
@@ -1470,7 +1466,7 @@ export function buildDeck(R: Report, fallbackTitle = 'Audit'): Deck {
   if (aiParts.length)
     notes.push([
       'AI-assisted sections',
-      `${aiParts.join(', ')}. They come from ${VISION} reading ${M.sample ? `${fmt(M.sample.read)} of the ${fmt(M.sample.matched)}` : 'a share of the'} sessions; journeys and actions are named by a model, and their shares are weighted to all sessions in scope (± is the 95% margin). Quick wins and insights are a model’s suggestions; every number in them is checked against the report’s figures.`,
+      `${aiParts.join(', ')}. They come from ${VISION} reading ${M.sample ? `${fmt(M.sample.read)} of the ${fmt(M.sample.matched)}` : 'a share of the'} sessions; journeys and actions are named by a model, and their shares are weighted to all sessions in scope. Quick wins and insights are a model’s suggestions; every number in them is checked against the report’s figures.`,
     ]);
   notes.push([
     'Derived figures',

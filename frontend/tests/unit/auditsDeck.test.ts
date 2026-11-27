@@ -149,8 +149,8 @@ describe('buildDeck (schema version 4)', () => {
         (r) => r.lines?.[0]?.kind === 'impact' && r.lines[0].text,
       ),
     ).toEqual([
-      'seen in 12% of the sessions read · Errors',
-      'seen in 26% of the sessions read · Errors',
+      'seen in 12% of the sessions read',
+      'seen in 26% of the sessions read',
       'seen in under 1% of the sessions read',
     ]);
     expect(frustrations.foot).toMatch(/The warning mark: flagged critical\.$/);
