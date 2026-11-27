@@ -21,7 +21,7 @@ var ErrTimeout = errors.New("query timed out, narrow the time range or filters")
 
 type Logs interface {
 	Search(ctx context.Context, projectID uint32, req *SearchRequest) (*SearchResponse, error)
-	Histogram(ctx context.Context, projectID uint32, f *Filter) (*HistogramResponse, error)
+	Histogram(ctx context.Context, projectID uint32, req *HistogramRequest) (*HistogramResponse, error)
 	Facets(ctx context.Context, projectID uint32, req *FacetsRequest) (any, error)
 	FacetsList(ctx context.Context, projectID uint32) ([]Facet, error)
 	Autocomplete(ctx context.Context, projectID uint32, propertyName, source, q string) ([]ValueCount, error)
@@ -136,15 +136,19 @@ func (l *logsImpl) searchWindow(ctx context.Context, projectID uint32, f *Filter
 	return logs, wrapErr(rows.Err())
 }
 
-func (l *logsImpl) Histogram(ctx context.Context, projectID uint32, f *Filter) (*HistogramResponse, error) {
-	if err := f.validate(); err != nil {
+func (l *logsImpl) Histogram(ctx context.Context, projectID uint32, req *HistogramRequest) (*HistogramResponse, error) {
+	if err := req.validate(); err != nil {
 		return nil, err
 	}
+	f := &req.Filter
 	step := histogramStep(f.StartTime, f.EndTime)
+	off := req.TzOffset * 60
 	qp := filters.NewParams()
 	where := buildConditions(projectID, f, f.StartTime, f.EndTime, exclusion{}, qp)
 	qp.Set("step", step)
-	query := fmt.Sprintf(`SELECT intDiv(toUnixTimestamp(Timestamp), @step) * @step AS t, SeverityText, count()
+	qp.Set("off", off)
+	// Same grid as fillBuckets: local-time aligned, returned as UTC seconds.
+	query := fmt.Sprintf(`SELECT intDiv(toInt64(toUnixTimestamp(Timestamp)) + toInt64(@off), @step) * @step - toInt64(@off) AS t, SeverityText, count()
 		FROM otel.logs WHERE %s GROUP BY t, SeverityText`, where)
 
 	rows, err := l.conn.Query(readContext(ctx), query, qp.Args()...)
@@ -156,22 +160,22 @@ func (l *logsImpl) Histogram(ctx context.Context, projectID uint32, f *Filter) (
 	counts := map[int64]map[string]uint64{}
 	for rows.Next() {
 		var (
-			t   uint64
+			t   int64
 			sev string
 			c   uint64
 		)
 		if err := rows.Scan(&t, &sev, &c); err != nil {
 			return nil, err
 		}
-		if counts[int64(t)] == nil {
-			counts[int64(t)] = map[string]uint64{}
+		if counts[t] == nil {
+			counts[t] = map[string]uint64{}
 		}
-		counts[int64(t)][sev] = c
+		counts[t][sev] = c
 	}
 	if err := rows.Err(); err != nil {
 		return nil, wrapErr(err)
 	}
-	return &HistogramResponse{Step: step, Buckets: fillBuckets(f.StartTime, f.EndTime, step, counts)}, nil
+	return &HistogramResponse{Step: step, Buckets: fillBuckets(f.StartTime, f.EndTime, step, off, counts)}, nil
 }
 
 func (l *logsImpl) Facets(ctx context.Context, projectID uint32, req *FacetsRequest) (any, error) {

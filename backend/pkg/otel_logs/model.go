@@ -22,6 +22,14 @@ type SearchRequest struct {
 	Cursor string `json:"cursor"`
 }
 
+type HistogramRequest struct {
+	Filter
+	// TzOffset is the viewer's UTC offset in minutes, positive east of UTC
+	// (in JS: -new Date().getTimezoneOffset()). Buckets are aligned to local
+	// time, so day bars start at local midnight and hour bars on local hours.
+	TzOffset int64 `json:"tzOffset"`
+}
+
 type FacetsRequest struct {
 	Filter
 	Key   string `json:"key"`

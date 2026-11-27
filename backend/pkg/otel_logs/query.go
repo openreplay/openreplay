@@ -21,6 +21,8 @@ const (
 	maxLimit          = 500
 	maxTokensPerCheck = 64
 	histogramBuckets  = 60
+	minTzOffset       = -12 * 60 // UTC-12:00, minutes
+	maxTzOffset       = 14 * 60  // UTC+14:00, minutes
 	facetLimit        = 50
 	facetSampleRows   = 3_000_000
 	internalKeyPrefix = "openreplay."
@@ -42,6 +44,13 @@ func invalid(format string, args ...any) error {
 func IsValidationError(err error) bool {
 	var v *ValidationError
 	return errors.As(err, &v)
+}
+
+func (r *HistogramRequest) validate() error {
+	if r.TzOffset < minTzOffset || r.TzOffset > maxTzOffset {
+		return invalid("tzOffset must be between %d and %d minutes", minTzOffset, maxTzOffset)
+	}
+	return r.Filter.validate()
 }
 
 func (f *Filter) validate() error {
@@ -265,9 +274,12 @@ func histogramStep(startMs, endMs int64) int64 {
 	return histogramSteps[len(histogramSteps)-1]
 }
 
-func fillBuckets(startMs, endMs, step int64, counts map[int64]map[string]uint64) []Bucket {
-	stepMs := step * 1000
-	first := startMs / stepMs * stepMs
+// fillBuckets emits every bucket of [startMs, endMs) on the grid shifted by
+// off seconds (the viewer's UTC offset), i.e. intDiv(ts + off, step) * step - off,
+// which is the grid the histogram query groups by.
+func fillBuckets(startMs, endMs, step, off int64, counts map[int64]map[string]uint64) []Bucket {
+	stepMs, offMs := step*1000, off*1000
+	first := (startMs+offMs)/stepMs*stepMs - offMs
 	buckets := make([]Bucket, 0, (endMs-first)/stepMs+1)
 	for t := first; t < endMs; t += stepMs {
 		b := Bucket{Time: t, BySeverity: map[string]uint64{}}
