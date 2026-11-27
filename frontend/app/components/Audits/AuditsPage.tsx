@@ -261,7 +261,11 @@ function AuditsPage() {
         </Tooltip>
       );
     if (a.isCancelled) return <Chip kind="status">{t('Cancelled')}</Chip>;
-    return <Chip kind="status">{t('Ready')}</Chip>;
+    return (
+      <Chip kind="status" tone="success">
+        {t('Ready')}
+      </Chip>
+    );
   };
 
   const whenReady = (a: AuditItem, label: string) =>
