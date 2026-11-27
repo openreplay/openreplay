@@ -11,6 +11,7 @@ const (
 	autocompleteLimit = 20
 	// attributes with more distinct values than this are not offered as facets
 	facetMaxDistinctValues = 500
+	facetMaxkeys           = 100
 )
 
 // autocompleteSources maps the request source to the Source enum of
@@ -71,6 +72,7 @@ func (l *logsImpl) FacetsList(ctx context.Context, projectID uint32) ([]Facet, e
 	qp.Set("projectId", projectID)
 	qp.Set("internalKeyPrefix", internalKeyPrefix)
 	qp.Set("maxDistinct", facetMaxDistinctValues)
+	qp.Set("maxkeys", facetMaxkeys)
 	query := `
 		SELECT toString(Source),
 		       toString(AttributeKey),
@@ -80,7 +82,8 @@ func (l *logsImpl) FacetsList(ctx context.Context, projectID uint32) ([]Facet, e
 		  AND NOT startsWith(AttributeKey, @internalKeyPrefix)
 		GROUP BY Source, AttributeKey
 		HAVING DistinctValues < @maxDistinct
-		ORDER BY DistinctValues DESC`
+		ORDER BY DistinctValues DESC
+		LIMIT @facetMaxkeys`
 
 	rows, err := l.conn.Query(facetContext(ctx), query, qp.Args()...)
 	if err != nil {
