@@ -9,19 +9,14 @@ import type { RawMessage } from './raw.gen'
 export default class RawMessageReader extends PrimitiveReader {
   readMessage(): RawMessage | null {
     const p = this.p
-    const resetPointer = () => {
-      this.p = p
-      return null
-    }
-
     const tp = this.readUint()
-    if (tp === null) { return resetPointer() }
+    if (tp === null) { return null }
 
     switch (tp) {
 <% $messages.select { |msg| msg.replayer != false }.each do |msg| %>
     case <%= msg.id %>: {
 <%= msg.attributes.map { |attr|
-"      const #{attr.name.camel_case} = this.read#{attr.type.to_s.pascal_case}(); if (#{attr.name.camel_case} === null) { return resetPointer() }" }.join "\n" %>
+"      const #{attr.name.camel_case} = this.read#{attr.type.to_s.pascal_case}(); if (#{attr.name.camel_case} === null) { this.p = p; return null }" }.join "\n" %>
       return {
         tp: MType.<%= msg.name.snake_case.pascal_case %>,
 <%= msg.attributes.map { |attr|

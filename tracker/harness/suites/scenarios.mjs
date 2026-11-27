@@ -7,7 +7,7 @@ import { buildPage, buildReplay } from '../lib/build.mjs'
 import { serve, pageHtml, REPLAY_HTML } from '../lib/server.mjs'
 import { launch, memoryAfterGc, replayDiff } from '../lib/browser.mjs'
 import { resolveTargets, columnLabel } from '../lib/targets.mjs'
-import { table, ms, ratio, saveResults } from '../lib/report.mjs'
+import { table, ms, ratio, saveResults, progress } from '../lib/report.mjs'
 
 const KIND = { core: 'correct', perf: 'perf', memory: 'memory' }
 const cost = (r) => (r.snapshotMs ?? 0) + (r.moTime ?? 0)
@@ -43,8 +43,6 @@ export async function listScenarios(browser, base, target) {
 }
 
 export const matches = (name, filters) => !filters.length || filters.some((f) => name.includes(f))
-
-const progress = (msg) => process.stderr.isTTY && process.stderr.write(`\r\x1b[K${msg}`)
 
 async function runOne(browser, base, col, name, opts) {
   const ctx = await browser.newContext()
@@ -153,19 +151,21 @@ export async function runScenarios(suite, args) {
       (s) => s.kind === kind && matches(s.name, args.rest),
     )
     const rows = []
-    for (const [n, sc] of scenarios.entries()) {
+    const tick = progress(scenarios.length * columns.length)
+    const status = (r, row) =>
+      kind === 'correct' ? coreCell(r, opts.replay) : kind === 'perf' ? perfCell(r, row.cells[0]) : memCell(r, opts.late)
+    for (const sc of scenarios) {
       const row = { name: sc.name, cells: [] }
       for (const col of columns) {
-        progress(`[${n + 1}/${scenarios.length}] ${sc.name} ${col.label}`)
         const runs = []
         for (let k = 0; k < reps; k++) runs.push(await runOne(browser, server.base, col, sc.name, opts))
         // a timed-out run costs 0 and would win the median
         const good = runs.filter((r) => r.ok).sort((a, b) => cost(a) - cost(b))
         row.cells.push(good.length ? good[Math.floor(good.length / 2)] : runs[0])
+        tick(`${sc.name} ${col.label}`, status(row.cells[row.cells.length - 1], row))
       }
       rows.push(row)
     }
-    progress('')
 
     const header = ['scenario', ...columns.map((c) => c.label)]
     let failed = 0

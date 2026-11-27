@@ -12,27 +12,25 @@ const NO_SIZE_TYPES = new Set([80, 81, 82])
 
 export default class TrackerBinaryReader extends PrimitiveReader {
   batchMetaMessages: any[] = []
+  /** Stamped on every message as it is created (one object shape, no later property adds) */
+  time = 0
+  tabId = ''
 
   readMessage(): RawMessage | null {
     const p = this.p
-    const resetPointer = () => {
-      this.p = p
-      return null
-    }
-
     const tp = this.readUint()
-    if (tp === null) { return resetPointer() }
+    if (tp === null) { return null }
 
     // Batch-level messages have no size prefix — read fields directly to advance pointer, then skip
     if (NO_SIZE_TYPES.has(tp)) {
       switch (tp) {
       case 81: {
         // BatchMetadata: Version, PageNo, FirstIndex, Timestamp, Location
-        const version = this.readUint(); if (version === null) { return resetPointer() }
-        const pageNo = this.readUint(); if (pageNo === null) { return resetPointer() }
-        const firstIndex = this.readUint(); if (firstIndex === null) { return resetPointer() }
-        const timestamp = this.readInt(); if (timestamp === null) { return resetPointer() }
-        const location = this.readString(); if (location === null) { return resetPointer() }
+        const version = this.readUint(); if (version === null) { this.p = p; return null }
+        const pageNo = this.readUint(); if (pageNo === null) { this.p = p; return null }
+        const firstIndex = this.readUint(); if (firstIndex === null) { this.p = p; return null }
+        const timestamp = this.readInt(); if (timestamp === null) { this.p = p; return null }
+        const location = this.readString(); if (location === null) { this.p = p; return null }
         this.batchMetaMessages.push({
           tp: 81,
           version,
@@ -45,8 +43,8 @@ export default class TrackerBinaryReader extends PrimitiveReader {
       }
       case 82: {
         // PartitionedMessage: PartNo, PartTotal
-        const partNo = this.readUint(); if (partNo === null) { return resetPointer() }
-        const partTotal = this.readUint(); if (partTotal === null) { return resetPointer() }
+        const partNo = this.readUint(); if (partNo === null) { this.p = p; return null }
+        const partTotal = this.readUint(); if (partTotal === null) { this.p = p; return null }
         return this.readMessage()
       }
       default:
@@ -57,1068 +55,868 @@ export default class TrackerBinaryReader extends PrimitiveReader {
 
     // All other messages have a 3-byte size prefix
     const size = this.readSize()
-    if (size === null) { return resetPointer() }
+    if (size === null) { this.p = p; return null }
 
     const bodyStart = this.p
+    // Wait for the whole body; once it is here, its fields are read unchecked
+    if (bodyStart + size > this.buf.length) { this.p = p; return null }
+    const msg = this.readBody(tp)
+    if (msg === undefined) {
+      // Skip unknown message type using its size prefix
+      this.p = bodyStart + size
+      return this.readMessage()
+    }
+    // Fields ran past the data: a corrupt body, read it as incomplete
+    if (this.p > this.buf.length) { this.p = p; return null }
+    return msg
+  }
 
+  private readBody(tp: number): RawMessage | undefined {
     switch (tp) {
 
-    case 0: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
+    case 0:
       return {
         tp: MType.Timestamp,
-        timestamp,
-      };
-    }
+        timestamp: this.uintU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 4: {
-      const url = this.readString(); if (url === null) { return resetPointer() }
-      const referrer = this.readString(); if (referrer === null) { return resetPointer() }
-      const navigationStart = this.readUint(); if (navigationStart === null) { return resetPointer() }
+    case 4:
       return {
         tp: MType.SetPageLocationDeprecated,
-        url,
-        referrer,
-        navigationStart,
-      };
-    }
+        url: this.stringU(),
+        referrer: this.stringU(),
+        navigationStart: this.uintU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 5: {
-      const width = this.readUint(); if (width === null) { return resetPointer() }
-      const height = this.readUint(); if (height === null) { return resetPointer() }
+    case 5:
       return {
         tp: MType.SetViewportSize,
-        width,
-        height,
-      };
-    }
+        width: this.uintU(),
+        height: this.uintU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 6: {
-      const x = this.readInt(); if (x === null) { return resetPointer() }
-      const y = this.readInt(); if (y === null) { return resetPointer() }
+    case 6:
       return {
         tp: MType.SetViewportScroll,
-        x,
-        y,
-      };
-    }
+        x: this.intU(),
+        y: this.intU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 7: {
-
+    case 7:
       return {
         tp: MType.CreateDocument,
 
-      };
-    }
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 8: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const parentID = this.readUint(); if (parentID === null) { return resetPointer() }
-      const index = this.readUint(); if (index === null) { return resetPointer() }
-      const tag = this.readString(); if (tag === null) { return resetPointer() }
-      const svg = this.readBoolean(); if (svg === null) { return resetPointer() }
+    case 8:
       return {
         tp: MType.CreateElementNode,
-        id,
-        parentID,
-        index,
-        tag,
-        svg,
-      };
-    }
+        id: this.uintU(),
+        parentID: this.uintU(),
+        index: this.uintU(),
+        tag: this.stringU(),
+        svg: this.booleanU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 9: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const parentID = this.readUint(); if (parentID === null) { return resetPointer() }
-      const index = this.readUint(); if (index === null) { return resetPointer() }
+    case 9:
       return {
         tp: MType.CreateTextNode,
-        id,
-        parentID,
-        index,
-      };
-    }
+        id: this.uintU(),
+        parentID: this.uintU(),
+        index: this.uintU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 10: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const parentID = this.readUint(); if (parentID === null) { return resetPointer() }
-      const index = this.readUint(); if (index === null) { return resetPointer() }
+    case 10:
       return {
         tp: MType.MoveNode,
-        id,
-        parentID,
-        index,
-      };
-    }
+        id: this.uintU(),
+        parentID: this.uintU(),
+        index: this.uintU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 11: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
+    case 11:
       return {
         tp: MType.RemoveNode,
-        id,
-      };
-    }
+        id: this.uintU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 12: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const name = this.readString(); if (name === null) { return resetPointer() }
-      const value = this.readString(); if (value === null) { return resetPointer() }
+    case 12:
       return {
         tp: MType.SetNodeAttribute,
-        id,
-        name,
-        value,
-      };
-    }
+        id: this.uintU(),
+        name: this.stringU(),
+        value: this.stringU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 13: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const name = this.readString(); if (name === null) { return resetPointer() }
+    case 13:
       return {
         tp: MType.RemoveNodeAttribute,
-        id,
-        name,
-      };
-    }
+        id: this.uintU(),
+        name: this.stringU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 14: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const data = this.readString(); if (data === null) { return resetPointer() }
+    case 14:
       return {
         tp: MType.SetNodeData,
-        id,
-        data,
-      };
-    }
+        id: this.uintU(),
+        data: this.stringU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 15: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const data = this.readString(); if (data === null) { return resetPointer() }
+    case 15:
       return {
         tp: MType.SetCssData,
-        id,
-        data,
-      };
-    }
+        id: this.uintU(),
+        data: this.stringU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 16: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const x = this.readInt(); if (x === null) { return resetPointer() }
-      const y = this.readInt(); if (y === null) { return resetPointer() }
+    case 16:
       return {
         tp: MType.SetNodeScroll,
-        id,
-        x,
-        y,
-      };
-    }
+        id: this.uintU(),
+        x: this.intU(),
+        y: this.intU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 18: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const value = this.readString(); if (value === null) { return resetPointer() }
-      const mask = this.readInt(); if (mask === null) { return resetPointer() }
+    case 18:
       return {
         tp: MType.SetInputValue,
-        id,
-        value,
-        mask,
-      };
-    }
+        id: this.uintU(),
+        value: this.stringU(),
+        mask: this.intU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 19: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const checked = this.readBoolean(); if (checked === null) { return resetPointer() }
+    case 19:
       return {
         tp: MType.SetInputChecked,
-        id,
-        checked,
-      };
-    }
+        id: this.uintU(),
+        checked: this.booleanU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 20: {
-      const x = this.readUint(); if (x === null) { return resetPointer() }
-      const y = this.readUint(); if (y === null) { return resetPointer() }
+    case 20:
       return {
         tp: MType.MouseMove,
-        x,
-        y,
-      };
-    }
+        x: this.uintU(),
+        y: this.uintU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 21: {
-      const type = this.readString(); if (type === null) { return resetPointer() }
-      const method = this.readString(); if (method === null) { return resetPointer() }
-      const url = this.readString(); if (url === null) { return resetPointer() }
-      const request = this.readString(); if (request === null) { return resetPointer() }
-      const response = this.readString(); if (response === null) { return resetPointer() }
-      const status = this.readUint(); if (status === null) { return resetPointer() }
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const duration = this.readUint(); if (duration === null) { return resetPointer() }
+    case 21:
       return {
         tp: MType.NetworkRequestDeprecated,
-        type,
-        method,
-        url,
-        request,
-        response,
-        status,
-        timestamp,
-        duration,
-      };
-    }
+        type: this.stringU(),
+        method: this.stringU(),
+        url: this.stringU(),
+        request: this.stringU(),
+        response: this.stringU(),
+        status: this.uintU(),
+        timestamp: this.uintU(),
+        duration: this.uintU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 22: {
-      const level = this.readString(); if (level === null) { return resetPointer() }
-      const value = this.readString(); if (value === null) { return resetPointer() }
+    case 22:
       return {
         tp: MType.ConsoleLog,
-        level,
-        value,
-      };
-    }
+        level: this.stringU(),
+        value: this.stringU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 34: {
-      const key = this.readUint(); if (key === null) { return resetPointer() }
-      const value = this.readString(); if (value === null) { return resetPointer() }
+    case 34:
       return {
         tp: MType.StringDictGlobal,
-        key,
-        value,
-      };
-    }
+        key: this.uintU(),
+        value: this.stringU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 35: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const name = this.readUint(); if (name === null) { return resetPointer() }
-      const value = this.readUint(); if (value === null) { return resetPointer() }
+    case 35:
       return {
         tp: MType.SetNodeAttributeDictGlobal,
-        id,
-        name,
-        value,
-      };
-    }
+        id: this.uintU(),
+        name: this.uintU(),
+        value: this.uintU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 36: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const styles = this.readString(); if (styles === null) { return resetPointer() }
+    case 36:
       return {
         tp: MType.NodeAnimationResult,
-        id,
-        styles,
-      };
-    }
+        id: this.uintU(),
+        styles: this.stringU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 40: {
-      const name = this.readString(); if (name === null) { return resetPointer() }
-      const duration = this.readUint(); if (duration === null) { return resetPointer() }
-      const args = this.readString(); if (args === null) { return resetPointer() }
-      const result = this.readString(); if (result === null) { return resetPointer() }
+    case 40:
       return {
         tp: MType.Profiler,
-        name,
-        duration,
-        args,
-        result,
-      };
-    }
+        name: this.stringU(),
+        duration: this.uintU(),
+        args: this.stringU(),
+        result: this.stringU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 41: {
-      const key = this.readString(); if (key === null) { return resetPointer() }
-      const value = this.readString(); if (value === null) { return resetPointer() }
+    case 41:
       return {
         tp: MType.OTable,
-        key,
-        value,
-      };
-    }
+        key: this.stringU(),
+        value: this.stringU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 44: {
-      const action = this.readString(); if (action === null) { return resetPointer() }
-      const state = this.readString(); if (state === null) { return resetPointer() }
-      const duration = this.readUint(); if (duration === null) { return resetPointer() }
+    case 44:
       return {
         tp: MType.ReduxDeprecated,
-        action,
-        state,
-        duration,
-      };
-    }
+        action: this.stringU(),
+        state: this.stringU(),
+        duration: this.uintU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 45: {
-      const mutation = this.readString(); if (mutation === null) { return resetPointer() }
-      const state = this.readString(); if (state === null) { return resetPointer() }
+    case 45:
       return {
         tp: MType.Vuex,
-        mutation,
-        state,
-      };
-    }
+        mutation: this.stringU(),
+        state: this.stringU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 46: {
-      const type = this.readString(); if (type === null) { return resetPointer() }
-      const payload = this.readString(); if (payload === null) { return resetPointer() }
+    case 46:
       return {
         tp: MType.MobX,
-        type,
-        payload,
-      };
-    }
+        type: this.stringU(),
+        payload: this.stringU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 47: {
-      const action = this.readString(); if (action === null) { return resetPointer() }
-      const state = this.readString(); if (state === null) { return resetPointer() }
-      const duration = this.readUint(); if (duration === null) { return resetPointer() }
+    case 47:
       return {
         tp: MType.NgRx,
-        action,
-        state,
-        duration,
-      };
-    }
+        action: this.stringU(),
+        state: this.stringU(),
+        duration: this.uintU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 48: {
-      const operationKind = this.readString(); if (operationKind === null) { return resetPointer() }
-      const operationName = this.readString(); if (operationName === null) { return resetPointer() }
-      const variables = this.readString(); if (variables === null) { return resetPointer() }
-      const response = this.readString(); if (response === null) { return resetPointer() }
-      const duration = this.readInt(); if (duration === null) { return resetPointer() }
+    case 48:
       return {
         tp: MType.GraphQlDeprecated,
-        operationKind,
-        operationName,
-        variables,
-        response,
-        duration,
-      };
-    }
+        operationKind: this.stringU(),
+        operationName: this.stringU(),
+        variables: this.stringU(),
+        response: this.stringU(),
+        duration: this.intU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 49: {
-      const frames = this.readInt(); if (frames === null) { return resetPointer() }
-      const ticks = this.readInt(); if (ticks === null) { return resetPointer() }
-      const totalJSHeapSize = this.readUint(); if (totalJSHeapSize === null) { return resetPointer() }
-      const usedJSHeapSize = this.readUint(); if (usedJSHeapSize === null) { return resetPointer() }
+    case 49:
       return {
         tp: MType.PerformanceTrack,
-        frames,
-        ticks,
-        totalJSHeapSize,
-        usedJSHeapSize,
-      };
-    }
+        frames: this.intU(),
+        ticks: this.intU(),
+        totalJSHeapSize: this.uintU(),
+        usedJSHeapSize: this.uintU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 50: {
-      const key = this.readUint(); if (key === null) { return resetPointer() }
-      const value = this.readString(); if (value === null) { return resetPointer() }
+    case 50:
       return {
         tp: MType.StringDictDeprecated,
-        key,
-        value,
-      };
-    }
+        key: this.uintU(),
+        value: this.stringU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 51: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const nameKey = this.readUint(); if (nameKey === null) { return resetPointer() }
-      const valueKey = this.readUint(); if (valueKey === null) { return resetPointer() }
+    case 51:
       return {
         tp: MType.SetNodeAttributeDictDeprecated,
-        id,
-        nameKey,
-        valueKey,
-      };
-    }
+        id: this.uintU(),
+        nameKey: this.uintU(),
+        valueKey: this.uintU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 43: {
-      const key = this.readString(); if (key === null) { return resetPointer() }
-      const value = this.readString(); if (value === null) { return resetPointer() }
+    case 43:
       return {
         tp: MType.StringDict,
-        key,
-        value,
-      };
-    }
+        key: this.stringU(),
+        value: this.stringU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 52: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const name = this.readString(); if (name === null) { return resetPointer() }
-      const value = this.readString(); if (value === null) { return resetPointer() }
+    case 52:
       return {
         tp: MType.SetNodeAttributeDict,
-        id,
-        name,
-        value,
-      };
-    }
+        id: this.uintU(),
+        name: this.stringU(),
+        value: this.stringU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 53: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const duration = this.readUint(); if (duration === null) { return resetPointer() }
-      const ttfb = this.readUint(); if (ttfb === null) { return resetPointer() }
-      const headerSize = this.readUint(); if (headerSize === null) { return resetPointer() }
-      const encodedBodySize = this.readUint(); if (encodedBodySize === null) { return resetPointer() }
-      const decodedBodySize = this.readUint(); if (decodedBodySize === null) { return resetPointer() }
-      const url = this.readString(); if (url === null) { return resetPointer() }
-      const initiator = this.readString(); if (initiator === null) { return resetPointer() }
+    case 53:
       return {
         tp: MType.ResourceTimingDeprecatedDeprecated,
-        timestamp,
-        duration,
-        ttfb,
-        headerSize,
-        encodedBodySize,
-        decodedBodySize,
-        url,
-        initiator,
-      };
-    }
+        timestamp: this.uintU(),
+        duration: this.uintU(),
+        ttfb: this.uintU(),
+        headerSize: this.uintU(),
+        encodedBodySize: this.uintU(),
+        decodedBodySize: this.uintU(),
+        url: this.stringU(),
+        initiator: this.stringU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 54: {
-      const downlink = this.readUint(); if (downlink === null) { return resetPointer() }
-      const type = this.readString(); if (type === null) { return resetPointer() }
+    case 54:
       return {
         tp: MType.ConnectionInformation,
-        downlink,
-        type,
-      };
-    }
+        downlink: this.uintU(),
+        type: this.stringU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 55: {
-      const hidden = this.readBoolean(); if (hidden === null) { return resetPointer() }
+    case 55:
       return {
         tp: MType.SetPageVisibility,
-        hidden,
-      };
-    }
+        hidden: this.booleanU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 57: {
-      const parentID = this.readUint(); if (parentID === null) { return resetPointer() }
-      const family = this.readString(); if (family === null) { return resetPointer() }
-      const source = this.readString(); if (source === null) { return resetPointer() }
-      const descriptors = this.readString(); if (descriptors === null) { return resetPointer() }
+    case 57:
       return {
         tp: MType.LoadFontFace,
-        parentID,
-        family,
-        source,
-        descriptors,
-      };
-    }
+        parentID: this.uintU(),
+        family: this.stringU(),
+        source: this.stringU(),
+        descriptors: this.stringU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 58: {
-      const id = this.readInt(); if (id === null) { return resetPointer() }
+    case 58:
       return {
         tp: MType.SetNodeFocus,
-        id,
-      };
-    }
+        id: this.intU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 60: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const name = this.readString(); if (name === null) { return resetPointer() }
-      const value = this.readString(); if (value === null) { return resetPointer() }
-      const baseURL = this.readString(); if (baseURL === null) { return resetPointer() }
+    case 60:
       return {
         tp: MType.SetNodeAttributeURLBased,
-        id,
-        name,
-        value,
-        baseURL,
-      };
-    }
+        id: this.uintU(),
+        name: this.stringU(),
+        value: this.stringU(),
+        baseURL: this.stringU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 61: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const data = this.readString(); if (data === null) { return resetPointer() }
-      const baseURL = this.readString(); if (baseURL === null) { return resetPointer() }
+    case 61:
       return {
         tp: MType.SetCssDataURLBased,
-        id,
-        data,
-        baseURL,
-      };
-    }
+        id: this.uintU(),
+        data: this.stringU(),
+        baseURL: this.stringU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 65: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const slotID = this.readUint(); if (slotID === null) { return resetPointer() }
+    case 65:
       return {
         tp: MType.SetNodeSlot,
-        id,
-        slotID,
-      };
-    }
+        id: this.uintU(),
+        slotID: this.uintU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 68: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const hesitationTime = this.readUint(); if (hesitationTime === null) { return resetPointer() }
-      const label = this.readString(); if (label === null) { return resetPointer() }
-      const selector = this.readString(); if (selector === null) { return resetPointer() }
-      const normalizedX = this.readUint(); if (normalizedX === null) { return resetPointer() }
-      const normalizedY = this.readUint(); if (normalizedY === null) { return resetPointer() }
+    case 68:
       return {
         tp: MType.MouseClick,
-        id,
-        hesitationTime,
-        label,
-        selector,
-        normalizedX,
-        normalizedY,
-      };
-    }
+        id: this.uintU(),
+        hesitationTime: this.uintU(),
+        label: this.stringU(),
+        selector: this.stringU(),
+        normalizedX: this.uintU(),
+        normalizedY: this.uintU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 69: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const hesitationTime = this.readUint(); if (hesitationTime === null) { return resetPointer() }
-      const label = this.readString(); if (label === null) { return resetPointer() }
-      const selector = this.readString(); if (selector === null) { return resetPointer() }
+    case 69:
       return {
         tp: MType.MouseClickDeprecated,
-        id,
-        hesitationTime,
-        label,
-        selector,
-      };
-    }
+        id: this.uintU(),
+        hesitationTime: this.uintU(),
+        label: this.stringU(),
+        selector: this.stringU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 70: {
-      const frameID = this.readUint(); if (frameID === null) { return resetPointer() }
-      const id = this.readUint(); if (id === null) { return resetPointer() }
+    case 70:
       return {
         tp: MType.CreateIFrameDocument,
-        frameID,
-        id,
-      };
-    }
+        frameID: this.uintU(),
+        id: this.uintU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 71: {
-      const sheetID = this.readUint(); if (sheetID === null) { return resetPointer() }
-      const text = this.readString(); if (text === null) { return resetPointer() }
-      const baseURL = this.readString(); if (baseURL === null) { return resetPointer() }
+    case 71:
       return {
         tp: MType.AdoptedSsReplaceURLBased,
-        sheetID,
-        text,
-        baseURL,
-      };
-    }
+        sheetID: this.uintU(),
+        text: this.stringU(),
+        baseURL: this.stringU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 72: {
-      const sheetID = this.readUint(); if (sheetID === null) { return resetPointer() }
-      const text = this.readString(); if (text === null) { return resetPointer() }
+    case 72:
       return {
         tp: MType.AdoptedSsReplace,
-        sheetID,
-        text,
-      };
-    }
+        sheetID: this.uintU(),
+        text: this.stringU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 73: {
-      const sheetID = this.readUint(); if (sheetID === null) { return resetPointer() }
-      const rule = this.readString(); if (rule === null) { return resetPointer() }
-      const index = this.readUint(); if (index === null) { return resetPointer() }
-      const baseURL = this.readString(); if (baseURL === null) { return resetPointer() }
+    case 73:
       return {
         tp: MType.AdoptedSsInsertRuleURLBased,
-        sheetID,
-        rule,
-        index,
-        baseURL,
-      };
-    }
+        sheetID: this.uintU(),
+        rule: this.stringU(),
+        index: this.uintU(),
+        baseURL: this.stringU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 74: {
-      const sheetID = this.readUint(); if (sheetID === null) { return resetPointer() }
-      const rule = this.readString(); if (rule === null) { return resetPointer() }
-      const index = this.readUint(); if (index === null) { return resetPointer() }
+    case 74:
       return {
         tp: MType.AdoptedSsInsertRule,
-        sheetID,
-        rule,
-        index,
-      };
-    }
+        sheetID: this.uintU(),
+        rule: this.stringU(),
+        index: this.uintU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 75: {
-      const sheetID = this.readUint(); if (sheetID === null) { return resetPointer() }
-      const index = this.readUint(); if (index === null) { return resetPointer() }
+    case 75:
       return {
         tp: MType.AdoptedSsDeleteRule,
-        sheetID,
-        index,
-      };
-    }
+        sheetID: this.uintU(),
+        index: this.uintU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 76: {
-      const sheetID = this.readUint(); if (sheetID === null) { return resetPointer() }
-      const id = this.readUint(); if (id === null) { return resetPointer() }
+    case 76:
       return {
         tp: MType.AdoptedSsAddOwner,
-        sheetID,
-        id,
-      };
-    }
+        sheetID: this.uintU(),
+        id: this.uintU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 77: {
-      const sheetID = this.readUint(); if (sheetID === null) { return resetPointer() }
-      const id = this.readUint(); if (id === null) { return resetPointer() }
+    case 77:
       return {
         tp: MType.AdoptedSsRemoveOwner,
-        sheetID,
-        id,
-      };
-    }
+        sheetID: this.uintU(),
+        id: this.uintU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 79: {
-      const mutation = this.readString(); if (mutation === null) { return resetPointer() }
-      const state = this.readString(); if (state === null) { return resetPointer() }
+    case 79:
       return {
         tp: MType.Zustand,
-        mutation,
-        state,
-      };
-    }
+        mutation: this.stringU(),
+        state: this.stringU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 83: {
-      const type = this.readString(); if (type === null) { return resetPointer() }
-      const method = this.readString(); if (method === null) { return resetPointer() }
-      const url = this.readString(); if (url === null) { return resetPointer() }
-      const request = this.readString(); if (request === null) { return resetPointer() }
-      const response = this.readString(); if (response === null) { return resetPointer() }
-      const status = this.readUint(); if (status === null) { return resetPointer() }
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const duration = this.readUint(); if (duration === null) { return resetPointer() }
-      const transferredBodySize = this.readUint(); if (transferredBodySize === null) { return resetPointer() }
+    case 83:
       return {
         tp: MType.NetworkRequest,
-        type,
-        method,
-        url,
-        request,
-        response,
-        status,
-        timestamp,
-        duration,
-        transferredBodySize,
-      };
-    }
+        type: this.stringU(),
+        method: this.stringU(),
+        url: this.stringU(),
+        request: this.stringU(),
+        response: this.stringU(),
+        status: this.uintU(),
+        timestamp: this.uintU(),
+        duration: this.uintU(),
+        transferredBodySize: this.uintU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 84: {
-      const chType = this.readString(); if (chType === null) { return resetPointer() }
-      const channelName = this.readString(); if (channelName === null) { return resetPointer() }
-      const data = this.readString(); if (data === null) { return resetPointer() }
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const dir = this.readString(); if (dir === null) { return resetPointer() }
-      const messageType = this.readString(); if (messageType === null) { return resetPointer() }
+    case 84:
       return {
         tp: MType.WsChannel,
-        chType,
-        channelName,
-        data,
-        timestamp,
-        dir,
-        messageType,
-      };
-    }
+        chType: this.stringU(),
+        channelName: this.stringU(),
+        data: this.stringU(),
+        timestamp: this.uintU(),
+        dir: this.stringU(),
+        messageType: this.stringU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 85: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const duration = this.readUint(); if (duration === null) { return resetPointer() }
-      const ttfb = this.readUint(); if (ttfb === null) { return resetPointer() }
-      const headerSize = this.readUint(); if (headerSize === null) { return resetPointer() }
-      const encodedBodySize = this.readUint(); if (encodedBodySize === null) { return resetPointer() }
-      const decodedBodySize = this.readUint(); if (decodedBodySize === null) { return resetPointer() }
-      const url = this.readString(); if (url === null) { return resetPointer() }
-      const initiator = this.readString(); if (initiator === null) { return resetPointer() }
-      const transferredSize = this.readUint(); if (transferredSize === null) { return resetPointer() }
-      const cached = this.readBoolean(); if (cached === null) { return resetPointer() }
-      const queueing = this.readUint(); if (queueing === null) { return resetPointer() }
-      const dnsLookup = this.readUint(); if (dnsLookup === null) { return resetPointer() }
-      const initialConnection = this.readUint(); if (initialConnection === null) { return resetPointer() }
-      const ssl = this.readUint(); if (ssl === null) { return resetPointer() }
-      const contentDownload = this.readUint(); if (contentDownload === null) { return resetPointer() }
-      const total = this.readUint(); if (total === null) { return resetPointer() }
-      const stalled = this.readUint(); if (stalled === null) { return resetPointer() }
+    case 85:
       return {
         tp: MType.ResourceTiming,
-        timestamp,
-        duration,
-        ttfb,
-        headerSize,
-        encodedBodySize,
-        decodedBodySize,
-        url,
-        initiator,
-        transferredSize,
-        cached,
-        queueing,
-        dnsLookup,
-        initialConnection,
-        ssl,
-        contentDownload,
-        total,
-        stalled,
-      };
-    }
+        timestamp: this.uintU(),
+        duration: this.uintU(),
+        ttfb: this.uintU(),
+        headerSize: this.uintU(),
+        encodedBodySize: this.uintU(),
+        decodedBodySize: this.uintU(),
+        url: this.stringU(),
+        initiator: this.stringU(),
+        transferredSize: this.uintU(),
+        cached: this.booleanU(),
+        queueing: this.uintU(),
+        dnsLookup: this.uintU(),
+        initialConnection: this.uintU(),
+        ssl: this.uintU(),
+        contentDownload: this.uintU(),
+        total: this.uintU(),
+        stalled: this.uintU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 87: {
-      const label = this.readString(); if (label === null) { return resetPointer() }
-      const startTime = this.readInt(); if (startTime === null) { return resetPointer() }
-      const endTime = this.readInt(); if (endTime === null) { return resetPointer() }
+    case 87:
       return {
         tp: MType.Incident,
-        label,
-        startTime,
-        endTime,
-      };
-    }
+        label: this.stringU(),
+        startTime: this.intU(),
+        endTime: this.intU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 89: {
-      const name = this.readString(); if (name === null) { return resetPointer() }
-      const duration = this.readInt(); if (duration === null) { return resetPointer() }
-      const blockingDuration = this.readInt(); if (blockingDuration === null) { return resetPointer() }
-      const firstUIEventTimestamp = this.readInt(); if (firstUIEventTimestamp === null) { return resetPointer() }
-      const startTime = this.readInt(); if (startTime === null) { return resetPointer() }
-      const scripts = this.readString(); if (scripts === null) { return resetPointer() }
+    case 89:
       return {
         tp: MType.LongAnimationTask,
-        name,
-        duration,
-        blockingDuration,
-        firstUIEventTimestamp,
-        startTime,
-        scripts,
-      };
-    }
+        name: this.stringU(),
+        duration: this.intU(),
+        blockingDuration: this.intU(),
+        firstUIEventTimestamp: this.intU(),
+        startTime: this.intU(),
+        scripts: this.stringU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 113: {
-      const selectionStart = this.readUint(); if (selectionStart === null) { return resetPointer() }
-      const selectionEnd = this.readUint(); if (selectionEnd === null) { return resetPointer() }
-      const selection = this.readString(); if (selection === null) { return resetPointer() }
+    case 113:
       return {
         tp: MType.SelectionChange,
-        selectionStart,
-        selectionEnd,
-        selection,
-      };
-    }
+        selectionStart: this.uintU(),
+        selectionEnd: this.uintU(),
+        selection: this.stringU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 114: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
+    case 114:
       return {
         tp: MType.MouseThrashing,
-        timestamp,
-      };
-    }
+        timestamp: this.uintU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 116: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const duration = this.readUint(); if (duration === null) { return resetPointer() }
-      const ttfb = this.readUint(); if (ttfb === null) { return resetPointer() }
-      const headerSize = this.readUint(); if (headerSize === null) { return resetPointer() }
-      const encodedBodySize = this.readUint(); if (encodedBodySize === null) { return resetPointer() }
-      const decodedBodySize = this.readUint(); if (decodedBodySize === null) { return resetPointer() }
-      const url = this.readString(); if (url === null) { return resetPointer() }
-      const initiator = this.readString(); if (initiator === null) { return resetPointer() }
-      const transferredSize = this.readUint(); if (transferredSize === null) { return resetPointer() }
-      const cached = this.readBoolean(); if (cached === null) { return resetPointer() }
+    case 116:
       return {
         tp: MType.ResourceTimingDeprecated,
-        timestamp,
-        duration,
-        ttfb,
-        headerSize,
-        encodedBodySize,
-        decodedBodySize,
-        url,
-        initiator,
-        transferredSize,
-        cached,
-      };
-    }
+        timestamp: this.uintU(),
+        duration: this.uintU(),
+        ttfb: this.uintU(),
+        headerSize: this.uintU(),
+        encodedBodySize: this.uintU(),
+        decodedBodySize: this.uintU(),
+        url: this.stringU(),
+        initiator: this.stringU(),
+        transferredSize: this.uintU(),
+        cached: this.booleanU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 117: {
-      const tabId = this.readString(); if (tabId === null) { return resetPointer() }
+    case 117:
       return {
         tp: MType.TabChange,
-        tabId,
-      };
-    }
+        tabId: this.stringU(),
+        time: this.time,
+      } as RawMessage;
 
-    case 118: {
-      const tabId = this.readString(); if (tabId === null) { return resetPointer() }
+    case 118:
       return {
         tp: MType.TabData,
-        tabId,
-      };
-    }
+        tabId: this.stringU(),
+        time: this.time,
+      } as RawMessage;
 
-    case 119: {
-      const nodeId = this.readString(); if (nodeId === null) { return resetPointer() }
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
+    case 119:
       return {
         tp: MType.CanvasNode,
-        nodeId,
-        timestamp,
-      };
-    }
+        nodeId: this.stringU(),
+        timestamp: this.uintU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 120: {
-      const tagId = this.readInt(); if (tagId === null) { return resetPointer() }
+    case 120:
       return {
         tp: MType.TagTrigger,
-        tagId,
-      };
-    }
+        tagId: this.intU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 121: {
-      const action = this.readString(); if (action === null) { return resetPointer() }
-      const state = this.readString(); if (state === null) { return resetPointer() }
-      const duration = this.readUint(); if (duration === null) { return resetPointer() }
-      const actionTime = this.readUint(); if (actionTime === null) { return resetPointer() }
+    case 121:
       return {
         tp: MType.Redux,
-        action,
-        state,
-        duration,
-        actionTime,
-      };
-    }
+        action: this.stringU(),
+        state: this.stringU(),
+        duration: this.uintU(),
+        actionTime: this.uintU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 122: {
-      const url = this.readString(); if (url === null) { return resetPointer() }
-      const referrer = this.readString(); if (referrer === null) { return resetPointer() }
-      const navigationStart = this.readUint(); if (navigationStart === null) { return resetPointer() }
-      const documentTitle = this.readString(); if (documentTitle === null) { return resetPointer() }
+    case 122:
       return {
         tp: MType.SetPageLocation,
-        url,
-        referrer,
-        navigationStart,
-        documentTitle,
-      };
-    }
+        url: this.stringU(),
+        referrer: this.stringU(),
+        navigationStart: this.uintU(),
+        documentTitle: this.stringU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 123: {
-      const operationKind = this.readString(); if (operationKind === null) { return resetPointer() }
-      const operationName = this.readString(); if (operationName === null) { return resetPointer() }
-      const variables = this.readString(); if (variables === null) { return resetPointer() }
-      const response = this.readString(); if (response === null) { return resetPointer() }
-      const duration = this.readUint(); if (duration === null) { return resetPointer() }
+    case 123:
       return {
         tp: MType.GraphQl,
-        operationKind,
-        operationName,
-        variables,
-        response,
-        duration,
-      };
-    }
+        operationKind: this.stringU(),
+        operationName: this.stringU(),
+        variables: this.stringU(),
+        response: this.stringU(),
+        duration: this.uintU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 93: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const length = this.readUint(); if (length === null) { return resetPointer() }
-      const name = this.readString(); if (name === null) { return resetPointer() }
-      const payload = this.readString(); if (payload === null) { return resetPointer() }
+    case 93:
       return {
         tp: MType.MobileEvent,
-        timestamp,
-        length,
-        name,
-        payload,
-      };
-    }
+        timestamp: this.uintU(),
+        length: this.uintU(),
+        name: this.stringU(),
+        payload: this.stringU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 96: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const length = this.readUint(); if (length === null) { return resetPointer() }
-      const x = this.readUint(); if (x === null) { return resetPointer() }
-      const y = this.readUint(); if (y === null) { return resetPointer() }
-      const width = this.readUint(); if (width === null) { return resetPointer() }
-      const height = this.readUint(); if (height === null) { return resetPointer() }
+    case 96:
       return {
         tp: MType.MobileScreenChanges,
-        timestamp,
-        length,
-        x,
-        y,
-        width,
-        height,
-      };
-    }
+        timestamp: this.uintU(),
+        length: this.uintU(),
+        x: this.uintU(),
+        y: this.uintU(),
+        width: this.uintU(),
+        height: this.uintU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 100: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const length = this.readUint(); if (length === null) { return resetPointer() }
-      const label = this.readString(); if (label === null) { return resetPointer() }
-      const x = this.readUint(); if (x === null) { return resetPointer() }
-      const y = this.readUint(); if (y === null) { return resetPointer() }
+    case 100:
       return {
         tp: MType.MobileClickEvent,
-        timestamp,
-        length,
-        label,
-        x,
-        y,
-      };
-    }
+        timestamp: this.uintU(),
+        length: this.uintU(),
+        label: this.stringU(),
+        x: this.uintU(),
+        y: this.uintU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 101: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const length = this.readUint(); if (length === null) { return resetPointer() }
-      const value = this.readString(); if (value === null) { return resetPointer() }
-      const valueMasked = this.readBoolean(); if (valueMasked === null) { return resetPointer() }
-      const label = this.readString(); if (label === null) { return resetPointer() }
+    case 101:
       return {
         tp: MType.MobileInputEvent,
-        timestamp,
-        length,
-        value,
-        valueMasked,
-        label,
-      };
-    }
+        timestamp: this.uintU(),
+        length: this.uintU(),
+        value: this.stringU(),
+        valueMasked: this.booleanU(),
+        label: this.stringU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 102: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const length = this.readUint(); if (length === null) { return resetPointer() }
-      const name = this.readString(); if (name === null) { return resetPointer() }
-      const value = this.readUint(); if (value === null) { return resetPointer() }
+    case 102:
       return {
         tp: MType.MobilePerformanceEvent,
-        timestamp,
-        length,
-        name,
-        value,
-      };
-    }
+        timestamp: this.uintU(),
+        length: this.uintU(),
+        name: this.stringU(),
+        value: this.uintU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 103: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const length = this.readUint(); if (length === null) { return resetPointer() }
-      const severity = this.readString(); if (severity === null) { return resetPointer() }
-      const content = this.readString(); if (content === null) { return resetPointer() }
+    case 103:
       return {
         tp: MType.MobileLog,
-        timestamp,
-        length,
-        severity,
-        content,
-      };
-    }
+        timestamp: this.uintU(),
+        length: this.uintU(),
+        severity: this.stringU(),
+        content: this.stringU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 104: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const length = this.readUint(); if (length === null) { return resetPointer() }
-      const content = this.readString(); if (content === null) { return resetPointer() }
+    case 104:
       return {
         tp: MType.MobileInternalError,
-        timestamp,
-        length,
-        content,
-      };
-    }
+        timestamp: this.uintU(),
+        length: this.uintU(),
+        content: this.stringU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 105: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const length = this.readUint(); if (length === null) { return resetPointer() }
-      const type = this.readString(); if (type === null) { return resetPointer() }
-      const method = this.readString(); if (method === null) { return resetPointer() }
-      const url = this.readString(); if (url === null) { return resetPointer() }
-      const request = this.readString(); if (request === null) { return resetPointer() }
-      const response = this.readString(); if (response === null) { return resetPointer() }
-      const status = this.readUint(); if (status === null) { return resetPointer() }
-      const duration = this.readUint(); if (duration === null) { return resetPointer() }
+    case 105:
       return {
         tp: MType.MobileNetworkCall,
-        timestamp,
-        length,
-        type,
-        method,
-        url,
-        request,
-        response,
-        status,
-        duration,
-      };
-    }
+        timestamp: this.uintU(),
+        length: this.uintU(),
+        type: this.stringU(),
+        method: this.stringU(),
+        url: this.stringU(),
+        request: this.stringU(),
+        response: this.stringU(),
+        status: this.uintU(),
+        duration: this.uintU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 106: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const length = this.readUint(); if (length === null) { return resetPointer() }
-      const label = this.readString(); if (label === null) { return resetPointer() }
-      const x = this.readUint(); if (x === null) { return resetPointer() }
-      const y = this.readUint(); if (y === null) { return resetPointer() }
-      const direction = this.readString(); if (direction === null) { return resetPointer() }
+    case 106:
       return {
         tp: MType.MobileSwipeEvent,
-        timestamp,
-        length,
-        label,
-        x,
-        y,
-        direction,
-      };
-    }
+        timestamp: this.uintU(),
+        length: this.uintU(),
+        label: this.stringU(),
+        x: this.uintU(),
+        y: this.uintU(),
+        direction: this.stringU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 107: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const length = this.readUint(); if (length === null) { return resetPointer() }
-      const firstIndex = this.readUint(); if (firstIndex === null) { return resetPointer() }
+    case 107:
       return {
         tp: MType.MobileBatchMeta,
-        timestamp,
-        length,
-        firstIndex,
-      };
-    }
+        timestamp: this.uintU(),
+        length: this.uintU(),
+        firstIndex: this.uintU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 109: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const length = this.readUint(); if (length === null) { return resetPointer() }
-      const operationKind = this.readString(); if (operationKind === null) { return resetPointer() }
-      const operationName = this.readString(); if (operationName === null) { return resetPointer() }
-      const variables = this.readString(); if (variables === null) { return resetPointer() }
-      const response = this.readString(); if (response === null) { return resetPointer() }
-      const duration = this.readUint(); if (duration === null) { return resetPointer() }
+    case 109:
       return {
         tp: MType.MobileGraphQl,
-        timestamp,
-        length,
-        operationKind,
-        operationName,
-        variables,
-        response,
-        duration,
-      };
-    }
+        timestamp: this.uintU(),
+        length: this.uintU(),
+        operationKind: this.stringU(),
+        operationName: this.stringU(),
+        variables: this.stringU(),
+        response: this.stringU(),
+        duration: this.uintU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    case 111: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const type = this.readString(); if (type === null) { return resetPointer() }
-      const contextString = this.readString(); if (contextString === null) { return resetPointer() }
-      const context = this.readString(); if (context === null) { return resetPointer() }
-      const payload = this.readString(); if (payload === null) { return resetPointer() }
+    case 111:
       return {
         tp: MType.MobileIssueEvent,
-        timestamp,
-        type,
-        contextString,
-        context,
-        payload,
-      };
-    }
+        timestamp: this.uintU(),
+        type: this.stringU(),
+        contextString: this.stringU(),
+        context: this.stringU(),
+        payload: this.stringU(),
+        time: this.time,
+        tabId: this.tabId,
+      } as RawMessage;
 
-    default: {
-      // Skip unknown message type using its size prefix
-      const skipTo = bodyStart + size
-      if (skipTo > this.buf.length) {
-        this.p = this.buf.length
-        return null
-      }
-      this.p = skipTo
-      return this.readMessage()
-    }
+    default:
+      return undefined
     }
   }
 }

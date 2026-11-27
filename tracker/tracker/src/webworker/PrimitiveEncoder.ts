@@ -1,5 +1,8 @@
 declare const TextEncoder: any
-const textEncoder: { encode(str: string): Uint8Array } =
+const textEncoder: {
+  encode(str: string): Uint8Array
+  encodeInto?(str: string, dest: Uint8Array): { read: number; written: number }
+} =
   typeof TextEncoder === 'function'
     ? new TextEncoder()
     : {
@@ -55,6 +58,8 @@ const textEncoder: { encode(str: string): Uint8Array } =
         },
       }
 
+const varintSize = (n: number) => (n < 0x80 ? 1 : n < 0x4000 ? 2 : n < 0x200000 ? 3 : 4)
+
 export default class PrimitiveEncoder {
   private offset = 0
   private checkpointOffset = 0
@@ -81,6 +86,9 @@ export default class PrimitiveEncoder {
   set(bytes: Uint8Array, offset: number) {
     this.data.set(bytes, offset)
   }
+  setByte(offset: number, value: number) {
+    this.data[offset] = value
+  }
   boolean(value: boolean): boolean {
     this.data[this.offset++] = +value
     return this.offset <= this.size
@@ -89,18 +97,63 @@ export default class PrimitiveEncoder {
     if (value < 0 || value > Number.MAX_SAFE_INTEGER) {
       value = 0
     }
-    while (value >= 0x80) {
-      this.data[this.offset++] = value % 0x100 | 0x80
-      value = Math.floor(value / 128)
+    const d = this.data
+    let o = this.offset
+    if (value < 0x80000000) {
+      value = value >>> 0
+      while (value >= 0x80) {
+        d[o++] = (value & 0x7f) | 0x80
+        value >>>= 7
+      }
+    } else {
+      while (value >= 0x80) {
+        d[o++] = value % 0x100 | 0x80
+        value = Math.floor(value / 128)
+      }
     }
-    this.data[this.offset++] = value
-    return this.offset <= this.size
+    d[o++] = value
+    this.offset = o
+    return o <= this.size
   }
   int(value: number): boolean {
     value = Math.round(value)
     return this.uint(value >= 0 ? value * 2 : value * -2 - 1)
   }
   string(value: string): boolean {
+    // TextEncoder.encode() coercion: undefined is '', anything else goes through String()
+    if (typeof value !== 'string') value = value === undefined ? '' : String(value)
+    const n = value.length
+    const d = this.data
+    const base = this.offset
+    if (n < 0x80 && base + 1 + n <= this.size) {
+      let i = 0
+      for (; i < n; i++) {
+        const c = value.charCodeAt(i)
+        if (c > 0x7f) break
+        d[base + 1 + i] = c
+      }
+      if (i === n) {
+        d[base] = n
+        this.offset = base + 1 + n
+        return true
+      }
+    }
+    if (!textEncoder.encodeInto) return this.encodedString(value)
+    // Encode right after the widest length prefix it could need, then close the
+    // gap once the real byte length is known.
+    const prefix = varintSize(n * 3)
+    const start = base + prefix
+    if (start > this.size) return this.encodedString(value)
+    const { read, written } = textEncoder.encodeInto(value, d.subarray(start))
+    // Out of room, though it may still fit behind a shorter prefix
+    if (read < n) return this.encodedString(value)
+    const realPrefix = varintSize(written)
+    if (realPrefix < prefix) d.copyWithin(base + realPrefix, start, start + written)
+    this.uint(written)
+    this.offset = base + realPrefix + written
+    return this.offset <= this.size
+  }
+  private encodedString(value: string): boolean {
     const encoded = textEncoder.encode(value)
     const length = encoded.byteLength
     if (!this.uint(length) || this.offset + length > this.size) {

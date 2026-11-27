@@ -3,7 +3,11 @@ import { chromium } from 'playwright-core'
 export async function launch() {
   try {
     // SwiftShader: WebGL in headless without a GPU
-    return await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] })
+    return await chromium.launch({
+      args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+      // another installed Chromium when playwright-core's own revision isn't downloaded
+      executablePath: process.env.HARNESS_CHROMIUM || undefined,
+    })
   } catch (e) {
     if (/Executable doesn't exist/.test(String(e))) {
       throw new Error('Chromium for playwright-core is missing: run `bun run install-browser` in tracker/harness')

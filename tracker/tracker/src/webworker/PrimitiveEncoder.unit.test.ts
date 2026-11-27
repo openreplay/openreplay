@@ -34,7 +34,11 @@ describe('PrimitiveEncoder', () => {
       [128, [0x80, 0x01]],
       [300, [0xac, 0x02]],
       [16_384, [0x80, 0x80, 0x01]],
+      [2 ** 31 - 1, [0xff, 0xff, 0xff, 0xff, 0x07]],
+      [2 ** 31, [0x80, 0x80, 0x80, 0x80, 0x08]],
       [2 ** 32, [0x80, 0x80, 0x80, 0x80, 0x10]],
+      [1700000000123, [0xfb, 0xd0, 0x95, 0xff, 0xbc, 0x31]],
+      [300.7, [0xac, 0x02]],
       [Number.MAX_SAFE_INTEGER, [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x0f]],
     ])('%d', (value, expected) => {
       expect(bytesOf((e) => e.uint(value))).toEqual(expected)
@@ -104,6 +108,48 @@ describe('PrimitiveEncoder', () => {
         e.checkpoint()
         const utf8 = Array.from(Buffer.from(str, 'utf8'))
         expect(Array.from(e.flush())).toEqual([utf8.length, ...utf8])
+      }
+    })
+
+    test.each([
+      ['fallback', fallbackEncoder],
+      ['TextEncoder', nativeEncoder],
+    ])('%s: long and mixed strings, multi-byte length prefix', (_, load) => {
+      const Enc = load()
+      const long = [
+        'a'.repeat(127),
+        'a'.repeat(128),
+        'a'.repeat(200) + 'é',
+        'é'.repeat(42),
+        'é'.repeat(43),
+        '中'.repeat(5000),
+        'x'.repeat(20_000) + '😀',
+      ]
+      for (const str of long) {
+        const e = new Enc(64 * 1024)
+        expect(e.string(str)).toBe(true)
+        e.checkpoint()
+        const utf8 = Array.from(Buffer.from(str, 'utf8'))
+        const want = new PrimitiveEncoder(8)
+        want.uint(utf8.length)
+        want.checkpoint()
+        expect(Array.from(e.flush())).toEqual([...Array.from(want.flush()), ...utf8])
+      }
+    })
+
+    test('TextEncoder: non-string values encode like TextEncoder.encode()', () => {
+      const e = new (nativeEncoder())(64)
+      expect(e.string(undefined as any) && e.string(null as any) && e.string(12 as any)).toBe(true)
+      e.checkpoint()
+      expect(Array.from(e.flush())).toEqual([0, 4, ...Buffer.from('null'), 2, ...Buffer.from('12')])
+    })
+
+    test('TextEncoder: overflow keeps reporting false at every boundary', () => {
+      const Enc = nativeEncoder()
+      for (const str of ['abc', 'é€', 'a'.repeat(130), 'é'.repeat(50)]) {
+        const need = Buffer.byteLength(str) + (Buffer.byteLength(str) < 128 ? 1 : 2)
+        for (let size = 0; size < need; size++) expect(new Enc(size).string(str)).toBe(false)
+        expect(new Enc(need).string(str)).toBe(true)
       }
     })
 

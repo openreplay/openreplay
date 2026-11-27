@@ -22,7 +22,7 @@ const fixture = (url) =>
       : undefined
 
 /** What the tracker's start request gets back from the fake backend. */
-const startResponse = () => ({
+const startResponse = (protocolVersion) => ({
   token: 'tok',
   userUUID: 'u',
   projectID: '1',
@@ -30,7 +30,7 @@ const startResponse = () => ({
   delay: 0,
   beaconSizeLimit: 1_000_000,
   startTimestamp: Date.now(),
-  protocolVersion: 1,
+  protocolVersion,
   compressionThreshold: 24000,
   canvasEnabled: false,
 })
@@ -38,11 +38,13 @@ const startResponse = () => ({
 /**
  * Static routes plus a fake ingest backend under /ingest/.
  * `routes`: url -> absolute file path, or { body, type }.
+ * `protocolVersion`: what the start response tells the tracker (2 = split streams).
  */
-export async function serve(routes) {
-  const ingest = { batches: 0, bytes: 0 }
+export async function serve(routes, { protocolVersion = 1 } = {}) {
+  // `bodies`: batch requests ({ body, dataType, split }) per run, for ingest points <base>ingest/<run>
+  const ingest = { batches: 0, bytes: 0, bodies: new Map() }
   const server = http.createServer((req, res) => {
-    const url = req.url.split('?')[0]
+    const [url, query = ''] = req.url.split('?')
     if (url.startsWith('/ingest/')) {
       const body = []
       req.on('data', (c) => body.push(c))
@@ -50,10 +52,21 @@ export async function serve(routes) {
         res.setHeader('access-control-allow-origin', '*')
         res.setHeader('access-control-allow-headers', '*')
         res.setHeader('content-type', 'application/json')
-        if (url.startsWith('/ingest/v1/web/start')) return res.end(JSON.stringify(startResponse()))
-        if (url.startsWith('/ingest/v1/web/i')) {
+        const [, run, endpoint] = url.match(/^\/ingest\/(?:([\w-]+)\/)?v1\/web\/(start|i)\b/) ?? []
+        if (endpoint === 'start') return res.end(JSON.stringify(startResponse(protocolVersion)))
+        if (endpoint === 'i') {
+          const buf = Buffer.concat(body)
           ingest.batches++
-          ingest.bytes += Buffer.concat(body).length
+          ingest.bytes += buf.length
+          if (run) {
+            if (!ingest.bodies.has(run)) ingest.bodies.set(run, [])
+            const split = new URLSearchParams(query).get('split')
+            ingest.bodies.get(run).push({
+              body: buf,
+              dataType: req.headers.datatype ?? 'player',
+              split: split === null ? undefined : Number(split),
+            })
+          }
         }
         res.end('{}')
       })

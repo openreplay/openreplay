@@ -32,7 +32,7 @@ where the page posts them to the worker.
 
 | suite | what |
 |---|---|
-| `e2e` | correctness scenarios through the real `Tracker`, replayed by the player |
+| `e2e` | correctness scenarios through the real `Tracker`, replayed by the player; `--wire` also decodes the batches the worker sent to the ingest and checks them against the posted messages (order per stream, batch headers, visual split) |
 | `bytes` | encoded bytes per scenario and per message type |
 | `modules` | inputs, select, checkbox, clicks, element scroll, late fields, same-origin iframe |
 | `leaks` | images, inputs and shadow hosts added and removed; memory after GC |
@@ -44,8 +44,13 @@ worktrees and build output (`--results` also the JSON results).
 Common flags: positional filters match scenario names (`core shadow iframe`),
 `--impls=default,next` (DOM-core suites) or `--modes=default,next` (full-tracker suites),
 `--no-build` reuses this checkout's tracker dist, `--strict` exits 1 on any failure,
-`--timeout=<ms>` per run (DOM-core suites). Suite runs (not `list`/`profile`/`clean`) write
-`results/<suite>-<time>.json`.
+`--timeout=<ms>` per run (DOM-core suites), `--protocol=2` has the fake ingest ask for split
+streams (full-tracker suites, default 1). Suite runs (not `list`/`profile`/`clean`) write
+`results/<suite>-<time>.json`. `HARNESS_CHROMIUM=<path>` launches another installed Chromium
+when playwright-core's own revision isn't downloaded.
+
+Each finished run prints a line to stderr (`[12/52 3m10s eta 10m] c_shadow next  OK wire`),
+so a long run can be followed from a log: `node cli.mjs e2e > run.log 2>&1 & tail -f run.log`.
 
 ## Baselines
 

@@ -7,9 +7,10 @@ import { headerVersion } from './protoFormat';
 import rewriteMessage from './rewriter/rewriteMessage';
 
 const INDEX_SIZE = 8;
+const TOP_BYTE = 2 ** 56;
 
 // TODO: composition instead of inheritance
-// needSkipMessage() and next() methods here use buf and p protected properties,
+// nextIndex() and readNext() here use the buf and p protected properties,
 export default class MFileReader extends RawMessageReader {
   /** Index of the last message read; later messages with a lower index are duplicates */
   private lastIndex: number = -1;
@@ -78,20 +79,25 @@ export default class MFileReader extends RawMessageReader {
   }
 
   private readIndexAt(pos: number): number {
-    let id = 0;
-    for (let i = 0; i < INDEX_SIZE; i++) {
-      id += this.buf[pos + i] * 2 ** (8 * i);
-    }
-    return id;
+    const b = this.buf;
+    return (
+      b[pos] +
+      b[pos + 1] * 0x100 +
+      b[pos + 2] * 0x10000 +
+      b[pos + 3] * 0x1000000 +
+      b[pos + 4] * 0x100000000 +
+      b[pos + 5] * 0x10000000000 +
+      b[pos + 6] * 0x1000000000000 +
+      b[pos + 7] * TOP_BYTE
+    );
   }
 
   private hasIndexAt(pos: number): boolean {
     return pos + INDEX_SIZE <= this.buf.length;
   }
 
-  private needSkipMessage(): boolean {
-    if (this.lastIndex < 0 || !this.hasIndexAt(this.p)) return false;
-    return this.readIndexAt(this.p) < this.lastIndex;
+  private nextIndex(): number {
+    return this.noIndexes || !this.hasIndexAt(this.p) ? 0 : this.readIndexAt(this.p);
   }
 
   /**
@@ -130,18 +136,23 @@ export default class MFileReader extends RawMessageReader {
       }
 
       let skipped = 0;
-      while (!this.noIndexes && this.needSkipMessage()) {
+      let index = this.nextIndex();
+      while (
+        !this.noIndexes &&
+        this.lastIndex >= 0 &&
+        this.hasIndexAt(this.p) &&
+        index < this.lastIndex
+      ) {
         if (!this.readRawMessage()) {
           return null;
         }
         skipped++;
+        index = this.nextIndex();
       }
       if (skipped > 0) {
         Logger.log(`Openreplay: skipped ${skipped} out-of-order messages`);
       }
 
-      const index =
-        this.noIndexes || !this.hasIndexAt(this.p) ? 0 : this.readIndexAt(this.p);
       const rMsg = this.readRawMessage();
       if (!rMsg) {
         return null;

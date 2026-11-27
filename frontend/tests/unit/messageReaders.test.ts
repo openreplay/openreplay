@@ -144,6 +144,38 @@ describe('TrackerReader', () => {
     expect(msgs).toHaveLength(3);
     expect(msgs[1]).toMatchObject({ tp: MType.SetNodeAttribute, value: 'http://' });
   });
+
+  const brief = (msgs: unknown[]) =>
+    msgs.map((m) => {
+      const { tp, id, value } = m as { tp: number; id?: number; value?: string };
+      return value !== undefined ? `${tp}:${id}=${value}` : id !== undefined ? `${tp}:${id}` : `${tp}`;
+    });
+
+  test('a message cut inside its body waits for the next file and is read once', () => {
+    const r = new TrackerReader(1000);
+    const attr = sized(MType.SetNodeAttribute, [...uint(5), ...str('class'), ...str('a b')]);
+    r.append(bytes(timestamp(1000), removeNode(1), attr.slice(0, 7)));
+    expect(brief(r.readBatch())).toEqual(['9999', `${MType.RemoveNode}:1`]);
+    r.append(bytes(attr.slice(7), removeNode(2)));
+    expect(brief(r.readBatch())).toEqual([`${MType.SetNodeAttribute}:5=a b`, `${MType.RemoveNode}:2`]);
+  });
+
+  test('an unknown message cut inside its body is skipped once the rest arrives', () => {
+    const r = new TrackerReader(1000);
+    const unknown = sized(250, [1, 2, 3, 4, 5, 6]);
+    r.append(bytes(timestamp(1000), unknown.slice(0, 7)));
+    expect(brief(r.readBatch())).toEqual(['9999']);
+    r.append(bytes(unknown.slice(7), removeNode(7)));
+    expect(brief(r.readBatch())).toEqual([`${MType.RemoveNode}:7`]);
+  });
+
+  test('an overlong varint is rejected instead of turning the read position into NaN', () => {
+    const r = new TrackerReader(1000);
+    const data = sized(MType.SetNodeData, [...uint(1), ...new Array(148).fill(0x80), 0x00]);
+    r.append(bytes(timestamp(1000), removeNode(1), data));
+    expect(brief(r.readBatch())).toEqual(['9999', `${MType.RemoveNode}:1`]);
+    expect(() => r.append(bytes(removeNode(2)))).not.toThrow();
+  });
 });
 
 describe('protoFormat', () => {

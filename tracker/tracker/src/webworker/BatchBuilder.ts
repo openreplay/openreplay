@@ -24,7 +24,6 @@ interface Snapshot {
 
 export default class BatchBuilder {
   private readonly encoder: MessageEncoder
-  private readonly sizeBuffer = new Uint8Array(SIZE_BYTES)
   private snap: Snapshot | null = null
   private hasNonTimestamp = false
   private lastPushedTs = 0
@@ -176,9 +175,8 @@ export default class BatchBuilder {
   }
 
   private writeSizeAt(size: number, offset: number): void {
-    for (let i = 0; i < SIZE_BYTES; i++) {
-      this.sizeBuffer[i] = size >> (i * 8)
-    }
-    this.encoder.set(this.sizeBuffer, offset)
+    this.encoder.setByte(offset, size & 0xff)
+    this.encoder.setByte(offset + 1, (size >> 8) & 0xff)
+    this.encoder.setByte(offset + 2, (size >> 16) & 0xff)
   }
 }

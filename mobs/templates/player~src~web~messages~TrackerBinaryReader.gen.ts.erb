@@ -12,27 +12,25 @@ const NO_SIZE_TYPES = new Set([80, 81, 82])
 
 export default class TrackerBinaryReader extends PrimitiveReader {
   batchMetaMessages: any[] = []
+  /** Stamped on every message as it is created (one object shape, no later property adds) */
+  time = 0
+  tabId = ''
 
   readMessage(): RawMessage | null {
     const p = this.p
-    const resetPointer = () => {
-      this.p = p
-      return null
-    }
-
     const tp = this.readUint()
-    if (tp === null) { return resetPointer() }
+    if (tp === null) { return null }
 
     // Batch-level messages have no size prefix — read fields directly to advance pointer, then skip
     if (NO_SIZE_TYPES.has(tp)) {
       switch (tp) {
       case 81: {
         // BatchMetadata: Version, PageNo, FirstIndex, Timestamp, Location
-        const version = this.readUint(); if (version === null) { return resetPointer() }
-        const pageNo = this.readUint(); if (pageNo === null) { return resetPointer() }
-        const firstIndex = this.readUint(); if (firstIndex === null) { return resetPointer() }
-        const timestamp = this.readInt(); if (timestamp === null) { return resetPointer() }
-        const location = this.readString(); if (location === null) { return resetPointer() }
+        const version = this.readUint(); if (version === null) { this.p = p; return null }
+        const pageNo = this.readUint(); if (pageNo === null) { this.p = p; return null }
+        const firstIndex = this.readUint(); if (firstIndex === null) { this.p = p; return null }
+        const timestamp = this.readInt(); if (timestamp === null) { this.p = p; return null }
+        const location = this.readString(); if (location === null) { this.p = p; return null }
         this.batchMetaMessages.push({
           tp: 81,
           version,
@@ -45,8 +43,8 @@ export default class TrackerBinaryReader extends PrimitiveReader {
       }
       case 82: {
         // PartitionedMessage: PartNo, PartTotal
-        const partNo = this.readUint(); if (partNo === null) { return resetPointer() }
-        const partTotal = this.readUint(); if (partTotal === null) { return resetPointer() }
+        const partNo = this.readUint(); if (partNo === null) { this.p = p; return null }
+        const partTotal = this.readUint(); if (partTotal === null) { this.p = p; return null }
         return this.readMessage()
       }
       default:
@@ -57,32 +55,36 @@ export default class TrackerBinaryReader extends PrimitiveReader {
 
     // All other messages have a 3-byte size prefix
     const size = this.readSize()
-    if (size === null) { return resetPointer() }
+    if (size === null) { this.p = p; return null }
 
     const bodyStart = this.p
+    // Wait for the whole body; once it is here, its fields are read unchecked
+    if (bodyStart + size > this.buf.length) { this.p = p; return null }
+    const msg = this.readBody(tp)
+    if (msg === undefined) {
+      // Skip unknown message type using its size prefix
+      this.p = bodyStart + size
+      return this.readMessage()
+    }
+    // Fields ran past the data: a corrupt body, read it as incomplete
+    if (this.p > this.buf.length) { this.p = p; return null }
+    return msg
+  }
 
+  private readBody(tp: number): RawMessage | undefined {
     switch (tp) {
 <% $messages.select { |msg| msg.replayer != false }.each do |msg| %>
-    case <%= msg.id %>: {
-<%= msg.attributes.map { |attr|
-"      const #{attr.name.camel_case} = this.read#{attr.type.to_s.pascal_case}(); if (#{attr.name.camel_case} === null) { return resetPointer() }" }.join "\n" %>
+    case <%= msg.id %>:
       return {
         tp: MType.<%= msg.name.snake_case.pascal_case %>,
 <%= msg.attributes.map { |attr|
-"        #{attr.name.camel_case}," }.join "\n" %>
-      };
-    }
+"        #{attr.name.camel_case}: this.#{attr.type.to_s.camel_case}U()," }.join "\n" %>
+<% own = msg.attributes.map { |attr| attr.name.camel_case } %><% unless own.include?('time') %>        time: this.time,
+<% end %><% unless own.include?('tabId') %>        tabId: this.tabId,
+<% end %>      } as RawMessage;
 <% end %>
-    default: {
-      // Skip unknown message type using its size prefix
-      const skipTo = bodyStart + size
-      if (skipTo > this.buf.length) {
-        this.p = this.buf.length
-        return null
-      }
-      this.p = skipTo
-      return this.readMessage()
-    }
+    default:
+      return undefined
     }
   }
 }

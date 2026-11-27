@@ -1,5 +1,6 @@
 ## 20.0.0
 
+- batches are encoded ~3.5x faster in the worker (short ASCII strings written directly, others via `TextEncoder.encodeInto` into the batch buffer, bitwise varints); the bytes sent are unchanged
 - SVG sprites: a sprite file is fetched once and shared by every `<use>` pointing at it (others waited on a 100 ms poll); a `<use>` with both `href` and `xlink:href` records `href`, as browsers render it; a hidden `<use>` gets no copy of its symbol
 - `captureSanitizer` option: a synchronous callback that gets attributes, resource URLs, CSS, fonts and inlined SVG sprites after the built-in masking and can rewrite or drop each value; canvas and cross-domain iframe capture are off while it is set
 - `stop()` or `discard()` called from a start callback cancels that start (it went on to record)
