@@ -19,6 +19,8 @@ export interface RefreshControlProps {
   onEvery: (seconds: number | null) => void;
   onPause: (paused: boolean) => void;
   onRefresh: () => void;
+  /** what Refresh now does when it is more than a refresh */
+  refreshLabel?: string;
   /** why auto-refresh cannot run now: it reads Off, the menu stays shut and
       this is its tip. `every` is kept for when it can. */
   unavailable?: string;
@@ -33,6 +35,7 @@ export function RefreshControl({
   onEvery,
   onPause,
   onRefresh,
+  refreshLabel,
   unavailable,
 }: RefreshControlProps) {
   const { t } = useTranslation();
@@ -48,11 +51,11 @@ export function RefreshControl({
       role="group"
       aria-label={t('Refresh')}
     >
-      <Tooltip title={t('Refresh now')}>
+      <Tooltip title={refreshLabel ?? t('Refresh now')}>
         <button
           type="button"
           className="m-refresh__cell m-refresh__now"
-          aria-label={t('Refresh')}
+          aria-label={refreshLabel ?? t('Refresh')}
           onClick={() => {
             onRefresh();
             setTurns((n) => n + 1);
@@ -72,7 +75,9 @@ export function RefreshControl({
             type="button"
             className="m-refresh__cell m-refresh__every"
             aria-disabled="true"
-            aria-label={t('Auto-refresh: off')}
+            aria-label={t('Auto-refresh: off. {{reason}}', {
+              reason: unavailable,
+            })}
           >
             <span className="m-refresh__value">{t('Off')}</span>
             <ChevronDown

@@ -3055,7 +3055,6 @@
   "Counted without its “contains” filter": "‘포함’ 필터를 빼고 집계함",
   "About this line": "이 줄 정보",
   "the newest {{n}} · {{total}} in this window": "최신 {{n}}개 · 이 기간 {{total}}개",
-  "Auto-refresh works on relative windows, like Past hour. A custom range doesn't move.": "자동 새로고침은 지난 1시간처럼 상대 기간에서만 작동합니다. 사용자 지정 범위는 움직이지 않습니다.",
   "Top {{n}}": "상위 {{n}}개",
   "Top {{n}} only": "상위 {{n}}개만",
   "Values under each bar": "막대별 값",
@@ -3196,5 +3195,8 @@
   "Message contains": "메시지에 포함",
   "A search holds up to {{n}} filters": "검색에는 필터를 최대 {{n}}개까지 쓸 수 있습니다",
   "A search is up to {{n}} characters": "검색어는 최대 {{n}}자까지 입력할 수 있습니다",
-  "A filter holds up to {{n}} values. Remove one to add another.": "필터 하나에 값은 최대 {{n}}개입니다. 하나를 지운 뒤 추가하세요."
+  "A filter holds up to {{n}} values. Remove one to add another.": "필터 하나에 값은 최대 {{n}}개입니다. 하나를 지운 뒤 추가하세요.",
+  "A custom range has an end, so there is nothing new to load. Pick a preset to auto-refresh.": "사용자 지정 범위에는 끝이 있어 새로 불러올 내용이 없습니다. 자동 새로고침하려면 미리 정의된 기간을 선택하세요.",
+  "Auto-refresh: off. {{reason}}": "자동 새로고침: 끔. {{reason}}",
+  "Back to {{label}}, refreshed": "{{label}}(으)로 돌아가 새로고침"
 }

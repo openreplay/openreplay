@@ -3122,7 +3122,6 @@
   "Counted without its “contains” filter": "Counted without its “contains” filter",
   "About this line": "About this line",
   "the newest {{n}} · {{total}} in this window": "the newest {{n}} · {{total}} in this window",
-  "Auto-refresh works on relative windows, like Past hour. A custom range doesn't move.": "Auto-refresh works on relative windows, like Past hour. A custom range doesn't move.",
   "Top {{n}}": "Top {{n}}",
   "Top {{n}} only": "Top {{n}} only",
   "Values under each bar": "Values under each bar",
@@ -3269,5 +3268,8 @@
   "Message contains": "Message contains",
   "A search holds up to {{n}} filters": "A search holds up to {{n}} filters",
   "A search is up to {{n}} characters": "A search is up to {{n}} characters",
-  "A filter holds up to {{n}} values. Remove one to add another.": "A filter holds up to {{n}} values. Remove one to add another."
+  "A filter holds up to {{n}} values. Remove one to add another.": "A filter holds up to {{n}} values. Remove one to add another.",
+  "A custom range has an end, so there is nothing new to load. Pick a preset to auto-refresh.": "A custom range has an end, so there is nothing new to load. Pick a preset to auto-refresh.",
+  "Auto-refresh: off. {{reason}}": "Auto-refresh: off. {{reason}}",
+  "Back to {{label}}, refreshed": "Back to {{label}}, refreshed"
 }

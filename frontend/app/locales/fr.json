@@ -3196,7 +3196,6 @@
   "Counted without its “contains” filter": "Compté sans son filtre « contient »",
   "About this line": "À propos de cette ligne",
   "the newest {{n}} · {{total}} in this window": "les {{n}} plus récentes · {{total}} sur cette période",
-  "Auto-refresh works on relative windows, like Past hour. A custom range doesn't move.": "L’actualisation automatique fonctionne avec les périodes relatives, comme Dernière heure. Une plage personnalisée ne bouge pas.",
   "Top {{n}}": "Top {{n}}",
   "Top {{n}} only": "Top {{n}} seulement",
   "Values under each bar": "Valeurs sous chaque barre",
@@ -3345,5 +3344,8 @@
   "Message contains": "Le message contient",
   "A search holds up to {{n}} filters": "Une recherche accepte jusqu'à {{n}} filtres",
   "A search is up to {{n}} characters": "Une recherche accepte jusqu'à {{n}} caractères",
-  "A filter holds up to {{n}} values. Remove one to add another.": "Un filtre accepte jusqu'à {{n}} valeurs. Retirez-en une pour en ajouter une autre."
+  "A filter holds up to {{n}} values. Remove one to add another.": "Un filtre accepte jusqu'à {{n}} valeurs. Retirez-en une pour en ajouter une autre.",
+  "A custom range has an end, so there is nothing new to load. Pick a preset to auto-refresh.": "Une plage personnalisée a une fin : il n’y a rien de nouveau à charger. Choisissez une période prédéfinie pour l’actualisation automatique.",
+  "Auto-refresh: off. {{reason}}": "Actualisation automatique : désactivée. {{reason}}",
+  "Back to {{label}}, refreshed": "Retour à {{label}} et actualisation"
 }
