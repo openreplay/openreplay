@@ -83,7 +83,7 @@ func (l *logsImpl) FacetsList(ctx context.Context, projectID uint32) ([]Facet, e
 		GROUP BY Source, AttributeKey
 		HAVING DistinctValues < @maxDistinct
 		ORDER BY DistinctValues DESC
-		LIMIT @facetMaxkeys`
+		LIMIT @maxkeys`
 
 	rows, err := l.conn.Query(facetContext(ctx), query, qp.Args()...)
 	if err != nil {
