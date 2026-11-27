@@ -44,7 +44,7 @@ func (h *handlersImpl) search(ctx *api.RequestContext) (any, int, error) {
 }
 
 func (h *handlersImpl) histogram(ctx *api.RequestContext) (any, int, error) {
-	req := &otel_logs.Filter{}
+	req := &otel_logs.HistogramRequest{}
 	projectID, code, err := parse(ctx, req)
 	if err != nil {
 		return nil, code, err
