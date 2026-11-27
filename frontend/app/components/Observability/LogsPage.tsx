@@ -462,6 +462,7 @@ function LogsPage() {
       lead={t('Add filter')}
       ariaLabel={t('Log filter')}
       restCollapsed={store.view ? false : store.restCollapsed}
+      fitChips={!store.view && !phone}
       saveAction={
         store.view ? undefined : (
           <Tooltip

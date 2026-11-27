@@ -31,6 +31,7 @@ import {
   type RefObject,
   cloneElement,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from 'react';
@@ -85,6 +86,8 @@ export interface FilterBarProps {
   emptyAs?: 'field' | 'button';
   /** rules written from outside the bar (a facet rail) leave it closed */
   restCollapsed?: boolean;
+  /** group chips share one name and one operator width */
+  fitChips?: boolean;
   /** what the bar filters, for its label */
   ariaLabel?: string;
 }
@@ -100,6 +103,7 @@ function FilterBar({
   live = false,
   emptyAs = 'field',
   restCollapsed = false,
+  fitChips = false,
   ariaLabel,
 }: FilterBarProps) {
   const { t } = useTranslation();
@@ -134,6 +138,7 @@ function FilterBar({
   // every rule is one kind: its door is just "filter"
   const oneKind = eventEntries.length === 0 && events.length === 0;
   const collapsed = !inPanel && any && collapse.collapsed;
+  useChipColumns(collapse.anchor, fitChips, groupEntries, live);
 
   const openPanel = (
     kind: 'all' | 'event' | 'group' = any ? 'event' : 'all',
@@ -209,7 +214,7 @@ function FilterBar({
 
   return (
     <section
-      className={`m-fchips${inPanel ? ' m-fchips--panel' : ''}${collapsed ? ' is-collapsed' : ''}`}
+      className={`m-fchips${fitChips ? ' m-fchips--fit' : ''}${inPanel ? ' m-fchips--panel' : ''}${collapsed ? ' is-collapsed' : ''}`}
       data-slot="filter-bar"
       aria-label={ariaLabel ?? t('Session filter')}
       ref={collapse.anchor as RefObject<HTMLElement>}
@@ -330,6 +335,7 @@ function FilterBar({
                 entries={groupEntries}
                 taken={taken}
                 live={live}
+                fit={fitChips}
               />
             ))}
             {groupEntries.length > 0 && (
@@ -400,6 +406,72 @@ function FilterBar({
 }
 
 export default observer(FilterBar);
+
+/** The catalogue's widest name and operator, as CSS variables on the bar. */
+function useChipColumns(
+  anchorRef: RefObject<HTMLElement | null>,
+  on: boolean,
+  entries: readonly CatalogueEntry[],
+  live: boolean,
+) {
+  const { t } = useTranslation();
+  // a string, so a catalogue rebuilt with the same words doesn't re-measure
+  const words = on
+    ? JSON.stringify([
+        entries.map((e) => e.displayName),
+        [
+          ...new Set(
+            entries.flatMap((e) =>
+              entryOperators(e, live).map((o) => t(o.label)),
+            ),
+          ),
+        ],
+      ])
+    : '';
+
+  useLayoutEffect(() => {
+    const host = anchorRef.current;
+    const ctx =
+      words && host ? document.createElement('canvas').getContext('2d') : null;
+    if (!host || !ctx) return undefined;
+    const [names, ops] = JSON.parse(words) as [string[], string[]];
+    const probe = document.createElement('span');
+    probe.className = 'm-fchip m-fchip--group';
+    probe.style.cssText = 'position:absolute;visibility:hidden';
+    const label = probe.appendChild(document.createElement('span'));
+    label.className = 'm-fchip__label';
+    const op = probe.appendChild(document.createElement('span'));
+    op.className = 'm-fchip__seg m-fchip__op';
+    const widest = (el: Element, list: readonly string[]) => {
+      const cs = getComputedStyle(el);
+      ctx.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+      return Math.ceil(
+        Math.max(0, ...list.map((w) => ctx.measureText(w).width)),
+      );
+    };
+    const measure = () => {
+      host.appendChild(probe);
+      const nameW = widest(label, names);
+      const opW = widest(op, ops);
+      probe.remove();
+      if (!nameW || !opW) return;
+      host.style.setProperty('--m-fchip-name-text', `${nameW}px`);
+      host.style.setProperty('--m-fchip-op-text', `${opW}px`);
+      host.dataset.fitted = '';
+    };
+    measure();
+    let alive = true;
+    void document.fonts?.ready.then(() => {
+      if (alive) measure();
+    });
+    return () => {
+      alive = false;
+      host.style.removeProperty('--m-fchip-name-text');
+      host.style.removeProperty('--m-fchip-op-text');
+      delete host.dataset.fitted;
+    };
+  }, [anchorRef, words]);
+}
 
 function OrderWord({
   value,
@@ -559,10 +631,13 @@ function NameSegment({
 function Predicate({
   filter,
   live,
+  fit = false,
   onUpdate,
 }: {
   filter: SearchFilter;
   live: boolean;
+  /** a single operator still takes its column, as a word */
+  fit?: boolean;
   onUpdate: (p: Partial<SearchFilter>) => void;
 }) {
   const { t } = useTranslation();
@@ -570,7 +645,7 @@ function Predicate({
   const operators = entryOperators(entry, live);
   return (
     <>
-      {operators.length > 1 && (
+      {operators.length > 1 ? (
         <InlineSelect
           className="m-fchip__seg m-fchip__op"
           value={filter.operator}
@@ -581,7 +656,11 @@ function Predicate({
           }))}
           ariaLabel={t('Operator for {{name}}', { name: entry.displayName })}
         />
-      )}
+      ) : fit && operators.length === 1 ? (
+        <span className="m-fchip__seg m-fchip__op">
+          {t(operators[0].label)}
+        </span>
+      ) : null}
       <ValueSegment filter={filter} live={live} onUpdate={onUpdate} />
     </>
   );
@@ -895,12 +974,14 @@ function GroupChip({
   entries,
   taken,
   live,
+  fit = false,
 }: {
   filter: SearchFilter;
   editor: FilterEditor;
   entries: readonly CatalogueEntry[];
   taken: readonly string[];
   live: boolean;
+  fit?: boolean;
 }) {
   const { t } = useTranslation();
   const { entry } = filter;
@@ -925,6 +1006,7 @@ function GroupChip({
           <Predicate
             filter={filter}
             live={live}
+            fit={fit}
             onUpdate={(p) => editor.onUpdate(filter.key, p)}
           />
         )}
