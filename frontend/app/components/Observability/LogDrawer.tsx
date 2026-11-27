@@ -76,6 +76,7 @@ export interface LogDrawerProps {
   withDate: boolean;
   zone: string;
   link?: string;
+  formatJson: boolean;
 }
 
 type Tab = 'attributes' | 'raw' | 'related';
@@ -100,6 +101,7 @@ export function LogDrawer({
   withDate,
   zone,
   link,
+  formatJson,
 }: LogDrawerProps) {
   const { t } = useTranslation();
   const [tab, setTab] = useState<Tab>('attributes');
@@ -290,7 +292,7 @@ export function LogDrawer({
               />
             }
           >
-            <MessageBody line={line} />
+            <MessageBody line={line} raw={!formatJson} />
           </Section>
 
           {session && (
@@ -362,6 +364,7 @@ export function LogDrawer({
                   onOpen={onOpen}
                   withDate={withDate}
                   zone={zone}
+                  raw={!formatJson}
                 />
               )}
             </TabsContent>
@@ -382,6 +385,7 @@ function Related({
   onOpen,
   withDate,
   zone,
+  raw,
 }: {
   line: OtelLog;
   fetch: LogDrawerProps['related'];
@@ -392,6 +396,7 @@ function Related({
   onOpen: (line: OtelLog) => void;
   withDate: boolean;
   zone: string;
+  raw: boolean;
 }) {
   const { t } = useTranslation();
   const [lines, setLines] = useState<OtelLog[] | null>(null);
@@ -490,7 +495,7 @@ function Related({
                 </span>
               )}
               <span className="m-logs__msg">
-                <BodyText log={l} />
+                <BodyText log={l} raw={raw} />
               </span>
             </button>
           );
@@ -500,10 +505,10 @@ function Related({
   );
 }
 
-function MessageBody({ line }: { line: OtelLog }) {
+function MessageBody({ line, raw }: { line: OtelLog; raw: boolean }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
-  const body = bodyOf(line);
+  const body = raw ? null : bodyOf(line);
   if (!body) return <pre className="m-logs__text">{line.body}</pre>;
   const n = Object.keys(body.json).length;
   return (

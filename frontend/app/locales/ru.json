@@ -3270,7 +3270,6 @@
   "Counted without its “contains” filter": "Подсчитано без его фильтра «содержит»",
   "About this line": "Об этой строке",
   "the newest {{n}} · {{total}} in this window": "последние {{n}} · {{total}} за этот период",
-  "Auto-refresh works on relative windows, like Past hour. A custom range doesn't move.": "Автообновление работает с относительными периодами, например «Последний час». Заданный диапазон не сдвигается.",
   "Top {{n}}": "Топ-{{n}}",
   "Top {{n}} only": "Только топ-{{n}}",
   "Values under each bar": "Значения под каждой полосой",
@@ -3382,7 +3381,6 @@
   "It opens here once the audit is ready.": "It opens here once the audit is ready.",
   "It may have been deleted.": "It may have been deleted.",
   "{{title}} report": "{{title}} report",
-  "Show contents": "Show contents",
   "Share": "Share",
   "Making the PDF…": "Making the PDF…",
   "Previous slide": "Previous slide",
@@ -3423,5 +3421,9 @@
   "Message contains": "Сообщение содержит",
   "A search holds up to {{n}} filters": "В поиске не больше {{n}} фильтров",
   "A search is up to {{n}} characters": "Поиск не длиннее {{n}} символов",
-  "A filter holds up to {{n}} values. Remove one to add another.": "В фильтре не больше {{n}} значений. Удалите одно, чтобы добавить другое."
+  "A filter holds up to {{n}} values. Remove one to add another.": "В фильтре не больше {{n}} значений. Удалите одно, чтобы добавить другое.",
+  "A custom range has an end, so there is nothing new to load. Pick a preset to auto-refresh.": "У заданного диапазона есть конец, поэтому загружать нечего. Выберите готовый период, чтобы включить автообновление.",
+  "Auto-refresh: off. {{reason}}": "Автообновление: выключено. {{reason}}",
+  "Back to {{label}}, refreshed": "Назад: {{label}}, с обновлением",
+  "Format JSON": "Форматировать JSON"
 }

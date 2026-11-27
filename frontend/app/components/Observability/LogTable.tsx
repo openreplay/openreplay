@@ -23,6 +23,7 @@ export interface LogTableProps {
   onOpen: (log: OtelLog) => void;
   onPlay?: (log: OtelLog) => void;
   columns: readonly string[];
+  formatJson: boolean;
 }
 
 const COLUMN_WIDTH: Record<string, number> = {
@@ -43,6 +44,7 @@ export function LogTable({
   onOpen,
   onPlay,
   columns: on,
+  formatJson,
 }: LogTableProps) {
   const { t } = useTranslation();
   const cell = (l: OtelLog, key: string) =>
@@ -83,7 +85,7 @@ export function LogTable({
       priority: 1,
       render: (l) => (
         <span className="m-logs__msg">
-          <BodyText log={l} />
+          <BodyText log={l} raw={!formatJson} />
           {onPlay && sessionOf(l) && (
             <Tooltip title={t('Watch session')}>
               <button
@@ -120,8 +122,8 @@ export function LogTable({
   );
 }
 
-export function BodyText({ log }: { log: OtelLog }) {
-  const body = bodyOf(log);
+export function BodyText({ log, raw }: { log: OtelLog; raw?: boolean }) {
+  const body = raw ? null : bodyOf(log);
   if (!body) return <span title={log.body}>{log.body}</span>;
   return (
     <span title={body.rest ? `${body.text}  ${body.rest}` : body.text}>

@@ -17,6 +17,7 @@
 .m-logs__main { min-width: 0; display: flex; flex-direction: column; }
 
 .m-logs__rail {
+  --m-facet-section-gap: var(--m-space-2);
   position: sticky;
   top: var(--m-panel-head-h, 0px);
   max-height: min(100%, calc(100dvh - var(--m-panel-head-h, 0px) - 6rem));
@@ -38,7 +39,7 @@
 }
 .m-logs__rail-head > span:first-child { flex: 1; }
 .m-logs__rail-hide { display: inline-flex; flex: none; }
-.m-logs__facet + .m-logs__facet { border-top: 1px solid var(--m-border-default); margin-top: var(--m-space-4); padding-top: var(--m-space-4); }
+.m-logs__facet + .m-logs__facet { border-top: 1px solid var(--m-border-default); margin-top: var(--m-facet-section-gap); padding-top: var(--m-facet-section-gap); }
 .m-logs__facet-head {
   display: flex;
   align-items: center;
@@ -357,7 +358,7 @@
 .m-logs__ctx-row.is-this::before { content: ''; position: absolute; left: 0; top: 3px; bottom: 3px; width: 2px; border-radius: 1px; background: var(--m-content-primary); }
 .m-logs__ctx-row.is-error .m-logs__stamp { color: var(--m-content-danger); }
 .m-logs__ctx-row.is-warn .m-logs__stamp { color: var(--m-content-warning); }
-.m-logs__ctx-row .m-logs__msg > span:first-child { white-space: normal; overflow: visible; text-overflow: clip; color: var(--m-content-secondary); }
+.m-logs__ctx-row .m-logs__msg > span:first-child { white-space: normal; overflow-wrap: anywhere; overflow: visible; text-overflow: clip; color: var(--m-content-secondary); }
 .m-logs__ctx-row.is-this .m-logs__msg > span:first-child { color: var(--m-content-primary); }
 .m-logs__session {
   display: flex;

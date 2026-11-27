@@ -3055,7 +3055,6 @@
   "Counted without its “contains” filter": "统计时未应用其“包含”筛选",
   "About this line": "关于此行",
   "the newest {{n}} · {{total}} in this window": "最新 {{n}} 条 · 此时间段共 {{total}} 条",
-  "Auto-refresh works on relative windows, like Past hour. A custom range doesn't move.": "自动刷新仅适用于相对时间段，例如“过去一小时”。自定义范围不会移动。",
   "Top {{n}}": "前 {{n}}",
   "Top {{n}} only": "仅前 {{n}}",
   "Values under each bar": "每个条形下的值",
@@ -3155,7 +3154,6 @@
   "It opens here once the audit is ready.": "It opens here once the audit is ready.",
   "It may have been deleted.": "It may have been deleted.",
   "{{title}} report": "{{title}} report",
-  "Show contents": "Show contents",
   "Share": "Share",
   "Making the PDF…": "Making the PDF…",
   "Previous slide": "Previous slide",
@@ -3196,5 +3194,9 @@
   "Message contains": "消息包含",
   "A search holds up to {{n}} filters": "一次搜索最多 {{n}} 个筛选条件",
   "A search is up to {{n}} characters": "搜索最多 {{n}} 个字符",
-  "A filter holds up to {{n}} values. Remove one to add another.": "一个筛选条件最多 {{n}} 个值。移除一个后才能再添加。"
+  "A filter holds up to {{n}} values. Remove one to add another.": "一个筛选条件最多 {{n}} 个值。移除一个后才能再添加。",
+  "A custom range has an end, so there is nothing new to load. Pick a preset to auto-refresh.": "自定义范围有结束时间，没有新内容可加载。选择预设时间段即可自动刷新。",
+  "Auto-refresh: off. {{reason}}": "自动刷新：关闭。{{reason}}",
+  "Back to {{label}}, refreshed": "返回{{label}}并刷新",
+  "Format JSON": "格式化 JSON"
 }

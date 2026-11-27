@@ -3270,7 +3270,6 @@
   "Counted without its “contains” filter": "Пораховано без його фільтра «містить»",
   "About this line": "Про цей рядок",
   "the newest {{n}} · {{total}} in this window": "останні {{n}} · {{total}} за цей період",
-  "Auto-refresh works on relative windows, like Past hour. A custom range doesn't move.": "Автооновлення працює з відносними періодами, наприклад «Остання година». Заданий діапазон не зсувається.",
   "Top {{n}}": "Топ {{n}}",
   "Top {{n}} only": "Лише топ {{n}}",
   "Values under each bar": "Значення під кожною смугою",
@@ -3382,7 +3381,6 @@
   "It opens here once the audit is ready.": "It opens here once the audit is ready.",
   "It may have been deleted.": "It may have been deleted.",
   "{{title}} report": "{{title}} report",
-  "Show contents": "Show contents",
   "Share": "Share",
   "Making the PDF…": "Making the PDF…",
   "Previous slide": "Previous slide",
@@ -3423,5 +3421,9 @@
   "Message contains": "Повідомлення містить",
   "A search holds up to {{n}} filters": "У пошуку не більше {{n}} фільтрів",
   "A search is up to {{n}} characters": "Пошук не довший за {{n}} символів",
-  "A filter holds up to {{n}} values. Remove one to add another.": "У фільтрі не більше {{n}} значень. Видаліть одне, щоб додати інше."
+  "A filter holds up to {{n}} values. Remove one to add another.": "У фільтрі не більше {{n}} значень. Видаліть одне, щоб додати інше.",
+  "A custom range has an end, so there is nothing new to load. Pick a preset to auto-refresh.": "Заданий діапазон має кінець, тож завантажувати нічого. Виберіть готовий період, щоб увімкнути автооновлення.",
+  "Auto-refresh: off. {{reason}}": "Автооновлення: вимкнено. {{reason}}",
+  "Back to {{label}}, refreshed": "Назад: {{label}}, з оновленням",
+  "Format JSON": "Форматувати JSON"
 }

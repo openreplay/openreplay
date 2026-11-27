@@ -1166,3 +1166,36 @@ span.m-fchip__said {
 .m-rulechips__add {
   justify-self: start;
 }
+
+/* fitChips: the measured text widths plus each block's glyph, gap and padding */
+.m-fchips--fit {
+  --m-fchip-name-pad: var(--m-space-3);
+}
+@media (min-width: 1440px) {
+  .m-fchips--fit {
+    --m-fchip-name-pad: var(--m-space-4);
+  }
+}
+.m-fchips--fit[data-fitted] .m-fchip--group .m-fchip__main > .m-fchip__name {
+  flex: none;
+  width: min(
+    16rem,
+    calc(
+      var(--m-fchip-name-text) + 12px + var(--m-space-2) + 2 *
+        var(--m-fchip-name-pad)
+    )
+  );
+}
+.m-fchips--fit[data-fitted] .m-fchip--group .m-fchip__main > .m-fchip__op {
+  flex: none;
+  width: calc(
+    var(--m-fchip-op-text) + 12px + var(--m-space-2) + 2 * var(--m-space-3)
+  );
+  justify-content: space-between;
+}
+.m-fchips--fit[data-fitted] .m-fchip--group .m-fchip__main > .m-fchip__value {
+  min-width: 6rem;
+}
+.m-fchips--fit .m-fchip--group .m-fchip__main > span.m-fchip__op:hover {
+  background: var(--m-fchip-spec);
+}

@@ -6,6 +6,7 @@ import { DisplayShell } from '@/ui/filters/DisplayMenu';
 import { RefreshControl } from '@/ui/filters/RefreshControl';
 import { SegmentIndicator } from '@/ui/filters/SegmentIndicator';
 import { DateRange } from '@/ui/inputs/DateRange';
+import { Switch } from '@/ui/inputs/switch';
 import { Segmented } from '@/ui/inputs/toggle-group';
 import { ListFooter } from '@/ui/layout/ListFooter';
 import { NewRowsBand } from '@/ui/layout/NewRowsBand';
@@ -353,30 +354,26 @@ function LogsPage() {
   /* the controls on the list's head */
   const w = store.window;
   const fixedRange = t(
-    "Auto-refresh works on relative windows, like Past hour. A custom range doesn't move.",
+    'A custom range has an end, so there is nothing new to load. Pick a preset to auto-refresh.',
   );
   const windowControl = (
-    <Tooltip title={fixedRange} disabled={relative}>
-      <span className="inline-flex">
-        <DateRange
-          field={t('Time')}
-          period={
-            'preset' in w
-              ? { rangeName: w.preset }
-              : { rangeName: CUSTOM_RANGE, start: w.from, end: w.to }
-          }
-          options={LOG_PRESETS.map((p) => ({ value: p.value, label: p.label }))}
-          resting={DEFAULT_LOG_PRESET}
-          withTime
-          zone={zone}
-          onChange={(p: any) =>
-            p.rangeName === CUSTOM_RANGE
-              ? store.setWindow(clampWindow(p.start, p.end))
-              : store.setWindow({ preset: p.rangeName })
-          }
-        />
-      </span>
-    </Tooltip>
+    <DateRange
+      field={t('Time')}
+      period={
+        'preset' in w
+          ? { rangeName: w.preset }
+          : { rangeName: CUSTOM_RANGE, start: w.from, end: w.to }
+      }
+      options={LOG_PRESETS.map((p) => ({ value: p.value, label: p.label }))}
+      resting={DEFAULT_LOG_PRESET}
+      withTime
+      zone={zone}
+      onChange={(p: any) =>
+        p.rangeName === CUSTOM_RANGE
+          ? store.setWindow(clampWindow(p.start, p.end))
+          : store.setWindow({ preset: p.rangeName })
+      }
+    />
   );
   const baseColumns = [
     'level',
@@ -407,7 +404,19 @@ function LogsPage() {
   );
   const displayControl = (
     <DisplayShell
-      rows={[]}
+      rows={[
+        {
+          id: 'logs-json',
+          label: t('Format JSON'),
+          control: (
+            <Switch
+              id="logs-json"
+              checked={store.formatJson}
+              onCheckedChange={store.setFormatJson}
+            />
+          ),
+        },
+      ]}
       fields={[...baseColumns, ...added].map((c) => ({
         value: c,
         label: keyLabel(t, c),
@@ -415,8 +424,8 @@ function LogsPage() {
       }))}
       onToggleField={store.toggleColumn}
       moreFields={more}
-      changeCount={store.columns.length}
-      onReset={store.resetColumns}
+      changeCount={store.columns.length + (store.formatJson ? 0 : 1)}
+      onReset={store.resetDisplay}
     />
   );
 
@@ -462,6 +471,7 @@ function LogsPage() {
       lead={t('Add filter')}
       ariaLabel={t('Log filter')}
       restCollapsed={store.view ? false : store.restCollapsed}
+      fitChips={!store.view && !phone}
       saveAction={
         store.view ? undefined : (
           <Tooltip
@@ -783,7 +793,18 @@ function LogsPage() {
                     choices={REFRESH_CHOICES}
                     onEvery={store.setRefresh}
                     onPause={store.setPaused}
-                    onRefresh={() => void store.run()}
+                    onRefresh={() =>
+                      relative
+                        ? void store.run()
+                        : store.setWindow({ preset: DEFAULT_LOG_PRESET })
+                    }
+                    refreshLabel={
+                      relative
+                        ? undefined
+                        : t('Back to {{label}}, refreshed', {
+                            label: presetLabel(DEFAULT_LOG_PRESET),
+                          })
+                    }
                     unavailable={relative ? undefined : fixedRange}
                   />
                   <IconButton
@@ -856,6 +877,7 @@ function LogsPage() {
                       onOpen={store.openLog}
                       onPlay={play}
                       columns={store.columns}
+                      formatJson={store.formatJson}
                     />
                   )}
                   <ListFooter
@@ -925,6 +947,7 @@ function LogsPage() {
             ? `${window.location.origin}${lineLink(store.openLine)}`
             : undefined
         }
+        formatJson={store.formatJson}
       />
       <SaveViewDialog
         open={naming}

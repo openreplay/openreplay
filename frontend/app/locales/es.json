@@ -3196,7 +3196,6 @@
   "Counted without its “contains” filter": "Contado sin su filtro «contiene»",
   "About this line": "Sobre esta línea",
   "the newest {{n}} · {{total}} in this window": "las {{n}} más recientes · {{total}} en esta ventana",
-  "Auto-refresh works on relative windows, like Past hour. A custom range doesn't move.": "La actualización automática funciona con ventanas relativas, como Última hora. Un rango personalizado no se mueve.",
   "Top {{n}}": "Top {{n}}",
   "Top {{n}} only": "Solo top {{n}}",
   "Values under each bar": "Valores bajo cada barra",
@@ -3304,7 +3303,6 @@
   "It opens here once the audit is ready.": "It opens here once the audit is ready.",
   "It may have been deleted.": "It may have been deleted.",
   "{{title}} report": "{{title}} report",
-  "Show contents": "Show contents",
   "Share": "Share",
   "Making the PDF…": "Making the PDF…",
   "Previous slide": "Previous slide",
@@ -3345,5 +3343,9 @@
   "Message contains": "El mensaje contiene",
   "A search holds up to {{n}} filters": "Una búsqueda admite hasta {{n}} filtros",
   "A search is up to {{n}} characters": "Una búsqueda admite hasta {{n}} caracteres",
-  "A filter holds up to {{n}} values. Remove one to add another.": "Un filtro admite hasta {{n}} valores. Quita uno para añadir otro."
+  "A filter holds up to {{n}} values. Remove one to add another.": "Un filtro admite hasta {{n}} valores. Quita uno para añadir otro.",
+  "A custom range has an end, so there is nothing new to load. Pick a preset to auto-refresh.": "Un rango personalizado tiene un final, así que no hay nada nuevo que cargar. Elige un periodo predefinido para actualizar automáticamente.",
+  "Auto-refresh: off. {{reason}}": "Actualización automática: desactivada. {{reason}}",
+  "Back to {{label}}, refreshed": "Volver a {{label}} y actualizar",
+  "Format JSON": "Formatear JSON"
 }

@@ -6,6 +6,8 @@ import { SessionAvatar } from '@/ui/data/SessionAvatar';
 import { Illustration } from '@/ui/illustrations/Illustration';
 import { Tooltip } from '@/ui/overlays/tooltip';
 import {
+  ArrowDown,
+  ArrowUp,
   Monitor,
   MonitorSmartphone,
   Smartphone,
@@ -82,8 +84,22 @@ function words(t: string): ReactNode {
   );
 }
 
-/** Digits in the figure face, a trailing unit at half size: "500ms", "4.7%". */
+/** Digits in the figure face, a trailing unit at half size: "500ms", "4.7%". A leading sign is an arrow. */
 export function Figure({ v }: { v: string }) {
+  const d = /^([▲▼+−-])\s?(\d.*)$/.exec(v);
+  if (d) {
+    const up = d[1] === '▲' || d[1] === '+';
+    return (
+      <>
+        {up ? (
+          <ArrowUp className="m-rep-s__dir" aria-label="up" />
+        ) : (
+          <ArrowDown className="m-rep-s__dir" aria-label="down" />
+        )}
+        <Figure v={d[2]!} />
+      </>
+    );
+  }
   const m = /^(.*\d)\s?(ms|s|%|pts|×|min)$/.exec(v);
   if (!m) return <>{words(v)}</>;
   return (
@@ -279,51 +295,72 @@ function Line({ line, journeys }: { line: RowLine; journeys?: string[] }) {
   }
 }
 
+/** The element's text cut at a word to fit `lines` lines, or undefined when it fits. */
+function cutToLines(el: HTMLElement, lines: number) {
+  const lh = parseFloat(getComputedStyle(el).lineHeight);
+  const fits = () => el.scrollHeight <= lines * lh + 1;
+  const full = el.textContent ?? '';
+  if (!lh || fits()) return undefined;
+  let lo = 0;
+  let hi = full.length;
+  while (lo < hi) {
+    const mid = Math.ceil((lo + hi) / 2);
+    el.textContent = `${full.slice(0, mid).trimEnd()}…`;
+    if (fits()) lo = mid;
+    else hi = mid - 1;
+  }
+  el.textContent = full;
+  const sp = full.lastIndexOf(' ', lo);
+  const end = sp > 0 && sp > lo - 30 ? sp : lo;
+  return `${full.slice(0, end).trimEnd()}…`;
+}
+
 function Rows({ rows, start = 0 }: { rows: ReportRow[]; start?: number }) {
   const list = useRef<HTMLOListElement>(null);
-  const [cut, setCut] = useState<{ rows: ReportRow[]; titles: string[] }>();
-  const titles = cut?.rows === rows ? cut.titles : undefined;
-  const wraps = rows.some((r) => r.wrap);
+  const [cut, setCut] = useState<{
+    rows: ReportRow[];
+    titles: string[];
+    texts: Array<string | undefined>;
+  }>();
+  const done = cut?.rows === rows ? cut : undefined;
   useLayoutEffect(() => {
     const body = list.current?.closest<HTMLElement>('.m-rep-s__body');
-    if (!wraps || !body) return;
+    if (
+      !body ||
+      !rows.some((r) => r.wrap || (r.description && r.journeys == null))
+    )
+      return;
     let live = true;
-    // wrapped titles give up lines, longest first, until the slide holds them; the text
-    // itself is cut (not line-clamp, which the PDF rasteriser drops) so every output matches
+    // the text itself is cut: the PDF rasteriser drops line-clamp
     void document.fonts.ready.then(() => {
+      if (!live) return;
+      const titles = rows.map((r) => r.title);
+      const texts = rows.map((r) => r.description);
+      body.querySelectorAll<HTMLElement>('p[data-i]').forEach((p) => {
+        const i = Number(p.dataset.i);
+        texts[i] = cutToLines(p, 2) ?? texts[i];
+      });
+      // wrapped titles give up lines, longest first, until the slide holds them
       const ts = Array.from(body.querySelectorAll<HTMLElement>('.t.is-wrap'));
       const lh = ts[0] && parseFloat(getComputedStyle(ts[0]).lineHeight);
-      if (!live || !lh) return;
-      let n = Math.max(...ts.map((t) => Math.round(t.offsetHeight / lh)));
-      const fits = (t: HTMLElement) => t.offsetHeight <= n * lh + 1;
-      while (n > 1 && body.scrollHeight > body.clientHeight) {
-        n--;
-        ts.forEach((t) => (t.style.maxHeight = `${n * lh}px`));
-      }
-      ts.forEach((t) => t.style.removeProperty('max-height'));
-      const next = rows.map((r) => r.title);
-      for (const t of ts) {
-        const full = t.textContent ?? '';
-        if (fits(t)) continue;
-        let lo = 0;
-        let hi = full.length;
-        while (lo < hi) {
-          const mid = Math.ceil((lo + hi) / 2);
-          t.textContent = `${full.slice(0, mid).trimEnd()}…`;
-          if (fits(t)) lo = mid;
-          else hi = mid - 1;
+      if (lh) {
+        let n = Math.max(...ts.map((t) => Math.round(t.offsetHeight / lh)));
+        while (n > 1 && body.scrollHeight > body.clientHeight) {
+          n--;
+          ts.forEach((t) => (t.style.maxHeight = `${n * lh}px`));
         }
-        t.textContent = full;
-        const sp = full.lastIndexOf(' ', lo);
-        const end = sp > 0 && sp > lo - 30 ? sp : lo;
-        next[Number(t.dataset.i)] = `${full.slice(0, end).trimEnd()}…`;
+        ts.forEach((t) => t.style.removeProperty('max-height'));
+        for (const t of ts) {
+          const i = Number(t.dataset.i);
+          titles[i] = cutToLines(t, n) ?? titles[i]!;
+        }
       }
-      setCut({ rows, titles: next });
+      setCut({ rows, titles, texts });
     });
     return () => {
       live = false;
     };
-  }, [rows, wraps]);
+  }, [rows]);
   return (
     <ol className="m-rep-s__rows" ref={list}>
       {rows.map((r, i) => {
@@ -342,10 +379,10 @@ function Rows({ rows, start = 0 }: { rows: ReportRow[]; start?: number }) {
                       ? 't is-wrap'
                       : 't'
               }
-              title={r.code || r.wrap ? r.title : undefined}
+              title={r.title}
               data-i={r.wrap ? i : undefined}
             >
-              {titles?.[i] ?? r.title}
+              {done?.titles[i] ?? r.title}
             </span>
           );
         return (
@@ -395,7 +432,9 @@ function Rows({ rows, start = 0 }: { rows: ReportRow[]; start?: number }) {
                     <p tabIndex={0}>{r.description}</p>
                   </Tooltip>
                 ) : (
-                  <p>{r.description}</p>
+                  <p title={r.description} data-i={i}>
+                    {done?.texts[i] ?? r.description}
+                  </p>
                 ))}
               {r.lines?.map((l, k) => (
                 <Line
@@ -673,7 +712,9 @@ export function ReportSlide({
       <span className="m-rep-s__src">
         {slide.ai && (
           <span className="m-rep-s__ai">
-            AI insight{slide.foot ? ' · ' : ''}
+            <Chip kind="status" tone="info">
+              AI insight
+            </Chip>
           </span>
         )}
         {slide.foot}
@@ -795,7 +836,7 @@ export function ReportSlide({
       );
       return frame(
         <div className="m-rep-s__toc">
-          {chapters.map((c, ci) => {
+          {chapters.map((c) => {
             const at = slides.flatMap((s, i) =>
               s.section === c.key ? [i] : [],
             );
@@ -809,10 +850,7 @@ export function ReportSlide({
                   onClick={() => onGo(first)}
                 >
                   <span className="m-rep-s__toc-mark">
-                    <span className="ic">
-                      <SectionIcon section={c.key} size={20} />
-                    </span>
-                    <span className="n">{pad2(ci + 1)}</span>
+                    <SectionIcon section={c.key} size={20} />
                   </span>
                   <b>{c.name}</b>
                   <span className="p">
