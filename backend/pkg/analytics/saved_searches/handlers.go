@@ -52,35 +52,89 @@ func getSearchIDFromRequest(r *http.Request) (string, error) {
 	return searchID, nil
 }
 
-type handlersImpl struct {
+// handlersImpl serves the saved searches of one scope; D is its payload.
+type handlersImpl[D any] struct {
 	log           logger.Logger
 	responser     api.Responser
 	jsonSizeLimit int64
-	savedSearches SavedSearches
+	savedSearches Store[D]
 	validator     *validator.Validate
+	routes        func(e *handlersImpl[D]) []*api.Description
+	// checkData is an optional scope-specific validation of the payload.
+	checkData func(data *D) error
 }
 
-func (e *handlersImpl) GetAll() []*api.Description {
-	return []*api.Description{
-		{"/{projectId}/sessions/search/save", "POST", e.saveSearch, []string{api.SESSION_REPLAY}, "add_saved_search"},
-		{"/{projectId}/sessions/search/saved", "GET", e.listSavedSearches, []string{api.SESSION_REPLAY}, "get_saved_searches"},
-		{"/{projectId}/sessions/search/saved/{searchId}", "GET", e.getSavedSearch, []string{api.SESSION_REPLAY}, "get_saved_search"},
-		{"/{projectId}/sessions/search/saved/{searchId}", "PUT", e.updateSavedSearch, []string{api.SESSION_REPLAY}, "update_saved_search"},
-		{"/{projectId}/sessions/search/saved/{searchId}", "DELETE", e.deleteSavedSearch, []string{api.SESSION_REPLAY}, "delete_saved_search"},
-	}
+func (e *handlersImpl[D]) GetAll() []*api.Description {
+	return e.routes(e)
 }
 
 func NewHandlers(log logger.Logger, cfg *config.Config, responser api.Responser, savedSearches SavedSearches, validator *validator.Validate) (api.Handlers, error) {
-	return &handlersImpl{
+	return &handlersImpl[model.SavedSearchData]{
 		log:           log,
 		responser:     responser,
 		jsonSizeLimit: cfg.JsonSizeLimit,
 		savedSearches: savedSearches,
 		validator:     validator,
+		routes: func(e *handlersImpl[model.SavedSearchData]) []*api.Description {
+			return []*api.Description{
+				{"/{projectId}/sessions/search/save", "POST", e.saveSearch, []string{api.SESSION_REPLAY}, "add_saved_search"},
+				{"/{projectId}/sessions/search/saved", "GET", e.listSavedSearches, []string{api.SESSION_REPLAY}, "get_saved_searches"},
+				{"/{projectId}/sessions/search/saved/{searchId}", "GET", e.getSavedSearch, []string{api.SESSION_REPLAY}, "get_saved_search"},
+				{"/{projectId}/sessions/search/saved/{searchId}", "PUT", e.updateSavedSearch, []string{api.SESSION_REPLAY}, "update_saved_search"},
+				{"/{projectId}/sessions/search/saved/{searchId}", "DELETE", e.deleteSavedSearch, []string{api.SESSION_REPLAY}, "delete_saved_search"},
+			}
+		},
 	}, nil
 }
 
-func (e *handlersImpl) saveSearch(w http.ResponseWriter, r *http.Request) {
+// NewLogsViewsHandlers exposes the same CRUD as the sessions saved searches
+// under /{projectId}/logs/views, for the logs scope.
+func NewLogsViewsHandlers(log logger.Logger, cfg *config.Config, responser api.Responser, views LogsViews, validator *validator.Validate) (api.Handlers, error) {
+	return &handlersImpl[json.RawMessage]{
+		log:           log,
+		responser:     responser,
+		jsonSizeLimit: cfg.JsonSizeLimit,
+		savedSearches: views,
+		validator:     validator,
+		checkData:     checkJSONObject,
+		routes: func(e *handlersImpl[json.RawMessage]) []*api.Description {
+			return []*api.Description{
+				{"/{projectId}/logs/views", "POST", e.saveSearch, api.NoPermissions, "add_logs_view"},
+				{"/{projectId}/logs/views", "GET", e.listSavedSearches, api.NoPermissions, "get_logs_views"},
+				{"/{projectId}/logs/views/{searchId}", "GET", e.getSavedSearch, api.NoPermissions, "get_logs_view"},
+				{"/{projectId}/logs/views/{searchId}", "PUT", e.updateSavedSearch, api.NoPermissions, "update_logs_view"},
+				{"/{projectId}/logs/views/{searchId}", "DELETE", e.deleteSavedSearch, api.NoPermissions, "delete_logs_view"},
+			}
+		},
+	}, nil
+}
+
+func checkJSONObject(data *json.RawMessage) error {
+	var obj map[string]json.RawMessage
+	if err := json.Unmarshal(*data, &obj); err != nil || obj == nil {
+		return errors.New("data must be a JSON object")
+	}
+	return nil
+}
+
+// decodeRequest parses and validates the body of a save / update request.
+func (e *handlersImpl[D]) decodeRequest(body []byte) (*model.SavedSearchRequestOf[D], error) {
+	req := &model.SavedSearchRequestOf[D]{}
+	if err := json.Unmarshal(body, req); err != nil {
+		return nil, err
+	}
+	if err := e.validator.Struct(req); err != nil {
+		return nil, err
+	}
+	if e.checkData != nil {
+		if err := e.checkData(&req.Data); err != nil {
+			return nil, err
+		}
+	}
+	return req, nil
+}
+
+func (e *handlersImpl[D]) saveSearch(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
@@ -91,13 +145,8 @@ func (e *handlersImpl) saveSearch(w http.ResponseWriter, r *http.Request) {
 	}
 	bodySize = len(bodyBytes)
 
-	req := &model.SavedSearchRequest{}
-	if err := json.Unmarshal(bodyBytes, req); err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-		return
-	}
-
-	if err = e.validator.Struct(req); err != nil {
+	req, err := e.decodeRequest(bodyBytes)
+	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
@@ -118,7 +167,7 @@ func (e *handlersImpl) saveSearch(w http.ResponseWriter, r *http.Request) {
 	e.responser.ResponseWithJSON(e.log, r.Context(), w, map[string]interface{}{"data": resp}, startTime, r.URL.Path, bodySize)
 }
 
-func (e *handlersImpl) getSavedSearch(w http.ResponseWriter, r *http.Request) {
+func (e *handlersImpl[D]) getSavedSearch(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
@@ -148,7 +197,7 @@ func (e *handlersImpl) getSavedSearch(w http.ResponseWriter, r *http.Request) {
 	e.responser.ResponseWithJSON(e.log, r.Context(), w, map[string]interface{}{"data": resp}, startTime, r.URL.Path, bodySize)
 }
 
-func (e *handlersImpl) listSavedSearches(w http.ResponseWriter, r *http.Request) {
+func (e *handlersImpl[D]) listSavedSearches(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
@@ -220,7 +269,7 @@ func (e *handlersImpl) listSavedSearches(w http.ResponseWriter, r *http.Request)
 	}, startTime, r.URL.Path, bodySize)
 }
 
-func (e *handlersImpl) updateSavedSearch(w http.ResponseWriter, r *http.Request) {
+func (e *handlersImpl[D]) updateSavedSearch(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
@@ -231,13 +280,8 @@ func (e *handlersImpl) updateSavedSearch(w http.ResponseWriter, r *http.Request)
 	}
 	bodySize = len(bodyBytes)
 
-	req := &model.SavedSearchRequest{}
-	if err := json.Unmarshal(bodyBytes, req); err != nil {
-		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
-		return
-	}
-
-	if err = e.validator.Struct(req); err != nil {
+	req, err := e.decodeRequest(bodyBytes)
+	if err != nil {
 		e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
@@ -255,7 +299,7 @@ func (e *handlersImpl) updateSavedSearch(w http.ResponseWriter, r *http.Request)
 	}
 
 	currentUser := r.Context().Value("userData").(*user.User)
-	resp, err := e.savedSearches.Update(projectID, currentUser.ID, searchID, req)
+	resp, err := e.savedSearches.Update(projectID, currentUser.ID, currentUser.IsAdmin(), searchID, req)
 	if err != nil {
 		if errors.Is(err, ErrSavedSearchNotFound) {
 			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)
@@ -272,7 +316,7 @@ func (e *handlersImpl) updateSavedSearch(w http.ResponseWriter, r *http.Request)
 	e.responser.ResponseWithJSON(e.log, r.Context(), w, map[string]interface{}{"data": resp}, startTime, r.URL.Path, bodySize)
 }
 
-func (e *handlersImpl) deleteSavedSearch(w http.ResponseWriter, r *http.Request) {
+func (e *handlersImpl[D]) deleteSavedSearch(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	bodySize := 0
 
@@ -289,7 +333,7 @@ func (e *handlersImpl) deleteSavedSearch(w http.ResponseWriter, r *http.Request)
 	}
 
 	currentUser := r.Context().Value("userData").(*user.User)
-	err = e.savedSearches.Delete(projectID, currentUser.ID, searchID)
+	err = e.savedSearches.Delete(projectID, currentUser.ID, currentUser.IsAdmin(), searchID)
 	if err != nil {
 		if errors.Is(err, ErrSavedSearchNotFound) {
 			e.responser.ResponseWithError(e.log, r.Context(), w, http.StatusNotFound, err, startTime, r.URL.Path, bodySize)

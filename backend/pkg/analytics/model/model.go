@@ -242,12 +242,20 @@ type SeriesSessionData struct {
 	Sessions   []Session `json:"sessions"`
 }
 
-type SavedSearchRequest struct {
-	Name     *string         `json:"name" validate:"omitempty,max=255"`
-	IsPublic *bool           `json:"isPublic"`
-	IsShare  *bool           `json:"isShare"`
-	Data     SavedSearchData `json:"data" validate:"required"`
+// SavedSearchRequestOf, SavedSearchOf and SavedSearchResponseOf are shared by
+// every saved-search scope; D is the scope's search payload.
+type SavedSearchRequestOf[D any] struct {
+	Name     *string `json:"name" validate:"omitempty,max=255"`
+	IsPublic *bool   `json:"isPublic"`
+	IsShare  *bool   `json:"isShare"`
+	Data     D       `json:"data" validate:"required"`
 }
+
+type (
+	SavedSearchRequest  = SavedSearchRequestOf[SavedSearchData]
+	SavedSearch         = SavedSearchOf[SavedSearchData]
+	SavedSearchResponse = SavedSearchResponseOf[SavedSearchData]
+)
 
 type SavedSearchData struct {
 	Filters     []Filter `json:"filters" validate:"required,dive"`
@@ -260,27 +268,27 @@ type SavedSearchData struct {
 	Page        int      `json:"page,omitempty" validate:"omitempty,min=1"`
 }
 
-type SavedSearch struct {
-	SearchID      string          `json:"searchId"`
-	ProjectID     int             `json:"projectId"`
-	UserID        uint64          `json:"userId"`
-	UserName      string          `json:"userName,omitempty"`
-	Name          *string         `json:"name,omitempty"`
-	IsPublic      bool            `json:"isPublic"`
-	IsShare       bool            `json:"isShare"`
-	Data          SavedSearchData `json:"data"`
-	CreatedAt     time.Time       `json:"createdAt"`
-	SessionsCount int64           `json:"sessionsCount"`
-	UsersCount    int64           `json:"usersCount"`
-	ExpiresAt     *time.Time      `json:"-"`
-	DeletedAt     *time.Time      `json:"-"`
+type SavedSearchOf[D any] struct {
+	SearchID      string     `json:"searchId"`
+	ProjectID     int        `json:"projectId"`
+	UserID        uint64     `json:"userId"`
+	UserName      string     `json:"userName,omitempty"`
+	Name          *string    `json:"name,omitempty"`
+	IsPublic      bool       `json:"isPublic"`
+	IsShare       bool       `json:"isShare"`
+	Data          D          `json:"data"`
+	CreatedAt     time.Time  `json:"createdAt"`
+	SessionsCount int64      `json:"sessionsCount"`
+	UsersCount    int64      `json:"usersCount"`
+	ExpiresAt     *time.Time `json:"-"`
+	DeletedAt     *time.Time `json:"-"`
 }
 
-type SavedSearchResponse struct {
-	SearchID  string          `json:"searchId"`
-	Name      *string         `json:"name,omitempty"`
-	IsPublic  bool            `json:"isPublic"`
-	IsShare   bool            `json:"isShare"`
-	Data      SavedSearchData `json:"data"`
-	CreatedAt time.Time       `json:"createdAt"`
+type SavedSearchResponseOf[D any] struct {
+	SearchID  string    `json:"searchId"`
+	Name      *string   `json:"name,omitempty"`
+	IsPublic  bool      `json:"isPublic"`
+	IsShare   bool      `json:"isShare"`
+	Data      D         `json:"data"`
+	CreatedAt time.Time `json:"createdAt"`
 }
