@@ -6,6 +6,7 @@ import { DisplayShell } from '@/ui/filters/DisplayMenu';
 import { RefreshControl } from '@/ui/filters/RefreshControl';
 import { SegmentIndicator } from '@/ui/filters/SegmentIndicator';
 import { DateRange } from '@/ui/inputs/DateRange';
+import { Switch } from '@/ui/inputs/switch';
 import { Segmented } from '@/ui/inputs/toggle-group';
 import { ListFooter } from '@/ui/layout/ListFooter';
 import { NewRowsBand } from '@/ui/layout/NewRowsBand';
@@ -403,7 +404,19 @@ function LogsPage() {
   );
   const displayControl = (
     <DisplayShell
-      rows={[]}
+      rows={[
+        {
+          id: 'logs-json',
+          label: t('Format JSON'),
+          control: (
+            <Switch
+              id="logs-json"
+              checked={store.formatJson}
+              onCheckedChange={store.setFormatJson}
+            />
+          ),
+        },
+      ]}
       fields={[...baseColumns, ...added].map((c) => ({
         value: c,
         label: keyLabel(t, c),
@@ -411,8 +424,8 @@ function LogsPage() {
       }))}
       onToggleField={store.toggleColumn}
       moreFields={more}
-      changeCount={store.columns.length}
-      onReset={store.resetColumns}
+      changeCount={store.columns.length + (store.formatJson ? 0 : 1)}
+      onReset={store.resetDisplay}
     />
   );
 
@@ -864,6 +877,7 @@ function LogsPage() {
                       onOpen={store.openLog}
                       onPlay={play}
                       columns={store.columns}
+                      formatJson={store.formatJson}
                     />
                   )}
                   <ListFooter
@@ -933,6 +947,7 @@ function LogsPage() {
             ? `${window.location.origin}${lineLink(store.openLine)}`
             : undefined
         }
+        formatJson={store.formatJson}
       />
       <SaveViewDialog
         open={naming}

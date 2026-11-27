@@ -3198,5 +3198,6 @@
   "A filter holds up to {{n}} values. Remove one to add another.": "一个筛选条件最多 {{n}} 个值。移除一个后才能再添加。",
   "A custom range has an end, so there is nothing new to load. Pick a preset to auto-refresh.": "自定义范围有结束时间，没有新内容可加载。选择预设时间段即可自动刷新。",
   "Auto-refresh: off. {{reason}}": "自动刷新：关闭。{{reason}}",
-  "Back to {{label}}, refreshed": "返回{{label}}并刷新"
+  "Back to {{label}}, refreshed": "返回{{label}}并刷新",
+  "Format JSON": "格式化 JSON"
 }

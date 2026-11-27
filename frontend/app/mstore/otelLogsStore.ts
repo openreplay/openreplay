@@ -111,6 +111,7 @@ export default class OtelLogsStore {
   page = 1;
   display: LogsDisplay = 'data';
   columns: string[] = [];
+  formatJson = true;
   /** keys put on the rail; null keeps the defaults */
   facetKeys: string[] | null = null;
   railOpen = true;
@@ -796,8 +797,13 @@ export default class OtelLogsStore {
       : [...this.columns, key];
   };
 
-  resetColumns = () => {
+  setFormatJson = (on: boolean) => {
+    this.formatJson = on;
+  };
+
+  resetDisplay = () => {
     this.columns = [];
+    this.formatJson = true;
   };
 
   setRail = (open: boolean) => {

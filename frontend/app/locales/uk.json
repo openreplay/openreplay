@@ -3425,5 +3425,6 @@
   "A filter holds up to {{n}} values. Remove one to add another.": "У фільтрі не більше {{n}} значень. Видаліть одне, щоб додати інше.",
   "A custom range has an end, so there is nothing new to load. Pick a preset to auto-refresh.": "Заданий діапазон має кінець, тож завантажувати нічого. Виберіть готовий період, щоб увімкнути автооновлення.",
   "Auto-refresh: off. {{reason}}": "Автооновлення: вимкнено. {{reason}}",
-  "Back to {{label}}, refreshed": "Назад: {{label}}, з оновленням"
+  "Back to {{label}}, refreshed": "Назад: {{label}}, з оновленням",
+  "Format JSON": "Форматувати JSON"
 }

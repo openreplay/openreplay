@@ -358,7 +358,7 @@
 .m-logs__ctx-row.is-this::before { content: ''; position: absolute; left: 0; top: 3px; bottom: 3px; width: 2px; border-radius: 1px; background: var(--m-content-primary); }
 .m-logs__ctx-row.is-error .m-logs__stamp { color: var(--m-content-danger); }
 .m-logs__ctx-row.is-warn .m-logs__stamp { color: var(--m-content-warning); }
-.m-logs__ctx-row .m-logs__msg > span:first-child { white-space: normal; overflow: visible; text-overflow: clip; color: var(--m-content-secondary); }
+.m-logs__ctx-row .m-logs__msg > span:first-child { white-space: normal; overflow-wrap: anywhere; overflow: visible; text-overflow: clip; color: var(--m-content-secondary); }
 .m-logs__ctx-row.is-this .m-logs__msg > span:first-child { color: var(--m-content-primary); }
 .m-logs__session {
   display: flex;

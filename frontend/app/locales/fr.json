@@ -3347,5 +3347,6 @@
   "A filter holds up to {{n}} values. Remove one to add another.": "Un filtre accepte jusqu'à {{n}} valeurs. Retirez-en une pour en ajouter une autre.",
   "A custom range has an end, so there is nothing new to load. Pick a preset to auto-refresh.": "Une plage personnalisée a une fin : il n’y a rien de nouveau à charger. Choisissez une période prédéfinie pour l’actualisation automatique.",
   "Auto-refresh: off. {{reason}}": "Actualisation automatique : désactivée. {{reason}}",
-  "Back to {{label}}, refreshed": "Retour à {{label}} et actualisation"
+  "Back to {{label}}, refreshed": "Retour à {{label}} et actualisation",
+  "Format JSON": "Formater le JSON"
 }
