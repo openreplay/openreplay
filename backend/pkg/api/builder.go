@@ -94,6 +94,7 @@ type serviceBuilder struct {
 	teamAPI            api.Handlers
 	ingestKeysAPI      api.Handlers
 	otelLogsAPI        api.Handlers
+	logsViewsAPI       api.Handlers
 	extraHandlers      []api.Handlers
 	workers            []Worker
 	wg                 sync.WaitGroup
@@ -102,7 +103,7 @@ type serviceBuilder struct {
 func (b *serviceBuilder) Handlers() []api.Handlers {
 	handlers := []api.Handlers{b.sessionAPI, b.eventAPI, b.filtersCatalogAPI, b.analyticsEventsAPI, b.favoriteAPI, b.noteAPI, b.replayAPI, b.apiKeyAPI, b.conditionsAPI,
 		b.chartsAPI, b.dashboardsAPI, b.cardsAPI, b.searchAPI, b.savedSearchesAPI, b.usersAPI, b.lexiconAPI, b.tagsAdminAPI, b.integrationsAPI, b.alertsAPI, b.notificationsAPI, b.projectsAdminAPI, b.accountsAPI, b.webhooksAPI, b.teamAPI,
-		b.ingestKeysAPI, b.otelLogsAPI}
+		b.ingestKeysAPI, b.otelLogsAPI, b.logsViewsAPI}
 	return append(handlers, b.extraHandlers...)
 }
 
@@ -186,6 +187,11 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 
 	savedSearchesService := saved_searches.New(log, pgconn, searchService)
 	savedSearchesHandlers, err := saved_searches.NewHandlers(log, cfg, responser, savedSearchesService, reqValidator)
+	if err != nil {
+		return nil, err
+	}
+
+	logsViewsHandlers, err := saved_searches.NewLogsViewsHandlers(log, cfg, responser, saved_searches.NewLogsViews(log, pgconn), reqValidator)
 	if err != nil {
 		return nil, err
 	}
@@ -379,6 +385,7 @@ func NewServiceBuilder(log logger.Logger, cfg *config.Config, webMetrics web.Web
 		teamAPI:            teamHandlers,
 		ingestKeysAPI:      ingestKeysHandlers,
 		otelLogsAPI:        otelLogsHandlers,
+		logsViewsAPI:       logsViewsHandlers,
 		extraHandlers:      extraHandlers,
 		workers:            workers,
 	}, nil

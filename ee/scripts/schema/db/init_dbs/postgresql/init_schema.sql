@@ -1282,11 +1282,14 @@ CREATE TABLE IF NOT EXISTS public.session_integrations
     PRIMARY KEY (session_id, project_id, provider)
 );
 
+CREATE TYPE public.saved_search_scope AS ENUM ('sessions', 'logs');
+
 CREATE TABLE IF NOT EXISTS public.saved_searches
 (
     search_id   uuid PRIMARY KEY                     DEFAULT gen_random_uuid(),
     project_id  integer                     NOT NULL REFERENCES public.projects (project_id) ON DELETE CASCADE,
     user_id     integer                     NOT NULL REFERENCES public.users (user_id) ON DELETE CASCADE,
+    scope       public.saved_search_scope   NOT NULL DEFAULT 'sessions',
     name        varchar(255)                         DEFAULT NULL,
     is_public   boolean                     NOT NULL DEFAULT FALSE,
     is_share    boolean                     NOT NULL DEFAULT FALSE,
