@@ -3,8 +3,8 @@ import { CheckRow } from '@/ui/inputs/CheckRow';
 import { SearchField } from '@/ui/inputs/SearchField';
 import { PopoverSearch } from '@/ui/overlays/PopoverSearch';
 import { PopoverPanel } from '@/ui/overlays/popover';
-import { ChevronDown, ListPlus, PanelLeftClose, X } from 'lucide-react';
-import { useState } from 'react';
+import { ChevronDown, ListPlus, PanelLeftClose, Search, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { compactCount } from './logs-logic';
@@ -174,12 +174,22 @@ function Facet({
   const [open, setOpen] = useState(true);
   const [all, setAll] = useState(false);
   const [q, setQ] = useState('');
+  const [searching, setSearching] = useState(false);
+  const fieldRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (searching) fieldRef.current?.querySelector('input')?.focus();
+  }, [searching]);
+  const toggleSearch = () => {
+    if (searching) setQ('');
+    setSearching((s) => !s);
+  };
   const picked = values.filter((v) => v.on).length;
   const searchable = values.length > 8;
-  const lower = q.toLowerCase();
+  const term = searchable && searching ? q : '';
+  const lower = term.toLowerCase();
   const shown = (
-    q ? values.filter((v) => v.label.toLowerCase().includes(lower)) : values
-  ).slice(0, all || q ? undefined : SHOWN);
+    term ? values.filter((v) => v.label.toLowerCase().includes(lower)) : values
+  ).slice(0, all || term ? undefined : SHOWN);
   const hidden = values.length - SHOWN;
   return (
     <section className={`m-logs__facet${open ? '' : ' is-closed'}`}>
@@ -195,6 +205,16 @@ function Facet({
             {label}
           </span>
         </button>
+        {searchable && open && (
+          <IconButton
+            icon={<Search size={13} />}
+            label={t('Search {{label}}', { label: label.toLowerCase() })}
+            variant="ghost"
+            size="xs"
+            pressed={searching}
+            onClick={toggleSearch}
+          />
+        )}
         {picked > 0 && (
           <button
             type="button"
@@ -212,15 +232,25 @@ function Facet({
       </div>
       {open && (
         <div className="m-logs__facet-body" role="menu" aria-label={label}>
-          {searchable && (
-            <SearchField
-              size="sm"
-              placeholder={t('Search {{label}}', {
-                label: label.toLowerCase(),
-              })}
-              value={q}
-              onChange={setQ}
-            />
+          {searchable && searching && (
+            <div
+              ref={fieldRef}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  e.stopPropagation();
+                  toggleSearch();
+                }
+              }}
+            >
+              <SearchField
+                size="sm"
+                placeholder={t('Search {{label}}', {
+                  label: label.toLowerCase(),
+                })}
+                value={q}
+                onChange={setQ}
+              />
+            </div>
           )}
           {shown.map((v) => (
             <CheckRow
@@ -240,14 +270,14 @@ function Facet({
             <span className="m-logs__more">
               {loading
                 ? t('Loading…')
-                : q
-                  ? t('Nothing matches “{{q}}”', { q })
+                : term
+                  ? t('Nothing matches “{{q}}”', { q: term })
                   : failed
                     ? t("The values didn't load")
                     : t('No values in this window')}
             </span>
           )}
-          {!q && hidden > 0 && (
+          {!term && hidden > 0 && (
             <button
               type="button"
               className="m-logs__more"
