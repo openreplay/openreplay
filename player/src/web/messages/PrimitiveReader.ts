@@ -2,6 +2,9 @@ const decoder = new TextDecoder();
 // Below this length a JS loop beats the TextDecoder call overhead for ASCII (tag and attribute names);
 // longer concatenations become V8 cons-strings that cost memory and later flattening
 const ASCII_FAST_PATH_MAX = 12;
+// Values are written below 2^53 (8 bytes). Longer varints are corrupt, and from ~147 bytes
+// on the multiplier overflows to Infinity, turning the value and then the pointer into NaN.
+const MAX_VARINT_BYTES = 10;
 
 export default class PrimitiveReader {
   /** pointer for curent position in the buffer */
@@ -51,11 +54,12 @@ export default class PrimitiveReader {
 
   readUint(): number | null {
     let { p } = this;
+    const limit = p + MAX_VARINT_BYTES;
     let r = 0;
     let s = 1;
     let b;
     do {
-      if (p >= this.buf.length) {
+      if (p >= this.buf.length || p >= limit) {
         return null;
       }
       b = this.buf[p++];
@@ -120,6 +124,7 @@ export default class PrimitiveReader {
   // garbage and leave `p` beyond `buf.length`, which the caller checks once per message.
   protected uintU(): number {
     let { p } = this;
+    const limit = p + MAX_VARINT_BYTES;
     let r = 0;
     let s = 1;
     let b;
@@ -127,8 +132,9 @@ export default class PrimitiveReader {
       b = this.buf[p++];
       r += (b & 0x7f) * s;
       s *= 128;
-    } while (b >= 0x80);
-    this.p = p;
+    } while (b >= 0x80 && p < limit);
+    // overlong: leave the pointer past the data so the caller rejects the message
+    this.p = b >= 0x80 ? this.buf.length + 1 : p;
     return r;
   }
 
