@@ -18,7 +18,7 @@ Previous version preference:
 {{- if $existingConfigMap }}
   {{- $previousVersion = index $existingConfigMap.data "version" | default .Values.fromVersion }}
 {{- end }}
-{{- $isMigration := or .Release.IsUpgrade (not (empty $previousVersion)) .Values.forceMigration }}
+{{- $isMigration := or .Release.IsUpgrade .Values.forceMigration }}
 {{- $versionChange := (or (not .Release.IsUpgrade) .Values.deployment.argo (and .Release.IsUpgrade (not (eq $previousVersion .Chart.AppVersion)))) }}
 {{- if or .Values.forceMigration (and (not .Values.skipMigration) $versionChange) }}
 ---
