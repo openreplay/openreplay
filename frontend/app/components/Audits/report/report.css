@@ -523,11 +523,6 @@
   color: var(--m-content-primary);
 }
 .m-rep-s__toc-mark {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-.m-rep-s__toc-mark .ic {
   display: grid;
   place-items: center;
   width: 40px;
@@ -536,13 +531,8 @@
   background: color-mix(in oklab, var(--m-accent-bright) 10%, transparent);
   color: var(--m-content-accent);
 }
-.m-rep-s__toc-head .n {
-  font: 500 30px/1 var(--m-font-num);
-  letter-spacing: -0.02em;
-  color: var(--m-content-accent);
-}
 .m-rep-s__toc-head b {
-  margin-top: 6px;
+  margin-top: 8px;
   font: 600 17px/1.25 var(--m-font-display);
   text-wrap: balance;
 }

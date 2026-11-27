@@ -795,7 +795,7 @@ export function ReportSlide({
       );
       return frame(
         <div className="m-rep-s__toc">
-          {chapters.map((c, ci) => {
+          {chapters.map((c) => {
             const at = slides.flatMap((s, i) =>
               s.section === c.key ? [i] : [],
             );
@@ -809,10 +809,7 @@ export function ReportSlide({
                   onClick={() => onGo(first)}
                 >
                   <span className="m-rep-s__toc-mark">
-                    <span className="ic">
-                      <SectionIcon section={c.key} size={20} />
-                    </span>
-                    <span className="n">{pad2(ci + 1)}</span>
+                    <SectionIcon section={c.key} size={20} />
                   </span>
                   <b>{c.name}</b>
                   <span className="p">

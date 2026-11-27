@@ -298,7 +298,7 @@ function AuditReport({
           className="m-rep"
           tabIndex={-1}
           aria-describedby={undefined}
-          // focus on the dialog itself: the first button's tooltip would open on focus
+          // focus on the dialog itself, not its first button
           onOpenAutoFocus={(e) => {
             e.preventDefault();
             root.current?.focus();
@@ -313,13 +313,6 @@ function AuditReport({
             {t('{{title}} report', { title })}
           </D.Title>
           <header className="m-rep__bar">
-            <IconButton
-              icon={<TableOfContents size={15} />}
-              label={t('Show contents')}
-              variant="ghost"
-              disabled={!slides.length}
-              onClick={() => setTocOpen(true)}
-            />
             <Button variant="subtle" size="sm" onClick={onClose}>
               <ArrowLeft size={14} />
               {t('Audits')}
@@ -408,6 +401,17 @@ function AuditReport({
           )}
 
           <footer className="m-rep__pager">
+            <Button
+              variant="subtle"
+              size="sm"
+              aria-expanded={tocOpen}
+              disabled={!slides.length}
+              onClick={() => setTocOpen(true)}
+            >
+              <TableOfContents size={14} />
+              {t('Contents')}
+            </Button>
+            <span className="m-rep__sep" aria-hidden="true" />
             <IconButton
               icon={<ChevronLeft size={15} />}
               label={t('Previous slide')}
