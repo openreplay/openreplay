@@ -1039,37 +1039,23 @@ CREATE TABLE IF NOT EXISTS otel.logs_kv_rollup_15m
       TTL Timestamp + toIntervalDay(_retention_days) DELETE WHERE _retention_days > 0
       SETTINGS index_granularity = 8192, ttl_only_drop_parts = 1;
 
-
--- The full list of attributes
-CREATE TABLE IF NOT EXISTS otel.all_attributes
+CREATE TABLE IF NOT EXISTS otel.logs_attribute_values
 (
-    ProjectId     UInt16,
-    Source        Enum8('resource'=0,'scope'=1,'log'=2),--Maps to ResourceAttributes, ScopeAttributes, LogAttributes
-    AttributeName String,
-    DataCount     UInt32   DEFAULT 1,
-    QueryCount    UInt32   DEFAULT 0,
+    Day            Date,
+    ProjectId      UInt16,
+    Source         Enum8('log_global' = 0, 'resource' = 1, 'scope' = 2, 'log' = 3),
+    AttributeKey   LowCardinality(String),
+    ValueType      Enum8('string' = 0, 'int' = 1, 'float' = 2, 'bool' = 3),
+    AttributeValue String,
+    Count          UInt64
+)
+    ENGINE = SummingMergeTree(Count)
+        PARTITION BY Day
+        ORDER BY (ProjectId, Source, ValueType, AttributeKey, AttributeValue)
+        TTL Day + INTERVAL 1 MONTH
+        SETTINGS ttl_only_drop_parts = 1;
 
-    CreatedAt     DateTime64,
-    _timestamp    DateTime DEFAULT now()
-) ENGINE = ReplacingMergeTree(_timestamp)
-      PARTITION BY toYYYYMM(_timestamp)
-      ORDER BY (ProjectId, Source, AttributeName);
 
--- Autocomplete
-
--- Autocomplete for all values
-CREATE TABLE IF NOT EXISTS otel.autocomplete_grouped
-(
-    ProjectId  UInt16,
-    Source     Enum8('log_global'=-1,'resource'=0,'scope'=1,'log'=2), -- log_global are separate columns, the rest are for attributes
-    Name       LowCardinality(String),
-    Value      String,
-    DataCount  AggregateFunction(sum, UInt16) COMMENT 'The number of appearance during the past month',
-    _timestamp DateTime
-) ENGINE = AggregatingMergeTree()
-      ORDER BY (ProjectId, Source, Name, Value)
-      PARTITION BY toYYYYMM(_timestamp)
-      TTL _timestamp + INTERVAL 1 MONTH;
 
 -- =====================================================================================
 -- OTEL MATERIALIZED VIEWS
@@ -1105,46 +1091,64 @@ FROM otel.logs
     ] AS kv
 GROUP BY ProjectId, Timestamp, ColumnIdentifier, Key, Value, _retention_days;
 
-CREATE MATERIALIZED VIEW IF NOT EXISTS otel.log_all_attributes_extractor_mv
-    TO otel.all_attributes AS
-SELECT logs.ProjectId,
-       attr.1         AS Source,
-       attr.2         AS AttributeName,
-       0              AS DataCount,
-       0              AS QueryCount,
-       logs.Timestamp AS CreatedAt
+CREATE MATERIALIZED VIEW IF NOT EXISTS otel.logs_attribute_values_mv
+    TO otel.logs_attribute_values AS
+SELECT toDate(Timestamp) AS Day,
+       ProjectId,
+       Attr.1            AS Source,
+       Attr.2            AS AttributeKey,
+       multiIf(
+               toInt64OrNull(Attr.3) IS NOT NULL, 'int',
+               toFloat64OrNull(Attr.3) IS NOT NULL, 'float',
+               lower(Attr.3) IN ('true', 'false'), 'bool',
+               'string') AS ValueType,
+       Attr.3            AS AttributeValue,
+       count()           AS Count
 FROM otel.logs
          ARRAY JOIN arrayConcat(
-        arrayMap((k) -> ('resource', toString(k)), mapKeys(ResourceAttributes)),
-        arrayMap((k) -> ('scope', toString(k)), mapKeys(ScopeAttributes)),
-        arrayMap((k) -> ('log', toString(k)), mapKeys(LogAttributes))) AS attr;
-
-
-CREATE MATERIALIZED VIEW IF NOT EXISTS otel.autocomplete_grouped_mv
-    TO otel.autocomplete_grouped AS
-SELECT ProjectId,
-       t.1                   AS Source,
-       t.2                   AS Name,
-       toString(t.3)         AS Value,
-       sumState(toUInt16(1)) AS DataCount,
-       _timestamp
-FROM otel.logs
-         ARRAY JOIN
-     arrayConcat([ ('log_global', 'ServiceName', ServiceName),
-                     ('log_global', 'ResourceSchemaUrl', ResourceSchemaUrl),
-                     ('log_global', 'ScopeSchemaUrl', ScopeSchemaUrl),
-                     ('log_global', 'ScopeName', ScopeName),
-                     ('log_global', 'ScopeVersion', ScopeVersion),
-                     ('log_global', 'EventName', EventName)],
-                 arrayMap((k, v) -> ('resource', toString(k), v),
-                          mapKeys(ResourceAttributes), mapValues(ResourceAttributes)),
-                 arrayMap((k, v) -> ('scope', toString(k), v),
-                          mapKeys(ScopeAttributes), mapValues(ScopeAttributes)),
-                 arrayMap((k, v) -> ('log', toString(k), v),
-                          mapKeys(LogAttributes), mapValues(LogAttributes))) AS t
-WHERE isNotNull(t.3)
-  AND notEmpty(toString(t.3))
-GROUP BY ALL;
+        [
+            ('log_global', 'ServiceName', toString(ServiceName)),
+            ('log_global', 'ResourceSchemaUrl', toString(ResourceSchemaUrl)),
+            ('log_global', 'ScopeSchemaUrl', toString(ScopeSchemaUrl)),
+            ('log_global', 'ScopeName', toString(ScopeName)),
+            ('log_global', 'ScopeVersion', toString(ScopeVersion)),
+            ('log_global', 'EventName', toString(EventName))
+            ],
+        arrayMap((k, v) -> ('resource', toString(k), v), mapKeys(ResourceAttributes), mapValues(ResourceAttributes)),
+        arrayMap((k, v) -> ('scope', toString(k), v), mapKeys(ScopeAttributes), mapValues(ScopeAttributes)),
+        arrayMap((k, v) -> ('log', toString(k), v), mapKeys(LogAttributes), mapValues(LogAttributes))
+                    ) AS Attr
+WHERE notEmpty(Attr.3)
+GROUP BY Day, ProjectId, Source, AttributeKey, ValueType, AttributeValue;
 
 CREATE OR REPLACE FUNCTION openreplay_migration_state AS() ->
     -1;
+
+
+--
+-- -- 4. Query: non-numeric attributes with the highest grouped values
+-- --    (top 5 values per attribute, most frequent first)
+-- SELECT
+--     ProjectId,
+--     Source,
+--     AttributeKey,
+--     AttributeValue,
+--     sum(Count) AS Occurrences
+-- FROM otel.logs_attribute_values
+-- WHERE ValueType = 'string'
+-- -- AND ProjectId = 1
+-- GROUP BY ProjectId, Source, AttributeKey, AttributeValue
+-- ORDER BY Occurrences DESC
+-- LIMIT 5 BY ProjectId, Source, AttributeKey
+-- LIMIT 100;
+--
+-- -- 5. Query: how many distinct values each attribute has
+-- SELECT
+--     ProjectId,
+--     Source,
+--     AttributeKey,
+--     uniq(AttributeValue) AS DistinctValues
+-- FROM otel.logs_attribute_values
+-- -- WHERE ProjectId = 1
+-- GROUP BY ProjectId, Source, AttributeKey
+-- ORDER BY DistinctValues DESC;
