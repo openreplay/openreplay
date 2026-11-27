@@ -116,6 +116,50 @@ export default class PrimitiveReader {
     return decoder.decode(this.buf.subarray(start, end));
   }
 
+  // Unchecked reads, for a body already known to be in the buffer. Past the end they return
+  // garbage and leave `p` beyond `buf.length`, which the caller checks once per message.
+  protected uintU(): number {
+    let { p } = this;
+    let r = 0;
+    let s = 1;
+    let b;
+    do {
+      b = this.buf[p++];
+      r += (b & 0x7f) * s;
+      s *= 128;
+    } while (b >= 0x80);
+    this.p = p;
+    return r;
+  }
+
+  protected intU(): number {
+    const u = this.uintU();
+    return u % 2 ? (u + 1) / -2 : u / 2;
+  }
+
+  protected stringU(): string {
+    const l = this.uintU();
+    const start = this.p;
+    const end = (this.p += l);
+    if (end > this.buf.length) return '';
+    if (l <= ASCII_FAST_PATH_MAX) {
+      let s = '';
+      for (let i = start; i < end; i++) {
+        const c = this.buf[i];
+        if (c > 0x7f) {
+          return decoder.decode(this.buf.subarray(start, end));
+        }
+        s += String.fromCharCode(c);
+      }
+      return s;
+    }
+    return decoder.decode(this.buf.subarray(start, end));
+  }
+
+  protected booleanU(): boolean {
+    return !!this.buf[this.p++];
+  }
+
   readBoolean(): boolean | null {
     if (this.p >= this.buf.length) {
       return null;

@@ -34,6 +34,7 @@ export default class TrackerReader {
       if (raw.tp === MType.Timestamp) {
         const ts = (raw as { tp: number; timestamp: number }).timestamp;
         this.currentTime = ts - this.startTime;
+        this.reader.time = this.currentTime;
         messages.push({
           tp: 9999,
           time: this.currentTime,
@@ -43,15 +44,13 @@ export default class TrackerReader {
 
       if (raw.tp === MType.TabData) {
         this.currentTab = (raw as { tp: number; tabId: string }).tabId;
+        this.reader.tabId = this.currentTab;
         continue;
       }
 
-      const msg = Object.assign(rewriteMessage(raw), {
-        time: this.currentTime,
-        tabId: this.currentTab,
-      }) as PlayerMsg;
-
-      messages.push(msg);
+      // its own tabId field is overwritten by the batch's tab, as before
+      if (raw.tp === MType.TabChange) raw.tabId = this.currentTab;
+      messages.push(rewriteMessage(raw) as PlayerMsg);
     }
     this.reader.releaseConsumed();
     return messages;

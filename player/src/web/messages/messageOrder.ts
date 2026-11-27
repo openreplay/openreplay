@@ -112,13 +112,39 @@ export function sortTimeGroup(msgs: PlayerMsg[], start: number, end: number) {
  * transitivity issues on large (20k+) arrays.
  */
 export function fixMessageOrder(msgs: PlayerMsg[]): PlayerMsg[] {
-  msgs.sort((a, b) => a.time - b.time);
+  const n = msgs.length;
+  // Each `time` read once: messages come in dozens of shapes, so reads in the
+  // sort comparator are slow. Files are almost always in order already.
+  let times = new Float64Array(n);
+  let inOrder = true;
+  let hasNaN = false;
+  for (let i = 0; i < n; i++) {
+    const t = msgs[i].time;
+    times[i] = t;
+    if (t !== t) hasNaN = true;
+    else if (i > 0 && t < times[i - 1]) inOrder = false;
+  }
+  if (hasNaN) {
+    msgs.sort((a, b) => a.time - b.time);
+    for (let i = 0; i < n; i++) times[i] = msgs[i].time;
+  } else if (!inOrder) {
+    const order: number[] = new Array(n);
+    for (let i = 0; i < n; i++) order[i] = i;
+    order.sort((a, b) => times[a] - times[b] || a - b);
+    const src = msgs.slice();
+    const sorted = new Float64Array(n);
+    for (let k = 0; k < n; k++) {
+      msgs[k] = src[order[k]];
+      sorted[k] = times[order[k]];
+    }
+    times = sorted;
+  }
 
   let i = 0;
-  while (i < msgs.length) {
-    const time = msgs[i].time;
+  while (i < n) {
+    const time = times[i];
     let j = i + 1;
-    while (j < msgs.length && msgs[j].time === time) j++;
+    while (j < n && times[j] === time) j++;
 
     if (j - i > 1 && needsSorting(msgs, i, j)) {
       sortTimeGroup(msgs, i, j);

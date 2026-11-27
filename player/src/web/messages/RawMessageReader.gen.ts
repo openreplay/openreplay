@@ -9,18 +9,13 @@ import type { RawMessage } from './raw.gen'
 export default class RawMessageReader extends PrimitiveReader {
   readMessage(): RawMessage | null {
     const p = this.p
-    const resetPointer = () => {
-      this.p = p
-      return null
-    }
-
     const tp = this.readUint()
-    if (tp === null) { return resetPointer() }
+    if (tp === null) { return null }
 
     switch (tp) {
 
     case 0: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
+      const timestamp = this.readUint(); if (timestamp === null) { this.p = p; return null }
       return {
         tp: MType.Timestamp,
         timestamp,
@@ -28,9 +23,9 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 4: {
-      const url = this.readString(); if (url === null) { return resetPointer() }
-      const referrer = this.readString(); if (referrer === null) { return resetPointer() }
-      const navigationStart = this.readUint(); if (navigationStart === null) { return resetPointer() }
+      const url = this.readString(); if (url === null) { this.p = p; return null }
+      const referrer = this.readString(); if (referrer === null) { this.p = p; return null }
+      const navigationStart = this.readUint(); if (navigationStart === null) { this.p = p; return null }
       return {
         tp: MType.SetPageLocationDeprecated,
         url,
@@ -40,8 +35,8 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 5: {
-      const width = this.readUint(); if (width === null) { return resetPointer() }
-      const height = this.readUint(); if (height === null) { return resetPointer() }
+      const width = this.readUint(); if (width === null) { this.p = p; return null }
+      const height = this.readUint(); if (height === null) { this.p = p; return null }
       return {
         tp: MType.SetViewportSize,
         width,
@@ -50,8 +45,8 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 6: {
-      const x = this.readInt(); if (x === null) { return resetPointer() }
-      const y = this.readInt(); if (y === null) { return resetPointer() }
+      const x = this.readInt(); if (x === null) { this.p = p; return null }
+      const y = this.readInt(); if (y === null) { this.p = p; return null }
       return {
         tp: MType.SetViewportScroll,
         x,
@@ -68,11 +63,11 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 8: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const parentID = this.readUint(); if (parentID === null) { return resetPointer() }
-      const index = this.readUint(); if (index === null) { return resetPointer() }
-      const tag = this.readString(); if (tag === null) { return resetPointer() }
-      const svg = this.readBoolean(); if (svg === null) { return resetPointer() }
+      const id = this.readUint(); if (id === null) { this.p = p; return null }
+      const parentID = this.readUint(); if (parentID === null) { this.p = p; return null }
+      const index = this.readUint(); if (index === null) { this.p = p; return null }
+      const tag = this.readString(); if (tag === null) { this.p = p; return null }
+      const svg = this.readBoolean(); if (svg === null) { this.p = p; return null }
       return {
         tp: MType.CreateElementNode,
         id,
@@ -84,9 +79,9 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 9: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const parentID = this.readUint(); if (parentID === null) { return resetPointer() }
-      const index = this.readUint(); if (index === null) { return resetPointer() }
+      const id = this.readUint(); if (id === null) { this.p = p; return null }
+      const parentID = this.readUint(); if (parentID === null) { this.p = p; return null }
+      const index = this.readUint(); if (index === null) { this.p = p; return null }
       return {
         tp: MType.CreateTextNode,
         id,
@@ -96,9 +91,9 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 10: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const parentID = this.readUint(); if (parentID === null) { return resetPointer() }
-      const index = this.readUint(); if (index === null) { return resetPointer() }
+      const id = this.readUint(); if (id === null) { this.p = p; return null }
+      const parentID = this.readUint(); if (parentID === null) { this.p = p; return null }
+      const index = this.readUint(); if (index === null) { this.p = p; return null }
       return {
         tp: MType.MoveNode,
         id,
@@ -108,7 +103,7 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 11: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
+      const id = this.readUint(); if (id === null) { this.p = p; return null }
       return {
         tp: MType.RemoveNode,
         id,
@@ -116,9 +111,9 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 12: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const name = this.readString(); if (name === null) { return resetPointer() }
-      const value = this.readString(); if (value === null) { return resetPointer() }
+      const id = this.readUint(); if (id === null) { this.p = p; return null }
+      const name = this.readString(); if (name === null) { this.p = p; return null }
+      const value = this.readString(); if (value === null) { this.p = p; return null }
       return {
         tp: MType.SetNodeAttribute,
         id,
@@ -128,8 +123,8 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 13: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const name = this.readString(); if (name === null) { return resetPointer() }
+      const id = this.readUint(); if (id === null) { this.p = p; return null }
+      const name = this.readString(); if (name === null) { this.p = p; return null }
       return {
         tp: MType.RemoveNodeAttribute,
         id,
@@ -138,8 +133,8 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 14: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const data = this.readString(); if (data === null) { return resetPointer() }
+      const id = this.readUint(); if (id === null) { this.p = p; return null }
+      const data = this.readString(); if (data === null) { this.p = p; return null }
       return {
         tp: MType.SetNodeData,
         id,
@@ -148,8 +143,8 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 15: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const data = this.readString(); if (data === null) { return resetPointer() }
+      const id = this.readUint(); if (id === null) { this.p = p; return null }
+      const data = this.readString(); if (data === null) { this.p = p; return null }
       return {
         tp: MType.SetCssData,
         id,
@@ -158,9 +153,9 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 16: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const x = this.readInt(); if (x === null) { return resetPointer() }
-      const y = this.readInt(); if (y === null) { return resetPointer() }
+      const id = this.readUint(); if (id === null) { this.p = p; return null }
+      const x = this.readInt(); if (x === null) { this.p = p; return null }
+      const y = this.readInt(); if (y === null) { this.p = p; return null }
       return {
         tp: MType.SetNodeScroll,
         id,
@@ -170,9 +165,9 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 18: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const value = this.readString(); if (value === null) { return resetPointer() }
-      const mask = this.readInt(); if (mask === null) { return resetPointer() }
+      const id = this.readUint(); if (id === null) { this.p = p; return null }
+      const value = this.readString(); if (value === null) { this.p = p; return null }
+      const mask = this.readInt(); if (mask === null) { this.p = p; return null }
       return {
         tp: MType.SetInputValue,
         id,
@@ -182,8 +177,8 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 19: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const checked = this.readBoolean(); if (checked === null) { return resetPointer() }
+      const id = this.readUint(); if (id === null) { this.p = p; return null }
+      const checked = this.readBoolean(); if (checked === null) { this.p = p; return null }
       return {
         tp: MType.SetInputChecked,
         id,
@@ -192,8 +187,8 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 20: {
-      const x = this.readUint(); if (x === null) { return resetPointer() }
-      const y = this.readUint(); if (y === null) { return resetPointer() }
+      const x = this.readUint(); if (x === null) { this.p = p; return null }
+      const y = this.readUint(); if (y === null) { this.p = p; return null }
       return {
         tp: MType.MouseMove,
         x,
@@ -202,14 +197,14 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 21: {
-      const type = this.readString(); if (type === null) { return resetPointer() }
-      const method = this.readString(); if (method === null) { return resetPointer() }
-      const url = this.readString(); if (url === null) { return resetPointer() }
-      const request = this.readString(); if (request === null) { return resetPointer() }
-      const response = this.readString(); if (response === null) { return resetPointer() }
-      const status = this.readUint(); if (status === null) { return resetPointer() }
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const duration = this.readUint(); if (duration === null) { return resetPointer() }
+      const type = this.readString(); if (type === null) { this.p = p; return null }
+      const method = this.readString(); if (method === null) { this.p = p; return null }
+      const url = this.readString(); if (url === null) { this.p = p; return null }
+      const request = this.readString(); if (request === null) { this.p = p; return null }
+      const response = this.readString(); if (response === null) { this.p = p; return null }
+      const status = this.readUint(); if (status === null) { this.p = p; return null }
+      const timestamp = this.readUint(); if (timestamp === null) { this.p = p; return null }
+      const duration = this.readUint(); if (duration === null) { this.p = p; return null }
       return {
         tp: MType.NetworkRequestDeprecated,
         type,
@@ -224,8 +219,8 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 22: {
-      const level = this.readString(); if (level === null) { return resetPointer() }
-      const value = this.readString(); if (value === null) { return resetPointer() }
+      const level = this.readString(); if (level === null) { this.p = p; return null }
+      const value = this.readString(); if (value === null) { this.p = p; return null }
       return {
         tp: MType.ConsoleLog,
         level,
@@ -234,8 +229,8 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 34: {
-      const key = this.readUint(); if (key === null) { return resetPointer() }
-      const value = this.readString(); if (value === null) { return resetPointer() }
+      const key = this.readUint(); if (key === null) { this.p = p; return null }
+      const value = this.readString(); if (value === null) { this.p = p; return null }
       return {
         tp: MType.StringDictGlobal,
         key,
@@ -244,9 +239,9 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 35: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const name = this.readUint(); if (name === null) { return resetPointer() }
-      const value = this.readUint(); if (value === null) { return resetPointer() }
+      const id = this.readUint(); if (id === null) { this.p = p; return null }
+      const name = this.readUint(); if (name === null) { this.p = p; return null }
+      const value = this.readUint(); if (value === null) { this.p = p; return null }
       return {
         tp: MType.SetNodeAttributeDictGlobal,
         id,
@@ -256,8 +251,8 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 36: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const styles = this.readString(); if (styles === null) { return resetPointer() }
+      const id = this.readUint(); if (id === null) { this.p = p; return null }
+      const styles = this.readString(); if (styles === null) { this.p = p; return null }
       return {
         tp: MType.NodeAnimationResult,
         id,
@@ -266,10 +261,10 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 40: {
-      const name = this.readString(); if (name === null) { return resetPointer() }
-      const duration = this.readUint(); if (duration === null) { return resetPointer() }
-      const args = this.readString(); if (args === null) { return resetPointer() }
-      const result = this.readString(); if (result === null) { return resetPointer() }
+      const name = this.readString(); if (name === null) { this.p = p; return null }
+      const duration = this.readUint(); if (duration === null) { this.p = p; return null }
+      const args = this.readString(); if (args === null) { this.p = p; return null }
+      const result = this.readString(); if (result === null) { this.p = p; return null }
       return {
         tp: MType.Profiler,
         name,
@@ -280,8 +275,8 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 41: {
-      const key = this.readString(); if (key === null) { return resetPointer() }
-      const value = this.readString(); if (value === null) { return resetPointer() }
+      const key = this.readString(); if (key === null) { this.p = p; return null }
+      const value = this.readString(); if (value === null) { this.p = p; return null }
       return {
         tp: MType.OTable,
         key,
@@ -290,9 +285,9 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 44: {
-      const action = this.readString(); if (action === null) { return resetPointer() }
-      const state = this.readString(); if (state === null) { return resetPointer() }
-      const duration = this.readUint(); if (duration === null) { return resetPointer() }
+      const action = this.readString(); if (action === null) { this.p = p; return null }
+      const state = this.readString(); if (state === null) { this.p = p; return null }
+      const duration = this.readUint(); if (duration === null) { this.p = p; return null }
       return {
         tp: MType.ReduxDeprecated,
         action,
@@ -302,8 +297,8 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 45: {
-      const mutation = this.readString(); if (mutation === null) { return resetPointer() }
-      const state = this.readString(); if (state === null) { return resetPointer() }
+      const mutation = this.readString(); if (mutation === null) { this.p = p; return null }
+      const state = this.readString(); if (state === null) { this.p = p; return null }
       return {
         tp: MType.Vuex,
         mutation,
@@ -312,8 +307,8 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 46: {
-      const type = this.readString(); if (type === null) { return resetPointer() }
-      const payload = this.readString(); if (payload === null) { return resetPointer() }
+      const type = this.readString(); if (type === null) { this.p = p; return null }
+      const payload = this.readString(); if (payload === null) { this.p = p; return null }
       return {
         tp: MType.MobX,
         type,
@@ -322,9 +317,9 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 47: {
-      const action = this.readString(); if (action === null) { return resetPointer() }
-      const state = this.readString(); if (state === null) { return resetPointer() }
-      const duration = this.readUint(); if (duration === null) { return resetPointer() }
+      const action = this.readString(); if (action === null) { this.p = p; return null }
+      const state = this.readString(); if (state === null) { this.p = p; return null }
+      const duration = this.readUint(); if (duration === null) { this.p = p; return null }
       return {
         tp: MType.NgRx,
         action,
@@ -334,11 +329,11 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 48: {
-      const operationKind = this.readString(); if (operationKind === null) { return resetPointer() }
-      const operationName = this.readString(); if (operationName === null) { return resetPointer() }
-      const variables = this.readString(); if (variables === null) { return resetPointer() }
-      const response = this.readString(); if (response === null) { return resetPointer() }
-      const duration = this.readInt(); if (duration === null) { return resetPointer() }
+      const operationKind = this.readString(); if (operationKind === null) { this.p = p; return null }
+      const operationName = this.readString(); if (operationName === null) { this.p = p; return null }
+      const variables = this.readString(); if (variables === null) { this.p = p; return null }
+      const response = this.readString(); if (response === null) { this.p = p; return null }
+      const duration = this.readInt(); if (duration === null) { this.p = p; return null }
       return {
         tp: MType.GraphQlDeprecated,
         operationKind,
@@ -350,10 +345,10 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 49: {
-      const frames = this.readInt(); if (frames === null) { return resetPointer() }
-      const ticks = this.readInt(); if (ticks === null) { return resetPointer() }
-      const totalJSHeapSize = this.readUint(); if (totalJSHeapSize === null) { return resetPointer() }
-      const usedJSHeapSize = this.readUint(); if (usedJSHeapSize === null) { return resetPointer() }
+      const frames = this.readInt(); if (frames === null) { this.p = p; return null }
+      const ticks = this.readInt(); if (ticks === null) { this.p = p; return null }
+      const totalJSHeapSize = this.readUint(); if (totalJSHeapSize === null) { this.p = p; return null }
+      const usedJSHeapSize = this.readUint(); if (usedJSHeapSize === null) { this.p = p; return null }
       return {
         tp: MType.PerformanceTrack,
         frames,
@@ -364,8 +359,8 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 50: {
-      const key = this.readUint(); if (key === null) { return resetPointer() }
-      const value = this.readString(); if (value === null) { return resetPointer() }
+      const key = this.readUint(); if (key === null) { this.p = p; return null }
+      const value = this.readString(); if (value === null) { this.p = p; return null }
       return {
         tp: MType.StringDictDeprecated,
         key,
@@ -374,9 +369,9 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 51: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const nameKey = this.readUint(); if (nameKey === null) { return resetPointer() }
-      const valueKey = this.readUint(); if (valueKey === null) { return resetPointer() }
+      const id = this.readUint(); if (id === null) { this.p = p; return null }
+      const nameKey = this.readUint(); if (nameKey === null) { this.p = p; return null }
+      const valueKey = this.readUint(); if (valueKey === null) { this.p = p; return null }
       return {
         tp: MType.SetNodeAttributeDictDeprecated,
         id,
@@ -386,8 +381,8 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 43: {
-      const key = this.readString(); if (key === null) { return resetPointer() }
-      const value = this.readString(); if (value === null) { return resetPointer() }
+      const key = this.readString(); if (key === null) { this.p = p; return null }
+      const value = this.readString(); if (value === null) { this.p = p; return null }
       return {
         tp: MType.StringDict,
         key,
@@ -396,9 +391,9 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 52: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const name = this.readString(); if (name === null) { return resetPointer() }
-      const value = this.readString(); if (value === null) { return resetPointer() }
+      const id = this.readUint(); if (id === null) { this.p = p; return null }
+      const name = this.readString(); if (name === null) { this.p = p; return null }
+      const value = this.readString(); if (value === null) { this.p = p; return null }
       return {
         tp: MType.SetNodeAttributeDict,
         id,
@@ -408,14 +403,14 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 53: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const duration = this.readUint(); if (duration === null) { return resetPointer() }
-      const ttfb = this.readUint(); if (ttfb === null) { return resetPointer() }
-      const headerSize = this.readUint(); if (headerSize === null) { return resetPointer() }
-      const encodedBodySize = this.readUint(); if (encodedBodySize === null) { return resetPointer() }
-      const decodedBodySize = this.readUint(); if (decodedBodySize === null) { return resetPointer() }
-      const url = this.readString(); if (url === null) { return resetPointer() }
-      const initiator = this.readString(); if (initiator === null) { return resetPointer() }
+      const timestamp = this.readUint(); if (timestamp === null) { this.p = p; return null }
+      const duration = this.readUint(); if (duration === null) { this.p = p; return null }
+      const ttfb = this.readUint(); if (ttfb === null) { this.p = p; return null }
+      const headerSize = this.readUint(); if (headerSize === null) { this.p = p; return null }
+      const encodedBodySize = this.readUint(); if (encodedBodySize === null) { this.p = p; return null }
+      const decodedBodySize = this.readUint(); if (decodedBodySize === null) { this.p = p; return null }
+      const url = this.readString(); if (url === null) { this.p = p; return null }
+      const initiator = this.readString(); if (initiator === null) { this.p = p; return null }
       return {
         tp: MType.ResourceTimingDeprecatedDeprecated,
         timestamp,
@@ -430,8 +425,8 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 54: {
-      const downlink = this.readUint(); if (downlink === null) { return resetPointer() }
-      const type = this.readString(); if (type === null) { return resetPointer() }
+      const downlink = this.readUint(); if (downlink === null) { this.p = p; return null }
+      const type = this.readString(); if (type === null) { this.p = p; return null }
       return {
         tp: MType.ConnectionInformation,
         downlink,
@@ -440,7 +435,7 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 55: {
-      const hidden = this.readBoolean(); if (hidden === null) { return resetPointer() }
+      const hidden = this.readBoolean(); if (hidden === null) { this.p = p; return null }
       return {
         tp: MType.SetPageVisibility,
         hidden,
@@ -448,10 +443,10 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 57: {
-      const parentID = this.readUint(); if (parentID === null) { return resetPointer() }
-      const family = this.readString(); if (family === null) { return resetPointer() }
-      const source = this.readString(); if (source === null) { return resetPointer() }
-      const descriptors = this.readString(); if (descriptors === null) { return resetPointer() }
+      const parentID = this.readUint(); if (parentID === null) { this.p = p; return null }
+      const family = this.readString(); if (family === null) { this.p = p; return null }
+      const source = this.readString(); if (source === null) { this.p = p; return null }
+      const descriptors = this.readString(); if (descriptors === null) { this.p = p; return null }
       return {
         tp: MType.LoadFontFace,
         parentID,
@@ -462,7 +457,7 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 58: {
-      const id = this.readInt(); if (id === null) { return resetPointer() }
+      const id = this.readInt(); if (id === null) { this.p = p; return null }
       return {
         tp: MType.SetNodeFocus,
         id,
@@ -470,10 +465,10 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 60: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const name = this.readString(); if (name === null) { return resetPointer() }
-      const value = this.readString(); if (value === null) { return resetPointer() }
-      const baseURL = this.readString(); if (baseURL === null) { return resetPointer() }
+      const id = this.readUint(); if (id === null) { this.p = p; return null }
+      const name = this.readString(); if (name === null) { this.p = p; return null }
+      const value = this.readString(); if (value === null) { this.p = p; return null }
+      const baseURL = this.readString(); if (baseURL === null) { this.p = p; return null }
       return {
         tp: MType.SetNodeAttributeURLBased,
         id,
@@ -484,9 +479,9 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 61: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const data = this.readString(); if (data === null) { return resetPointer() }
-      const baseURL = this.readString(); if (baseURL === null) { return resetPointer() }
+      const id = this.readUint(); if (id === null) { this.p = p; return null }
+      const data = this.readString(); if (data === null) { this.p = p; return null }
+      const baseURL = this.readString(); if (baseURL === null) { this.p = p; return null }
       return {
         tp: MType.SetCssDataURLBased,
         id,
@@ -496,8 +491,8 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 65: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const slotID = this.readUint(); if (slotID === null) { return resetPointer() }
+      const id = this.readUint(); if (id === null) { this.p = p; return null }
+      const slotID = this.readUint(); if (slotID === null) { this.p = p; return null }
       return {
         tp: MType.SetNodeSlot,
         id,
@@ -506,12 +501,12 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 68: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const hesitationTime = this.readUint(); if (hesitationTime === null) { return resetPointer() }
-      const label = this.readString(); if (label === null) { return resetPointer() }
-      const selector = this.readString(); if (selector === null) { return resetPointer() }
-      const normalizedX = this.readUint(); if (normalizedX === null) { return resetPointer() }
-      const normalizedY = this.readUint(); if (normalizedY === null) { return resetPointer() }
+      const id = this.readUint(); if (id === null) { this.p = p; return null }
+      const hesitationTime = this.readUint(); if (hesitationTime === null) { this.p = p; return null }
+      const label = this.readString(); if (label === null) { this.p = p; return null }
+      const selector = this.readString(); if (selector === null) { this.p = p; return null }
+      const normalizedX = this.readUint(); if (normalizedX === null) { this.p = p; return null }
+      const normalizedY = this.readUint(); if (normalizedY === null) { this.p = p; return null }
       return {
         tp: MType.MouseClick,
         id,
@@ -524,10 +519,10 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 69: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const hesitationTime = this.readUint(); if (hesitationTime === null) { return resetPointer() }
-      const label = this.readString(); if (label === null) { return resetPointer() }
-      const selector = this.readString(); if (selector === null) { return resetPointer() }
+      const id = this.readUint(); if (id === null) { this.p = p; return null }
+      const hesitationTime = this.readUint(); if (hesitationTime === null) { this.p = p; return null }
+      const label = this.readString(); if (label === null) { this.p = p; return null }
+      const selector = this.readString(); if (selector === null) { this.p = p; return null }
       return {
         tp: MType.MouseClickDeprecated,
         id,
@@ -538,8 +533,8 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 70: {
-      const frameID = this.readUint(); if (frameID === null) { return resetPointer() }
-      const id = this.readUint(); if (id === null) { return resetPointer() }
+      const frameID = this.readUint(); if (frameID === null) { this.p = p; return null }
+      const id = this.readUint(); if (id === null) { this.p = p; return null }
       return {
         tp: MType.CreateIFrameDocument,
         frameID,
@@ -548,9 +543,9 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 71: {
-      const sheetID = this.readUint(); if (sheetID === null) { return resetPointer() }
-      const text = this.readString(); if (text === null) { return resetPointer() }
-      const baseURL = this.readString(); if (baseURL === null) { return resetPointer() }
+      const sheetID = this.readUint(); if (sheetID === null) { this.p = p; return null }
+      const text = this.readString(); if (text === null) { this.p = p; return null }
+      const baseURL = this.readString(); if (baseURL === null) { this.p = p; return null }
       return {
         tp: MType.AdoptedSsReplaceURLBased,
         sheetID,
@@ -560,8 +555,8 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 72: {
-      const sheetID = this.readUint(); if (sheetID === null) { return resetPointer() }
-      const text = this.readString(); if (text === null) { return resetPointer() }
+      const sheetID = this.readUint(); if (sheetID === null) { this.p = p; return null }
+      const text = this.readString(); if (text === null) { this.p = p; return null }
       return {
         tp: MType.AdoptedSsReplace,
         sheetID,
@@ -570,10 +565,10 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 73: {
-      const sheetID = this.readUint(); if (sheetID === null) { return resetPointer() }
-      const rule = this.readString(); if (rule === null) { return resetPointer() }
-      const index = this.readUint(); if (index === null) { return resetPointer() }
-      const baseURL = this.readString(); if (baseURL === null) { return resetPointer() }
+      const sheetID = this.readUint(); if (sheetID === null) { this.p = p; return null }
+      const rule = this.readString(); if (rule === null) { this.p = p; return null }
+      const index = this.readUint(); if (index === null) { this.p = p; return null }
+      const baseURL = this.readString(); if (baseURL === null) { this.p = p; return null }
       return {
         tp: MType.AdoptedSsInsertRuleURLBased,
         sheetID,
@@ -584,9 +579,9 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 74: {
-      const sheetID = this.readUint(); if (sheetID === null) { return resetPointer() }
-      const rule = this.readString(); if (rule === null) { return resetPointer() }
-      const index = this.readUint(); if (index === null) { return resetPointer() }
+      const sheetID = this.readUint(); if (sheetID === null) { this.p = p; return null }
+      const rule = this.readString(); if (rule === null) { this.p = p; return null }
+      const index = this.readUint(); if (index === null) { this.p = p; return null }
       return {
         tp: MType.AdoptedSsInsertRule,
         sheetID,
@@ -596,8 +591,8 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 75: {
-      const sheetID = this.readUint(); if (sheetID === null) { return resetPointer() }
-      const index = this.readUint(); if (index === null) { return resetPointer() }
+      const sheetID = this.readUint(); if (sheetID === null) { this.p = p; return null }
+      const index = this.readUint(); if (index === null) { this.p = p; return null }
       return {
         tp: MType.AdoptedSsDeleteRule,
         sheetID,
@@ -606,8 +601,8 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 76: {
-      const sheetID = this.readUint(); if (sheetID === null) { return resetPointer() }
-      const id = this.readUint(); if (id === null) { return resetPointer() }
+      const sheetID = this.readUint(); if (sheetID === null) { this.p = p; return null }
+      const id = this.readUint(); if (id === null) { this.p = p; return null }
       return {
         tp: MType.AdoptedSsAddOwner,
         sheetID,
@@ -616,8 +611,8 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 77: {
-      const sheetID = this.readUint(); if (sheetID === null) { return resetPointer() }
-      const id = this.readUint(); if (id === null) { return resetPointer() }
+      const sheetID = this.readUint(); if (sheetID === null) { this.p = p; return null }
+      const id = this.readUint(); if (id === null) { this.p = p; return null }
       return {
         tp: MType.AdoptedSsRemoveOwner,
         sheetID,
@@ -626,8 +621,8 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 79: {
-      const mutation = this.readString(); if (mutation === null) { return resetPointer() }
-      const state = this.readString(); if (state === null) { return resetPointer() }
+      const mutation = this.readString(); if (mutation === null) { this.p = p; return null }
+      const state = this.readString(); if (state === null) { this.p = p; return null }
       return {
         tp: MType.Zustand,
         mutation,
@@ -636,15 +631,15 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 83: {
-      const type = this.readString(); if (type === null) { return resetPointer() }
-      const method = this.readString(); if (method === null) { return resetPointer() }
-      const url = this.readString(); if (url === null) { return resetPointer() }
-      const request = this.readString(); if (request === null) { return resetPointer() }
-      const response = this.readString(); if (response === null) { return resetPointer() }
-      const status = this.readUint(); if (status === null) { return resetPointer() }
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const duration = this.readUint(); if (duration === null) { return resetPointer() }
-      const transferredBodySize = this.readUint(); if (transferredBodySize === null) { return resetPointer() }
+      const type = this.readString(); if (type === null) { this.p = p; return null }
+      const method = this.readString(); if (method === null) { this.p = p; return null }
+      const url = this.readString(); if (url === null) { this.p = p; return null }
+      const request = this.readString(); if (request === null) { this.p = p; return null }
+      const response = this.readString(); if (response === null) { this.p = p; return null }
+      const status = this.readUint(); if (status === null) { this.p = p; return null }
+      const timestamp = this.readUint(); if (timestamp === null) { this.p = p; return null }
+      const duration = this.readUint(); if (duration === null) { this.p = p; return null }
+      const transferredBodySize = this.readUint(); if (transferredBodySize === null) { this.p = p; return null }
       return {
         tp: MType.NetworkRequest,
         type,
@@ -660,12 +655,12 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 84: {
-      const chType = this.readString(); if (chType === null) { return resetPointer() }
-      const channelName = this.readString(); if (channelName === null) { return resetPointer() }
-      const data = this.readString(); if (data === null) { return resetPointer() }
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const dir = this.readString(); if (dir === null) { return resetPointer() }
-      const messageType = this.readString(); if (messageType === null) { return resetPointer() }
+      const chType = this.readString(); if (chType === null) { this.p = p; return null }
+      const channelName = this.readString(); if (channelName === null) { this.p = p; return null }
+      const data = this.readString(); if (data === null) { this.p = p; return null }
+      const timestamp = this.readUint(); if (timestamp === null) { this.p = p; return null }
+      const dir = this.readString(); if (dir === null) { this.p = p; return null }
+      const messageType = this.readString(); if (messageType === null) { this.p = p; return null }
       return {
         tp: MType.WsChannel,
         chType,
@@ -678,23 +673,23 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 85: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const duration = this.readUint(); if (duration === null) { return resetPointer() }
-      const ttfb = this.readUint(); if (ttfb === null) { return resetPointer() }
-      const headerSize = this.readUint(); if (headerSize === null) { return resetPointer() }
-      const encodedBodySize = this.readUint(); if (encodedBodySize === null) { return resetPointer() }
-      const decodedBodySize = this.readUint(); if (decodedBodySize === null) { return resetPointer() }
-      const url = this.readString(); if (url === null) { return resetPointer() }
-      const initiator = this.readString(); if (initiator === null) { return resetPointer() }
-      const transferredSize = this.readUint(); if (transferredSize === null) { return resetPointer() }
-      const cached = this.readBoolean(); if (cached === null) { return resetPointer() }
-      const queueing = this.readUint(); if (queueing === null) { return resetPointer() }
-      const dnsLookup = this.readUint(); if (dnsLookup === null) { return resetPointer() }
-      const initialConnection = this.readUint(); if (initialConnection === null) { return resetPointer() }
-      const ssl = this.readUint(); if (ssl === null) { return resetPointer() }
-      const contentDownload = this.readUint(); if (contentDownload === null) { return resetPointer() }
-      const total = this.readUint(); if (total === null) { return resetPointer() }
-      const stalled = this.readUint(); if (stalled === null) { return resetPointer() }
+      const timestamp = this.readUint(); if (timestamp === null) { this.p = p; return null }
+      const duration = this.readUint(); if (duration === null) { this.p = p; return null }
+      const ttfb = this.readUint(); if (ttfb === null) { this.p = p; return null }
+      const headerSize = this.readUint(); if (headerSize === null) { this.p = p; return null }
+      const encodedBodySize = this.readUint(); if (encodedBodySize === null) { this.p = p; return null }
+      const decodedBodySize = this.readUint(); if (decodedBodySize === null) { this.p = p; return null }
+      const url = this.readString(); if (url === null) { this.p = p; return null }
+      const initiator = this.readString(); if (initiator === null) { this.p = p; return null }
+      const transferredSize = this.readUint(); if (transferredSize === null) { this.p = p; return null }
+      const cached = this.readBoolean(); if (cached === null) { this.p = p; return null }
+      const queueing = this.readUint(); if (queueing === null) { this.p = p; return null }
+      const dnsLookup = this.readUint(); if (dnsLookup === null) { this.p = p; return null }
+      const initialConnection = this.readUint(); if (initialConnection === null) { this.p = p; return null }
+      const ssl = this.readUint(); if (ssl === null) { this.p = p; return null }
+      const contentDownload = this.readUint(); if (contentDownload === null) { this.p = p; return null }
+      const total = this.readUint(); if (total === null) { this.p = p; return null }
+      const stalled = this.readUint(); if (stalled === null) { this.p = p; return null }
       return {
         tp: MType.ResourceTiming,
         timestamp,
@@ -718,9 +713,9 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 87: {
-      const label = this.readString(); if (label === null) { return resetPointer() }
-      const startTime = this.readInt(); if (startTime === null) { return resetPointer() }
-      const endTime = this.readInt(); if (endTime === null) { return resetPointer() }
+      const label = this.readString(); if (label === null) { this.p = p; return null }
+      const startTime = this.readInt(); if (startTime === null) { this.p = p; return null }
+      const endTime = this.readInt(); if (endTime === null) { this.p = p; return null }
       return {
         tp: MType.Incident,
         label,
@@ -730,12 +725,12 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 89: {
-      const name = this.readString(); if (name === null) { return resetPointer() }
-      const duration = this.readInt(); if (duration === null) { return resetPointer() }
-      const blockingDuration = this.readInt(); if (blockingDuration === null) { return resetPointer() }
-      const firstUIEventTimestamp = this.readInt(); if (firstUIEventTimestamp === null) { return resetPointer() }
-      const startTime = this.readInt(); if (startTime === null) { return resetPointer() }
-      const scripts = this.readString(); if (scripts === null) { return resetPointer() }
+      const name = this.readString(); if (name === null) { this.p = p; return null }
+      const duration = this.readInt(); if (duration === null) { this.p = p; return null }
+      const blockingDuration = this.readInt(); if (blockingDuration === null) { this.p = p; return null }
+      const firstUIEventTimestamp = this.readInt(); if (firstUIEventTimestamp === null) { this.p = p; return null }
+      const startTime = this.readInt(); if (startTime === null) { this.p = p; return null }
+      const scripts = this.readString(); if (scripts === null) { this.p = p; return null }
       return {
         tp: MType.LongAnimationTask,
         name,
@@ -748,9 +743,9 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 113: {
-      const selectionStart = this.readUint(); if (selectionStart === null) { return resetPointer() }
-      const selectionEnd = this.readUint(); if (selectionEnd === null) { return resetPointer() }
-      const selection = this.readString(); if (selection === null) { return resetPointer() }
+      const selectionStart = this.readUint(); if (selectionStart === null) { this.p = p; return null }
+      const selectionEnd = this.readUint(); if (selectionEnd === null) { this.p = p; return null }
+      const selection = this.readString(); if (selection === null) { this.p = p; return null }
       return {
         tp: MType.SelectionChange,
         selectionStart,
@@ -760,7 +755,7 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 114: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
+      const timestamp = this.readUint(); if (timestamp === null) { this.p = p; return null }
       return {
         tp: MType.MouseThrashing,
         timestamp,
@@ -768,16 +763,16 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 116: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const duration = this.readUint(); if (duration === null) { return resetPointer() }
-      const ttfb = this.readUint(); if (ttfb === null) { return resetPointer() }
-      const headerSize = this.readUint(); if (headerSize === null) { return resetPointer() }
-      const encodedBodySize = this.readUint(); if (encodedBodySize === null) { return resetPointer() }
-      const decodedBodySize = this.readUint(); if (decodedBodySize === null) { return resetPointer() }
-      const url = this.readString(); if (url === null) { return resetPointer() }
-      const initiator = this.readString(); if (initiator === null) { return resetPointer() }
-      const transferredSize = this.readUint(); if (transferredSize === null) { return resetPointer() }
-      const cached = this.readBoolean(); if (cached === null) { return resetPointer() }
+      const timestamp = this.readUint(); if (timestamp === null) { this.p = p; return null }
+      const duration = this.readUint(); if (duration === null) { this.p = p; return null }
+      const ttfb = this.readUint(); if (ttfb === null) { this.p = p; return null }
+      const headerSize = this.readUint(); if (headerSize === null) { this.p = p; return null }
+      const encodedBodySize = this.readUint(); if (encodedBodySize === null) { this.p = p; return null }
+      const decodedBodySize = this.readUint(); if (decodedBodySize === null) { this.p = p; return null }
+      const url = this.readString(); if (url === null) { this.p = p; return null }
+      const initiator = this.readString(); if (initiator === null) { this.p = p; return null }
+      const transferredSize = this.readUint(); if (transferredSize === null) { this.p = p; return null }
+      const cached = this.readBoolean(); if (cached === null) { this.p = p; return null }
       return {
         tp: MType.ResourceTimingDeprecated,
         timestamp,
@@ -794,7 +789,7 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 117: {
-      const tabId = this.readString(); if (tabId === null) { return resetPointer() }
+      const tabId = this.readString(); if (tabId === null) { this.p = p; return null }
       return {
         tp: MType.TabChange,
         tabId,
@@ -802,7 +797,7 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 118: {
-      const tabId = this.readString(); if (tabId === null) { return resetPointer() }
+      const tabId = this.readString(); if (tabId === null) { this.p = p; return null }
       return {
         tp: MType.TabData,
         tabId,
@@ -810,8 +805,8 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 119: {
-      const nodeId = this.readString(); if (nodeId === null) { return resetPointer() }
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
+      const nodeId = this.readString(); if (nodeId === null) { this.p = p; return null }
+      const timestamp = this.readUint(); if (timestamp === null) { this.p = p; return null }
       return {
         tp: MType.CanvasNode,
         nodeId,
@@ -820,7 +815,7 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 120: {
-      const tagId = this.readInt(); if (tagId === null) { return resetPointer() }
+      const tagId = this.readInt(); if (tagId === null) { this.p = p; return null }
       return {
         tp: MType.TagTrigger,
         tagId,
@@ -828,10 +823,10 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 121: {
-      const action = this.readString(); if (action === null) { return resetPointer() }
-      const state = this.readString(); if (state === null) { return resetPointer() }
-      const duration = this.readUint(); if (duration === null) { return resetPointer() }
-      const actionTime = this.readUint(); if (actionTime === null) { return resetPointer() }
+      const action = this.readString(); if (action === null) { this.p = p; return null }
+      const state = this.readString(); if (state === null) { this.p = p; return null }
+      const duration = this.readUint(); if (duration === null) { this.p = p; return null }
+      const actionTime = this.readUint(); if (actionTime === null) { this.p = p; return null }
       return {
         tp: MType.Redux,
         action,
@@ -842,10 +837,10 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 122: {
-      const url = this.readString(); if (url === null) { return resetPointer() }
-      const referrer = this.readString(); if (referrer === null) { return resetPointer() }
-      const navigationStart = this.readUint(); if (navigationStart === null) { return resetPointer() }
-      const documentTitle = this.readString(); if (documentTitle === null) { return resetPointer() }
+      const url = this.readString(); if (url === null) { this.p = p; return null }
+      const referrer = this.readString(); if (referrer === null) { this.p = p; return null }
+      const navigationStart = this.readUint(); if (navigationStart === null) { this.p = p; return null }
+      const documentTitle = this.readString(); if (documentTitle === null) { this.p = p; return null }
       return {
         tp: MType.SetPageLocation,
         url,
@@ -856,11 +851,11 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 123: {
-      const operationKind = this.readString(); if (operationKind === null) { return resetPointer() }
-      const operationName = this.readString(); if (operationName === null) { return resetPointer() }
-      const variables = this.readString(); if (variables === null) { return resetPointer() }
-      const response = this.readString(); if (response === null) { return resetPointer() }
-      const duration = this.readUint(); if (duration === null) { return resetPointer() }
+      const operationKind = this.readString(); if (operationKind === null) { this.p = p; return null }
+      const operationName = this.readString(); if (operationName === null) { this.p = p; return null }
+      const variables = this.readString(); if (variables === null) { this.p = p; return null }
+      const response = this.readString(); if (response === null) { this.p = p; return null }
+      const duration = this.readUint(); if (duration === null) { this.p = p; return null }
       return {
         tp: MType.GraphQl,
         operationKind,
@@ -872,10 +867,10 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 93: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const length = this.readUint(); if (length === null) { return resetPointer() }
-      const name = this.readString(); if (name === null) { return resetPointer() }
-      const payload = this.readString(); if (payload === null) { return resetPointer() }
+      const timestamp = this.readUint(); if (timestamp === null) { this.p = p; return null }
+      const length = this.readUint(); if (length === null) { this.p = p; return null }
+      const name = this.readString(); if (name === null) { this.p = p; return null }
+      const payload = this.readString(); if (payload === null) { this.p = p; return null }
       return {
         tp: MType.MobileEvent,
         timestamp,
@@ -886,12 +881,12 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 96: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const length = this.readUint(); if (length === null) { return resetPointer() }
-      const x = this.readUint(); if (x === null) { return resetPointer() }
-      const y = this.readUint(); if (y === null) { return resetPointer() }
-      const width = this.readUint(); if (width === null) { return resetPointer() }
-      const height = this.readUint(); if (height === null) { return resetPointer() }
+      const timestamp = this.readUint(); if (timestamp === null) { this.p = p; return null }
+      const length = this.readUint(); if (length === null) { this.p = p; return null }
+      const x = this.readUint(); if (x === null) { this.p = p; return null }
+      const y = this.readUint(); if (y === null) { this.p = p; return null }
+      const width = this.readUint(); if (width === null) { this.p = p; return null }
+      const height = this.readUint(); if (height === null) { this.p = p; return null }
       return {
         tp: MType.MobileScreenChanges,
         timestamp,
@@ -904,11 +899,11 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 100: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const length = this.readUint(); if (length === null) { return resetPointer() }
-      const label = this.readString(); if (label === null) { return resetPointer() }
-      const x = this.readUint(); if (x === null) { return resetPointer() }
-      const y = this.readUint(); if (y === null) { return resetPointer() }
+      const timestamp = this.readUint(); if (timestamp === null) { this.p = p; return null }
+      const length = this.readUint(); if (length === null) { this.p = p; return null }
+      const label = this.readString(); if (label === null) { this.p = p; return null }
+      const x = this.readUint(); if (x === null) { this.p = p; return null }
+      const y = this.readUint(); if (y === null) { this.p = p; return null }
       return {
         tp: MType.MobileClickEvent,
         timestamp,
@@ -920,11 +915,11 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 101: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const length = this.readUint(); if (length === null) { return resetPointer() }
-      const value = this.readString(); if (value === null) { return resetPointer() }
-      const valueMasked = this.readBoolean(); if (valueMasked === null) { return resetPointer() }
-      const label = this.readString(); if (label === null) { return resetPointer() }
+      const timestamp = this.readUint(); if (timestamp === null) { this.p = p; return null }
+      const length = this.readUint(); if (length === null) { this.p = p; return null }
+      const value = this.readString(); if (value === null) { this.p = p; return null }
+      const valueMasked = this.readBoolean(); if (valueMasked === null) { this.p = p; return null }
+      const label = this.readString(); if (label === null) { this.p = p; return null }
       return {
         tp: MType.MobileInputEvent,
         timestamp,
@@ -936,10 +931,10 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 102: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const length = this.readUint(); if (length === null) { return resetPointer() }
-      const name = this.readString(); if (name === null) { return resetPointer() }
-      const value = this.readUint(); if (value === null) { return resetPointer() }
+      const timestamp = this.readUint(); if (timestamp === null) { this.p = p; return null }
+      const length = this.readUint(); if (length === null) { this.p = p; return null }
+      const name = this.readString(); if (name === null) { this.p = p; return null }
+      const value = this.readUint(); if (value === null) { this.p = p; return null }
       return {
         tp: MType.MobilePerformanceEvent,
         timestamp,
@@ -950,10 +945,10 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 103: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const length = this.readUint(); if (length === null) { return resetPointer() }
-      const severity = this.readString(); if (severity === null) { return resetPointer() }
-      const content = this.readString(); if (content === null) { return resetPointer() }
+      const timestamp = this.readUint(); if (timestamp === null) { this.p = p; return null }
+      const length = this.readUint(); if (length === null) { this.p = p; return null }
+      const severity = this.readString(); if (severity === null) { this.p = p; return null }
+      const content = this.readString(); if (content === null) { this.p = p; return null }
       return {
         tp: MType.MobileLog,
         timestamp,
@@ -964,9 +959,9 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 104: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const length = this.readUint(); if (length === null) { return resetPointer() }
-      const content = this.readString(); if (content === null) { return resetPointer() }
+      const timestamp = this.readUint(); if (timestamp === null) { this.p = p; return null }
+      const length = this.readUint(); if (length === null) { this.p = p; return null }
+      const content = this.readString(); if (content === null) { this.p = p; return null }
       return {
         tp: MType.MobileInternalError,
         timestamp,
@@ -976,15 +971,15 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 105: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const length = this.readUint(); if (length === null) { return resetPointer() }
-      const type = this.readString(); if (type === null) { return resetPointer() }
-      const method = this.readString(); if (method === null) { return resetPointer() }
-      const url = this.readString(); if (url === null) { return resetPointer() }
-      const request = this.readString(); if (request === null) { return resetPointer() }
-      const response = this.readString(); if (response === null) { return resetPointer() }
-      const status = this.readUint(); if (status === null) { return resetPointer() }
-      const duration = this.readUint(); if (duration === null) { return resetPointer() }
+      const timestamp = this.readUint(); if (timestamp === null) { this.p = p; return null }
+      const length = this.readUint(); if (length === null) { this.p = p; return null }
+      const type = this.readString(); if (type === null) { this.p = p; return null }
+      const method = this.readString(); if (method === null) { this.p = p; return null }
+      const url = this.readString(); if (url === null) { this.p = p; return null }
+      const request = this.readString(); if (request === null) { this.p = p; return null }
+      const response = this.readString(); if (response === null) { this.p = p; return null }
+      const status = this.readUint(); if (status === null) { this.p = p; return null }
+      const duration = this.readUint(); if (duration === null) { this.p = p; return null }
       return {
         tp: MType.MobileNetworkCall,
         timestamp,
@@ -1000,12 +995,12 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 106: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const length = this.readUint(); if (length === null) { return resetPointer() }
-      const label = this.readString(); if (label === null) { return resetPointer() }
-      const x = this.readUint(); if (x === null) { return resetPointer() }
-      const y = this.readUint(); if (y === null) { return resetPointer() }
-      const direction = this.readString(); if (direction === null) { return resetPointer() }
+      const timestamp = this.readUint(); if (timestamp === null) { this.p = p; return null }
+      const length = this.readUint(); if (length === null) { this.p = p; return null }
+      const label = this.readString(); if (label === null) { this.p = p; return null }
+      const x = this.readUint(); if (x === null) { this.p = p; return null }
+      const y = this.readUint(); if (y === null) { this.p = p; return null }
+      const direction = this.readString(); if (direction === null) { this.p = p; return null }
       return {
         tp: MType.MobileSwipeEvent,
         timestamp,
@@ -1018,9 +1013,9 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 107: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const length = this.readUint(); if (length === null) { return resetPointer() }
-      const firstIndex = this.readUint(); if (firstIndex === null) { return resetPointer() }
+      const timestamp = this.readUint(); if (timestamp === null) { this.p = p; return null }
+      const length = this.readUint(); if (length === null) { this.p = p; return null }
+      const firstIndex = this.readUint(); if (firstIndex === null) { this.p = p; return null }
       return {
         tp: MType.MobileBatchMeta,
         timestamp,
@@ -1030,13 +1025,13 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 109: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const length = this.readUint(); if (length === null) { return resetPointer() }
-      const operationKind = this.readString(); if (operationKind === null) { return resetPointer() }
-      const operationName = this.readString(); if (operationName === null) { return resetPointer() }
-      const variables = this.readString(); if (variables === null) { return resetPointer() }
-      const response = this.readString(); if (response === null) { return resetPointer() }
-      const duration = this.readUint(); if (duration === null) { return resetPointer() }
+      const timestamp = this.readUint(); if (timestamp === null) { this.p = p; return null }
+      const length = this.readUint(); if (length === null) { this.p = p; return null }
+      const operationKind = this.readString(); if (operationKind === null) { this.p = p; return null }
+      const operationName = this.readString(); if (operationName === null) { this.p = p; return null }
+      const variables = this.readString(); if (variables === null) { this.p = p; return null }
+      const response = this.readString(); if (response === null) { this.p = p; return null }
+      const duration = this.readUint(); if (duration === null) { this.p = p; return null }
       return {
         tp: MType.MobileGraphQl,
         timestamp,
@@ -1050,11 +1045,11 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     case 111: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const type = this.readString(); if (type === null) { return resetPointer() }
-      const contextString = this.readString(); if (contextString === null) { return resetPointer() }
-      const context = this.readString(); if (context === null) { return resetPointer() }
-      const payload = this.readString(); if (payload === null) { return resetPointer() }
+      const timestamp = this.readUint(); if (timestamp === null) { this.p = p; return null }
+      const type = this.readString(); if (type === null) { this.p = p; return null }
+      const contextString = this.readString(); if (contextString === null) { this.p = p; return null }
+      const context = this.readString(); if (context === null) { this.p = p; return null }
+      const payload = this.readString(); if (payload === null) { this.p = p; return null }
       return {
         tp: MType.MobileIssueEvent,
         timestamp,
