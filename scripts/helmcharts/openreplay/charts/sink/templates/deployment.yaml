@@ -101,7 +101,7 @@ spec:
           claimName: "{{ tpl .Values.pvc.name . }}"
       {{- include "openreplay.volume.redis_ca_certificate" .Values.global.redis | nindent 6 }}
       {{- with .Values.persistence.volumes  }}
-        {{- toYaml . | nindent 8 }}
+        {{- toYaml . | nindent 6 }}
       {{- end }}
       {{- end }}
       {{- with .Values.nodeSelector }}

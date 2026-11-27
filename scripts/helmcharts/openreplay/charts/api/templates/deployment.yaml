@@ -138,7 +138,7 @@ spec:
       {{- else }}
       volumes:
       {{- with .Values.persistence.volumes }}
-        {{- toYaml . | nindent 8 }}
+        {{- toYaml . | nindent 6 }}
       {{- end }}
       - name: datadir
         persistentVolumeClaim:

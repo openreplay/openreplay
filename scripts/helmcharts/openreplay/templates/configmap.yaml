@@ -45,9 +45,15 @@ data:
   PGPORT: "{{ .Values.global.postgresql.postgresqlPort | b64enc }}"
   PGDATABASE: "{{ .Values.global.postgresql.postgresqlDatabase | b64enc }}"
   PGUSER: "{{ .Values.global.postgresql.postgresqlUser | b64enc }}"
+{{- if not .Values.global.postgresql.existingSecret }}
   PGPASSWORD: "{{ .Values.global.postgresql.postgresqlPassword | b64enc }}"
+{{- end }}
   CLICKHOUSE_USER: "{{ .Values.global.clickhouse.username | b64enc }}"
+{{- if not .Values.global.clickhouse.existingSecret }}
   CLICKHOUSE_PASSWORD: "{{ .Values.global.clickhouse.password | b64enc }}"
+{{- end }}
   MINIO_HOST: "{{ .Values.global.s3.endpoint | b64enc }}"
+{{- if not .Values.global.s3.existingSecret }}
   MINIO_ACCESS_KEY: "{{ .Values.global.s3.accessKey | b64enc }}"
   MINIO_SECRET_KEY: "{{ .Values.global.s3.secretKey | b64enc }}"
+{{- end }}
