@@ -3,7 +3,7 @@ import { CACHE, WORKSPACE } from '../lib/paths.mjs'
 import { buildFeatures } from '../lib/build.mjs'
 import { serve, pageHtml } from '../lib/server.mjs'
 import { launch } from '../lib/browser.mjs'
-import { table, saveResults } from '../lib/report.mjs'
+import { table, saveResults, progress } from '../lib/report.mjs'
 import { matches } from './scenarios.mjs'
 
 /** Runs window.checks from src/features against this checkout's tracker modules. */
@@ -22,6 +22,7 @@ export async function runFeatures(args) {
     await probe.close()
     const rows = []
     let failed = 0
+    const tick = progress(names.length)
     for (const name of names) {
       const page = await browser.newPage()
       const errors = []
@@ -31,6 +32,7 @@ export async function runFeatures(args) {
       await page.close()
       if (!r.ok) failed++
       rows.push([name, r.ok ? 'OK' : 'FAIL', errors.length ? errors[0].slice(0, 120) : ''])
+      tick(name, r.ok ? 'OK' : 'FAIL')
       if (!r.ok || args.flags.verbose) console.log(`${name}:`, JSON.stringify(r.details, null, 1))
     }
     table(['check', 'result', 'page errors'], rows)

@@ -5,8 +5,9 @@ import { buildTracker } from '../lib/build.mjs'
 import { serve, pageHtml } from '../lib/server.mjs'
 import { launch, captureWorkerMessages, memoryAfterGc, replayDiff } from '../lib/browser.mjs'
 import { resolveTargets, columnLabel, messageNames } from '../lib/targets.mjs'
-import { table, ratio, saveResults } from '../lib/report.mjs'
+import { table, ratio, saveResults, progress } from '../lib/report.mjs'
 import { scenarioRoutes, listScenarios, matches } from './scenarios.mjs'
+import { wireSchema, compareWire } from '../lib/wire.mjs'
 
 const BASE_OPTIONS = {
   projectKey: 'k',
@@ -50,7 +51,13 @@ async function setup(args, { replay = false } = {}) {
   return { targets, routes, columns }
 }
 
-const options = (base, col) => ({ ...BASE_OPTIONS, ingestPoint: base + 'ingest', ...MODES[col.mode] })
+const protocolOf = (args) => Number(args.flags.protocol ?? 1)
+const options = (base, col, run) => ({
+  ...BASE_OPTIONS,
+  ingestPoint: base + (run ? `ingest/${run}` : 'ingest'),
+  ...MODES[col.mode],
+})
+let wireRuns = 0
 
 async function newPage(browser, base, url) {
   const ctx = await browser.newContext()
@@ -63,12 +70,16 @@ async function newPage(browser, base, url) {
   return { ctx, page, errors }
 }
 
-/** Runs a scenario under the real Tracker; `collect` picks what comes back from the page. */
-async function runScenario(browser, base, col, name, collect) {
+/**
+ * Runs a scenario under the real Tracker; `collect` picks what comes back from the page.
+ * `wire` ({ ingest, schema }): also force a flush and decode what reached the fake ingest.
+ */
+async function runScenario(browser, base, col, name, collect, wire) {
   const { ctx, page, errors } = await newPage(browser, base, `${col.target.id}/`)
+  const run = wire ? `r${++wireRuns}` : null
   try {
     const r = await page.evaluate(
-      async ([name, url, opts, collect]) => {
+      async ([name, url, opts, collect, flush]) => {
         const { default: Tracker } = await import(url)
         const sc = window.H.scenarios[name]
         const tick = (ms) => new Promise((r) => setTimeout(r, ms))
@@ -82,13 +93,26 @@ async function runScenario(browser, base, col, name, collect) {
         }
         await tick(400)
         const out = { started: started?.success ?? !!started, msgs: window.__msgs.length }
+        if (flush) {
+          tracker.forceFlushBatch()
+          out.flushed = window.__msgs.length
+        }
         if (collect === 'tree') Object.assign(out, { tuples: window.__msgs, want: window.H.expected({ imgModule: true }) })
         if (collect === 'bytes') out.sizes = window.H.sizesByType(window.__msgs)
         return out
       },
-      [name, `/${col.target.id}/tracker.js`, options(base, col), collect],
+      [name, `/${col.target.id}/tracker.js`, options(base, col, run), collect, !!wire],
     )
     r.errors = errors
+    if (wire && r.started) {
+      // gzip + fetch happen after the flush message: wait until the flushed part has arrived
+      for (let waited = 0; ; waited += 200) {
+        r.wire = compareWire(wire.ingest.bodies.get(run) ?? [], r.tuples, r.flushed, wire.schema, wire.protocol)
+        if (r.wire.ok || waited >= 5000) break
+        await page.waitForTimeout(200)
+      }
+      wire.ingest.bodies.delete(run)
+    }
     if (collect === 'tree') {
       r.diff = r.started ? await replayDiff(ctx, base, r.tuples, r.want) : null
       delete r.tuples
@@ -109,14 +133,26 @@ async function scenarioList(browser, base, targets, args) {
 async function e2e(browser, base, ctx, args) {
   const { columns } = ctx
   const scenarios = await scenarioList(browser, base, ctx.targets, args)
+  const schemas = new Map()
+  const wireFor = (t) => {
+    if (!args.flags.wire) return null
+    if (!schemas.has(t.id)) schemas.set(t.id, wireSchema(t.workspace))
+    return { ingest: ctx.ingest, schema: schemas.get(t.id), protocol: protocolOf(args) }
+  }
+  const wireCell = (r) => (r.wire ? (r.wire.ok ? ' wire' : ' WIRE✗') : '')
+  const cell = (r) => (!r.started ? 'NOSTART' : r.diff ? 'DIFF' : 'OK') + wireCell(r) + (r.errors.length ? ' !err' : '')
+  const ok = (r) => r.started && !r.diff && !r.errors.length && (!r.wire || r.wire.ok)
   const rows = []
+  const tick = progress(scenarios.length * columns.length)
   for (const sc of scenarios) {
     const cells = []
-    for (const col of columns) cells.push(await runScenario(browser, base, col, sc.name, 'tree'))
+    for (const col of columns) {
+      const r = await runScenario(browser, base, col, sc.name, 'tree', wireFor(col.target))
+      cells.push(r)
+      tick(`${sc.name} ${col.label}`, cell(r))
+    }
     rows.push({ name: sc.name, cells })
   }
-  const cell = (r) => (!r.started ? 'NOSTART' : r.diff ? 'DIFF' : 'OK') + (r.errors.length ? ' !err' : '')
-  const ok = (r) => r.started && !r.diff && !r.errors.length
   table(
     ['scenario', ...columns.map((c) => c.label)],
     [
@@ -125,6 +161,17 @@ async function e2e(browser, base, ctx, args) {
     ],
   )
   console.log('\ncells: replay of the recorded messages by the real player vs the live DOM; !err = page errors')
+  if (args.flags.wire) {
+    console.log(`wire (protocol ${protocolOf(args)}): batches the worker sent to the ingest, decoded, match the posted messages (WIRE✗: they do not)`)
+    columns.forEach((c, i) => {
+      const w = rows.map((row) => row.cells[i].wire).filter(Boolean)
+      const sum = (k) => w.reduce((n, x) => n + (x[k] ?? 0), 0)
+      const kinds = {}
+      for (const x of w) for (const [k, n] of Object.entries(x.kinds ?? {})) kinds[k] = (kinds[k] ?? 0) + n
+      const byKind = Object.entries(kinds).map(([k, n]) => `${n} ${k}`).join(', ')
+      console.log(`  ${c.label}: ${w.filter((x) => x.ok).length}/${w.length} exact, ${sum('messages')} messages in ${sum('batches')} batches (${byKind})`)
+    })
+  }
   if (args.flags.verbose) {
     for (const row of rows) {
       row.cells.forEach((r, i) => {
@@ -132,6 +179,7 @@ async function e2e(browser, base, ctx, args) {
         console.log(`\n${row.name} [${columns[i].label}]`)
         if (r.errors.length) console.log('  errors:', r.errors.slice(0, 3).join(' | '))
         if (r.diff) console.log('  got :', r.diff.got, '\n  want:', r.diff.want)
+        if (r.wire && !r.wire.ok) console.log('  wire:', r.wire.error, r.wire.got ? `\n    got : ${r.wire.got}\n    want: ${r.wire.want}` : '')
       })
     }
   }
@@ -144,6 +192,7 @@ async function bytes(browser, base, ctx, args) {
   const names = messageNames(targets[targets.length - 1].workspace)
   const rows = []
   const byType = {}
+  const tick = progress(scenarios.length * columns.length)
   for (const sc of scenarios) {
     const cells = []
     for (const [i, col] of columns.entries()) {
@@ -156,6 +205,7 @@ async function bytes(browser, base, ctx, args) {
         e[i].bytes += v.bytes
       }
       cells.push(r)
+      tick(`${sc.name} ${col.label}`, `${r.total} B`)
     }
     rows.push({ name: sc.name, cells })
   }
@@ -194,6 +244,7 @@ const MODULE_CHECKS = [
 async function modules(browser, base, ctx, args) {
   const { columns } = ctx
   const results = []
+  const tick = progress(columns.length)
   for (const col of columns) {
     const { ctx: bctx, page, errors } = await newPage(browser, base, `${col.target.id}/modules`)
     try {
@@ -240,6 +291,7 @@ async function modules(browser, base, ctx, args) {
       })
       r.errors = errors
       results.push(r)
+      tick(col.label)
     } finally {
       await bctx.close()
     }
@@ -253,6 +305,7 @@ async function modules(browser, base, ctx, args) {
 async function leaks(browser, base, ctx, args) {
   const columns = [{ target: ctx.targets[ctx.targets.length - 1], mode: 'none', label: 'none' }, ...ctx.columns]
   const rows = []
+  const tick = progress(columns.length)
   for (const col of columns) {
     const { ctx: bctx, page } = await newPage(browser, base, `${col.target.id}/blank`)
     try {
@@ -295,6 +348,7 @@ async function leaks(browser, base, ctx, args) {
         late = await memoryAfterGc(cdp)
       }
       rows.push({ label: col.label, mem, late })
+      tick(col.label, `${mem.nodes} nodes ${mem.heapMB}MB`)
     } finally {
       await bctx.close()
     }
@@ -309,7 +363,8 @@ const SUITES = { e2e, bytes, modules, leaks }
 
 export async function runTrackerSuite(suite, args) {
   const ctx = await setup(args, { replay: suite === 'e2e' })
-  const server = await serve(ctx.routes)
+  const server = await serve(ctx.routes, { protocolVersion: protocolOf(args) })
+  ctx.ingest = server.ingest
   const browser = await launch()
   try {
     const out = await SUITES[suite](browser, server.base, ctx, args)

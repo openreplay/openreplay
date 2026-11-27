@@ -16,6 +16,7 @@ DOM core (cores driven directly, messages checked against a mirror of the player
 
 Full tracker (built dist, fake ingest, messages taken at the worker boundary):
   e2e       correctness scenarios through the real Tracker, replayed by the player
+                                                          --wire    also decode what the worker sent to the ingest
   bytes     encoded bytes per scenario and per message type
   modules   interaction modules smoke test (inputs, clicks, scroll, iframes)
   leaks     listener-bearing churn (images, shadow roots, inputs), memory after GC
@@ -30,6 +31,7 @@ Options:
   --impls=default,next DOM cores to run (core/perf/memory); --modes=... for full-tracker suites
   --baseline=<ref>     also run against a git ref (branch, tag, sha), side by side
   --no-build           full-tracker suites: reuse this checkout's tracker dist
+  --protocol=2         full-tracker suites: the fake ingest answers with protocol 2 (split streams)
   --strict             exit 1 on any failure (core, e2e, modules, features)
   --timeout=120000     per scenario run, ms (core/perf/memory)
 `
