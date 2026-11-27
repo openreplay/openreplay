@@ -7,8 +7,6 @@ const ASCII: Record<string, string> = {
   '—': '-',
   '≈': '~',
   '±': '+/-',
-  '▲': '+',
-  '▼': '-',
   '‘': "'",
   '’': "'",
   '“': '"',
@@ -80,6 +78,22 @@ export function addTextLayer(pdf: jsPDF, slide: HTMLElement) {
         bottom: tail.bottom,
       },
       parseFloat(getComputedStyle(mid).fontSize) || 12,
+      box,
+    );
+  });
+  // a change's arrow (Figure) is a sign in the text
+  slide.querySelectorAll<SVGElement>('.m-rep-s__dir').forEach((dir) => {
+    const r = dir.getBoundingClientRect();
+    emit(
+      pdf,
+      {
+        text: dir.getAttribute('aria-label') === 'up' ? '+' : '-',
+        left: r.left,
+        right: r.right,
+        top: r.top,
+        bottom: r.bottom,
+      },
+      parseFloat(getComputedStyle(dir).fontSize) || 12,
       box,
     );
   });

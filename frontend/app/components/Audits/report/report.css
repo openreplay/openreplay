@@ -372,8 +372,9 @@
   max-width: 1180px;
 }
 .m-rep-s__ai {
-  color: var(--m-content-muted);
-  font-weight: 500;
+  display: inline-flex;
+  vertical-align: middle;
+  margin-right: 8px;
 }
 .m-rep-s__org {
   flex: none;
@@ -869,6 +870,11 @@
   flex: 0 1 auto;
   min-width: 0;
 }
+.m-rep-s__rt > .t {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
 /* a title beside its URL or code: one line each, free width shared equally, a short one kept whole */
 .m-rep-s__tc {
   display: grid;
@@ -914,8 +920,11 @@
   color: var(--m-content-placeholder);
   margin-left: 0;
 }
+/* two lines; Rows cuts the text to them */
 .m-rep-s__row p {
   margin: 4px 0 0;
+  max-height: 3em;
+  overflow: hidden;
   font-size: 15px;
   line-height: 1.5;
   color: var(--m-content-muted);
@@ -1644,6 +1653,14 @@
 }
 .m-rep__pager .w {
   margin: 0 6px;
+}
+.m-rep-s__dir {
+  display: inline-block;
+  width: 0.8em;
+  height: 0.8em;
+  margin-right: 0.12em;
+  vertical-align: -0.05em;
+  stroke-width: 2.25;
 }
 
 .m-rep-s__page {
